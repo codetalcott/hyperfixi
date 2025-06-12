@@ -1,19 +1,69 @@
 {
   "name": "hyperfixi",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "version": "0.1.0",
+  "description": "Unified fetch syntax for _hyperscript + fixi.js integration",
+  "type": "module",
+  "main": "dist/hyperscript-fixi.mjs",
+  "browser": "dist/hyperscript-fixi.min.js",
+  "types": "dist/hyperscript-fixi.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/hyperscript-fixi.mjs",
+      "require": "./dist/hyperscript-fixi.min.js",
+      "types": "./dist/hyperscript-fixi.d.ts"
+    }
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "files": [
+    "dist/",
+    "src/",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "open test.html",
+    "test:simple": "open test-simple.html",
+    "size": "npm run size:analysis",
+    "size:uncompressed": "wc -c src/hyperfixi.js",
+    "size:gzipped": "gzip -c src/hyperfixi.js | wc -c",
+    "size:minified": "wc -c src/hyperfixi.min.js",
+    "size:analysis": "echo 'Size Analysis:' && echo 'Uncompressed: '$(wc -c < src/hyperfixi.js)' bytes' && echo 'Minified: '$(wc -c < src/hyperfixi.min.js)' bytes' && echo 'Gzipped: '$(gzip -c src/hyperfixi.js | wc -c)' bytes'",
+    "lint": "echo 'No linting configured yet'",
+    "typecheck": "echo 'No typechecking configured yet'"
+  },
+  "peerDependencies": {
+    "_hyperscript": ">=0.9.0",
+    "fixi.js": ">=0.6.0"
+  },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.2",
     "rollup": "^2.79.2",
     "rollup-plugin-terser": "^7.0.2",
     "typescript": "^5.8.3"
-  }
+  },
+  "keywords": [
+    "hyperscript",
+    "fixi",
+    "fetch",
+    "ajax",
+    "hypermedia",
+    "minimalist",
+    "dom",
+    "reactive"
+  ],
+  "author": "HyperFixi Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyperfixi/hyperfixi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hyperfixi/hyperfixi/issues"
+  },
+  "homepage": "https://github.com/hyperfixi/hyperfixi#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "sideEffects": false
 }
