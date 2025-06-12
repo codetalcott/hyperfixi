@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>HyperFixi Syntax Module Tests</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .test { margin: 20px 0; padding: 15px; border: 2px solid #ddd; border-radius: 5px; }
+        .test.pass { border-color: #28a745; background: #f8fff9; }
+        .test.fail { border-color: #dc3545; background: #fff8f8; }
+        .test h3 { margin-top: 0; }
+        .result { font-weight: bold; margin: 10px 0; }
+        .result.pass { color: #28a745; }
+        .result.fail { color: #dc3545; }
+        .stats { background: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .module-section { border-top: 3px solid #6c757d; margin: 30px 0; padding-top: 20px; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧩 HyperFixi Syntax Module Tests</h1>
+    
+    <div class="stats">
+        <strong>Test Results:</strong>
+        <span id="passed">0</span> passed, 
+        <span id="failed">0</span> failed,
+        <span id="total">0</span> total
+    </div>
+
+    <!-- Shorthand Syntax Tests -->
+    <div class="module-section">
+        <h2>📝 Shorthand Syntax Module</h2>
+        
+        <div class="test" id="test-shorthand-detection">
+            <h3>Shorthand Detection - isShorthandSyntax</h3>
+            <p>Test detection of shorthand vs extended syntax</p>
+            <div class="result" id="result-shorthand-detection">Running...</div>
+        </div>
+
+        <div class="test" id="test-shorthand-parsing">
+            <h3>Shorthand Parsing - parseShorthandSyntax</h3>
+            <p>Test parsing of fetch /url and replace #target syntax</p>
+            <div class="result" id="result-shorthand-parsing">Running...</div>
+        </div>
+
+        <div class="test" id="test-shorthand-placements">
+            <h3>Shorthand Placements - getShorthandPlacements</h3>
+            <p>Test all supported placement keywords</p>
+            <div class="result" id="result-shorthand-placements">Running...</div>
+        </div>
+    </div>
+
+    <!-- Extended Syntax Tests -->
+    <div class="module-section">
+        <h2>🔧 Extended Syntax Module</h2>
+        
+        <div class="test" id="test-extended-detection">
+            <h3>Extended Detection - isExtendedSyntax</h3>
+            <p>Test detection of 'with' keyword for extended syntax</p>
+            <div class="result" id="result-extended-detection">Running...</div>
+        </div>
+
+        <div class="test" id="test-extended-parsing">
+            <h3>Extended Parsing - parseExtendedSyntax</h3>
+            <p>Test parsing of fetch /url with method: 'POST', body: data syntax</p>
+            <div class="result" id="result-extended-parsing">Running...</div>
+        </div>
+
+        <div class="test" id="test-extended-options">
+            <h3>Extended Options - getExtendedOptions</h3>
+            <p>Test all supported extended options (method, body, headers, etc.)</p>
+            <div class="result" id="result-extended-options">Running...</div>
+        </div>
+    </div>
+
+    <!-- Placement Module Tests -->
+    <div class="module-section">
+        <h2>🎯 Placement Module</h2>
+        
+        <div class="test" id="test-placement-validation">
+            <h3>Placement Validation - validatePlacementSequence</h3>
+            <p>Test validation of placement sequences</p>
+            <div class="result" id="result-placement-validation">Running...</div>
+        </div>
+
+        <div class="test" id="test-placement-strategies">
+            <h3>Placement Strategies - getSwapStrategy</h3>
+            <p>Test mapping placement keywords to swap strategies</p>
+            <div class="result" id="result-placement-strategies">Running...</div>
+        </div>
+
+        <div class="test" id="test-placement-enumeration">
+            <h3>Placement Enumeration - getAllPlacements</h3>
+            <p>Test enumeration of all available placements</p>
+            <div class="result" id="result-placement-enumeration">Running...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Test framework
+        let passed = 0;
+        let failed = 0;
+        let total = 0;
+
+        function updateStats() {
+            document.getElementById('passed').textContent = passed;
+            document.getElementById('failed').textContent = failed;
+            document.getElementById('total').textContent = total;
+        }
+
+        function runTest(testId, testName, testFn) {
+            total++;
+            const testElement = document.getElementById(`test-${testId}`);
+            const resultElement = document.getElementById(`result-${testId}`);
+            
+            try {
+                testFn();
+                passed++;
+                testElement.className = 'test pass';
+                resultElement.className = 'result pass';
+                resultElement.textContent = '✅ PASS';
+            } catch (error) {
+                failed++;
+                testElement.className = 'test fail';
+                resultElement.className = 'result fail';
+                resultElement.textContent = `❌ FAIL: ${error.message}`;
+                console.error(`Test ${testName} failed:`, error);
+            }
+            
+            updateStats();
+        }
+
+        function assertEqual(actual, expected, message = '') {
+            if (actual !== expected) {
+                throw new Error(`${message}Expected: ${expected}, Got: ${actual}`);
+            }
+        }
+
+        function assertNotNull(value, message = '') {
+            if (value === null || value === undefined) {
+                throw new Error(`${message}Expected non-null value, got: ${value}`);
+            }
+        }
+
+        function assertTrue(value, message = '') {
+            if (!value) {
+                throw new Error(`${message}Expected truthy value, got: ${value}`);
+            }
+        }
+
+        function assertFalse(value, message = '') {
+            if (value) {
+                throw new Error(`${message}Expected falsy value, got: ${value}`);
+            }
+        }
+
+        function assertArrayEqual(actual, expected, message = '') {
+            if (!Array.isArray(actual) || !Array.isArray(expected)) {
+                throw new Error(`${message}Both values must be arrays`);
+            }
+            if (actual.length !== expected.length) {
+                throw new Error(`${message}Array lengths differ: ${actual.length} vs ${expected.length}`);
+            }
+            for (let i = 0; i < actual.length; i++) {
+                if (actual[i] !== expected[i]) {
+                    throw new Error(`${message}Arrays differ at index ${i}: ${actual[i]} vs ${expected[i]}`);
+                }
+            }
+        }
+
+        function assertContains(array, value, message = '') {
+            if (!array.includes(value)) {
+                throw new Error(`${message}Array does not contain: ${value}`);
+            }
+        }
+
+        // Mock hyperscript parser and tokens
+        const mockParser = {
+            parseElementExpression: () => ({ type: 'url', value: '/test-url' }),
+            raiseParseError: (tokens, message) => { throw new Error(message); }
+        };
+
+        const mockTokens = {
+            currentToken: () => ({ value: 'test-token' }),
+            matchToken: (token) => token === 'test-token' || token === 'with' || token === 'and',
+            consumeToken: () => ({ value: 'consumed' }),
+            requireToken: (token) => ({ value: token }),
+            hasMore: () => true
+        };
+
+        const mockRuntime = {
+            evaluateElement: (expr) => expr.value || 'mock-value'
+        };
+
+        async function runSyntaxTests() {
+            // Test Shorthand Syntax Module
+            const { 
+                parseShorthandSyntax, 
+                isShorthandSyntax, 
+                getShorthandPlacements 
+            } = await import('../syntax/shorthand.js');
+
+            runTest('shorthand-detection', 'isShorthandSyntax', () => {
+                // Mock tokens that represent shorthand vs extended syntax
+                const shorthandTokens = {
+                    ...mockTokens,
+                    matchToken: (token) => token !== 'with' // No 'with' keyword = shorthand
+                };
+                
+                const extendedTokens = {
+                    ...mockTokens,
+                    matchToken: (token) => token === 'with' // 'with' keyword = extended
+                };
+                
+                assertTrue(isShorthandSyntax(shorthandTokens), 'Should detect shorthand syntax');
+                assertFalse(isShorthandSyntax(extendedTokens), 'Should not detect extended as shorthand');
+            });
+
+            runTest('shorthand-parsing', 'parseShorthandSyntax', () => {
+                const command = { url: { value: '/test' }, placement: null, target: null };
+                
+                const result = parseShorthandSyntax(mockParser, mockRuntime, mockTokens, command);
+                
+                assertNotNull(result, 'Should return command object');
+                assertNotNull(result.url, 'Should preserve URL');
+                // Additional parsing validation would go here
+            });
+
+            runTest('shorthand-placements', 'getShorthandPlacements', () => {
+                const placements = getShorthandPlacements();
+                
+                assertTrue(Array.isArray(placements), 'Should return array');
+                assertContains(placements, 'replace', 'Should include replace');
+                assertContains(placements, 'put into', 'Should include put into');
+                assertContains(placements, 'append to', 'Should include append to');
+                assertContains(placements, 'prepend to', 'Should include prepend to');
+            });
+
+            // Test Extended Syntax Module
+            const { 
+                parseExtendedSyntax, 
+                isExtendedSyntax, 
+                getExtendedOptions,
+                EXTENDED_OPTIONS 
+            } = await import('../syntax/extended.js');
+
+            runTest('extended-detection', 'isExtendedSyntax', () => {
+                const extendedTokens = {
+                    ...mockTokens,
+                    matchToken: (token) => token === 'with'
+                };
+                
+                const shorthandTokens = {
+                    ...mockTokens,
+                    matchToken: (token) => token !== 'with'
+                };
+                
+                assertTrue(isExtendedSyntax(extendedTokens), 'Should detect extended syntax');
+                assertFalse(isExtendedSyntax(shorthandTokens), 'Should not detect shorthand as extended');
+            });
+
+            runTest('extended-parsing', 'parseExtendedSyntax', () => {
+                const command = { url: { value: '/test' }, options: {} };
+                
+                const result = parseExtendedSyntax(mockParser, mockRuntime, mockTokens, command);
+                
+                assertNotNull(result, 'Should return command object');
+                assertNotNull(result.options, 'Should have options object');
+                // Additional parsing validation would go here
+            });
+
+            runTest('extended-options', 'getExtendedOptions', () => {
+                const options = getExtendedOptions();
+                
+                assertTrue(Array.isArray(options), 'Should return array');
+                assertContains(options, 'method', 'Should include method option');
+                assertContains(options, 'body', 'Should include body option');
+                assertContains(options, 'headers', 'Should include headers option');
+                assertContains(options, 'target', 'Should include target option');
+                assertContains(options, 'swap', 'Should include swap option');
+                
+                // Test EXTENDED_OPTIONS constant
+                assertNotNull(EXTENDED_OPTIONS, 'Should export EXTENDED_OPTIONS constant');
+                assertTrue(typeof EXTENDED_OPTIONS === 'object', 'EXTENDED_OPTIONS should be object');
+            });
+
+            // Test Placement Module
+            const { 
+                validatePlacementSequence, 
+                getAllPlacements, 
+                isValidPlacement, 
+                getSwapStrategy,
+                PLACEMENTS 
+            } = await import('../syntax/placement.js');
+
+            runTest('placement-validation', 'validatePlacementSequence', () => {
+                assertTrue(validatePlacementSequence(['replace']), 'Should validate simple replace');
+                assertTrue(validatePlacementSequence(['put', 'into']), 'Should validate put into');
+                assertTrue(validatePlacementSequence(['append', 'to']), 'Should validate append to');
+                assertTrue(validatePlacementSequence(['prepend', 'to']), 'Should validate prepend to');
+                
+                // Test invalid sequences
+                assertFalse(validatePlacementSequence(['invalid']), 'Should reject invalid placement');
+                assertFalse(validatePlacementSequence(['put']), 'Should reject incomplete put sequence');
+            });
+
+            runTest('placement-strategies', 'getSwapStrategy', () => {
+                assertEqual(getSwapStrategy('replace'), 'outerHTML', 'replace -> outerHTML');
+                assertEqual(getSwapStrategy('put into'), 'innerHTML', 'put into -> innerHTML');
+                assertEqual(getSwapStrategy('append to'), 'beforeend', 'append to -> beforeend');
+                assertEqual(getSwapStrategy('prepend to'), 'afterbegin', 'prepend to -> afterbegin');
+                
+                // Test isValidPlacement
+                assertTrue(isValidPlacement('replace'), 'replace should be valid');
+                assertTrue(isValidPlacement('put into'), 'put into should be valid');
+                assertFalse(isValidPlacement('invalid'), 'invalid should not be valid');
+            });
+
+            runTest('placement-enumeration', 'getAllPlacements', () => {
+                const placements = getAllPlacements();
+                
+                assertTrue(Array.isArray(placements), 'Should return array');
+                assertTrue(placements.length >= 4, 'Should have at least 4 placements');
+                assertContains(placements, 'replace', 'Should include replace');
+                assertContains(placements, 'put into', 'Should include put into');
+                assertContains(placements, 'append to', 'Should include append to');
+                assertContains(placements, 'prepend to', 'Should include prepend to');
+                
+                // Test PLACEMENTS constant
+                assertNotNull(PLACEMENTS, 'Should export PLACEMENTS constant');
+                assertTrue(typeof PLACEMENTS === 'object', 'PLACEMENTS should be object');
+            });
+        }
+
+        // Run all syntax tests
+        runSyntaxTests().then(() => {
+            console.log(`Syntax module tests completed: ${passed} passed, ${failed} failed`);
+        }).catch(error => {
+            console.error('Syntax test runner error:', error);
+        });
+    </script>
+</body>
+</html>

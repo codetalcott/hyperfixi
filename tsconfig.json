@@ -3,13 +3,63 @@
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "node",
-    "declaration": true, // Generates .d.ts files
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    
+    // Output configuration
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "outDir": "./dist",
+    "removeComments": false,
+    
+    // Type checking
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    
+    // Module resolution
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    
+    // Path mapping for clean imports
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "@test/*": ["test/*"],
+      "@core/*": ["core/*"],
+      "@commands/*": ["commands/*"],
+      "@expressions/*": ["expressions/*"],
+      "@features/*": ["features/*"],
+      "@types/*": ["types/*"]
+    },
+    
+    // Advanced options
+    "incremental": true,
+    "composite": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  
+  "include": [
+    "src/**/*",
+    "vitest.config.ts"
+  ],
+  
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  
+  "ts-node": {
+    "esm": true
+  }
 }

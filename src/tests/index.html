@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>HyperFixi Modular Test Suite</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; }
+        .test-suite { margin: 20px 0; padding: 20px; border: 2px solid #ddd; border-radius: 8px; background: #fafafa; }
+        .test-suite h3 { margin-top: 0; color: #333; }
+        .test-suite.running { border-color: #17a2b8; background: #e3f7fd; }
+        .test-suite.pass { border-color: #28a745; background: #f8fff9; }
+        .test-suite.fail { border-color: #dc3545; background: #fff8f8; }
+        .run-button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        .run-button:hover { background: #0056b3; }
+        .run-button:disabled { background: #6c757d; cursor: not-allowed; }
+        .stats { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; text-align: center; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px; }
+        .stat-card { background: white; padding: 15px; border-radius: 5px; border: 1px solid #dee2e6; text-align: center; }
+        .stat-number { font-size: 24px; font-weight: bold; color: #495057; }
+        .stat-label { font-size: 12px; text-transform: uppercase; color: #6c757d; margin-top: 5px; }
+        .progress-bar { width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; margin: 15px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #28a745, #20c997); transition: width 0.3s ease; }
+        .module-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .module-link { padding: 15px; background: white; border: 1px solid #dee2e6; border-radius: 5px; text-decoration: none; color: #495057; transition: all 0.2s; }
+        .module-link:hover { border-color: #007bff; background: #f8f9fa; transform: translateY(-2px); }
+        .architecture-info { background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 15px; }
+        .feature-card { background: white; padding: 15px; border-radius: 5px; border-left: 4px solid #007bff; }
+        iframe { width: 100%; height: 500px; border: 1px solid #ddd; border-radius: 5px; margin: 10px 0; }
+        .loading { opacity: 0.6; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 HyperFixi Modular Test Suite</h1>
+        <p>Comprehensive TDD testing for tree-shakeable hyperscript + fixi.js integration</p>
+    </div>
+
+    <div class="stats">
+        <h2>📊 Test Results Dashboard</h2>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="total-tests">0</div>
+                <div class="stat-label">Total Tests</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="passed-tests">0</div>
+                <div class="stat-label">Passed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="failed-tests">0</div>
+                <div class="stat-label">Failed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="success-rate">0%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button class="run-button" onclick="runAllTests()" id="run-all-btn">🚀 Run All Tests</button>
+            <button class="run-button" onclick="runQuickTests()" id="run-quick-btn">⚡ Quick Test</button>
+            <button class="run-button" onclick="clearResults()" id="clear-btn">🗑️ Clear Results</button>
+        </div>
+    </div>
+
+    <div class="architecture-info">
+        <h3>🏗️ Modular Architecture Overview</h3>
+        <p>HyperFixi has been transformed into a tree-shakeable modular system optimizing from 13KB down to 2-8KB depending on feature usage.</p>
+        
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>🧩 Core Modules</h4>
+                <ul>
+                    <li>Parser utilities</li>
+                    <li>HTTP executor</li>
+                    <li>DOM manipulation</li>
+                    <li>Event system</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h4>📝 Syntax Modules</h4>
+                <ul>
+                    <li>Shorthand syntax</li>
+                    <li>Extended syntax</li>
+                    <li>Placement strategies</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h4>🔗 Integration Modules</h4>
+                <ul>
+                    <li>Hyperscript commands</li>
+                    <li>Fixi event compatibility</li>
+                    <li>Event handlers</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h4>📦 Preset Bundles</h4>
+                <ul>
+                    <li>Minimal (~2KB)</li>
+                    <li>Standard (~4KB)</li>
+                    <li>Events (~6KB)</li>
+                    <li>Complete (~8KB)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Suite Sections -->
+    <div class="test-suite" id="suite-core">
+        <h3>🔧 Core Modules Test Suite</h3>
+        <p>Tests parser, executor, DOM, and events core utilities</p>
+        <button class="run-button" onclick="runCoreTests()">Run Core Tests</button>
+        <div id="core-results"></div>
+    </div>
+
+    <div class="test-suite" id="suite-syntax">
+        <h3>📝 Syntax Modules Test Suite</h3>
+        <p>Tests shorthand, extended, and placement syntax modules</p>
+        <button class="run-button" onclick="runSyntaxTests()">Run Syntax Tests</button>
+        <div id="syntax-results"></div>
+    </div>
+
+    <div class="test-suite" id="suite-integration">
+        <h3>🔗 Integration Modules Test Suite</h3>
+        <p>Tests hyperscript and fixi-events integration modules</p>
+        <button class="run-button" onclick="runIntegrationTests()">Run Integration Tests</button>
+        <div id="integration-results"></div>
+    </div>
+
+    <div class="test-suite" id="suite-presets">
+        <h3>📦 Preset Bundles Test Suite</h3>
+        <p>Tests all preset bundles and validates bundle sizes</p>
+        <button class="run-button" onclick="runPresetTests()">Run Preset Tests</button>
+        <div id="preset-results"></div>
+    </div>
+
+    <!-- Individual Test Module Links -->
+    <h3>🔗 Individual Test Modules</h3>
+    <div class="module-links">
+        <a href="core.test.html" class="module-link" target="_blank">
+            <strong>🔧 Core Module Tests</strong>
+            <p>Parser, executor, DOM, events</p>
+        </a>
+        <a href="syntax.test.html" class="module-link" target="_blank">
+            <strong>📝 Syntax Module Tests</strong>
+            <p>Shorthand, extended, placement</p>
+        </a>
+        <a href="integration.test.html" class="module-link" target="_blank">
+            <strong>🔗 Integration Module Tests</strong>
+            <p>Hyperscript, fixi-events</p>
+        </a>
+        <a href="presets.test.html" class="module-link" target="_blank">
+            <strong>📦 Preset Bundle Tests</strong>
+            <p>All presets, size validation</p>
+        </a>
+    </div>
+
+    <script>
+        // Test framework state
+        let testResults = {
+            core: { total: 0, passed: 0, failed: 0, completed: false },
+            syntax: { total: 0, passed: 0, failed: 0, completed: false },
+            integration: { total: 0, passed: 0, failed: 0, completed: false },
+            presets: { total: 0, passed: 0, failed: 0, completed: false }
+        };
+
+        function updateDashboard() {
+            const totalTests = Object.values(testResults).reduce((sum, suite) => sum + suite.total, 0);
+            const passedTests = Object.values(testResults).reduce((sum, suite) => sum + suite.passed, 0);
+            const failedTests = Object.values(testResults).reduce((sum, suite) => sum + suite.failed, 0);
+            const successRate = totalTests > 0 ? Math.round((passedTests / totalTests) * 100) : 0;
+
+            document.getElementById('total-tests').textContent = totalTests;
+            document.getElementById('passed-tests').textContent = passedTests;
+            document.getElementById('failed-tests').textContent = failedTests;
+            document.getElementById('success-rate').textContent = successRate + '%';
+
+            // Update progress bar
+            const progressFill = document.getElementById('progress-fill');
+            progressFill.style.width = successRate + '%';
+            
+            // Update colors based on success rate
+            if (successRate >= 90) {
+                progressFill.style.background = 'linear-gradient(90deg, #28a745, #20c997)';
+            } else if (successRate >= 70) {
+                progressFill.style.background = 'linear-gradient(90deg, #ffc107, #fd7e14)';
+            } else {
+                progressFill.style.background = 'linear-gradient(90deg, #dc3545, #e83e8c)';
+            }
+        }
+
+        function runTestInFrame(testFile, suiteId, resultsId) {
+            const suite = document.getElementById(suiteId);
+            const resultsDiv = document.getElementById(resultsId);
+            
+            suite.className = 'test-suite running';
+            resultsDiv.innerHTML = '<p>🔄 Running tests...</p>';
+
+            const iframe = document.createElement('iframe');
+            iframe.src = testFile;
+            iframe.style.display = 'none'; // Hidden frame for test execution
+            
+            iframe.onload = function() {
+                // Wait for tests to complete, then extract results
+                setTimeout(() => {
+                    try {
+                        const iframeDoc = iframe.contentDocument;
+                        const passed = parseInt(iframeDoc.getElementById('passed')?.textContent || '0');
+                        const failed = parseInt(iframeDoc.getElementById('failed')?.textContent || '0');
+                        const total = parseInt(iframeDoc.getElementById('total')?.textContent || '0');
+                        
+                        const suiteName = suiteId.replace('suite-', '');
+                        testResults[suiteName] = { total, passed, failed, completed: true };
+                        
+                        if (failed === 0) {
+                            suite.className = 'test-suite pass';
+                            resultsDiv.innerHTML = `<p>✅ All tests passed! (${passed}/${total})</p>`;
+                        } else {
+                            suite.className = 'test-suite fail';
+                            resultsDiv.innerHTML = `<p>❌ ${failed} test(s) failed. (${passed}/${total} passed)</p>`;
+                        }
+                        
+                        updateDashboard();
+                    } catch (error) {
+                        suite.className = 'test-suite fail';
+                        resultsDiv.innerHTML = `<p>❌ Error running tests: ${error.message}</p>`;
+                    }
+                    
+                    document.body.removeChild(iframe);
+                }, 3000); // Wait 3 seconds for tests to complete
+            };
+            
+            document.body.appendChild(iframe);
+        }
+
+        function runCoreTests() {
+            runTestInFrame('core.test.html', 'suite-core', 'core-results');
+        }
+
+        function runSyntaxTests() {
+            runTestInFrame('syntax.test.html', 'suite-syntax', 'syntax-results');
+        }
+
+        function runIntegrationTests() {
+            runTestInFrame('integration.test.html', 'suite-integration', 'integration-results');
+        }
+
+        function runPresetTests() {
+            runTestInFrame('presets.test.html', 'suite-presets', 'preset-results');
+        }
+
+        async function runAllTests() {
+            const runAllBtn = document.getElementById('run-all-btn');
+            runAllBtn.disabled = true;
+            runAllBtn.textContent = '🔄 Running All Tests...';
+            
+            // Clear previous results
+            clearResults();
+            
+            // Run all test suites in sequence
+            runCoreTests();
+            
+            setTimeout(() => {
+                runSyntaxTests();
+            }, 1000);
+            
+            setTimeout(() => {
+                runIntegrationTests();
+            }, 2000);
+            
+            setTimeout(() => {
+                runPresetTests();
+                
+                // Re-enable button after all tests
+                setTimeout(() => {
+                    runAllBtn.disabled = false;
+                    runAllBtn.textContent = '🚀 Run All Tests';
+                }, 4000);
+            }, 3000);
+        }
+
+        function runQuickTests() {
+            // Run a subset of critical tests for faster feedback
+            runCoreTests();
+            runSyntaxTests();
+        }
+
+        function clearResults() {
+            testResults = {
+                core: { total: 0, passed: 0, failed: 0, completed: false },
+                syntax: { total: 0, passed: 0, failed: 0, completed: false },
+                integration: { total: 0, passed: 0, failed: 0, completed: false },
+                presets: { total: 0, passed: 0, failed: 0, completed: false }
+            };
+            
+            // Reset suite visual states
+            document.querySelectorAll('.test-suite').forEach(suite => {
+                suite.className = 'test-suite';
+            });
+            
+            // Clear results displays
+            document.querySelectorAll('[id$="-results"]').forEach(div => {
+                div.innerHTML = '';
+            });
+            
+            updateDashboard();
+        }
+
+        // Initialize dashboard
+        updateDashboard();
+
+        // Display current time
+        document.addEventListener('DOMContentLoaded', () => {
+            const header = document.querySelector('.header p');
+            header.innerHTML += `<br><small>Test session started: ${new Date().toLocaleString()}</small>`;
+        });
+    </script>
+</body>
+</html>
