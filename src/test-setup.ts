@@ -106,11 +106,18 @@ export const waitForEvent = (
   });
 };
 
-export const createMockHyperscriptContext = () => ({
-  me: null as HTMLElement | null,
+export const createMockHyperscriptContext = (element?: HTMLElement) => ({
+  me: element || null,
   it: null as any,
-  you: null as HTMLElement | null,
+  you: element || null,
   result: null as any,
   locals: new Map<string, any>(),
   globals: new Map<string, any>(),
+  flags: {
+    halted: false,
+    breaking: false,
+    continuing: false,
+    returning: false,
+    async: false,
+  },
 });

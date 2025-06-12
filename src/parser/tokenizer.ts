@@ -130,10 +130,31 @@ export function tokenize(input: string): Token[] {
       continue;
     }
     
-    // Handle CSS selectors
-    if (char === '#' || char === '.') {
+    // Handle CSS selectors (but only when not preceded by an identifier/expression)
+    if (char === '#') {
       tokenizeCSSSelector(tokenizer);
       continue;
+    }
+    
+    if (char === '.') {
+      // Check if this is a CSS selector or a member access operator
+      // It's a CSS selector if it's at the start or follows whitespace/operators
+      const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
+      const isCSSSelectorContext = !prevToken || 
+        prevToken.type === 'whitespace' || 
+        prevToken.type === 'operator' ||
+        prevToken.type === 'keyword' ||
+        prevToken.value === '(' || 
+        prevToken.value === '[' ||
+        prevToken.value === '{' ||
+        prevToken.value === ',' ||
+        prevToken.value === ';';
+        
+      if (isCSSSelectorContext && isAlpha(peek(tokenizer))) {
+        tokenizeCSSSelector(tokenizer);
+        continue;
+      }
+      // Otherwise, fall through to operator handling
     }
     
     // Handle symbols
@@ -439,26 +460,8 @@ function tokenizeIdentifier(tokenizer: Tokenizer): void {
   
   while (tokenizer.position < tokenizer.input.length) {
     const char = tokenizer.input[tokenizer.position];
-    if (isAlphaNumeric(char) || char === '_') {
+    if (isAlphaNumeric(char) || char === '_' || char === '-') {
       value += advance(tokenizer);
-    } else if (char === '.') {
-      // Handle property access
-      const nextChar = peek(tokenizer);
-      if (isAlpha(nextChar) || nextChar === '_') {
-        value += advance(tokenizer); // consume '.'
-        while (tokenizer.position < tokenizer.input.length) {
-          const propChar = tokenizer.input[tokenizer.position];
-          if (isAlphaNumeric(propChar) || propChar === '_') {
-            value += advance(tokenizer);
-          } else {
-            break;
-          }
-        }
-        addToken(tokenizer, TokenType.PROPERTY_ACCESS, value, start);
-        return;
-      } else {
-        break;
-      }
     } else {
       break;
     }

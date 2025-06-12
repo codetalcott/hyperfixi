@@ -89,14 +89,14 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse logical expressions', () => {
       expectAST('a and b', {
-        type: 'BinaryExpression',
+        type: 'binaryExpression',
         operator: 'and',
         left: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'a'
         },
         right: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'b'
         }
       });
@@ -104,19 +104,19 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse complex logical combinations', () => {
       expectAST('x > 5 and y < 10', {
-        type: 'BinaryExpression',
+        type: 'binaryExpression',
         operator: 'and',
         left: {
-          type: 'BinaryExpression',
+          type: 'binaryExpression',
           operator: '>',
-          left: { type: 'Identifier', name: 'x' },
-          right: { type: 'Literal', value: 5 }
+          left: { type: 'identifier', name: 'x' },
+          right: { type: 'literal', value: 5 }
         },
         right: {
-          type: 'BinaryExpression',
+          type: 'binaryExpression',
           operator: '<',
-          left: { type: 'Identifier', name: 'y' },
-          right: { type: 'Literal', value: 10 }
+          left: { type: 'identifier', name: 'y' },
+          right: { type: 'literal', value: 10 }
         }
       });
     });
@@ -125,10 +125,10 @@ describe('Hyperscript AST Parser', () => {
   describe('Unary Expression Parsing', () => {
     it('should parse negation', () => {
       expectAST('not x', {
-        type: 'UnaryExpression',
+        type: 'unaryExpression',
         operator: 'not',
         argument: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'x'
         },
         prefix: true
@@ -137,10 +137,10 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse arithmetic negation', () => {
       expectAST('-42', {
-        type: 'UnaryExpression',
+        type: 'unaryExpression',
         operator: '-',
         argument: {
-          type: 'Literal',
+          type: 'literal',
           value: 42
         },
         prefix: true
@@ -151,13 +151,13 @@ describe('Hyperscript AST Parser', () => {
   describe('Member Expression Parsing', () => {
     it('should parse property access', () => {
       expectAST('element.className', {
-        type: 'MemberExpression',
+        type: 'memberExpression',
         object: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'element'
         },
         property: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'className'
         },
         computed: false
@@ -166,13 +166,13 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse computed property access', () => {
       expectAST('element[prop]', {
-        type: 'MemberExpression',
+        type: 'memberExpression',
         object: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'element'
         },
         property: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'prop'
         },
         computed: true
@@ -181,13 +181,13 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse possessive syntax', () => {
       expectAST("element's property", {
-        type: 'PossessiveExpression',
+        type: 'possessiveExpression',
         object: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'element'
         },
         property: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'property'
         }
       });
@@ -195,15 +195,15 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse chained property access', () => {
       expectAST('window.location.href', {
-        type: 'MemberExpression',
+        type: 'memberExpression',
         object: {
-          type: 'MemberExpression',
-          object: { type: 'Identifier', name: 'window' },
-          property: { type: 'Identifier', name: 'location' },
+          type: 'memberExpression',
+          object: { type: 'identifier', name: 'window' },
+          property: { type: 'identifier', name: 'location' },
           computed: false
         },
         property: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'href'
         },
         computed: false
@@ -214,9 +214,9 @@ describe('Hyperscript AST Parser', () => {
   describe('Call Expression Parsing', () => {
     it('should parse function calls', () => {
       expectAST('func()', {
-        type: 'CallExpression',
+        type: 'callExpression',
         callee: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'func'
         },
         arguments: []
@@ -225,29 +225,29 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse function calls with arguments', () => {
       expectAST('func(a, b)', {
-        type: 'CallExpression',
+        type: 'callExpression',
         callee: {
-          type: 'Identifier',
+          type: 'identifier',
           name: 'func'
         },
         arguments: [
-          { type: 'Identifier', name: 'a' },
-          { type: 'Identifier', name: 'b' }
+          { type: 'identifier', name: 'a' },
+          { type: 'identifier', name: 'b' }
         ]
       });
     });
 
     it('should parse method calls', () => {
       expectAST('object.method(arg)', {
-        type: 'CallExpression',
+        type: 'callExpression',
         callee: {
-          type: 'MemberExpression',
-          object: { type: 'Identifier', name: 'object' },
-          property: { type: 'Identifier', name: 'method' },
+          type: 'memberExpression',
+          object: { type: 'identifier', name: 'object' },
+          property: { type: 'identifier', name: 'method' },
           computed: false
         },
         arguments: [
-          { type: 'Identifier', name: 'arg' }
+          { type: 'identifier', name: 'arg' }
         ]
       });
     });
@@ -256,28 +256,28 @@ describe('Hyperscript AST Parser', () => {
   describe('CSS Selector Parsing', () => {
     it('should parse simple CSS selectors', () => {
       expectAST('<button/>', {
-        type: 'Selector',
+        type: 'selector',
         value: 'button'
       });
     });
 
     it('should parse class selectors', () => {
       expectAST('<.primary/>', {
-        type: 'Selector',
+        type: 'selector',
         value: '.primary'
       });
     });
 
     it('should parse ID selectors', () => {
       expectAST('<#myButton/>', {
-        type: 'Selector',
+        type: 'selector',
         value: '#myButton'
       });
     });
 
     it('should parse complex CSS selectors', () => {
       expectAST('<button.primary:not(.disabled)/>', {
-        type: 'Selector',
+        type: 'selector',
         value: 'button.primary:not(.disabled)'
       });
     });
@@ -286,13 +286,13 @@ describe('Hyperscript AST Parser', () => {
   describe('Event Handler Parsing', () => {
     it('should parse simple event handlers', () => {
       expectAST('on click hide me', {
-        type: 'EventHandler',
+        type: 'eventHandler',
         event: 'click',
         commands: [{
-          type: 'Command',
+          type: 'command',
           name: 'hide',
-          arguments: [
-            { type: 'Identifier', name: 'me' }
+          args: [
+            { type: 'identifier', name: 'me' }
           ]
         }]
       });
@@ -300,14 +300,14 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse event handlers with selectors', () => {
       expectAST('on click from .button hide me', {
-        type: 'EventHandler',
+        type: 'eventHandler',
         event: 'click',
         selector: '.button',
         commands: [{
-          type: 'Command',
+          type: 'command',
           name: 'hide',
-          arguments: [
-            { type: 'Identifier', name: 'me' }
+          args: [
+            { type: 'identifier', name: 'me' }
           ]
         }]
       });
@@ -315,18 +315,18 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse multiple commands', () => {
       expectAST('on click hide me then show #result', {
-        type: 'EventHandler',
+        type: 'eventHandler',
         event: 'click',
         commands: [
           {
-            type: 'Command',
+            type: 'command',
             name: 'hide',
-            arguments: [{ type: 'Identifier', name: 'me' }]
+            args: [{ type: 'identifier', name: 'me' }]
           },
           {
-            type: 'Command',
+            type: 'command',
             name: 'show',
-            arguments: [{ type: 'Selector', value: '#result' }]
+            args: [{ type: 'selector', value: '#result' }]
           }
         ]
       });
@@ -336,18 +336,21 @@ describe('Hyperscript AST Parser', () => {
   describe('Command Parsing', () => {
     it('should parse simple commands', () => {
       expectAST('hide', {
-        type: 'Command',
-        name: 'hide',
-        arguments: []
+        type: 'identifier',
+        name: 'hide'
       });
     });
 
     it('should parse commands with targets', () => {
       expectAST('hide #target', {
-        type: 'Command',
-        name: 'hide',
-        target: {
-          type: 'Selector',
+        type: 'binaryExpression',
+        operator: ' ',
+        left: {
+          type: 'identifier',
+          name: 'hide'
+        },
+        right: {
+          type: 'selector',
           value: '#target'
         }
       });

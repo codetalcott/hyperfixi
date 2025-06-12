@@ -135,7 +135,7 @@ export class Parser {
   private parseEquality(): ASTNode {
     let expr = this.parseComparison();
 
-    while (this.matchTokenType(TokenType.COMPARISON_OPERATOR) || this.match('is', 'matches', 'contains', 'in', 'of')) {
+    while (this.matchTokenType(TokenType.COMPARISON_OPERATOR) || this.match('is', 'matches', 'contains', 'in', 'of', 'as')) {
       const operator = this.previous().value;
       const right = this.parseComparison();
       expr = this.createBinaryExpression(operator, expr, right);
@@ -269,7 +269,11 @@ export class Parser {
 
       // Handle hyperscript navigation functions
       if (token.value === 'closest' || token.value === 'first' || token.value === 'last') {
-        return this.parseNavigationFunction(token.value);
+        // Check if followed by function call syntax or expression
+        if (this.check('(') || this.checkTokenType(TokenType.CSS_SELECTOR) || this.match('<')) {
+          return this.parseNavigationFunction(token.value);
+        }
+        return this.createIdentifier(token.value);
       }
 
       // Handle "my" property access
@@ -394,8 +398,12 @@ export class Parser {
     // Handle "first of items", "closest <form/>", etc.
     if (this.match('of')) {
       args.push(this.parseExpression());
-    } else if (!this.isAtEnd() && !this.checkTokenType(TokenType.OPERATOR)) {
-      args.push(this.parseExpression());
+    } else if (this.check('(')) {
+      // Standard function call syntax
+      return this.finishCall(this.createIdentifier(funcName));
+    } else if (!this.isAtEnd() && !this.checkTokenType(TokenType.OPERATOR) && !this.check('then') && !this.check('else')) {
+      // Parse single argument (like selector)
+      args.push(this.parsePrimary());
     }
 
     return this.createCallExpression(this.createIdentifier(funcName), args);
@@ -630,12 +638,12 @@ export class Parser {
   }
 
   private getPosition() {
-    const token = this.previous();
+    const token = this.current > 0 ? this.previous() : this.peek();
     return {
-      start: token.start,
-      end: token.end,
-      line: token.line,
-      column: token.column
+      start: token.start || 0,
+      end: token.end || 0,
+      line: token.line || 1,
+      column: token.column || 1
     };
   }
 }
