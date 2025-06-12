@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import type { ASTNode } from '../types/core.js';
 import { parse } from './parser.js';
+import { tokenize } from './tokenizer.js';
 
 describe('Hyperscript AST Parser', () => {
   
@@ -180,10 +181,6 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should parse possessive syntax', () => {
-      // Debug: test what we actually get
-      const result = parse('element\'s property');
-      console.log('Possessive parse result:', JSON.stringify(result, null, 2));
-      
       expectAST('element\'s property', {
         type: 'possessiveExpression',
         object: {

@@ -203,9 +203,10 @@ export class Parser {
         const index = this.parseExpression();
         this.consume(']', "Expected ']' after array index");
         expr = this.createMemberExpression(expr, index, true);
-      } else if (this.check("'s") || this.check("'s") || this.checkSequence("'", 's') || this.checkSequence("'", 's')) {
-        // Handle possessive syntax: element's property
-        this.consumePossessive();
+      } else if ((this.check("'") || this.check("'")) && this.checkNext("s")) {
+        // Handle possessive syntax: element's property (now tokenized as separate ' and s)
+        this.advance(); // consume apostrophe
+        this.advance(); // consume 's'
         const property = this.consume(TokenType.IDENTIFIER, "Expected property name after possessive");
         expr = this.createPossessiveExpression(expr, this.createIdentifier(property.value));
       } else {
@@ -576,6 +577,11 @@ export class Parser {
   private checkTokenType(tokenType: TokenType): boolean {
     if (this.isAtEnd()) return false;
     return this.peek().type === tokenType;
+  }
+
+  private checkNext(value: string): boolean {
+    if (this.current + 1 >= this.tokens.length) return false;
+    return this.tokens[this.current + 1].value === value;
   }
 
   private checkSequence(...values: string[]): boolean {

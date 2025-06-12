@@ -124,9 +124,26 @@ export function tokenize(input: string): Token[] {
       continue;
     }
     
-    // Handle strings
-    if (char === '"' || char === "'") {
+    // Handle strings, but check for possessive syntax first
+    if (char === '"') {
       tokenizeString(tokenizer);
+      continue;
+    }
+    
+    if (char === "'" || char === "'") {
+      // Check if this is possessive syntax (apostrophe followed by 's')
+      const nextChar = peek(tokenizer, 1);
+      const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
+      const isPossessive = nextChar === 's' && prevToken && 
+        (prevToken.type === TokenType.IDENTIFIER || prevToken.type === TokenType.CONTEXT_VAR);
+      
+      if (isPossessive) {
+        // Tokenize as operator for possessive syntax
+        tokenizeOperator(tokenizer);
+      } else {
+        // Tokenize as string
+        tokenizeString(tokenizer);
+      }
       continue;
     }
     
@@ -532,5 +549,5 @@ function isAlphaNumeric(char: string): boolean {
 }
 
 function isOperatorChar(char: string): boolean {
-  return '+-*/%=!<>&|(){}[],.;:?'.includes(char);
+  return '+-*/%=!<>&|(){}[],.;:?\'\''.includes(char);
 }
