@@ -222,6 +222,31 @@ export class ExpressionEvaluator {
       case '||':
         return leftValue || rightValue;
       
+      case '=':
+        // Assignment operator - set variable in context
+        if (left.type === 'identifier') {
+          const variableName = left.name;
+          
+          // Handle special context variables
+          if (variableName === 'result') {
+            context.result = rightValue;
+          } else if (variableName === 'it') {
+            context.it = rightValue;
+          } else if (variableName === 'you') {
+            context.you = rightValue;
+          } else {
+            // Set regular variable
+            if (!context.variables) {
+              context.variables = new Map();
+            }
+            context.variables.set(variableName, rightValue);
+          }
+          
+          return rightValue; // Assignment returns the assigned value
+        } else {
+          throw new Error('Left side of assignment must be an identifier');
+        }
+      
       case ' ':
         // Space operator - typically for command with selector
         if (typeof leftValue === 'string' && typeof rightValue === 'string') {

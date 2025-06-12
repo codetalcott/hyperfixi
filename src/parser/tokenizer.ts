@@ -161,6 +161,7 @@ export function tokenize(input: string): Token[] {
         prevToken.type === 'whitespace' || 
         prevToken.type === 'operator' ||
         prevToken.type === 'keyword' ||
+        prevToken.type === 'command' ||  // Commands like "add .active" in conditionals
         prevToken.value === '(' || 
         prevToken.value === '[' ||
         prevToken.value === '{' ||

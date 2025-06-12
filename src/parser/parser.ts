@@ -108,7 +108,20 @@ export class Parser {
   }
 
   private parseExpression(): ASTNode {
-    return this.parseLogicalOr();
+    return this.parseAssignment();
+  }
+
+  private parseAssignment(): ASTNode {
+    let expr = this.parseLogicalOr();
+
+    // Right associative - assignment operators associate right-to-left
+    if (this.match('=')) {
+      const operator = this.previous().value;
+      const right = this.parseAssignment(); // Recursive call for right associativity
+      expr = this.createBinaryExpression(operator, expr, right);
+    }
+
+    return expr;
   }
 
   private parseLogicalOr(): ASTNode {
@@ -256,7 +269,7 @@ export class Parser {
   private createCommandFromIdentifier(identifierNode: any): any {
     const args: ASTNode[] = [];
     
-    // Parse command arguments
+    // Parse command arguments (space-separated, not comma-separated)
     while (!this.isAtEnd() && 
            !this.check('then') && 
            !this.check('and') && 
@@ -265,6 +278,7 @@ export class Parser {
       
       if (this.checkTokenType(TokenType.CONTEXT_VAR) || 
           this.checkTokenType(TokenType.IDENTIFIER) ||
+          this.checkTokenType(TokenType.KEYWORD) ||  // Add KEYWORD support for words like "into"
           this.checkTokenType(TokenType.CSS_SELECTOR) ||
           this.checkTokenType(TokenType.ID_SELECTOR) ||
           this.checkTokenType(TokenType.CLASS_SELECTOR) ||
@@ -274,10 +288,7 @@ export class Parser {
           this.match('<')) {
         args.push(this.parsePrimary());
       } else {
-        args.push(this.parseExpression());
-      }
-      
-      if (!this.match(',')) {
+        // Stop parsing if we encounter an unrecognized token
         break;
       }
     }
@@ -511,11 +522,11 @@ export class Parser {
     const test = this.parseExpression();
     
     this.consume('then', "Expected 'then' after if condition");
-    const consequent = this.parseExpression();
+    const consequent = this.parseConditionalBranch();
     
     let alternate: ASTNode | undefined;
     if (this.match('else')) {
-      alternate = this.parseExpression();
+      alternate = this.parseConditionalBranch();
     }
 
     const pos = this.getPosition();
@@ -529,6 +540,32 @@ export class Parser {
       line: pos.line,
       column: pos.column
     } as any; // TypeScript helper for complex conditional types
+  }
+
+  private parseConditionalBranch(): ASTNode {
+    // Check if the next token is a command identifier
+    if (this.checkTokenType(TokenType.COMMAND)) {
+      // Parse as command directly
+      const commandToken = this.advance();
+      const identifierNode = this.createIdentifier(commandToken.value);
+      return this.createCommandFromIdentifier(identifierNode);
+    }
+    
+    // Also check for IDENTIFIER tokens that are commands (backup)
+    if (this.checkTokenType(TokenType.IDENTIFIER) || this.checkTokenType(TokenType.KEYWORD)) {
+      const token = this.peek();
+      
+      // Check if this identifier is a known command
+      if (this.isCommand(token.value)) {
+        // Parse as command
+        const identifierToken = this.advance();
+        const identifierNode = this.createIdentifier(identifierToken.value);
+        return this.createCommandFromIdentifier(identifierNode);
+      }
+    }
+    
+    // Otherwise parse as expression
+    return this.parseExpression();
   }
 
   private parseNavigationFunction(funcName: string): CallExpressionNode {

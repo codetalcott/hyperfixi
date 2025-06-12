@@ -198,12 +198,20 @@ describe('Hyperscript AST Parser', () => {
       expectAST('window.location.href', {
         type: 'memberExpression',
         object: {
-          type: 'identifier',
-          name: 'window'
+          type: 'memberExpression',
+          object: {
+            type: 'identifier',
+            name: 'window'
+          },
+          property: {
+            type: 'identifier',
+            name: 'location'
+          },
+          computed: false
         },
         property: {
           type: 'identifier',
-          name: 'location'
+          name: 'href'
         },
         computed: false
       });
@@ -238,10 +246,16 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse method calls', () => {
       expectAST('object.method(arg)', {
-        type: 'memberExpression',
-        object: { type: 'identifier', name: 'object' },
-        property: { type: 'identifier', name: 'method' },
-        computed: false
+        type: 'callExpression',
+        callee: {
+          type: 'memberExpression',
+          object: { type: 'identifier', name: 'object' },
+          property: { type: 'identifier', name: 'method' },
+          computed: false
+        },
+        arguments: [
+          { type: 'identifier', name: 'arg' }
+        ]
       });
     });
   });
@@ -351,17 +365,22 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse put commands', () => {
       expectAST('put "hello" into #output', {
-        type: 'identifier',
-        name: 'put'
+        type: 'command',
+        name: 'put',
+        args: [
+          { type: 'literal', value: 'hello' },
+          { type: 'identifier', name: 'into' },
+          { type: 'selector', value: '#output' }
+        ]
       });
     });
 
     it('should parse add/remove class commands', () => {
       expectAST('add .active', {
-        type: 'memberExpression',
-        object: { type: 'identifier', name: 'add' },
-        property: { type: 'identifier', name: 'active' },
-        computed: false
+        type: 'binaryExpression',
+        operator: ' ',
+        left: { type: 'identifier', name: 'add' },
+        right: { type: 'selector', value: '.active' }
       });
     });
 
@@ -369,7 +388,7 @@ describe('Hyperscript AST Parser', () => {
       expectAST('wait 500ms', {
         type: 'command',
         name: 'wait',
-        arguments: [
+        args: [
           { type: 'literal', value: '500ms' }
         ]
       });
@@ -556,12 +575,12 @@ describe('Hyperscript AST Parser', () => {
         consequent: {
           type: 'command',
           name: 'add',
-          arguments: [{ type: 'selector', value: '.active' }]
+          args: [{ type: 'selector', value: '.active' }]
         },
         alternate: {
           type: 'command',
           name: 'remove',
-          arguments: [{ type: 'selector', value: '.active' }]
+          args: [{ type: 'selector', value: '.active' }]
         }
       });
     });
