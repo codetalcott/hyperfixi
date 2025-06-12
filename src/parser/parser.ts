@@ -203,7 +203,7 @@ export class Parser {
         const index = this.parseExpression();
         this.consume(']', "Expected ']' after array index");
         expr = this.createMemberExpression(expr, index, true);
-      } else if (this.check("'s") || this.checkSequence("'", 's')) {
+      } else if (this.check("'s") || this.check("'s") || this.checkSequence("'", 's') || this.checkSequence("'", 's')) {
         // Handle possessive syntax: element's property
         this.consumePossessive();
         const property = this.consume(TokenType.IDENTIFIER, "Expected property name after possessive");
@@ -587,11 +587,13 @@ export class Parser {
   }
 
   private consumePossessive(): void {
-    if (this.check("'s")) {
+    if (this.check("'s") || this.check("'s")) {
       this.advance();
+    } else if (this.check("'") || this.check("'")) {
+      this.advance(); // consume apostrophe
+      this.consume('s', "Expected 's' after apostrophe in possessive");
     } else {
-      this.consume("'", "Expected ''' in possessive");
-      this.consume('s', "Expected 's' after ''' in possessive");
+      this.addError("Expected possessive syntax ('s)");
     }
   }
 

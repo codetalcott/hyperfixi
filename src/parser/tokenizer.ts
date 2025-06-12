@@ -170,7 +170,22 @@ export function tokenize(input: string): Token[] {
     }
     
     if (char === '[') {
-      tokenizeArrayLiteral(tokenizer);
+      // Determine if this is array literal or member access
+      const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
+      const isMemberAccess = prevToken && 
+        (prevToken.type === TokenType.IDENTIFIER || 
+         prevToken.type === TokenType.CONTEXT_VAR ||
+         prevToken.value === ')' ||
+         prevToken.value === ']');
+      
+      if (isMemberAccess) {
+        // Treat as member access operator
+        addToken(tokenizer, TokenType.OPERATOR, '[');
+        advance(tokenizer);
+      } else {
+        // Treat as array literal
+        tokenizeArrayLiteral(tokenizer);
+      }
       continue;
     }
     

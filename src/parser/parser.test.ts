@@ -180,7 +180,11 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should parse possessive syntax', () => {
-      expectAST("element's property", {
+      // Debug: test what we actually get
+      const result = parse('element\'s property');
+      console.log('Possessive parse result:', JSON.stringify(result, null, 2));
+      
+      expectAST('element\'s property', {
         type: 'possessiveExpression',
         object: {
           type: 'identifier',
