@@ -9,7 +9,7 @@ This plan is structured in phases, moving from project setup to a final, publish
 The goal of this phase is to create a professional, modern TypeScript project environment configured for building a tree-shakable library.
 
 * **Step 1: Initialize the Project**
-  * Create a new directory: `mkdir hyperscript-fixi`
+  * Create a new directory: `mkdir hyperfixi`
   * Initialize a Node.js project: `npm init -y`
   * Install core dependencies: `npm install fixi.js hyperscript.org`
   * Install development dependencies: `npm install -D typescript rollup @rollup/plugin-typescript @rollup/plugin-node-resolve rollup-plugin-terser`
@@ -54,7 +54,7 @@ The goal of this phase is to create a professional, modern TypeScript project en
               sourcemap: true,
             },
             {
-              file: 'dist/hyperscript-fixi.min.js', // For <script> tags
+              file: 'dist/hyperfixi.min.js', // For <script> tags
               format: 'umd',
               name: 'hyperscriptFixi', // Global variable name
               plugins: [terser()],

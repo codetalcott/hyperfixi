@@ -78,5 +78,14 @@ debug*.html
 /src/generated/
 /packages/*/src/generated/
 
+# Tool outputs  
+/tools/debug/output/
+/tools/build/output/
+
+# Archive directories (development artifacts)
+/docs/archive/
+/tools/legacy/
+/tools/debug/
+
 # Vitest
 .vitest/
