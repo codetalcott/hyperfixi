@@ -8,13 +8,15 @@
 ## 🏗️ Current Architecture Analysis
 
 **Modular Pattern Identified:**
+
 - **Commands**: `src/commands/{category}/{name}.ts` + `{name}.test.ts`
-- **Expressions**: `src/expressions/{category}/index.ts` + `index.test.ts` 
+- **Expressions**: `src/expressions/{category}/index.ts` + `index.test.ts`
 - **Features**: `src/features/{name}.ts` + `{name}.test.ts`
 - **Types**: Comprehensive TypeScript definitions in `src/types/core.ts`
 - **Testing**: Vitest + Happy-DOM with 100% test coverage requirement
 
 **Current Implementation Strengths:**
+
 - ✅ **Strong Core**: Parser, runtime, type system, and API layer well-implemented
 - ✅ **Rich Expression System**: 50+ expressions covering most use cases (85% complete)
 - ✅ **Basic DOM Operations**: Essential show/hide/toggle/add/remove commands work
@@ -27,10 +29,12 @@
 ### **COMMANDS (30 total - 6 implemented, 24 remaining)**
 
 #### ✅ **Implemented (6)**
-- **DOM**: `hide`, `show`, `toggle`, `add`, `remove` 
+
+- **DOM**: `hide`, `show`, `toggle`, `add`, `remove`
 - **Async**: `fetch`
 
 #### 🔴 **Critical Missing (Priority 1 - 8 commands)**
+
 ```typescript
 // Control Flow Commands
 - put        // Content insertion - CRITICAL
@@ -46,6 +50,7 @@
 ```
 
 #### 🟡 **Important Missing (Priority 2 - 16 commands)**
+
 ```typescript
 // Navigation & Flow Control
 - go         // URL navigation
@@ -73,14 +78,16 @@
 ### **EXPRESSIONS (22 categories - 16 implemented, 6 remaining)**
 
 #### ✅ **Implemented (16 categories)**
+
 - ✅ Logical/Comparison (17 expressions)
-- ✅ Reference/Context (13 expressions) 
+- ✅ Reference/Context (13 expressions)
 - ✅ Positional Navigation (7 expressions)
 - ✅ Property Access (9 expressions)
 - ✅ Type Conversion (3 expressions)
 - ✅ Mathematical Operations (10+ expressions)
 
 #### 🔴 **Missing Critical (6 categories)**
+
 ```typescript
 // String Operations (Priority 1)
 - string interpolation (`${variable}`)
@@ -115,9 +122,11 @@
 ### **FEATURES (8 total - 1 implemented, 7 remaining)**
 
 #### ✅ **Implemented (1)**
+
 - ✅ `on` - Basic event handling
 
 #### 🔴 **Critical Missing (Priority 1 - 4 features)**
+
 ```typescript
 - def        // Function definitions - CRITICAL
 - init       // Element initialization - CRITICAL  
@@ -126,6 +135,7 @@
 ```
 
 #### 🟡 **Advanced Missing (Priority 2 - 3 features)**
+
 ```typescript
 - worker     // Web worker support
 - socket     // WebSocket integration  
@@ -137,6 +147,7 @@
 ### **Phase 1: Critical Command Infrastructure (2-3 weeks)**
 
 #### **1.1 Content Manipulation Commands**
+
 ```typescript
 // TDD Pattern: src/commands/content/
 └── put.test.ts     // Tests BEFORE implementation
@@ -149,7 +160,8 @@
 └── append.ts
 ```
 
-#### **1.2 Control Flow Commands** 
+#### **1.2 Control Flow Commands**
+
 ```typescript
 // TDD Pattern: src/commands/control-flow/
 └── if.test.ts      // Complex branching tests
@@ -163,6 +175,7 @@
 ```
 
 #### **1.3 Variable Assignment Commands**
+
 ```typescript
 // TDD Pattern: src/commands/variables/
 └── set.test.ts     // Variable scoping tests
@@ -176,6 +189,7 @@
 ### **Phase 2: Advanced Expression System (2 weeks)**
 
 #### **2.1 String & Time Expressions**
+
 ```typescript
 // TDD Pattern: src/expressions/string/
 └── index.test.ts   // String operation tests
@@ -193,6 +207,7 @@
 ```
 
 #### **2.2 Array & Object Operations**
+
 ```typescript
 // TDD Pattern: src/expressions/collections/
 └── index.test.ts   // Collection operation tests
@@ -205,6 +220,7 @@
 ### **Phase 3: Advanced Features (2 weeks)**
 
 #### **3.1 Function Definition System**
+
 ```typescript
 // TDD Pattern: src/features/
 └── def.test.ts     // Function definition tests
@@ -216,6 +232,7 @@
 ```
 
 #### **3.2 Behavior System**
+
 ```typescript
 // TDD Pattern: src/features/
 └── behavior.test.ts // Reusable behavior tests
@@ -229,6 +246,7 @@
 ### **Phase 4: Integration & Optimization (1 week)**
 
 #### **4.1 Parser Integration**
+
 ```typescript
 // TDD Pattern: src/parser/
 └── integration.test.ts // End-to-end parsing tests
@@ -241,6 +259,7 @@
 ## 🔬 Testing Patterns by Feature Category
 
 ### **Command Testing Pattern (Following hide.test.ts)**
+
 ```typescript
 describe('CommandName Command', () => {
   let command: CommandNameCommand;
@@ -278,6 +297,7 @@ describe('CommandName Command', () => {
 ```
 
 ### **Expression Testing Pattern (Following logical/index.test.ts)**
+
 ```typescript
 describe('ExpressionCategory Expressions', () => {
   let context: ExecutionContext;
@@ -301,6 +321,7 @@ describe('ExpressionCategory Expressions', () => {
 ```
 
 ### **Feature Testing Pattern (Following on.test.ts)**
+
 ```typescript
 describe('FeatureName Feature', () => {
   let feature: FeatureNameFeature;
@@ -328,6 +349,7 @@ describe('FeatureName Feature', () => {
 ## 🗺️ Implementation Roadmap
 
 ### **Week 1-2: Foundation Commands**
+
 ```bash
 # Priority Order (TDD First)
 1. put command      - Content insertion (CRITICAL)
@@ -340,6 +362,7 @@ describe('FeatureName Feature', () => {
 ```
 
 ### **Week 3-4: Control Flow**
+
 ```bash
 # Priority Order  
 1. if/else commands - Conditional execution (CRITICAL)
@@ -351,6 +374,7 @@ describe('FeatureName Feature', () => {
 ```
 
 ### **Week 5-6: Advanced Expressions**
+
 ```bash
 # Priority Order
 1. String operations - Template literals, regex (HIGH)
@@ -362,6 +386,7 @@ describe('FeatureName Feature', () => {
 ```
 
 ### **Week 7-8: Advanced Features**
+
 ```bash
 # Priority Order
 1. def feature      - Function definitions (CRITICAL)
@@ -374,7 +399,8 @@ describe('FeatureName Feature', () => {
 
 ## 🚀 Immediate Next Steps
 
-### **Step 1: Set up TDD Infrastructure** 
+### **Step 1: Set up TDD Infrastructure**
+
 ```bash
 # Create test file structure for missing commands
 mkdir -p src/commands/{content,control-flow,variables,navigation,data}
@@ -387,6 +413,7 @@ touch src/commands/content/put.ts
 ```
 
 ### **Step 2: Begin with `put` Command TDD Cycle**
+
 ```typescript
 // src/commands/content/put.test.ts - Write failing tests first
 describe('Put Command', () => {
@@ -403,6 +430,7 @@ describe('Put Command', () => {
 ```
 
 ### **Step 3: Systematic Implementation**
+
 ```bash
 # Follow red-green-refactor cycle for each feature:
 1. Write comprehensive failing tests
@@ -416,6 +444,7 @@ describe('Put Command', () => {
 ## 📊 Success Metrics
 
 **Completion Criteria:**
+
 - ✅ **Commands**: 30/30 implemented with 100% test coverage
 - ✅ **Expressions**: 22/22 categories with comprehensive tests  
 - ✅ **Features**: 8/8 features with integration tests
@@ -428,6 +457,7 @@ describe('Put Command', () => {
 ## 📚 Reference Documentation
 
 ### **Hyperscript Language Specification Sources**
+
 - **hyperscript-lsp database**: `/Users/williamtalcott/projects/hyperscript-lsp/data/extracted/json/`
   - `markdown_commands.json` - 30 commands with syntax and examples
   - `markdown_expressions.json` - 22 expression categories
@@ -436,7 +466,9 @@ describe('Put Command', () => {
 - **Test examples**: Real-world usage patterns from cookbook examples
 
 ### **Current Implementation Analysis**
+
 Based on detailed analysis comparing hyperfixi/core against hyperscript-lsp database:
+
 - **Foundation strength**: Excellent modular architecture and testing infrastructure
 - **Expression completeness**: 85% of expression system implemented (50+ expressions)
 - **Command gaps**: Only 20% of commands implemented (6 of 30)

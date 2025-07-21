@@ -11,6 +11,8 @@ import type { ExecutionContext } from '../types/core.js';
 // Mock DOM for testing
 const createMockElement = () => ({
   style: { display: 'block' },
+  textContent: '',
+  innerHTML: '',
   classList: {
     add: vi.fn(),
     remove: vi.fn(),
@@ -19,7 +21,8 @@ const createMockElement = () => ({
   },
   querySelector: vi.fn(),
   addEventListener: vi.fn(),
-  removeEventListener: vi.fn()
+  removeEventListener: vi.fn(),
+  dispatchEvent: vi.fn()
 } as any);
 
 describe('Hyperscript Runtime', () => {
@@ -84,6 +87,27 @@ describe('Hyperscript Runtime', () => {
       await runtime.execute(ast, context);
       
       expect(mockElement.classList.remove).toHaveBeenCalledWith('active');
+    });
+
+    it('should execute put command', async () => {
+      const ast = parse('put "Hello World" into me').node!;
+      await runtime.execute(ast, context);
+      
+      expect(mockElement.textContent).toBe('Hello World');
+    });
+
+    it('should execute set command for variables', async () => {
+      const ast = parse('set myVar to "test value"').node!;
+      await runtime.execute(ast, context);
+      
+      expect(context.variables?.get('myVar')).toBe('test value');
+    });
+
+    it('should execute set command for context variables', async () => {
+      const ast = parse('set result to "completed"').node!;
+      await runtime.execute(ast, context);
+      
+      expect(context.result).toBe('completed');
     });
   });
 

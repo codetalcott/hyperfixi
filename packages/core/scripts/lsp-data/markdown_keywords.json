@@ -1,0 +1,693 @@
+[
+  {
+    "id": "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+    "elementType": "Keyword",
+    "name": "end",
+    "description": "Keyword \"end\" used in command syntax patterns.",
+    "usage_context": [
+      "throw \"Yep!\"\n  end\n</script>",
+      "  <statements>\nend",
+      "   return 42\n  end\n</script>",
+      " do\n {command}\nend",
+      "+ (j as int)\n  end\n</script>",
+      "\n  {<command>}\nend",
+      "<hyperscript>}\nend",
+      "turn n + 1 }\n  end\n  def incremen",
+      "n { miner }\n  \tend\n\n  \tdef startM",
+      "{ regexFind };\nend",
+      "\n        }\n    end\n    def regexF",
+      "  {<command>}]\nend",
+      "    return e\n  end\n</script>"
+    ],
+    "syntax_examples": [
+      "<script type=\"text/hyperscript\">\n  def throwsIfTrue(value)\n    if value throw \"Yep!\"\n  end\n</script>",
+      "tell <expression>\n  <statements>\nend",
+      "<script type=\"text/hyperscript\">\n  -- return the answer\n  def theAnswer()\n    return 42\n  end\n</script>",
+      "async <command>\n\nasync do\n {command}\nend",
+      "<script type=\"text/hyperscript\">\n  def increment(i, j)\n    return (i as int) + (j as int)\n  end\n</script>",
+      "init [immediately]\n  {<command>}\nend",
+      "behavior <name>(<parameter list>)\n  {<hyperscript>}\nend",
+      "worker Incrementer\n  js\n    function _increment(n) { return n + 1 }\n  end\n  def increment(n) return _increment(n) end\nend",
+      "<script type=\"text/hyperscript\">\n  worker Miner(\"/scripts/mine-crypto.js\")\n  \tjs\n  \t\tvar miner = new CryptoMiner();\n  \t\treturn { miner }\n  \tend\n\n  \tdef startMining() miner.start() end\n  \tdef stopMining() miner.stop() end\n  end\n</script>\n\n<label>\n  <input\n    type=\"checkbox\"\n    _=\"on change\n                            if me.checked Miner.startMining()\n                            else Miner.stopMining()\"\n  />\n  Disable ads <small>and enable cryptocurrency mining</small>\n</label>",
+      "js\n    function regexFind(re, group, str) {\n        return new RegExp(re).exec(str)[group];\n    }\n\n    return { regexFind };\nend",
+      "js\n    function regexExec(re, str) {\n        return new RegExp(re).exec(str);\n    }\n\n    function regexFind(re, group, str) {\n        return regexExec(re, str)[group];\n    }\n\n    return { regexFind };\nend",
+      "worker MyWorker\n    js\n        function _regexFind(re, group, str) {\n            return new RegExp(re).exec(str)[group];\n        }\n    end\n    def regexFind(re, group, str) return _regexFind(re, group, str) end",
+      "def <function name>(<parameter list>)\n  {<command>}\n[catch <identifier>\n  {<command>}]\n[finally\n  {<command>}]\nend",
+      "<script type=\"text/hyperscript\">\n  def delayTheAnswer()\n    wait 2s\n    return 42\n  end\n</script>",
+      "<script type=\"text/hyperscript\">\n  def utils.delayTheAnswer()\n    wait 2s\n    return 42\n  end\n</script>",
+      "<script type=\"text/hyperscript\">\n  def delayTheAnswer()\n    wait 2s\n    throw \"Nope!\"\n  catch e\n    return e\n  end\n</script>"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "end",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.115Z",
+    "updated_at": "2025-05-22T15:38:26.115Z"
+  },
+  {
+    "id": "ff15f360-7c62-40b1-a4ed-1788336991ec",
+    "elementType": "Keyword",
+    "name": "with",
+    "description": "Keyword \"with\" used in command syntax patterns.",
+    "usage_context": [
+      "attribute-ref [with <expression>]>",
+      "selected=true] with 'false' from .",
+      "hide [target] [with <hide-show-str",
+      "\"on click hide with opacity\">Hide ",
+      "\"on click hide with twOpacity\">Hid",
+      "color-template with (colors: getCo",
+      "<expression>} [with <expression>]",
+      " log 'clicked' with console.debug\"",
+      "fetch /example with timeout:300ms\n",
+      "show [target] [with <hide-show-str",
+      "t 2s then show with *twOpacity\">\n "
+    ],
+    "syntax_examples": [
+      "take <class-ref+ or attribute-ref [with <expression>]> [from <expression>] [for <expression>]",
+      "<div _=\"on click take .active\">Activate Me!</div>\n\n<div _=\"on click take .active from .tab for the event's target\">\n  <a class=\"tab active\">Tab 1</a>\n  <a class=\"tab\">Tab 2</a>\n  <a class=\"tab\">Tab 3</a>\n</div>\n\n<div _=\"on click take [@aria-current=page] from .step for the event's 'target\">\n  <a class=\"step\">Step 1</a>\n  <a class=\"step\">Step 2</a>\n  <a class=\"step\">Step 3</a>\n</div>\n\n<div _=\"on click take [@aria-selected=true] with 'false' from .item for the event's 'target\">\n  <a class=\"item\">Option 1</a>\n  <a class=\"item\">Option 2</a>\n  <a class=\"item\">Option 3</a>\n</div>",
+      "hide [target] [with <hide-show-strategy>[: <argument>]] [when <expr>]",
+      "<div _=\"on click hide\">Hide Me!</div>\n\n<div _=\"on click hide with opacity\">Hide Me With Opacity!</div>\n\n<div _=\"on click hide #anotherDiv\">Hide Another Div!</div>",
+      "<div _=\"on click hide\">Hide Me!</div>\n\n<!-- Or by specifying the strategy name directly between : twDisplay, twVisibility, twOpacity -->\n<div _=\"on click hide with twOpacity\">Hide Me With Opacity!</div>",
+      "<button\n  _=\"on click\n    render #color-template with (colors: getColors())\n    then put it into #colors\"\n>\n  Get the colors\n</button>",
+      "log <expression> {, <expression>} [with <expression>]",
+      "<div _=\"on click log 'clicked'\">Click Me!</div>\n\n<div _=\"on click log 'clicked', 'clacked'\">Click Me!</div>\n\n<div _=\"on click log 'clicked' with console.debug\">Click Me!</div>",
+      "<button _=\"on click fetch /example with timeout:300ms\n                    put the result into my innerHTML\">\n  Get from /example!\n</button>",
+      "show [target] [with <hide-show-strategy>[: <argument>]] [where <expr>]",
+      "<div _=\"on load wait 2s then show\">I'll show after a few seconds!</div>\n\n<!-- Or by specifying the strategy name directly between : twDisplay, twVisibility, twOpacity -->\n<div _=\"on load wait 2s then show with *twOpacity\">\n  I'll show after a few seconds with Tailwind CSS opacity!\n</div>"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "with",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.115Z",
+    "updated_at": "2025-05-22T15:38:26.115Z"
+  },
+  {
+    "id": "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+    "elementType": "Keyword",
+    "name": "from",
+    "description": "Keyword \"from\" used in command syntax patterns.",
+    "usage_context": [
+      " <expression> [from <arg-list>] [c",
+      "make a URL from \"/path/\", \"htt",
+      "k items 2 to 4 from arr\n--      it",
+      "pick items from start to 4 fro",
+      "of \"the (\\w+)\" from str\nlog it[0] ",
+      " <expression> [from <expression>]",
+      "e .not-clacked from #another-div\">",
+      "roperty name> [from <string>} to <",
+      "move @disabled from me\n  end"
+    ],
+    "syntax_examples": [
+      "make (a|an) <expression> [from <arg-list>] [called <identifier>]\nmake (a|an) <query-ref>                    [called <identifier>]",
+      "make a URL from \"/path/\", \"https://origin.example.com\"",
+      "set arr to [10, 11, 12, 13, 14, 15]\npick items 2 to 4 from arr\n--      it = [12, 13]\npick items 2 to 4 from arr inclusive\n--      it = [12, 13, 14]\npick items 2 to 4 from arr exclusive\n--      it = [13]",
+      "pick items from start to 4 from arr\n--      it = [10, 11, 12, 13]\npick items from 2 to end from arr\n--      it = [12, 13, 14, 15]\npick items from start to end from arr\n--      it = [10, 11, 12, 13, 14, 15]",
+      "set str to \"The quick brown fox jumps over the lazy dog.\"\npick match of \"the (\\w+)\" from str\nlog it[0] -- \"the lazy\"\nlog it[1] -- \"lazy\"\npick match of \"the (\\w+)\" | i from str\nlog it[0] -- \"The quick\"\nlog it[1] -- \"quick\"",
+      "remove <expression> [from <expression>]",
+      "<div _=\"on click remove me\">Remove Me!</div>\n\n<div _=\"on click remove .not-clicked\">Remove Class From Me!</div>\n\n<div _=\"on click remove .not-clacked from #another-div\">\n  Remove Class From Another Div!\n</div>\n\n<div _=\"on click remove .foo .bar from #another-div\">\n  Remove Class From Another Div!\n</div>\n\n<button _=\"on click remove @disabled from the next <button/>\">Un-Disable The Next Button</button>\n<button _=\"on click call alert('world')\" disabled>Hello!</button>",
+      "transition [[element] <transition target>]\n  {<property name> [from <string>} to <string>}\n[over <time expression> | using <expression>]",
+      "def loadExample ()\n    add @disabled to me\n    fetch /example\n    put the result after me\n  finally\n    remove @disabled from me\n  end"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "from",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.115Z",
+    "updated_at": "2025-05-22T15:38:26.115Z"
+  },
+  {
+    "id": "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+    "elementType": "Keyword",
+    "name": "in",
+    "description": "Keyword \"in\" used in command syntax patterns.",
+    "usage_context": [
+      "formatPizzaToppings(toppings)\n  ",
+      "lick tell <p/> in me\n           ",
+      "o [to] url <stringLike> [in new ",
+      "th 20px of padding in the viewpo",
+      "peat for match in result index i",
+      "r <identifier> in <expression> [",
+      "foo/>, <.foo/> in <.bar/>",
+      "eat for person in people\n    app",
+      "l>\n    @repeat in colors\n      @",
+      "Clicked!</em>' into me\">Click Me",
+      " ul)\n\tfor item in array\n\t\t-- put",
+      "        put it into my innerHTML",
+      "f ('clipboard' in window.navigat",
+      "  set text to #input.value\n     "
+    ],
+    "syntax_examples": [
+      "def formatPizzaToppings(toppings)\n  make an Intl.ListFormat from \"en\", { type: \"conjunction\" }\n    called listFmt\n\n  for part in listFmt.formatToParts(toppings)\n    if the part's type is \"element\"\n      make a <span.topping/>\n      put the part's value into its textContent\n      append it to #toppings\n    else\n      append the part's value to #toppings\n    end\n  end",
+      "<div _=\"on click tell <p/> in me\n                   add .highlight -- adds the highlight class to each p\n                                  -- found in this element...\n                   log your textContent\n                 end \"\n>\n  Click to highlight paragraphs\n  <p>Hyperscript is cool!</p>\n  <p>Sure is!</p>\n</div>",
+      "go [to] url <stringLike> [in new window]\n go [to] [top|middle|bottom] [left|center|right] [of] <expression> [(+|-) <number> [px] ][smoothly|instantly]\n go back",
+      "<button _=\"on click go to url https://duck.com\">\n  Go Search\n</button>\n\n<button _=\"on click go to the top of the body\">\n  Go To The Top...\n</button>\n\n<button _=\"on click go to the top of #a-div -20px\">\n  Go To The Top Of A Div, with 20px of padding in the viewport\n</button>",
+      "set str to \"The quick brown fox jumps over the lazy dog.\"\npick match of \"the (\\w+)\" | i from str\nrepeat for match in result index i\n  log `${i}:`\n  log it[0] -- \"The quick\"\n  log it[1] -- \"quick\"\nend",
+      "repeat for <identifier> in <expression> [index <identifier>] { <command> } end\nrepeat in <expression> [index <identifier>] { <command> } end\nrepeat while <expression> [index <identifier>] { <command> } end\nrepeat until <expression> [index <identifier>] { <command> } end\nrepeat until event <expression> [from <expression>] [index <identifier>] { <command> } end\nrepeat <number> times [index <identifier>] { <command> } end\nrepeat forever <expression> [index <identifier>] { <command> } end\nfor <identifier> in <expression> [index <identifier>]",
+      "beep! <.foo/>\nbeep! <.foo/>, <.foo/> in <.bar/>",
+      "set result to \"<div>\"\nrepeat for person in people\n    append `\n        <div id=\"${person.id}\">\n            <div class=\"icon\"><img src=\"${person.iconURL}\"></div>\n            <div class=\"label\">${person.firstName} ${person.lastName}</div>\n        </div>\n    `\nend\nappend \"</div>\"\nput it into #people",
+      "<template id=\"color-template\">\n  <ul>\n    @repeat in colors\n      @set bg to it\n      @set fg to getContrastingColor(it)\n      <li style=\"background: ${bg}; color: ${unescaped fg}\">${bg}</li>\n    @end\n  </ul>\n</template>",
+      "<div _=\"on click put '<em>Clicked!</em>' into me\">Click Me!</div>\n\n<!-- equivalent to the above -->\n<div _=\"on click put '<em>Clicked!</em>' into my.innerHTML\">Click Me!</div>\n\n<div\n  _=\"on click\n\tcall document.createElement('em')\n\tput 'Clicked!' in it\n\tput it in me\"\n>\n  Click Me!\n</div>",
+      "def fillList(array, ul)\n\tfor item in array\n\t\t-- put `<li>${item}</li>` at end of ul\n\t\tcall document.createElement('li')\n\t\tput the item into its textContent\n\t\tput it at end of the ul\n\tend\nend",
+      "<button _=\"on click fetch /example\n                    put it into my innerHTML\">\n  Get from /example!\n</button>\n\n<button _='on click fetch /test as json with method:\"POST\"\n                    put `${its result}` into my innerHTML'>\n  Post to /test!\n</button>\n\n<button _=\"on click fetch `${pageUrl}` as html\n                    get the textContent of the <h1/> in it\n                    call alert(result)\">\n  Get the title of the page!\n</button>\n\n<div _='on click fetch /number as Number with method:\"POST\"\n                 put \"${the result + 1}\" into my innerHTML'>\n  Increment!\n</div>",
+      "<button\n  _=\"on click\n           js\n               if ('clipboard' in window.navigator) {\n               \t return navigator.clipboard.readText()\n               }\n           end\n           put it in my.innerHTML \"\n></button>",
+      "<button\n  _=\"on click\n           set text to #input.value\n           js(me, text)\n               if ('clipboard' in window.navigator) {\n               \t return navigator.clipboard.writeText(text)\n               \t   .then(() => 'Copied')\n               \t   .catch(() => me.parentElement.remove(me))\n               }\n           end\n           put message in my.innerHTML \"\n></button>"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "in",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.115Z",
+    "updated_at": "2025-05-22T15:38:26.115Z"
+  },
+  {
+    "id": "391fcf9a-8160-47af-806b-65c80afd0aaa",
+    "elementType": "Keyword",
+    "name": "to",
+    "description": "Keyword \"to\" used in command syntax patterns.",
+    "usage_context": [
+      "fault <target> to <expr>",
+      "t an attribute to a value\n    de",
+      "ppend \"works \" to #message -- th",
+      "mpty... <br/>\" to #message\n end",
+      "<button _=\"on click s",
+      "obal globalVar to 10",
+      "pend <string> [to <string> | <ar",
+      "set fullName to \"John\"\nappend ",
+      "et resultArray to []\nappend 1 to",
+      "HTML here</i>\" to #myDIV",
+      "ject-literal> [to <target-expres",
+      "k add .clacked to #another-div\">",
+      "<div>\n    <button id=\"btn1\"\n   ",
+      "set userId to my [@data-user",
+      "'X-AuthToken'] to getAuthToken()",
+      "set counter to 5\ndecrement co",
+      "set counter to 5\nincrement co",
+      "ion my opacity to 0\n  transition",
+      " foo's opacity to 0",
+      "ion my opacity to 0 then remove ",
+      "t <expression> to <expression>",
+      "bar\", doh: 42) to MySocket",
+      "movable\">Click to get rid of me<",
+      "banner\">\n  <button id=\"close-ban",
+      "sition opacity to 1\n         els"
+    ],
+    "syntax_examples": [
+      "default <target> to <expr>",
+      "-- default an attribute to a value\n    default @foo to 'bar'\n\n   -- default a variable to a value\n   default x to 10",
+      "repeat 3 times\n    append \"works \" to #message -- this command will execute\n    continue\n    append \"skipped \" to #message -- this command will be skipped\n end",
+      "repeat 3 times\n    wait 2s\n    if my @value is not empty\n      break\n    end\n    append \"Value is still empty... <br/>\" to #message\n end",
+      "<button _=\"on click set :x to increment(:x, 2) then put :x into the next <output/>\">\n  set :x to increment(:x, 2)\n</button>\n<output></output>",
+      "set global globalVar to 10",
+      "append <string> [to <string> | <array> | <HTML Element>]",
+      "set fullName to \"John\"\nappend \" Connor\" to fullName\n-- fullName == \"John Connnor\"",
+      "set resultArray to []\nappend 1 to resultArray\nappend 2 to resultArray\nappend 3 to resultArray\n-- resultArray == [1,2,3]",
+      "append \"<i>More HTML here</i>\" to #myDIV",
+      "add <class-ref+ or attribute-ref or object-literal> [to <target-expression>] [where <expr>]",
+      "<div _=\"on click add .clicked\">Click Me!</div>\n\n<div _=\"on click add .clacked to #another-div\">Click Me!</div>\n\n<button _=\"on click add @disabled='true'\">Disable Me!</button>\n\n<input\n  type=\"color\"\n  _=\"on change add { '--accent-color': my.value } to document.body\"\n/>\n\n<button _=\"on click add @disabled='true' to <button/> when it is not me\">Disable Other Buttons</button>",
+      "<div>\n    <button id=\"btn1\"\n            _=\"on click\n                 add @disabled\n                 fetch /example\n                 put the result after me\n               finally\n                 remove @disabled\">\n        Get Response\n    </button>\n    <button _=\"on click send fetch:abort to #btn1\">\n        Cancel The Request\n    </button>\n</div>",
+      "set userId to my [@data-userId]\nfetch `/users/${userId}/profile` as JSON",
+      "<body _=\"on fetch:beforeRequest(headers)\n            set headers['X-AuthToken'] to getAuthToken()\">\n            ...\n</body>",
+      "set counter to 5\ndecrement counter by 2 -- counter is now 3\n\ndecrement newVariable -- newVariable is defaulted to zero, then decremented to -1",
+      "set counter to 5\nincrement counter by 2 -- counter is now 7\n\nincrement newVariable -- newVariable is defaulted to zero, then incremented to 1",
+      "transition my opacity to 0\n  transition the div's opacity to 0\n  transition #anotherDiv's opacity to 0\n  transition .aClass's opacity to 0",
+      "transition element foo's opacity to 0",
+      "<div _=\"on click transition my opacity to 0 then remove me\">\n  Fade then remove me\n</div>",
+      "set <expression> to <expression>",
+      "send myMessage(foo: \"bar\", doh: 42) to MySocket",
+      "<div _=\"install Removable\">Click to get rid of me</div>",
+      "<div class=\"banner\">\n  <button id=\"close-banner\"></button>\n  Click the button to close me\n</div>",
+      "<img\n  _=\"on intersection(intersecting) having threshold 0.5\n         if intersecting transition opacity to 1\n         else transition opacity to 0 \"\n  src=\"https://placebear.com/200/300\"\n/>"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "to",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.115Z",
+    "updated_at": "2025-05-22T15:38:26.115Z"
+  },
+  {
+    "id": "fcdde68c-88c0-4887-91ce-02c626f673c6",
+    "elementType": "Keyword",
+    "name": "on",
+    "description": "Keyword \"on\" used in command syntax patterns.",
+    "usage_context": [
+      "erate while a condition is true\n",
+      "nd to the else on the previous l",
+      " list>) [(to | on | with | into ",
+      "<button _=\"on click re",
+      "set <expression> to <expressio",
+      "<div _=\"on click set x to",
+      "<class-ref>)\n [on <expression>]\n",
+      "<button _=\"on click to",
+      "<div _=\"on load wait 2s t",
+      "] [to <expression>]\n trigger <ev",
+      "<div _=\"on click send doI",
+      "yperscript\">\n  on mousedown\n    ",
+      "me expr>]\n    [on message [as js",
+      ".com/example\n  on message as jso",
+      "hat-updates\n\n  on newMessage as ",
+      "rver/demo\n\n    on message as str",
+      "er/updates\n    on message\n      ",
+      "amicServer\n    on message as jso",
+      "updater\n\n      on message as jso",
+      "<div\n  _=\"\n  on click remove m",
+      " Removable\n    on click\n      re",
+      "able(removeButton)\n    on click ",
+      "able(removeButton)\n    init\n    ",
+      "on [every] <event",
+      "on click 1\n  on c",
+      "t: <output _=\"\non click from #in",
+      "<div\n  _=\"on click call mig",
+      "<div _=\"on click call ale",
+      "ext\"\n  _=\"\n    on input call reg"
+    ],
+    "syntax_examples": [
+      "-- the basic for loop\n  repeat for p in <p/>\n    add .example to p\n  end\n\n  -- syntactic sugar for the above\n  for p in <p/>\n    add .example to p\n  end\n\n  -- iterating over an array but without an explicit variable\n  -- instead the keyword it is used\n  repeat in <p/>\n    add .example to it\n  end\n\n  -- iterate while a condition is true\n  repeat while #div matches .active\n    put \"Still waiting.\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting..\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting...\" into #div.innerHTML\n  end\n\n  -- iterate until a condition is true\n  repeat until #div does not match .active\n    put \"Still waiting.\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting..\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting...\" into #div.innerHTML\n  end\n\n  -- iterate until an event 'stop' occurs\n  repeat until event stop\n    put \"Still waiting.\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting..\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting...\" into #div.innerHTML\n  end\n\n  -- iterate five times\n  repeat 5 times\n    put \"Fun \" before end of #div.innerHTML\n  end\n\n  -- iterate forever\n  repeat forever\n    toggle .throb on #div\n    wait 1s\n  end",
+      "...\nelse\n  if false   -- does not bind to the else on the previous line as an \"else if\"\n    log 'foo'\n  end\n  log 'bar'\nend",
+      "<method name>(<arg list>) [(to | on | with | into | from | at)] <expression>",
+      "<button _=\"on click reload() the location of the window\">\n  Reload the Location\n</button>\n\n<button _=\"on click setAttribute('foo', 'bar') on me\">\n  Set foo to bar on me\n</button>",
+      "set <expression> to <expression>\n  set <object literal> on <expression>",
+      "<div _=\"on click set x to 'foo' then log x\">\n  Click Me!\n</div>\n\n<div _=\"on click set my.style.color to 'red'\">\n  Click Me!\n</div>\n\n<button _=\"on click set { disabled: true, innerText: \"Don't click me!\" } on me\">\n  Click Me!\n</button>",
+      "toggle ({<class-ref>} | <attribute-ref> | between <class-ref> and <class-ref>)\n [on <expression>]\n  [(for <time expression>) |\n   (until <event name> [from <expression>]]`\n\ntoggle [the | my] ('*opacity' | '*visibility' | '*display')\n [of <expression>]\n  [(for <time expression>) |\n   (until <event name> [from <expression>]]`",
+      "<button _=\"on click toggle .toggled\">Toggle Me!</button>\n\n<div _=\"on click toggle .toggled on #another-div\">Toggle Another Div!</div>\n\n<button _=\"on click toggle [@disabled='true']\">Toggle Disabled!</button>\n\n<div _=\"on click toggle .toggled for 2s\">Toggle for 2 seconds</div>\n\n<div _=\"on mouseenter toggle .visible on #help until mouseleave\">\n  Mouse Over Me!\n</div>\n<div id=\"help\">I'm a helpful message!</div>\n\n<button _=\"on click toggle between .enabled and .disabled\">\n  Toggle Me!\n</button>\n\n<button _=\"on click toggle *display on the next <div/>\">\n  Toggle Me!\n</button>",
+      "<div _=\"on load wait 2s then show\">I'll show after a few seconds!</div>\n\n<div _=\"on load wait 2s then show:inline\">\n  I'll show inline after a few seconds!\n</div>\n\n<div _=\"on load wait 2s then show with *opacity\">\n  I'll show after a few seconds with opacity!\n</div>\n\n<div _=\"on click show #anotherDiv\">Show Another Div!</div>\n\n<!-- on every keyup show all elements in #quotes that match the inputs value -->\n<input type=\"text\" placeholder=\"Search...\"\n     _=\"on keyup\n          show <p/> in #quotes when its textContent contains my value\">",
+      "send <event-name>[(<named arguments>)] [to <expression>]\n trigger <event-name>[(<named arguments>)] [on <expression>]",
+      "<div _=\"on click send doIt(answer:42) to #div1\">Send an event</div>\n<div\n  id=\"div1\"\n  _=\"on doIt(answer) put `The answer is $answer` into my.innerHTML\"\n>\n  Check the console for the answer...\n</div>\n\n<div _=\"on click trigger doIt(answer:42) end\n        on doIt(answer) log `The answer is $answer`\">\n  Click Me!\n</div>",
+      "<script type=\"text/hyperscript\">\n  on mousedown\n    halt the event -- prevent text selection...\n    -- do other stuff...\n  end\n</script>",
+      "socket <socket-name> <socket-url> [with timeout <time expr>]\n    [on message [as json] <command-list>]",
+      "socket MySocket ws://myserver.com/example\n  on message as json\n    log message\nend",
+      "eventsource ChatUpdates from http://myserver.com/chat-updates\n\n  on newMessage as json\n    log it\n  end\n\n  on updateMessage as json\n    log it\n  end\n\nend",
+      "eventsource demo from http://server/demo\n\n    on message as string\n        put it into #div\n    end\n\n    on open\n        log \"connection opened.\"\n    end\n\n    on close\n        log \"connection closed.\"\n    end\n\n    on error\n        log \"handle error here...\"\n    end\n\nend",
+      "-- define the SSE EventSource\neventsource UpdateServer from http://server/updates\n    on message\n        log it\n    end\nend\n\n-- elsewhere in your code, listen for the \"cancelGoAway\" message, then disconnect\non cancelGoAway from UpdateServer\n    log \"received cancel message from server\"\n    call UpdateServer.close()\nend",
+      "eventsource DynamicServer\n    on message as json\n        log it\n    end\nend\n\n-- somewhere else in your code\nDynamicServer.open(\"test.com/test1.sse\") -- creates a new connection to this URL\n\nDynamicServer.open(\"test.com/test2.sse\") -- automatically closes the first connection\nDynamicServer.close()\n\nDynamicServer.open(\"test.com/test3.sse\") -- reconnects to a different endpoint.",
+      "<script type=\"text/hyperscript\">\n  eventsource recordUpdater from http://server-name/record-updater\n\n      on message as json\n          put it.name into #name\n          put it.username into #username\n          put it.email into #email\n          log me\n      end\n\n  end\n</script>\n\n<div>\n  <button script=\"on click call recordUpdater.open()\">Connect</button>\n  <button script=\"on click call recordUpdater.close()\">Disconnect</button>\n</div>\n\n<h3>Real-Time Record</h3>\n<div>Name: <span id=\"name\">...</span></div>\n<div>Username: <span id=\"username\">...</span></div>\n<div>Email: <span id=\"email\"></span></div>",
+      "<div\n  _=\"\n  on click remove me\n\"\n>\n  Click to get rid of me\n</div>",
+      "<script type=\"text/hyperscript\">\n  behavior Removable\n    on click\n      remove me\n    end\n  end\n</script>",
+      "<script type=\"text/hyperscript\">\n  behavior Removable(removeButton)\n    on click from removeButton\n        remove me\n    end\n  end\n</script>",
+      "<script type=\"text/hyperscript\">\n  behavior Removable(removeButton)\n    init\n      if no removeButton set the removeButton to me\n    end\n\n    on click from removeButton\n      remove me\n    end\n  end\n</script>",
+      "on [every] <event-name>[(<param-list>)][\\[<filter>\\]] [<count>] [from <expr>] [<debounce> | <throttle>]\n   { or [every] <event-name>[(<param-list>)][\\[<filter>\\]] [<count>] [from <expr>] [<debounce> | <throttle>] }\n    [queue (all | first | last | none)]\n    {<command>}\n[end]",
+      "on click 1\n  on click 2 to 10\n  on click 11 and on",
+      "Count: <output _=\"\non click from #inc\n\tlog \"Increment\"\n\tincrement my textContent\ninit\n\tremove me\n\">0</output>\n\n<!--After the <output/> is removed, clicking this will not log anything to\n\tthe console-->\n<button id=\"inc\">Increment</button>",
+      "<div\n  _=\"on click call mightThrow()\n        on exception(error) log error\"\n>\n  Click Me!\n</div>",
+      "<div _=\"on click call alert('You clicked me!')\">Click Me!</div>\n\n<div\n  _=\"on mouseenter add .visible to #help end\n        on mouseleave remove .visible from #help end\"\n>\n  Mouse Over Me!\n</div>\n<div id=\"help\">I'm a helpful message!</div>",
+      "<input\n  type=\"text\"\n  _=\"\n    on input call regexFind('(.*)\\+.*@.*', 1, my.value\"\n/>"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "on",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.115Z",
+    "updated_at": "2025-05-22T15:38:26.115Z"
+  },
+  {
+    "id": "16ca17ad-082d-4f61-9200-147b8755b377",
+    "elementType": "Keyword",
+    "name": "then",
+    "description": "Keyword \"then\" used in command syntax patterns.",
+    "usage_context": [
+      "<conditional> [then] <command-list",
+      "ick measure me then log it\">Click ",
+      "   toggle .red then settle\"\n>\n  Yo",
+      "=\"init wait 2s then add .explode\">"
+    ],
+    "syntax_examples": [
+      "if <conditional> [then] <command-list> [(else | otherwise) <command-list>] end`",
+      "<div _=\"on click measure me then log it\">Click Me To Measure</div>\n\n<div _=\"on click measure my top then log top\">Click Me To Measure My Top</div>",
+      "<style>\n  #pulsar {\n    transition: all 800ms ease-in-out;\n  }\n  .red {\n    background: red;\n  }\n</style>\n<div\n  id=\"pulsar\"\n  _=\"on load repeat 6 times\n                toggle .red then settle\"\n>\n  You thought the blink tag was dead?\n</div>",
+      "<div _=\"init wait 2s then add .explode\">\n  This div will explode after 2 seconds...\n</div>"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "then",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.115Z",
+    "updated_at": "2025-05-22T15:38:26.115Z"
+  },
+  {
+    "id": "069f5efe-d159-4464-a394-bf5ef9021133",
+    "elementType": "Keyword",
+    "name": "not",
+    "description": "Keyword \"not\" used in command syntax patterns.",
+    "usage_context": [
+      " click if I do not match .disable"
+    ],
+    "syntax_examples": [
+      "<div\n  _=\"on click if I do not match .disabled\n                   add .clicked\"\n>\n  Click Me!\n</div>"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "not",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.115Z",
+    "updated_at": "2025-05-22T15:38:26.115Z"
+  },
+  {
+    "id": "5c4285f2-8b28-425d-8000-c0095c75d562",
+    "elementType": "Keyword",
+    "name": "into",
+    "description": "Keyword \"into\" used in command syntax patterns.",
+    "usage_context": [
+      "\n  put a value into the button\n-->",
+      ":x then put it into the next <outp",
+      "x) then put it into the next <outp",
+      " 2 then put it into the next <outp",
+      ")) then put it into the next <outp",
+      "2) then put it into the next <outp",
+      " entered: $it' into my.innerHTML\"\n",
+      " <expression> (into | before | at ",
+      "put the result into me\"\n>\n  Get th",
+      "le then put it into my innerHTML\">",
+      " put \"Mutated\" into me'></div>"
+    ],
+    "syntax_examples": [
+      "<!--\n  here we spin off the fetch and put asynchronously and immediately\n  put a value into the button\n-->\n<button\n  _=\"on click async do\n                      fetch /example\n                      put it into my.innerHTML\n                    end\n                    put 'Fetching It!' into my innerHTML\"\n>\n  Fetch it!\n</button>",
+      "<button _=\"on click increment :x then put it into the next <output/>\">\n  call increment :x\n</button>\n<output></output>",
+      "<button _=\"on click increment(:x) then put it into the next <output/>\">\n  increment(:x)\n</button>\n<output></output>",
+      "<button _=\"on click increment :x by 2 then put it into the next <output/>\">\n  increment :x by 2\n</button>\n<output></output>",
+      "<button _=\"on click increment(:x) by 2 then put it into the next <output/>\">\n  increment(:x) by 2\n</button>\n<output></output>",
+      "<button _=\"on click call(increment(:x, 2)) then put it into the next <output/>\">\n  call(increment(:x,2))\n</button>\n<output></output>",
+      "<button _=\"on click increment(:x, 2) then put it into the next <output/>\">\n  increment(:x, 2)\n</button>\n<output></output>",
+      "<div _=\"on click call myJavascriptFunction()\">Click Me!</div>\n\n<div\n  _=\"on click get prompt('Enter your age')\n                 put 'You entered: $it' into my.innerHTML\"\n>\n  Click Me!\n</div>",
+      "put <expression> (into | before | at [the] start of | at [the] end of | after)  <expression>`",
+      "<button\n  _=\"on click call MySocket.rpc.increment(41) then put the result into me\"\n>\n  Get the answer...\n</button>",
+      "<!-- a 5 second timeout -->\n<button\n  _=\"on click call MySocket.rpc.timeout(5000).increment(41) then put the result into me\"\n>\n  Get the answer...\n</button>\n\n<!-- no timeout -->\n<button\n  _=\"on click call MySocket.rpc.noTimeout.increment(41) then put the result into me\"\n>\n  Get the answer...\n</button>",
+      "<div _=\"on click or touchstart fetch /example then put it into my innerHTML\">\n  Fetch it...\n</div>",
+      "<div _='on mutation of @foo put \"Mutated\" into me'></div>"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "into",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "73e43a8a-0048-4984-8911-67fd9d04ccbd",
+    "elementType": "Keyword",
+    "name": "as",
+    "description": "Keyword \"as\" used in command syntax patterns.",
+    "usage_context": [
+      "<stringLike> [ as [ a | an ]( js"
+    ],
+    "syntax_examples": [
+      "fetch <stringLike> [ as [ a | an ]( json | Object | html | response ) ] [<object literal> | 'with' <naked named arguments>]"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "as",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "263889c6-1ff7-4041-b058-071c9a3276c2",
+    "elementType": "Keyword",
+    "name": "by",
+    "description": "Keyword \"by\" used in command syntax patterns.",
+    "usage_context": [
+      "ment <target> [by <number>]"
+    ],
+    "syntax_examples": [
+      "decrement <target> [by <number>]",
+      "increment <target> [by <number>]"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "by",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "1885b2aa-0332-41bb-a06a-41f464394d9b",
+    "elementType": "Keyword",
+    "name": "for",
+    "description": "Keyword \"for\" used in command syntax patterns.",
+    "usage_context": [
+      " expression> | for (<event> [from",
+      "after 1s.\nwait for load or 1s\nif ",
+      "mple then wait for transitionend\""
+    ],
+    "syntax_examples": [
+      "wait (<time expression> | for (<event> [from <source>]) [or ...] )",
+      "-- Fail if the thing doesn't load after 1s.\nwait for load or 1s\nif the result is not an Event\n  throw 'Took too long to load.'\nend\n\n-- Parens are required for dynamic timeouts.\nwait for click or (config.clickTimeout) ms",
+      "<div _=\"on click add .example then wait for transitionend\">\n  Add the class, then wait for the transition to complete\n</div>\n\n<div _=\"on click add .example then wait 2s then remove .example\">\n  Add and then remove a class\n</div>\n\n<div\n  _=\"wait for mousemove(clientX, clientY) or mouseup(clientX, clientY) from document\"\n>\n  Mouse Dragging...\n</div>"
+    ],
+    "tags": [
+      "extracted-keyword",
+      "for",
+      "used-in-command"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "260a96b7-6e3e-4cc7-9dc5-290c2fffadbe",
+    "elementType": "Keyword",
+    "name": "else",
+    "description": "Hyperscript keyword \"else\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "else"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "3acb4c0c-0776-4344-91b3-405fa5d7abda",
+    "elementType": "Keyword",
+    "name": "when",
+    "description": "Hyperscript keyword \"when\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "when"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "6a85e8d9-5d53-45aa-9686-841b18af8c8b",
+    "elementType": "Keyword",
+    "name": "after",
+    "description": "Hyperscript keyword \"after\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "after"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "37629f5e-f032-49c8-b413-0c120fa3af19",
+    "elementType": "Keyword",
+    "name": "before",
+    "description": "Hyperscript keyword \"before\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "before"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "22343067-6021-4371-8ba1-58903a8aad2f",
+    "elementType": "Keyword",
+    "name": "until",
+    "description": "Hyperscript keyword \"until\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "until"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "351f4c62-0bd0-4670-bdd3-9f09409c0474",
+    "elementType": "Keyword",
+    "name": "while",
+    "description": "Hyperscript keyword \"while\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "while"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "ed6b49a2-8ede-49a4-9cf6-5b754459898e",
+    "elementType": "Keyword",
+    "name": "unless",
+    "description": "Hyperscript keyword \"unless\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "unless"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "03a185eb-4a57-4ed2-ae67-ae2ed214b0ee",
+    "elementType": "Keyword",
+    "name": "at",
+    "description": "Hyperscript keyword \"at\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "at"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "080da252-1e7a-4fd1-abf8-bba82bbf5710",
+    "elementType": "Keyword",
+    "name": "async",
+    "description": "Hyperscript keyword \"async\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "async"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144",
+    "elementType": "Keyword",
+    "name": "and",
+    "description": "Hyperscript keyword \"and\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "and"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "ec87d0b2-cb9e-4f53-a57a-4b965a780cac",
+    "elementType": "Keyword",
+    "name": "or",
+    "description": "Hyperscript keyword \"or\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "or"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "fce7f1c1-da46-464a-bc7a-babf82afb5af",
+    "elementType": "Keyword",
+    "name": "if",
+    "description": "Hyperscript keyword \"if\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "if"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "a3731f2b-6f41-4c2c-aa20-57eb43e42f39",
+    "elementType": "Keyword",
+    "name": "repeat",
+    "description": "Hyperscript keyword \"repeat\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "repeat"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "1f6735b8-405a-4242-83ef-8610905a246d",
+    "elementType": "Keyword",
+    "name": "of",
+    "description": "Hyperscript keyword \"of\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "of"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  },
+  {
+    "id": "bef9c738-a7c9-45b1-8d0a-22c0b3c1f530",
+    "elementType": "Keyword",
+    "name": "target",
+    "description": "Hyperscript keyword \"target\".",
+    "usage_context": [],
+    "syntax_examples": [],
+    "tags": [
+      "default-keyword",
+      "target"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.116Z",
+    "updated_at": "2025-05-22T15:38:26.116Z"
+  }
+]

@@ -1,0 +1,523 @@
+[
+  {
+    "id": "3ebdaeff-a5fd-4bbf-84bc-4d5826048d35",
+    "name": "attribute-ref",
+    "description": "Attribute references are similar to CSS attribute references, and may or may not include a value.",
+    "syntax_canonical": "<button _=\"on click add [@disabled]\">Disable Me!</button>\n\n<button _=\"on click remove [@disabled]\">Enable Me!</button>",
+    "tags": [
+      "official-expression-md",
+      "attribute-ref"
+    ],
+    "notes": "[<name>[=<value>]]",
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.109Z",
+    "updated_at": "2025-05-22T15:38:26.109Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">",
+      "is"
+    ]
+  },
+  {
+    "id": "a1882978-b3e8-4623-ad73-261a54449136",
+    "name": "query-reference",
+    "description": "The query reference expression allows you to embed arbitrary CSS selectors in hyperscript. It will evaluate to all matching elements.",
+    "syntax_canonical": "<div _=\"on click add .clicked to <button/>\">Add .clicked to all buttons</div>\n\n<div _=\"on click add .clicked to <button:not(.clicked)/>\">\n  Add .clicked to all buttons that don't have .clicked on it already...\n</div>",
+    "tags": [
+      "official-expression-md",
+      "query-reference"
+    ],
+    "notes": "`<<css query>/>'",
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.111Z",
+    "updated_at": "2025-05-22T15:38:26.111Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">",
+      "not"
+    ]
+  },
+  {
+    "id": "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc",
+    "name": "it",
+    "description": "Many hyperscript commands return a value which is stored in the local variable scope as result or it.  Subsequent commands will often overwrite this value, so you'll need to store it in your own variable before it gets erased.\nFor possessive expressions, its will also work, as in its property instead of it.property.",
+    "syntax_canonical": "fetch /my-server/people as an Object\n    put it into people",
+    "tags": [
+      "official-expression-md",
+      "it"
+    ],
+    "notes": "This uses the fetch command to load data from a server, an as expression to parse JSON, then puts the result into a local variable called \"people\"",
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.111Z",
+    "updated_at": "2025-05-22T15:38:26.111Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "-",
+      "/"
+    ]
+  },
+  {
+    "id": "4b5ec135-1057-457c-8094-f8ba904c1add",
+    "name": "as",
+    "description": "Hyperscript provides a pluggable conversion system with the as expression. It will look up the conversion of the given name and apply it to the input expression.\nBy default, hyperscript provides the following conversions:\nArray - convert to Array\nDate - convert to Date\nFloat - convert to float\nFragment - converts a string into an HTML Fragment\nHTML - converts NodeLists and arrays to an HTML string\nInt - convert to integer\nJSON - convert to a JSON String\nNumber - convert to number\nObject - convert from a JSON String\nString - convert to String\nValues - converts a Form (or other element) into a struct containing its input names/values\nValues:Form - converts a Form (or other element) into form encoded string\nValues:JSON - converts a Form (or other element) into json encoded string\nFixed<:N> - convert to a fixed precision string representation of the number, with an optional precision of N\nSome examples:\nYou can add new conversions by adding them to the _hyperscript.config.conversions object:",
+    "syntax_canonical": "log '10' as Int            -- logs 10\n  log '3.141568' as Fixed:2  -- logs '3.14'\n  log '{\"foo\":10}' as Object -- logs { \"foo\": 10 }'\n  log 10 as String           -- logs \"10\"",
+    "tags": [
+      "official-expression-md",
+      "as"
+    ],
+    "notes": "which can then be used like so in hyperscript:\nYou also have the option to create a dynamic conversion, which will be calledbefore all conversions, and allow you to create more flexible conversion naming schemes\nThis conversion could now be used like so:",
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.111Z",
+    "updated_at": "2025-05-22T15:38:26.111Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "-",
+      "/",
+      "=",
+      "<",
+      ">"
+    ],
+    "example_usage": [
+      "<button _=\"on click put 'foo' as MyConversion:Short into my innerHTML\">\n  Call my conversion\n</button>"
+    ]
+  },
+  {
+    "id": "95dc807d-6d9c-4952-abf8-f98a23b4a537",
+    "name": "block-literal",
+    "description": "Block expressions are anonymous functions that return a value (the right hand side expression).",
+    "syntax_canonical": "<div _=\"on click setTimeout(\\->console.log('called!'), 1000)\">\n  Log 'called!' in a second\n</div>",
+    "tags": [
+      "official-expression-md",
+      "block-literal"
+    ],
+    "notes": "\\ [<parameters-list>] -> <expression>",
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.112Z",
+    "updated_at": "2025-05-22T15:38:26.112Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "-",
+      "/",
+      "=",
+      "<",
+      ">"
+    ]
+  },
+  {
+    "id": "7cac76a4-5326-449c-9acb-a833ade9b8df",
+    "name": "positional",
+    "description": "Positional expressions allow you to select an element from an array or array-like object. If they are applied to aDOM element, the children of the DOM object will be used.",
+    "syntax_canonical": "<div _=\"on click log first in me\">... Log my first child ...</div>\n\n<div _=\"on click log last in me\">\n  ...\n  Log my last child\n  ...\n</div>",
+    "tags": [
+      "official-expression-md",
+      "positional"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.112Z",
+    "updated_at": "2025-05-22T15:38:26.112Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">"
+    ]
+  },
+  {
+    "id": "422b7280-8b85-4c80-9be6-4351f9c42a11",
+    "name": "closest",
+    "description": "The closest expression allows you to find the closest matching element to a given DOM element. By defaultit will use the current element.",
+    "syntax_canonical": "<div _=\"on click add .clicked to the closest <section/>\">...</div>\n\n<div _=\"on click add .clicked to the closest <div/> to the parentElement of me\">\n  ...\n</div>",
+    "tags": [
+      "official-expression-md",
+      "closest"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.112Z",
+    "updated_at": "2025-05-22T15:38:26.112Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">"
+    ]
+  },
+  {
+    "id": "559edd9e-aa2b-41f0-b3e2-2ad6203fcdd6",
+    "name": "id-reference",
+    "description": "An id reference expression uses a syntax from to CSS selectors to reference elements by directly by the id property. It evaluates to a singlenode in the DOM with the given identifier",
+    "syntax_canonical": "<div _=\"on click add .clicked to #another-div\">\n  Add the .clicked class to another div!\n</div>",
+    "tags": [
+      "official-expression-md",
+      "id-reference"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.112Z",
+    "updated_at": "2025-05-22T15:38:26.112Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "-",
+      "/",
+      "=",
+      "<",
+      ">",
+      "not"
+    ]
+  },
+  {
+    "id": "9ea25b37-6b1d-475c-92bb-fe82ea88dbea",
+    "name": "logical-operator",
+    "description": "Logical operators are similar to logical operators in javascript, but use the english words rather than symbols.\nNote that all logical operators have the same precedence, but if multiple distinct operators are used the expression must be parenthesized to avoid ambiguity.",
+    "syntax_canonical": "<div\n  _=\"on click\n          if I do not match .active and I do not contain .active\n            add .active\"\n>\n  Activate Me\n</div>",
+    "tags": [
+      "official-expression-md",
+      "logical-operator"
+    ],
+    "notes": "x and yx or ynot x",
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.112Z",
+    "updated_at": "2025-05-22T15:38:26.112Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">",
+      "and",
+      "not"
+    ]
+  },
+  {
+    "id": "2cc2f2c1-1a36-40ef-86b3-fd8639ed9ab3",
+    "name": "async",
+    "description": "By default, hyperscript synchronizes on any Promisesthat go through its runtime. This is usually what is desired butat times you may want to avoid this synchronization when evaluatingan expression. To do so, you can use the async keyword.",
+    "syntax_canonical": "<button _=\"on click async call generatePromise() \">\n  Generate a promise but don't block\n</button>",
+    "tags": [
+      "official-expression-md",
+      "async"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.112Z",
+    "updated_at": "2025-05-22T15:38:26.112Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">",
+      "is"
+    ]
+  },
+  {
+    "id": "7ee26730-4f78-4b74-8d77-0a157d9ee31e",
+    "name": "string",
+    "description": "String expressions are similar to string expressions in javascript, and support both a quote and double quote delimiter.\nHyperscript supports template literalslike in Javascript by using the back-tic character, and you can use either a $ or ${} to include an expression value in the template.\nNote that in some places you can use \"naked strings\", which are strings that do not have a starting quote or double quote.Instead they are delimited by whitespace: /example",
+    "syntax_canonical": "set x to \"foo\" -- double quotes\n  set y to 'bar' -- single quotes\n  set foobar to `$foo$bar` -- template strings (back ticks) using \"$\"\n  set hello to `hello ${name}` -- template strings using \"${}\"",
+    "tags": [
+      "official-expression-md",
+      "string"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.113Z",
+    "updated_at": "2025-05-22T15:38:26.113Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "-",
+      "/",
+      "=",
+      "<",
+      ">",
+      "or"
+    ]
+  },
+  {
+    "id": "edab2fac-ac3f-4d9c-8c84-1b7db5dc205d",
+    "name": "beep",
+    "description": "The beep! expression allows you to debug a partial expression value, logging its value to the console and otherwiseacting like an identity function: it simply returns the inner value it logs.  This allows you to insert a beep!into an expression without disrupting its evaluation.",
+    "syntax_canonical": "add .highlighted to the <p/> in beep! <div.highlight/> -- logs the result of <div.highlight/>\nadd .highlighted to beep! the <p/> in <div.highlight/> -- logs the result of the <p/> in <div.highlight/>",
+    "tags": [
+      "official-expression-md",
+      "beep"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.113Z",
+    "updated_at": "2025-05-22T15:38:26.113Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "-",
+      "/",
+      "<",
+      ">"
+    ]
+  },
+  {
+    "id": "a443120d-2b38-4ae5-be70-aefccf1b95b8",
+    "name": "of",
+    "description": "The of expression allows you to reverse the normal order of property accessors for clearer code.\nSo this:\nCan be rewritten like this:\nWhere we have converted window.location into the form the location of the window.",
+    "syntax_canonical": "<button _=\"on click call window.location.reload()\">\n  Reload the Location\n</button>",
+    "tags": [
+      "official-expression-md",
+      "of"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.113Z",
+    "updated_at": "2025-05-22T15:38:26.113Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">"
+    ]
+  },
+  {
+    "id": "8249854a-a7d9-43dc-ad9a-246ced0d9c78",
+    "name": "comparison-operator",
+    "description": "Many comparison operators are similar to comparison operators in javascript. In addition to the usual comparison operators, hyperscript includes the english terms is and is not for == and != respectively.\nThe really modifier switches a comparison to use === or !==, depending on what it modifies.\nHyperscript also includes four additional operations, match, contain, include, exists and various syntaxes depending on what is being tested against. match will test if the left hand side matches the CSS query or Regular Expression string.  contains will test if the left hand side contains OR includes the right hand side (invoking contains() or includes()).  includes is identical to contains.  exist test if the left hand sideis not null and, if it is a collection of elements, it contains any elements.\nThe is in test effectively flips the left hand side and right hand side of the contains comparison.\nYou can also test if a value exists or not using the is empty and is not empty comparisons. Hyperscript considers \"empty\" values to be undefined, null, empty strings, and zero length arrays and objects. This works in the same way as the no expression.",
+    "syntax_canonical": "<div\n  _=\"on click if <button/>.length > 1\n                   log 'found multiple buttons!'\"\n>\n  Find buttons\n</div>\n\n<div\n  _=\"on click if I match .active\n                   log 'I'm active!'\"\n>\n  Check if active\n</div>",
+    "tags": [
+      "official-expression-md",
+      "comparison-operator"
+    ],
+    "notes": "Finally, you can test if a value is of a given type with the is a form\nNote that all comparison operators have the same precedence, but if multiple distinct operators are used theexpression must be parenthesized to avoid ambiguity.",
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.113Z",
+    "updated_at": "2025-05-22T15:38:26.113Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">"
+    ]
+  },
+  {
+    "id": "46f41bcb-6cb2-488a-ac41-b08ae3cdbf14",
+    "name": "time-expression",
+    "description": "The time expression can be used in some commands to express a number of milliseconds in a clearer manner.\nIf the numeric value is followed by s or seconds the number will be multiplied by 1000",
+    "syntax_canonical": "<div _=\"on click wait 2s then log 'hello world'\">Hello World!</div>",
+    "tags": [
+      "official-expression-md",
+      "time-expression"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.113Z",
+    "updated_at": "2025-05-22T15:38:26.113Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">",
+      "or"
+    ]
+  },
+  {
+    "id": "5b813e51-89e9-4ae7-ae97-0c90cad87190",
+    "name": "me",
+    "description": "Most hyperscript features run within the context of an HTML element.  For example, <div _=\"on click ...\"> is an event handler that runs in the context of the <div> that contains it.  Within these scripts, you can use the me expression as a link back to their associated HTML element.\nFor possessive expressions, my will also work, as in my property instead of me.property.",
+    "syntax_canonical": "<button data-script=\"on click put 'I have been clicked' into me\">\n    click me\n    </button>",
+    "tags": [
+      "official-expression-md",
+      "me"
+    ],
+    "notes": "This uses the put command to update the contents of the associated element.\nThis uses a possessive expression and an attribute reference to display a custom message.\nThis demonstrates the possessive expression along with the increment command to makes a simple click counter.",
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.113Z",
+    "updated_at": "2025-05-22T15:38:26.113Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "-",
+      "/",
+      "=",
+      "<",
+      ">"
+    ],
+    "example_usage": [
+      "<div data-script=\"on click increment my innerHTML\">1</div>",
+      "k tell <p/> in me\n              ",
+      "oo', 'bar') on me\">\n  Set foo to",
+      ": \"Don't click me!\" } on me\">\n  ",
+      "value } to document.body\"\n/>\n\n<b",
+      "ed!</em>' into me\">Click Me!</di",
+      "e result after me\n              ",
+      "iv _=\"on click measure me then l",
+      "n click remove me\">Remove Me!</d",
+      " 0 then remove me\">\n  Fade then ",
+      "\n           js(me, text)\n       ",
+      "ocket.rpc.increment(41) then put",
+      "- a 5 second timeout -->\n<button",
+      "ttp://server-name/record-updater",
+      "n click remove me\n\"\n>\n  Click to",
+      "k\n      remove me\n    end\n  end\n",
+      " to get rid of me</div>",
+      "utton to close me\n</div>",
+      "        remove me\n    end\n  end\n",
+      "emoveButton to me\n    end\n\n    o",
+      "            if me.checked Miner.",
+      "inc\n\tlog \"Increment\"\n\tincrement ",
+      "\"Mutated\" into me'></div>",
+      "t('You clicked me!')\">Click Me!<",
+      "d @disabled to me\n    fetch /exa"
+    ]
+  },
+  {
+    "id": "0fe565f7-c8c6-4e60-b5b7-a00147f2db10",
+    "name": "relative-positional",
+    "description": "Relative positional expressions allow you to select an element relative to another element in the DOM, using thenext and previous keywords.  The command will scan forward (next) or backwards (previous) in a linear depth-firstwalk over the DOM, including elements adjacent to parent elements.\nYou can use the from clause to start the linear forward search from another element.  The default element to startthe search from is the current element that the script is on.\nYou can use the within clause to restrict the search to a given subset of the DOM.  The default is the entire document.\nYou can have the search wrap around by adding the with wrapping clause at the end of the expression.\nThese expressions can be used, for example, to create a custom focus ring.",
+    "syntax_canonical": "<button _=\"on click toggle .hidden on the next <div/>\">Toggle Hidden</button>\n<div class=\"hidden\">\n  ...\n</div>",
+    "tags": [
+      "official-expression-md",
+      "relative-positional"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.114Z",
+    "updated_at": "2025-05-22T15:38:26.114Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">"
+    ]
+  },
+  {
+    "id": "4aa512b3-5747-4ccb-bb8a-5118b093bb62",
+    "name": "cookies",
+    "description": "The cookies symbol is not a proper expression, but rather a value assigned, by default, to the cookies symbol.  Thisvalue presents a better API than the standard document.cookieAPI, making cookies work more like window.localStorage\nThe API of the cookies symbol is as follows:\nIn addition to this, the cookies symbol can be iterated over:\nYou can also assign a simple javascript object to a given cookie name in order to pass values forspecialized attributes like expires:\nThe attributes of the the javascript object will be interpreted as follows:\nvalue will be the value of the cookie\nAll other properties will be kebab-cased from camel case and set as part of the cookie string, as specified here.",
+    "syntax_canonical": "for c in cookies\n      log c.name, c.value\n    end",
+    "tags": [
+      "official-expression-md",
+      "cookies"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.114Z",
+    "updated_at": "2025-05-22T15:38:26.114Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "or",
+      "-"
+    ],
+    "example_usage": [
+      "<button _=\"on click set cookies.hello to 'world'\">\n    Set the cookie 'hello' to 'world'!\n</button>"
+    ]
+  },
+  {
+    "id": "ee3ec4e0-0836-4cb2-b57c-68925d3b471c",
+    "name": "you",
+    "description": "The you reference is available within the tell command as a reference to current node being acted upon.\nMost hyperscript features run within the context of an HTML element.  For example, <div _=\"on click ...\"> is an event handler that runs in the context of the <div> that contains it.  Within these scripts, you can use the me expression as a link back to their associated HTML element.\nIf it makes the code more readable in English, yourself can be used as an alias.\nFor possessive expressions, your will also work, as in my property instead of me.property.",
+    "syntax_canonical": "tell <p/>\n    append \"some value\" to you\nend",
+    "tags": [
+      "official-expression-md",
+      "you"
+    ],
+    "notes": "This uses the append command to update the contents of every <p> tag.\nThis uses the remove command to remove all elements with the disabled=true property\nThis uses a possessive expression to decrement the value of every element targeted",
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.114Z",
+    "updated_at": "2025-05-22T15:38:26.114Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "<",
+      ">",
+      "=",
+      "is"
+    ],
+    "example_usage": [
+      "tell <.counter/>\n    increment your value"
+    ]
+  },
+  {
+    "id": "bb879e69-aa62-4f64-b29d-a49b57e582ec",
+    "name": "no",
+    "description": "The no operator returns true if the value of the expression is null, undefined oran object of length 0 (an empty string or array). You can also accomplish thissame task using the is empty and is not empty comparisons operators.",
+    "syntax_canonical": "<div\n  _=\"on click\n          if no .tabs log 'No tabs found!'\"\n>\n  Check for Tabs\n</div>",
+    "tags": [
+      "official-expression-md",
+      "no"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.114Z",
+    "updated_at": "2025-05-22T15:38:26.114Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">",
+      "or"
+    ]
+  },
+  {
+    "id": "e13c709b-66f6-454c-9eb4-7bb7c947634c",
+    "name": "class-reference",
+    "description": "The class reference expression uses a syntax from CSS selectors to reference all elements with a given class. It typicallyevaluates to a NodeList of all matching classes, unless it is used as theright hand side of an assignment.",
+    "syntax_canonical": "<div _=\"on click add .clicked\">Add the .clicked class to me!</div>\n\n<div _=\"on click log .clicked\">\n  Log all elements with the clicked class on it in the DOM\n</div>",
+    "tags": [
+      "official-expression-md",
+      "class-reference"
+    ],
+    "notes": ".<class name>",
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.114Z",
+    "updated_at": "2025-05-22T15:38:26.114Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "/",
+      "=",
+      "<",
+      ">"
+    ]
+  },
+  {
+    "id": "efed57ad-c7e8-42f8-bd11-293b85c87286",
+    "name": "possessive",
+    "description": "The possessive expression can be used in places to more clearly express intent when compared with the more typical. operator.\nThe possessive expression can also be used to get and set attributes of an element in the DOM",
+    "syntax_canonical": "<div _=\"on click set the window's location to 'https://duck.com'\">\n  Go to Duck Duck Go\n</div>\n<div\n  data-demo=\"Here is some data...\"\n  _=\"on click put my attribute data-demo into me\"\n>\n  Replace Me w/ Attribute Data\n</div>",
+    "tags": [
+      "official-expression-md",
+      "possessive"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.115Z",
+    "updated_at": "2025-05-22T15:38:26.115Z",
+    "elementType": "Expression",
+    "category": "Arithmetic",
+    "operators": [
+      "-",
+      "/",
+      "=",
+      "<",
+      ">",
+      "is"
+    ]
+  }
+]

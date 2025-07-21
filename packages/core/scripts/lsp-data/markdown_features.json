@@ -1,0 +1,178 @@
+[
+  {
+    "id": "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+    "name": "set",
+    "description": "The set feature allows you to set an element scoped variable to a value.  When used as a top-level feature, onlyelement-scoped variables are supported.\nSee the set command for more information.",
+    "syntax_canonical": "set <expression> to <expression>",
+    "tags": [
+      "official-feature-md",
+      "set"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.104Z",
+    "updated_at": "2025-05-22T15:38:26.104Z",
+    "elementType": "Feature"
+  },
+  {
+    "id": "9e535a0d-c3ef-44ed-a5fc-1915a1580b18",
+    "name": "socket",
+    "description": "Note: if you want the socket feature, you must either use the \"Whole 9 Yards\" release of hyperscript, or include the /dist/socket.js file.\n<br/>\nsocket-name is a name for the socket. This is available in the current hypertext scope and exposes additional data about the browser WebSocket object.\nsocket-url is the address that the socket is connected to. Schemes like ws or wss can optionally be specified (like in socket MySocket ws://myserver.com/example). If not specified, hyperscript defaults to add the location's scheme-type, host and port (like in socket MySocket /example).\nwith timeout <time expr> allows you to set a default timeout for RPC calls.\non message is an optional message handler body that can be run when messages are received. The message symbolwill be set to the message value. The optional as json modifier will convert the message to json before runningthe handler.\nWeb Sockets provide a mechanism for two-way communicationbetween a browser client and a server. Hyperscript provides a simple way to create them, as well as a simpleRemote Procedure Call (RPC) mechanism layered on top of them.",
+    "syntax_canonical": "socket <socket-name> <socket-url> [with timeout <time expr>]\n    [on message [as json] <command-list>]",
+    "tags": [
+      "official-feature-md",
+      "socket"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.104Z",
+    "updated_at": "2025-05-22T15:38:26.104Z",
+    "elementType": "Feature",
+    "example_usage": [
+      "socket MySocket ws://myserver.com/example\n  on message as json\n    log message\nend",
+      "send myMessage(foo: \"bar\", doh: 42) to MySocket",
+      "<button\n  _=\"on click call MySocket.rpc.increment(41) then put the result into me\"\n>\n  Get the answer...\n</button>",
+      "<!-- a 5 second timeout -->\n<button\n  _=\"on click call MySocket.rpc.timeout(5000).increment(41) then put the result into me\"\n>\n  Get the answer...\n</button>\n\n<!-- no timeout -->\n<button\n  _=\"on click call MySocket.rpc.noTimeout.increment(41) then put the result into me\"\n>\n  Get the answer...\n</button>"
+    ]
+  },
+  {
+    "id": "01de0725-8df6-450d-a62f-485842dee189",
+    "name": "init",
+    "description": "The init keyword allows you to run some hyperscript when an element initializes.  By default, it will execute afterall features have been evaluated.  If you add the immediately modifier, it will run immediately, which can be usefulfrom a timing perspective, but note that features defined after the init (e.g. functions) will not be available.",
+    "syntax_canonical": "init [immediately]\n  {<command>}\nend",
+    "tags": [
+      "official-feature-md",
+      "init"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.105Z",
+    "updated_at": "2025-05-22T15:38:26.105Z",
+    "elementType": "Feature",
+    "example_usage": [
+      "<div _=\"init wait 2s then add .explode\">\n  This div will explode after 2 seconds...\n</div>"
+    ]
+  },
+  {
+    "id": "4451761c-9f45-4216-b71e-86fdd8787494",
+    "name": "event-source",
+    "description": "Note: if you want the event source feature, you must either use the \"Whole 9 Yards\" release of hyperscript, or include the /dist/eventsource.js file.\nServer Sent Events are a simple way for your web server to push information directly to your clients that is supported by all modern browsers. They provide real-time, uni-directional communication from your server to a browser. Server Sent Events cannot sent information back to your server. If you need two-way communication, consider implementing WebSockets instead.\nSSE connections can require substantial work to set up and maintain. For example, browsers are supposed to reconnect to a failed SSE stream automatically, but their behavior differs. Hyperscript manages everything for you, and reconnects connections that have failed, so your code only has to handle incoming messages.\nThe SSE specification requires that every event listener must declare a specific event name that it will listen to. There is no ability to designate a \"catch all\" handler for any unnamed events. This means that you will need to know exactly what event names are being sent, and will need to write specific event handlers for each one.",
+    "syntax_canonical": "eventsource ChatUpdates from http://myserver.com/chat-updates\n\n  on newMessage as json\n    log it\n  end\n\n  on updateMessage as json\n    log it\n  end\n\nend",
+    "tags": [
+      "official-feature-md",
+      "event-source"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.105Z",
+    "updated_at": "2025-05-22T15:38:26.105Z",
+    "elementType": "Feature",
+    "example_usage": [
+      "eventsource demo from http://server/demo\n\n    on message as string\n        put it into #div\n    end\n\n    on open\n        log \"connection opened.\"\n    end\n\n    on close\n        log \"connection closed.\"\n    end\n\n    on error\n        log \"handle error here...\"\n    end\n\nend",
+      "-- define the SSE EventSource\neventsource UpdateServer from http://server/updates\n    on message\n        log it\n    end\nend\n\n-- elsewhere in your code, listen for the \"cancelGoAway\" message, then disconnect\non cancelGoAway from UpdateServer\n    log \"received cancel message from server\"\n    call UpdateServer.close()\nend",
+      "eventsource DynamicServer\n    on message as json\n        log it\n    end\nend\n\n-- somewhere else in your code\nDynamicServer.open(\"test.com/test1.sse\") -- creates a new connection to this URL\n\nDynamicServer.open(\"test.com/test2.sse\") -- automatically closes the first connection\nDynamicServer.close()\n\nDynamicServer.open(\"test.com/test3.sse\") -- reconnects to a different endpoint.",
+      "<script type=\"text/hyperscript\">\n  eventsource recordUpdater from http://server-name/record-updater\n\n      on message as json\n          put it.name into #name\n          put it.username into #username\n          put it.email into #email\n          log me\n      end\n\n  end\n</script>\n\n<div>\n  <button script=\"on click call recordUpdater.open()\">Connect</button>\n  <button script=\"on click call recordUpdater.close()\">Disconnect</button>\n</div>\n\n<h3>Real-Time Record</h3>\n<div>Name: <span id=\"name\">...</span></div>\n<div>Username: <span id=\"username\">...</span></div>\n<div>Email: <span id=\"email\"></span></div>"
+    ]
+  },
+  {
+    "id": "0b099734-2352-48b2-b2ae-50ce9b68c928",
+    "name": "behavior",
+    "description": "Behaviors allow you to bundle together some hyperscript code (that would normally go in the _ attribute of an element) so that it can be \"installed\" on any other.\nFor instance, consider this disappearing div:\nThis revolutionary UI technology impresses the client, and they come to you with a list of other components that they would like to be Removable™. Do you copy this code to each of those elements? That would work, but is not ideal, since\nThis code is highly experimental, you'd like to be able to change it in just one place.\nYour boss is considering licensing the Removable™ tech to other companies.\nTo remedy this, you can define a behavior:\n<!-- I've never actually had a job, so I'm just imitating stories from techtalks. This is what the industry is like, right? -->\nand install it in your elements:\nSo far, so good! Until you come across this:\nHow do we implement this? We could create a new behavior, but we'd have to duplicate our highly sophisticated logic. Thankfully, behaviors can accept arguments:",
+    "syntax_canonical": "behavior <name>(<parameter list>)\n  {<hyperscript>}\nend",
+    "tags": [
+      "official-feature-md",
+      "behavior"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.106Z",
+    "updated_at": "2025-05-22T15:38:26.106Z",
+    "elementType": "Feature",
+    "example_usage": [
+      "<div\n  _=\"\n  on click remove me\n\"\n>\n  Click to get rid of me\n</div>",
+      "<script type=\"text/hyperscript\">\n  behavior Removable\n    on click\n      remove me\n    end\n  end\n</script>",
+      "<div _=\"install Removable\">Click to get rid of me</div>",
+      "<div class=\"banner\">\n  <button id=\"close-banner\"></button>\n  Click the button to close me\n</div>",
+      "<script type=\"text/hyperscript\">\n  behavior Removable(removeButton)\n    on click from removeButton\n        remove me\n    end\n  end\n</script>",
+      "<div class=\"banner\" _=\"install Removable(removeButton: #close-banner)\">...</div>",
+      "<script type=\"text/hyperscript\">\n  behavior Removable(removeButton)\n    init\n      if no removeButton set the removeButton to me\n    end\n\n    on click from removeButton\n      remove me\n    end\n  end\n</script>",
+      "<script type=\"text/hyperscript\" src=\"/behaviors._hs\"></script>\n<script src=\"https://unpkg.com/hyperscript.org\"></script>"
+    ]
+  },
+  {
+    "id": "b76abd9b-b466-4e17-ac24-87b6c54d4945",
+    "name": "worker",
+    "description": "Note: if you want the worker feature, you must either use the \"Whole 9 Yards\" release of hyperscript, or include the /dist/workers.js file.\n_hyperscript allows you to create Web Workers whose functions are exposed to the main thread.\nAny function declarations (declared with def) will be exposed on the main thread, so the above worker can be invoked as Incrementer.increment(4) in either _hyperscript or JavaScript. The body of the function will then run in the worker and the result returned asynchronously to the main thread. As a result, the worker feature can be used to perform calculations in a non-blocking way, and although these worker functions return promises, _hyperscript's [async-transparent] nature means we can call it as if it were synchronous. In summary:\nFunctions are declared in workers\nThey can be called from the main thread just like normal functions\nThey return promises\nWhen calling worker functions from _hyperscript code, you don't need to worry about this fact\nBecause it runs in a Web Worker, the code inside a worker body cannot access the DOM or the window global scope. It also can't access scripts included in the main thread, which is what the external-scripts feature is for. URLs passed in as external scripts, if relative, need to be relative to the HTML document which spawns the worker.",
+    "syntax_canonical": "worker Incrementer\n  js\n    function _increment(n) { return n + 1 }\n  end\n  def increment(n) return _increment(n) end\nend",
+    "tags": [
+      "official-feature-md",
+      "worker"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.106Z",
+    "updated_at": "2025-05-22T15:38:26.106Z",
+    "elementType": "Feature",
+    "example_usage": [
+      "<script type=\"text/hyperscript\">\n  worker Miner(\"/scripts/mine-crypto.js\")\n  \tjs\n  \t\tvar miner = new CryptoMiner();\n  \t\treturn { miner }\n  \tend\n\n  \tdef startMining() miner.start() end\n  \tdef stopMining() miner.stop() end\n  end\n</script>\n\n<label>\n  <input\n    type=\"checkbox\"\n    _=\"on change\n                            if me.checked Miner.startMining()\n                            else Miner.stopMining()\"\n  />\n  Disable ads <small>and enable cryptocurrency mining</small>\n</label>"
+    ]
+  },
+  {
+    "id": "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+    "name": "on",
+    "description": "Event handlers are used to handle events with hyperscript. They are typically embedded directly on the element thatis responding to the event.\nIf the every prefix is used, the event handler will not be synchronized (see queueing below.)\nThe event-name can be a symbol, a dot-separated symbol or a string that names the event. The most obvious eventsof interest are are standard HTML DOM events such as click,focus/blur, change, etc. There are many, many standard browser events thatmay be of interest depending on what you are trying to build. You may also wish to define your own events for higher level abstractions.\nThe optional param-list is a comma separated list of parameter names. Parameters will be set from properties directlyon the event or in the details property.\nThe optional filter is a boolean expression that will filter the event. Symbols in the expression will be resolvedagainst the event first, then against the global scope.\nThe optional count is a count filter with a value of either a specific number, a range or an unbounded start:",
+    "syntax_canonical": "on [every] <event-name>[(<param-list>)][\\[<filter>\\]] [<count>] [from <expr>] [<debounce> | <throttle>]\n   { or [every] <event-name>[(<param-list>)][\\[<filter>\\]] [<count>] [from <expr>] [<debounce> | <throttle>] }\n    [queue (all | first | last | none)]\n    {<command>}\n[end]",
+    "tags": [
+      "official-feature-md",
+      "on"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.107Z",
+    "updated_at": "2025-05-22T15:38:26.107Z",
+    "elementType": "Feature",
+    "example_usage": [
+      "on click 1\n  on click 2 to 10\n  on click 11 and on",
+      "<div _=\"on click or touchstart fetch /example then put it into my innerHTML\">\n  Fetch it...\n</div>",
+      "<div _=\"on anEvent(foo) log foo\">Log Foo</div>",
+      "<div _=\"on anEvent log event.detail.foo\">Log Foo</div>",
+      "Count: <output _=\"\non click from #inc\n\tlog \"Increment\"\n\tincrement my textContent\ninit\n\tremove me\n\">0</output>\n\n<!--After the <output/> is removed, clicking this will not log anything to\n\tthe console-->\n<button id=\"inc\">Increment</button>",
+      "<div\n  _=\"on click call mightThrow()\n        on exception(error) log error\"\n>\n  Click Me!\n</div>",
+      "<div _='on mutation of @foo put \"Mutated\" into me'></div>",
+      "<img\n  _=\"on intersection(intersecting) having threshold 0.5\n         if intersecting transition opacity to 1\n         else transition opacity to 0 \"\n  src=\"https://placebear.com/200/300\"\n/>",
+      "<div _=\"on click call alert('You clicked me!')\">Click Me!</div>\n\n<div\n  _=\"on mouseenter add .visible to #help end\n        on mouseleave remove .visible from #help end\"\n>\n  Mouse Over Me!\n</div>\n<div id=\"help\">I'm a helpful message!</div>"
+    ]
+  },
+  {
+    "id": "d68eb363-2df6-47aa-922c-56790e2ac8c2",
+    "name": "js",
+    "description": "Note: This page is about the top-level JS feature. _hyperscript also supports inline JS as a command, say, inside an event listener or function.\nTop-level JavaScript can be used in a <script type=text/hyperscript> block, as shown:\nfunction declarations inside a JS block will be exposed to the global scope (let, var, const declarations will not be exposed). As a result, this function can then be used in _hyperscript code:\nIf you don't want to expose all the functions, return an object containing those that you do want to expose:\njs blocks can also be placed in workers:\nthis inside a js block is the global scope (window, or self in workers).\n{% include \"js_end.md\" %}",
+    "syntax_canonical": "js\n    function regexFind(re, group, str) {\n        return new RegExp(re).exec(str)[group];\n    }\n\n    return { regexFind };\nend",
+    "tags": [
+      "official-feature-md",
+      "js"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.107Z",
+    "updated_at": "2025-05-22T15:38:26.107Z",
+    "elementType": "Feature",
+    "example_usage": [
+      "<input\n  type=\"text\"\n  _=\"\n    on input call regexFind('(.*)\\+.*@.*', 1, my.value\"\n/>",
+      "js\n    function regexExec(re, str) {\n        return new RegExp(re).exec(str);\n    }\n\n    function regexFind(re, group, str) {\n        return regexExec(re, str)[group];\n    }\n\n    return { regexFind };\nend",
+      "worker MyWorker\n    js\n        function _regexFind(re, group, str) {\n            return new RegExp(re).exec(str)[group];\n        }\n    end\n    def regexFind(re, group, str) return _regexFind(re, group, str) end"
+    ]
+  },
+  {
+    "id": "d924a644-a6c1-42b1-8677-3aca76daa63d",
+    "name": "def",
+    "description": "The def keyword allows you to define functions in hyperscript. It consists of a function name, a parameter listand a body with an optional catch and/or an optional finally block.\nThe body of the function is a list of commands, optionally separated by the then keyword.\nFunctions are typically placed in script tags:\nYou may also namespace functions by giving them a dot separated namespace\nFunctions may be invoked from both hyperscript or javascript. However, in javascript, an asynchronous function willreturn a promise that must be dealt with explicitly.\nValues may be returned with the return command. If the function is synchronous, the value will be returned as normaland if it is asynchronous, the promise will be resolved. The hyperscript runtime hides this difference when thefunction is invoked within hyperscript.\nExceptions may be thrown with the throw command. If the function is synchronous, the exception will be thrown as normaland if it is asynchronous, the promise will be rejected. The hyperscript runtime hides this difference when thefunction is invoked within hyperscript.",
+    "syntax_canonical": "def <function name>(<parameter list>)\n  {<command>}\n[catch <identifier>\n  {<command>}]\n[finally\n  {<command>}]\nend",
+    "tags": [
+      "official-feature-md",
+      "def"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.107Z",
+    "updated_at": "2025-05-22T15:38:26.107Z",
+    "elementType": "Feature",
+    "example_usage": [
+      "<script type=\"text/hyperscript\">\n  def delayTheAnswer()\n    wait 2s\n    return 42\n  end\n</script>",
+      "<script type=\"text/hyperscript\">\n  def utils.delayTheAnswer()\n    wait 2s\n    return 42\n  end\n</script>",
+      "<script type=\"text/hyperscript\">\n  def delayTheAnswer()\n    wait 2s\n    throw \"Nope!\"\n  catch e\n    return e\n  end\n</script>",
+      "def loadExample ()\n    add @disabled to me\n    fetch /example\n    put the result after me\n  finally\n    remove @disabled from me\n  end"
+    ]
+  }
+]

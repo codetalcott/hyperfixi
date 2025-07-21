@@ -253,6 +253,12 @@ export class ExpressionEvaluator {
           // This might be a command-selector pattern, return both values
           return { command: leftValue, selector: rightValue };
         }
+        
+        // Special case: command identifier + selector node
+        if (left.type === 'identifier' && right.type === 'selector') {
+          return { command: left.name, selector: right.value };
+        }
+        
         return rightValue;
       
       default:

@@ -12,6 +12,8 @@ import type {
 } from '../types/core.js';
 
 import { ExpressionEvaluator } from '../core/expression-evaluator.js';
+import { PutCommand } from '../commands/dom/put.js';
+import { SetCommand } from '../commands/data/set.js';
 
 export interface RuntimeOptions {
   enableAsyncCommands?: boolean;
@@ -22,6 +24,8 @@ export interface RuntimeOptions {
 export class Runtime {
   private options: RuntimeOptions;
   private expressionEvaluator: ExpressionEvaluator;
+  private putCommand: PutCommand;
+  private setCommand: SetCommand;
   
   constructor(options: RuntimeOptions = {}) {
     this.options = {
@@ -32,6 +36,8 @@ export class Runtime {
     };
     
     this.expressionEvaluator = new ExpressionEvaluator();
+    this.putCommand = new PutCommand();
+    this.setCommand = new SetCommand();
   }
 
   /**
@@ -48,13 +54,46 @@ export class Runtime {
         
         default:
           // For all other node types, use the expression evaluator
-          return await this.expressionEvaluator.evaluate(node, context);
+          const result = await this.expressionEvaluator.evaluate(node, context);
+          
+          // Check if the result is a command-selector pattern from space operator
+          if (result && typeof result === 'object' && result.command && result.selector) {
+            return await this.executeCommandFromPattern(result.command, result.selector, context);
+          }
+          
+          return result;
       }
     } catch (error) {
       if (this.options.enableErrorReporting) {
         console.error('Runtime execution error:', error);
       }
       throw error;
+    }
+  }
+
+  /**
+   * Execute a command from a command-selector pattern (e.g., "add .active")
+   */
+  private async executeCommandFromPattern(command: string, selector: string, context: ExecutionContext): Promise<any> {
+    // For add/remove class commands, pass the selector string directly
+    // For other commands, we might need different handling
+    switch (command.toLowerCase()) {
+      case 'add':
+        return this.executeAddCommand([selector], context);
+      case 'remove':
+        return this.executeRemoveCommand([selector], context);
+      case 'hide':
+        return this.executeHideCommand([selector], context);
+      case 'show':
+        return this.executeShowCommand([selector], context);
+      default:
+        // For unknown commands, create a proper command node
+        const commandNode: CommandNode = {
+          type: 'command',
+          name: command,
+          args: [{ type: 'literal', value: selector }]
+        };
+        return await this.executeCommand(commandNode, context);
     }
   }
 
@@ -86,10 +125,10 @@ export class Runtime {
         return this.executeRemoveCommand(evaluatedArgs, context);
       
       case 'put':
-        return this.executePutCommand(evaluatedArgs, context);
+        return await this.executePutCommand(evaluatedArgs, context);
       
       case 'set':
-        return this.executeSetCommand(evaluatedArgs, context);
+        return await this.executeSetCommand(evaluatedArgs, context);
       
       default:
         throw new Error(`Unknown command: ${name}`);
@@ -230,6 +269,11 @@ export class Runtime {
         // Remove leading dot if present
         const className = arg.startsWith('.') ? arg.slice(1) : arg;
         target.classList.add(className);
+      } else if (Array.isArray(arg)) {
+        // Handle element arrays from selector evaluation - extract class name from original selector
+        // This case occurs when selector nodes are evaluated to elements
+        // For add/remove class operations, we need the class name, not the elements
+        console.warn('Add command received element array instead of class name');
       }
     });
   }
@@ -255,43 +299,17 @@ export class Runtime {
   /**
    * Execute put command (set content)
    */
-  private executePutCommand(args: any[], context: ExecutionContext): void {
-    if (args.length < 3) {
-      throw new Error('Put command requires value, "into", and target');
-    }
-    
-    const value = args[0];
-    const intoKeyword = args[1]; // Should be "into"
-    const target = args[2];
-    
-    if (target instanceof HTMLElement) {
-      target.textContent = String(value);
-    }
+  private async executePutCommand(args: any[], context: ExecutionContext): Promise<void> {
+    // Use the new PutCommand class for proper implementation
+    return this.putCommand.execute(context, ...args);
   }
 
   /**
    * Execute set command (set variables)
    */
-  private executeSetCommand(args: any[], context: ExecutionContext): void {
-    if (args.length < 3) {
-      throw new Error('Set command requires variable, "to", and value');
-    }
-    
-    const variableName = args[0];
-    const toKeyword = args[1]; // Should be "to"
-    const value = args[2];
-    
-    // Set context variable
-    if (variableName === 'result') {
-      context.result = value;
-    } else if (variableName === 'it') {
-      context.it = value;
-    } else {
-      if (!context.variables) {
-        context.variables = new Map();
-      }
-      context.variables.set(variableName, value);
-    }
+  private async executeSetCommand(args: any[], context: ExecutionContext): Promise<void> {
+    // Use the new SetCommand class for proper implementation
+    return this.setCommand.execute(context, ...args);
   }
 
   /**

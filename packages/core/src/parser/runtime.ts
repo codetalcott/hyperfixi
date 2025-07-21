@@ -168,7 +168,12 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       return logicalExpressions.strictNotEquals.evaluate(context, left, right);
       
     case 'as':
-      return conversionExpressions.as.evaluate(context, left, right);
+      // For 'as' conversion, right operand should be a string type name
+      const typeName = typeof right === 'string' ? right : 
+                      right?.type === 'identifier' ? right.name :
+                      right?.type === 'literal' ? right.value :
+                      String(right);
+      return conversionExpressions.as.evaluate(context, left, typeName);
       
       
     case 'contains':

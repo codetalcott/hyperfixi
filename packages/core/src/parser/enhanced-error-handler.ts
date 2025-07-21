@@ -245,6 +245,29 @@ export class EnhancedErrorHandler {
   }
 
   /**
+   * Advance to next position
+   */
+  advance(): void {
+    if (this.position < this.tokens.length - 1) {
+      this.position++;
+    }
+  }
+
+  /**
+   * Set position to specific index
+   */
+  setPosition(position: number): void {
+    this.position = Math.max(0, Math.min(position, this.tokens.length - 1));
+  }
+
+  /**
+   * Get current position
+   */
+  getPosition(): number {
+    return this.position;
+  }
+
+  /**
    * Get current token for error reporting
    */
   private getCurrentToken(): Token {

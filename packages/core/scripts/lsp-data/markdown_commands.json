@@ -1,0 +1,693 @@
+[
+  {
+    "id": "8462b2da-f21f-457d-a8ec-41054afbd39e",
+    "name": "throw",
+    "description": "The throw command throws an exception.",
+    "syntax_canonical": "throw <expression>",
+    "tags": [
+      "official-command-md",
+      "throw"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.078Z",
+    "updated_at": "2025-05-22T15:38:26.078Z",
+    "elementType": "Command",
+    "purpose": "The throw command throws an exception.",
+    "example_usage": [
+      "<script type=\"text/hyperscript\">\n  def throwsIfTrue(value)\n    if value throw \"Yep!\"\n  end\n</script>"
+    ]
+  },
+  {
+    "id": "15dcf036-189e-4549-bef5-81f4b22c43c7",
+    "name": "take",
+    "description": "The take command allows you to take a class or an attribute from a set of elements (or all elements) and add it to the current element (or the targeted element).\nWhen using take with attributes, elements matching from expression will have their attributes with the same name removed regardless of value.You can specify a new value to be assigned instead via with clause (in this case the attribute will be added even if the element didn't have it originally).",
+    "syntax_canonical": "take <class-ref+ or attribute-ref [with <expression>]> [from <expression>] [for <expression>]",
+    "tags": [
+      "official-command-md",
+      "take"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.080Z",
+    "updated_at": "2025-05-22T15:38:26.080Z",
+    "elementType": "Command",
+    "purpose": "The take command allows you to take a class or an attribute from a set of elements (or all elements) and add it to the current element (or the targeted element).\nWhen using take with attributes, elements matching from expression will have their attributes with the same name removed regardless of value.You can specify a new value to be assigned instead via with clause (in this case the attribute will be added even if the element didn't have it originally).",
+    "example_usage": [
+      "<div _=\"on click take .active\">Activate Me!</div>\n\n<div _=\"on click take .active from .tab for the event's target\">\n  <a class=\"tab active\">Tab 1</a>\n  <a class=\"tab\">Tab 2</a>\n  <a class=\"tab\">Tab 3</a>\n</div>\n\n<div _=\"on click take [@aria-current=page] from .step for the event's 'target\">\n  <a class=\"step\">Step 1</a>\n  <a class=\"step\">Step 2</a>\n  <a class=\"step\">Step 3</a>\n</div>\n\n<div _=\"on click take [@aria-selected=true] with 'false' from .item for the event's 'target\">\n  <a class=\"item\">Option 1</a>\n  <a class=\"item\">Option 2</a>\n  <a class=\"item\">Option 3</a>\n</div>"
+    ]
+  },
+  {
+    "id": "2ec473a1-2ff0-46a0-899d-79905ed1444a",
+    "name": "hide",
+    "description": "The hide command allows you to hide an element in the DOM using various strategies. The default strategy is display.\nBy default, the following strategies are available:\ndisplay - toggle display between none and block\nvisibility - toggle visibility between hidden and visible\nopacity - toggle opacity between 0 and 1\nYou can change the default hide/show strategy by setting _hyperscript.config.defaultHideShowStrategy\nYou can add new hide/show strategies by setting new values into the _hyperscript.config.hideShowStrategies object.\nIn case you are using Tailwind CSS, you may want to use their utility classes.\nYou will have to set _hyperscript.config.defaultHideShowStrategy to one of this options :\ntwDisplay - add class hidden Display - Tailwind CSS\ntwVisibility - add class invisible Visibility - Tailwind CSS\ntwOpacity - add class opacity-0 Opacity - Tailwind CSS\nYou may also have to update your tailwind.config.js to add to the safe list the classes you need\nMore information here : Content Configuration - Tailwind CSS",
+    "syntax_canonical": "hide [target] [with <hide-show-strategy>[: <argument>]] [when <expr>]",
+    "tags": [
+      "official-command-md",
+      "hide"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.083Z",
+    "updated_at": "2025-05-22T15:38:26.083Z",
+    "elementType": "Command",
+    "purpose": "The hide command allows you to hide an element in the DOM using various strategies. The default strategy is display.\nBy default, the following strategies are available:\ndisplay - toggle display between none and block\nvisibility - toggle visibility between hidden and visible\nopacity - toggle opacity between 0 and 1\nYou can change the default hide/show strategy by setting _hyperscript.config.defaultHideShowStrategy\nYou can add new hide/show strategies by setting new values into the _hyperscript.config.hideShowStrategies object.\nIn case you are using Tailwind CSS, you may want to use their utility classes.\nYou will have to set _hyperscript.config.defaultHideShowStrategy to one of this options :\ntwDisplay - add class hidden Display - Tailwind CSS\ntwVisibility - add class invisible Visibility - Tailwind CSS\ntwOpacity - add class opacity-0 Opacity - Tailwind CSS\nYou may also have to update your tailwind.config.js to add to the safe list the classes you need\nMore information here : Content Configuration - Tailwind CSS",
+    "example_usage": [
+      "<div _=\"on click hide\">Hide Me!</div>\n\n<div _=\"on click hide with opacity\">Hide Me With Opacity!</div>\n\n<div _=\"on click hide #anotherDiv\">Hide Another Div!</div>",
+      "<div _=\"on click hide\">Hide Me!</div>\n\n<!-- Or by specifying the strategy name directly between : twDisplay, twVisibility, twOpacity -->\n<div _=\"on click hide with twOpacity\">Hide Me With Opacity!</div>"
+    ]
+  },
+  {
+    "id": "2aba6e29-3435-426d-921e-9a852c84fd09",
+    "name": "make",
+    "description": "The make command can be used to create class instances or DOM elements.\nIn the first form:\nis equal to the JavaScript new URL(\"/path/\", \"https://origin.example.com\").\nIn the second form:\nwill create an <a> element and add the class \"navlink\" to it. Currently, onlyclasses and IDs are supported.",
+    "syntax_canonical": "make (a|an) <expression> [from <arg-list>] [called <identifier>]\nmake (a|an) <query-ref>                    [called <identifier>]",
+    "tags": [
+      "official-command-md",
+      "make"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.083Z",
+    "updated_at": "2025-05-22T15:38:26.083Z",
+    "elementType": "Command",
+    "purpose": "The make command can be used to create class instances or DOM elements.\nIn the first form:\nis equal to the JavaScript new URL(\"/path/\", \"https://origin.example.com\").\nIn the second form:\nwill create an <a> element and add the class \"navlink\" to it. Currently, onlyclasses and IDs are supported.",
+    "example_usage": [
+      "make a URL from \"/path/\", \"https://origin.example.com\"",
+      "make an <a.navlink/>",
+      "def formatPizzaToppings(toppings)\n  make an Intl.ListFormat from \"en\", { type: \"conjunction\" }\n    called listFmt\n\n  for part in listFmt.formatToParts(toppings)\n    if the part's type is \"element\"\n      make a <span.topping/>\n      put the part's value into its textContent\n      append it to #toppings\n    else\n      append the part's value to #toppings\n    end\n  end"
+    ]
+  },
+  {
+    "id": "a43e4092-2981-40d2-87c4-f9e634a4302f",
+    "name": "tell",
+    "description": "The tell command can be used to temporarily change the default target for commands like add.\nWithin tell blocks, keywords you, your, and yourself can be used to identify the individual element being referenced.",
+    "syntax_canonical": "tell <expression>\n  <statements>\nend",
+    "tags": [
+      "official-command-md",
+      "tell"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.084Z",
+    "updated_at": "2025-05-22T15:38:26.084Z",
+    "elementType": "Command",
+    "purpose": "The tell command can be used to temporarily change the default target for commands like add.\nWithin tell blocks, keywords you, your, and yourself can be used to identify the individual element being referenced.",
+    "example_usage": [
+      "<div _=\"on click tell <p/> in me\n                   add .highlight -- adds the highlight class to each p\n                                  -- found in this element...\n                   log your textContent\n                 end \"\n>\n  Click to highlight paragraphs\n  <p>Hyperscript is cool!</p>\n  <p>Sure is!</p>\n</div>"
+    ]
+  },
+  {
+    "id": "4129dd02-6451-4b96-84af-c68c0cc0ab44",
+    "name": "go",
+    "description": "The go command allows you navigate on the page with various forms\ngo to url <stringLike> will navigate to the given URL. If the url starts with an anchor # it will instead updatethe windows href.\ngo to <modifiers> elt will scroll the element into view on the current page. You can pick the top, bottom, left, etc.by using modifiers, and you can pick the animation style with a following smoothly or instantly.\nAdditionally you can use a pixel-based offset to pad the scrolling by some amount since, annoyingly, the default behavior ofscrollIntoView() is to put the element right on the edge of the viewport.\nFinally, the go back form will navigate back in the history stack.",
+    "syntax_canonical": "go [to] url <stringLike> [in new window]\n go [to] [top|middle|bottom] [left|center|right] [of] <expression> [(+|-) <number> [px] ][smoothly|instantly]\n go back",
+    "tags": [
+      "official-command-md",
+      "go"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.084Z",
+    "updated_at": "2025-05-22T15:38:26.084Z",
+    "elementType": "Command",
+    "purpose": "The go command allows you navigate on the page with various forms\ngo to url <stringLike> will navigate to the given URL. If the url starts with an anchor # it will instead updatethe windows href.\ngo to <modifiers> elt will scroll the element into view on the current page. You can pick the top, bottom, left, etc.by using modifiers, and you can pick the animation style with a following smoothly or instantly.\nAdditionally you can use a pixel-based offset to pad the scrolling by some amount since, annoyingly, the default behavior ofscrollIntoView() is to put the element right on the edge of the viewport.\nFinally, the go back form will navigate back in the history stack.",
+    "example_usage": [
+      "<button _=\"on click go to url https://duck.com\">\n  Go Search\n</button>\n\n<button _=\"on click go to the top of the body\">\n  Go To The Top...\n</button>\n\n<button _=\"on click go to the top of #a-div -20px\">\n  Go To The Top Of A Div, with 20px of padding in the viewport\n</button>"
+    ]
+  },
+  {
+    "id": "68a74d44-8f1a-4081-8006-3a3a93d6a8f7",
+    "name": "pick",
+    "description": "This command has several forms:\nitem | items\ncharacter | characters\nmatch\nmatches\n{%syntax \"pick items at|from[[?]] from[[?]] [[start]] to [[end]] from [[array]] inclusive|exclusive[[?]]\"%}\n{%syntax \"pick item at[[?]] [...]\"%}\nSelects items from <var>array</var> using Array.slice. By default, it willinclude <var>start</var> but not <var>end</var>. You can use inclusive orexclusive to override this behavior. If <var>end</var> is omitted, it willreturn an array containing just one item.\nYou can use the keywords start or end for <var>start</var> and<var>end</var>, respectively.\n{%syntax \"pick characters [...]\"%}\n{%syntax \"pick character [...]\"%}\nSame as pick items, but for strings, using String.slice.\n{%syntax \"pick match of[[?]] [[regex]] | [[flags]][[?]] from [[string]]\"%}\nSelects the first match for the <var>regex</var> in the <var>string</var>.\n{%syntax \"pick matches of[[?]] [[regex]] | [[flags]][[?]] from [[string]]\"%}\nReturns an iterable of all matches for the <var>regex</var> in the<var>string</var>.",
+    "syntax_canonical": "set arr to [10, 11, 12, 13, 14, 15]\npick items 2 to 4 from arr\n--      it = [12, 13]\npick items 2 to 4 from arr inclusive\n--      it = [12, 13, 14]\npick items 2 to 4 from arr exclusive\n--      it = [13]",
+    "tags": [
+      "official-command-md",
+      "pick"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.087Z",
+    "updated_at": "2025-05-22T15:38:26.087Z",
+    "elementType": "Command",
+    "purpose": "This command has several forms:\nitem | items\ncharacter | characters\nmatch\nmatches\n{%syntax \"pick items at|from[[?]] from[[?]] [[start]] to [[end]] from [[array]] inclusive|exclusive[[?]]\"%}\n{%syntax \"pick item at[[?]] [...]\"%}\nSelects items from <var>array</var> using Array.slice. By default, it willinclude <var>start</var> but not <var>end</var>. You can use inclusive orexclusive to override this behavior. If <var>end</var> is omitted, it willreturn an array containing just one item.\nYou can use the keywords start or end for <var>start</var> and<var>end</var>, respectively.\n{%syntax \"pick characters [...]\"%}\n{%syntax \"pick character [...]\"%}\nSame as pick items, but for strings, using String.slice.\n{%syntax \"pick match of[[?]] [[regex]] | [[flags]][[?]] from [[string]]\"%}\nSelects the first match for the <var>regex</var> in the <var>string</var>.\n{%syntax \"pick matches of[[?]] [[regex]] | [[flags]][[?]] from [[string]]\"%}\nReturns an iterable of all matches for the <var>regex</var> in the<var>string</var>.",
+    "example_usage": [
+      "pick items from start to 4 from arr\n--      it = [10, 11, 12, 13]\npick items from 2 to end from arr\n--      it = [12, 13, 14, 15]\npick items from start to end from arr\n--      it = [10, 11, 12, 13, 14, 15]",
+      "set str to \"The quick brown fox jumps over the lazy dog.\"\npick match of \"the (\\w+)\" from str\nlog it[0] -- \"the lazy\"\nlog it[1] -- \"lazy\"\npick match of \"the (\\w+)\" | i from str\nlog it[0] -- \"The quick\"\nlog it[1] -- \"quick\"",
+      "set str to \"The quick brown fox jumps over the lazy dog.\"\npick match of \"the (\\w+)\" | i from str\nrepeat for match in result index i\n  log `${i}:`\n  log it[0] -- \"The quick\"\n  log it[1] -- \"quick\"\nend",
+      "0:\nThe quick\nquick\n1:\nthe lazy\nlazy"
+    ]
+  },
+  {
+    "id": "20a521c7-841e-462c-9388-ce457e99ff48",
+    "name": "default",
+    "description": "The default command defaults a variable or property to a given value.",
+    "syntax_canonical": "default <target> to <expr>",
+    "tags": [
+      "official-command-md",
+      "default"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.087Z",
+    "updated_at": "2025-05-22T15:38:26.087Z",
+    "elementType": "Command",
+    "purpose": "The default command defaults a variable or property to a given value.",
+    "example_usage": [
+      "-- default an attribute to a value\n    default @foo to 'bar'\n\n   -- default a variable to a value\n   default x to 10"
+    ]
+  },
+  {
+    "id": "9952d76e-37fd-4e55-b863-30fb39a9934a",
+    "name": "continue",
+    "description": "The continue command works inside any repeat block.  It exits the current iteration of the loop and begins at the top of the next iteration.",
+    "syntax_canonical": "continue",
+    "tags": [
+      "official-command-md",
+      "continue"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.087Z",
+    "updated_at": "2025-05-22T15:38:26.087Z",
+    "elementType": "Command",
+    "purpose": "The continue command works inside any repeat block.  It exits the current iteration of the loop and begins at the top of the next iteration.",
+    "example_usage": [
+      "repeat 3 times\n    append \"works \" to #message -- this command will execute\n    continue\n    append \"skipped \" to #message -- this command will be skipped\n end"
+    ]
+  },
+  {
+    "id": "d91d9640-20ba-4ccb-bd3a-eab3edcdd04c",
+    "name": "repeat",
+    "description": "The repeat command provides iteration in the hyperscript language. It is very flexible and supports many forms.\nIn every form you may assign a named value to the current iteration index by appending a index i to theloop specification.\nHere are examples of all the above forms:",
+    "syntax_canonical": "repeat for <identifier> in <expression> [index <identifier>] { <command> } end\nrepeat in <expression> [index <identifier>] { <command> } end\nrepeat while <expression> [index <identifier>] { <command> } end\nrepeat until <expression> [index <identifier>] { <command> } end\nrepeat until event <expression> [from <expression>] [index <identifier>] { <command> } end\nrepeat <number> times [index <identifier>] { <command> } end\nrepeat forever <expression> [index <identifier>] { <command> } end\nfor <identifier> in <expression> [index <identifier>]",
+    "tags": [
+      "official-command-md",
+      "repeat"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.088Z",
+    "updated_at": "2025-05-22T15:38:26.088Z",
+    "elementType": "Command",
+    "purpose": "The repeat command provides iteration in the hyperscript language. It is very flexible and supports many forms.\nIn every form you may assign a named value to the current iteration index by appending a index i to theloop specification.\nHere are examples of all the above forms:",
+    "example_usage": [
+      "-- the basic for loop\n  repeat for p in <p/>\n    add .example to p\n  end\n\n  -- syntactic sugar for the above\n  for p in <p/>\n    add .example to p\n  end\n\n  -- iterating over an array but without an explicit variable\n  -- instead the keyword it is used\n  repeat in <p/>\n    add .example to it\n  end\n\n  -- iterate while a condition is true\n  repeat while #div matches .active\n    put \"Still waiting.\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting..\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting...\" into #div.innerHTML\n  end\n\n  -- iterate until a condition is true\n  repeat until #div does not match .active\n    put \"Still waiting.\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting..\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting...\" into #div.innerHTML\n  end\n\n  -- iterate until an event 'stop' occurs\n  repeat until event stop\n    put \"Still waiting.\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting..\" into #div.innerHTML\n    wait 1s\n    put \"Still waiting...\" into #div.innerHTML\n  end\n\n  -- iterate five times\n  repeat 5 times\n    put \"Fun \" before end of #div.innerHTML\n  end\n\n  -- iterate forever\n  repeat forever\n    toggle .throb on #div\n    wait 1s\n  end"
+    ]
+  },
+  {
+    "id": "da375985-4bcf-4063-9d88-319a531cffba",
+    "name": "return",
+    "description": "The return command returns a value from a function in hyperscript or stops an event handler from continuing.\nYou may use the exit form to return no value.",
+    "syntax_canonical": "return <expression>\nexit",
+    "tags": [
+      "official-command-md",
+      "return"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.088Z",
+    "updated_at": "2025-05-22T15:38:26.088Z",
+    "elementType": "Command",
+    "purpose": "The return command returns a value from a function in hyperscript or stops an event handler from continuing.\nYou may use the exit form to return no value.",
+    "example_usage": [
+      "<script type=\"text/hyperscript\">\n  -- return the answer\n  def theAnswer()\n    return 42\n  end\n</script>"
+    ]
+  },
+  {
+    "id": "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+    "name": "if",
+    "description": "The if command provides the standard if-statement control flow.\nNote that a leading if on a separate line from an else statement will be treated as a nested if within the else:",
+    "syntax_canonical": "if <conditional> [then] <command-list> [(else | otherwise) <command-list>] end`",
+    "tags": [
+      "official-command-md",
+      "if"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.089Z",
+    "updated_at": "2025-05-22T15:38:26.089Z",
+    "elementType": "Command",
+    "purpose": "The if command provides the standard if-statement control flow.\nNote that a leading if on a separate line from an else statement will be treated as a nested if within the else:",
+    "example_usage": [
+      "...\nelse\n  if false   -- does not bind to the else on the previous line as an \"else if\"\n    log 'foo'\n  end\n  log 'bar'\nend",
+      "<div\n  _=\"on click if I do not match .disabled\n                   add .clicked\"\n>\n  Click Me!\n</div>"
+    ]
+  },
+  {
+    "id": "ee5e07a1-00c3-4fcd-bcb9-738936a0bcfd",
+    "name": "break",
+    "description": "The break command works inside any repeat block.  It exits the loop.",
+    "syntax_canonical": "break",
+    "tags": [
+      "official-command-md",
+      "break"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.089Z",
+    "updated_at": "2025-05-22T15:38:26.089Z",
+    "elementType": "Command",
+    "purpose": "The break command works inside any repeat block.  It exits the loop.",
+    "example_usage": [
+      "repeat 3 times\n    wait 2s\n    if my @value is not empty\n      break\n    end\n    append \"Value is still empty... <br/>\" to #message\n end"
+    ]
+  },
+  {
+    "id": "711c5e2e-6f12-4f17-9524-c5a22e25e228",
+    "name": "trigger",
+    "description": "See the send command documentation",
+    "tags": [
+      "official-command-md",
+      "trigger"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.089Z",
+    "updated_at": "2025-05-22T15:38:26.089Z",
+    "elementType": "Command",
+    "purpose": "See the send command documentation"
+  },
+  {
+    "id": "a6b33809-2356-4283-a816-6312da8d32f6",
+    "name": "async",
+    "description": "The async command you to execute a command or a block of commands asynchronously (they will not block hyperscript from continuingeven if they return a promise)",
+    "syntax_canonical": "async <command>\n\nasync do\n {command}\nend",
+    "tags": [
+      "official-command-md",
+      "async"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.090Z",
+    "updated_at": "2025-05-22T15:38:26.090Z",
+    "elementType": "Command",
+    "purpose": "The async command you to execute a command or a block of commands asynchronously (they will not block hyperscript from continuingeven if they return a promise)",
+    "example_usage": [
+      "<!--\n  here we spin off the fetch and put asynchronously and immediately\n  put a value into the button\n-->\n<button\n  _=\"on click async do\n                      fetch /example\n                      put it into my.innerHTML\n                    end\n                    put 'Fetching It!' into my innerHTML\"\n>\n  Fetch it!\n</button>"
+    ]
+  },
+  {
+    "id": "84404c98-f88f-4ec0-bf80-da0bb0102434",
+    "name": "pseudo-commands",
+    "description": "Pseudo-commands allow you to treat a method on an object as a top level command. The method name must be followed byan argument list, then optional prepositional syntax to clarify the code, then an expression. The method will belooked up on the value returned by the expression and executed.\nA function defined with the same name as a hyperscript command cannot be called as a pseudo-command.\nBuilt-in commands can be called with or without parentheses grouping the single object the command works on. If a function has the same name as a command but takes more than a single parameter, the hyperscript parser will not see the call to the function as a pseudo-command, but will see the additional parameters in the function call as a parse error for the built-in command.\nFor example, this function's name, increment(), collides with the built-in hyperscript increment command.\nThis demonstrates typical increment command usage:\nHere is a call to the increment command with parens around the variable to increment.",
+    "syntax_canonical": "<method name>(<arg list>) [(to | on | with | into | from | at)] <expression>",
+    "tags": [
+      "official-command-md",
+      "pseudo-commands"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.090Z",
+    "updated_at": "2025-05-22T15:38:26.090Z",
+    "elementType": "Command",
+    "purpose": "Pseudo-commands allow you to treat a method on an object as a top level command. The method name must be followed byan argument list, then optional prepositional syntax to clarify the code, then an expression. The method will belooked up on the value returned by the expression and executed.\nA function defined with the same name as a hyperscript command cannot be called as a pseudo-command.\nBuilt-in commands can be called with or without parentheses grouping the single object the command works on. If a function has the same name as a command but takes more than a single parameter, the hyperscript parser will not see the call to the function as a pseudo-command, but will see the additional parameters in the function call as a parse error for the built-in command.\nFor example, this function's name, increment(), collides with the built-in hyperscript increment command.\nThis demonstrates typical increment command usage:\nHere is a call to the increment command with parens around the variable to increment.",
+    "example_usage": [
+      "<button _=\"on click reload() the location of the window\">\n  Reload the Location\n</button>\n\n<button _=\"on click setAttribute('foo', 'bar') on me\">\n  Set foo to bar on me\n</button>",
+      "<script type=\"text/hyperscript\">\n  def increment(i, j)\n    return (i as int) + (j as int)\n  end\n</script>",
+      "<button _=\"on click increment :x then put it into the next <output/>\">\n  call increment :x\n</button>\n<output></output>",
+      "<button _=\"on click increment(:x) then put it into the next <output/>\">\n  increment(:x)\n</button>\n<output></output>",
+      "<button _=\"on click increment :x by 2 then put it into the next <output/>\">\n  increment :x by 2\n</button>\n<output></output>",
+      "<button _=\"on click increment(:x) by 2 then put it into the next <output/>\">\n  increment(:x) by 2\n</button>\n<output></output>",
+      "<button _=\"on click set :x to increment(:x, 2) then put :x into the next <output/>\">\n  set :x to increment(:x, 2)\n</button>\n<output></output>",
+      "<button _=\"on click call(increment(:x, 2)) then put it into the next <output/>\">\n  call(increment(:x,2))\n</button>\n<output></output>",
+      "<button _=\"on click increment(:x, 2) then put it into the next <output/>\">\n  increment(:x, 2)\n</button>\n<output></output>"
+    ]
+  },
+  {
+    "id": "9e19fdde-4794-475b-9d93-5de4227a2d03",
+    "name": "beep",
+    "description": "The beep! command allows you to debug an expression (or multiple expressions) by printingthe source of the expression, its result and the type of the result to the console.  This isquick and convenient mechanism for print-debugging in hyperscript.\nNote that the syntax is slightly different than the beep! expression, which bindsto unary expressions rather than general expressions.\nNote that you can also print the value of multiple expressions in a single beep! command.Note that you can also print the value of multiple expressions in a single beep! command.",
+    "syntax_canonical": "beep! <expression> {, <expression>}",
+    "tags": [
+      "official-command-md",
+      "beep"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.091Z",
+    "updated_at": "2025-05-22T15:38:26.091Z",
+    "elementType": "Command",
+    "purpose": "The beep! command allows you to debug an expression (or multiple expressions) by printingthe source of the expression, its result and the type of the result to the console.  This isquick and convenient mechanism for print-debugging in hyperscript.\nNote that the syntax is slightly different than the beep! expression, which bindsto unary expressions rather than general expressions.\nNote that you can also print the value of multiple expressions in a single beep! command.Note that you can also print the value of multiple expressions in a single beep! command.",
+    "example_usage": [
+      "beep! <.foo/>\nbeep! <.foo/>, <.foo/> in <.bar/>"
+    ]
+  },
+  {
+    "id": "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+    "name": "set",
+    "description": "The set command allows you to set a value of a variable, property or the DOM. It is similar to the put commandbut reads more naturally for operations like setting variables.\nIt can also be used to set many properties at once using the set {...} on form.\nWhen setting a symbol, such as x, the following rules are used:\nIf a symbol x exists in the current local scope, set the locally scoped value\nIf not, if a symbol x exists in the current element-local scope, set the element-local scoped value\nIf not, create a new locally scoped symbol named x with the value\nNote that if you wish to set a global variable you must explicitly use the global modifier unless the symbol startswith a $:",
+    "syntax_canonical": "set <expression> to <expression>\n  set <object literal> on <expression>",
+    "tags": [
+      "official-command-md",
+      "set"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.092Z",
+    "updated_at": "2025-05-22T15:38:26.092Z",
+    "elementType": "Command",
+    "purpose": "The set command allows you to set a value of a variable, property or the DOM. It is similar to the put commandbut reads more naturally for operations like setting variables.\nIt can also be used to set many properties at once using the set {...} on form.\nWhen setting a symbol, such as x, the following rules are used:\nIf a symbol x exists in the current local scope, set the locally scoped value\nIf not, if a symbol x exists in the current element-local scope, set the element-local scoped value\nIf not, create a new locally scoped symbol named x with the value\nNote that if you wish to set a global variable you must explicitly use the global modifier unless the symbol startswith a $:",
+    "example_usage": [
+      "set global globalVar to 10",
+      "<div _=\"on click set x to 'foo' then log x\">\n  Click Me!\n</div>\n\n<div _=\"on click set my.style.color to 'red'\">\n  Click Me!\n</div>\n\n<button _=\"on click set { disabled: true, innerText: \"Don't click me!\" } on me\">\n  Click Me!\n</button>"
+    ]
+  },
+  {
+    "id": "63620480-8826-4164-84e3-3b4897b855c3",
+    "name": "call",
+    "description": "The call command allows you evaluate an expression.\nThe value of this expression will be put into the it variable.\nget is an alias for call and can be used if it more clearly expresses the meaning of the code.",
+    "syntax_canonical": "call <expression>\nget <expression>",
+    "tags": [
+      "official-command-md",
+      "call"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.092Z",
+    "updated_at": "2025-05-22T15:38:26.092Z",
+    "elementType": "Command",
+    "purpose": "The call command allows you evaluate an expression.\nThe value of this expression will be put into the it variable.\nget is an alias for call and can be used if it more clearly expresses the meaning of the code.",
+    "example_usage": [
+      "<div _=\"on click call myJavascriptFunction()\">Click Me!</div>\n\n<div\n  _=\"on click get prompt('Enter your age')\n                 put 'You entered: $it' into my.innerHTML\"\n>\n  Click Me!\n</div>"
+    ]
+  },
+  {
+    "id": "cac57a5a-92b3-43f9-87b9-c63be07f8b04",
+    "name": "append",
+    "description": "The append command adds a string value to the end of another string, array, or HTML Element. If no target variable is defined, then the standard result variable is used by default.",
+    "syntax_canonical": "append <string> [to <string> | <array> | <HTML Element>]",
+    "tags": [
+      "official-command-md",
+      "append"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.093Z",
+    "updated_at": "2025-05-22T15:38:26.093Z",
+    "elementType": "Command",
+    "purpose": "The append command adds a string value to the end of another string, array, or HTML Element. If no target variable is defined, then the standard result variable is used by default.",
+    "example_usage": [
+      "set fullName to \"John\"\nappend \" Connor\" to fullName\n-- fullName == \"John Connnor\"",
+      "set resultArray to []\nappend 1 to resultArray\nappend 2 to resultArray\nappend 3 to resultArray\n-- resultArray == [1,2,3]",
+      "append \"<i>More HTML here</i>\" to #myDIV",
+      "set result to \"<div>\"\nrepeat for person in people\n    append `\n        <div id=\"${person.id}\">\n            <div class=\"icon\"><img src=\"${person.iconURL}\"></div>\n            <div class=\"label\">${person.firstName} ${person.lastName}</div>\n        </div>\n    `\nend\nappend \"</div>\"\nput it into #people"
+    ]
+  },
+  {
+    "id": "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+    "name": "add",
+    "description": "The add command allows you to add a class (via a class ref), an attribute(via an attribute ref) or CSS attributes (via an object literal) to either the current element or to another element.\nNote: Hyperscript supports hyphens in object property names, so you can write add { font-size: '2em' }. However, double hyphens (--) mark comments in hyperscript, so if you need to use them for [CSS Custom Properties][], use quotes -- add { '--big-font-size': '2em' }.\nThe where clause allows you filter what elements have the class or property added in the target.  The expression will be evaluated foreach element in target and, if the result is true, the element class or property will be added.  If it is false, the classor property will be removed.  The it symbol will be set to the current element, allowing you to express conditions against each elementin target.  Note that this clause only works with classes and properties.",
+    "syntax_canonical": "add <class-ref+ or attribute-ref or object-literal> [to <target-expression>] [where <expr>]",
+    "tags": [
+      "official-command-md",
+      "add"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.093Z",
+    "updated_at": "2025-05-22T15:38:26.093Z",
+    "elementType": "Command",
+    "purpose": "The add command allows you to add a class (via a class ref), an attribute(via an attribute ref) or CSS attributes (via an object literal) to either the current element or to another element.\nNote: Hyperscript supports hyphens in object property names, so you can write add { font-size: '2em' }. However, double hyphens (--) mark comments in hyperscript, so if you need to use them for [CSS Custom Properties][], use quotes -- add { '--big-font-size': '2em' }.\nThe where clause allows you filter what elements have the class or property added in the target.  The expression will be evaluated foreach element in target and, if the result is true, the element class or property will be added.  If it is false, the classor property will be removed.  The it symbol will be set to the current element, allowing you to express conditions against each elementin target.  Note that this clause only works with classes and properties.",
+    "example_usage": [
+      "<div _=\"on click add .clicked\">Click Me!</div>\n\n<div _=\"on click add .clacked to #another-div\">Click Me!</div>\n\n<button _=\"on click add @disabled='true'\">Disable Me!</button>\n\n<input\n  type=\"color\"\n  _=\"on change add { '--accent-color': my.value } to document.body\"\n/>\n\n<button _=\"on click add @disabled='true' to <button/> when it is not me\">Disable Other Buttons</button>"
+    ]
+  },
+  {
+    "id": "31feba66-9b2c-4962-96ac-a20bd76915aa",
+    "name": "render",
+    "description": "Note: if you want the template command, you must include the /dist/template.js file in addition to the hyperscript script\nThe render command implements a simple template language. This language has two rules:\nYou can use ${} string interpolation, just like in template literals. However, bare `$var` interpolation is not supported.\nInterpolated expressions will be HTML-escaped, unless they are preceded by unescaped.\nAny line starting with @ is executed as a _hyperscript statement.\nThe result of rendering the template will be stored in the result (or it) variable.\nFor example, if we want to render a list of colors:\nOur template might look like this:",
+    "syntax_canonical": "<script src=\"https://unpkg.com/hyperscript.org@0.9.14/dist/template.js\"></script>",
+    "tags": [
+      "official-command-md",
+      "render"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.093Z",
+    "updated_at": "2025-05-22T15:38:26.093Z",
+    "elementType": "Command",
+    "purpose": "Note: if you want the template command, you must include the /dist/template.js file in addition to the hyperscript script\nThe render command implements a simple template language. This language has two rules:\nYou can use ${} string interpolation, just like in template literals. However, bare `$var` interpolation is not supported.\nInterpolated expressions will be HTML-escaped, unless they are preceded by unescaped.\nAny line starting with @ is executed as a _hyperscript statement.\nThe result of rendering the template will be stored in the result (or it) variable.\nFor example, if we want to render a list of colors:\nOur template might look like this:",
+    "example_usage": [
+      "<button\n  _=\"on click\n    render #color-template with (colors: getColors())\n    then put it into #colors\"\n>\n  Get the colors\n</button>",
+      "<template id=\"color-template\">\n  <ul>\n    @repeat in colors\n      @set bg to it\n      @set fg to getContrastingColor(it)\n      <li style=\"background: ${bg}; color: ${unescaped fg}\">${bg}</li>\n    @end\n  </ul>\n</template>"
+    ]
+  },
+  {
+    "id": "e2964269-4569-4cf4-a016-111114758a72",
+    "name": "log",
+    "description": "The log command logs an expression to console.log or whatever value is provided with the with clause.",
+    "syntax_canonical": "log <expression> {, <expression>} [with <expression>]",
+    "tags": [
+      "official-command-md",
+      "log"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.093Z",
+    "updated_at": "2025-05-22T15:38:26.093Z",
+    "elementType": "Command",
+    "purpose": "The log command logs an expression to console.log or whatever value is provided with the with clause.",
+    "example_usage": [
+      "<div _=\"on click log 'clicked'\">Click Me!</div>\n\n<div _=\"on click log 'clicked', 'clacked'\">Click Me!</div>\n\n<div _=\"on click log 'clicked' with console.debug\">Click Me!</div>"
+    ]
+  },
+  {
+    "id": "25d30ce9-4aa3-4eb7-b486-19602ef47f08",
+    "name": "toggle",
+    "description": "The toggle command allows you to toggle:\nA class or set of classes (via a class ref)\nAn attribute (via an attribute ref)\nOr the visibility of an element via opacity, visibility or display\non either the current element or, if a target expressionis provided, to the targeted element(s).\nYou can use the form toggle between .class1 and .class2 to flip between two classes.\nIf you provide a for <time expression> the class or attribute will be toggled for that amount of time.\nIf you provide an until <event name> the class or attribute will be toggled until the given event is received.",
+    "syntax_canonical": "toggle ({<class-ref>} | <attribute-ref> | between <class-ref> and <class-ref>)\n [on <expression>]\n  [(for <time expression>) |\n   (until <event name> [from <expression>]]`\n\ntoggle [the | my] ('*opacity' | '*visibility' | '*display')\n [of <expression>]\n  [(for <time expression>) |\n   (until <event name> [from <expression>]]`",
+    "tags": [
+      "official-command-md",
+      "toggle"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.094Z",
+    "updated_at": "2025-05-22T15:38:26.094Z",
+    "elementType": "Command",
+    "purpose": "The toggle command allows you to toggle:\nA class or set of classes (via a class ref)\nAn attribute (via an attribute ref)\nOr the visibility of an element via opacity, visibility or display\non either the current element or, if a target expressionis provided, to the targeted element(s).\nYou can use the form toggle between .class1 and .class2 to flip between two classes.\nIf you provide a for <time expression> the class or attribute will be toggled for that amount of time.\nIf you provide an until <event name> the class or attribute will be toggled until the given event is received.",
+    "example_usage": [
+      "<button _=\"on click toggle .toggled\">Toggle Me!</button>\n\n<div _=\"on click toggle .toggled on #another-div\">Toggle Another Div!</div>\n\n<button _=\"on click toggle [@disabled='true']\">Toggle Disabled!</button>\n\n<div _=\"on click toggle .toggled for 2s\">Toggle for 2 seconds</div>\n\n<div _=\"on mouseenter toggle .visible on #help until mouseleave\">\n  Mouse Over Me!\n</div>\n<div id=\"help\">I'm a helpful message!</div>\n\n<button _=\"on click toggle between .enabled and .disabled\">\n  Toggle Me!\n</button>\n\n<button _=\"on click toggle *display on the next <div/>\">\n  Toggle Me!\n</button>"
+    ]
+  },
+  {
+    "id": "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+    "name": "put",
+    "description": "The put command allows you to insert content into a variable, property or the DOM.\nContent that is added to the DOM via the put command targeting DOM will have any hyperscript content within itinitialized without needing to call processNode().",
+    "syntax_canonical": "put <expression> (into | before | at [the] start of | at [the] end of | after)  <expression>`",
+    "tags": [
+      "official-command-md",
+      "put"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.095Z",
+    "updated_at": "2025-05-22T15:38:26.095Z",
+    "elementType": "Command",
+    "purpose": "The put command allows you to insert content into a variable, property or the DOM.\nContent that is added to the DOM via the put command targeting DOM will have any hyperscript content within itinitialized without needing to call processNode().",
+    "example_usage": [
+      "<div _=\"on click put '<em>Clicked!</em>' into me\">Click Me!</div>\n\n<!-- equivalent to the above -->\n<div _=\"on click put '<em>Clicked!</em>' into my.innerHTML\">Click Me!</div>\n\n<div\n  _=\"on click\n\tcall document.createElement('em')\n\tput 'Clicked!' in it\n\tput it in me\"\n>\n  Click Me!\n</div>",
+      "def fillList(array, ul)\n\tfor item in array\n\t\t-- put `<li>${item}</li>` at end of ul\n\t\tcall document.createElement('li')\n\t\tput the item into its textContent\n\t\tput it at end of the ul\n\tend\nend"
+    ]
+  },
+  {
+    "id": "adf9e1ac-88bf-45d2-8a89-33eaa714c9aa",
+    "name": "fetch",
+    "description": "The fetch command issues a fetch request to thegiven URL. The URL can either be a naked URL or a string literal.\nBy default the result will be processed as text, but you can have it processedas JSON, as HTML, or as a raw response object by adding the as json, as htmlor as response modifiers.\nAdditionally, you can use conversions directly on theresponse text.\nThis command saves the result into the it variable.\nThis command is asynchronous.\nThe fetch command supports both timeouts as well as request cancellation.\nTo add a timeout to a request syntactically, you can use add a timeout property using the with form:\nTo cancel a fetch request, send a fetch:abort event to the element that triggered the request:\nIf you need to fetch from a dynamically-generated URL, just use a template literal string (the ones with the backticks) as the URL.  For example:\nThe fetch command features a few events that can be listened to (using hyperscript or javascript) to do thingslike configure the fetch options, update UI state, etc.",
+    "syntax_canonical": "fetch <stringLike> [ as [ a | an ]( json | Object | html | response ) ] [<object literal> | 'with' <naked named arguments>]",
+    "tags": [
+      "official-command-md",
+      "fetch"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.095Z",
+    "updated_at": "2025-05-22T15:38:26.095Z",
+    "elementType": "Command",
+    "purpose": "The fetch command issues a fetch request to thegiven URL. The URL can either be a naked URL or a string literal.\nBy default the result will be processed as text, but you can have it processedas JSON, as HTML, or as a raw response object by adding the as json, as htmlor as response modifiers.\nAdditionally, you can use conversions directly on theresponse text.\nThis command saves the result into the it variable.\nThis command is asynchronous.\nThe fetch command supports both timeouts as well as request cancellation.\nTo add a timeout to a request syntactically, you can use add a timeout property using the with form:\nTo cancel a fetch request, send a fetch:abort event to the element that triggered the request:\nIf you need to fetch from a dynamically-generated URL, just use a template literal string (the ones with the backticks) as the URL.  For example:\nThe fetch command features a few events that can be listened to (using hyperscript or javascript) to do thingslike configure the fetch options, update UI state, etc.",
+    "example_usage": [
+      "<button _=\"on click fetch /example with timeout:300ms\n                    put the result into my innerHTML\">\n  Get from /example!\n</button>",
+      "<div>\n    <button id=\"btn1\"\n            _=\"on click\n                 add @disabled\n                 fetch /example\n                 put the result after me\n               finally\n                 remove @disabled\">\n        Get Response\n    </button>\n    <button _=\"on click send fetch:abort to #btn1\">\n        Cancel The Request\n    </button>\n</div>",
+      "set userId to my [@data-userId]\nfetch `/users/${userId}/profile` as JSON",
+      "<body _=\"on fetch:beforeRequest(headers)\n            set headers['X-AuthToken'] to getAuthToken()\">\n            ...\n</body>",
+      "<button _=\"on click fetch /example\n                    put it into my innerHTML\">\n  Get from /example!\n</button>\n\n<button _='on click fetch /test as json with method:\"POST\"\n                    put `${its result}` into my innerHTML'>\n  Post to /test!\n</button>\n\n<button _=\"on click fetch `${pageUrl}` as html\n                    get the textContent of the <h1/> in it\n                    call alert(result)\">\n  Get the title of the page!\n</button>\n\n<div _='on click fetch /number as Number with method:\"POST\"\n                 put \"${the result + 1}\" into my innerHTML'>\n  Increment!\n</div>"
+    ]
+  },
+  {
+    "id": "cbbc1d59-05be-40e8-9d39-e3b93bc62c6a",
+    "name": "show",
+    "description": "The show command allows you to show an element in the DOM using various strategies. The default strategy is display.\nBy default, the following strategies are available:\ndisplay - toggle display between none and block\nvisibility - toggle visibility between hidden and visible\nopacity - toggle visibility between 0 and 1\nYou can also use the style-literal form (e.g. *display).\nYou can change the default hide/show strategy by setting _hyperscript.config.defaultHideShowStrategy\nYou can add new hide/show strategies by setting the hyperscript.config.hideShowStrategies object.\nNote that the display strategy can take an argument to specify the type of display to use when showing. The defaultis block\nThe where clause allows you filter what elements are shown in the target.  The expression will be evaluated foreach element in target and, if the result is true, the element will be shown.  If it is false, the element will behidden.  The it symbol will be set to the current element, allowing you to express conditions against each elementin target",
+    "syntax_canonical": "show [target] [with <hide-show-strategy>[: <argument>]] [where <expr>]",
+    "tags": [
+      "official-command-md",
+      "show"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.095Z",
+    "updated_at": "2025-05-22T15:38:26.095Z",
+    "elementType": "Command",
+    "purpose": "The show command allows you to show an element in the DOM using various strategies. The default strategy is display.\nBy default, the following strategies are available:\ndisplay - toggle display between none and block\nvisibility - toggle visibility between hidden and visible\nopacity - toggle visibility between 0 and 1\nYou can also use the style-literal form (e.g. *display).\nYou can change the default hide/show strategy by setting _hyperscript.config.defaultHideShowStrategy\nYou can add new hide/show strategies by setting the hyperscript.config.hideShowStrategies object.\nNote that the display strategy can take an argument to specify the type of display to use when showing. The defaultis block\nThe where clause allows you filter what elements are shown in the target.  The expression will be evaluated foreach element in target and, if the result is true, the element will be shown.  If it is false, the element will behidden.  The it symbol will be set to the current element, allowing you to express conditions against each elementin target",
+    "example_usage": [
+      "<div _=\"on load wait 2s then show\">I'll show after a few seconds!</div>\n\n<div _=\"on load wait 2s then show:inline\">\n  I'll show inline after a few seconds!\n</div>\n\n<div _=\"on load wait 2s then show with *opacity\">\n  I'll show after a few seconds with opacity!\n</div>\n\n<div _=\"on click show #anotherDiv\">Show Another Div!</div>\n\n<!-- on every keyup show all elements in #quotes that match the inputs value -->\n<input type=\"text\" placeholder=\"Search...\"\n     _=\"on keyup\n          show <p/> in #quotes when its textContent contains my value\">",
+      "<div _=\"on load wait 2s then show\">I'll show after a few seconds!</div>\n\n<!-- Or by specifying the strategy name directly between : twDisplay, twVisibility, twOpacity -->\n<div _=\"on load wait 2s then show with *twOpacity\">\n  I'll show after a few seconds with Tailwind CSS opacity!\n</div>"
+    ]
+  },
+  {
+    "id": "8d5d2756-f688-4a73-b9a3-3d03e90dff19",
+    "name": "measure",
+    "description": "The measure command gets the measurements for a given element using getBoundingClientRect() as well as thescroll* properties. It will place the result into the result variable.\nYou may also specify particular measurements to be saved into local variables, by name.\nThe available measurements are:\nx\ny\nleft\ntop\nright\nbottom\nwidth\nheight\nbounds\nscrollLeft\nscrollTop\nscrollLeftMax\nscrollTopMax\nscrollWidth\nscrollHeight\nscroll",
+    "syntax_canonical": "measure <possessive> [measurement {, measurement}",
+    "tags": [
+      "official-command-md",
+      "measure"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.096Z",
+    "updated_at": "2025-05-22T15:38:26.096Z",
+    "elementType": "Command",
+    "purpose": "The measure command gets the measurements for a given element using getBoundingClientRect() as well as thescroll* properties. It will place the result into the result variable.\nYou may also specify particular measurements to be saved into local variables, by name.\nThe available measurements are:\nx\ny\nleft\ntop\nright\nbottom\nwidth\nheight\nbounds\nscrollLeft\nscrollTop\nscrollLeftMax\nscrollTopMax\nscrollWidth\nscrollHeight\nscroll",
+    "example_usage": [
+      "<div _=\"on click measure me then log it\">Click Me To Measure</div>\n\n<div _=\"on click measure my top then log top\">Click Me To Measure My Top</div>"
+    ]
+  },
+  {
+    "id": "35570393-3221-422b-8391-4d53dda9f86c",
+    "name": "decrement",
+    "description": "The decrement command subtracts from an existing variable, property, or attribute. It defaults to subtracting the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then decremented by the specified amount. The decrement command is the opposite of the increment command command.",
+    "syntax_canonical": "decrement <target> [by <number>]",
+    "tags": [
+      "official-command-md",
+      "decrement"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.096Z",
+    "updated_at": "2025-05-22T15:38:26.096Z",
+    "elementType": "Command",
+    "purpose": "The decrement command subtracts from an existing variable, property, or attribute. It defaults to subtracting the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then decremented by the specified amount. The decrement command is the opposite of the increment command command.",
+    "example_usage": [
+      "set counter to 5\ndecrement counter by 2 -- counter is now 3\n\ndecrement newVariable -- newVariable is defaulted to zero, then decremented to -1"
+    ]
+  },
+  {
+    "id": "48222684-0945-44be-980b-5beae008632c",
+    "name": "send",
+    "description": "The send command sends an event to the given target. Arguments can optionally be provided in a named argument listand will be passed in the event.detail object.\nYou can alternatively use the equivalent trigger syntax.",
+    "syntax_canonical": "send <event-name>[(<named arguments>)] [to <expression>]\n trigger <event-name>[(<named arguments>)] [on <expression>]",
+    "tags": [
+      "official-command-md",
+      "send"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.096Z",
+    "updated_at": "2025-05-22T15:38:26.096Z",
+    "elementType": "Command",
+    "purpose": "The send command sends an event to the given target. Arguments can optionally be provided in a named argument listand will be passed in the event.detail object.\nYou can alternatively use the equivalent trigger syntax.",
+    "example_usage": [
+      "<div _=\"on click send doIt(answer:42) to #div1\">Send an event</div>\n<div\n  id=\"div1\"\n  _=\"on doIt(answer) put `The answer is $answer` into my.innerHTML\"\n>\n  Check the console for the answer...\n</div>\n\n<div _=\"on click trigger doIt(answer:42) end\n        on doIt(answer) log `The answer is $answer`\">\n  Click Me!\n</div>"
+    ]
+  },
+  {
+    "id": "3bf2cda5-5170-41e7-b7a9-6ff73a2d670d",
+    "name": "increment",
+    "description": "The increment command adds to an existing variable, property, or attribute. It defaults to adding the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then incremented by the specified amount. The increment command is the opposite of the decrement command command.",
+    "syntax_canonical": "increment <target> [by <number>]",
+    "tags": [
+      "official-command-md",
+      "increment"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.096Z",
+    "updated_at": "2025-05-22T15:38:26.096Z",
+    "elementType": "Command",
+    "purpose": "The increment command adds to an existing variable, property, or attribute. It defaults to adding the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then incremented by the specified amount. The increment command is the opposite of the decrement command command.",
+    "example_usage": [
+      "set counter to 5\nincrement counter by 2 -- counter is now 7\n\nincrement newVariable -- newVariable is defaulted to zero, then incremented to 1"
+    ]
+  },
+  {
+    "id": "e860c03e-87b4-494a-a6d5-e8ef203d4527",
+    "name": "wait",
+    "description": "The wait command can either wait for an event to occur or for a fixed amount of time\nIn the form wait for <event> {or <event>} [from <source>] the hyperscript will pause until the element receivesany of the specified events.\nEvents may destructure properties into local variables using the eventName(property1, property2, ...) form.\nIn the wait <time-expr> form, it waits the given amount of time, which can be in the following formats:\n10 - 10 milliseconds\n100 ms - 100 milliseconds\n100 milliseconds - 100 milliseconds\n1 s - 1000 milliseconds\n1 seconds - 1000 milliseconds\nYou can also mix timeouts and events, which can be useful to avoid waiting forever for an event:\nThis command is asynchronous. All commands that follow it will be delayed until the wait completes.",
+    "syntax_canonical": "wait (<time expression> | for (<event> [from <source>]) [or ...] )",
+    "tags": [
+      "official-command-md",
+      "wait"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.097Z",
+    "updated_at": "2025-05-22T15:38:26.097Z",
+    "elementType": "Command",
+    "purpose": "The wait command can either wait for an event to occur or for a fixed amount of time\nIn the form wait for <event> {or <event>} [from <source>] the hyperscript will pause until the element receivesany of the specified events.\nEvents may destructure properties into local variables using the eventName(property1, property2, ...) form.\nIn the wait <time-expr> form, it waits the given amount of time, which can be in the following formats:\n10 - 10 milliseconds\n100 ms - 100 milliseconds\n100 milliseconds - 100 milliseconds\n1 s - 1000 milliseconds\n1 seconds - 1000 milliseconds\nYou can also mix timeouts and events, which can be useful to avoid waiting forever for an event:\nThis command is asynchronous. All commands that follow it will be delayed until the wait completes.",
+    "example_usage": [
+      "-- Fail if the thing doesn't load after 1s.\nwait for load or 1s\nif the result is not an Event\n  throw 'Took too long to load.'\nend\n\n-- Parens are required for dynamic timeouts.\nwait for click or (config.clickTimeout) ms",
+      "<div _=\"on click add .example then wait for transitionend\">\n  Add the class, then wait for the transition to complete\n</div>\n\n<div _=\"on click add .example then wait 2s then remove .example\">\n  Add and then remove a class\n</div>\n\n<div\n  _=\"wait for mousemove(clientX, clientY) or mouseup(clientX, clientY) from document\"\n>\n  Mouse Dragging...\n</div>"
+    ]
+  },
+  {
+    "id": "6f91f136-2fee-4133-a276-f533b14dca9c",
+    "name": "settle",
+    "description": "The settle command allows you to synchronize on the CSS transition of an element. It will listen for thetransitionend even on the given element (or me if no element is given).\nIf a transitionstart event is not received within 500ms, the command will continue assuming that notransition will occur.",
+    "syntax_canonical": "settle [<expression>]",
+    "tags": [
+      "official-command-md",
+      "settle"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.097Z",
+    "updated_at": "2025-05-22T15:38:26.097Z",
+    "elementType": "Command",
+    "purpose": "The settle command allows you to synchronize on the CSS transition of an element. It will listen for thetransitionend even on the given element (or me if no element is given).\nIf a transitionstart event is not received within 500ms, the command will continue assuming that notransition will occur.",
+    "example_usage": [
+      "<style>\n  #pulsar {\n    transition: all 800ms ease-in-out;\n  }\n  .red {\n    background: red;\n  }\n</style>\n<div\n  id=\"pulsar\"\n  _=\"on load repeat 6 times\n                toggle .red then settle\"\n>\n  You thought the blink tag was dead?\n</div>"
+    ]
+  },
+  {
+    "id": "e1820461-8b4e-45e6-ae12-7349c0f08415",
+    "name": "remove",
+    "description": "The remove command allows you to remove an element from the DOM or to removea class or property from an element node.",
+    "syntax_canonical": "remove <expression> [from <expression>]",
+    "tags": [
+      "official-command-md",
+      "remove"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.097Z",
+    "updated_at": "2025-05-22T15:38:26.097Z",
+    "elementType": "Command",
+    "purpose": "The remove command allows you to remove an element from the DOM or to removea class or property from an element node.",
+    "example_usage": [
+      "<div _=\"on click remove me\">Remove Me!</div>\n\n<div _=\"on click remove .not-clicked\">Remove Class From Me!</div>\n\n<div _=\"on click remove .not-clacked from #another-div\">\n  Remove Class From Another Div!\n</div>\n\n<div _=\"on click remove .foo .bar from #another-div\">\n  Remove Class From Another Div!\n</div>\n\n<button _=\"on click remove @disabled from the next <button/>\">Un-Disable The Next Button</button>\n<button _=\"on click call alert('world')\" disabled>Hello!</button>"
+    ]
+  },
+  {
+    "id": "c8e8d6e2-0404-42d5-99ce-e5b22a3b643b",
+    "name": "transition",
+    "description": "The transition command allows you to transition properties on an element from one value to another.\nIf you use the form transition <transition target> the transition will take place on the specified target, otherwiseit is done on the current me.\nThe transition target can be a pseudo-possessive:\nIf the target is a symbol it will need to be preceded by a the or the keyword element to distinguish the symbol from aproperty name:\nFollowing the start is a series of transitions, starting with a style property name, followed optionally bya from and an initial value. If this is omitted, the current calculated value of the property is used.\nNext comes a required to followed by a final value to transition the property too. Note that you can useeither strings or naked strings.\nYou can optionally set the transition time by using the over clause and passing in a time expression such as500ms or 2 seconds.\nFinally, if you don't specify a transition time, you can optionally set the transition style by using the usingclause and passing in a string that specifies a transformation specification, e.g. all 1s ease-in.",
+    "syntax_canonical": "transition [[element] <transition target>]\n  {<property name> [from <string>} to <string>}\n[over <time expression> | using <expression>]",
+    "tags": [
+      "official-command-md",
+      "transition"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.097Z",
+    "updated_at": "2025-05-22T15:38:26.097Z",
+    "elementType": "Command",
+    "purpose": "The transition command allows you to transition properties on an element from one value to another.\nIf you use the form transition <transition target> the transition will take place on the specified target, otherwiseit is done on the current me.\nThe transition target can be a pseudo-possessive:\nIf the target is a symbol it will need to be preceded by a the or the keyword element to distinguish the symbol from aproperty name:\nFollowing the start is a series of transitions, starting with a style property name, followed optionally bya from and an initial value. If this is omitted, the current calculated value of the property is used.\nNext comes a required to followed by a final value to transition the property too. Note that you can useeither strings or naked strings.\nYou can optionally set the transition time by using the over clause and passing in a time expression such as500ms or 2 seconds.\nFinally, if you don't specify a transition time, you can optionally set the transition style by using the usingclause and passing in a string that specifies a transformation specification, e.g. all 1s ease-in.",
+    "example_usage": [
+      "transition my opacity to 0\n  transition the div's opacity to 0\n  transition #anotherDiv's opacity to 0\n  transition .aClass's opacity to 0",
+      "transition element foo's opacity to 0",
+      "<div _=\"on click transition my opacity to 0 then remove me\">\n  Fade then remove me\n</div>"
+    ]
+  },
+  {
+    "id": "5aace35b-eeb4-434a-863d-a95973a3cfa3",
+    "name": "halt",
+    "description": "The halt command prevents an event from bubbling and/or from performing its default action.\nThe form halt the event will halt both the bubbling and default for the event, but continue execution of theevent handler\nThe form halt the event's (bubbling|default) will halt either the bubbling or the default for the event, but continueexecution of the event handler\nThe form halt will halt both the bubbling and default for the event and exit the current event handler, acting the sameas the exit command.\nThe form halt (bubbling|default) will halt either the bubbling or the default for the event and exit the current eventhandler.",
+    "syntax_canonical": "halt [the event['s]] (bubbling|default)\nexit",
+    "tags": [
+      "official-command-md",
+      "halt"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.097Z",
+    "updated_at": "2025-05-22T15:38:26.097Z",
+    "elementType": "Command",
+    "purpose": "The halt command prevents an event from bubbling and/or from performing its default action.\nThe form halt the event will halt both the bubbling and default for the event, but continue execution of theevent handler\nThe form halt the event's (bubbling|default) will halt either the bubbling or the default for the event, but continueexecution of the event handler\nThe form halt will halt both the bubbling and default for the event and exit the current event handler, acting the sameas the exit command.\nThe form halt (bubbling|default) will halt either the bubbling or the default for the event and exit the current eventhandler.",
+    "example_usage": [
+      "<script type=\"text/hyperscript\">\n  on mousedown\n    halt the event -- prevent text selection...\n    -- do other stuff...\n  end\n</script>"
+    ]
+  },
+  {
+    "id": "57843421-f708-4ab7-a422-1fc430ead80c",
+    "name": "js",
+    "description": "Note: This page is about the inline JS command. _hyperscript also supports JS blocks at the top level.\nThe js command can be used to embed JavaScript code inline in _hyperscript, as shown below:\nthis inside a js block is the global scope (window, or self in workers).\nIf the js block returns a promise, the code that comes after it will execute when it resolves.\nIf the js block needs to use variables from the surrounding _hyperscript code, these need to be explicitly declared as shown:\n{% include \"js_end.md\" %}",
+    "syntax_canonical": "<button\n  _=\"on click\n           js\n               if ('clipboard' in window.navigator) {\n               \t return navigator.clipboard.readText()\n               }\n           end\n           put it in my.innerHTML \"\n></button>",
+    "tags": [
+      "official-command-md",
+      "js"
+    ],
+    "status": "Draft",
+    "created_at": "2025-05-22T15:38:26.098Z",
+    "updated_at": "2025-05-22T15:38:26.098Z",
+    "elementType": "Command",
+    "purpose": "Note: This page is about the inline JS command. _hyperscript also supports JS blocks at the top level.\nThe js command can be used to embed JavaScript code inline in _hyperscript, as shown below:\nthis inside a js block is the global scope (window, or self in workers).\nIf the js block returns a promise, the code that comes after it will execute when it resolves.\nIf the js block needs to use variables from the surrounding _hyperscript code, these need to be explicitly declared as shown:\n{% include \"js_end.md\" %}",
+    "example_usage": [
+      "<button\n  _=\"on click\n           set text to #input.value\n           js(me, text)\n               if ('clipboard' in window.navigator) {\n               \t return navigator.clipboard.writeText(text)\n               \t   .then(() => 'Copied')\n               \t   .catch(() => me.parentElement.remove(me))\n               }\n           end\n           put message in my.innerHTML \"\n></button>"
+    ]
+  }
+]

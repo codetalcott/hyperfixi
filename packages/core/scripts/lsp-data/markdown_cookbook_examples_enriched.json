@@ -1,0 +1,3471 @@
+[
+  {
+    "id": "88ebf7aa-04fb-4c27-bbc8-bf75abf8d637",
+    "title": "Disable all Buttons During an htmx Request",
+    "description": "",
+    "raw_code": "on every htmx:beforeSend in <button:not(.no-disable)/> \n           tell it \n               toggle [@disabled='true'] until htmx:afterOnLoad",
+    "html_context": "<body _=\"on every htmx:beforeSend in <button:not(.no-disable)/> \n           tell it \n               toggle [@disabled='true'] until htmx:afterOnLoad\">\n      \n</body>",
+    "source_info": {
+      "id": "59d00c37-2c37-43c1-a8da-07a37ebf6da7",
+      "source_description": "Hyperscript Cookbook - 50-disable-btn-during-request-all.md",
+      "document_path": "../../www/cookbook/50-disable-btn-during-request-all.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:08:39.751Z",
+    "updated_at": "2025-05-22T23:33:56.269Z",
+    "related_grammar_element_ids": [
+      "a43e4092-2981-40d2-87c4-f9e634a4302f",
+      "25d30ce9-4aa3-4eb7-b486-19602ef47f08",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "069f5efe-d159-4464-a394-bf5ef9021133",
+      "22343067-6021-4371-8ba1-58903a8aad2f",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "ee1599f1-48ff-4589-9b7d-40d7ebf76274",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc",
+      "bb879e69-aa62-4f64-b29d-a49b57e582ec"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "da96e3a9-25e9-43cc-b5dd-1b569ea3db3f",
+    "title": "Filter A Group Of Elements",
+    "description": "",
+    "raw_code": "on keyup\n           if the event's key is 'Escape'\n             set my value to ''\n             trigger keyup\n           else\n            show <blockquote/> in #quotes when its textContent contains my value",
+    "html_context": "<input type=\"text\" placeholder=\"Search Quotes...\"\n       _=\"on keyup\n           if the event's key is 'Escape'\n             set my value to ''\n             trigger keyup\n           else\n            show <blockquote/> in #quotes when its textContent contains my value\">",
+    "source_info": {
+      "id": "93e0f4e3-728d-4f78-8512-39c9ed57ee50",
+      "source_description": "Hyperscript Cookbook - 60-filter-a-group-of-elements.md",
+      "document_path": "../../www/cookbook/60-filter-a-group-of-elements.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:08:39.753Z",
+    "updated_at": "2025-05-22T23:33:56.270Z",
+    "related_grammar_element_ids": [
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "711c5e2e-6f12-4f17-9524-c5a22e25e228",
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "cbbc1d59-05be-40e8-9d39-e3b93bc62c6a",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "260a96b7-6e3e-4cc7-9dc5-290c2fffadbe",
+      "3acb4c0c-0776-4344-91b3-405fa5d7abda",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1",
+      "ce4019a3-3b44-4bdf-b63c-b729d2adb510"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "d813e680-e9ad-4605-bb11-9cec2be1a67b",
+    "title": "Click 'Reset' to get an indeterminate checkbox",
+    "description": "",
+    "raw_code": "on load set my.indeterminate to true\n\non click set .indeterminate.indeterminate to true",
+    "html_context": "<form>\n<input class=\"indeterminate\" type=\"checkbox\" _=\"on load set my.indeterminate to true\">\n<input type=\"reset\" _=\"on click set .indeterminate.indeterminate to true\">\n</form>",
+    "source_info": {
+      "id": "2e96269e-ba2a-4614-913e-ec64ff40ca05",
+      "source_description": "Hyperscript Cookbook - 20-indeterminate-checkbox.md",
+      "document_path": "../../www/cookbook/20-indeterminate-checkbox.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:08:39.757Z",
+    "updated_at": "2025-05-22T23:33:56.270Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "a6fbc036-d692-4754-9518-49d60bd45b12",
+    "title": "Using the transition command",
+    "description": "",
+    "raw_code": "on click transition opacity to 0 then remove me",
+    "html_context": "<button _=\"on click transition opacity to 0 then remove me\">\n  Fade & Remove\n</button>",
+    "source_info": {
+      "id": "f87ebcad-2507-44d2-91c8-1a8674409711",
+      "source_description": "Hyperscript Cookbook - 30-fade-and-remove.md",
+      "document_path": "../../www/cookbook/30-fade-and-remove.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:08:39.758Z",
+    "updated_at": "2025-05-22T23:33:56.270Z",
+    "related_grammar_element_ids": [
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "c8e8d6e2-0404-42d5-99ce-e5b22a3b643b",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "56fefcbc-6e7d-4e95-8ee6-d6d763ab812e",
+    "title": "Concatenate two strings in _hyperscript",
+    "description": "",
+    "raw_code": "on click set my.innerText to #first.innerText + ' ' + #second.innerText",
+    "html_context": "<p id=\"first\">Hello</p>\n<p id=\"second\">World</p>\n<button class=\"btn primary\" _=\"on click set my.innerText to #first.innerText + ' ' + #second.innerText\">\n  Concat\n</button>",
+    "source_info": {
+      "id": "188efcd6-488d-4383-acf0-c028dd9af6a5",
+      "source_description": "Hyperscript Cookbook - 10-concat-two-strings.md",
+      "document_path": "../../www/cookbook/10-concat-two-strings.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:08:39.760Z",
+    "updated_at": "2025-05-22T23:33:56.270Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "a2fcacaf-7f5f-4c5f-865e-cbc9062670a7",
+    "title": "Disable button until request finishes",
+    "description": "",
+    "raw_code": "on click toggle @disabled until htmx:afterOnLoad",
+    "html_context": "<button\n      class=\"button is-primary\"\n      hx-get=\"/example\"\n      _=\"on click toggle @disabled until htmx:afterOnLoad\">\n      Do It\n</button>",
+    "source_info": {
+      "id": "010d8fab-2ed2-4de6-b5de-b46c83e2a7fd",
+      "source_description": "Hyperscript Cookbook - 40-disable-btn-during-request.md",
+      "document_path": "../../www/cookbook/40-disable-btn-during-request.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:08:39.761Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "25d30ce9-4aa3-4eb7-b486-19602ef47f08",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "22343067-6021-4371-8ba1-58903a8aad2f",
+      "ee1599f1-48ff-4589-9b7d-40d7ebf76274"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "3bf45d58-5abb-4fa9-81af-cbf37f1a9f0d",
+    "title": "Hyperscript",
+    "description": "Yes:",
+    "raw_code": "on click toggle .open on the #menu",
+    "html_context": "<button _=\"on click toggle .open on the #menu\">\n  Menu\n</button>\n<ul id=\"menu\">\n  <li><a href=\"/\">Home</a></li>\n  ...\n</ul>",
+    "source_info": {
+      "id": "232330b3-1331-4e0f-b368-7652ce0c11ef",
+      "source_description": "Hyperscript Documentation - a-fun-guide.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/a-fun-guide.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.700Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "25d30ce9-4aa3-4eb7-b486-19602ef47f08",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "42ae9264-59c2-44d1-aafb-d430f16e79c9",
+    "title": "hyperscript & Its Friend htmx",
+    "description": "Well, htmx helpfully fires a lot of [events](https://htmx.org/events) that you can respond to, and responding to events\nis hyperscript's bread and butter.  Hyperscript *loves* responding to events.",
+    "raw_code": "on htmx:afterRequest wait 2s then put '' into #messages",
+    "html_context": "<button hx-get=\"/message\" hx-target=\"#messages\"\n        _=\"on htmx:afterRequest wait 2s then put '' into #messages\">\n  Get A Message\n</button>\n<div id=\"messages\">\n</div>",
+    "source_info": {
+      "id": "b65b24e2-4b4a-4a54-ae36-ba4c33183225",
+      "source_description": "Hyperscript Documentation - a-fun-guide.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/a-fun-guide.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.701Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "e860c03e-87b4-494a-a6d5-e8ef203d4527",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "5c4285f2-8b28-425d-8000-c0095c75d562"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "40a91df1-5738-47b3-a328-aa1a19c11e0b",
+    "title": "hyperscript & Its Friend htmx",
+    "description": "Relax, we can do that quite easily by putting the hyperscript on the message itself instead:",
+    "raw_code": "on load wait 2s then remove me",
+    "html_context": "<div id=\"messages\">\n  <div _=\"on load wait 2s then remove me\">\n    Hyperscript is awesome...\n  </div>\n</div>",
+    "source_info": {
+      "id": "352f1b2f-3d60-4660-b1d7-8762e4951cce",
+      "source_description": "Hyperscript Documentation - a-fun-guide.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/a-fun-guide.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.701Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "e860c03e-87b4-494a-a6d5-e8ef203d4527",
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "73b03380-6a94-4540-a0ce-7b65bd59d237",
+    "title": "hyperscript & Its Friend htmx",
+    "description": "In fact, let's make that even nicer and fade it out:",
+    "raw_code": "on load wait 2s then transition my opacity to 0 then remove me",
+    "html_context": "<div id=\"messages\">\n  <div _=\"on load wait 2s then transition my opacity to 0 then remove me\">\n    Hyperscript is *REALLY* awesome...\n  </div>\n</div>",
+    "source_info": {
+      "id": "2a624f92-8466-4031-a672-acc8a87941de",
+      "source_description": "Hyperscript Documentation - a-fun-guide.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/a-fun-guide.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.701Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "e860c03e-87b4-494a-a6d5-e8ef203d4527",
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "c8e8d6e2-0404-42d5-99ce-e5b22a3b643b",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "75716056-2468-4e5e-9261-29c80331b79e",
+    "title": "hyperscript",
+    "description": "Hyperscript embedded in HTML",
+    "raw_code": "on click transition opacity to 0 then remove me",
+    "html_context": "<div _=\"on click transition opacity to 0 then remove me\">\n  Remove Me\n</div>\n",
+    "source_info": {
+      "id": "a12cab05-6eb5-4915-ab43-a8a423af0f39",
+      "source_description": "Hyperscript Documentation - comparison.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/comparison.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.703Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "c8e8d6e2-0404-42d5-99ce-e5b22a3b643b",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "162ee2fb-897a-4c5f-ada0-ac52dff56aea",
+    "title": "hyperscript",
+    "description": "Hyperscript embedded in HTML",
+    "raw_code": "on click\n             fetch /clickedMessage/\n             put the result into #fetch-target-3",
+    "html_context": "<button _=\"on click\n             fetch /clickedMessage/\n             put the result into #fetch-target-3\">\n Fetch It\n</button>\n<div id=\"fetch-target-3\"></div>\n",
+    "source_info": {
+      "id": "0e7f53d6-513a-4c2d-bdf1-ace431a87c5a",
+      "source_description": "Hyperscript Documentation - comparison.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/comparison.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.703Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "adf9e1ac-88bf-45d2-8a89-33eaa714c9aa",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "5c4285f2-8b28-425d-8000-c0095c75d562",
+      "bef9c738-a7c9-45b1-8d0a-22c0b3c1f530",
+      "76164223-6900-4de9-b44c-b4b9dc80b7a5"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "aaa568d0-064b-40cf-882c-254cb5659537",
+    "title": "hyperscript",
+    "description": "Hyperscript embedded in HTML",
+    "raw_code": "on keyup debounced at 300ms\n            put my.value into #debounce-target-3",
+    "html_context": "<input _=\"on keyup debounced at 300ms\n            put my.value into #debounce-target-3\"/>\n<div id=\"debounce-target-3\"></div>\n",
+    "source_info": {
+      "id": "56f4106a-390c-4a6a-8a33-ee0050e4b4be",
+      "source_description": "Hyperscript Documentation - comparison.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/comparison.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.703Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "5c4285f2-8b28-425d-8000-c0095c75d562",
+      "03a185eb-4a57-4ed2-ae67-ae2ed214b0ee",
+      "bef9c738-a7c9-45b1-8d0a-22c0b3c1f530",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "3fb22108-8f8a-4edf-a7af-c4703c5fbbfe",
+    "title": "hyperscript",
+    "description": "Hyperscript embedded in HTML",
+    "raw_code": "on click toggle .red-border on #toggle-target-3",
+    "html_context": "<!-- Class- and ID-refs mean you can write concise code without\n     relying on DOM clobbering. -->\n<button _=\"on click toggle .red-border on #toggle-target-3\">\n  Toggle Class\n</button>\n<div id=\"toggle-target-3\">\n  Toggle Target\n</div>\n",
+    "source_info": {
+      "id": "e9b2def8-730f-4439-859d-cd9bfe6070cc",
+      "source_description": "Hyperscript Documentation - comparison.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/comparison.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.704Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "25d30ce9-4aa3-4eb7-b486-19602ef47f08",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "bef9c738-a7c9-45b1-8d0a-22c0b3c1f530"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "f6ce756e-7be8-4dcf-90a6-6d91229c451e",
+    "title": "hyperscript",
+    "description": "Hyperscript embedded in HTML",
+    "raw_code": "on click send doIt to #event-target-3\n\non doIt remove me",
+    "html_context": "<button _=\"on click send doIt to #event-target-3\">\n  Trigger Event\n</button>\n<div id=\"event-target-3\"\n     _=\"on doIt remove me\">\n  Event Target\n</div>\n",
+    "source_info": {
+      "id": "6429ab87-8248-474b-938f-3415c9388dd6",
+      "source_description": "Hyperscript Documentation - comparison.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/comparison.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.704Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "48222684-0945-44be-980b-5beae008632c",
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "bef9c738-a7c9-45b1-8d0a-22c0b3c1f530",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "04ee120c-d006-4f06-a6d6-bd08e5a503eb",
+    "title": "hyperscript",
+    "description": "Hyperscript embedded in HTML",
+    "raw_code": "on click show #show-target-3",
+    "html_context": "<button _=\"on click show #show-target-3\">\n  Show Element\n</button>\n<div style=\"display: none\" id=\"show-target-3\">\n  Hidden Element\n</div>\n",
+    "source_info": {
+      "id": "8d4c67d6-13f7-41d9-943d-09a864fcec6e",
+      "source_description": "Hyperscript Documentation - comparison.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/comparison.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.704Z",
+    "updated_at": "2025-05-22T23:33:56.271Z",
+    "related_grammar_element_ids": [
+      "cbbc1d59-05be-40e8-9d39-e3b93bc62c6a",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "bef9c738-a7c9-45b1-8d0a-22c0b3c1f530"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "e477bcff-ae9c-4de6-9352-e8a465c90f85",
+    "title": "Install & Quick Start {#install}",
+    "description": "After you've done this, you can begin adding hyperscript to elements:",
+    "raw_code": "on click call alert('You clicked me!')",
+    "html_context": "<div _=\"on click call alert('You clicked me!')\">\n  Click Me!\n</div>",
+    "source_info": {
+      "id": "4ce14dc6-de82-4082-a337-4aff7409d668",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.714Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "63620480-8826-4164-84e3-3b4897b855c3",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "d8b9021e-c7bf-461a-936e-37a4686d5e8c",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190",
+      "ee3ec4e0-0836-4cb2-b57c-68925d3b471c"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "eec95b6b-9c1d-46ce-9f9b-706d1ca6422e",
+    "title": "Language Basics {#basics}",
+    "description": "Going back to our original example:",
+    "raw_code": "on click toggle .red on me",
+    "html_context": "<button _=\"on click toggle .red on me\">\n  Click Me\n</button>",
+    "source_info": {
+      "id": "81e61be9-bd89-4bdc-8f1f-89bfcf2f0577",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.714Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "25d30ce9-4aa3-4eb7-b486-19602ef47f08",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "89683a08-73c3-4fa4-83b6-b4022f53c81f",
+    "title": "Separators",
+    "description": "Features are also terminated by an `end`:",
+    "raw_code": "on click\n  log \"Clicked!\"\nend",
+    "source_info": {
+      "id": "bfa10345-7914-4c88-8653-0506f968b301",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.714Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "fb313b32-aeda-4660-99af-695a78664374",
+    "title": "Separators",
+    "description": "The script ends:",
+    "raw_code": "on click if true log 'Clicked!'",
+    "html_context": "<button _=\"on click if true log 'Clicked!'\">\nClick Me\n</button>",
+    "source_info": {
+      "id": "39add59f-b413-45b7-bad0-ce3b02474b2f",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.714Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "c30ef7a1-5044-48c8-8006-da3c1f088d84",
+    "title": "Separators",
+    "description": "Another feature starts:",
+    "raw_code": "on click if true log 'Clicked!'\n           on mouseenter log 'Mouse entered!'",
+    "html_context": "<button _=\"on click if true log 'Clicked!'\n           on mouseenter log 'Mouse entered!'\">\nClick Me\n</button>",
+    "source_info": {
+      "id": "d0ef28f6-156c-4389-b780-a025ac4e9789",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "503a1f9f-b9c1-4002-8022-92c49d62597b",
+    "title": "Variables {#variables}",
+    "description": "Here is how you create a simple, local variable:",
+    "raw_code": "set x to 10",
+    "source_info": {
+      "id": "429ddc83-02ca-4c83-b8aa-cbb6b680d180",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "a2d4931b-cce6-4d08-ac48-efe5fcd454f6",
+    "title": "Variable Names & Scoping {#names_and_scoping}",
+    "description": "By using these prefixes it is easy to tell differently scoped variables from one another without a lot of additional\nsyntax:",
+    "raw_code": "set $foo to 10 -- sets a global named $foo\nset :bar to 20 -- sets an element scoped variable named :bar",
+    "source_info": {
+      "id": "e33596fd-8805-40ac-951a-52d2d53f6ffc",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "2ffd849c-9659-4d60-aa8b-cd2b5dd3675c",
+    "title": "Scoping Modifiers {#scoping_modifiers}",
+    "description": "A variable with a `global` prefix is a global",
+    "raw_code": "set global myGlobal to true",
+    "source_info": {
+      "id": "55912a5e-f25c-468c-81d0-85e33e9368a2",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "534fc041-09ec-49cd-bb00-215e5f35a27b",
+    "title": "Scoping Modifiers {#scoping_modifiers}",
+    "description": "A variable with an `element` prefix is element-scoped",
+    "raw_code": "set element myElementVar to true",
+    "source_info": {
+      "id": "4f09a529-d27a-45d6-b521-610681a7ed1b",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "2a737c75-fe12-455d-bb6e-a1211a5fe57a",
+    "title": "Scoping Modifiers {#scoping_modifiers}",
+    "description": "A variable with a `local` prefix is locally scoped",
+    "raw_code": "set local x to true",
+    "source_info": {
+      "id": "a2ea0765-35cf-4616-8e03-58d2d1bbc9f5",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "370deed3-ece1-4c2c-879c-74fab76bf3a2",
+    "title": "Attributes",
+    "description": "You can access attributes on an element with the attribute literal syntax, using an `@` prefix:",
+    "raw_code": "set @my-attr to 10",
+    "source_info": {
+      "id": "bed5ba73-39f0-441b-9b40-16283d6c426b",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1",
+      "ee1599f1-48ff-4589-9b7d-40d7ebf76274"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "510e98a4-54cc-4f2f-83cf-49ef45648376",
+    "title": "Properties",
+    "description": "Hyperscript offers a few different ways to access properties of objects.  The first two should be familiar\nto JavaScript developers:",
+    "raw_code": "set x to {name : \"Joe\", age: 35}    -- create an object with some properties\nlog x.name                          -- standard \"dot\" notation\nlog x['name']                       -- standard array-index notation",
+    "source_info": {
+      "id": "39e82a16-7a2b-4d30-ac0f-e984b6651641",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "ff15f360-7c62-40b1-a4ed-1788336991ec",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "5fac9e00-3d0a-4eaf-824e-7e72bc0bbeb8",
+    "title": "Properties",
+    "description": "The next mechanism is known as a [possessive expression](/expressions/possessive) and uses the standard english `'s`\nto express a property access:",
+    "raw_code": "set x to {name : \"Joe\", age: 35}    -- create an object with some properties\nlog x's name                        -- access the name property using a possessive",
+    "source_info": {
+      "id": "fb1d9ba7-b70b-485c-ae81-ee2e3fcf8a59",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "ff15f360-7c62-40b1-a4ed-1788336991ec",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "efed57ad-c7e8-42f8-bd11-293b85c87286"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "2ca86405-b73d-468b-99b6-595ca983407c",
+    "title": "Properties",
+    "description": "There are two special cases for the possessive expression, the symbols `my` and `its`, both of which\ncan be used without the `'s` for possessive expressions:",
+    "raw_code": "get the first <div/> then          -- get the first div in the DOM, setting the `results` variable\nset my innerHTML to its innerHTML  -- use possessive expressions to set the current elements innerHTML\n                                   -- to the innerHTML of that div",
+    "source_info": {
+      "id": "acf2715b-7f25-493e-9fb8-167b294202a2",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1",
+      "ce4019a3-3b44-4bdf-b63c-b729d2adb510",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8",
+      "efed57ad-c7e8-42f8-bd11-293b85c87286"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "10533612-4e3b-4443-b823-6195988d59f5",
+    "title": "Properties",
+    "description": "Finally, you can also use the [of expression](/expressions/of) to get a property as well:",
+    "raw_code": "set x to {name : \"Joe\", age: 35}    -- create an object with some properties\nlog the name of x                   -- access the name property using an of expression",
+    "source_info": {
+      "id": "ab27ae63-bc3b-46c0-9296-3337d4f0ec35",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "ff15f360-7c62-40b1-a4ed-1788336991ec",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "82471e2a-a632-4ab9-8c12-0ea39e149b49",
+    "title": "Flat Mapping",
+    "description": "The `of` operator flips the order of the property & the element that the property is on, which can sometimes\nclarify your code.",
+    "raw_code": "set allDivs to <div/>                      -- get all divs\nset allParents to the parent of allDivs    -- get all parents of those divs as an array\nset allChildren to the children of allDivs -- get all children of those divs as an array",
+    "source_info": {
+      "id": "76f063a7-ccdf-4e18-8389-3447cf5e92fe",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "73e43a8a-0048-4984-8911-67fd9d04ccbd",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "4b5ec135-1057-457c-8094-f8ba904c1add",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "a30d4f5a-a9c5-41eb-a46e-8d83b79ea18c",
+    "title": "Null Safety",
+    "description": "On an array, only the `length` property will not perform a flat map in this manner.",
+    "raw_code": "set example to null\nlog example.prop     -- logs null, because `example` is null",
+    "source_info": {
+      "id": "6031e0b1-b290-46d9-8e5f-904a14f02e98",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "2ab9a80f-4792-44ca-b17b-000c78a3440f",
+    "title": "Creating New Objects",
+    "description": "You can also use [`query literals`](/expressions/#query-literals), discussed [below](#dom-literals), to create new HTML content:",
+    "raw_code": "make an <a.navlink/> then put it after me",
+    "source_info": {
+      "id": "9bbc6c9a-f368-4188-a312-80a1b04859fd",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "2aba6e29-3435-426d-921e-9a852c84fd09",
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "6a85e8d9-5d53-45aa-9686-841b18af8c8b",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "f390ab40-565a-4930-9d94-f23b69bc70ab",
+    "title": "Arrays",
+    "description": "Hyperscript arrays work very similarly to JavaScript arrays:",
+    "raw_code": "set myArr to [1, 2, 3]\nlog myArr[0]           -- logs \"1\"",
+    "source_info": {
+      "id": "d7bfb644-f55a-424f-bda9-67288450b925",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "402cdfc0-8bd7-4968-8f5e-6fcad149a7df",
+    "title": "Arrays",
+    "description": "You can use the `first`, `last` and `random` keywords, discussed [below](#positional), with arrays:",
+    "raw_code": "set myArr to [1, 2, 3]\nlog the first of myArr  -- logs \"1\"\nlog the last of myArr   -- logs \"3\"\nlog random in myArr     -- logs a random element from the array",
+    "source_info": {
+      "id": "fb45cc1c-9301-47d5-9521-800b4f852f6f",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "0080d2b8-b04e-4278-ae5f-649a39169f5b",
+    "title": "Closures",
+    "description": "",
+    "raw_code": "set strs to [\"a\", \"list\", \"of\", \"strings\"]\nset lens to strs.map( \\ s -> s.length )\nlog lens",
+    "source_info": {
+      "id": "fd351f64-139c-459f-ba99-5fcda6f8e7ab",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "73aad904-c1e0-4336-be46-76299718e7c6",
+    "title": "Control Flow",
+    "description": "As mentioned in the introduction, `end` is often omitted when it isn't needed in order to make scripts smaller:",
+    "raw_code": "on click increment :x\n              if :x < 3\n                put :x into the next <output/>\n              otherwise\n                put '3 is the max...' into the next <output/>",
+    "html_context": "<button _=\"on click increment :x\n              if :x < 3\n                put :x into the next <output/>\n              otherwise\n                put '3 is the max...' into the next <output/>\">\n  Click Me\n</button>\n<output>--</output>",
+    "source_info": {
+      "id": "aea84a65-fd8d-4993-8cbe-fcd44136a7f6",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "3bf2cda5-5170-41e7-b7a9-6ff73a2d670d",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "5c4285f2-8b28-425d-8000-c0095c75d562",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "d89c00bf-3a00-49f5-b981-5d4cdd3ca2e4",
+    "title": "Control Flow",
+    "description": "All commands also support an `unless` modifier to conditionally execute them.\nThis allows for a very succinct way of expressing branching logic.",
+    "raw_code": "on click set error to functionCouldReturnError()\n              log error unless no error",
+    "html_context": "<button _=\"on click set error to functionCouldReturnError()\n              log error unless no error\">\n  Log Result\n</button>",
+    "source_info": {
+      "id": "1bc8ad19-5145-4329-ba39-e8bbf0ca7411",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "ed6b49a2-8ede-49a4-9cf6-5b754459898e",
+      "bb879e69-aa62-4f64-b29d-a49b57e582ec"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "f6a73ee3-7f15-4974-aaec-5285de7e2530",
+    "title": "Comparisons & Logical Operators",
+    "description": "If the left hand side of the operator is `I`, then `is` can be replaced with `am`:",
+    "raw_code": "get chosenElement()\nif I am the result then remove me end",
+    "source_info": {
+      "id": "ecee4110-c93a-4b05-95f9-f814d00f304e",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "76164223-6900-4de9-b44c-b4b9dc80b7a5",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "8d14348a-7873-4230-ad07-7afe0075ccad",
+    "title": "Comparisons & Logical Operators",
+    "description": "Comparisons can be combined via the `and`, `or` and `not` expressions in the usual manner:",
+    "raw_code": "if I am <:checked/> and the closest <form/> is <:focus/>\n  add .highlight to the closest <form/>",
+    "source_info": {
+      "id": "d1e47271-738c-46a2-a59b-b03ea5a14d30",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af",
+      "422b7280-8b85-4c80-9be6-4351f9c42a11"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "8093e37b-690a-409a-8067-2e67335bcba6",
+    "title": "Comparisons & Logical Operators",
+    "description": "To work around this, you can move the promise-based value out to a separate statement:",
+    "raw_code": "get returnsPromise()\nif the result and foo() # foo() will not execute if promise resolves to false",
+    "source_info": {
+      "id": "bd38ab80-5ef9-48b1-94cb-ec0da5914019",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "069f5efe-d159-4464-a394-bf5ef9021133",
+      "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af",
+      "76164223-6900-4de9-b44c-b4b9dc80b7a5"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "cb1f9bab-1257-4257-98d0-fc246e86a51b",
+    "title": "Loops {#loops}",
+    "description": "It supports a large number of variants, including a short hand `for` version:",
+    "raw_code": "-- a basic for loop\nrepeat for x in [1, 2, 3]\n  log x\nend\n\n-- you may omit the 'repeat' keyword for a for loop\nfor x in [1, 2, 3]\n  log x\nend\n\n-- you may repeat without an explicit loop variable and use\n-- the implicit `it` symbol\nrepeat in [1, 2, 3]\n  log it\nend\n\n-- you may use a while clause to loop while a condition is true\nrepeat while x < 10\n  log x\nend\n\n-- you may use an until clause to loop until a condition is true\nrepeat until x is 10\n  log x\nend\n\n-- you may use the times clause to repeat a fixed number of times\nrepeat 3 times\n  log 'looping'\nend\n\n-- you may use the index clause on any of the above\n-- to bind the loop index to a given symbol\n-- an index clause is any of \"index\", or \"indexed by\"\n-- followed by a variable name\nfor x in [1, 2, 3] index i\n  log i, \"is\", x\nend\n\n-- you can loop forever if you like\nrepeat forever\n  if I match :focus\n    break\n  end\n  wait 2s\nend",
+    "source_info": {
+      "id": "52eb19dc-20b3-4d78-b460-5e5c735cac28",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "d91d9640-20ba-4ccb-bd3a-eab3edcdd04c",
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "ee5e07a1-00c3-4fcd-bcb9-738936a0bcfd",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "e860c03e-87b4-494a-a6d5-e8ef203d4527",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "263889c6-1ff7-4041-b058-071c9a3276c2",
+      "1885b2aa-0332-41bb-a06a-41f464394d9b",
+      "22343067-6021-4371-8ba1-58903a8aad2f",
+      "351f4c62-0bd0-4670-bdd3-9f09409c0474",
+      "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144",
+      "ec87d0b2-cb9e-4f53-a57a-4b965a780cac",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af",
+      "a3731f2b-6f41-4c2c-aa20-57eb43e42f39",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "d8b9021e-c7bf-461a-936e-37a4686d5e8c",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8",
+      "ee3ec4e0-0836-4cb2-b57c-68925d3b471c"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "ae5dc79d-7a76-441d-ab2f-ed082a689e6e",
+    "title": "Aggregate Operations {#aggregate_operations}",
+    "description": "For example, if you want to add the class `.foo` to all elements that have the class `.bar` on it, you can simply\nwrite this:",
+    "raw_code": "add .foo to .bar",
+    "source_info": {
+      "id": "9da8bfde-d25c-4c8d-b4c2-fbd2c373264f",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword"
+    ]
+  },
+  {
+    "id": "b30e8c57-c429-45e4-b964-a0df93d8e102",
+    "title": "Math Operations {#math}",
+    "description": "Hyperscript supports most of the regular math operators:",
+    "raw_code": "set x to 10\nset y to 20\nset sum to x + y\nset diff to x - y\nset product to x * y",
+    "source_info": {
+      "id": "328c6c29-9130-415a-94f9-ac5027cd0dd5",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.272Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "f2bbd933-5c42-47b2-b1c9-75977ac2fa5b",
+    "title": "Math Operations {#math}",
+    "description": "with one exception, the modulo operator uses the keyword `mod`:",
+    "raw_code": "set x to 10 mod 3",
+    "source_info": {
+      "id": "fca7401f-c8cf-4cec-8cc2-533bff02e302",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "d566dfb4-d6cb-4970-8c82-782695ad0f83",
+    "title": "Math Operations {#math}",
+    "description": "Hyperscript does not have a notion of mathematical operator precedence.  Instead, math operators must be fully\nparenthesized when used in combination with other math operators:",
+    "raw_code": "set x to 10\nset y to 20\nset sumOfSquares to (x * x) + (y * y)",
+    "source_info": {
+      "id": "7dcf8c96-69cc-4e09-bb20-4a5289b47d1d",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "a43d7a16-2692-4505-8c55-21b3c21c4610",
+    "title": "Math Operations {#math}",
+    "description": "Hyperscript also offers an [`increment`](/commands/increment) and [`decrement`](/commands/decrement) command for modifying\nnumbers:",
+    "raw_code": "set x to 1\nincrement x\nputs x -- prints 2 to the console",
+    "source_info": {
+      "id": "ddae207c-1423-4216-aa0d-5b98f38694cc",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "3bf2cda5-5170-41e7-b7a9-6ff73a2d670d",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "89405e22-5c8d-4beb-9af3-a9a59d9cd264",
+    "title": "Math Operations {#math}",
+    "description": "",
+    "raw_code": "on click\n   increment @data-counter\n   if @data-counter as Int is greater than 4\n     add @disabled -- disable after the 5th click",
+    "source_info": {
+      "id": "c1c0fdb2-0a2e-4af7-a4e5-392fde8b4c55",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "3bf2cda5-5170-41e7-b7a9-6ff73a2d670d",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "73e43a8a-0048-4984-8911-67fd9d04ccbd",
+      "6a85e8d9-5d53-45aa-9686-841b18af8c8b",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af",
+      "ee1599f1-48ff-4589-9b7d-40d7ebf76274",
+      "4b5ec135-1057-457c-8094-f8ba904c1add"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "9c340aa3-39de-4513-9e4d-fa482de31969",
+    "title": "Strings {#strings}",
+    "description": "Hyperscript supports strings that use either a single quotes or double quotes:",
+    "raw_code": "set hello to 'hello'\nset world to \"world\"\nset helloWorld to hello + \" \" + world",
+    "source_info": {
+      "id": "c9767afa-1463-4cbc-8568-7d4112307829",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "d2fe9edd-b77d-45c7-bf6f-0e7159836a86",
+    "title": "Strings {#strings}",
+    "description": "and also supports JavaScript style template strings:",
+    "raw_code": "set helloWorld to `${hello} ${world}`",
+    "source_info": {
+      "id": "df6b0042-2153-489d-ad77-993584f44084",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "85269050-934a-40ac-bfc5-97d7b970d04d",
+    "title": "Strings {#strings}",
+    "description": "The [`append`](/commands/append) command can append content to strings (as well as to arrays and the DOM):",
+    "raw_code": "get \"hello\"      -- set result to \"hello\"\n  append \" world\"  -- append \" world\" to the result\n  log it           -- log it to the console",
+    "source_info": {
+      "id": "21474bf8-e499-4783-98f7-929ed9a73c39",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "cac57a5a-92b3-43f9-87b9-c63be07f8b04",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "76164223-6900-4de9-b44c-b4b9dc80b7a5",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "59408cbe-7e4d-44ce-be84-0eb415a18e89",
+    "title": "Calling Functions {#calling-functions}",
+    "description": "There are many ways to invoke functions in hyperscript.  Two commands let you invoke a function and automatically\nassign the result to the `result` variable: [`call` and `get`](/commands/call):",
+    "raw_code": "call alert('hello world!')\nget the nextInteger() then log it -- using the 'it' alias for 'result`",
+    "source_info": {
+      "id": "a588d567-208a-482d-a054-1770cd20b5e4",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "63620480-8826-4164-84e3-3b4897b855c3",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "1885b2aa-0332-41bb-a06a-41f464394d9b",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "76164223-6900-4de9-b44c-b4b9dc80b7a5",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "17a1bd41-ec68-4882-b3d8-666ae0088f8f",
+    "title": "Events & Event Handlers {#event}",
+    "description": "Respond to events only in certain cases, either with counts (e.g. `on click 1`) or with event filters (`on keyup[key is 'Escape']`)",
+    "raw_code": "on keyup[key is 'Escape']",
+    "source_info": {
+      "id": "39e68e25-f36b-4ec5-9fcc-fda9bbad50fa",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "00a68107-90a1-4270-8791-416818bba323",
+    "title": "The Every Modifier {#on_every}",
+    "description": "An event handler with the `every` modifier will execute the event handler for every event that is received,\n even if the preceding handler execution has not finished.",
+    "raw_code": "on every click add .clicked",
+    "html_context": "<button _=\"on every click add .clicked\">\n  Add The \"clicked\" Class To Me\n</button>",
+    "source_info": {
+      "id": "1852bf69-c74a-4c64-b723-78e7b89f0bbe",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "feb58126-2177-41f6-b0da-fc7dffbc061c",
+    "title": "Mutation Events {#mutation}",
+    "description": "hyperscript includes a few synthetic events that make it easier to use more complex APIs in JavaScript.",
+    "raw_code": "on mutation of @foo put \"Mutated\" into me",
+    "html_context": "<div _='on mutation of @foo put \"Mutated\" into me'></div>",
+    "source_info": {
+      "id": "3a59ebf6-51d6-403b-b262-cbdf12275338",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "5c4285f2-8b28-425d-8000-c0095c75d562",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "ee1599f1-48ff-4589-9b7d-40d7ebf76274",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "c4df1402-80d5-445a-8ef9-91765a9634c9",
+    "title": "Intersection Events {#intersection}",
+    "description": "Here is a div that is set to `content-editable='true'` and that listens to mutations and updates a mutation count\nbelow:",
+    "raw_code": "on intersection(intersecting) having threshold 0.5\n        if intersecting transition opacity to 1\n        else transition opacity to 0",
+    "html_context": "<img _=\"on intersection(intersecting) having threshold 0.5\n        if intersecting transition opacity to 1\n        else transition opacity to 0 \"\n    src=\"https://placebear.com/200/300\"/>",
+    "source_info": {
+      "id": "f8616799-d109-4d0f-b745-4fa80c421d32",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.715Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "c8e8d6e2-0404-42d5-99ce-e5b22a3b643b",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "260a96b7-6e3e-4cc7-9dc5-290c2fffadbe",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "16a032c4-3f64-46dc-99a4-f0ce84952dee",
+    "title": "Init Blocks {#init}",
+    "description": "If you have logic that you wish to run when an element is initialized, you can use the `init` block to do so:",
+    "raw_code": "init transition my opacity to 100% over 3 seconds",
+    "html_context": "<div _=\"init transition my opacity to 100% over 3 seconds\">\n  Fade Me In\n</div>",
+    "source_info": {
+      "id": "862ab5a8-eb91-4c09-aca9-ba4eb149312e",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "c8e8d6e2-0404-42d5-99ce-e5b22a3b643b",
+      "01de0725-8df6-450d-a62f-485842dee189",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "8bd8c56e-cdad-4de2-8ff9-a4cd5888517a",
+    "title": "Exception Handling {#exceptions}",
+    "description": "Both functions and event handlers may have a `catch` block associated with them:",
+    "raw_code": "def example\n  call mightThrowAnException()\ncatch e\n  log e\nend\n\non click\n  call mightThrowAnException()\ncatch e\n  log e\nend",
+    "source_info": {
+      "id": "3100bdfd-0746-45f7-92de-8bb6b04b1001",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "63620480-8826-4164-84e3-3b4897b855c3",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "d924a644-a6c1-42b1-8677-3aca76daa63d",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "60052f99-aa52-47cc-979c-c0b2d2560c34",
+    "title": "Exception Handling {#exceptions}",
+    "description": "This allows you to handle exceptions that occur during the execution of the function or event handler.",
+    "raw_code": "on exception(error)\n     log \"An error occurred: \" + error",
+    "source_info": {
+      "id": "a21cf368-9b3c-43e7-9422-1aab9c645b31",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "446b2e74-a01b-40b5-b21f-071fc525cb97",
+    "title": "Finally Blocks {#finally}",
+    "description": "Both functions and event handlers also support a `finally` block to ensure that some cleanup code is executed:",
+    "raw_code": "on click\n  add @disabled to me\n  fetch /example\n  put the result after me\nfinally\n  remove @disabled from me",
+    "source_info": {
+      "id": "4d1661a5-966a-42ca-8978-26e3b5f2b388",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "adf9e1ac-88bf-45d2-8a89-33eaa714c9aa",
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "6a85e8d9-5d53-45aa-9686-841b18af8c8b",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "76164223-6900-4de9-b44c-b4b9dc80b7a5",
+      "ee1599f1-48ff-4589-9b7d-40d7ebf76274",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "508b9b26-0a06-49ee-809c-4be18d251212",
+    "title": "Throwing Exceptions {#throw}",
+    "description": "You may throw an exception using the familiar `throw` keyword:",
+    "raw_code": "on click\n  if I do not match .selected\n    throw \"I am not selected!\"\n  ...",
+    "source_info": {
+      "id": "f7c107af-0b16-48b0-b351-0ec4d0a09747",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "8462b2da-f21f-457d-a8ec-41054afbd39e",
+      "9cb45301-1a97-4539-8e5c-cdd201a6ee76",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "069f5efe-d159-4464-a394-bf5ef9021133",
+      "fce7f1c1-da46-464a-bc7a-babf82afb5af"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "bb60dcfe-71de-43f9-82d1-7127f71c31b2",
+    "title": "DOM Literals {#dom-literals}",
+    "description": "Here are a few examples of these literals in action:",
+    "raw_code": "-- adds the 'disabled' class to the element with the id 'myDiv'\nadd .disabled to #myDiv\n\n-- adds the 'highlight' class to all divs with the class 'tabs' on them\nadd .highlight to <div.tabs/>\n\n-- sets the width of the current element to 35 pixels\nset my *width to 35px\n\n-- adds the `disabled` attribute to the current element\nadd @disabled to me",
+    "source_info": {
+      "id": "0dc81317-9848-4e6a-b2c9-01d27e28ed78",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "ff15f360-7c62-40b1-a4ed-1788336991ec",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "ee1599f1-48ff-4589-9b7d-40d7ebf76274",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "697a73f9-1872-4765-9270-164284a26f75",
+    "title": "DOM Literals {#dom-literals}",
+    "description": "This allows you to look up elements based on a variable rather than a fixed value:",
+    "raw_code": "-- adds the 'disabled' class to the element with the id 'myDiv'\nset idToDisable to 'myDiv'\nadd .disabled to #{idToDisable}\n\n-- adds the 'highlight' class to all elements with the 'tabs' class\nset classToHighlight to 'tabs'\nadd .highlight to .{classToHighlight}\n\n-- removes all divs w/ class .hidden on them from the DOM\nset elementType to 'div'\nremove <${elementType}.hidden/>",
+    "source_info": {
+      "id": "9f519603-a4ba-4cec-ae91-5fefea541243",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "ff15f360-7c62-40b1-a4ed-1788336991ec",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "e6633c90-91e8-441c-9071-fee2af52b5e9",
+    "title": "DOM Literals {#dom-literals}",
+    "description": "with the corresponding hyperscript:",
+    "raw_code": "on click from #example-btn\n  remove .elements-to-remove",
+    "source_info": {
+      "id": "6cae2f08-80fb-4524-9dfb-0b0d7806841c",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.273Z",
+    "related_grammar_element_ids": [
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "f73b4fad-a915-4930-8ff6-4f6715d14f2b",
+    "title": "Finding Things In Other Things {#in}",
+    "description": "Often you want to find things *within* a particular element.  To do this you can use the `in` expression:",
+    "raw_code": "-- add the class 'highlight' to all paragraph tags in the current element\nadd .highlight to <p/> in me",
+    "source_info": {
+      "id": "fa21156e-d02d-4955-a455-7d8041178b5a",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "0408793e-2bff-4e03-a207-46824348147e",
+    "title": "Finding The Closest Matching (Parent) Element {#closest}",
+    "description": "To do this in hyperscript you can use the [`closest`](/expressions/closest) expression:",
+    "raw_code": "-- add the class 'highlight' to the closest table row to the current element\nadd .highlight to the closest <tr/>",
+    "source_info": {
+      "id": "71d1da22-3246-4661-886e-ad0c4aaacea6",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "422b7280-8b85-4c80-9be6-4351f9c42a11"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "d3dec593-d90b-4d29-a788-59327ee785f4",
+    "title": "Finding The Closest Matching (Parent) Element {#closest}",
+    "description": "Note that `closest` starts with the current element\nand recurses up the DOM from there.  If you wish to start at the parent instead, you can use this form:",
+    "raw_code": "-- add the class 'highlight' to the closest div to the current element, excluding the current element\nadd .highlight to the closest parent <div/>",
+    "source_info": {
+      "id": "9c6282ad-fb65-4885-98fc-940dc50c9bf8",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "422b7280-8b85-4c80-9be6-4351f9c42a11"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "5195c9ae-4828-4cba-8c02-930061dbd24a",
+    "title": "Finding Things By Position {#positional}",
+    "description": "You can use the [positional expressions](/expressions/positional) to get the first, last or a random element from\na collection of things:",
+    "raw_code": "-- add the class 'highlight' to the first paragraph tag in the current element\nadd .highlight to the first <p/> in me",
+    "source_info": {
+      "id": "dc97236e-4954-4ca5-b120-bbd16dae434d",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "33118b55-5ad1-4f3d-b951-a97e5a70fe07",
+    "title": "Finding Things Relative To Other Things {#relative_positional}",
+    "description": "You can use the [relative positional expressions](/expressions/relative-positional) `next` and `previous` to get an element\n relative to either the current element, or to another element:",
+    "raw_code": "-- add the class 'highlight' to the next paragraph found in a forward scan of the DOM\nadd .highlight to the next <p/>",
+    "source_info": {
+      "id": "68854877-5592-4b84-a7ad-0d795c871fc6",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "d60d8466-4323-4129-971c-58e1ec88e1e3",
+    "title": "Set & Put {#set-and-put}",
+    "description": "The `put` command can be used in the following ways:",
+    "raw_code": "put [[content]] before [[element]]",
+    "source_info": {
+      "id": "25291a9a-e3f7-4f84-ad17-5a5c4a60ba1e",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "37629f5e-f032-49c8-b413-0c120fa3af19"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword"
+    ]
+  },
+  {
+    "id": "2a25924c-340e-494a-98c3-ebd5cfb4cda2",
+    "title": "Set & Put {#set-and-put}",
+    "description": "The `put` command can be used in the following ways:",
+    "raw_code": "put [[content]] at the start of [[element]]",
+    "source_info": {
+      "id": "d11db2ac-7dfd-4b00-bb54-0f043582073a",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "03a185eb-4a57-4ed2-ae67-ae2ed214b0ee",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "71e0e3e7-5b35-4e28-b73c-c17899c9170a",
+    "title": "Set & Put {#set-and-put}",
+    "description": "The `put` command can be used in the following ways:",
+    "raw_code": "put [[content]] at the end of [[element]]",
+    "source_info": {
+      "id": "1b1094c4-4109-4402-a638-c0c13027e1a5",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "03a185eb-4a57-4ed2-ae67-ae2ed214b0ee",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "c4a4ecca-420c-4d36-924c-dcc5e995edb8",
+    "title": "Set & Put {#set-and-put}",
+    "description": "The `put` command can be used in the following ways:",
+    "raw_code": "put [[content]] after [[element]]",
+    "source_info": {
+      "id": "0fc47223-4c64-44ae-8e9b-6ea9b7b36750",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "6a85e8d9-5d53-45aa-9686-841b18af8c8b"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword"
+    ]
+  },
+  {
+    "id": "8c61c833-a7f5-44fa-bb0e-f988881d6ffc",
+    "title": "The `async` keyword {#async-keyword}",
+    "description": "So, if you wanted to invoke a method that returns a promise, say `returnsAPromise()` but not wait on it to return, you write code like this:",
+    "raw_code": "on click async call returnsAPromise() put 'I called it...' into the next <output/>",
+    "html_context": "<button _=\"on click async call returnsAPromise() put 'I called it...' into the next <output/>\">\n  Get The Answer...\n</button>",
+    "source_info": {
+      "id": "a038a009-95b2-4cdc-a088-e82df901ce8b",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "a6b33809-2356-4283-a816-6312da8d32f6",
+      "63620480-8826-4164-84e3-3b4897b855c3",
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "5c4285f2-8b28-425d-8000-c0095c75d562",
+      "080da252-1e7a-4fd1-abf8-bba82bbf5710",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc",
+      "2cc2f2c1-1a36-40ef-86b3-fd8639ed9ab3"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "cf1ffab8-017c-453c-a539-f3f68cfba9c7",
+    "title": "Calling JavaScript {#js-call}",
+    "description": "Any JavaScript function may be called directly from Hyperscript. See: [calling functions](#calling-functions).",
+    "raw_code": "on click call alert('Hello from JavaScript!')",
+    "html_context": "<button _=\"on click call alert('Hello from JavaScript!')\">\n  Click me.\n</button>",
+    "source_info": {
+      "id": "48d57f52-b8a0-4fe6-bba5-b8f293d6167f",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "63620480-8826-4164-84e3-3b4897b855c3",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "05d2d3f1-a2d1-4a70-a972-daff37495d52",
+    "title": "Inline JavaScript {#js-inline}",
+    "description": "Inline JavaScript may be defined using the [`js` keyword](/features/js).",
+    "raw_code": "init js alert('Hello from JavaScript!') end",
+    "html_context": "<div _=\"init js alert('Hello from JavaScript!') end\"></div>",
+    "source_info": {
+      "id": "e779696d-e48e-4c8d-996f-8c891833b154",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "57843421-f708-4ab7-a422-1fc430ead80c",
+      "01de0725-8df6-450d-a62f-485842dee189",
+      "d68eb363-2df6-47aa-922c-56790e2ac8c2",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "3faee002-cd8c-455b-bdde-9cb104a623e2",
+    "title": "Inline JavaScript {#js-inline}",
+    "description": "Return values are supported.",
+    "raw_code": "on click js return 'Success!' end then put it into my.innerHTML",
+    "html_context": "<button _=\"on click js return 'Success!' end then put it into my.innerHTML\">\n Click me.\n</button>",
+    "source_info": {
+      "id": "c6ec65cb-80aa-4611-b0ad-75eaf461dc4d",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "da375985-4bcf-4063-9d88-319a531cffba",
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "57843421-f708-4ab7-a422-1fc430ead80c",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "d68eb363-2df6-47aa-922c-56790e2ac8c2",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "5c4285f2-8b28-425d-8000-c0095c75d562",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "adcd0bdb-ce40-4570-872f-67b5558ce38f",
+    "title": "Inline JavaScript {#js-inline}",
+    "description": "Parameters are supported.",
+    "raw_code": "on click set foo to 1 js(foo) alert('Adding 1 to foo: '+(foo+1)) end",
+    "html_context": "<button _=\"on click set foo to 1 js(foo) alert('Adding 1 to foo: '+(foo+1)) end\">\n Click me.\n</button>",
+    "source_info": {
+      "id": "59921101-0042-4772-9f2f-83f7d0899c8e",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "57843421-f708-4ab7-a422-1fc430ead80c",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "d68eb363-2df6-47aa-922c-56790e2ac8c2",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "0b8ad937-ad19-49a2-8523-e6899608b91f",
+    "title": "Behaviors {#behaviors}",
+    "description": "We have covered the basics (and not-so-basics) of hyperscript.  Now we come to the more advanced\nfeatures of the language.",
+    "raw_code": "behavior Removable\n  on click\n    remove me\n  end\nend",
+    "source_info": {
+      "id": "1c0fa542-a6e2-451d-993d-2108aa18cf3a",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "0b099734-2352-48b2-b2ae-50ce9b68c928",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "b0f24862-f8a8-41c5-9c0c-42a519178f0c",
+    "title": "Behaviors {#behaviors}",
+    "description": "They can accept arguments:",
+    "raw_code": "behavior Removable(removeButton)\n  on click from removeButton\n    remove me\n  end\nend",
+    "source_info": {
+      "id": "94170e33-0479-4172-b578-f3efab0707f7",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "e1820461-8b4e-45e6-ae12-7349c0f08415",
+      "0b099734-2352-48b2-b2ae-50ce9b68c928",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "9714ec8f-5b29-4443-8395-2d971b865bf4",
+    "title": "Behaviors {#behaviors}",
+    "description": "They can be installed as shown:",
+    "raw_code": "install Removable(removeButton: #close-banner)",
+    "html_context": "<div class=\"banner\" _=\"install Removable(removeButton: #close-banner)\">\n  ...",
+    "source_info": {
+      "id": "a0a0b203-2d84-450f-b4c0-a669b30ab688",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [],
+    "tags": [
+      "beginner"
+    ]
+  },
+  {
+    "id": "a0fa7523-3571-44dc-bf41-9c7ec3f25e1e",
+    "title": "Web Workers {#workers}",
+    "description": "[WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Using_web_workers) can be defined\ninline in hyperscript by using the [`worker` keyword](/features/worker).",
+    "raw_code": "on click call Incrementer.increment(41) then put 'The answer is: ' + it into my.innerHTML",
+    "html_context": "<script type=\"text/hyperscript\">\n  worker Incrementer\n    def increment(i)\n      return i + 1\n    end\n  end\n</script>\n<button _=\"on click call Incrementer.increment(41) then put 'The answer is: ' + it into my.innerHTML\">\n  Call a Worker...\n</button>",
+    "source_info": {
+      "id": "0e3701dc-2cf6-4adc-b55e-b1aca2b7d5a0",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "63620480-8826-4164-84e3-3b4897b855c3",
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "3bf2cda5-5170-41e7-b7a9-6ff73a2d670d",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "5c4285f2-8b28-425d-8000-c0095c75d562",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "5fb5075e-b09c-4131-9412-6452c7ba3ad1",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "ee366ba0-bd1c-46fd-aa59-a233b18c2684",
+    "title": "Web Sockets {#sockets}",
+    "description": "Here is a simple web socket declaration in hyperscript:",
+    "raw_code": "socket MySocket ws://myserver.com/example\n  on message as json\n    log message\nend",
+    "source_info": {
+      "id": "7012ed97-4362-4fdf-a51e-bf355c53eeac",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "9e535a0d-c3ef-44ed-a5fc-1915a1580b18",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "73e43a8a-0048-4984-8911-67fd9d04ccbd",
+      "4b5ec135-1057-457c-8094-f8ba904c1add"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "cc9de361-bdeb-48a1-992d-1037dbbb28c6",
+    "title": "Event Source {#event-source}",
+    "description": "Here is an example event source in hyperscript:",
+    "raw_code": "eventsource ChatUpdates from http://myserver.com/chat-updates\n\n  on message as string\n    put it into #div\n  end\n\n  on open\n    log \"connection opened.\"\n  end\n\nend",
+    "source_info": {
+      "id": "cc742eb6-37b1-41c0-a15a-b86f3fbd5d3a",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "5c4285f2-8b28-425d-8000-c0095c75d562",
+      "73e43a8a-0048-4984-8911-67fd9d04ccbd",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc",
+      "4b5ec135-1057-457c-8094-f8ba904c1add",
+      "7ee26730-4f78-4b74-8d77-0a157d9ee31e"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "15a468c1-0f74-4af7-93a9-4c78b124bcd6",
+    "title": "Debugging {#debugging}",
+    "description": "",
+    "raw_code": "get <div.highlighted/> then log the result",
+    "source_info": {
+      "id": "a9c0c5c6-1190-4265-9515-70ad4c7e5613",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.274Z",
+    "related_grammar_element_ids": [
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "76164223-6900-4de9-b44c-b4b9dc80b7a5"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "1870855e-269e-4f44-b865-20106435f76f",
+    "title": "Beeping",
+    "description": "This is a reasonable way to start debugging but it is, obviously, fairly primitive.",
+    "raw_code": "add .highlighted to <p/> in <div.hilight/>",
+    "source_info": {
+      "id": "e0dd4bcb-838c-455e-8fee-f881bc94569a",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword"
+    ]
+  },
+  {
+    "id": "3a4025d3-2703-4558-9f72-ec3086d8780a",
+    "title": "Beeping",
+    "description": "If this wasn't behaving as you expect and you wanted to debug the results, you might break it up like so:",
+    "raw_code": "set highlightDiv to <div.hilight/>\n  log highlightDiv\n  set highlightParagraphs to <p/> in highlightDiv\n  log highlightParagraphs\n  add .highlighted to highlightParagraphs",
+    "source_info": {
+      "id": "d90b667f-f9bc-4135-b8a4-b034a53316e7",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "e2964269-4569-4cf4-a016-111114758a72",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "0ae54fef-e76f-4954-a065-e9be1db276ab",
+    "title": "Beeping",
+    "description": "So, considering the above code, rather than breaking things up, we might just try this:",
+    "raw_code": "add .highlighted to <p/> in beep! <div.hilight/>",
+    "source_info": {
+      "id": "231ad16e-b4a3-499f-91a6-21504021965b",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "9e19fdde-4794-475b-9d93-5de4227a2d03",
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "edab2fac-ac3f-4d9c-8c84-1b7db5dc205d"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "ea49d678-0c15-4a4c-a706-0bcd9e269c02",
+    "title": "Beeping",
+    "description": "We could now move the `beep!` out to the `in` expression like so:",
+    "raw_code": "add .highlighted to beep! <p/> in <div.hilight/>",
+    "source_info": {
+      "id": "06bcf860-8b72-4087-8a1e-82e9909247b1",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "9e19fdde-4794-475b-9d93-5de4227a2d03",
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "edab2fac-ac3f-4d9c-8c84-1b7db5dc205d"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "a26ba9a9-1b11-4761-9b2d-7c5bc612c4fb",
+    "title": "Beeping",
+    "description": "After making the fix, we can remove the `beep!` (which is *obviously* not supposed to be there!):",
+    "raw_code": "add .highlighted to <p/> in <div.highlight/>",
+    "source_info": {
+      "id": "02e2868a-4181-43a9-992b-5b77b02c13dc",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword"
+    ]
+  },
+  {
+    "id": "f432c2de-9d8a-42b0-80b8-a08f738fe8cc",
+    "title": "Extending {#extending}",
+    "description": "With this command defined you can now write the following hyperscript:",
+    "raw_code": "def testFoo()\n    set str to \"foo\"\n    foo str\n  end",
+    "source_info": {
+      "id": "6dcebfa2-4b7e-4185-afff-97a261c1821e",
+      "source_description": "Hyperscript Documentation - docs.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/docs.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.716Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "d924a644-a6c1-42b1-8677-3aca76daa63d",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "e1a7ef8f-7158-496a-9830-1f875fd82fca",
+    "title": "An easy & approachable language for modern web front-ends",
+    "description": "<figure>",
+    "raw_code": "on pointerdown\n  repeat until event pointerup from the document\n    set rand to Math.random() * 360\n    transition\n      *background-color\n      to `hsl($rand 100% 90%)`\n      over 250ms\n  end\n  transition *background-color to initial",
+    "source_info": {
+      "id": "0e5c0b34-def9-40b1-be3f-c7ea8da32374",
+      "source_description": "Hyperscript Documentation - index.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/index.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.717Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d91d9640-20ba-4ccb-bd3a-eab3edcdd04c",
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "c8e8d6e2-0404-42d5-99ce-e5b22a3b643b",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "22343067-6021-4371-8ba1-58903a8aad2f",
+      "a3731f2b-6f41-4c2c-aa20-57eb43e42f39"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "3593d9db-6644-49bd-94ab-347e2e6c0f5b",
+    "title": "Events are first class citizens",
+    "description": "</div>",
+    "raw_code": "on click send hello to <form />\n\non hello alert('got event')",
+    "html_context": "<button _=\"on click send hello to <form />\">Send</button>\n\n<form _=\"on hello alert('got event')\">",
+    "source_info": {
+      "id": "ec13bf2a-9529-48e7-b66b-9c422fef0e95",
+      "source_description": "Hyperscript Documentation - index.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/index.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.718Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "48222684-0945-44be-980b-5beae008632c",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "c0809c73-d6da-4828-8e28-25b98a954071",
+    "title": "Be async with no extra code",
+    "description": "</div>",
+    "raw_code": "on click wait 5s send hello to .target\n\ninit fetch https://stuff as json then put result into me",
+    "html_context": "<div _=\"on click wait 5s send hello to .target\">\n\n<div _=\"init fetch https://stuff as json then put result into me\">Using fetch() API...</div>",
+    "source_info": {
+      "id": "33e9d5c1-5852-475b-a811-fce2f3df56aa",
+      "source_description": "Hyperscript Documentation - index.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/index.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.718Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "adf9e1ac-88bf-45d2-8a89-33eaa714c9aa",
+      "48222684-0945-44be-980b-5beae008632c",
+      "e860c03e-87b4-494a-a6d5-e8ef203d4527",
+      "01de0725-8df6-450d-a62f-485842dee189",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "16ca17ad-082d-4f61-9200-147b8755b377",
+      "5c4285f2-8b28-425d-8000-c0095c75d562",
+      "73e43a8a-0048-4984-8911-67fd9d04ccbd",
+      "bef9c738-a7c9-45b1-8d0a-22c0b3c1f530",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "76164223-6900-4de9-b44c-b4b9dc80b7a5",
+      "4b5ec135-1057-457c-8094-f8ba904c1add",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "cb24853e-c904-4291-b610-1eb032633067",
+    "title": "Enhance existing code",
+    "description": "</div>",
+    "raw_code": "init js alert('Hello from JavaScript!') end\n\ninit js(haystack) return /needle/gi.exec(haystack) end\n\ninstall Draggable(dragHandle: .titlebar)",
+    "html_context": "<div _=\"init js alert('Hello from JavaScript!') end\"></div>\n\n<div _=\"init js(haystack) return /needle/gi.exec(haystack) end\">\n\n<div _=\"install Draggable(dragHandle: .titlebar)\">",
+    "source_info": {
+      "id": "0b4befb4-eb6c-46a6-8384-976d45dec477",
+      "source_description": "Hyperscript Documentation - index.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/index.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.718Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "da375985-4bcf-4063-9d88-319a531cffba",
+      "57843421-f708-4ab7-a422-1fc430ead80c",
+      "01de0725-8df6-450d-a62f-485842dee189",
+      "d68eb363-2df6-47aa-922c-56790e2ac8c2",
+      "1e00a918-e0ec-44f6-87d3-fc072f5b10f6",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "52487db8-a894-4097-b767-4753cb827d31",
+    "title": "Remember [HyperCard](https://hypercard.org/HyperTalk%20Reference%202.4.pdf)?",
+    "description": "</div>",
+    "raw_code": "on click tell <p/> in me add .highlight\n\ntell <details /> in .article set you.open to false",
+    "html_context": "<div _=\"on click tell <p/> in me add .highlight\">\n\n<div _=\"tell <details /> in .article set you.open to false\">",
+    "source_info": {
+      "id": "12069502-0b2b-4c04-932b-11f1e42d085b",
+      "source_description": "Hyperscript Documentation - index.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/index.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.718Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "a43e4092-2981-40d2-87c4-f9e634a4302f",
+      "36627342-0e1a-4eb3-ad50-34b92fd08f22",
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "d303b50a-9dc5-4686-8e18-4a5706393bc1",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "d8b9021e-c7bf-461a-936e-37a4686d5e8c",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190",
+      "ee3ec4e0-0836-4cb2-b57c-68925d3b471c"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "f73ca67a-749c-4ba2-81dc-b80e7ab34557",
+    "title": "Debugging and extending",
+    "description": "**Graphically [debug](/docs#debugging)** and step through code as it runs.",
+    "raw_code": "on click breakpoint",
+    "source_info": {
+      "id": "5731f366-14b2-4736-9d2d-cc57bac43ebb",
+      "source_description": "Hyperscript Documentation - index.md",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/index.md"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:20:36.718Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "91b61e79-5ed3-4978-b34c-18ec91747890",
+    "title": "A start on our keyboard shortcut",
+    "description": "Hyperscript code example",
+    "raw_code": "on keydown[altKey and code is 'KeyS'] ...",
+    "source_info": {
+      "id": "09232b19-5c9c-4ee3-9c41-5a6f9ef583ce",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "ea9fd407-c4d7-415f-bf6d-b62da8563324",
+    "title": "Listening globally",
+    "description": "Hyperscript code example",
+    "raw_code": "on keydown[altKey and code is 'KeyS'] from window ...",
+    "source_info": {
+      "id": "e8510820-8df8-41f0-999c-b427884d7f14",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "a14c2533-be26-4921-88e8-f5b1ecb1b6ed",
+    "title": "HTML with Hyperscript",
+    "description": "Hyperscript embedded in HTML",
+    "raw_code": "on click\nincrement the textContent of the previous <output/>",
+    "html_context": "<div class=\"counter\">\n  <output>0</output>\n  <button _=\"on click\n    increment the textContent of the previous <output/>\"> <1>\n    Increment\n  </button>\n</div>",
+    "source_info": {
+      "id": "a6350aab-2750-4386-86b9-f6d23a434ebf",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "3bf2cda5-5170-41e7-b7a9-6ff73a2d670d",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "9796be44-ee5b-4b51-9a1b-d64750fdc26b",
+    "title": "Listening globally",
+    "description": "Hyperscript embedded in HTML",
+    "raw_code": "on keydown[altKey and code is 'KeyS'] from the window\nfocus() me",
+    "html_context": "<input id=\"search\" name=\"q\" type=\"search\" placeholder=\"Search Contacts\"\n  _=\"on keydown[altKey and code is 'KeyS'] from the window\n    focus() me\"> <1>",
+    "source_info": {
+      "id": "5498e34b-f333-4d7b-b9f5-86caefb1506a",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "e9bbd840-73c6-4336-9991-666953296f95",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": " (underscore) attribute for putting scripting on DOM\nelements. You may also use the ",
+    "source_info": {
+      "id": "d92228d4-5abe-48d2-b25a-2e43afa2b118",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "1885b2aa-0332-41bb-a06a-41f464394d9b",
+      "d8b9021e-c7bf-461a-936e-37a4686d5e8c",
+      "ee3ec4e0-0836-4cb2-b57c-68925d3b471c"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "4004574b-9fa8-460b-b5a1-3d76a66340cc",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": "\nattributes, depending on your HTML validation needs.\n\nLet’s look at how to implement the simple counter component we have been looking\nat using \\_hyperscript. We will place an ",
+    "source_info": {
+      "id": "b2e0e89b-53f7-4fcf-9ced-602834b2f01e",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "03a185eb-4a57-4ed2-ae67-ae2ed214b0ee",
+      "16a5869d-addf-4f8f-8d5f-1b53786e5c13"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword",
+      "special-symbol"
+    ]
+  },
+  {
+    "id": "d1f910b1-29d0-42ee-9b70-ba682c5b0649",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": ". To implement the counter, we will need to add a\nsmall bit of \\_hyperscript to the button. On a click, the button should\nincrement the text of the previous ",
+    "source_info": {
+      "id": "674e1aaf-d35c-454e-ae38-5b23579e0d01",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "3bf2cda5-5170-41e7-b7a9-6ff73a2d670d",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "388afcb8-6203-4146-ab15-8df800d18dac",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": "html\n<div class=\"counter\">\n  <output>0</output>\n  <button _=\"on click\n    increment the textContent of the previous <output/>\"> <1>\n    Increment\n  </button>\n</div>\n",
+    "source_info": {
+      "id": "6d09028a-6fa4-47da-8b91-90d62ad3420b",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "3bf2cda5-5170-41e7-b7a9-6ff73a2d670d",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "e1006f06-611a-459d-bee4-8aee9c5276ce",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": ". Which one you use should depend on which one is most readable.\n- ",
+    "source_info": {
+      "id": "bc86f2c0-4d8e-43c5-9a5d-ec8ce11da21e",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "d8b9021e-c7bf-461a-936e-37a4686d5e8c",
+      "ee3ec4e0-0836-4cb2-b57c-68925d3b471c"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "762e35c5-16e8-4924-95d2-1133201167ba",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": ",\n\\_hyperscript does not shy away from using DOM-specific, non-natural language\nwhen appropriate.]\n\n==== \\_hyperscript in Action: A Keyboard Shortcut <_hyperscript_in_action_a_keyboard_shortcut>\nWhile the counter demo is a good way to compare various approaches to scripting,\nthe rubber meets the road when you try to actually implement a useful feature\nwith an approach. For \\_hyperscript, let’s add a keyboard shortcut to\nContact.app: when a user hits Alt+S in our app, we will focus the search field.\n\nSince our keyboard shortcut focuses the search input, let’s put the code for it\non that search input, satisfying locality.\n\nHere is the original HTML for the search input:\n\n#figure[",
+    "source_info": {
+      "id": "3360016b-3ec4-4230-8817-e6f91dc2765d",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37",
+      "f403e42d-439d-4e54-b74e-3e8360f2bebc",
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "ff15f360-7c62-40b1-a4ed-1788336991ec",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "9901fed0-456a-49fe-8820-85cf1f4b1e15",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "069f5efe-d159-4464-a394-bf5ef9021133",
+      "1885b2aa-0332-41bb-a06a-41f464394d9b",
+      "3acb4c0c-0776-4344-91b3-405fa5d7abda",
+      "351f4c62-0bd0-4670-bdd3-9f09409c0474",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "d8b9021e-c7bf-461a-936e-37a4686d5e8c",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc",
+      "ee3ec4e0-0836-4cb2-b57c-68925d3b471c"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "aa78aa1b-f744-4800-afbf-d5a5a568079b",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": "]\n\n#index[\\_hyperscript][event listener]\n#index[\\_hyperscript][event filter]\n#index[\\_hyperscript][filter expression]\nWe will add an event listener using the ",
+    "source_info": {
+      "id": "632cab07-c526-4f89-8a58-5f500610451e",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "b54537cc-9e66-4413-8b70-a863cb4bcc37"
+    ],
+    "tags": [
+      "beginner",
+      "command"
+    ]
+  },
+  {
+    "id": "29562e35-3167-4036-827b-90f6209278dc",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": ") of the event to achieve this.\n\nSo far our \\_hyperscript looks like this:\n\n#figure(caption: [A start on our keyboard shortcut])[\n",
+    "source_info": {
+      "id": "1577967d-a845-48c3-933b-b9e0df1a4c4e",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "1f6735b8-405a-4242-83ef-8610905a246d",
+      "a443120d-2b38-4ae5-be70-aefccf1b95b8"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword",
+      "expression"
+    ]
+  },
+  {
+    "id": "3b281af4-6d0c-4c9b-8c93-3d2a40b0799b",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": "hyperscript\non keydown[altKey and code is 'KeyS'] ...\n",
+    "source_info": {
+      "id": "9a16af92-da1b-49a2-88c6-558c4ee0bcd8",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "bef0fed3-4626-4a34-a427-e246b6fb47b2",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": " ]\n\n#index[\\_hyperscript][from]\nNow, by default, \\_hyperscript will listen for a given event _on the element where it is declared_.\nSo, with the script we have, we would only get ",
+    "source_info": {
+      "id": "815a70d9-ff06-4006-a694-4bf183cd11ed",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "20a521c7-841e-462c-9388-ce457e99ff48",
+      "ff15f360-7c62-40b1-a4ed-1788336991ec",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "263889c6-1ff7-4041-b058-071c9a3276c2",
+      "1885b2aa-0332-41bb-a06a-41f464394d9b",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc"
+    ],
+    "tags": [
+      "beginner",
+      "command",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "94e6a9b0-5e2c-432c-bf02-99334e493455",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": " from the\nwindow, and our code ends up looking, naturally, like this:\n\n#figure(caption: [Listening globally])[\n",
+    "source_info": {
+      "id": "6b44a55f-d5d4-4647-b2d7-aa8e15983040",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144"
+    ],
+    "tags": [
+      "beginner",
+      "keyword"
+    ]
+  },
+  {
+    "id": "7f8c3d07-737c-4d45-a222-63beb67d476c",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": "hyperscript\non keydown[altKey and code is 'KeyS'] from window ...\n",
+    "source_info": {
+      "id": "508c0267-8a94-468b-8f84-e79834dcc75d",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword"
+    ]
+  },
+  {
+    "id": "d9b053a7-e7c1-4f6c-91ff-cece9429d1ff",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": " clause, we can attach the listener to the window while, at the\nsame time, keeping the code on the element it logically relates to.\n\nNow that we’ve picked out the event we want to use to focus the search box,\nlet’s implement the actual focusing by calling the standard\n",
+    "source_info": {
+      "id": "40ea7228-4ceb-46b9-a68a-0b49b317d314",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.275Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "391fcf9a-8160-47af-806b-65c80afd0aaa",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "263889c6-1ff7-4041-b058-071c9a3276c2",
+      "351f4c62-0bd0-4670-bdd3-9f09409c0474",
+      "03a185eb-4a57-4ed2-ae67-ae2ed214b0ee",
+      "87bc7953-7310-46d4-8418-d2693fc955be",
+      "67ab6a89-9b4e-4c99-b5a7-8189b3f3f1fc"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  },
+  {
+    "id": "17b32c59-eb68-435c-a330-18e9d2a5a8d2",
+    "title": "Inline Hyperscript Example",
+    "description": "Inline hyperscript code",
+    "raw_code": "html\n<input id=\"search\" name=\"q\" type=\"search\" placeholder=\"Search Contacts\"\n  _=\"on keydown[altKey and code is 'KeyS'] from the window\n    focus() me\"> <1>\n",
+    "source_info": {
+      "id": "3c6dfb97-1120-4143-b9b5-5a18d60e6405",
+      "source_description": "Hyperscript Book - hypermedia-section.typ",
+      "document_path": "/Users/williamtalcott/projects/hyperscript-lsp/www/hypermedia-section.typ"
+    },
+    "difficulty": "Beginner",
+    "status": "New",
+    "created_at": "2025-05-22T23:33:49.482Z",
+    "updated_at": "2025-05-22T23:33:56.276Z",
+    "related_grammar_element_ids": [
+      "d49de9a2-c1f1-46a6-8121-da53ff9b5c67",
+      "3e75e1a6-91ea-4970-8b41-f10ccf8d915b",
+      "fcdde68c-88c0-4887-91ce-02c626f673c6",
+      "bfd3fdeb-294d-4e42-9e3a-c5b3c916c144",
+      "e83b75c5-2e67-43ce-9d45-ee3c2b9775b0",
+      "5b813e51-89e9-4ae7-ae97-0c90cad87190"
+    ],
+    "tags": [
+      "beginner",
+      "feature",
+      "keyword",
+      "special-symbol",
+      "expression"
+    ]
+  }
+]

@@ -1,21 +1,29 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with
+code in this repository.
 
 ## 🚀 Current Development Status
 
-**Phase 3 Complete**: Expression System Implementation ✅  
-**Overall Progress**: 75% Complete  
-**Test Results**: 388 tests passing (100% success rate)  
+**Phase 3 Complete**: Expression System Implementation ✅\
+**Overall Progress**: 75% Complete\
+**Test Results**: 388 tests passing (100% success rate)
 
-📋 **For comprehensive project status and development context**: See [Development Plan](roadmap/plan.md)
+📋 **For comprehensive project status and development context**: See
+[Development Plan](roadmap/plan.md)
 
 ## Project Overview
 
-**Current Focus**: HyperFixi has evolved from a simple _hyperscript + fixi.js integration into a comprehensive **hyperscript expression evaluation engine**. The project now implements a complete expression system that handles all documented hyperscript patterns with full TypeScript type safety and comprehensive testing.
+**Current Focus**: HyperFixi has evolved from a simple _hyperscript + fixi.js
+integration into a comprehensive **hyperscript expression evaluation engine**.
+The project now implements a complete expression system that handles all
+documented hyperscript patterns with full TypeScript type safety and
+comprehensive testing.
 
-**Original Vision**: Bridge between _hyperscript and fixi.js - two minimalist web development libraries  
-**Current Reality**: Production-ready hyperscript expression system with 388 passing tests
+**Original Vision**: Bridge between _hyperscript and fixi.js - two minimalist
+web development libraries\
+**Current Reality**: Production-ready hyperscript expression system with 388
+passing tests
 
 ## Current Architecture (Phase 3)
 
@@ -41,15 +49,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 The project uses Rollup with TypeScript to create two output formats:
 
 - **dist/hyperscript-fixi.mjs** - ES module for modern bundlers
-- **dist/hyperscript-fixi.min.js** - UMD bundle for script tags (with global `hyperscriptFixi`)
+- **dist/hyperscript-fixi.min.js** - UMD bundle for script tags (with global
+  `hyperscriptFixi`)
 
 Both outputs include source maps and the UMD version is minified with Terser.
 
 ### Expression System Pattern
 
-The project implements a complete hyperscript expression evaluation system with 6 categories of expressions:
+The project implements a complete hyperscript expression evaluation system with
+6 categories of expressions:
 
 1. **Reference Expressions** - Context and DOM element access:
+
    ```hyperscript
    me                    # Current element
    my data-value        # Element attributes  
@@ -58,6 +69,7 @@ The project implements a complete hyperscript expression evaluation system with 
    ```
 
 2. **Property Access** - Possessive syntax and attribute handling:
+
    ```hyperscript
    element's property   # Possessive syntax
    my className        # Element properties
@@ -65,6 +77,7 @@ The project implements a complete hyperscript expression evaluation system with 
    ```
 
 3. **Type Conversion** - The `as` keyword with comprehensive conversions:
+
    ```hyperscript
    "123" as Int        # Type conversion
    form as Values      # Form processing
@@ -72,6 +85,7 @@ The project implements a complete hyperscript expression evaluation system with 
    ```
 
 4. **Logical Operations** - Comparisons and boolean logic:
+
    ```hyperscript
    value > 5           # Comparisons
    element matches .class  # CSS matching
@@ -79,6 +93,7 @@ The project implements a complete hyperscript expression evaluation system with 
    ```
 
 5. **Mathematical Operations** - Arithmetic with proper precedence:
+
    ```hyperscript
    (value + 5) * 2     # Mathematical expressions
    array.length mod 3  # Modulo operations
@@ -117,27 +132,34 @@ npm run lint:fix       # Auto-fix linting issues
 
 ## Current Project Philosophy (Phase 3)
 
-The project has evolved to focus on **robust, comprehensive hyperscript expression evaluation**:
+The project has evolved to focus on **robust, comprehensive hyperscript
+expression evaluation**:
 
 - **Type Safety First** - Strict TypeScript with comprehensive type definitions
 - **Test-Driven Development** - 388 tests ensuring reliability and correctness
-- **Modular Architecture** - Tree-shakable expression categories for optimal bundle size
-- **LSP Compliance** - All documented hyperscript patterns implemented and validated
+- **Modular Architecture** - Tree-shakable expression categories for optimal
+  bundle size
+- **LSP Compliance** - All documented hyperscript patterns implemented and
+  validated
 - **Production Ready** - 100% test pass rate with real-world usage validation
 
 ## Key Files for Current Development
 
 ### Core Implementation
+
 - **src/types/core.ts** - Expression system type definitions
 - **src/expressions/\*/index.ts** - Expression category implementations
 - **src/test-setup.ts** - Testing infrastructure and utilities
 
-### Documentation & Planning  
-- **[roadmap/plan.md](roadmap/plan.md)** - 📋 **Dynamic context memory store for development**
+### Documentation & Planning
+
+- **[roadmap/plan.md](roadmap/plan.md)** - 📋 **Dynamic context memory store for
+  development**
 - **PHASE_3_SUMMARY.md** - Comprehensive implementation summary
 - **INTEGRATION_TESTS_SUMMARY.md** - Integration testing results and patterns
 
 ### Testing & Validation
+
 - **src/expressions/\*/index.test.ts** - Unit tests for each expression category
 - **src/expressions/integration\*.test.ts** - Real-world usage pattern tests
 
@@ -153,19 +175,23 @@ The project uses modern testing practices:
 
 ## Expression System Integration Notes
 
-- **Async-first architecture** - All expressions return Promises for consistency  
+- **Async-first architecture** - All expressions return Promises for consistency
 - **Modular design** - Each expression category independently importable
-- **Comprehensive validation** - Runtime argument checking with descriptive errors
+- **Comprehensive validation** - Runtime argument checking with descriptive
+  errors
 - **Context-aware evaluation** - Proper handling of `me`, `you`, `it` contexts
-- **DOM integration** - Full CSS selector support and DOM manipulation capabilities
+- **DOM integration** - Full CSS selector support and DOM manipulation
+  capabilities
 - **Form processing** - Complete form value extraction and type conversion
 
 ## Next Development Phase
 
 **Phase 4 Priority**: Parser & Runtime Integration
+
 - Hyperscript syntax parser (tokenization, AST generation)
 - Runtime expression evaluator connecting parser to expression system
 - Event system integration for `on click` style event handling
 - DOM manipulation commands (`put`, `add`, `remove`, etc.)
 
-For detailed development context and next steps, see **[Development Plan](roadmap/plan.md)**.
+For detailed development context and next steps, see
+**[Development Plan](roadmap/plan.md)**.

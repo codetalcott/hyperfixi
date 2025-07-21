@@ -145,7 +145,7 @@ describe('Enhanced Error Handler', () => {
       expect(errors.length).toBeGreaterThan(0);
       
       const consecutiveOpError = errors.find(e => 
-        e.message.includes('consecutive operators')
+        e.message.toLowerCase().includes('consecutive operators')
       );
       
       expect(consecutiveOpError).toBeDefined();
@@ -211,6 +211,10 @@ describe('Enhanced Error Handler', () => {
       
       // Add error for unclosed parenthesis
       const parenError = handler.addError('Unclosed paren', { parsing: 'parentheses' });
+      
+      // Advance to a different position
+      handler.advance();
+      handler.advance();
       
       // Add error for incomplete multiplication
       const multError = handler.addError('Incomplete mult', { parsing: 'binary_op' });

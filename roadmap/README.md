@@ -26,11 +26,13 @@ This directory contains the development roadmap and planning documents for Hyper
 ## Planning Documents
 
 ### Active Planning
+
 - **[plan.md](./plan.md)** - Current development plan and context
 - **[considerations.md](./considerations.md)** - Technical considerations and decisions
 - **[syntax.md](./syntax.md)** - Syntax design and patterns
 
 ### Historical Planning
+
 - **[sketch.md](./sketch.md)** - Original project concept and integration approach
 - **[tdd-requirements.md](./tdd-requirements.md)** - Test-driven development requirements
 
@@ -56,14 +58,16 @@ This directory contains the development roadmap and planning documents for Hyper
 
 ## Next Milestones
 
-### Q1 2024 Goals
+### Q3 2025 Goals
+
 1. Complete fixi utilities implementation
 2. Launch interactive playground
 3. Publish packages to npm registry
 4. Create documentation website
 
-### Q2 2024 Goals  
-1. Framework integration packages (React, Vue, Svelte)
+### Q4 2025 Goals  
+
+1. Framework integration packages (Django, Flask, FastApi, Elysiajs)
 2. VS Code extension with syntax highlighting
 3. Browser extension for debugging
 4. Performance optimization and JIT compilation
