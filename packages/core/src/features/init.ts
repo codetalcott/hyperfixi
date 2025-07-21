@@ -78,7 +78,7 @@ export class InitFeature {
     if (!element) {
       return;
     }
-
+    
     const registration = this.registrations.get(element);
     if (!registration) {
       return;
@@ -333,6 +333,7 @@ export class InitFeature {
           const element = context.me as HTMLElement;
           const attrName = String(name);
           const attrValue = String(value);
+          
           element.setAttribute(attrName, attrValue);
           
           // Ensure the attribute is immediately available
@@ -496,11 +497,27 @@ export class InitFeature {
   private handleInitError(element: HTMLElement, error: any, context: ExecutionContext): void {
     console.error(`Init error for element ${element.id || element.tagName}:`, error);
 
+    // Store error details in context for testing
+    context.locals?.set('__init_error', {
+      message: error.message || String(error),
+      error: error,
+      timestamp: Date.now()
+    });
+
     // Emit error event
     this.emitInitEvent(element, 'hyperscript:error', {
       error,
       phase: 'init',
-      element
+      element,
+      message: error.message || String(error)
+    });
+
+    // Also emit more specific init error event
+    this.emitInitEvent(element, 'hyperscript:init:error', {
+      error,
+      phase: 'init',
+      element,
+      message: error.message || String(error)
     });
 
     // Mark as processed even if failed to prevent retry loops

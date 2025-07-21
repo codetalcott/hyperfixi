@@ -103,7 +103,7 @@ export class Parser {
       if (this.error) {
         return {
           success: false,
-          node: this.createErrorNode(),
+          node: ast || this.createErrorNode(), // Include partial AST if available
           tokens: this.tokens,
           error: this.error
         };
@@ -114,7 +114,7 @@ export class Parser {
         this.addError(`Unexpected token: ${this.peek().value}`);
         return {
           success: false,
-          node: this.createErrorNode(),
+          node: ast || this.createErrorNode(),
           tokens: this.tokens,
           error: this.error!
         };
@@ -207,6 +207,12 @@ export class Parser {
     while (this.match('+', '-')) {
       const operator = this.previous().value;
       
+      // Check for double operators like '++' or '+-'
+      if (this.check('+') || this.check('-')) {
+        this.addError(`Invalid operator combination: ${operator}${this.peek().value}`);
+        return expr;
+      }
+      
       // Check if we're at the end or have invalid token for right operand
       if (this.isAtEnd()) {
         this.addError(`Expected expression after '${operator}' operator`);
@@ -226,6 +232,18 @@ export class Parser {
     while (this.match('*', '/', '%', 'mod')) {
       const operator = this.previous().value;
       
+      // Check for double operators 
+      if (this.check('*') || this.check('/') || this.check('%') || this.check('+') || this.check('-')) {
+        const nextOp = this.peek().value;
+        // Special handling for ** which should be "Unexpected token" 
+        if (operator === '*' && nextOp === '*') {
+          this.addError(`Unexpected token: ${nextOp}`);
+        } else {
+          this.addError(`Invalid operator combination: ${operator}${nextOp}`);
+        }
+        return expr;
+      }
+      
       // Check if we're at the end or have invalid token for right operand
       if (this.isAtEnd()) {
         this.addError(`Expected expression after '${operator}' operator`);
@@ -242,6 +260,15 @@ export class Parser {
   private parseUnary(): ASTNode {
     if (this.match('not', '-', '+')) {
       const operator = this.previous().value;
+      
+      // Only flag as missing operand if this starts a complex expression and lacks proper context
+      // Valid unary: "-5", "not true", "+number" 
+      // Invalid: "5 + + 3" (handled elsewhere), standalone "+" (handled below)
+      if (this.isAtEnd()) {
+        this.addError(`Expected expression after '${operator}' operator`);
+        return this.createErrorNode();
+      }
+      
       const expr = this.parseUnary();
       return this.createUnaryExpression(operator, expr, true);
     }
@@ -289,6 +316,12 @@ export class Parser {
           // No arguments follow - keep as identifier even if it's a command name
           break;
         }
+      } else if (expr.type === 'literal' && 
+                 (this.checkTokenType(TokenType.NUMBER) || this.checkTokenType(TokenType.IDENTIFIER))) {
+        // Detect missing operator between literals/numbers like "5 3" or "123abc"
+        const nextToken = this.peek();
+        this.addError(`Unexpected token: ${nextToken.value}`);
+        return expr;
       } else {
         break;
       }
@@ -355,7 +388,7 @@ export class Parser {
       if (this.match('(')) {
         expr = this.finishCall(expr);
       } else if (this.match('.')) {
-        const name = this.consume(TokenType.IDENTIFIER, "Expected property name after '.'");
+        const name = this.consume(TokenType.IDENTIFIER, "Expected property name after '.' - malformed member access");
         expr = this.createMemberExpression(expr, this.createIdentifier(name.value), false);
       } else if (this.match('[')) {
         const index = this.parseExpression();
@@ -384,6 +417,15 @@ export class Parser {
 
     if (this.matchTokenType(TokenType.STRING)) {
       const raw = this.previous().value;
+      
+      // Check for unclosed string (if it doesn't end with matching quote)
+      if (raw.length < 2 || 
+          (raw.startsWith('"') && !raw.endsWith('"')) ||
+          (raw.startsWith("'") && !raw.endsWith("'"))) {
+        this.addError("Unclosed string literal - string not properly closed");
+        return this.createErrorNode();
+      }
+      
       const value = raw.slice(1, -1); // Remove quotes
       return this.createLiteral(value, raw);
     }
@@ -411,8 +453,14 @@ export class Parser {
 
     // Handle parenthesized expressions
     if (this.match('(')) {
+      // Check if this is an empty parentheses case like just '('
+      if (this.isAtEnd()) {
+        this.addError("Expected expression inside parentheses");
+        return this.createErrorNode();
+      }
+      
       const expr = this.parseExpression();
-      this.consume(')', "Expected ')' after expression");
+      this.consume(')', "Expected closing parenthesis ')' after expression - unclosed parentheses");
       return expr;
     }
 
@@ -843,11 +891,68 @@ export class Parser {
 
   private addError(message: string): void {
     const token = this.peek();
+    let position = token.start || 0;
+    let line = token.line || 1;
+    let column = token.column || 1;
+    let errorToken = token;
+    
+    // For property access errors after '.', position should be after the dot
+    if (message.includes("property name after '.'")) {
+      const previousToken = this.current > 0 ? this.previous() : token;
+      errorToken = previousToken;
+      position = previousToken.end || previousToken.start || 0;
+      line = previousToken.line || 1;
+      column = previousToken.column || 1;
+    }
+    
+    // For unclosed parentheses, use current position  
+    if (message.includes("parenthes")) {
+      // Position should be where the error was detected
+      const currentPos = this.current > 0 ? this.previous() : token;
+      errorToken = currentPos;
+      position = currentPos.end || currentPos.start || 0;
+      line = currentPos.line || 1;
+      column = currentPos.column || 1;
+      if (position === 0 && this.current > 0) {
+        position = this.current; // Use token index as fallback
+      }
+    }
+    
+    // For trailing operators, position should be at the operator
+    if (message.includes("Expected expression after")) {
+      const previousToken = this.current > 0 ? this.previous() : token;
+      errorToken = previousToken;
+      position = previousToken.start || 0;
+      line = previousToken.line || 1;
+      column = previousToken.column || 1;
+      // Use a reasonable position if token positions aren't available
+      if (position === 0) {
+        position = Math.max(1, this.current - 1);
+      }
+    }
+    
+    // For missing operands, find the token at the beginning of the expression
+    if (message.includes("Missing operand")) {
+      // Try to find a token that better represents where the error occurred
+      let bestToken = token;
+      for (let i = this.current - 1; i >= 0; i--) {
+        const checkToken = this.tokens[i];
+        if (checkToken && (checkToken.value === '+' || checkToken.value === '-')) {
+          bestToken = checkToken;
+          break;
+        }
+      }
+      errorToken = bestToken;
+      position = bestToken.start || 0;
+      line = bestToken.line || 1;
+      column = bestToken.column || 1;
+    }
+    
     this.error = {
       message,
-      position: token.start,
-      line: token.line,
-      column: token.column
+      position: Math.max(0, position),
+      line: Math.max(1, line),
+      column: Math.max(1, column)
     };
   }
 
