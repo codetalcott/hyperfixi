@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>_hyperscript API Test</title>
+</head>
+<body>
+    <div id="results"></div>
+    
+    <!-- Original _hyperscript library -->
+    <script src="/dist/_hyperscript.js"></script>
+    
+    <script>
+        function testOriginalHyperscript() {
+            const tests = [
+                // Test expressions that should work
+                '(2 + 3) * 4',      // With parentheses
+                '2 + 3 + 4',        // Same operator
+                '2 * 3 * 4',        // Same operator
+                '5',                // Single value
+                'true',             // Boolean
+                '"hello"',          // String
+                
+                // Test expressions that require precedence
+                '2 + 3 * 4',        // Mixed operators - should fail
+                'true and false or true',  // Mixed logical - should fail
+            ];
+            
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Original _hyperscript API Test</h2>';
+            
+            for (const expr of tests) {
+                try {
+                    const result = _hyperscript.evaluate(expr, {});
+                    results.innerHTML += `<div style="color: green;">✅ ${expr} = ${result}</div>`;
+                    console.log(`SUCCESS: ${expr} = ${result}`);
+                } catch (error) {
+                    results.innerHTML += `<div style="color: red;">❌ ${expr}: ${error.message}</div>`;
+                    console.log(`ERROR: ${expr}: ${error.message}`);
+                }
+            }
+        }
+        
+        window.addEventListener('load', testOriginalHyperscript);
+    </script>
+</body>
+</html>

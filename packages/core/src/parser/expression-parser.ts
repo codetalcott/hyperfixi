@@ -73,15 +73,27 @@ function parseExpression(tokens: Token[]): ASTNode {
 
 /**
  * Parse logical expressions (and, or, not) - lowest precedence
+ * Enforces _hyperscript's strict precedence: mixed logical operators require parentheses
  */
 function parseLogicalExpression(state: ParseState): ASTNode {
   let left = parseComparisonExpression(state);
+  let firstOperator: string | null = null;
   
   while (state.position < state.tokens.length) {
     const token = state.tokens[state.position];
     
     if (token.type === TokenType.LOGICAL_OPERATOR) {
       const operator = token.value;
+      
+      // Enforce strict precedence: reject mixed operators
+      if (firstOperator === null) {
+        firstOperator = operator;
+      } else if (firstOperator !== operator) {
+        throw new ExpressionParseError(
+          `You must parenthesize logical operations with different operators\n\n${reconstructExpression(state, left)}\n${' '.repeat(token.start)}^^`
+        );
+      }
+      
       state.position++; // consume operator
       
       const right = parseComparisonExpression(state);
@@ -159,15 +171,27 @@ function parseComparisonExpression(state: ParseState): ASTNode {
 
 /**
  * Parse arithmetic expressions (+, -, *, /, mod)
+ * Enforces _hyperscript's strict precedence: mixed math operators require parentheses
  */
 function parseArithmeticExpression(state: ParseState): ASTNode {
   let left = parseAsExpression(state);
+  let firstOperator: string | null = null;
   
   while (state.position < state.tokens.length) {
     const token = state.tokens[state.position];
     
     if (token.type === TokenType.OPERATOR && ['+', '-', '*', '/', 'mod'].includes(token.value)) {
       const operator = token.value;
+      
+      // Enforce strict precedence: reject mixed operators
+      if (firstOperator === null) {
+        firstOperator = operator;
+      } else if (firstOperator !== operator) {
+        throw new ExpressionParseError(
+          `You must parenthesize math operations with different operators\n\n${reconstructExpression(state, left)}\n${' '.repeat(token.start)}^^`
+        );
+      }
+      
       state.position++; // consume operator
       
       const right = parseAsExpression(state);
@@ -757,4 +781,13 @@ async function evaluateAttributeAccess(node: any, context: ExecutionContext): Pr
 async function evaluateBracketExpression(node: any, context: ExecutionContext): Promise<any> {
   // Evaluate the inner expression
   return await evaluateASTNode(node.expression, context);
+}
+
+/**
+ * Helper function to reconstruct expression text for error messages
+ */
+function reconstructExpression(state: ParseState, leftNode?: ASTNode): string {
+  // Simple reconstruction - in a more sophisticated implementation,
+  // we'd traverse the AST to rebuild the original text
+  return state.tokens.map(token => token.value).join(' ');
 }

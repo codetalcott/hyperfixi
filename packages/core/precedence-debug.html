@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Precedence Debug Test</title>
+</head>
+<body>
+    <div id="results"></div>
+    
+    <!-- Original _hyperscript library -->
+    <script src="/dist/_hyperscript.js"></script>
+    
+    <!-- Our hyperfixi implementation -->
+    <script src="/dist/hyperfixi-browser.js"></script>
+    
+    <script>
+        async function testPrecedence() {
+            const tests = [
+                '2 + 3 * 4',        // Expected: 14 (multiplication first)
+                '10 - 2 * 3',       // Expected: 4 (multiplication first) 
+                '(2 + 3) * 4',      // Expected: 20 (parentheses first)
+                '2 * 3 + 4',        // Expected: 10 (multiplication first)
+                '8 / 2 + 3',        // Expected: 7 (division first)
+                '2 + 3 + 4',        // Expected: 9 (left to right)
+                'true and false or true',  // Expected: true (and first, then or)
+                'false or true and false', // Expected: false (and first, then or)
+            ];
+            
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>Precedence Test Results</h2>';
+            
+            for (const expr of tests) {
+                try {
+                    const original = _hyperscript.evaluate(expr, {});
+                    const ours = await hyperfixi.evalHyperScript(expr, {});
+                    
+                    const match = original === ours;
+                    const color = match ? 'green' : 'red';
+                    
+                    results.innerHTML += `
+                        <div style="color: ${color}; font-family: monospace;">
+                            ${match ? '✅' : '❌'} ${expr}<br>
+                            &nbsp;&nbsp;_hyperscript: ${original}<br>
+                            &nbsp;&nbsp;hyperfixi: ${ours}<br>
+                            <br>
+                        </div>
+                    `;
+                    
+                    console.log(`${expr}: _hyperscript=${original}, hyperfixi=${ours}, match=${match}`);
+                } catch (error) {
+                    results.innerHTML += `
+                        <div style="color: orange; font-family: monospace;">
+                            ⚠️ ${expr}<br>
+                            &nbsp;&nbsp;Error: ${error.message}<br>
+                            <br>
+                        </div>
+                    `;
+                    console.error(`${expr}: Error ${error.message}`);
+                }
+            }
+        }
+        
+        window.addEventListener('load', testPrecedence);
+    </script>
+</body>
+</html>

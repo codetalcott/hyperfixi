@@ -19,10 +19,48 @@
         window.testExpression = async function(expression, context = {}) {
             try {
                 // Use the correct API for both libraries
-                const original = _hyperscript.evaluate(expression, context);
-                const ours = await hyperfixi.evalHyperScript(expression, context);
+                let original, originalError;
+                let ours, oursError;
                 
-                return { expression, original, ours, match: original === ours };
+                // Test _hyperscript
+                try {
+                    original = _hyperscript.evaluate(expression, context);
+                } catch (err) {
+                    originalError = err.message;
+                }
+                
+                // Test hyperfixi
+                try {
+                    ours = await hyperfixi.evalHyperScript(expression, context);
+                } catch (err) {
+                    oursError = err.message;
+                }
+                
+                // Both succeeded - compare values
+                if (!originalError && !oursError) {
+                    return { expression, original, ours, match: original === ours };
+                }
+                
+                // Both failed - check if error messages are similar (compatibility)
+                if (originalError && oursError) {
+                    // For mixed operator errors, both should fail - that's compatible
+                    const isMixedOperatorError = originalError.includes('parenthesize') || oursError.includes('parenthesize');
+                    return { 
+                        expression, 
+                        original: `ERROR: ${originalError}`, 
+                        ours: `ERROR: ${oursError}`, 
+                        match: isMixedOperatorError 
+                    };
+                }
+                
+                // One succeeded, one failed - not compatible
+                return { 
+                    expression, 
+                    original: originalError ? `ERROR: ${originalError}` : original, 
+                    ours: oursError ? `ERROR: ${oursError}` : ours, 
+                    match: false 
+                };
+                
             } catch (error) {
                 return { expression, error: error.message, match: false };
             }
