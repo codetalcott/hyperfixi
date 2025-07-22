@@ -73,6 +73,9 @@ export class ExpressionEvaluator {
       case 'binaryExpression':
         return this.evaluateBinaryExpression(node as any, context);
       
+      case 'unaryExpression':
+        return this.evaluateUnaryExpression(node as any, context);
+      
       case 'callExpression':
         return this.evaluateCallExpression(node as any, context);
       
@@ -216,11 +219,32 @@ export class ExpressionEvaluator {
         const modExpr = this.expressionRegistry.get('modulo');
         return modExpr ? modExpr.evaluate(context, leftValue, rightValue) : leftValue % rightValue;
       
+      case 'as':
+        // Type conversion - right operand should be a type name
+        const typeName = typeof rightValue === 'string' ? rightValue : 
+                        right.type === 'identifier' ? right.name :
+                        right.type === 'literal' ? right.value :
+                        String(rightValue);
+        const asExpr = this.expressionRegistry.get('as');
+        return asExpr ? asExpr.evaluate(context, leftValue, typeName) : leftValue;
+      
       case '&&':
-        return leftValue && rightValue;
+      case 'and':
+        const andExpr = this.expressionRegistry.get('and');
+        return andExpr ? andExpr.evaluate(context, leftValue, rightValue) : leftValue && rightValue;
       
       case '||':
-        return leftValue || rightValue;
+      case 'or':
+        const orExpr = this.expressionRegistry.get('or');
+        return orExpr ? orExpr.evaluate(context, leftValue, rightValue) : leftValue || rightValue;
+      
+      case 'is':
+        // Identity comparison - strict equality (bypass registry for binary comparison)
+        return leftValue === rightValue;
+      
+      case 'is not':
+        // Negative identity comparison - strict inequality
+        return leftValue !== rightValue;
       
       case '=':
         // Assignment operator - set variable in context
@@ -263,6 +287,32 @@ export class ExpressionEvaluator {
       
       default:
         throw new Error(`Unsupported binary operator: ${operator}`);
+    }
+  }
+
+  /**
+   * Evaluate unary expressions (not, -, +, etc.)
+   */
+  private async evaluateUnaryExpression(node: any, context: ExecutionContext): Promise<any> {
+    const { operator, argument } = node;
+    
+    // Evaluate operand
+    const operandValue = await this.evaluate(argument, context);
+    
+    switch (operator) {
+      case 'not':
+      case '!':
+        const notExpr = this.expressionRegistry.get('not');
+        return notExpr ? notExpr.evaluate(context, operandValue) : !operandValue;
+      
+      case '-':
+        return -operandValue;
+      
+      case '+':
+        return +operandValue;
+      
+      default:
+        throw new Error(`Unsupported unary operator: ${operator}`);
     }
   }
 

@@ -44,17 +44,29 @@ function convertContext(hyperScriptContext?: HyperScriptContext): ExecutionConte
     async: false
   };
 
-  // Convert locals object to Map
-  if (hyperScriptContext?.locals) {
+  if (!hyperScriptContext) {
+    return context;
+  }
+
+  // Handle structured format with locals/globals properties
+  if (hyperScriptContext.locals && typeof hyperScriptContext.locals === 'object') {
     for (const [key, value] of Object.entries(hyperScriptContext.locals)) {
       context.locals.set(key, value);
     }
   }
 
-  // Convert globals object to Map
-  if (hyperScriptContext?.globals) {
+  if (hyperScriptContext.globals && typeof hyperScriptContext.globals === 'object') {
     for (const [key, value] of Object.entries(hyperScriptContext.globals)) {
       context.globals.set(key, value);
+    }
+  }
+
+  // Handle plain object format - treat unknown properties as locals
+  // This supports calling evalHyperScript('expr', { var1: 'value1', var2: 'value2' })
+  const knownProperties = new Set(['me', 'you', 'result', 'locals', 'globals']);
+  for (const [key, value] of Object.entries(hyperScriptContext)) {
+    if (!knownProperties.has(key) && typeof value !== 'undefined') {
+      context.locals.set(key, value);
     }
   }
 

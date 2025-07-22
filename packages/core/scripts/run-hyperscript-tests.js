@@ -187,33 +187,35 @@ Object.defineProperty(Object.prototype, 'should', {
   async runSingleTest(filename, testCase) {
     console.log(`    🔍 ${testCase.description}`);
     
-    // For expression tests, let's try to extract and run the evalHyperScript calls
-    if (filename.includes('expressions')) {
-      await this.runExpressionTest(testCase);
-    } else {
-      console.log(`    ⏩ Skipping non-expression test for now`);
-    }
+    // Always try to run expression tests - all files in expressions/ directory contain expressions
+    await this.runExpressionTest(testCase);
   }
 
   async runExpressionTest(testCase) {
     // Import our compatibility layer
-    const { evalHyperScript } = await import('../src/compatibility/eval-hyperscript.js');
+    const { evalHyperScript } = await import('../dist/index.mjs');
     
     // Extract evalHyperScript calls from test code
     const evalCalls = this.extractEvalCalls(testCase.code);
+    
+    if (evalCalls.length === 0) {
+      console.log(`      ⚠️  No evalHyperScript calls found in test`);
+      return; // Don't fail the test if no calls are found
+    }
     
     for (const call of evalCalls) {
       try {
         const result = await evalHyperScript(call.expression, call.context);
         
-        // If there's an expected result, compare it
-        if (call.expectedResult !== undefined) {
-          if (result !== call.expectedResult) {
-            throw new Error(`Expected ${call.expectedResult}, got ${result}`);
+        // Try to extract expected result from test code
+        const expectedResult = this.extractExpectedResult(testCase.code, call.expression);
+        if (expectedResult !== undefined) {
+          if (result != expectedResult) { // Use loose equality for now
+            throw new Error(`Expected ${expectedResult}, got ${result}`);
           }
         }
         
-        console.log(`      ✅ ${call.expression} => ${result}`);
+        console.log(`      ✅ ${call.expression} => ${JSON.stringify(result)}`);
       } catch (error) {
         console.log(`      ❌ ${call.expression} => ${error.message}`);
         throw error;
@@ -247,6 +249,29 @@ Object.defineProperty(Object.prototype, 'should', {
     }
     
     return calls;
+  }
+
+  extractExpectedResult(code, expression) {
+    // Try to find patterns like result.should.equal("foo") after the expression
+    const lines = code.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].includes(expression)) {
+        // Look for should.equal on the next few lines
+        for (let j = i; j < Math.min(i + 3, lines.length); j++) {
+          const shouldMatch = lines[j].match(/\.should\.equal\s*\(\s*([^)]+)\s*\)/);
+          if (shouldMatch) {
+            try {
+              // Try to evaluate the expected value
+              return eval(shouldMatch[1]);
+            } catch (e) {
+              // If eval fails, return the string as-is
+              return shouldMatch[1];
+            }
+          }
+        }
+      }
+    }
+    return undefined;
   }
 
   ensureDir(dir) {

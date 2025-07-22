@@ -578,6 +578,7 @@ function resolveIdentifier(name: string, context: ExecutionContext): any {
   if (name === 'it') return context.it;
   if (name === 'result') return context.result;
   
+  
   // Check locals
   if (context.locals.has(name)) {
     return context.locals.get(name);

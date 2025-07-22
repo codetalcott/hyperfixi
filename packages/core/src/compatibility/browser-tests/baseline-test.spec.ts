@@ -26,43 +26,43 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
         },
         {
           name: "string concat works", 
-          test: () => {
-            const result = evalHyperScript("'a' + 'b'");
+          test: async () => {
+            const result = await evalHyperScript("'a' + 'b'");
             return { success: result === "ab", result, expected: "ab" };
           }
         },
         {
           name: "subtraction works",
-          test: () => {
-            const result = evalHyperScript("1 - 1"); 
+          test: async () => {
+            const result = await evalHyperScript("1 - 1"); 
             return { success: result === 0, result, expected: 0 };
           }
         },
         {
           name: "multiplication works",
-          test: () => {
-            const result = evalHyperScript("1 * 2");
+          test: async () => {
+            const result = await evalHyperScript("1 * 2");
             return { success: result === 2, result, expected: 2 };
           }
         },
         {
           name: "division works",
-          test: () => {
-            const result = evalHyperScript("1 / 2");
+          test: async () => {
+            const result = await evalHyperScript("1 / 2");
             return { success: result === 0.5, result, expected: 0.5 };
           }
         },
         {
           name: "mod works",
-          test: () => {
-            const result = evalHyperScript("3 mod 2");
+          test: async () => {
+            const result = await evalHyperScript("3 mod 2");
             return { success: result === 1, result, expected: 1 };
           }
         },
         {
           name: "addition works w/ more than one value",
-          test: () => {
-            const result = evalHyperScript("1 + 2 + 3");
+          test: async () => {
+            const result = await evalHyperScript("1 + 2 + 3");
             return { success: result === 6, result, expected: 6 };
           }
         },
@@ -70,14 +70,14 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
           name: "unparenthesized expressions with mixed operators cause error",
           test: () => {
             const result = getParseErrorFor("1 + 2 * 3");
-            const hasCorrectError = result.indexOf("You must parenthesize math operations with different operators") === 0;
+            const hasCorrectError = result && result.indexOf("You must parenthesize math operations with different operators") === 0;
             return { success: hasCorrectError, result, expected: "error message" };
           }
         },
         {
           name: "parenthesized expressions with multiple operators work",
-          test: () => {
-            const result = evalHyperScript("1 + (2 * 3)");
+          test: async () => {
+            const result = await evalHyperScript("1 + (2 * 3)");
             return { success: result === 7, result, expected: 7 };
           }
         }
@@ -86,7 +86,7 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
       const results = [];
       for (const testCase of tests) {
         try {
-          const result = testCase.test();
+          const result = await testCase.test();
           results.push({
             name: testCase.name,
             success: result.success,
@@ -130,15 +130,15 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
       const tests = [
         {
           name: "can parse simple strings",
-          test: () => {
-            const result = evalHyperScript('"hello world"');
+          test: async () => {
+            const result = await evalHyperScript('"hello world"');
             return { success: result === "hello world", result, expected: "hello world" };
           }
         },
         {
           name: "can parse simple strings w/ single quotes",
-          test: () => {
-            const result = evalHyperScript("'hello world'");
+          test: async () => {
+            const result = await evalHyperScript("'hello world'");
             return { success: result === "hello world", result, expected: "hello world" };
           }
         }
@@ -147,7 +147,7 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
       const results = [];
       for (const testCase of tests) {
         try {
-          const result = testCase.test();
+          const result = await testCase.test();
           results.push({
             name: testCase.name,
             success: result.success,
@@ -191,22 +191,22 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
       const tests = [
         {
           name: "its result works",
-          test: () => {
-            const result = evalHyperScript("its result", { result: { result: 'success' } });
+          test: async () => {
+            const result = await evalHyperScript("its result", { result: { result: 'success' } });
             return { success: result === 'success', result, expected: 'success' };
           }
         },
         {
           name: "my property works",
-          test: () => {
-            const result = evalHyperScript("my value", { me: { value: 42 } });
+          test: async () => {
+            const result = await evalHyperScript("my value", { me: { value: 42 } });
             return { success: result === 42, result, expected: 42 };
           }
         },
         {
           name: "your property works",
-          test: () => {
-            const result = evalHyperScript("your data", { you: { data: 'test' } });
+          test: async () => {
+            const result = await evalHyperScript("your data", { you: { data: 'test' } });
             return { success: result === 'test', result, expected: 'test' };
           }
         }
@@ -215,7 +215,7 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
       const results = [];
       for (const testCase of tests) {
         try {
-          const result = testCase.test();
+          const result = await testCase.test();
           results.push({
             name: testCase.name,
             success: result.success,
@@ -282,7 +282,7 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
       const results = [];
       for (const testCase of tests) {
         try {
-          const result = testCase.test();
+          const result = await testCase.test();
           results.push({
             name: testCase.name,
             success: result.success,

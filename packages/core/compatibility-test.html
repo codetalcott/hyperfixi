@@ -82,6 +82,208 @@
             document.getElementById('work-area').innerHTML = '';
         };
         
+        // Make function for creating DOM elements with hyperscript behavior
+        window.make = function(htmlString) {
+            try {
+                // Create a temporary container to parse the HTML
+                const container = document.createElement('div');
+                container.innerHTML = htmlString;
+                
+                // Get the first child element
+                const element = container.firstElementChild;
+                if (!element) {
+                    throw new Error('Invalid HTML string');
+                }
+                
+                // Check for hyperscript behavior attribute
+                const hyperschriptBehavior = element.getAttribute('_');
+                if (hyperschriptBehavior) {
+                    // Initialize hyperscript behavior on the element
+                    window.initHyperscriptBehavior(element, hyperschriptBehavior);
+                }
+                
+                return element;
+            } catch (error) {
+                console.error('make() error:', error.message);
+                throw error;
+            }
+        };
+        
+        // Initialize hyperscript behavior on an element
+        window.initHyperscriptBehavior = function(element, behavior) {
+            // Parse the behavior string to extract event handlers
+            // Format: "on <event> <command>"
+            const eventHandlers = window.parseHyperscriptBehavior(behavior);
+            
+            for (const handler of eventHandlers) {
+                element.addEventListener(handler.event, function(evt) {
+                    try {
+                        // Temporarily add element to DOM for selector resolution
+                        const wasInDOM = document.body.contains(element);
+                        if (!wasInDOM) {
+                            document.body.appendChild(element);
+                        }
+                        
+                        // Set up context with proper element binding
+                        const context = {
+                            me: element,
+                            you: null, 
+                            it: evt,
+                            result: null,
+                            locals: new Map(),
+                            globals: new Map()
+                        };
+                        
+                        // Execute hyperscript command synchronously for simple commands
+                        try {
+                            // For simple commands, try synchronous execution
+                            window.executeHyperscriptSync(handler.command, context);
+                        } catch (error) {
+                            console.error('Hyperscript behavior error:', error.message);
+                        } finally {
+                            // Remove from DOM if we added it temporarily
+                            if (!wasInDOM && document.body.contains(element)) {
+                                document.body.removeChild(element);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Hyperscript behavior setup error:', error.message);
+                    }
+                });
+            }
+        };
+        
+        // Parse hyperscript behavior string into event handlers
+        window.parseHyperscriptBehavior = function(behavior) {
+            const handlers = [];
+            
+            // Handle single event handler case (most common)
+            // Pattern: "on <event> <command>"
+            const singleMatch = behavior.match(/^on\s+(\w+)\s+(.+)$/);
+            if (singleMatch) {
+                handlers.push({
+                    event: singleMatch[1],
+                    command: singleMatch[2].trim()
+                });
+                return handlers;
+            }
+            
+            // Handle multiple event handlers (fallback for complex cases)
+            const matches = behavior.match(/on\s+(\w+)\s+(.+?)(?=\s+on\s+\w+|$)/g);
+            
+            if (matches) {
+                for (const match of matches) {
+                    const parts = match.match(/on\s+(\w+)\s+(.+)/);
+                    if (parts) {
+                        handlers.push({
+                            event: parts[1],
+                            command: parts[2].trim()
+                        });
+                    }
+                }
+            }
+            
+            return handlers;
+        };
+        
+        // Execute hyperscript commands synchronously for simple cases
+        window.executeHyperscriptSync = function(command, context) {
+            // Handle simple PUT commands synchronously
+            if (command.match(/^put\s+.+\s+into\s+.+$/)) {
+                window.executePutCommand(command, context);
+                return;
+            }
+            
+            // Handle simple SET commands synchronously
+            if (command.match(/^set\s+.+\s+to\s+.+$/)) {
+                window.executeSetCommand(command, context);
+                return;
+            }
+            
+            // For other commands, fall back to async
+            throw new Error('Command requires async execution');
+        };
+        
+        // Synchronous PUT command execution
+        window.executePutCommand = function(command, context) {
+            const match = command.match(/^put\s+(.+)\s+into\s+(.+)$/);
+            if (!match) return;
+            
+            const [, contentExpr, targetExpr] = match;
+            
+            // Evaluate content (simple cases)
+            let content = window.evaluateSimpleExpression(contentExpr, context);
+            
+            // Handle target resolution
+            if (targetExpr.includes('.innerHTML')) {
+                const elementSelector = targetExpr.replace('.innerHTML', '');
+                const element = window.resolveElementSimple(elementSelector, context);
+                if (element) {
+                    element.innerHTML = content;
+                }
+            } else {
+                const element = window.resolveElementSimple(targetExpr, context);
+                if (element) {
+                    element.textContent = content;
+                }
+            }
+        };
+        
+        // Synchronous SET command execution
+        window.executeSetCommand = function(command, context) {
+            const match = command.match(/^set\s+(.+)\s+to\s+(.+)$/);
+            if (!match) return;
+            
+            const [, target, valueExpr] = match;
+            
+            // Handle "my property" syntax
+            if (target.startsWith('my ')) {
+                const property = target.replace('my ', '');
+                const value = window.evaluateSimpleExpression(valueExpr, context);
+                
+                if (property === 'innerHTML' && context.me) {
+                    context.me.innerHTML = value;
+                } else if (property === 'textContent' && context.me) {
+                    context.me.textContent = value;
+                }
+            }
+        };
+        
+        // Simple expression evaluation for synchronous execution
+        window.evaluateSimpleExpression = function(expr, context) {
+            // Handle string literals
+            if (expr.startsWith('"') && expr.endsWith('"')) {
+                return expr.slice(1, -1);  // Remove quotes
+            }
+            if (expr.startsWith("'") && expr.endsWith("'")) {
+                return expr.slice(1, -1);  // Remove quotes
+            }
+            
+            // Handle numbers
+            const num = parseFloat(expr);
+            if (!isNaN(num)) {
+                return num;
+            }
+            
+            // Handle simple variables (fallback)
+            return expr;
+        };
+        
+        // Simple element resolution for synchronous execution
+        window.resolveElementSimple = function(selector, context) {
+            // Handle 'me' reference
+            if (selector === 'me') {
+                return context.me;
+            }
+            
+            // Handle CSS selectors
+            if (selector.startsWith('#') || selector.startsWith('.')) {
+                return document.querySelector(selector);
+            }
+            
+            return null;
+        };
+        
         // Test command execution helper
         window.testCommandExecution = async function(command, context = {}) {
             try {
@@ -95,6 +297,19 @@
                     locals: context,
                     globals: context
                 };
+                
+                // For PUT commands with variables, test variable resolution first
+                if (command.startsWith('put ') && Object.keys(context).length > 0) {
+                    const varName = Object.keys(context)[0];
+                    try {
+                        const varTest = await hyperfixi.evalHyperScript(varName, hyperscriptContext);
+                        if (varTest === null || varTest === undefined) {
+                            throw new Error(`Variable ${varName} resolved to ${varTest}`);
+                        }
+                    } catch (err) {
+                        throw new Error(`Variable resolution failed: ${err.message}`);
+                    }
+                }
                 
                 await hyperfixi.evalHyperScript(command, hyperscriptContext);
                 
