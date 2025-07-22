@@ -72,31 +72,40 @@ function parseExpression(tokens: Token[]): ASTNode {
 }
 
 /**
- * Parse logical expressions (and, or, not) - lowest precedence
- * Enforces _hyperscript's strict precedence: mixed logical operators require parentheses
+ * Parse logical expressions (and, or, not) with proper operator precedence
+ * Handles standard logical precedence: and (4) before or (3)
  */
 function parseLogicalExpression(state: ParseState): ASTNode {
+  return parseLogicalExpressionWithPrecedence(state, 3); // Start with lowest logical precedence (or)
+}
+
+/**
+ * Precedence climbing for logical expressions
+ * Precedence levels:
+ * - OR (or): 3
+ * - AND (and): 4  
+ * - NOT (not): handled separately as unary
+ */
+function parseLogicalExpressionWithPrecedence(state: ParseState, minPrecedence: number): ASTNode {
   let left = parseComparisonExpression(state);
-  let firstOperator: string | null = null;
   
   while (state.position < state.tokens.length) {
     const token = state.tokens[state.position];
     
-    if (token.type === TokenType.LOGICAL_OPERATOR) {
+    if (token.type === TokenType.LOGICAL_OPERATOR && isLogicalBinaryOperator(token.value)) {
       const operator = token.value;
+      const precedence = getLogicalOperatorPrecedence(operator);
       
-      // Enforce strict precedence: reject mixed operators
-      if (firstOperator === null) {
-        firstOperator = operator;
-      } else if (firstOperator !== operator) {
-        throw new ExpressionParseError(
-          `You must parenthesize logical operations with different operators\n\n${reconstructExpression(state, left)}\n${' '.repeat(token.start)}^^`
-        );
+      // Stop if this operator has lower precedence than minimum required
+      if (precedence < minPrecedence) {
+        break;
       }
       
       state.position++; // consume operator
       
-      const right = parseComparisonExpression(state);
+      // All logical operators are left-associative, so use precedence + 1
+      const nextMinPrecedence = precedence + 1;
+      const right = parseLogicalExpressionWithPrecedence(state, nextMinPrecedence);
       
       left = {
         type: 'binaryExpression',
@@ -112,6 +121,27 @@ function parseLogicalExpression(state: ParseState): ASTNode {
   }
   
   return left;
+}
+
+/**
+ * Check if operator is a binary logical operator
+ */
+function isLogicalBinaryOperator(operator: string): boolean {
+  return ['and', 'or'].includes(operator);
+}
+
+/**
+ * Get logical operator precedence
+ */
+function getLogicalOperatorPrecedence(operator: string): number {
+  switch (operator) {
+    case 'or':
+      return 3;
+    case 'and':
+      return 4;
+    default:
+      return 0;
+  }
 }
 
 /**
@@ -170,31 +200,41 @@ function parseComparisonExpression(state: ParseState): ASTNode {
 }
 
 /**
- * Parse arithmetic expressions (+, -, *, /, mod)
- * Enforces _hyperscript's strict precedence: mixed math operators require parentheses
+ * Parse arithmetic expressions (+, -, *, /, %) with proper operator precedence
+ * Handles standard math precedence: multiplication/division (7) before addition/subtraction (6)
  */
 function parseArithmeticExpression(state: ParseState): ASTNode {
+  return parseArithmeticExpressionWithPrecedence(state, 6); // Start with lowest math precedence
+}
+
+/**
+ * Precedence climbing for arithmetic expressions
+ * Precedence levels: 
+ * - Addition/Subtraction (+, -): 6
+ * - Multiplication/Division/Modulo (*, /, mod): 7
+ * - Exponentiation (^, **): 8
+ */
+function parseArithmeticExpressionWithPrecedence(state: ParseState, minPrecedence: number): ASTNode {
   let left = parseAsExpression(state);
-  let firstOperator: string | null = null;
   
   while (state.position < state.tokens.length) {
     const token = state.tokens[state.position];
     
-    if (token.type === TokenType.OPERATOR && ['+', '-', '*', '/', 'mod'].includes(token.value)) {
+    if (token.type === TokenType.OPERATOR && isArithmeticOperator(token.value)) {
       const operator = token.value;
+      const precedence = getArithmeticOperatorPrecedence(operator);
       
-      // Enforce strict precedence: reject mixed operators
-      if (firstOperator === null) {
-        firstOperator = operator;
-      } else if (firstOperator !== operator) {
-        throw new ExpressionParseError(
-          `You must parenthesize math operations with different operators\n\n${reconstructExpression(state, left)}\n${' '.repeat(token.start)}^^`
-        );
+      // Stop if this operator has lower precedence than minimum required
+      if (precedence < minPrecedence) {
+        break;
       }
       
       state.position++; // consume operator
       
-      const right = parseAsExpression(state);
+      // For right-associative operators (like ^), use same precedence
+      // For left-associative operators, use precedence + 1 to ensure left-to-right
+      const nextMinPrecedence = isRightAssociative(operator) ? precedence : precedence + 1;
+      const right = parseArithmeticExpressionWithPrecedence(state, nextMinPrecedence);
       
       left = {
         type: 'binaryExpression',
@@ -210,6 +250,40 @@ function parseArithmeticExpression(state: ParseState): ASTNode {
   }
   
   return left;
+}
+
+/**
+ * Check if operator is arithmetic
+ */
+function isArithmeticOperator(operator: string): boolean {
+  return ['+', '-', '*', '/', '%', '^', '**'].includes(operator);
+}
+
+/**
+ * Get arithmetic operator precedence
+ */
+function getArithmeticOperatorPrecedence(operator: string): number {
+  switch (operator) {
+    case '+':
+    case '-':
+      return 6;
+    case '*':
+    case '/':
+    case '%':
+      return 7;
+    case '^':
+    case '**':
+      return 8;
+    default:
+      return 0;
+  }
+}
+
+/**
+ * Check if operator is right-associative
+ */
+function isRightAssociative(operator: string): boolean {
+  return ['^', '**'].includes(operator); // Exponentiation is right-associative
 }
 
 /**
