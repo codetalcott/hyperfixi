@@ -265,6 +265,25 @@ export const isEmptyExpression: ExpressionImplementation = {
   }
 };
 
+export const noExpression: ExpressionImplementation = {
+  name: 'no',
+  category: 'Logical',
+  evaluatesTo: 'Boolean',
+  operators: ['no'],
+  
+  async evaluate(context: ExecutionContext, value: any): Promise<boolean> {
+    // The 'no' operator is equivalent to 'is empty' according to hyperscript docs
+    return await isEmptyExpression.evaluate(context, value);
+  },
+  
+  validate(args: any[]): string | null {
+    if (args.length !== 1) {
+      return 'no requires exactly one argument (value)';
+    }
+    return null;
+  }
+};
+
 export const isNotEmptyExpression: ExpressionImplementation = {
   name: 'isNotEmpty',
   category: 'Logical',
@@ -475,6 +494,7 @@ export const logicalExpressions = {
   and: andExpression,
   or: orExpression,
   not: notExpression,
+  no: noExpression,
   isEmpty: isEmptyExpression,
   isNotEmpty: isNotEmptyExpression,
   exists: existsExpression,

@@ -472,13 +472,13 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     throw new ExpressionParseError('Unexpected end of expression');
   }
   
-  // Handle unary operators (not, !, -, +)
-  if (token.type === TokenType.LOGICAL_OPERATOR && token.value === 'not') {
-    advance(state); // consume 'not'
+  // Handle unary operators (not, no, !, -, +)
+  if (token.type === TokenType.LOGICAL_OPERATOR && (token.value === 'not' || token.value === 'no')) {
+    advance(state); // consume 'not' or 'no'
     const operand = parsePrimaryExpression(state);
     return {
       type: 'unaryExpression',
-      operator: 'not',
+      operator: token.value,
       operand,
       start: token.start,
       end: operand.end
@@ -1221,6 +1221,8 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
   switch (operator) {
     case 'not':
       return logicalExpressions.not.evaluate(context, operand);
+    case 'no':
+      return logicalExpressions.no.evaluate(context, operand);
     case 'exists':
       return logicalExpressions.exists.evaluate(context, operand);
     case 'is empty':

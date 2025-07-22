@@ -57,7 +57,7 @@ export enum TokenType {
 const KEYWORDS = new Set([
   'on', 'init', 'behavior', 'def', 'set', 'if', 'else', 'unless', 'repeat', 'for',
   'while', 'until', 'end', 'and', 'or', 'not', 'in', 'to', 'from', 'into',
-  'with', 'as', 'then', 'when', 'where', 'after', 'before', 'by', 'at', 'async'
+  'with', 'as', 'then', 'when', 'where', 'after', 'before', 'by', 'at', 'async', 'no'
 ]);
 
 const COMMANDS = new Set([
@@ -72,7 +72,7 @@ const CONTEXT_VARS = new Set([
   'me', 'it', 'you', 'result', 'my', 'its', 'your'
 ]);
 
-const LOGICAL_OPERATORS = new Set(['and', 'or', 'not']);
+const LOGICAL_OPERATORS = new Set(['and', 'or', 'not', 'no']);
 
 const COMPARISON_OPERATORS = new Set([
   '==', '!=', '===', '!==', '<', '>', '<=', '>=', 'is', 'is not',
