@@ -452,12 +452,56 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
   
   // Context variables and identifiers
   if (token.type === TokenType.CONTEXT_VAR || token.type === TokenType.IDENTIFIER) {
-    advance(state);
+    const identifierToken = advance(state)!;
+    
+    // Check for function call syntax: identifier()
+    const nextToken = peek(state);
+    if (nextToken && nextToken.value === '(') {
+      advance(state); // consume '('
+      
+      // Parse function arguments
+      const args: ASTNode[] = [];
+      
+      // Check for arguments before closing paren
+      let currentToken = peek(state);
+      while (currentToken && currentToken.value !== ')') {
+        const arg = parseExpression(state);
+        args.push(arg);
+        
+        currentToken = peek(state);
+        if (currentToken && currentToken.value === ',') {
+          advance(state); // consume comma
+          currentToken = peek(state);
+        }
+      }
+      
+      // Consume closing paren
+      const closeParen = peek(state);
+      if (!closeParen || closeParen.value !== ')') {
+        throw new ExpressionParseError('Expected closing parenthesis');
+      }
+      advance(state);
+      
+      return {
+        type: 'callExpression',
+        callee: {
+          type: 'identifier',
+          name: identifierToken.value,
+          start: identifierToken.start,
+          end: identifierToken.end
+        },
+        arguments: args,
+        start: identifierToken.start,
+        end: closeParen.end
+      };
+    }
+    
+    // Regular identifier
     return {
       type: 'identifier',
-      name: token.value,
-      start: token.start,
-      end: token.end
+      name: identifierToken.value,
+      start: identifierToken.start,
+      end: identifierToken.end
     };
   }
   
@@ -515,6 +559,9 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
       
     case 'bracketExpression':
       return evaluateBracketExpression(node, context);
+      
+    case 'callExpression':
+      return evaluateCallExpression(node, context);
       
     default:
       throw new ExpressionParseError(`Unknown AST node type: ${(node as any).type}`);
@@ -781,6 +828,35 @@ async function evaluateAttributeAccess(node: any, context: ExecutionContext): Pr
 async function evaluateBracketExpression(node: any, context: ExecutionContext): Promise<any> {
   // Evaluate the inner expression
   return await evaluateASTNode(node.expression, context);
+}
+
+/**
+ * Evaluate call expressions (function calls)
+ */
+async function evaluateCallExpression(node: any, context: ExecutionContext): Promise<any> {
+  // Evaluate the function (callee)
+  const func = await evaluateASTNode(node.callee, context);
+  
+  if (typeof func !== 'function') {
+    throw new ExpressionParseError(`Cannot call non-function value: ${typeof func}`);
+  }
+  
+  // Evaluate arguments
+  const args = [];
+  for (const arg of node.arguments) {
+    const value = await evaluateASTNode(arg, context);
+    args.push(value);
+  }
+  
+  // Call the function
+  const result = func(...args);
+  
+  // Handle async functions
+  if (result && typeof result.then === 'function') {
+    return await result;
+  }
+  
+  return result;
 }
 
 /**
