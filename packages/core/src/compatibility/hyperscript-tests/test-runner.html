@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>HyperFixi vs _hyperscript Test Runner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/mocha/mocha.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin: 10px 0;
+        }
+        .stat {
+            padding: 10px;
+            border-radius: 4px;
+            background: white;
+            border: 2px solid #ddd;
+        }
+        .stat.passing {
+            border-color: #28a745;
+            color: #28a745;
+        }
+        .stat.failing {
+            border-color: #dc3545;
+            color: #dc3545;
+        }
+        .progress {
+            margin: 10px 0;
+        }
+        .progress-bar {
+            background: #e9ecef;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        #test-controls {
+            margin-bottom: 20px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .category-toggle {
+            margin: 5px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        #work-area {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎯 HyperFixi vs _hyperscript Test Runner</h1>
+        <p>Running official _hyperscript tests against HyperFixi implementation</p>
+        
+        <div class="stats">
+            <div class="stat passing">
+                <strong id="pass-count">0</strong> Passing
+            </div>
+            <div class="stat failing">
+                <strong id="fail-count">0</strong> Failing
+            </div>
+            <div class="stat">
+                <strong id="total-count">0</strong> Total
+            </div>
+            <div class="stat">
+                <strong id="completion-rate">0%</strong> Complete
+            </div>
+        </div>
+        
+        <div class="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="test-controls">
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="runExpressionTests()">Run Expression Tests Only</button>
+        <button onclick="runCommandTests()">Run Command Tests Only</button>
+        <button onclick="stopTests()" id="stop-btn" disabled>Stop Tests</button>
+        
+        <br><br>
+        
+        <label>
+            <input type="checkbox" id="show-passing" checked> Show Passing Tests
+        </label>
+        <label>
+            <input type="checkbox" id="show-failing" checked> Show Failing Tests
+        </label>
+        <label>
+            <input type="checkbox" id="stop-on-failure"> Stop on First Failure
+        </label>
+    </div>
+
+    <!-- Test Categories -->
+    <div id="category-controls">
+        <h3>Test Categories</h3>
+        <button class="category-toggle" onclick="toggleCategory('expressions')">Expressions</button>
+        <button class="category-toggle" onclick="toggleCategory('commands')">Commands</button>
+        <button class="category-toggle" onclick="toggleCategory('features')">Features</button>
+        <button class="category-toggle" onclick="toggleCategory('core')">Core</button>
+    </div>
+
+    <!-- Hidden work area for DOM tests -->
+    <div id="work-area"></div>
+
+    <!-- Mocha test results -->
+    <div id="mocha"></div>
+
+    <!-- Load dependencies -->
+    <script src="https://unpkg.com/chai/chai.js"></script>
+    <script src="https://unpkg.com/mocha/mocha.js"></script>
+    
+    <!-- Load HyperFixi -->
+    <script src="/dist/hyperfixi-browser.js"></script>
+    
+    <!-- Load our test adapter -->
+    <script type="module">
+        // We'll load our test adapter here
+        import { createHyperScriptTestAdapter, testUtils } from './test-adapter.js';
+        
+        // Set up global test environment
+        window._hyperscript = createHyperScriptTestAdapter();
+        
+        // Expose test utilities globally (like _hyperscript tests expect)
+        Object.assign(window, testUtils);
+        
+        // Set up Mocha
+        mocha.setup('bdd');
+        
+        // Set up Chai
+        window.should = chai.should();
+        window.assert = chai.assert;
+        
+        // Track test results
+        let testResults = {
+            passed: 0,
+            failed: 0,
+            total: 0
+        };
+
+        // Update UI stats
+        function updateStats() {
+            document.getElementById('pass-count').textContent = testResults.passed;
+            document.getElementById('fail-count').textContent = testResults.failed;
+            document.getElementById('total-count').textContent = testResults.total;
+            
+            const completion = testResults.total > 0 
+                ? Math.round((testResults.passed / testResults.total) * 100) 
+                : 0;
+            document.getElementById('completion-rate').textContent = completion + '%';
+            document.getElementById('progress-fill').style.width = completion + '%';
+        }
+
+        // Hook into Mocha events
+        mocha.suite.on('pass', function(test) {
+            testResults.passed++;
+            testResults.total++;
+            updateStats();
+        });
+
+        mocha.suite.on('fail', function(test, err) {
+            testResults.failed++;
+            testResults.total++;
+            updateStats();
+            
+            if (document.getElementById('stop-on-failure').checked) {
+                stopTests();
+            }
+        });
+
+        // Test running functions
+        window.runAllTests = function() {
+            console.log('🚀 Starting full _hyperscript test suite...');
+            document.getElementById('stop-btn').disabled = false;
+            
+            // Reset counters
+            testResults = { passed: 0, failed: 0, total: 0 };
+            updateStats();
+            
+            // We'll dynamically load test files here
+            loadAndRunTests([
+                'expressions/mathOperator',
+                'expressions/strings', 
+                'expressions/logicalOperator',
+                'expressions/comparisonOperator',
+                'expressions/possessiveExpression',
+                // Add more as we implement them
+            ]);
+        };
+
+        window.runExpressionTests = function() {
+            console.log('🔍 Running expression tests only...');
+            loadAndRunTests([
+                'expressions/mathOperator',
+                'expressions/strings', 
+                'expressions/logicalOperator',
+                'expressions/comparisonOperator',
+                'expressions/possessiveExpression',
+                'expressions/numbers',
+                'expressions/boolean',
+                'expressions/asExpression'
+            ]);
+        };
+
+        window.runCommandTests = function() {
+            console.log('⚙️ Running command tests only...');
+            alert('Command tests not implemented yet - this will show 0% passing');
+        };
+
+        window.stopTests = function() {
+            console.log('⏹️ Stopping tests...');
+            document.getElementById('stop-btn').disabled = true;
+        };
+
+        async function loadAndRunTests(testFiles) {
+            for (const testFile of testFiles) {
+                try {
+                    console.log(`Loading test: ${testFile}`);
+                    // We'll need to convert _hyperscript test files to work with our adapter
+                    // For now, let's create a simple test to verify our setup
+                    await loadTestFile(testFile);
+                } catch (error) {
+                    console.error(`Failed to load test ${testFile}:`, error);
+                }
+            }
+            
+            // Run all loaded tests
+            mocha.run();
+        }
+
+        async function loadTestFile(testFile) {
+            // This is where we'd load and adapt _hyperscript test files
+            // For now, let's create some basic tests to validate our setup
+            
+            if (testFile === 'expressions/mathOperator') {
+                describe("HyperFixi Math Operator Tests", function () {
+                    it("addition works", async function () {
+                        const result = await evalHyperScript("1 + 1");
+                        result.should.equal(2);
+                    });
+
+                    it("string concat works", async function () {
+                        const result = await evalHyperScript("'a' + 'b'");
+                        result.should.equal("ab");
+                    });
+
+                    it("unparenthesized expressions with multiple operators cause an error", function () {
+                        const result = getParseErrorFor("1 + 2 * 3");
+                        result.indexOf("You must parenthesize math operations with different operators").should.equal(0);
+                    });
+
+                    it("parenthesized expressions with multiple operators work", async function () {
+                        const result = await evalHyperScript("1 + (2 * 3)");
+                        result.should.equal(7);
+                    });
+                });
+            }
+            
+            if (testFile === 'expressions/strings') {
+                describe("HyperFixi String Tests", function () {
+                    it("can parse simple strings", async function () {
+                        const result = await evalHyperScript('"hello world"');
+                        result.should.equal("hello world");
+                    });
+
+                    it("can parse simple strings w/ single quotes", async function () {
+                        const result = await evalHyperScript("'hello world'");
+                        result.should.equal("hello world");
+                    });
+                });
+            }
+
+            if (testFile === 'expressions/possessiveExpression') {
+                describe("HyperFixi Possessive Expression Tests", function () {
+                    it("its result works", async function () {
+                        const result = await evalHyperScript("its result", { result: { result: 'success' } });
+                        result.should.equal('success');
+                    });
+
+                    it("my property works", async function () {
+                        const result = await evalHyperScript("my value", { me: { value: 42 } });
+                        result.should.equal(42);
+                    });
+
+                    it("your property works", async function () {
+                        const result = await evalHyperScript("your data", { you: { data: 'test' } });
+                        result.should.equal('test');
+                    });
+                });
+            }
+        }
+
+        // Make functions available globally
+        window.updateStats = updateStats;
+        window.testResults = testResults;
+        
+        console.log('✅ Test runner initialized');
+    </script>
+</body>
+</html>

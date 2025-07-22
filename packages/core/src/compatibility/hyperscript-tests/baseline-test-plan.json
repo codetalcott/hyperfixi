@@ -1,0 +1,132 @@
+{
+  "timestamp": "2025-07-22T14:17:49.083Z",
+  "totalTestFiles": 83,
+  "categories": {
+    "expressions": [
+      "arrayIndex",
+      "arrayLiteral",
+      "asExpression",
+      "async",
+      "attributeRef",
+      "beep!",
+      "blockLiteral",
+      "boolean",
+      "classRef",
+      "closest",
+      "comparisonOperator",
+      "cookies",
+      "functionCalls",
+      "idRef",
+      "in",
+      "logicalOperator",
+      "mathOperator",
+      "no",
+      "not",
+      "null",
+      "numbers",
+      "objectLiteral",
+      "positionalExpression",
+      "possessiveExpression",
+      "propertyAccess",
+      "queryRef",
+      "relativePositionalExpression",
+      "some",
+      "stringPostfix",
+      "strings",
+      "styleRef",
+      "symbol",
+      "typecheck"
+    ],
+    "commands": [
+      "add",
+      "append",
+      "async",
+      "call",
+      "default",
+      "fetch",
+      "hide",
+      "if",
+      "increment",
+      "js",
+      "log",
+      "make",
+      "measure",
+      "pick",
+      "pseudoCommand",
+      "put",
+      "remove",
+      "repeat",
+      "send",
+      "set",
+      "settle",
+      "show",
+      "take",
+      "tell",
+      "throw",
+      "toggle",
+      "transition",
+      "trigger",
+      "unlessModifier",
+      "wait"
+    ],
+    "features": [
+      "behavior",
+      "def",
+      "init",
+      "js",
+      "on",
+      "set",
+      "socket",
+      "worker"
+    ],
+    "core": [
+      "api",
+      "bootstrap",
+      "parser",
+      "regressions",
+      "runtime",
+      "runtimeErrors",
+      "scoping",
+      "security",
+      "sourceInfo",
+      "tokenizer"
+    ],
+    "ext": [
+      "tailwind"
+    ],
+    "templates": [
+      "templates"
+    ]
+  },
+  "predictions": {
+    "expressions": {
+      "files": 33,
+      "expectedPassRate": "60-80%"
+    },
+    "commands": {
+      "files": 30,
+      "expectedPassRate": "0-5%"
+    },
+    "features": {
+      "files": 8,
+      "expectedPassRate": "0%"
+    },
+    "core": {
+      "files": 10,
+      "expectedPassRate": "20-40%"
+    }
+  },
+  "overallPrediction": {
+    "passing": 23,
+    "total": 83,
+    "rate": "28%"
+  },
+  "nextSteps": [
+    "Set up test adapter to run expression tests",
+    "Establish baseline pass rate",
+    "Identify highest-impact missing features",
+    "Implement command system (put, set, add, etc.)",
+    "Implement event handling (on click, etc.)",
+    "Implement full parser integration"
+  ]
+}
