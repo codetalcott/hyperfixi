@@ -10,7 +10,7 @@ import type { ExecutionContext, ExpressionImplementation, EvaluationType } from 
 // ============================================================================
 
 type ConversionType = 
-  | 'Array' | 'Date' | 'Float' | 'Fragment' | 'HTML' | 'Int' 
+  | 'Array' | 'Boolean' | 'Date' | 'Float' | 'Fragment' | 'HTML' | 'Int' 
   | 'JSON' | 'Number' | 'Object' | 'String' | 'Values' 
   | 'Values:Form' | 'Values:JSON' | string; // Allow custom conversions
 
@@ -36,6 +36,22 @@ export const defaultConversions: Record<string, ConversionFunction> = {
     if (typeof value === 'string') return value;
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);
+  },
+
+  Boolean: (value: any) => {
+    if (typeof value === 'boolean') return value;
+    if (value == null) return false; // null and undefined are falsy
+    if (typeof value === 'string') {
+      // Handle special string cases
+      const lowerValue = value.toLowerCase().trim();
+      if (lowerValue === 'false' || lowerValue === '0' || lowerValue === '') return false;
+      return true; // Any other non-empty string is truthy
+    }
+    if (typeof value === 'number') {
+      return value !== 0 && !isNaN(value); // 0 and NaN are falsy
+    }
+    // For objects, arrays, etc. - use JavaScript truthiness
+    return Boolean(value);
   },
 
   Number: (value: any) => {
@@ -255,10 +271,37 @@ export const asExpression: ExpressionImplementation = {
       return num.toFixed(precision || 2);
     }
     
-    // Check for built-in conversion
-    const converter = defaultConversions[type];
+    // Check for built-in conversion (case-sensitive first)
+    let converter = defaultConversions[type];
     if (converter) {
       return converter(value, context);
+    }
+    
+    // Check for case-insensitive matches and common aliases
+    const lowerType = type.toLowerCase();
+    const typeAliases: Record<string, string> = {
+      'boolean': 'Boolean',
+      'bool': 'Boolean', 
+      'string': 'String',
+      'str': 'String',
+      'number': 'Number',
+      'num': 'Number',
+      'int': 'Int',
+      'integer': 'Int',
+      'float': 'Float',
+      'array': 'Array',
+      'object': 'Object',
+      'obj': 'Object',
+      'date': 'Date',
+      'json': 'JSON'
+    };
+    
+    const aliasedType = typeAliases[lowerType];
+    if (aliasedType) {
+      converter = defaultConversions[aliasedType];
+      if (converter) {
+        return converter(value, context);
+      }
     }
     
     // Check for custom conversions in global config

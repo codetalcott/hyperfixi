@@ -516,7 +516,7 @@ function tokenizeOperator(tokenizer: Tokenizer): void {
     advance(tokenizer);
     advance(tokenizer);
     advance(tokenizer);
-  } else if (['==', '!=', '<=', '>=', '&&', '||'].includes(twoChar)) {
+  } else if (['==', '!=', '<=', '>=', '&&', '||', '**'].includes(twoChar)) {
     value = twoChar;
     advance(tokenizer);
     advance(tokenizer);
@@ -788,5 +788,5 @@ function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
 }
 
 function isOperatorChar(char: string): boolean {
-  return '+-*/%=!<>&|(){}[],.;:?\'\''.includes(char);
+  return '+-*/^%=!<>&|(){}[],.;:?\'\''.includes(char);
 }

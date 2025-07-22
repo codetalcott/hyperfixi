@@ -367,6 +367,31 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
         start: left.start,
         end: property.end
       };
+    }
+    // Handle dot notation property access (obj.property)
+    else if (token.type === TokenType.OPERATOR && token.value === '.') {
+      state.position++; // consume '.'
+      
+      // Next token should be an identifier for the property name
+      const propertyToken = advance(state);
+      if (!propertyToken || propertyToken.type !== TokenType.IDENTIFIER) {
+        throw new ExpressionParseError('Expected property name after "."');
+      }
+      
+      left = {
+        type: 'propertyAccess',
+        object: left,
+        property: {
+          type: 'identifier',
+          name: propertyToken.value,
+          start: propertyToken.start,
+          end: propertyToken.end
+        },
+        start: left.start,
+        end: propertyToken.end
+      };
+      // Continue loop to handle chained property access (obj.prop1.prop2)
+      continue;
     } else {
       break;
     }
@@ -385,13 +410,26 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     throw new ExpressionParseError('Unexpected end of expression');
   }
   
-  // Handle unary operators (not, !)
+  // Handle unary operators (not, !, -, +)
   if (token.type === TokenType.LOGICAL_OPERATOR && token.value === 'not') {
     advance(state); // consume 'not'
     const operand = parsePrimaryExpression(state);
     return {
       type: 'unaryExpression',
       operator: 'not',
+      operand,
+      start: token.start,
+      end: operand.end
+    };
+  }
+  
+  // Handle unary minus and plus operators
+  if (token.type === TokenType.OPERATOR && (token.value === '-' || token.value === '+')) {
+    advance(state); // consume operator
+    const operand = parsePrimaryExpression(state);
+    return {
+      type: 'unaryExpression',
+      operator: token.value,
       operand,
       start: token.start,
       end: operand.end
@@ -616,6 +654,9 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
     case 'contextPossessive':
       return evaluateContextPossessive(node, context);
       
+    case 'propertyAccess':
+      return evaluatePropertyAccess(node, context);
+      
     case 'asExpression':
       return evaluateAsExpression(node, context);
       
@@ -711,6 +752,9 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       return specialExpressions.division.evaluate(context, left, right);
     case 'mod':
       return specialExpressions.modulo.evaluate(context, left, right);
+    case '^':
+    case '**':
+      return specialExpressions.exponentiation.evaluate(context, left, right);
     case 'matches':
       return logicalExpressions.matches.evaluate(context, left, right);
     case 'contains':
@@ -809,6 +853,40 @@ async function evaluateContextPossessive(node: any, context: ExecutionContext): 
 }
 
 /**
+ * Evaluate dot notation property access (obj.property)
+ */
+async function evaluatePropertyAccess(node: any, context: ExecutionContext): Promise<any> {
+  const object = await evaluateASTNode(node.object, context);
+  const propertyNode = node.property;
+  
+  // Handle null/undefined objects gracefully
+  if (object === null || object === undefined) {
+    throw new ExpressionParseError(`Cannot access property "${propertyNode.name}" of ${object}`);
+  }
+  
+  // Extract property name
+  if (propertyNode.type !== 'identifier') {
+    throw new ExpressionParseError('Property name must be an identifier');
+  }
+  
+  const propertyName = propertyNode.name;
+  
+  // Use standard JavaScript property access
+  try {
+    const value = object[propertyName];
+    
+    // Handle method calls - if it's a function, bind it to the object
+    if (typeof value === 'function') {
+      return value.bind(object);
+    }
+    
+    return value;
+  } catch (error) {
+    throw new ExpressionParseError(`Error accessing property "${propertyName}": ${error}`);
+  }
+}
+
+/**
  * Evaluate 'as' type conversion expressions
  */
 async function evaluateAsExpression(node: any, context: ExecutionContext): Promise<any> {
@@ -877,6 +955,14 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
       return logicalExpressions.isEmpty.evaluate(context, operand);
     case 'is not empty':
       return logicalExpressions.isNotEmpty.evaluate(context, operand);
+    case '-':
+      // Unary minus: negate the number
+      const negativeValue = typeof operand === 'number' ? operand : parseFloat(operand);
+      return isNaN(negativeValue) ? 0 : -negativeValue;
+    case '+':
+      // Unary plus: convert to number
+      const positiveValue = typeof operand === 'number' ? operand : parseFloat(operand);
+      return isNaN(positiveValue) ? 0 : positiveValue;
     default:
       throw new ExpressionParseError(`Unknown unary operator: ${operator}`);
   }
