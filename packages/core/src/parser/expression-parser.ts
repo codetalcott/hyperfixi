@@ -392,6 +392,67 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
       };
       // Continue loop to handle chained property access (obj.prop1.prop2)
       continue;
+    }
+    // Handle array access (arr[index])
+    else if (token.type === TokenType.OPERATOR && token.value === '[') {
+      state.position++; // consume '['
+      
+      // Parse the index expression
+      const index = parseLogicalExpression(state);
+      
+      // Consume closing bracket
+      const closeToken = advance(state);
+      if (!closeToken || closeToken.value !== ']') {
+        throw new ExpressionParseError('Expected closing bracket after array index');
+      }
+      
+      left = {
+        type: 'arrayAccess',
+        object: left,
+        index,
+        start: left.start,
+        end: closeToken.end
+      };
+      // Continue loop to handle chained array access (arr[0][1])
+      continue;
+    }
+    // Handle method calls (obj.method())
+    else if (token.type === TokenType.OPERATOR && token.value === '(') {
+      state.position++; // consume '('
+      
+      // Parse function arguments
+      const args: ASTNode[] = [];
+      
+      // Check for arguments before closing paren
+      let currentToken = peek(state);
+      while (currentToken && currentToken.value !== ')') {
+        const arg = parseLogicalExpression(state);
+        args.push(arg);
+        
+        currentToken = peek(state);
+        if (currentToken && currentToken.value === ',') {
+          advance(state); // consume comma
+          currentToken = peek(state);
+        } else {
+          break;
+        }
+      }
+      
+      // Consume closing paren
+      const closeParen = advance(state);
+      if (!closeParen || closeParen.value !== ')') {
+        throw new ExpressionParseError('Expected closing parenthesis');
+      }
+      
+      left = {
+        type: 'callExpression',
+        callee: left,
+        arguments: args,
+        start: left.start,
+        end: closeParen.end
+      };
+      // Continue loop to handle chained method calls (obj.method().another())
+      continue;
     } else {
       break;
     }
@@ -521,7 +582,7 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     };
   }
   
-  // Bracket notation for attribute access [@attr] or [expr]
+  // Array literals and bracket notation
   if (token.value === '[') {
     advance(state); // consume '['
     
@@ -546,19 +607,89 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
         end: closeToken.end
       };
     } else {
-      // Handle general bracket expressions [expr]
-      const expr = parseLogicalExpression(state);
-      const closeToken = advance(state);
-      if (!closeToken || closeToken.value !== ']') {
-        throw new ExpressionParseError('Expected closing bracket');
+      // Check if this is an array literal by looking for array-like patterns
+      // Array literal if: [], [expr], [expr, expr], etc.
+      const currentPos = state.position;
+      let isArrayLiteral = false;
+      
+      // If immediately followed by ], it's an empty array
+      if (nextToken?.value === ']') {
+        isArrayLiteral = true;
+      } else {
+        // Look ahead to see if there are commas (array) or no commas (bracket expression)
+        let lookahead = currentPos;
+        let bracketDepth = 1;
+        let foundComma = false;
+        
+        while (lookahead < state.tokens.length && bracketDepth > 0) {
+          const tok = state.tokens[lookahead];
+          if (tok.value === '[') bracketDepth++;
+          if (tok.value === ']') bracketDepth--;
+          if (tok.value === ',' && bracketDepth === 1) {
+            foundComma = true;
+            break;
+          }
+          lookahead++;
+        }
+        
+        // If we found a comma at the top level, it's an array literal
+        if (foundComma) {
+          isArrayLiteral = true;
+        }
       }
       
-      return {
-        type: 'bracketExpression',
-        expression: expr,
-        start: token.start,
-        end: closeToken.end
-      };
+      if (isArrayLiteral) {
+        // Parse as array literal
+        const elements: ASTNode[] = [];
+        
+        // Handle empty array
+        if (peek(state)?.value === ']') {
+          advance(state); // consume ']'
+          return {
+            type: 'arrayLiteral',
+            elements,
+            start: token.start,
+            end: state.tokens[state.position - 1].end
+          };
+        }
+        
+        // Parse array elements
+        do {
+          elements.push(parseLogicalExpression(state));
+          
+          if (peek(state)?.value === ',') {
+            advance(state); // consume ','
+          } else {
+            break;
+          }
+        } while (peek(state) && peek(state)!.value !== ']');
+        
+        const closeToken = advance(state);
+        if (!closeToken || closeToken.value !== ']') {
+          throw new ExpressionParseError('Expected closing bracket in array literal');
+        }
+        
+        return {
+          type: 'arrayLiteral',
+          elements,
+          start: token.start,
+          end: closeToken.end
+        };
+      } else {
+        // Handle as bracket expression [expr]
+        const expr = parseLogicalExpression(state);
+        const closeToken = advance(state);
+        if (!closeToken || closeToken.value !== ']') {
+          throw new ExpressionParseError('Expected closing bracket');
+        }
+        
+        return {
+          type: 'bracketExpression',
+          expression: expr,
+          start: token.start,
+          end: closeToken.end
+        };
+      }
     }
   }
   
@@ -677,6 +808,12 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
       
     case 'callExpression':
       return evaluateCallExpression(node, context);
+      
+    case 'arrayLiteral':
+      return evaluateArrayLiteral(node, context);
+      
+    case 'arrayAccess':
+      return evaluateArrayAccess(node, context);
       
     default:
       throw new ExpressionParseError(`Unknown AST node type: ${(node as any).type}`);
@@ -1018,6 +1155,58 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
   }
   
   return result;
+}
+
+/**
+ * Evaluate array literal expressions [1, 2, 3]
+ */
+async function evaluateArrayLiteral(node: any, context: ExecutionContext): Promise<any[]> {
+  const elements = [];
+  
+  for (const element of node.elements) {
+    const value = await evaluateASTNode(element, context);
+    elements.push(value);
+  }
+  
+  return elements;
+}
+
+/**
+ * Evaluate array access expressions arr[index]
+ */
+async function evaluateArrayAccess(node: any, context: ExecutionContext): Promise<any> {
+  const object = await evaluateASTNode(node.object, context);
+  const index = await evaluateASTNode(node.index, context);
+  
+  // Handle null/undefined objects gracefully
+  if (object === null || object === undefined) {
+    throw new ExpressionParseError(`Cannot access index "${index}" of ${object}`);
+  }
+  
+  // Handle array access
+  if (Array.isArray(object)) {
+    const numIndex = typeof index === 'number' ? index : parseInt(index, 10);
+    if (isNaN(numIndex)) {
+      throw new ExpressionParseError(`Array index must be a number, got: ${typeof index}`);
+    }
+    return object[numIndex];
+  }
+  
+  // Handle object property access with bracket notation
+  if (typeof object === 'object') {
+    return object[String(index)];
+  }
+  
+  // Handle string character access
+  if (typeof object === 'string') {
+    const numIndex = typeof index === 'number' ? index : parseInt(index, 10);
+    if (isNaN(numIndex)) {
+      throw new ExpressionParseError(`String index must be a number, got: ${typeof index}`);
+    }
+    return object[numIndex];
+  }
+  
+  throw new ExpressionParseError(`Cannot access property of ${typeof object}`);
 }
 
 /**

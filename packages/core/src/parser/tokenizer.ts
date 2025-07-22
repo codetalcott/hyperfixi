@@ -239,10 +239,19 @@ export function tokenize(input: string): Token[] {
           addToken(tokenizer, TokenType.SYMBOL, '[');
           advance(tokenizer);
         } else {
-          // Treat as array literal
-          tokenizeArrayLiteral(tokenizer);
+          // For array literals, tokenize individual brackets instead of whole array
+          // This allows the parser to handle array structure properly
+          addToken(tokenizer, TokenType.OPERATOR, '[');
+          advance(tokenizer);
         }
       }
+      continue;
+    }
+    
+    // Handle closing bracket for arrays
+    if (char === ']') {
+      addToken(tokenizer, TokenType.OPERATOR, ']');
+      advance(tokenizer);
       continue;
     }
     
