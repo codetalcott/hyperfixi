@@ -137,6 +137,11 @@ export class Runtime {
         // Set command should get mixed arguments - variable name raw, value evaluated  
         return await this.executeSetCommand(rawArgs, context);
       
+      case 'log':
+        // Log command evaluates all arguments and logs them
+        const logArgs = await Promise.all(rawArgs.map(arg => this.execute(arg, context)));
+        return this.executeLogCommand(logArgs, context);
+      
       default:
         throw new Error(`Unknown command: ${name}`);
     }
@@ -367,6 +372,20 @@ export class Runtime {
     
     // Fallback: use raw args
     return this.setCommand.execute(context, ...rawArgs);
+  }
+
+  /**
+   * Execute LOG command - output values to console
+   */
+  private executeLogCommand(args: any[], context: ExecutionContext): void {
+    // If no arguments, just log empty
+    if (args.length === 0) {
+      console.log();
+      return;
+    }
+    
+    // Log all arguments
+    console.log(...args);
   }
 
   /**

@@ -4,6 +4,9 @@
  */
 
 import { parseAndEvaluateExpression } from '../parser/expression-parser.js';
+import { Parser } from '../parser/parser.js';
+import { Runtime } from '../runtime/runtime.js';
+import { tokenize } from '../parser/tokenizer.js';
 import type { ExecutionContext } from '../types/core.js';
 
 /**
@@ -78,19 +81,27 @@ function convertContext(hyperScriptContext?: HyperScriptContext): ExecutionConte
  * ```
  */
 export async function evalHyperScript(
-  expression: string, 
+  script: string, 
   context?: HyperScriptContext
 ): Promise<any> {
-  // Handle empty expressions
-  if (!expression || expression.trim() === '') {
-    throw new Error('Cannot evaluate empty expression');
+  // Handle empty input
+  if (!script || script.trim() === '') {
+    throw new Error('Cannot evaluate empty script');
   }
 
   try {
-    // Convert context and evaluate
+    // Convert context
     const executionContext = convertContext(context);
-    const result = await parseAndEvaluateExpression(expression, executionContext);
-    return result;
+    
+    // Determine if this is a command or expression
+    if (isCommand(script)) {
+      // Use full parser + runtime for commands
+      return await executeAsCommand(script, executionContext);
+    } else {
+      // Use expression parser for expressions
+      const result = await parseAndEvaluateExpression(script, executionContext);
+      return result;
+    }
   } catch (error) {
     // Match _hyperscript error handling behavior
     if (error instanceof Error) {
@@ -98,6 +109,45 @@ export async function evalHyperScript(
     }
     throw error;
   }
+}
+
+/**
+ * Determine if input is a command vs an expression
+ */
+function isCommand(script: string): boolean {
+  const trimmed = script.trim();
+  
+  // Known command starters
+  const commandStarters = [
+    'put', 'set', 'add', 'remove', 'show', 'hide', 'toggle',
+    'if', 'repeat', 'wait', 'call', 'send', 'make', 'log',
+    'increment', 'decrement', 'fetch', 'throw', 'return',
+    'break', 'continue', 'halt', 'go', 'on'
+  ];
+  
+  const firstWord = trimmed.split(/\s+/)[0];
+  return commandStarters.includes(firstWord.toLowerCase());
+}
+
+/**
+ * Execute script as a command using full parser + runtime
+ */
+async function executeAsCommand(script: string, context: ExecutionContext): Promise<any> {
+  // Tokenize
+  const tokens = tokenize(script);
+  
+  // Parse with full parser
+  const parser = new Parser(tokens);
+  const parseResult = parser.parse();
+  
+  if (!parseResult.success || !parseResult.node) {
+    throw new Error(`Parse error: ${parseResult.error?.message || 'Unknown parse error'}`);
+  }
+  
+  // Execute with runtime
+  const runtime = new Runtime();
+  const result = await runtime.execute(parseResult.node, context);
+  return result;
 }
 
 /**
