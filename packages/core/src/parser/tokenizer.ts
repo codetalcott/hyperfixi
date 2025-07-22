@@ -533,7 +533,7 @@ function tokenizeOperator(tokenizer: Tokenizer): void {
     advance(tokenizer);
     advance(tokenizer);
     advance(tokenizer);
-  } else if (['==', '!=', '<=', '>=', '&&', '||', '**'].includes(twoChar)) {
+  } else if (['==', '!=', '<=', '>=', '&&', '||', '**', '~=', '|=', '^=', '$=', '*='].includes(twoChar)) {
     value = twoChar;
     advance(tokenizer);
     advance(tokenizer);
@@ -787,7 +787,7 @@ function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
     // If we find content that looks like selector syntax
     if (isAlphaNumeric(char) || char === '.' || char === '#' || char === '[' || char === ']' || 
         char === ':' || char === '-' || char === '_' || char === ' ' || char === '=' || 
-        char === '"' || char === "'" || char === '(') {
+        char === '"' || char === "'" || char === '(' || char === ')') {
       foundValidContent = true;
       pos++;
     } else if (char === ' ' || char === '\t') {
@@ -809,5 +809,5 @@ function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
 }
 
 function isOperatorChar(char: string): boolean {
-  return '+-*/^%=!<>&|(){}[],.;:?\'\''.includes(char);
+  return '+-*/^%=!<>&|(){}[],.;:?\'\'~$'.includes(char);
 }

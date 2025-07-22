@@ -691,9 +691,17 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
         end: closeToken.end
       };
     } else {
+      // Check if this is a standalone attribute selector [attr] or [attr="value"]
+      const currentPos = state.position;
+      const isAttributeSelector = looksLikeAttributeSelector(state, currentPos);
+      
+      if (isAttributeSelector) {
+        // Parse as CSS attribute selector
+        return parseAttributeSelector(state, token);
+      }
+      
       // Check if this is an array literal by looking for array-like patterns
       // Array literal if: [], [expr], [expr, expr], etc.
-      const currentPos = state.position;
       let isArrayLiteral = false;
       
       // If immediately followed by ], it's an empty array
@@ -901,6 +909,9 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
       
     case 'queryReference':
       return evaluateQueryReference(node, context);
+      
+    case 'attributeSelector':
+      return evaluateAttributeSelector(node, context);
       
     case 'unaryExpression':
       return evaluateUnaryExpression(node, context);
@@ -1370,6 +1381,110 @@ async function evaluateInOperator(item: any, collection: any, context: Execution
   }
   
   throw new ExpressionParseError(`Cannot use 'in' operator with ${typeof collection}`);
+}
+
+/**
+ * Evaluate CSS attribute selector - returns NodeList of matching elements
+ */
+async function evaluateAttributeSelector(node: any, context: ExecutionContext): Promise<NodeList> {
+  // Build CSS selector string
+  let selectorStr = `[${node.attribute}`;
+  
+  if (node.operator && node.value !== null) {
+    selectorStr += `${node.operator}"${node.value}"`;
+  }
+  
+  selectorStr += ']';
+  
+  // Use DOM querySelectorAll to find matching elements
+  if (typeof document !== 'undefined') {
+    return document.querySelectorAll(selectorStr);
+  } else {
+    // In non-DOM environments, return empty NodeList-like object
+    return [] as unknown as NodeList;
+  }
+}
+
+/**
+ * Check if bracket content looks like an attribute selector
+ */
+function looksLikeAttributeSelector(state: ParseState, position: number): boolean {
+  let pos = position;
+  
+  // Look for pattern: identifier (optionally followed by operator and value)
+  const firstToken = state.tokens[pos];
+  if (!firstToken || firstToken.type !== TokenType.IDENTIFIER) {
+    return false;
+  }
+  
+  pos++; // Move past identifier
+  
+  // Check what comes next
+  const nextToken = state.tokens[pos];
+  if (!nextToken) return false;
+  
+  // If directly followed by ], it's a simple attribute selector [attr]
+  if (nextToken.value === ']') {
+    return true;
+  }
+  
+  // If followed by =, ~=, |=, ^=, $=, *=, it's an attribute selector with value
+  if (nextToken.value === '=' || nextToken.value === '~=' || 
+      nextToken.value === '|=' || nextToken.value === '^=' ||
+      nextToken.value === '$=' || nextToken.value === '*=') {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Parse CSS attribute selector [attr] or [attr="value"]
+ */
+function parseAttributeSelector(state: ParseState, openBracket: Token): ASTNode {
+  // Parse attribute name
+  const attrToken = advance(state);
+  if (!attrToken || attrToken.type !== TokenType.IDENTIFIER) {
+    throw new ExpressionParseError('Expected attribute name in selector');
+  }
+  
+  let operator = null;
+  let value = null;
+  
+  // Check for operator
+  const nextToken = peek(state);
+  if (nextToken && ['=', '~=', '|=', '^=', '$=', '*='].includes(nextToken.value)) {
+    operator = advance(state)!.value;
+    
+    // Parse value
+    const valueToken = advance(state);
+    if (!valueToken) {
+      throw new ExpressionParseError('Expected value after attribute operator');
+    }
+    
+    if (valueToken.type === TokenType.STRING) {
+      value = valueToken.value.slice(1, -1); // Remove quotes
+    } else if (valueToken.type === TokenType.IDENTIFIER || valueToken.type === TokenType.NUMBER) {
+      value = valueToken.value;
+    } else {
+      throw new ExpressionParseError(`Unexpected token in attribute selector: ${valueToken.value}`);
+    }
+  }
+  
+  // Consume closing bracket
+  const closeToken = advance(state);
+  if (!closeToken || closeToken.value !== ']') {
+    throw new ExpressionParseError('Expected closing bracket in attribute selector');
+  }
+  
+  return {
+    type: 'attributeSelector',
+    attribute: attrToken.value,
+    operator,
+    value,
+    start: openBracket.start,
+    end: closeToken.end
+  };
 }
 
 /**
