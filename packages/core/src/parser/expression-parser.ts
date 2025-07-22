@@ -256,7 +256,7 @@ function parseArithmeticExpressionWithPrecedence(state: ParseState, minPrecedenc
  * Check if operator is arithmetic
  */
 function isArithmeticOperator(operator: string): boolean {
-  return ['+', '-', '*', '/', '%', '^', '**'].includes(operator);
+  return ['+', '-', '*', '/', '%', '^', '**', 'mod'].includes(operator);
 }
 
 /**
@@ -270,6 +270,7 @@ function getArithmeticOperatorPrecedence(operator: string): number {
     case '*':
     case '/':
     case '%':
+    case 'mod':
       return 7;
     case '^':
     case '**':
@@ -582,6 +583,89 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     };
   }
   
+  // Object literals ({key: value, ...})
+  if (token.value === '{') {
+    advance(state); // consume '{'
+    
+    const properties: { key: ASTNode; value: ASTNode }[] = [];
+    
+    // Handle empty object {}
+    if (peek(state)?.value === '}') {
+      advance(state); // consume '}'
+      return {
+        type: 'objectLiteral',
+        properties,
+        start: token.start,
+        end: state.tokens[state.position - 1].end
+      };
+    }
+    
+    // Parse object properties
+    do {
+      // Parse key (can be identifier or string)
+      const keyToken = peek(state);
+      if (!keyToken) {
+        throw new ExpressionParseError('Expected property key in object literal');
+      }
+      
+      let key: ASTNode;
+      if (keyToken.type === TokenType.IDENTIFIER) {
+        advance(state);
+        key = {
+          type: 'identifier',
+          name: keyToken.value,
+          start: keyToken.start,
+          end: keyToken.end
+        };
+      } else if (keyToken.type === TokenType.STRING) {
+        advance(state);
+        key = {
+          type: 'literal',
+          value: keyToken.value.slice(1, -1), // Remove quotes
+          valueType: 'string',
+          start: keyToken.start,
+          end: keyToken.end
+        };
+      } else {
+        throw new ExpressionParseError(`Expected property key, got: ${keyToken.type}`);
+      }
+      
+      // Expect colon
+      const colonToken = advance(state);
+      if (!colonToken || colonToken.value !== ':') {
+        throw new ExpressionParseError('Expected ":" after property key');
+      }
+      
+      // Parse value
+      const value = parseLogicalExpression(state);
+      
+      properties.push({ key, value });
+      
+      // Check for comma or closing brace
+      const nextToken = peek(state);
+      if (nextToken?.value === ',') {
+        advance(state); // consume ','
+      } else if (nextToken?.value === '}') {
+        break;
+      } else {
+        throw new ExpressionParseError('Expected "," or "}" in object literal');
+      }
+    } while (peek(state) && peek(state)!.value !== '}');
+    
+    // Consume closing brace
+    const closeToken = advance(state);
+    if (!closeToken || closeToken.value !== '}') {
+      throw new ExpressionParseError('Expected closing brace "}" in object literal');
+    }
+    
+    return {
+      type: 'objectLiteral',
+      properties,
+      start: token.start,
+      end: closeToken.end
+    };
+  }
+
   // Array literals and bracket notation
   if (token.value === '[') {
     advance(state); // consume '['
@@ -739,6 +823,27 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
       };
     }
     
+    // Handle special literal identifiers
+    if (identifierToken.value === 'null') {
+      return {
+        type: 'literal',
+        value: null,
+        valueType: 'null',
+        start: identifierToken.start,
+        end: identifierToken.end
+      };
+    }
+    
+    if (identifierToken.value === 'undefined') {
+      return {
+        type: 'literal',
+        value: undefined,
+        valueType: 'undefined',
+        start: identifierToken.start,
+        end: identifierToken.end
+      };
+    }
+    
     // Regular identifier
     return {
       type: 'identifier',
@@ -811,6 +916,9 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
       
     case 'arrayLiteral':
       return evaluateArrayLiteral(node, context);
+      
+    case 'objectLiteral':
+      return evaluateObjectLiteral(node, context);
       
     case 'arrayAccess':
       return evaluateArrayAccess(node, context);
@@ -896,6 +1004,8 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       return logicalExpressions.matches.evaluate(context, left, right);
     case 'contains':
       return logicalExpressions.contains.evaluate(context, left, right);
+    case 'in':
+      return evaluateInOperator(left, right, context);
     case 'does not contain':
       return logicalExpressions.doesNotContain.evaluate(context, left, right);
     case 'exists':
@@ -1172,6 +1282,34 @@ async function evaluateArrayLiteral(node: any, context: ExecutionContext): Promi
 }
 
 /**
+ * Evaluate object literal expressions {key: value, ...}
+ */
+async function evaluateObjectLiteral(node: any, context: ExecutionContext): Promise<Record<string, any>> {
+  const result: Record<string, any> = {};
+  
+  for (const property of node.properties) {
+    // Evaluate the key
+    let key: string;
+    if (property.key.type === 'identifier') {
+      key = property.key.name;
+    } else if (property.key.type === 'literal' && property.key.valueType === 'string') {
+      key = property.key.value;
+    } else {
+      // For computed keys, evaluate them
+      const keyValue = await evaluateASTNode(property.key, context);
+      key = String(keyValue);
+    }
+    
+    // Evaluate the value
+    const value = await evaluateASTNode(property.value, context);
+    
+    result[key] = value;
+  }
+  
+  return result;
+}
+
+/**
  * Evaluate array access expressions arr[index]
  */
 async function evaluateArrayAccess(node: any, context: ExecutionContext): Promise<any> {
@@ -1207,6 +1345,31 @@ async function evaluateArrayAccess(node: any, context: ExecutionContext): Promis
   }
   
   throw new ExpressionParseError(`Cannot access property of ${typeof object}`);
+}
+
+/**
+ * Evaluate 'in' operator for membership testing
+ */
+async function evaluateInOperator(item: any, collection: any, context: ExecutionContext): Promise<boolean> {
+  
+  // Handle array membership
+  if (Array.isArray(collection)) {
+    return collection.includes(item);
+  }
+  
+  // Handle object property membership
+  if (typeof collection === 'object' && collection !== null) {
+    // Convert item to string for property name comparison
+    const propertyName = String(item);
+    return propertyName in collection;
+  }
+  
+  // Handle string containment (if needed)
+  if (typeof collection === 'string') {
+    return collection.includes(String(item));
+  }
+  
+  throw new ExpressionParseError(`Cannot use 'in' operator with ${typeof collection}`);
 }
 
 /**

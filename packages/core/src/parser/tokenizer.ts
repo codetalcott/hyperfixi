@@ -76,7 +76,7 @@ const LOGICAL_OPERATORS = new Set(['and', 'or', 'not']);
 const COMPARISON_OPERATORS = new Set([
   '==', '!=', '===', '!==', '<', '>', '<=', '>=', 'is', 'is not',
   'contains', 'does not contain', 'matches', 'exists', 'is empty', 'is not empty',
-  'is in', 'is not in', 'equals'
+  'is in', 'is not in', 'equals', 'in'
 ]);
 
 const MATHEMATICAL_OPERATORS = new Set(['mod']);
@@ -204,9 +204,17 @@ export function tokenize(input: string): Token[] {
       continue;
     }
     
-    // Handle object/array literals
+    // Handle object literals - emit individual tokens for proper parsing
     if (char === '{') {
-      tokenizeObjectLiteral(tokenizer);
+      addToken(tokenizer, TokenType.OPERATOR, '{');
+      advance(tokenizer);
+      continue;
+    }
+    
+    // Handle closing brace for objects
+    if (char === '}') {
+      addToken(tokenizer, TokenType.OPERATOR, '}');
+      advance(tokenizer);
       continue;
     }
     
@@ -720,6 +728,10 @@ function classifyIdentifier(value: string): TokenType {
   
   if (MATHEMATICAL_OPERATORS.has(lowerValue)) {
     return TokenType.OPERATOR;
+  }
+  
+  if (COMPARISON_OPERATORS.has(lowerValue)) {
+    return TokenType.COMPARISON_OPERATOR;
   }
   
   if (CONTEXT_VARS.has(lowerValue)) {
