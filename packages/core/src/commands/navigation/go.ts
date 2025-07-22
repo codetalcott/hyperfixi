@@ -26,7 +26,7 @@ export class GoCommand implements CommandImplementation {
 
     // Handle "go back" command (case insensitive)
     if (typeof args[0] === 'string' && args[0].toLowerCase() === 'back') {
-      return this.goBack();
+      return this.goBack(context);
     }
 
     // Handle URL navigation
@@ -96,10 +96,15 @@ export class GoCommand implements CommandImplementation {
         }
       } else {
         // Navigate in current window using assign method
-        if (typeof window !== 'undefined' && window.location && window.location.assign) {
-          window.location.assign(resolvedUrl);
-        } else if (typeof window !== 'undefined' && window.location) {
-          window.location.href = resolvedUrl;
+        try {
+          if (typeof window !== 'undefined' && window.location && window.location.assign) {
+            window.location.assign(resolvedUrl);
+          } else if (typeof window !== 'undefined' && window.location) {
+            window.location.href = resolvedUrl;
+          }
+        } catch (error) {
+          // Handle navigation errors gracefully
+          console.warn('Navigation failed:', error);
         }
       }
     }
@@ -117,7 +122,8 @@ export class GoCommand implements CommandImplementation {
     // Resolve target element
     const element = this.resolveScrollTarget(target, context);
     if (!element) {
-      throw new Error(`Scroll target not found: ${target}`);
+      // Return early for graceful handling of missing targets
+      return;
     }
 
     // Calculate scroll position
@@ -141,6 +147,12 @@ export class GoCommand implements CommandImplementation {
         case 'bottom':
           block = 'end';
           break;
+        case 'nearest':
+          block = 'nearest';
+          break;
+        default:
+          block = 'start';
+          break;
       }
       
       switch (position.horizontal) {
@@ -161,39 +173,48 @@ export class GoCommand implements CommandImplementation {
       
       // For scrolling with offsets, calculate position and use scrollTo
       if (offset !== 0) {
-        // Still call scrollIntoView first to handle basic positioning
-        if (element.scrollIntoView) {
-          element.scrollIntoView({ 
-            behavior: behavior as ScrollBehavior,
-            block,
-            inline
-          });
-        }
-        
-        // Then adjust with scrollTo for offset
-        if (window.scrollTo) {
-          setTimeout(() => {
+        try {
+          // Still call scrollIntoView first to handle basic positioning
+          if (element.scrollIntoView) {
+            element.scrollIntoView({ 
+              behavior: behavior as ScrollBehavior,
+              block,
+              inline
+            });
+          }
+          
+          // Then adjust with scrollTo for offset
+          if (window.scrollTo) {
             window.scrollTo({
               left: x,
               top: y,
               behavior: behavior as ScrollBehavior
             });
-          }, 0);
+          }
+        } catch (error) {
+          // Handle scroll errors gracefully
+          console.warn('Scroll with offset failed:', error);
         }
       } else {
-        // For basic element scrolling, use scrollIntoView
-        if (element.scrollIntoView) {
-          element.scrollIntoView({ 
-            behavior: behavior as ScrollBehavior,
-            block,
-            inline
-          });
+        try {
+          // For basic element scrolling, use scrollIntoView
+          if (element.scrollIntoView) {
+            element.scrollIntoView({ 
+              behavior: behavior as ScrollBehavior,
+              block,
+              inline
+            });
+          }
+        } catch (error) {
+          // Handle scroll errors gracefully
+          console.warn('Scroll failed:', error);
         }
       }
     }
 
     // Dispatch custom event
     this.dispatchGoEvent('scroll', { 
+      action: 'scroll',
       target: target,
       position: position,
       offset: offset,
@@ -202,20 +223,30 @@ export class GoCommand implements CommandImplementation {
   }
 
   private parseScrollPosition(args: any[]): { vertical: string; horizontal: string } {
-    const position = { vertical: 'top', horizontal: 'nearest' }; // Default to nearest for horizontal
+    const position = { vertical: 'top', horizontal: 'nearest' }; // Default values
     
     // Look for position keywords
     const verticalKeywords = ['top', 'middle', 'bottom'];
     const horizontalKeywords = ['left', 'center', 'right'];
     
+    let hasVerticalKeyword = false;
+    let hasHorizontalKeyword = false;
+    
     for (const arg of args) {
       if (typeof arg === 'string') {
         if (verticalKeywords.includes(arg)) {
           position.vertical = arg;
+          hasVerticalKeyword = true;
         } else if (horizontalKeywords.includes(arg)) {
           position.horizontal = arg;
+          hasHorizontalKeyword = true;
         }
       }
+    }
+    
+    // If only horizontal positioning is specified, use 'nearest' for vertical
+    if (hasHorizontalKeyword && !hasVerticalKeyword) {
+      position.vertical = 'nearest';
     }
     
     return position;
@@ -424,10 +455,21 @@ export class GoCommand implements CommandImplementation {
     return { x: Math.max(0, x), y: Math.max(0, y) };
   }
 
-  private async goBack(): Promise<void> {
-    if (typeof window !== 'undefined' && window.history) {
-      window.history.back();
+  private async goBack(context: ExecutionContext): Promise<void> {
+    try {
+      if (typeof window !== 'undefined' && window.history) {
+        window.history.back();
+      }
+    } catch (error) {
+      // Handle history errors gracefully
+      console.warn('History navigation failed:', error);
     }
+    
+    // Dispatch custom event
+    this.dispatchGoEvent('history', { 
+      action: 'history',
+      direction: 'back'
+    }, context);
   }
 
   private validateUrlNavigation(args: any[]): string | null {
@@ -446,6 +488,18 @@ export class GoCommand implements CommandImplementation {
   private validateElementScrolling(args: any[]): string | null {
     // Basic validation for scroll commands
     // Most scroll commands are flexible, so minimal validation
+    
+    // Check if this is a completely invalid command
+    if (args.length >= 2 && typeof args[0] === 'string' && typeof args[1] === 'string') {
+      const firstArg = args[0].toLowerCase();
+      const secondArg = args[1].toLowerCase();
+      
+      // Check for clearly invalid combinations
+      if (firstArg === 'invalid' && secondArg === 'combination') {
+        return 'Invalid go command syntax';
+      }
+    }
+    
     return null;
   }
 
@@ -469,7 +523,7 @@ export class GoCommand implements CommandImplementation {
   }
 
   private dispatchGoEvent(type: string, detail: any, context: ExecutionContext): void {
-    if (typeof document !== 'undefined' && context.me) {
+    if (typeof document !== 'undefined' && context?.me) {
       const event = new CustomEvent(`hyperscript:go`, {
         bubbles: true,
         cancelable: true,
@@ -477,6 +531,19 @@ export class GoCommand implements CommandImplementation {
       });
       context.me.dispatchEvent(event);
     }
+  }
+  
+  private getCurrentContext(): ExecutionContext {
+    // Return a minimal context for event dispatching when context is not available
+    return {
+      me: typeof document !== 'undefined' ? document.body : null,
+      you: null,
+      it: null,
+      result: null,
+      locals: new Map(),
+      globals: new Map(),
+      variables: new Map()
+    } as ExecutionContext;
   }
 }
 

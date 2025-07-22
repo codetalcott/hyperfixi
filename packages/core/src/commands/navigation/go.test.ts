@@ -643,7 +643,7 @@ describe('Go Command', () => {
       const iframe = createTestElement('<iframe src="about:blank"></iframe>') as HTMLIFrameElement;
       document.body.appendChild(iframe);
       
-      const iframeContext = createContext(iframe);
+      const iframeContext = createMockHyperscriptContext(iframe) as ExecutionContext;
       
       expect(async () => {
         await goCommand.execute(iframeContext, 'to', 'url', 'https://example.com');

@@ -206,13 +206,7 @@ export function tokenizeOptimized(input: string): Token[] {
       continue;
     }
     
-    // Handle operators
-    if (isOperatorChar(char)) {
-      tokenizeOperatorOptimized(tokenizer);
-      continue;
-    }
-    
-    // Handle object/array literals
+    // Handle object/array literals first (before operators)
     if (char === '{') {
       tokenizeObjectLiteralOptimized(tokenizer);
       continue;
@@ -220,6 +214,12 @@ export function tokenizeOptimized(input: string): Token[] {
     
     if (char === '[') {
       tokenizeArrayOrMemberAccessOptimized(tokenizer);
+      continue;
+    }
+    
+    // Handle operators
+    if (isOperatorChar(char)) {
+      tokenizeOperatorOptimized(tokenizer);
       continue;
     }
     

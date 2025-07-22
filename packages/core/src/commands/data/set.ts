@@ -106,11 +106,11 @@ export class SetCommand implements CommandImplementation {
   }
 
   private setLocalVariable(context: ExecutionContext, name: string, value: any): void {
-    // Use context.variables for general variable storage, matching runtime test expectations
-    if (!context.variables) {
-      context.variables = new Map();
+    // Use context.locals for local variable storage
+    if (!context.locals) {
+      context.locals = new Map();
     }
-    context.variables.set(name, value);
+    context.locals.set(name, value);
   }
 
   private setGlobalVariable(context: ExecutionContext, name: string, value: any): void {

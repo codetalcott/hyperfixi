@@ -111,7 +111,7 @@ describe('Hyperscript Runtime', () => {
       
       await runtime.execute(setCommandAST as any, context);
       
-      expect(context.variables?.get('myVar')).toBe('test value');
+      expect(context.locals?.get('myVar')).toBe('test value');
     });
 
     it('should execute set command for context variables', async () => {

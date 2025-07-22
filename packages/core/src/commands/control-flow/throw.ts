@@ -13,6 +13,12 @@ export class ThrowCommand implements CommandImplementation {
   isBlocking = true; // Stops execution by throwing
 
   async execute(context: ExecutionContext, ...args: any[]): Promise<any> {
+    // Handle null context gracefully
+    if (!context) {
+      const errorMessage = args.length > 0 ? String(args[0]) : 'An error occurred';
+      throw new Error(errorMessage);
+    }
+    
     // Determine error message/object
     let errorData: any;
     
@@ -31,11 +37,13 @@ export class ThrowCommand implements CommandImplementation {
     // Process error data
     const processedError = await this.processErrorData(errorData, context);
 
-    // Emit error event before throwing
-    this.emitErrorEvent(processedError, context);
-
-    // Create and throw the error
+    // Create the error first
     const error = this.createError(processedError, context);
+    
+    // Emit error event before throwing (with the actual Error object)
+    this.emitErrorEvent(error, context);
+
+    // Throw the error
     throw error;
   }
 
@@ -71,6 +79,11 @@ export class ThrowCommand implements CommandImplementation {
    * Evaluate error expression (simplified)
    */
   private async evaluateErrorExpression(expr: string, context: ExecutionContext): Promise<any> {
+    // Handle null context
+    if (!context) {
+      return expr;
+    }
+    
     // Handle simple variable lookups
     if (context.locals?.has(expr)) {
       return context.locals.get(expr);
@@ -109,6 +122,11 @@ export class ThrowCommand implements CommandImplementation {
    * Evaluate string concatenation expression
    */
   private async evaluateStringExpression(expr: string, context: ExecutionContext): Promise<string> {
+    // Handle null context
+    if (!context) {
+      return expr;
+    }
+    
     // Simple string concatenation evaluation
     const parts = expr.split('+').map(p => p.trim());
     let result = '';
@@ -199,6 +217,10 @@ export class ThrowCommand implements CommandImplementation {
    * Enhance error with hyperscript context
    */
   private enhanceErrorWithContext(error: Error, context: ExecutionContext): void {
+    if (!context) {
+      return;
+    }
+    
     // Add hyperscript-specific context
     (error as any).hyperscriptContext = {
       element: context.me,
@@ -219,15 +241,15 @@ export class ThrowCommand implements CommandImplementation {
   /**
    * Emit error event before throwing
    */
-  private emitErrorEvent(errorData: any, context: ExecutionContext): void {
-    if (!context.me) return;
+  private emitErrorEvent(error: Error, context: ExecutionContext): void {
+    if (!context || !context.me) return;
 
     try {
       const event = new CustomEvent('hyperscript:error', {
         bubbles: true,
         cancelable: false,
         detail: {
-          error: errorData,
+          error: error,
           command: 'throw',
           element: context.me,
           context: {
