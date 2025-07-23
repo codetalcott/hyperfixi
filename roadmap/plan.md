@@ -15,7 +15,7 @@ that works exactly like the original, with modern TypeScript benefits.
 - ✅ **Browser Tests**: 34% official test suite compatibility
 - ✅ **Core Infrastructure**: Tokenizer + Parser + API structure complete (Phase
   1 ✅)
-- ❌ **Command System**: Missing basic commands (put, add, remove, toggle)
+- 🚀 **Command System**: PUT command complete (10/10 tests), ADD/REMOVE/TOGGLE in progress
 - ❌ **Event System**: Missing event handling (on click, send, trigger)
 
 ## Implementation Plan: Get the Basics Right (4-6 weeks)
@@ -64,10 +64,12 @@ that works exactly like the original, with modern TypeScript benefits.
 
 #### Week 3: Essential Commands
 
-- [ ] **PUT Command** (`~/projects/_hyperscript/test/commands/put.js`)
-  - [ ] Study `~/projects/_hyperscript/src/hyperscript.js` put implementation
-  - [ ] Implement `put X into Y` syntax and behavior
-  - [ ] Add support for innerHTML, textContent, attributes
+- [x] **PUT Command** (`~/projects/_hyperscript/test/commands/put.js`) ✅ **COMPLETE**
+  - [x] Study `~/projects/_hyperscript/src/hyperscript.js` put implementation
+  - [x] Implement `put X into Y` syntax and behavior
+  - [x] Add support for innerHTML, textContent, attributes, styles
+  - [x] Add support for `put X before/after Y`, `put X at start/end of Y`
+  - [x] **Result**: 10/10 tests passing, all syntax variations working
 
 - [ ] **ADD/REMOVE Commands** (`~/projects/_hyperscript/test/commands/add.js`,
       `~/projects/_hyperscript/test/commands/remove.js`)
