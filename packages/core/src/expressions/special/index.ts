@@ -402,21 +402,97 @@ function ensureNumber(value: any, context: string): number {
 }
 
 function interpolateString(template: string, context: ExecutionContext): string {
-  // Handle simple $variable interpolation
-  let result = template.replace(/\$([a-zA-Z_][a-zA-Z0-9_]*)/g, (match, varName) => {
-    // In a real implementation, this would look up variables from context
-    // For now, return the variable name for testing
-    return `[${varName}]`;
+  // Handle simple $variable interpolation (including numbers and property access)
+  let result = template.replace(/\$([a-zA-Z_$][a-zA-Z0-9_.$]*)/g, (match, varName) => {
+    try {
+      // Handle numeric literals like $1, $2, etc.
+      if (/^\d+$/.test(varName)) {
+        return varName;
+      }
+      
+      // Handle property access like $window.foo
+      if (varName.includes('.')) {
+        const parts = varName.split('.');
+        let value = resolveVariable(parts[0], context);
+        
+        for (let i = 1; i < parts.length; i++) {
+          if (value == null) break;
+          value = value[parts[i]];
+        }
+        
+        return String(value ?? '');
+      }
+      
+      // Handle simple variables
+      const value = resolveVariable(varName, context);
+      return String(value ?? '');
+    } catch (error) {
+      // Return empty string for failed lookups
+      return '';
+    }
   });
   
   // Handle ${expression} interpolation  
   result = result.replace(/\$\{([^}]+)\}/g, (match, expression) => {
-    // In a real implementation, this would evaluate the expression
-    // For now, return the expression for testing
-    return `[${expression}]`;
+    try {
+      // For now, handle simple cases
+      // TODO: Implement full expression evaluation
+      if (/^\d+$/.test(expression.trim())) {
+        return expression.trim();
+      }
+      
+      // Handle simple variable references
+      if (/^[a-zA-Z_$][a-zA-Z0-9_.$]*$/.test(expression.trim())) {
+        const varName = expression.trim();
+        if (varName.includes('.')) {
+          const parts = varName.split('.');
+          let value = resolveVariable(parts[0], context);
+          
+          for (let i = 1; i < parts.length; i++) {
+            if (value == null) break;
+            value = value[parts[i]];
+          }
+          
+          return String(value ?? '');
+        }
+        
+        const value = resolveVariable(varName, context);
+        return String(value ?? '');
+      }
+      
+      // For complex expressions, return placeholder for now
+      return `[${expression}]`;
+    } catch (error) {
+      return '';
+    }
   });
   
   return result;
+}
+
+// Helper function to resolve variables from context
+function resolveVariable(varName: string, context: ExecutionContext): any {
+  // Check locals first
+  if (context.locals?.has(varName)) {
+    return context.locals.get(varName);
+  }
+  
+  // Check context properties
+  if (varName === 'me' && context.me) return context.me;
+  if (varName === 'you' && context.you) return context.you;
+  if (varName === 'it' && context.it) return context.it;
+  if (varName === 'result' && context.result) return context.result;
+  
+  // Check globals (including window)
+  if (typeof window !== 'undefined' && varName === 'window') {
+    return window;
+  }
+  
+  if (context.globals?.has(varName)) {
+    return context.globals.get(varName);
+  }
+  
+  return undefined;
 }
 
 // ============================================================================

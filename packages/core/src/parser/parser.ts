@@ -512,8 +512,53 @@ export class Parser {
       return this.createIdentifier(token.value);
     }
 
+    // Handle dollar expressions ($variable, $1, $window.foo)
+    if (this.match('$')) {
+      return this.parseDollarExpression();
+    }
+
     const token = this.peek();
     this.addError(`Unexpected token: ${token.value} at line ${token.line}, column ${token.column}`);
+    return this.createErrorNode();
+  }
+
+  private parseDollarExpression(): ASTNode {
+    // We've already consumed the '$' token
+    
+    // Check if followed by a number (like $1, $2)
+    if (this.checkTokenType(TokenType.NUMBER)) {
+      const numberToken = this.advance();
+      const value = numberToken.value;
+      return this.createLiteral(value, `$${value}`);
+    }
+    
+    // Check if followed by an identifier (like $variable, $window)
+    if (this.checkTokenType(TokenType.IDENTIFIER)) {
+      const identifierToken = this.advance();
+      let expression = this.createIdentifier(identifierToken.value);
+      
+      // Handle property access like $window.foo
+      while (this.match('.')) {
+        if (this.checkTokenType(TokenType.IDENTIFIER)) {
+          const propertyToken = this.advance();
+          expression = this.createMemberExpression(expression, this.createIdentifier(propertyToken.value), false);
+        } else {
+          this.addError("Expected property name after '.' in dollar expression");
+          return this.createErrorNode();
+        }
+      }
+      
+      // Wrap in a special dollar expression node
+      return {
+        type: 'dollarExpression',
+        expression,
+        raw: `$${identifierToken.value}${this.previous().raw || ''}`,
+        line: identifierToken.line,
+        column: identifierToken.column - 1 // Include the $ symbol
+      };
+    }
+    
+    this.addError("Expected identifier or number after '$'");
     return this.createErrorNode();
   }
 

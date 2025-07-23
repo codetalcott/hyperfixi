@@ -82,6 +82,9 @@ export class ExpressionEvaluator {
       case 'selector':
         return this.evaluateSelector(node as any, context);
       
+      case 'dollarExpression':
+        return this.evaluateDollarExpression(node as any, context);
+      
       default:
         throw new Error(`Unsupported AST node type for evaluation: ${node.type}`);
     }
@@ -398,6 +401,50 @@ export class ExpressionEvaluator {
    */
   getAvailableExpressions(): string[] {
     return Array.from(this.expressionRegistry.keys());
+  }
+
+  /**
+   * Evaluate dollar expressions ($variable, $1, $window.foo)
+   */
+  private async evaluateDollarExpression(node: { expression: any }, context: ExecutionContext): Promise<any> {
+    // Evaluate the inner expression normally
+    const value = await this.evaluate(node.expression, context);
+    
+    // If it's a simple identifier, try to resolve it from context
+    if (node.expression.type === 'identifier') {
+      const varName = node.expression.name;
+      
+      // Handle numeric literals like $1, $2
+      if (/^\d+$/.test(varName)) {
+        return varName;
+      }
+      
+      // Handle context variables
+      if (context.locals?.has(varName)) {
+        return context.locals.get(varName);
+      }
+      
+      // Handle special context properties
+      if (varName === 'me' && context.me) return context.me;
+      if (varName === 'you' && context.you) return context.you;
+      if (varName === 'it' && context.it) return context.it;
+      if (varName === 'result' && context.result) return context.result;
+      
+      // Handle globals including window
+      if (typeof window !== 'undefined' && varName === 'window') {
+        return window;
+      }
+      
+      if (context.globals?.has(varName)) {
+        return context.globals.get(varName);
+      }
+      
+      // Return empty string for unresolved variables (hyperscript behavior)
+      return '';
+    }
+    
+    // For member expressions, evaluate normally
+    return value;
   }
 
   /**

@@ -1507,10 +1507,40 @@ function parseAttributeSelector(state: ParseState, openBracket: Token): ASTNode 
  * Evaluate template literal expressions
  */
 async function evaluateTemplateLiteral(node: any, context: ExecutionContext): Promise<string> {
-  const template = node.value;
+  let template = node.value;
   
-  // Replace ${expression} patterns with evaluated results
-  const result = await replaceAsyncBatch(template, /\$\{([^}]+)\}/g, async (match: string, expr: string) => {
+  // First handle $variable patterns (like $1, $window.foo)
+  template = await replaceAsyncBatch(template, /\$([a-zA-Z_$][a-zA-Z0-9_.$]*|\d+)/g, async (match: string, varName: string) => {
+    try {
+      // Handle numeric literals like $1, $2 (return the number as string)
+      if (/^\d+$/.test(varName)) {
+        return varName;
+      }
+      
+      // Handle property access like $window.foo
+      if (varName.includes('.')) {
+        const parts = varName.split('.');
+        let value = resolveVariable(parts[0], context);
+        
+        for (let i = 1; i < parts.length; i++) {
+          if (value == null) break;
+          value = value[parts[i]];
+        }
+        
+        return String(value ?? '');
+      }
+      
+      // Handle simple variables
+      const value = resolveVariable(varName, context);
+      return String(value ?? '');
+    } catch (error) {
+      // Return empty string for failed lookups (hyperscript behavior)
+      return '';
+    }
+  });
+  
+  // Then handle ${expression} patterns
+  template = await replaceAsyncBatch(template, /\$\{([^}]+)\}/g, async (match: string, expr: string) => {
     try {
       // Recursively parse and evaluate the interpolated expression
       const result = await parseAndEvaluateExpression(expr, context);
@@ -1521,7 +1551,34 @@ async function evaluateTemplateLiteral(node: any, context: ExecutionContext): Pr
     }
   });
   
-  return result;
+  return template;
+}
+
+/**
+ * Helper function to resolve variables from execution context
+ */
+function resolveVariable(varName: string, context: ExecutionContext): any {
+  // Check locals first
+  if (context.locals?.has(varName)) {
+    return context.locals.get(varName);
+  }
+  
+  // Check context properties
+  if (varName === 'me' && context.me) return context.me;
+  if (varName === 'you' && context.you) return context.you;
+  if (varName === 'it' && context.it) return context.it;
+  if (varName === 'result' && context.result) return context.result;
+  
+  // Check globals (including window)
+  if (typeof window !== 'undefined' && varName === 'window') {
+    return window;
+  }
+  
+  if (context.globals?.has(varName)) {
+    return context.globals.get(varName);
+  }
+  
+  return undefined;
 }
 
 /**
