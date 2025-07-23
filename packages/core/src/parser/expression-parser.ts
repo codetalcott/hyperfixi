@@ -485,6 +485,38 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     };
   }
   
+  // Handle positional expressions (first, last) - these can take arguments
+  if (token.type === TokenType.IDENTIFIER && (token.value === 'first' || token.value === 'last')) {
+    const operatorToken = advance(state)!; // consume 'first' or 'last'
+    
+    // Check if there's an argument (like '.test-item' in 'first .test-item')
+    const nextToken = peek(state);
+    if (nextToken && 
+        (nextToken.type === TokenType.CLASS_SELECTOR || 
+         nextToken.type === TokenType.ID_SELECTOR ||
+         nextToken.type === TokenType.QUERY_REFERENCE ||
+         nextToken.type === TokenType.IDENTIFIER)) {
+      // Parse the argument expression
+      const argument = parsePrimaryExpression(state);
+      return {
+        type: 'positionalExpression',
+        operator: operatorToken.value,
+        argument,
+        start: operatorToken.start,
+        end: argument.end
+      };
+    } else {
+      // No argument - just the positional expression on its own (operates on context.it)
+      return {
+        type: 'positionalExpression',
+        operator: operatorToken.value,
+        argument: null,
+        start: operatorToken.start,
+        end: operatorToken.end
+      };
+    }
+  }
+  
   // Handle unary minus and plus operators
   if (token.type === TokenType.OPERATOR && (token.value === '-' || token.value === '+')) {
     advance(state); // consume operator
@@ -550,10 +582,35 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
   // Boolean literals
   if (token.type === TokenType.BOOLEAN) {
     advance(state);
+    let value: any;
+    let valueType: string;
+    
+    switch (token.value) {
+      case 'true':
+        value = true;
+        valueType = 'boolean';
+        break;
+      case 'false':
+        value = false;
+        valueType = 'boolean';
+        break;
+      case 'null':
+        value = null;
+        valueType = 'null';
+        break;
+      case 'undefined':
+        value = undefined;
+        valueType = 'undefined';
+        break;
+      default:
+        value = token.value === 'true';
+        valueType = 'boolean';
+    }
+    
     return {
       type: 'literal',
-      value: token.value === 'true',
-      valueType: 'boolean',
+      value,
+      valueType,
       start: token.start,
       end: token.end
     };
@@ -947,6 +1004,9 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
       
     case 'arrayAccess':
       return evaluateArrayAccess(node, context);
+      
+    case 'positionalExpression':
+      return evaluatePositionalExpression(node, context);
       
     default:
       throw new ExpressionParseError(`Unknown AST node type: ${(node as any).type}`);
@@ -1582,6 +1642,31 @@ async function evaluateTemplateLiteral(node: any, context: ExecutionContext): Pr
   });
   
   return template;
+}
+
+/**
+ * Evaluate positional expressions (first, last)
+ */
+async function evaluatePositionalExpression(node: any, context: ExecutionContext): Promise<any> {
+  const operator = node.operator; // 'first' or 'last'
+  
+  // If there's an argument, evaluate it to get the collection
+  let collection;
+  if (node.argument) {
+    collection = await evaluateASTNode(node.argument, context);
+  } else {
+    // No argument - use context.it
+    collection = context.it;
+  }
+  
+  // Get the appropriate positional expression implementation
+  if (operator === 'first') {
+    return positionalExpressions.first.evaluate(context, collection);
+  } else if (operator === 'last') {
+    return positionalExpressions.last.evaluate(context, collection);
+  } else {
+    throw new ExpressionParseError(`Unknown positional operator: ${operator}`);
+  }
 }
 
 /**

@@ -73,11 +73,18 @@ export const defaultConversions: Record<string, ConversionFunction> = {
 
   Date: (value: any) => {
     if (value instanceof Date) return value;
-    if (value == null) return new Date();
+    if (value == null) return new Date(NaN); // Returns Invalid Date 
     
     // Try to parse various date formats
+    // Handle the common case where date strings are interpreted as UTC but we want local time
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      // For YYYY-MM-DD format, create local date to avoid timezone issues
+      const [year, month, day] = value.split('-').map(Number);
+      return new Date(year, month - 1, day); // Month is 0-indexed
+    }
+    
     const date = new Date(value);
-    return isNaN(date.getTime()) ? new Date() : date;
+    return date; // Return the date even if invalid - let the caller handle validation
   },
 
   // JSON conversions

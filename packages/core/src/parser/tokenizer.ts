@@ -204,7 +204,9 @@ export function tokenize(input: string): Token[] {
         prevToken.value === '[' ||
         prevToken.value === '{' ||
         prevToken.value === ',' ||
-        prevToken.value === ';';
+        prevToken.value === ';' ||
+        // Positional expressions like 'first', 'last' should treat following dots as CSS selectors
+        (prevToken.type === 'identifier' && ['first', 'last', 'next', 'previous'].includes(prevToken.value));
         
       if (isCSSSelectorContext && isAlpha(peek(tokenizer))) {
         tokenizeCSSSelector(tokenizer);
