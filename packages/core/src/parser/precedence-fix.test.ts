@@ -102,19 +102,28 @@ describe('Operator Precedence Fix - TDD', () => {
     });
   });
 
-  describe('Current Behavior Documentation', () => {
-    it('documents current error behavior for math mixed operators', async () => {
-      // This test documents what currently happens - it should fail with precedence error
-      await expect(parseAndEvaluateExpression('2 + 3 * 4', context))
-        .rejects
-        .toThrow('You must parenthesize math operations with different operators');
+  describe('JavaScript-Standard Precedence Behavior ✅', () => {
+    it('now correctly evaluates math mixed operators (was: error, now: JavaScript standard)', async () => {
+      // ✅ FIXED: Now correctly evaluates using JavaScript standard precedence
+      // 2 + 3 * 4 = 2 + 12 = 14 (multiplication before addition)
+      const result = await parseAndEvaluateExpression('2 + 3 * 4', context);
+      expect(result).toBe(14);
     });
 
-    it('documents current error behavior for logical mixed operators', async () => {
-      // This test documents what currently happens - it should fail with precedence error
-      await expect(parseAndEvaluateExpression('true and false or true', context))
-        .rejects
-        .toThrow('You must parenthesize logical operations with different operators');
+    it('now correctly evaluates logical mixed operators (was: error, now: JavaScript standard)', async () => {
+      // ✅ FIXED: Now correctly evaluates using JavaScript standard precedence  
+      // true and false or true = (true and false) or true = false or true = true
+      const result = await parseAndEvaluateExpression('true and false or true', context);
+      expect(result).toBe(true);
+    });
+    
+    it('confirms we follow JavaScript precedence standards', async () => {
+      // These should all work correctly with standard precedence rules
+      expect(await parseAndEvaluateExpression('2 + 3 * 4', context)).toBe(14);  // * before +
+      expect(await parseAndEvaluateExpression('10 - 2 * 3', context)).toBe(4);  // * before -
+      expect(await parseAndEvaluateExpression('8 / 2 + 3', context)).toBe(7);   // / before +
+      expect(await parseAndEvaluateExpression('true and false or true', context)).toBe(true);   // and before or
+      expect(await parseAndEvaluateExpression('false or true and false', context)).toBe(false); // and before or
     });
   });
 });
