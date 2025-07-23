@@ -98,14 +98,55 @@
                 // Check for hyperscript behavior attribute
                 const hyperschriptBehavior = element.getAttribute('_');
                 if (hyperschriptBehavior) {
-                    // Initialize hyperscript behavior on the element
-                    window.initHyperscriptBehavior(element, hyperschriptBehavior);
+                    // Use our proper hyperscript API instead of custom implementation
+                    window.initHyperscriptBehaviorProper(element, hyperschriptBehavior);
                 }
                 
                 return element;
             } catch (error) {
                 console.error('make() error:', error.message);
                 throw error;
+            }
+        };
+        
+        // Proper hyperscript behavior initialization using our API
+        window.initHyperscriptBehaviorProper = function(element, behavior) {
+            try {
+                console.log('Initializing behavior:', behavior, 'on element:', element);
+                
+                // For event handlers (on syntax), parse and bind them directly
+                if (behavior.trim().startsWith('on ')) {
+                    const match = behavior.match(/^on\s+(\w+)\s+(.+)$/);
+                    if (match) {
+                        const [, eventType, commandCode] = match;
+                        console.log('Setting up event:', eventType, 'command:', commandCode);
+                        
+                        if (commandCode) {
+                            element.addEventListener(eventType, async (event) => {
+                                try {
+                                    console.log('Event triggered:', eventType, 'executing:', commandCode);
+                                    
+                                    // Create proper execution context
+                                    const context = hyperfixi.createContext(element);
+                                    
+                                    // Execute the command using evalHyperScript which we know works
+                                    const result = await hyperfixi.evalHyperScript(commandCode, context);
+                                    console.log('Command executed, result:', result);
+                                } catch (error) {
+                                    console.error('Hyperscript execution error:', error);
+                                }
+                            });
+                            console.log('Event listener added for:', eventType);
+                        }
+                    }
+                } else {
+                    // For other syntax, try to execute immediately
+                    console.log('Non-event behavior, attempting immediate execution');
+                    const context = hyperfixi.createContext(element);
+                    hyperfixi.evalHyperScript(behavior, context);
+                }
+            } catch (error) {
+                console.error('Error setting up hyperscript behavior:', error);
             }
         };
         

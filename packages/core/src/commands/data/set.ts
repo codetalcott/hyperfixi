@@ -48,8 +48,11 @@ export class SetCommand implements CommandImplementation {
     
     // Check for property assignment syntax: set element property to value
     if (args.length === 4 && args[2] === 'to') {
-      const [element, propertyPath, keyword, value] = args;
-      this.setElementProperty(element, propertyPath, value);
+      const [elementRef, propertyPath, keyword, value] = args;
+      
+      // Resolve the element reference (e.g., "my" -> context.me)
+      const resolvedElement = this.resolveTarget(elementRef, context);
+      this.setElementProperty(resolvedElement, propertyPath, value);
       return value;
     }
     
@@ -61,6 +64,28 @@ export class SetCommand implements CommandImplementation {
     }
 
     if (typeof target === 'string') {
+      // Check for possessive expressions like "my innerHTML", "my textContent", etc.
+      const possessiveMatch = target.match(/^(my|its?|your?)\s+(.+)$/);
+      if (possessiveMatch) {
+        const [, possessive, property] = possessiveMatch;
+        
+        let targetElement: any;
+        if (possessive === 'my' && context.me) {
+          targetElement = context.me;
+        } else if (possessive === 'its' || possessive === 'it') {
+          targetElement = context.it;
+        } else if (possessive === 'your' || possessive === 'you') {
+          targetElement = context.you;
+        }
+        
+        if (targetElement) {
+          this.setElementProperty(targetElement, property, value);
+          return value;
+        } else {
+          throw new Error(`Context reference '${possessive}' is not available`);
+        }
+      }
+      
       // Handle variable assignment or $ prefixed global variables
       if (target.startsWith('$')) {
         this.setGlobalVariable(context, target, value);
@@ -151,16 +176,14 @@ export class SetCommand implements CommandImplementation {
         } else if (finalProperty.startsWith('data-')) {
           target.setAttribute(finalProperty, String(value));
         } else {
-          // Try to set as property first, fallback to attribute
-          try {
+          // For simple properties like innerHTML, textContent, etc., set directly on target
+          // The bug was that we were setting on 'current' which might be different from target
+          // after path navigation, but for single properties we should set on target directly
+          if (pathParts.length === 1) {
+            target[finalProperty] = value;
+          } else {
+            // For nested properties, use current
             current[finalProperty] = value;
-          } catch (e) {
-            // If property is read-only, ignore silently
-            if (finalProperty === 'tagName' || finalProperty === 'nodeName') {
-              // These are read-only, ignore
-              return;
-            }
-            target.setAttribute(finalProperty, String(value));
           }
         }
       } else {
@@ -218,7 +241,7 @@ export class SetCommand implements CommandImplementation {
     
     // If target is a string, treat as CSS selector or context reference
     if (typeof target === 'string') {
-      if (target === 'me' && context.me) {
+      if ((target === 'me' || target === 'my') && context.me) {
         return context.me;
       } else if (target === 'it' && context.it) {
         return context.it;
