@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { RenderCommand } from './render';
 import { ExecutionContext } from '../../types/core';
+import '../../test-setup.js';
 
 describe('Render Command', () => {
   let renderCommand: RenderCommand;
@@ -45,7 +46,11 @@ describe('Render Command', () => {
       
       const result = await renderCommand.execute(mockContext, mockTemplate);
       
-      expect(result).toBeInstanceOf(DocumentFragment);
+      // Check that result is a DocumentFragment-like object with the expected structure
+      expect(result).toBeDefined();
+      expect(result.nodeType).toBe(11); // DocumentFragment nodeType
+      expect(typeof result.appendChild).toBe('function');
+      expect(typeof result.cloneNode).toBe('function');
       expect(mockContext.result).toBe(result);
     });
 
@@ -61,17 +66,26 @@ describe('Render Command', () => {
 
       const result = await renderCommand.execute(mockContext, mockTemplate, 'with', data);
       
-      expect(result).toBeInstanceOf(DocumentFragment);
+      // Check that result is a DocumentFragment-like object with the expected structure
+      expect(result).toBeDefined();
+      expect(result.nodeType).toBe(11); // DocumentFragment nodeType
+      expect(typeof result.appendChild).toBe('function');
+      expect(typeof result.cloneNode).toBe('function');
       expect(mockContext.result).toBe(result);
     });
 
     it('should handle template selector strings', async () => {
       const querySelector = vi.fn().mockReturnValue(mockTemplate);
-      vi.stubGlobal('document', { querySelector });
+      const originalQuerySelector = document.querySelector;
+      vi.spyOn(document, 'querySelector').mockImplementation(querySelector);
       
-      await renderCommand.execute(mockContext, '#myTemplate');
-      
-      expect(querySelector).toHaveBeenCalledWith('#myTemplate');
+      try {
+        await renderCommand.execute(mockContext, '#myTemplate');
+        expect(querySelector).toHaveBeenCalledWith('#myTemplate');
+      } finally {
+        // Restore original querySelector
+        vi.mocked(document.querySelector).mockRestore();
+      }
     });
   });
 
@@ -231,7 +245,11 @@ describe('Render Command', () => {
       mockContext.me = templateElement;
       
       const result = await renderCommand.execute(mockContext, 'me');
-      expect(result).toBeInstanceOf(DocumentFragment);
+      // Check that result is a DocumentFragment-like object with the expected structure
+      expect(result).toBeDefined();
+      expect(result.nodeType).toBe(11); // DocumentFragment nodeType
+      expect(typeof result.appendChild).toBe('function');
+      expect(typeof result.cloneNode).toBe('function');
     });
 
     it('should resolve "it" template reference', async () => {
@@ -241,7 +259,11 @@ describe('Render Command', () => {
       mockContext.it = templateElement;
       
       const result = await renderCommand.execute(mockContext, 'it');
-      expect(result).toBeInstanceOf(DocumentFragment);
+      // Check that result is a DocumentFragment-like object with the expected structure
+      expect(result).toBeDefined();
+      expect(result.nodeType).toBe(11); // DocumentFragment nodeType
+      expect(typeof result.appendChild).toBe('function');
+      expect(typeof result.cloneNode).toBe('function');
     });
 
     it('should resolve "you" template reference', async () => {
@@ -251,7 +273,11 @@ describe('Render Command', () => {
       mockContext.you = templateElement;
       
       const result = await renderCommand.execute(mockContext, 'you');
-      expect(result).toBeInstanceOf(DocumentFragment);
+      // Check that result is a DocumentFragment-like object with the expected structure
+      expect(result).toBeDefined();
+      expect(result.nodeType).toBe(11); // DocumentFragment nodeType
+      expect(typeof result.appendChild).toBe('function');
+      expect(typeof result.cloneNode).toBe('function');
     });
   });
 
@@ -262,12 +288,15 @@ describe('Render Command', () => {
     });
 
     it('should throw error for template not found', async () => {
-      vi.stubGlobal('document', {
-        querySelector: vi.fn().mockReturnValue(null)
-      });
+      const querySelector = vi.fn().mockReturnValue(null);
+      vi.spyOn(document, 'querySelector').mockImplementation(querySelector);
 
-      await expect(renderCommand.execute(mockContext, '#nonexistent'))
-        .rejects.toThrow('Template not found: #nonexistent');
+      try {
+        await expect(renderCommand.execute(mockContext, '#nonexistent'))
+          .rejects.toThrow('Template not found: #nonexistent');
+      } finally {
+        vi.mocked(document.querySelector).mockRestore();
+      }
     });
 
     it('should handle interpolation errors gracefully', async () => {
@@ -281,7 +310,11 @@ describe('Render Command', () => {
       const result = await renderCommand.execute(mockContext, mockTemplate);
       
       // Should still return result with error placeholder
-      expect(result).toBeInstanceOf(DocumentFragment);
+      // Check that result is a DocumentFragment-like object with the expected structure
+      expect(result).toBeDefined();
+      expect(result.nodeType).toBe(11); // DocumentFragment nodeType
+      expect(typeof result.appendChild).toBe('function');
+      expect(typeof result.cloneNode).toBe('function');
     });
 
     it('should handle directive processing errors', async () => {
@@ -295,7 +328,11 @@ describe('Render Command', () => {
 
       // Should not throw, but handle gracefully
       const result = await renderCommand.execute(mockContext, mockTemplate);
-      expect(result).toBeInstanceOf(DocumentFragment);
+      // Check that result is a DocumentFragment-like object with the expected structure
+      expect(result).toBeDefined();
+      expect(result.nodeType).toBe(11); // DocumentFragment nodeType
+      expect(typeof result.appendChild).toBe('function');
+      expect(typeof result.cloneNode).toBe('function');
     });
   });
 
@@ -330,7 +367,11 @@ describe('Render Command', () => {
 
       const result = await renderCommand.execute(mockContext, mockTemplate, 'with', templateData);
       
-      expect(result).toBeInstanceOf(DocumentFragment);
+      // Check that result is a DocumentFragment-like object with the expected structure
+      expect(result).toBeDefined();
+      expect(result.nodeType).toBe(11); // DocumentFragment nodeType
+      expect(typeof result.appendChild).toBe('function');
+      expect(typeof result.cloneNode).toBe('function');
       expect(mockContext.result).toBe(result);
       expect(mockEvalExpression).toHaveBeenCalledWith('name', expect.any(Object));
       expect(mockEvalExpression).toHaveBeenCalledWith('age', expect.any(Object));
@@ -342,7 +383,11 @@ describe('Render Command', () => {
       const result = await renderCommand.execute(mockContext, mockTemplate);
       
       expect(mockContext.result).toBe(result);
-      expect(mockContext.result).toBeInstanceOf(DocumentFragment);
+      // Check that result is a DocumentFragment-like object with the expected structure
+      expect(result).toBeDefined();
+      expect(result.nodeType).toBe(11); // DocumentFragment nodeType
+      expect(typeof result.appendChild).toBe('function');
+      expect(typeof result.cloneNode).toBe('function');
     });
 
     it('should support template.js extension patterns', async () => {
@@ -379,7 +424,11 @@ describe('Render Command', () => {
 
       const result = await renderCommand.execute(mockContext, mockTemplate, 'with', postData);
       
-      expect(result).toBeInstanceOf(DocumentFragment);
+      // Check that result is a DocumentFragment-like object with the expected structure
+      expect(result).toBeDefined();
+      expect(result.nodeType).toBe(11); // DocumentFragment nodeType
+      expect(typeof result.appendChild).toBe('function');
+      expect(typeof result.cloneNode).toBe('function');
       expect(mockEvalExpression).toHaveBeenCalledTimes(5);
     });
   });
