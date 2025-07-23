@@ -191,6 +191,7 @@ export class ExpressionEvaluator {
       
       case '==':
       case '===':
+      case 'equals':
         const equalsExpr = this.expressionRegistry.get('equals');
         return equalsExpr ? equalsExpr.evaluate(context, leftValue, rightValue) : leftValue === rightValue;
       
@@ -216,6 +217,7 @@ export class ExpressionEvaluator {
         return divideExpr ? divideExpr.evaluate(context, leftValue, rightValue) : leftValue / rightValue;
       
       case '%':
+      case 'mod':
         const modExpr = this.expressionRegistry.get('modulo');
         return modExpr ? modExpr.evaluate(context, leftValue, rightValue) : leftValue % rightValue;
       
@@ -270,6 +272,34 @@ export class ExpressionEvaluator {
         } else {
           throw new Error('Left side of assignment must be an identifier');
         }
+      
+      case 'contains':
+        // Container contains item - works with arrays, strings, and DOM elements
+        if (Array.isArray(leftValue)) {
+          return leftValue.includes(rightValue);
+        }
+        if (typeof leftValue === 'string') {
+          return leftValue.includes(String(rightValue));
+        }
+        // DOM element containment (CSS selector matching)
+        if (leftValue && typeof leftValue.matches === 'function') {
+          return leftValue.matches(String(rightValue));
+        }
+        return false;
+      
+      case 'includes':
+        // Alias for contains
+        if (Array.isArray(leftValue)) {
+          return leftValue.includes(rightValue);
+        }
+        if (typeof leftValue === 'string') {
+          return leftValue.includes(String(rightValue));
+        }
+        // DOM element containment (CSS selector matching)
+        if (leftValue && typeof leftValue.matches === 'function') {
+          return leftValue.matches(String(rightValue));
+        }
+        return false;
       
       case ' ':
         // Space operator - typically for command with selector
