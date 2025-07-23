@@ -346,7 +346,7 @@ export const containsExpression: ExpressionImplementation = {
   name: 'contains',
   category: 'Logical',
   evaluatesTo: 'Boolean',
-  operators: ['contains'],
+  operators: ['contains', 'includes', 'include'],
   
   async evaluate(context: ExecutionContext, container: any, value: any): Promise<boolean> {
     // Handle DOM element containment first
@@ -410,7 +410,7 @@ export const doesNotContainExpression: ExpressionImplementation = {
   name: 'doesNotContain',
   category: 'Logical',
   evaluatesTo: 'Boolean',
-  operators: ['does not contain', 'doesNotContain'],
+  operators: ['does not contain', 'doesNotContain', 'does not include', 'doesNotInclude'],
   
   async evaluate(context: ExecutionContext, container: any, value: any): Promise<boolean> {
     return !(await containsExpression.evaluate(context, container, value));

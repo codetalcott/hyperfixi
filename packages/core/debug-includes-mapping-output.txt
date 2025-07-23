@@ -1,0 +1,7 @@
+
+=== INCLUDES MAPPING VERIFICATION ===
+Contains expression name: contains
+Contains operators: ["contains","includes","include"]
+Has 'includes' operator: true
+Has 'include' operator: true
+✅ includes/include operators are properly registered

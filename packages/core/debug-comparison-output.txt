@@ -1,0 +1,10 @@
+
+=== COMPARING CONTAINS VS INCLUDES ===
+
+Input: "array contains value"
+Parse success: true
+No AST generated
+
+Input: "array includes value"
+Parse success: true
+No AST generated

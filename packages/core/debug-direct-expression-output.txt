@@ -1,0 +1,8 @@
+
+=== DIRECT CONTAINS EXPRESSION TEST ===
+String contains: "hello world" contains "world" = true
+Array contains: ["a", "b", "c"] contains "b" = true
+String not contains: "hello world" contains "xyz" = false
+Array not contains: ["a", "b", "c"] contains "x" = false
+
+✅ All direct expression tests completed successfully

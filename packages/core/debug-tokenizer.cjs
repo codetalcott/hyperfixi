@@ -1,3 +1,5 @@
+
+// Debug tokenizer with logging
 /**
  * Hyperscript Tokenizer
  * Performs lexical analysis and token classification based on hyperscript-lsp database
@@ -6,7 +8,7 @@
 import type { Token } from '../types/core';
 
 // Token types based on hyperscript language elements
-export enum TokenType {
+enum TokenType {
   // Language elements
   KEYWORD = 'keyword',
   COMMAND = 'command',
@@ -100,7 +102,7 @@ const DOM_EVENTS = new Set([
   'dragleave', 'cut', 'copy', 'paste'
 ]);
 
-export interface Tokenizer {
+interface Tokenizer {
   input: string;
   position: number;
   line: number;
@@ -108,7 +110,7 @@ export interface Tokenizer {
   tokens: Token[];
 }
 
-export function createTokenizer(): Tokenizer {
+function createTokenizer(): Tokenizer {
   return {
     input: '',
     position: 0,
@@ -118,7 +120,7 @@ export function createTokenizer(): Tokenizer {
   };
 }
 
-export function tokenize(input: string): Token[] {
+function tokenize(input: string): Token[] {
   const tokenizer = createTokenizer();
   tokenizer.input = input;
   
@@ -655,7 +657,12 @@ function tokenizeNumberOrTime(tokenizer: Tokenizer): void {
   }
 }
 
+
 function tokenizeIdentifier(tokenizer: Tokenizer): void {
+  console.log('=== tokenizeIdentifier called ===');
+  console.log('Current position:', tokenizer.position);
+  console.log('Current char:', tokenizer.input[tokenizer.position]);
+  console.log('Remaining input:', tokenizer.input.slice(tokenizer.position, tokenizer.position + 20));
   const start = tokenizer.position;
   const input = tokenizer.input;
   const inputLength = input.length;
@@ -674,18 +681,28 @@ function tokenizeIdentifier(tokenizer: Tokenizer): void {
     }
   }
   
+  
+  console.log('Identifier value:', value);
+  
   // Check for multi-word operators starting with this identifier
   const compound = tryTokenizeCompoundOperator(tokenizer, value, start);
   if (compound) {
     return; // Compound operator was handled
   }
   
+  
+  console.log('About to classify identifier:', value);
+  
   // Classify the identifier
   const type = classifyIdentifier(value);
   addToken(tokenizer, type, value, start);
 }
 
+
 function tryTokenizeCompoundOperator(tokenizer: Tokenizer, firstWord: string, start: number): boolean {
+  console.log('=== tryTokenizeCompoundOperator called ===');
+  console.log('First word:', firstWord);
+  console.log('Start position:', start);
   const lowerFirst = firstWord.toLowerCase();
   const originalPosition = tokenizer.position;
   
@@ -747,17 +764,26 @@ function tryTokenizeCompoundOperator(tokenizer: Tokenizer, firstWord: string, st
     return true;
   }
   
+  
+  console.log('No compound operator found for:', firstWord);
+  
   // No compound operator found, reset position
   tokenizer.position = originalPosition;
   return false;
 }
 
+
 function classifyIdentifier(value: string): TokenType {
+  console.log('=== classifyIdentifier called ===');
+  console.log('Value:', value);
+  console.log('Lowercase value:', value.toLowerCase());
   const lowerValue = value.toLowerCase();
   
   // Special case for include/includes to ensure they're treated as comparison operators
   if (lowerValue === 'include' || lowerValue === 'includes') {
-    return TokenType.COMPARISON_OPERATOR;
+    
+  console.log('Returning COMPARISON_OPERATOR for:', value);
+  return TokenType.COMPARISON_OPERATOR;
   }
   
   // Check more specific types first
@@ -793,6 +819,8 @@ function classifyIdentifier(value: string): TokenType {
     return TokenType.KEYWORD;
   }
   
+  
+  console.log('Returning IDENTIFIER for:', value);
   return TokenType.IDENTIFIER;
 }
 
@@ -913,4 +941,19 @@ function tryBuildLongestCompound(tokenizer: Tokenizer, firstWord: string, second
 
 function isOperatorChar(char: string): boolean {
   return '+-*/^%=!<>&|(){}[],.;:?\'\'~$'.includes(char);
+}
+
+// Test the includes tokenization
+const input = 'array includes value';
+console.log('\n=== TOKENIZING:', input, '===\n');
+
+try {
+  const tokens = tokenize(input);
+  console.log('\n=== RESULT TOKENS ===');
+  tokens.forEach((token, i) => {
+    console.log(`Token ${i}: ${token.type} = "${token.value}"`);
+  });
+} catch (error) {
+  console.error('\n=== ERROR ===');
+  console.error(error.message);
 }
