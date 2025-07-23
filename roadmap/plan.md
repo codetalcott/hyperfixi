@@ -13,7 +13,8 @@ that works exactly like the original, with modern TypeScript benefits.
 - ✅ **Expression System**: 388/388 tests passing (comprehensive evaluation
   engine)
 - ✅ **Browser Tests**: 34% official test suite compatibility
-- ❌ **Core Infrastructure**: 0/10 core tests passing (major gap)
+- ✅ **Core Infrastructure**: Tokenizer + Parser + API structure complete (Phase
+  1 ✅)
 - ❌ **Command System**: Missing basic commands (put, add, remove, toggle)
 - ❌ **Event System**: Missing event handling (on click, send, trigger)
 

@@ -6,7 +6,7 @@
 import { beforeEach, afterEach, vi } from 'vitest';
 
 // Mock console methods in test environment to reduce noise
-const consoleMethods = ['log', 'warn', 'error', 'info'] as const;
+const consoleMethods = ['log', 'error', 'info'] as const;
 const originalConsole = { ...console };
 
 beforeEach(() => {
@@ -15,36 +15,48 @@ beforeEach(() => {
   
   // Mock console methods unless explicitly testing them
   consoleMethods.forEach(method => {
-    vi.spyOn(console, method).mockImplementation(() => {});
+    if (method in console) {
+      vi.spyOn(console, method).mockImplementation(() => {});
+    }
   });
   
-  // Reset DOM state
-  document.head.innerHTML = '';
-  document.body.innerHTML = '';
+  // Reset DOM state safely
+  if (document.head) {
+    document.head.innerHTML = '';
+  }
+  if (document.body) {
+    document.body.innerHTML = '';
+  }
   
   // Clear any global hyperscript state if it exists
-  if (typeof window !== 'undefined') {
+  if (typeof globalThis !== 'undefined') {
     // Reset any global state that might affect tests
-    delete (window as any)._hyperscript;
-    delete (window as any).hyperscriptFixi;
+    delete (globalThis as any)._hyperscript;
+    delete (globalThis as any).hyperscriptFixi;
   }
 });
 
 afterEach(() => {
   // Restore console methods
   consoleMethods.forEach(method => {
-    const spy = vi.mocked(console[method]);
-    if (spy && spy.mockRestore) {
-      spy.mockRestore();
+    if (method in console) {
+      const spy = vi.mocked(console[method]);
+      if (spy && spy.mockRestore) {
+        spy.mockRestore();
+      }
     }
   });
   
   // Clean up any event listeners or timers
   vi.clearAllTimers();
   
-  // Clean up DOM
-  document.head.innerHTML = '';
-  document.body.innerHTML = '';
+  // Clean up DOM safely
+  if (document.head) {
+    document.head.innerHTML = '';
+  }
+  if (document.body) {
+    document.body.innerHTML = '';  
+  }
 });
 
 // Global test utilities
