@@ -726,34 +726,11 @@ function tryTokenizeCompoundOperator(tokenizer: Tokenizer, firstWord: string, st
     const lowerNext = nextWord.toLowerCase();
     let compound = `${lowerFirst} ${lowerNext}`;
     
-    // Check for three-word operators
-    if (compound === 'is not' || compound === 'does not') {
-      const nextNextWordStart = tokenizer.position;
-      skipWhitespace(tokenizer);
-      
-      let thirdWord = '';
-      while (tokenizer.position < tokenizer.input.length) {
-        const char = tokenizer.input[tokenizer.position];
-        if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || 
-            (char >= '0' && char <= '9') || char === '_' || char === '-') {
-          thirdWord += advance(tokenizer);
-        } else {
-          break;
-        }
-      }
-      
-      if (thirdWord) {
-        const lowerThird = thirdWord.toLowerCase();
-        const threeWordCompound = `${compound} ${lowerThird}`;
-        
-        if (COMPARISON_OPERATORS.has(threeWordCompound)) {
-          addToken(tokenizer, TokenType.COMPARISON_OPERATOR, threeWordCompound, start);
-          return true;
-        }
-      }
-      
-      // Reset to check two-word operator
-      tokenizer.position = nextNextWordStart;
+    // Try to build longest possible compound operator
+    const longestCompound = tryBuildLongestCompound(tokenizer, lowerFirst, lowerNext);
+    if (longestCompound) {
+      addToken(tokenizer, TokenType.COMPARISON_OPERATOR, longestCompound, start);
+      return true;
     }
     
     // Check two-word operators
@@ -863,6 +840,70 @@ function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
   
   // Reached end without finding />, not a query reference
   return false;
+}
+
+/**
+ * Try to build the longest possible compound operator starting with two given words
+ * Returns the compound operator string if found, null otherwise
+ */
+function tryBuildLongestCompound(tokenizer: Tokenizer, firstWord: string, secondWord: string): string | null {
+  const originalPosition = tokenizer.position;
+  let compound = `${firstWord} ${secondWord}`;
+  const words = [firstWord, secondWord];
+  
+  // Keep adding words until we can't find any more or reach a reasonable limit
+  const maxWords = 8; // Reasonable upper bound
+  
+  while (words.length < maxWords) {
+    // Skip whitespace and try to read next word
+    skipWhitespace(tokenizer);
+    
+    if (tokenizer.position >= tokenizer.input.length) {
+      break;
+    }
+    
+    let nextWord = '';
+    const wordStart = tokenizer.position;
+    
+    while (tokenizer.position < tokenizer.input.length) {
+      const char = tokenizer.input[tokenizer.position];
+      // Only include alphabetic characters for compound operator words
+      // Exclude numbers to avoid consuming the right operand
+      if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')) {
+        nextWord += advance(tokenizer);
+      } else {
+        break;
+      }
+    }
+    
+    if (!nextWord) {
+      break;
+    }
+    
+    // Add the word and check if this compound exists
+    words.push(nextWord.toLowerCase());
+    const newCompound = words.join(' ');
+    
+    // If this compound exists, update our candidate
+    if (COMPARISON_OPERATORS.has(newCompound)) {
+      compound = newCompound;
+      // Continue looking for longer compounds
+    } else {
+      // This compound doesn't exist, but maybe a longer one does
+      // Continue checking in case we have patterns like "is greater than or equal to"
+      // where "is greater than" exists but we want the longer form
+    }
+  }
+  
+  // Check if we found a valid compound
+  if (COMPARISON_OPERATORS.has(compound) && compound !== `${firstWord} ${secondWord}`) {
+    // Found a compound longer than 2 words
+    return compound;
+  }
+  
+  // Reset position and return null
+  tokenizer.position = originalPosition;
+  return null;
 }
 
 function isOperatorChar(char: string): boolean {
