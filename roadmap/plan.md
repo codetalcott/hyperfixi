@@ -13,52 +13,47 @@ that works exactly like the original, with modern TypeScript benefits.
 - ✅ **Expression System**: 388/388 tests passing (comprehensive evaluation
   engine)
 - ✅ **Browser Tests**: 34% official test suite compatibility
-- ✅ **Core Infrastructure**: Tokenizer + Parser + API structure complete (Phase 1 ✅)
+- ❌ **Core Infrastructure**: 0/10 core tests passing (major gap)
 - ❌ **Command System**: Missing basic commands (put, add, remove, toggle)
 - ❌ **Event System**: Missing event handling (on click, send, trigger)
 
-### 🎯 Phase 1 Complete (January 2025)
-**Core Infrastructure Foundation**: Successfully implemented _hyperscript-compatible tokenizer (27/27 tests), basic parser (11/12 tests), and core API structure. Ready for Phase 2: Command System implementation.
-
 ## Implementation Plan: Get the Basics Right (4-6 weeks)
 
-### ✅ Phase 1: Core Infrastructure (Weeks 1-2) - COMPLETE
+### Phase 1: Core Infrastructure (Weeks 1-2)
 
-**Goal**: ✅ Build tokenizer, parser, and API foundation for _hyperscript compatibility
+**Goal**: Fix our current expression system gaps and achieve core functionality
 
-**Focus**: ✅ Create core infrastructure needed for command system implementation
+**Focus**: The 10 core tests that are failing (0/10 → 8+/10)
 
 **Reference**: `~/projects/_hyperscript/test/core/`
 
-#### ✅ Week 1: Core System Foundation - COMPLETE
+#### Week 1: Core System Foundation
 
-- ✅ **Tokenizer System** (`~/projects/_hyperscript/test/core/tokenizer.js`)
-  - ✅ Complete _hyperscript-compatible tokenizer (27/27 tests passing)
-  - ✅ Context-aware possessive expression handling (`value's length`)
-  - ✅ All token types supported (CLASS_REF, ID_REF, ATTRIBUTE_REF, etc.)
-  - ✅ Proper operator precedence and whitespace handling
+- [ ] **Parser Infrastructure** (`~/projects/_hyperscript/test/core/parser.js`)
+  - [ ] Study `~/projects/_hyperscript/src/hyperscript.js` parser implementation
+  - [ ] Implement basic hyperscript syntax parsing
+  - [ ] Add error recovery and parsing edge cases
+  - [ ] Reference: `~/projects/_hyperscript/test/core/tokenizer.js`
 
-- ✅ **Parser Infrastructure** (`~/projects/_hyperscript/test/core/parser.js`)
-  - ✅ Study `~/projects/_hyperscript/src/hyperscript.js` parser implementation
-  - ✅ Implement basic hyperscript syntax parsing (11/12 tests passing)
-  - ✅ Add error recovery and parsing edge cases
-  - ✅ Command parsing (PUT, ADD, REMOVE, TOGGLE, SET, LOG)
+- [ ] **Runtime System** (`~/projects/_hyperscript/test/core/runtime.js`)
+  - [ ] Study `~/projects/_hyperscript/src/hyperscript.js` runtime patterns
+  - [ ] Implement function definition and execution (`def`/`end`)
+  - [ ] Add stack trace management and error handling
+  - [ ] Reference: `~/projects/_hyperscript/test/core/runtimeErrors.js`
 
-#### ✅ Week 2: Core API & Integration - COMPLETE
+#### Week 2: Core Integration & Testing
 
-- ✅ **API Compatibility** (`~/projects/_hyperscript/test/core/api.js`)
-  - ✅ Implement `_hyperscript` API object with full interface
-  - ✅ Core methods: `parse()`, `processNode()`, `evaluate()` (stubs ready)
-  - ✅ Internal APIs: `lexer`, `parser`, `runtime` access
-  - ✅ Configuration system with type conversions
+- [ ] **API Compatibility** (`~/projects/_hyperscript/test/core/api.js`)
+  - [ ] Implement `_hyperscript.processNode()` API
+  - [ ] Add element initialization and reprocessing logic
+  - [ ] Ensure DOM node processing compatibility
 
-- ✅ **Parser Integration**
-  - ✅ AST nodes designed for interpretation and compilation
-  - ✅ Expression parsing with operator precedence  
-  - ✅ Feature parsing (ON events, DEF functions, INIT)
-  - ✅ Error handling with location information
+- [ ] **Variable Scoping** (`~/projects/_hyperscript/test/core/scoping.js`)
+  - [ ] Study `~/projects/_hyperscript/src/hyperscript.js` variable handling
+  - [ ] Implement local, element, and global variable scopes
+  - [ ] Add variable hoisting and precedence rules
 
-- ✅ **Foundation Complete**: Ready for Phase 2 Command System implementation
+- [ ] **Validation**: Run all core tests and achieve 8+/10 passing
 
 ### Phase 2: Command System (Weeks 3-4)
 
