@@ -6,7 +6,6 @@
 
 import type { 
   ExecutionContext, 
-  CommandNode, 
   TypedExecutionContext,
   ValidationResult 
 } from '../types/core.js';
@@ -18,8 +17,8 @@ import type { TypedCommandImplementation } from '../commands/base/types.js';
  */
 export interface RuntimeCommand {
   name: string;
-  execute(context: ExecutionContext, ...args: any[]): Promise<any>;
-  validate?(input: any): ValidationResult<any>;
+  execute(context: ExecutionContext, ...args: unknown[]): Promise<unknown>;
+  validate?(input: unknown): ValidationResult<unknown>;
   metadata?: {
     description: string;
     examples: string[];
@@ -84,7 +83,7 @@ export class ContextBridge {
  * Wraps TypedCommandImplementation for runtime compatibility
  */
 export class EnhancedCommandAdapter implements RuntimeCommand {
-  constructor(private impl: TypedCommandImplementation<any, any, any>) {}
+  constructor(private impl: TypedCommandImplementation<unknown, unknown, TypedExecutionContext>) {}
 
   get name(): string {
     return this.impl.metadata.name;
@@ -101,7 +100,7 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
   /**
    * Execute command with context conversion
    */
-  async execute(context: ExecutionContext, ...args: any[]): Promise<any> {
+  async execute(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     try {
       // Convert to typed context
       const typedContext = ContextBridge.toTyped(context);
@@ -156,7 +155,7 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
   /**
    * Validate command input
    */
-  validate(input: any): ValidationResult<any> {
+  validate(input: unknown): ValidationResult<unknown> {
     if (!this.impl.validation) {
       return { success: true, data: input };
     }
@@ -168,7 +167,7 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
    * Parse runtime args to command input format
    * This is command-specific and should be overridden by specific adapters
    */
-  private parseArgsToInput(args: any[]): any {
+  private parseArgsToInput(args: unknown[]): unknown {
     // Default: return first arg as input, or empty object
     if (args.length === 0) {
       return {};
@@ -190,7 +189,7 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
   /**
    * Generate helpful suggestions for command usage
    */
-  private generateSuggestions(args: any[]): string[] {
+  private generateSuggestions(args: unknown[]): string[] {
     const suggestions: string[] = [];
     
     // Add basic syntax suggestion
@@ -218,7 +217,7 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
  */
 export class EnhancedCommandRegistry {
   private adapters = new Map<string, EnhancedCommandAdapter>();
-  private implementations = new Map<string, TypedCommandImplementation<any, any, any>>();
+  private implementations = new Map<string, TypedCommandImplementation<unknown, unknown, TypedExecutionContext>>();
 
   /**
    * Register an enhanced command
@@ -226,9 +225,9 @@ export class EnhancedCommandRegistry {
   register<TInput, TOutput, TContext extends TypedExecutionContext>(
     impl: TypedCommandImplementation<TInput, TOutput, TContext>
   ): void {
-    const adapter = new EnhancedCommandAdapter(impl);
+    const adapter = new EnhancedCommandAdapter(impl as TypedCommandImplementation<unknown, unknown, TypedExecutionContext>);
     this.adapters.set(impl.metadata.name, adapter);
-    this.implementations.set(impl.metadata.name, impl);
+    this.implementations.set(impl.metadata.name, impl as TypedCommandImplementation<unknown, unknown, TypedExecutionContext>);
   }
 
   /**
@@ -241,7 +240,7 @@ export class EnhancedCommandRegistry {
   /**
    * Get original enhanced implementation
    */
-  getImplementation(name: string): TypedCommandImplementation<any, any, any> | undefined {
+  getImplementation(name: string): TypedCommandImplementation<unknown, unknown, TypedExecutionContext> | undefined {
     return this.implementations.get(name);
   }
 
@@ -269,7 +268,7 @@ export class EnhancedCommandRegistry {
   /**
    * Validate a command exists and can handle the given input
    */
-  validateCommand(name: string, input: any): ValidationResult<any> {
+  validateCommand(name: string, input: unknown): ValidationResult<unknown> {
     const adapter = this.getAdapter(name);
     if (!adapter) {
       return {
@@ -303,10 +302,5 @@ export class EnhancedCommandRegistry {
 export function createEnhancedAdapter<TInput, TOutput, TContext extends TypedExecutionContext>(
   impl: TypedCommandImplementation<TInput, TOutput, TContext>
 ): EnhancedCommandAdapter {
-  return new EnhancedCommandAdapter(impl);
+  return new EnhancedCommandAdapter(impl as TypedCommandImplementation<unknown, unknown, TypedExecutionContext>);
 }
-
-/**
- * Global enhanced command registry instance
- */
-export const globalEnhancedRegistry = EnhancedCommandRegistry.createWithDefaults();

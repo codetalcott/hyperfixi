@@ -16,7 +16,7 @@ import { PutCommand } from '../commands/dom/put.js';
 import { SetCommand } from '../commands/data/set.js';
 
 // Enhanced command imports
-import { EnhancedCommandRegistry, globalEnhancedRegistry } from './enhanced-command-adapter.js';
+import { EnhancedCommandRegistry } from './enhanced-command-adapter.js';
 import { createHideCommand } from '../commands/dom/hide.js';
 import { createShowCommand } from '../commands/dom/show.js';
 import { createToggleCommand } from '../commands/dom/toggle.js';
@@ -98,16 +98,18 @@ export class Runtime {
   /**
    * Execute an AST node within the given execution context
    */
-  async execute(node: ASTNode, context: ExecutionContext): Promise<any> {
+  async execute(node: ASTNode, context: ExecutionContext): Promise<unknown> {
     try {
       switch (node.type) {
-        case 'command':
+        case 'command': {
           return await this.executeCommand(node as CommandNode, context);
+        }
         
-        case 'eventHandler':
+        case 'eventHandler': {
           return await this.executeEventHandler(node as EventHandlerNode, context);
+        }
         
-        default:
+        default: {
           // For all other node types, use the expression evaluator
           const result = await this.expressionEvaluator.evaluate(node, context);
           
@@ -117,6 +119,7 @@ export class Runtime {
           }
           
           return result;
+        }
       }
     } catch (error) {
       if (this.options.enableErrorReporting) {
@@ -129,7 +132,7 @@ export class Runtime {
   /**
    * Execute enhanced command with adapter
    */
-  private async executeEnhancedCommand(name: string, args: ExpressionNode[], context: ExecutionContext): Promise<any> {
+  private async executeEnhancedCommand(name: string, args: ExpressionNode[], context: ExecutionContext): Promise<unknown> {
     const adapter = this.enhancedRegistry.getAdapter(name);
     if (!adapter) {
       throw new Error(`Enhanced command not found: ${name}`);
@@ -147,7 +150,7 @@ export class Runtime {
   /**
    * Execute a command from a command-selector pattern (e.g., "add .active")
    */
-  private async executeCommandFromPattern(command: string, selector: string, context: ExecutionContext): Promise<any> {
+  private async executeCommandFromPattern(command: string, selector: string, context: ExecutionContext): Promise<unknown> {
     const commandName = command.toLowerCase();
     
     // Try enhanced commands first if available
@@ -157,15 +160,19 @@ export class Runtime {
 
     // Fallback to legacy command handling
     switch (commandName) {
-      case 'add':
+      case 'add': {
         return this.executeAddCommand([selector], context);
-      case 'remove':
+      }
+      case 'remove': {
         return this.executeRemoveCommand([selector], context);
-      case 'hide':
+      }
+      case 'hide': {
         return this.executeHideCommand([selector], context);
-      case 'show':
+      }
+      case 'show': {
         return this.executeShowCommand([selector], context);
-      default:
+      }
+      default: {
         // For unknown commands, create a proper command node
         const commandNode: CommandNode = {
           type: 'command',
@@ -173,13 +180,14 @@ export class Runtime {
           args: [{ type: 'literal', value: selector }]
         };
         return await this.executeCommand(commandNode, context);
+      }
     }
   }
 
   /**
    * Execute a command node (hide, show, wait, add, remove, etc.)
    */
-  private async executeCommand(node: CommandNode, context: ExecutionContext): Promise<any> {
+  private async executeCommand(node: CommandNode, context: ExecutionContext): Promise<unknown> {
     const { name, args } = node;
     
     // Try enhanced commands first if enabled
@@ -192,42 +200,51 @@ export class Runtime {
     const rawArgs = args || [];
 
     switch (name.toLowerCase()) {
-      case 'hide':
+      case 'hide': {
         // These commands expect evaluated args
-        const hideArgs = await Promise.all(rawArgs.map(arg => this.execute(arg, context)));
+        const hideArgs = await Promise.all(rawArgs.map((arg: ExpressionNode) => this.execute(arg, context)));
         return this.executeHideCommand(hideArgs, context);
+      }
       
-      case 'show':
-        const showArgs = await Promise.all(rawArgs.map(arg => this.execute(arg, context)));
+      case 'show': {
+        const showArgs = await Promise.all(rawArgs.map((arg: ExpressionNode) => this.execute(arg, context)));
         return this.executeShowCommand(showArgs, context);
+      }
       
-      case 'wait':
-        const waitArgs = await Promise.all(rawArgs.map(arg => this.execute(arg, context)));
+      case 'wait': {
+        const waitArgs = await Promise.all(rawArgs.map((arg: ExpressionNode) => this.execute(arg, context)));
         return this.executeWaitCommand(waitArgs, context);
+      }
       
-      case 'add':
-        const addArgs = await Promise.all(rawArgs.map(arg => this.execute(arg, context)));
+      case 'add': {
+        const addArgs = await Promise.all(rawArgs.map((arg: ExpressionNode) => this.execute(arg, context)));
         return this.executeAddCommand(addArgs, context);
+      }
       
-      case 'remove':
-        const removeArgs = await Promise.all(rawArgs.map(arg => this.execute(arg, context)));
+      case 'remove': {
+        const removeArgs = await Promise.all(rawArgs.map((arg: ExpressionNode) => this.execute(arg, context)));
         return this.executeRemoveCommand(removeArgs, context);
+      }
       
-      case 'put':
+      case 'put': {
         // Put command should get mixed arguments - content evaluated, target as raw string/element
         return await this.executePutCommand(rawArgs, context);
+      }
       
-      case 'set':
+      case 'set': {
         // Set command should get mixed arguments - variable name raw, value evaluated  
         return await this.executeSetCommand(rawArgs, context);
+      }
       
-      case 'log':
+      case 'log': {
         // Log command evaluates all arguments and logs them
-        const logArgs = await Promise.all(rawArgs.map(arg => this.execute(arg, context)));
+        const logArgs = await Promise.all(rawArgs.map((arg: ExpressionNode) => this.execute(arg, context)));
         return this.executeLogCommand(logArgs, context);
+      }
       
-      default:
+      default: {
         throw new Error(`Unknown command: ${name}`);
+      }
     }
   }
 
@@ -280,7 +297,7 @@ export class Runtime {
   /**
    * Execute hide command
    */
-  private executeHideCommand(args: any[], context: ExecutionContext): void {
+  private executeHideCommand(args: unknown[], context: ExecutionContext): void {
     // When we have args like "hide me", the first arg is the evaluated "me" identifier
     // When we have no args like "hide", use context.me directly
     const target = args.length > 0 ? args[0] : context.me;
@@ -301,7 +318,7 @@ export class Runtime {
   /**
    * Execute show command
    */
-  private executeShowCommand(args: any[], context: ExecutionContext): void {
+  private executeShowCommand(args: unknown[], context: ExecutionContext): void {
     const target = args.length > 0 ? args[0] : context.me;
     
     if (!target) {
@@ -320,7 +337,7 @@ export class Runtime {
   /**
    * Execute wait command with time delays
    */
-  private async executeWaitCommand(args: any[], context: ExecutionContext): Promise<void> {
+  private async executeWaitCommand(args: unknown[], _context: ExecutionContext): Promise<void> {
     if (args.length === 0) {
       throw new Error('Wait command requires a time argument');
     }
@@ -355,7 +372,7 @@ export class Runtime {
   /**
    * Execute add command (add classes)
    */
-  private executeAddCommand(args: any[], context: ExecutionContext): void {
+  private executeAddCommand(args: unknown[], context: ExecutionContext): void {
     const target = context.me;
     if (!target) {
       throw new Error('Context element "me" is null');
@@ -378,7 +395,7 @@ export class Runtime {
   /**
    * Execute remove command (remove classes)
    */
-  private executeRemoveCommand(args: any[], context: ExecutionContext): void {
+  private executeRemoveCommand(args: unknown[], context: ExecutionContext): void {
     const target = context.me;
     if (!target) {
       throw new Error('Context element "me" is null');
@@ -396,7 +413,7 @@ export class Runtime {
   /**
    * Execute put command (set content)
    */
-  private async executePutCommand(rawArgs: any[], context: ExecutionContext): Promise<void> {
+  private async executePutCommand(rawArgs: ExpressionNode[], context: ExecutionContext): Promise<void> {
     // Process arguments: content (evaluate), preposition (evaluate), target (special handling)
     if (rawArgs.length >= 3) {
       const content = await this.execute(rawArgs[0], context);
@@ -430,7 +447,7 @@ export class Runtime {
   /**
    * Execute set command (set variables)
    */
-  private async executeSetCommand(rawArgs: any[], context: ExecutionContext): Promise<void> {
+  private async executeSetCommand(rawArgs: ExpressionNode[], context: ExecutionContext): Promise<void> {
     // Process arguments: variable name (raw), "to" (evaluate), value (evaluate)
     if (rawArgs.length >= 3) {
       let varName = rawArgs[0];
@@ -461,7 +478,7 @@ export class Runtime {
   /**
    * Execute LOG command - output values to console
    */
-  private executeLogCommand(args: any[], context: ExecutionContext): void {
+  private executeLogCommand(args: unknown[], _context: ExecutionContext): void {
     // If no arguments, just log empty
     if (args.length === 0) {
       console.log();
@@ -472,111 +489,9 @@ export class Runtime {
     console.log(...args);
   }
 
-  /**
-   * Resolve identifier to value from context
-   */
-  private resolveIdentifier(node: { name: string }, context: ExecutionContext): any {
-    const { name } = node;
-    
-    switch (name) {
-      case 'me':
-        return context.me;
-      case 'it':
-        return context.it;
-      case 'you':
-        return context.you;
-      case 'result':
-        return context.result;
-      default:
-        return context.variables?.get(name) || name;
-    }
-  }
 
-  /**
-   * Execute binary expressions (command selector, arithmetic, etc.)
-   */
-  private async executeBinaryExpression(node: any, context: ExecutionContext): Promise<any> {
-    const { operator, left, right } = node;
-    
-    if (operator === ' ') {
-      // Space operator - typically command with selector
-      const leftValue = await this.execute(left, context);
-      const rightValue = await this.execute(right, context);
-      
-      // If left is a command name and right is a selector, execute command on selected elements
-      if (typeof leftValue === 'string' && typeof rightValue === 'string') {
-        const elements = this.queryElements(rightValue, context);
-        
-        // Execute command on each selected element
-        for (const element of elements) {
-          const elementContext = { ...context, me: element };
-          await this.execute({ type: 'command', name: leftValue, args: [] }, elementContext);
-        }
-        
-        return elements;
-      }
-    }
-    
-    // Handle other binary operators here (arithmetic, comparison, etc.)
-    const leftValue = await this.execute(left, context);
-    const rightValue = await this.execute(right, context);
-    
-    switch (operator) {
-      case '+':
-        return leftValue + rightValue;
-      case '-':
-        return leftValue - rightValue;
-      case '*':
-        return leftValue * rightValue;
-      case '/':
-        return leftValue / rightValue;
-      case '==':
-        return leftValue === rightValue;
-      case '!=':
-        return leftValue !== rightValue;
-      default:
-        throw new Error(`Unsupported binary operator: ${operator}`);
-    }
-  }
 
-  /**
-   * Execute member expressions (object.property)
-   * Special handling for command-like member expressions (add .class, remove .class)
-   */
-  private async executeMemberExpression(node: any, context: ExecutionContext): Promise<any> {
-    const { object, property, computed } = node;
-    
-    // Special case: handle command-like member expressions (add.active, remove.active)
-    if (object.type === 'identifier' && ['add', 'remove'].includes(object.name)) {
-      const commandName = object.name;
-      const className = property.name || property;
-      
-      // Execute as class manipulation command
-      if (commandName === 'add') {
-        return this.executeAddCommand([`.${className}`], context);
-      } else if (commandName === 'remove') {
-        return this.executeRemoveCommand([`.${className}`], context);
-      }
-    }
-    
-    // Standard member expression evaluation
-    const objectValue = await this.execute(object, context);
-    
-    if (computed) {
-      const propertyValue = await this.execute(property, context);
-      return objectValue[propertyValue];
-    } else {
-      const propertyName = property.name || property;
-      return objectValue[propertyName];
-    }
-  }
 
-  /**
-   * Resolve CSS selector to string
-   */
-  private resolveSelector(node: { value: string }, context: ExecutionContext): string {
-    return node.value;
-  }
 
   /**
    * Query DOM elements by selector
@@ -618,7 +533,7 @@ export class Runtime {
     
     // Add enhanced commands
     if (this.options.useEnhancedCommands) {
-      this.enhancedRegistry.getCommandNames().forEach(name => commands.add(name));
+      this.enhancedRegistry.getCommandNames().forEach((name: string) => commands.add(name));
     }
     
     // Add legacy commands
@@ -630,7 +545,7 @@ export class Runtime {
   /**
    * Validate command before execution
    */
-  validateCommand(name: string, input: any): { valid: boolean; error?: string; suggestions?: string[] } {
+  validateCommand(name: string, input: unknown): { valid: boolean; error?: string; suggestions?: string[] } {
     // Try enhanced validation first
     if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
       const result = this.enhancedRegistry.validateCommand(name.toLowerCase(), input);

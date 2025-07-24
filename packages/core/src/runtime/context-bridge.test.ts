@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ContextBridge } from './enhanced-command-adapter.js';
-import type { ExecutionContext, TypedExecutionContext } from '../types/core.js';
+import type { ExecutionContext } from '../types/core.js';
 
 describe('ContextBridge', () => {
   let mockElement: HTMLElement;
@@ -22,7 +22,7 @@ describe('ContextBridge', () => {
       style: {},
       addEventListener: () => {},
       removeEventListener: () => {}
-    } as any;
+    } as HTMLElement;
 
     // Create base execution context
     baseContext = {
@@ -195,7 +195,7 @@ describe('ContextBridge', () => {
       const partialContext = {
         me: mockElement,
         it: 'test'
-      } as any;
+      } as ExecutionContext;
 
       const typedContext = ContextBridge.toTyped(partialContext);
       

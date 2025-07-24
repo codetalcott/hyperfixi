@@ -36,7 +36,8 @@ Successfully completed the integration between enhanced TypeScript commands and 
 ## 🔧 **Technical Implementation**
 
 ### Enhanced Command Flow
-```
+
+```text
 1. Runtime.executeCommand() receives CommandNode
 2. Checks if enhanced command exists in registry
 3. Uses EnhancedCommandAdapter.execute()
@@ -47,6 +48,7 @@ Successfully completed the integration between enhanced TypeScript commands and 
 ```
 
 ### Context Bridge Architecture
+
 ```typescript
 // Conversion process
 ExecutionContext → TypedExecutionContext (enhanced features)

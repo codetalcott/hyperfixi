@@ -32,7 +32,7 @@ describe('Runtime Integration with Enhanced Commands', () => {
       },
       addEventListener: vi.fn(),
       removeEventListener: vi.fn()
-    } as any;
+    } as HTMLElement;
 
     // Create execution context
     context = {
@@ -146,7 +146,7 @@ describe('Runtime Integration with Enhanced Commands', () => {
         await runtime.execute(commandNode, context);
         expect.fail('Should have thrown error');
       } catch (error) {
-        expect(error.message).toContain('add command error');
+        expect((error as Error).message).toContain('add command error');
         // Enhanced commands should provide better error messages
       }
     });
@@ -237,19 +237,19 @@ describe('Runtime Integration with Enhanced Commands', () => {
   describe('Command Pattern Execution', () => {
     it('should execute command-selector patterns through enhanced commands', async () => {
       // Simulate "add .active" pattern
-      const result = await runtime['executeCommandFromPattern']('add', '.active', context);
+      const _result = await runtime['executeCommandFromPattern']('add', '.active', context);
 
       expect(mockElement.classList.add).toHaveBeenCalledWith('active');
     });
 
     it('should execute "remove .inactive" pattern through enhanced commands', async () => {
-      const result = await runtime['executeCommandFromPattern']('remove', '.inactive', context);
+      const _result = await runtime['executeCommandFromPattern']('remove', '.inactive', context);
 
       expect(mockElement.classList.remove).toHaveBeenCalledWith('inactive');
     });
 
     it('should execute "hide" pattern through enhanced commands', async () => {
-      const result = await runtime['executeCommandFromPattern']('hide', '', context);
+      const _result = await runtime['executeCommandFromPattern']('hide', '', context);
 
       expect(mockElement.style.display).toBe('none');
     });
