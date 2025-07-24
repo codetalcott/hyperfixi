@@ -9,17 +9,17 @@ import type {
   EnhancedTemplateDirective,
   TemplateExecutionContext,
   RepeatDirectiveInput,
-  RepeatDirectiveInputSchema,
   TemplateDirectiveType,
   TemplateRenderStrategy,
   TemplateLLMDocumentation
 } from '../../../types/enhanced-templates.ts';
+import { RepeatDirectiveInputSchema } from '../../../types/enhanced-templates.ts';
 import type {
   TypedResult,
   ExpressionMetadata,
-  ValidationResult,
-  HyperScriptValue
+  ValidationResult
 } from '../../../types/enhanced-expressions.ts';
+import type { HyperScriptValue } from '../../../types/enhanced-core.ts';
 import { TemplateContextUtils } from '../enhanced-template-context.ts';
 
 /**
@@ -29,7 +29,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
   public readonly name = '@repeat' as const;
   public readonly category = 'Template';
   public readonly syntax = '@repeat in <collection>';
-  public readonly outputType = 'string' as const;
+  public readonly outputType = 'String' as const;
   public readonly inputSchema = RepeatDirectiveInputSchema;
 
   // Template-specific properties

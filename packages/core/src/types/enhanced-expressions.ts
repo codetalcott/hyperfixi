@@ -16,7 +16,8 @@ export type ExpressionCategory =
   | 'Conversion'     // as keyword, type conversions
   | 'Positional'     // first, last, array navigation
   | 'Property'       // possessive syntax, attribute access
-  | 'Special';       // literals, math operations, string manipulation
+  | 'Special'        // literals, math operations, string manipulation
+  | 'Template';      // template directives, conditional rendering, iteration
 
 /**
  * Expression evaluation result types

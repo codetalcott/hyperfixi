@@ -11,9 +11,9 @@ import type {
   TypedResult,
   ExpressionMetadata,
   ValidationResult,
-  LLMDocumentation,
-  HyperScriptValue
+  LLMDocumentation
 } from './enhanced-expressions.ts';
+import type { HyperScriptValue } from './enhanced-core.ts';
 import type { ExecutionContext } from './core.ts';
 
 // ============================================================================
@@ -350,8 +350,8 @@ export type TemplateDataTypes =
   | boolean
   | null
   | undefined
-  | Array<TemplateDataTypes>
-  | Record<string, TemplateDataTypes>;
+  | Array<string | number | boolean | null | undefined | Record<string, unknown>>
+  | Record<string, string | number | boolean | null | undefined | Array<unknown>>;
 
 /**
  * Standard template context interface

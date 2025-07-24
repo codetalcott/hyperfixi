@@ -4,16 +4,15 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
 import type {
   EnhancedTemplateDirective,
   TemplateExecutionContext,
   IfDirectiveInput,
-  IfDirectiveInputSchema,
   TemplateDirectiveType,
   TemplateRenderStrategy,
   TemplateLLMDocumentation
 } from '../../../types/enhanced-templates.ts';
+import { IfDirectiveInputSchema } from '../../../types/enhanced-templates.ts';
 import type {
   TypedResult,
   ExpressionMetadata,
@@ -28,7 +27,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
   public readonly name = '@if' as const;
   public readonly category = 'Template';
   public readonly syntax = '@if <condition>';
-  public readonly outputType = 'string' as const;
+  public readonly outputType = 'String' as const;
   public readonly inputSchema = IfDirectiveInputSchema;
 
   // Template-specific properties
@@ -223,7 +222,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
       }
 
       // Evaluate condition
-      const conditionResult = await this.evaluateCondition(input.condition, context);
+      const conditionResult = this.evaluateCondition(input.condition, context);
       
       // Create conditional context
       const conditionalContext = this.createConditionalContext(context, conditionResult);
@@ -231,7 +230,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
       // Execute template content if condition is true
       let result = '';
       if (conditionResult) {
-        result = await this.renderTemplateContent(templateContent, conditionalContext);
+        result = this.renderTemplateContent(templateContent, conditionalContext);
       }
 
       // Track evaluation
@@ -322,25 +321,23 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
    */
   validateTemplateContext(
     context: TemplateExecutionContext,
-    input: IfDirectiveInput
+    _input: IfDirectiveInput
   ): ValidationResult {
-    const errors: Array<{ type: string; message: string; suggestion: string }> = [];
+    const errors: ValidationResult['errors'] = [];
     
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {
       errors.push({
-        type: 'context-error',
-        message: 'Template buffer not initialized',
-        suggestion: 'Ensure template context is properly created'
+        type: 'runtime-error',
+        message: 'Template buffer not initialized'
       });
     }
     
     // Check nesting depth
     if (context.templateDepth > 10) {
       errors.push({
-        type: 'nesting-error',
-        message: `Template nesting too deep (${context.templateDepth})`,
-        suggestion: 'Reduce template nesting complexity'
+        type: 'runtime-error',
+        message: `Template nesting too deep (${context.templateDepth})`
       });
     }
     
@@ -354,7 +351,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
   /**
    * Evaluate condition expression for truthiness
    */
-  private async evaluateCondition(condition: unknown, context: TemplateExecutionContext): Promise<boolean> {
+  private evaluateCondition(condition: unknown, _context: TemplateExecutionContext): boolean {
     // Handle direct boolean values
     if (typeof condition === 'boolean') {
       return condition;
@@ -409,10 +406,10 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
   /**
    * Render template content with interpolation
    */
-  private async renderTemplateContent(
+  private renderTemplateContent(
     templateContent: string,
     context: TemplateExecutionContext
-  ): Promise<string> {
+  ): string {
     // Simple interpolation for ${variable} expressions
     return templateContent.replace(/\$\{([^}]+)\}/g, (match, expression) => {
       try {
@@ -434,7 +431,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
    */
   private resolveExpression(expression: string, variables: Record<string, unknown>): unknown {
     // Handle simple variable access
-    if (variables.hasOwnProperty(expression)) {
+    if (expression in variables) {
       return variables[expression];
     }
     

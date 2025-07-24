@@ -9,11 +9,11 @@ import type {
   EnhancedTemplateDirective,
   TemplateExecutionContext,
   ElseDirectiveInput,
-  ElseDirectiveInputSchema,
   TemplateDirectiveType,
   TemplateRenderStrategy,
   TemplateLLMDocumentation
 } from '../../../types/enhanced-templates.ts';
+import { ElseDirectiveInputSchema } from '../../../types/enhanced-templates.ts';
 import type {
   TypedResult,
   ExpressionMetadata,
@@ -28,7 +28,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
   public readonly name = '@else' as const;
   public readonly category = 'Template';
   public readonly syntax = '@else';
-  public readonly outputType = 'string' as const;
+  public readonly outputType = 'String' as const;
   public readonly inputSchema = ElseDirectiveInputSchema;
 
   // Template-specific properties
