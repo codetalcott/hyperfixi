@@ -6,8 +6,6 @@
 
 import { z } from 'zod';
 import type { 
-  CommandImplementation, 
-  ExecutionContext,
   TypedCommandImplementation,
   TypedExecutionContext,
   EvaluationResult,
@@ -15,6 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
+import type { CommandImplementation, ExecutionContext } from '../../types/core.js';
 import { dispatchCustomEvent } from '../../core/events.ts';
 
 export interface SettleCommandOptions {
@@ -85,7 +84,7 @@ export class SettleCommand implements CommandImplementation, TypedCommandImpleme
   public readonly metadata: CommandMetadata = {
     category: 'animation',
     complexity: 'medium',
-    sideEffects: ['async-wait', 'animation-tracking'],
+    sideEffects: ['async-operation', 'dom-query'],
     examples: [
       {
         code: 'settle',
@@ -118,7 +117,7 @@ export class SettleCommand implements CommandImplementation, TypedCommandImpleme
       },
       {
         name: 'timeout',
-        type: 'number | string',  
+        type: 'number',  
         description: 'Maximum time to wait in milliseconds or with unit (s, ms)',
         optional: true,
         examples: ['5000', '3s', '500ms']
@@ -173,14 +172,22 @@ export class SettleCommand implements CommandImplementation, TypedCommandImpleme
 
   // Enhanced execute method with full type safety
   async execute(
-    context: ExecutionContext | TypedExecutionContext,
+    context: TypedExecutionContext,
+    ...args: unknown[]
+  ): Promise<EvaluationResult<HTMLElement>> {
+    return this.executeEnhanced(context, ...args);
+  }
+
+  // Legacy execute method for backward compatibility (CommandImplementation interface)
+  async executeLegacy(
+    context: ExecutionContext,
     ...args: unknown[]
   ): Promise<HTMLElement | EvaluationResult<HTMLElement>> {
     // Detect if we're using enhanced context
     if ('locals' in context && 'globals' in context && 'variables' in context) {
       return this.executeEnhanced(context as TypedExecutionContext, ...args);
     } else {
-      return this.executeLegacy(context as ExecutionContext, ...args as any[]);
+      return this.executeLegacyInternal(context as ExecutionContext, ...args as any[]);
     }
   }
 
@@ -250,7 +257,7 @@ export class SettleCommand implements CommandImplementation, TypedCommandImpleme
   }
 
   // Legacy execute method for backward compatibility  
-  private async executeLegacy(context: ExecutionContext, ...args: any[]): Promise<HTMLElement> {
+  private async executeLegacyInternal(context: ExecutionContext, ...args: any[]): Promise<HTMLElement> {
     let target: HTMLElement | undefined;
     let timeout: number = this.options.defaultTimeout || this.DEFAULT_TIMEOUT;
     
@@ -265,7 +272,7 @@ export class SettleCommand implements CommandImplementation, TypedCommandImpleme
         target = arg;
       } else if (typeof arg === 'string') {
         // CSS selector
-        target = this.resolveElement(arg);
+        target = this.resolveElementLegacy(arg);
       }
     }
     
@@ -311,7 +318,7 @@ export class SettleCommand implements CommandImplementation, TypedCommandImpleme
             return {
               isValid: false,
               errors: [{
-                type: 'invalid-format' as const,
+                type: 'invalid-syntax' as const,
                 message: `Invalid timeout format: "${timeoutValue}"`,
                 suggestion: 'Use numeric milliseconds, or format like "3s", "500ms"'
               }],
@@ -706,7 +713,7 @@ export class SettleCommand implements CommandImplementation, TypedCommandImpleme
       return {
         success: true,
         value: undefined,
-        type: 'void'
+        type: 'unknown'
       };
     } catch (error) {
       return {
@@ -723,38 +730,6 @@ export class SettleCommand implements CommandImplementation, TypedCommandImpleme
   }
 
   // Legacy validation method for backward compatibility
-  validate(args: any[]): string | null {
-    
-    // Parse arguments
-    for (let i = 0; i < args.length; i++) {
-      const arg = args[i];
-      
-      if (arg === 'for' && i + 1 < args.length) {
-        timeout = this.parseTimeout(args[i + 1]);
-        i++; // Skip the timeout value
-      } else if (arg instanceof HTMLElement) {
-        target = arg;
-      } else if (typeof arg === 'string') {
-        // CSS selector
-        target = this.resolveElement(arg);
-      }
-    }
-    
-    // Default to context.me if no target specified
-    if (!target) {
-      if (!context.me) {
-        throw new Error('No target element available for settle command');
-      }
-      target = context.me;
-    }
-    
-    // Wait for the element to settle
-    await this.waitForSettle(target, timeout);
-    
-    // Return the target element
-    return target;
-  }
-
   validate(args: any[]): string | null {
     for (let i = 0; i < args.length; i++) {
       const arg = args[i];
@@ -803,7 +778,7 @@ export class SettleCommand implements CommandImplementation, TypedCommandImpleme
     return parsed;
   }
 
-  private resolveElement(selector: string): HTMLElement {
+  private resolveElementLegacy(selector: string): HTMLElement {
     const element = document.querySelector(selector);
     if (!element) {
       throw new Error(`Settle target not found: ${selector}`);

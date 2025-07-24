@@ -135,13 +135,12 @@ export class PutCommand implements TypedCommandImplementation<
 
   async execute(
     context: TypedExecutionContext,
-    content: PutCommandInput[0],
-    position: PutCommandInput[1],
-    target?: PutCommandInput[2]
+    ...args: unknown[]
   ): Promise<EvaluationResult<HTMLElement>> {
+    const [content, position, target] = args as [PutCommandInput[0], PutCommandInput[1], PutCommandInput[2]];
     try {
       // Runtime validation for type safety
-      const validationResult = this.validate([content, position, target]);
+      const validationResult = this.validate(args);
       if (!validationResult.isValid) {
         return {
           success: false,

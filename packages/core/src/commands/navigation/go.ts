@@ -53,12 +53,12 @@ export class GoCommand implements TypedCommandImplementation<
   public readonly syntax = 'go [to] url <url> [in new window] | go [to] [position] [of] <target> [offset] [behavior] | go back';
   public readonly description = 'Provides navigation functionality including URL navigation, element scrolling, and browser history management';
   public readonly inputSchema = GoCommandInputSchema;
-  public readonly outputType = 'string' as const;
+  public readonly outputType = 'unknown' as const;
 
   public readonly metadata: CommandMetadata = {
     category: 'navigation',
-    complexity: 'complex',
-    sideEffects: ['navigation', 'dom-mutation', 'history'],
+    complexity: 'high',
+    sideEffects: ['navigation', 'dom-query', 'history'],
     examples: [
       {
         code: 'go to url "https://example.com"',

@@ -6,8 +6,6 @@
 
 import { z } from 'zod';
 import type { 
-  CommandImplementation, 
-  ExecutionContext,
   TypedCommandImplementation,
   TypedExecutionContext,
   EvaluationResult,
@@ -15,6 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
+import type { CommandImplementation, ExecutionContext } from '../../types/core.js';
 import { dispatchCustomEvent } from '../../core/events.ts';
 
 export interface TakeCommandOptions {
@@ -882,7 +881,7 @@ export class TakeCommand implements CommandImplementation, TypedCommandImplement
     if (args[i] instanceof HTMLElement) {
       source = args[i];
     } else if (typeof args[i] === 'string') {
-      source = this.resolveElement(args[i]);
+      source = this.resolveElementLegacy(args[i]);
     } else {
       throw new Error('Invalid source element');
     }
@@ -897,7 +896,7 @@ export class TakeCommand implements CommandImplementation, TypedCommandImplement
       if (args[i] instanceof HTMLElement) {
         target = args[i];
       } else if (typeof args[i] === 'string') {
-        target = this.resolveElement(args[i]);
+        target = this.resolveElementLegacy(args[i]);
       } else {
         throw new Error('Invalid target element');
       }
@@ -1061,7 +1060,7 @@ export class TakeCommand implements CommandImplementation, TypedCommandImplement
     }
   }
 
-  private resolveElement(selector: string): HTMLElement {
+  private resolveElementLegacy(selector: string): HTMLElement {
     const element = document.querySelector(selector);
     if (!element) {
       throw new Error(`Take element not found: ${selector}`);
