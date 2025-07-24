@@ -11,9 +11,8 @@ import {
   createStaticField,
   createDynamicField,
   createObject
-} from './index.js';
-import { createTypedExpressionContext } from '../../test-utilities.js';
-import type { TypedExpressionContext } from '../../types/enhanced-core.js';
+} from './index.ts';
+import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
 describe('Enhanced Object Expression', () => {
   let objectExpression: EnhancedObjectLiteralExpression;

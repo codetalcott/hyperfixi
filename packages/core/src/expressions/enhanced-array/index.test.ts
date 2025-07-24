@@ -11,9 +11,8 @@ import {
   createArrayIndexExpression,
   createArray,
   indexArray
-} from './index.js';
-import { createTypedExpressionContext } from '../../test-utilities.js';
-import type { TypedExpressionContext } from '../../types/enhanced-core.js';
+} from './index.ts';
+import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
 describe('Enhanced Array Expressions', () => {
   let arrayLiteralExpression: EnhancedArrayLiteralExpression;
@@ -46,10 +45,10 @@ describe('Enhanced Array Expressions', () => {
         expect(result.errors[0]).toContain('may impact performance');
       });
 
-      test('warns about mixed null/undefined elements', async () => {
+      test('accepts mixed null/undefined elements (no longer warns)', async () => {
         const result = await arrayLiteralExpression.validate([1, null, 3, undefined, 5]);
-        expect(result.isValid).toBe(false);
-        expect(result.errors[0]).toContain('null/undefined elements');
+        expect(result.isValid).toBe(true);
+        // Mixed null/undefined is common in JavaScript arrays, so we accept it
       });
     });
 

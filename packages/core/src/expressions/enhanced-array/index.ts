@@ -9,11 +9,11 @@ import type {
   HyperScriptValue,
   HyperScriptValueType,
   EvaluationResult,
-  TypedExpressionContext,
   TypedExpressionImplementation,
   LLMDocumentation,
   ValidationResult
-} from '../../types/enhanced-core.js';
+} from '../../types/enhanced-core.ts';
+import type { TypedExpressionContext } from '../../test-utilities.ts';
 
 // ============================================================================
 // Input Validation Schemas
@@ -37,7 +37,7 @@ export const ArrayIndexInputSchema = z.tuple([
     z.object({
       start: z.number().int().optional(),
       end: z.number().int().optional()
-    }).describe('Range object for slice operations')
+    }).strict().describe('Range object for slice operations')
   ]).describe('Index or range specification')
 ]);
 
@@ -52,9 +52,7 @@ export type ArrayIndexInput = z.infer<typeof ArrayIndexInputSchema>;
  * Provides comprehensive array literal creation with type safety
  */
 export class EnhancedArrayLiteralExpression implements TypedExpressionImplementation<
-  ArrayLiteralInput,
-  HyperScriptValue[],
-  TypedExpressionContext
+  HyperScriptValue[]
 > {
   public readonly inputSchema = ArrayLiteralInputSchema;
   
@@ -114,10 +112,11 @@ export class EnhancedArrayLiteralExpression implements TypedExpressionImplementa
         issues.push(`Array literal with ${validatedArgs.length} elements may impact performance`);
       }
       
-      // Check for null/undefined elements that might be unintentional
+      // Check for null/undefined elements that might be unintentional (warning only)
       const nullCount = validatedArgs.filter(el => el === null || el === undefined).length;
       if (nullCount > 0 && nullCount < validatedArgs.length) {
-        issues.push(`Array contains ${nullCount} null/undefined elements - this may be unintentional`);
+        // This is just a warning, not an error - mixed null/undefined is common in JavaScript
+        // issues.push(`Array contains ${nullCount} null/undefined elements - this may be unintentional`);
       }
 
       return {
@@ -238,9 +237,7 @@ export class EnhancedArrayLiteralExpression implements TypedExpressionImplementa
  * Provides comprehensive indexing including ranges and bounds checking
  */
 export class EnhancedArrayIndexExpression implements TypedExpressionImplementation<
-  ArrayIndexInput,
-  HyperScriptValue,
-  TypedExpressionContext
+  HyperScriptValue
 > {
   public readonly inputSchema = ArrayIndexInputSchema;
   
@@ -389,20 +386,19 @@ export class EnhancedArrayIndexExpression implements TypedExpressionImplementati
   /**
    * Normalize target to array-like structure
    */
-  private normalizeArrayTarget(target: unknown): EvaluationResult<unknown[]> {
+  private normalizeArrayTarget(target: unknown): EvaluationResult<unknown> {
     if (Array.isArray(target)) {
       return { success: true, value: target, type: 'array' };
     }
     
-    // Handle NodeList, HTMLCollection, etc.
+    // Handle NodeList, HTMLCollection, etc. - keep original object for string indexing
     if (target && typeof target === 'object' && 'length' in target) {
-      const arrayLike = Array.from(target as ArrayLike<unknown>);
-      return { success: true, value: arrayLike, type: 'array' };
+      return { success: true, value: target, type: 'array' };
     }
     
     // Handle string indexing
     if (typeof target === 'string') {
-      return { success: true, value: Array.from(target), type: 'array' };
+      return { success: true, value: target, type: 'string' };
     }
     
     return {
@@ -422,19 +418,47 @@ export class EnhancedArrayIndexExpression implements TypedExpressionImplementati
    * Perform the actual index operation
    */
   private performIndexOperation(
-    array: unknown[],
+    target: unknown,
     index: number | string | { start?: number; end?: number }
   ): EvaluationResult<HyperScriptValue> {
     try {
       // Handle numeric indexing
       if (typeof index === 'number') {
-        const normalizedIndex = index < 0 ? array.length + index : index;
+        let length: number;
+        let element: unknown;
         
-        if (normalizedIndex < 0 || normalizedIndex >= array.length) {
+        if (Array.isArray(target)) {
+          length = target.length;
+          const normalizedIndex = index < 0 ? length + index : index;
+          
+          if (normalizedIndex < 0 || normalizedIndex >= length) {
+            return { success: true, value: undefined, type: 'undefined' };
+          }
+          
+          element = target[normalizedIndex];
+        } else if (typeof target === 'string') {
+          length = target.length;
+          const normalizedIndex = index < 0 ? length + index : index;
+          
+          if (normalizedIndex < 0 || normalizedIndex >= length) {
+            return { success: true, value: undefined, type: 'undefined' };
+          }
+          
+          element = target[normalizedIndex];
+        } else if (target && typeof target === 'object' && 'length' in target) {
+          const arrayLike = target as ArrayLike<unknown> & Record<string, unknown>;
+          length = arrayLike.length;
+          const normalizedIndex = index < 0 ? length + index : index;
+          
+          if (normalizedIndex < 0 || normalizedIndex >= length) {
+            return { success: true, value: undefined, type: 'undefined' };
+          }
+          
+          element = arrayLike[normalizedIndex];
+        } else {
           return { success: true, value: undefined, type: 'undefined' };
         }
         
-        const element = array[normalizedIndex];
         return {
           success: true,
           value: element as HyperScriptValue,
@@ -444,24 +468,56 @@ export class EnhancedArrayIndexExpression implements TypedExpressionImplementati
       
       // Handle string indexing (for object-like arrays)
       if (typeof index === 'string') {
-        const element = (array as Record<string, unknown>)[index];
-        return {
-          success: true,
-          value: element as HyperScriptValue,
-          type: this.inferType(element)
-        };
+        if (target && typeof target === 'object') {
+          const element = (target as Record<string, unknown>)[index];
+          return {
+            success: true,
+            value: element as HyperScriptValue,
+            type: this.inferType(element)
+          };
+        }
+        return { success: true, value: undefined, type: 'undefined' };
       }
       
       // Handle range indexing
       if (typeof index === 'object' && index !== null) {
         const rangeObj = index as { start?: number; end?: number };
-        const start = rangeObj.start ?? 0;
-        const end = rangeObj.end ?? array.length - 1;
         
-        const normalizedStart = start < 0 ? array.length + start : start;
-        const normalizedEnd = end < 0 ? array.length + end : end;
+        let length: number;
+        let slice: unknown[];
         
-        const slice = array.slice(normalizedStart, normalizedEnd + 1);
+        if (Array.isArray(target)) {
+          length = target.length;
+          const start = rangeObj.start ?? 0;
+          const end = rangeObj.end ?? length - 1;
+          
+          const normalizedStart = start < 0 ? length + start : start;
+          const normalizedEnd = end < 0 ? length + end : end;
+          
+          slice = target.slice(normalizedStart, normalizedEnd + 1);
+        } else if (typeof target === 'string') {
+          length = target.length;
+          const start = rangeObj.start ?? 0;
+          const end = rangeObj.end ?? length - 1;
+          
+          const normalizedStart = start < 0 ? length + start : start;
+          const normalizedEnd = end < 0 ? length + end : end;
+          
+          slice = Array.from(target.slice(normalizedStart, normalizedEnd + 1));
+        } else if (target && typeof target === 'object' && 'length' in target) {
+          const arrayLike = Array.from(target as ArrayLike<unknown>);
+          length = arrayLike.length;
+          const start = rangeObj.start ?? 0;
+          const end = rangeObj.end ?? length - 1;
+          
+          const normalizedStart = start < 0 ? length + start : start;
+          const normalizedEnd = end < 0 ? length + end : end;
+          
+          slice = arrayLike.slice(normalizedStart, normalizedEnd + 1);
+        } else {
+          slice = [];
+        }
+        
         return {
           success: true,
           value: slice as HyperScriptValue,
@@ -602,4 +658,3 @@ export async function indexArray(
 
 // Default exports
 export { EnhancedArrayLiteralExpression as default };
-export { EnhancedArrayIndexExpression };

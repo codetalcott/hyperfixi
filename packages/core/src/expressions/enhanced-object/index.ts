@@ -9,11 +9,11 @@ import type {
   HyperScriptValue,
   HyperScriptValueType,
   EvaluationResult,
-  TypedExpressionContext,
   TypedExpressionImplementation,
   LLMDocumentation,
   ValidationResult
-} from '../../types/enhanced-core.js';
+} from '../../types/enhanced-core.ts';
+import type { TypedExpressionContext } from '../../test-utilities.ts';
 
 // ============================================================================
 // Input Validation Schemas
@@ -49,9 +49,7 @@ export type ObjectLiteralInput = z.infer<typeof ObjectLiteralInputSchema>;
  * Provides comprehensive object literal creation with dynamic field names and type safety
  */
 export class EnhancedObjectLiteralExpression implements TypedExpressionImplementation<
-  ObjectLiteralInput,
-  Record<string, HyperScriptValue>,
-  TypedExpressionContext
+  Record<string, HyperScriptValue>
 > {
   public readonly inputSchema = ObjectLiteralInputSchema;
   
