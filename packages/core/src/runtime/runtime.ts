@@ -15,10 +15,23 @@ import { ExpressionEvaluator } from '../core/expression-evaluator.js';
 import { PutCommand } from '../commands/dom/put.js';
 import { SetCommand } from '../commands/data/set.js';
 
+// Enhanced command imports
+import { EnhancedCommandRegistry, globalEnhancedRegistry } from './enhanced-command-adapter.js';
+import { createHideCommand } from '../commands/dom/hide.js';
+import { createShowCommand } from '../commands/dom/show.js';
+import { createToggleCommand } from '../commands/dom/toggle.js';
+import { createAddCommand } from '../commands/dom/add.js';
+import { createRemoveCommand } from '../commands/dom/remove.js';
+import { createSendCommand } from '../commands/events/send.js';
+import { createTriggerCommand } from '../commands/events/trigger.js';
+import { createWaitCommand } from '../commands/async/wait.js';
+import { createFetchCommand } from '../commands/async/fetch.js';
+
 export interface RuntimeOptions {
   enableAsyncCommands?: boolean;
   commandTimeout?: number;
   enableErrorReporting?: boolean;
+  useEnhancedCommands?: boolean;
 }
 
 export class Runtime {
@@ -26,18 +39,60 @@ export class Runtime {
   private expressionEvaluator: ExpressionEvaluator;
   private putCommand: PutCommand;
   private setCommand: SetCommand;
+  private enhancedRegistry: EnhancedCommandRegistry;
   
   constructor(options: RuntimeOptions = {}) {
     this.options = {
       enableAsyncCommands: true,
       commandTimeout: 10000, // 10 seconds
       enableErrorReporting: true,
+      useEnhancedCommands: true,
       ...options
     };
     
     this.expressionEvaluator = new ExpressionEvaluator();
     this.putCommand = new PutCommand();
     this.setCommand = new SetCommand();
+    
+    // Initialize enhanced command registry
+    this.enhancedRegistry = new EnhancedCommandRegistry();
+    this.initializeEnhancedCommands();
+  }
+
+  /**
+   * Initialize enhanced commands in the registry
+   */
+  private initializeEnhancedCommands(): void {
+    if (!this.options.useEnhancedCommands) {
+      return;
+    }
+
+    try {
+      // Register DOM commands
+      this.enhancedRegistry.register(createHideCommand());
+      this.enhancedRegistry.register(createShowCommand());
+      this.enhancedRegistry.register(createToggleCommand());
+      this.enhancedRegistry.register(createAddCommand());
+      this.enhancedRegistry.register(createRemoveCommand());
+      
+      // Register event commands
+      this.enhancedRegistry.register(createSendCommand());
+      this.enhancedRegistry.register(createTriggerCommand());
+      
+      // Register async commands
+      this.enhancedRegistry.register(createWaitCommand());
+      this.enhancedRegistry.register(createFetchCommand());
+      
+      if (this.options.enableErrorReporting) {
+        console.log(`Enhanced commands initialized: ${this.enhancedRegistry.getCommandNames().join(', ')}`);
+      }
+    } catch (error) {
+      if (this.options.enableErrorReporting) {
+        console.warn('Failed to initialize some enhanced commands:', error);
+      }
+      // Fallback to legacy commands if enhanced initialization fails
+      this.options.useEnhancedCommands = false;
+    }
   }
 
   /**
@@ -72,12 +127,36 @@ export class Runtime {
   }
 
   /**
+   * Execute enhanced command with adapter
+   */
+  private async executeEnhancedCommand(name: string, args: ExpressionNode[], context: ExecutionContext): Promise<any> {
+    const adapter = this.enhancedRegistry.getAdapter(name);
+    if (!adapter) {
+      throw new Error(`Enhanced command not found: ${name}`);
+    }
+
+    // Evaluate arguments in current context
+    const evaluatedArgs = await Promise.all(
+      args.map(arg => this.execute(arg, context))
+    );
+
+    // Execute through enhanced adapter
+    return await adapter.execute(context, ...evaluatedArgs);
+  }
+
+  /**
    * Execute a command from a command-selector pattern (e.g., "add .active")
    */
   private async executeCommandFromPattern(command: string, selector: string, context: ExecutionContext): Promise<any> {
-    // For add/remove class commands, pass the selector string directly
-    // For other commands, we might need different handling
-    switch (command.toLowerCase()) {
+    const commandName = command.toLowerCase();
+    
+    // Try enhanced commands first if available
+    if (this.options.useEnhancedCommands && this.enhancedRegistry.has(commandName)) {
+      return await this.executeEnhancedCommand(commandName, [{ type: 'literal', value: selector }], context);
+    }
+
+    // Fallback to legacy command handling
+    switch (commandName) {
       case 'add':
         return this.executeAddCommand([selector], context);
       case 'remove':
@@ -102,6 +181,11 @@ export class Runtime {
    */
   private async executeCommand(node: CommandNode, context: ExecutionContext): Promise<any> {
     const { name, args } = node;
+    
+    // Try enhanced commands first if enabled
+    if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
+      return await this.executeEnhancedCommand(name.toLowerCase(), args || [], context);
+    }
     
     // For now, let commands handle their own argument evaluation
     // This ensures compatibility with how the commands are designed
@@ -524,5 +608,63 @@ export class Runtime {
            obj.style && 
            typeof obj.style === 'object' &&
            obj.classList;
+  }
+
+  /**
+   * Get available command names (both enhanced and legacy)
+   */
+  getAvailableCommands(): string[] {
+    const commands = new Set<string>();
+    
+    // Add enhanced commands
+    if (this.options.useEnhancedCommands) {
+      this.enhancedRegistry.getCommandNames().forEach(name => commands.add(name));
+    }
+    
+    // Add legacy commands
+    ['hide', 'show', 'wait', 'add', 'remove', 'put', 'set', 'log'].forEach(name => commands.add(name));
+    
+    return Array.from(commands);
+  }
+
+  /**
+   * Validate command before execution
+   */
+  validateCommand(name: string, input: any): { valid: boolean; error?: string; suggestions?: string[] } {
+    // Try enhanced validation first
+    if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
+      const result = this.enhancedRegistry.validateCommand(name.toLowerCase(), input);
+      return {
+        valid: result.success,
+        error: result.error?.message,
+        suggestions: result.error?.suggestions
+      };
+    }
+    
+    // Basic validation for legacy commands
+    const availableCommands = this.getAvailableCommands();
+    if (!availableCommands.includes(name.toLowerCase())) {
+      return {
+        valid: false,
+        error: `Unknown command: ${name}`,
+        suggestions: [`Available commands: ${availableCommands.join(', ')}`]
+      };
+    }
+    
+    return { valid: true };
+  }
+
+  /**
+   * Get enhanced command registry (for debugging/inspection)
+   */
+  getEnhancedRegistry(): EnhancedCommandRegistry {
+    return this.enhancedRegistry;
+  }
+
+  /**
+   * Check if enhanced commands are enabled
+   */
+  isUsingEnhancedCommands(): boolean {
+    return this.options.useEnhancedCommands === true;
   }
 }
