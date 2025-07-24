@@ -1,16 +1,72 @@
 /**
- * Logical expressions for hyperscript
+ * Enhanced Logical expressions for hyperscript
  * Handles comparison operators, boolean logic, and conditional expressions
+ * Enhanced with TypeScript patterns, comprehensive validation, and LLM documentation
  */
 
+import { z } from 'zod';
 import type { ExecutionContext, ExpressionImplementation, EvaluationType } from '../../types/core.js';
+import type { 
+  TypedExpressionContext, 
+  ExpressionMetadata, 
+  LLMDocumentation 
+} from '../../types/enhanced-expressions.js';
 import { matchesWithCache } from '../../performance/integration.js';
+
+// ============================================================================
+// Enhanced Expression Interface
+// ============================================================================
+
+/**
+ * Enhanced expression implementation with metadata and LLM documentation
+ */
+interface EnhancedExpressionImplementation extends ExpressionImplementation {
+  metadata?: ExpressionMetadata;
+  documentation?: LLMDocumentation;
+  inputSchema?: z.ZodSchema<any>;
+}
+
+/**
+ * Enhanced evaluation tracking
+ */
+function trackEvaluation<T>(
+  expression: ExpressionImplementation,
+  context: ExecutionContext,
+  args: any[],
+  result: T,
+  startTime: number,
+  success: boolean = true,
+  error?: Error
+): T {
+  // Add evaluation tracking if context supports it
+  if ('evaluationHistory' in context && Array.isArray(context.evaluationHistory)) {
+    (context as any).evaluationHistory.push({
+      expressionName: expression.name,
+      category: expression.category,
+      input: args,
+      output: result,
+      timestamp: startTime,
+      duration: Date.now() - startTime,
+      success,
+      error
+    });
+  }
+  return result;
+}
+
+// ============================================================================
+// Enhanced Input Schemas
+// ============================================================================
+
+const ComparisonInputSchema = z.tuple([z.any(), z.any()]);
+const UnaryInputSchema = z.tuple([z.any()]);
+const PatternMatchingInputSchema = z.tuple([z.any(), z.string()]);
 
 // ============================================================================
 // Comparison Operators
 // ============================================================================
 
-export const equalsExpression: ExpressionImplementation = {
+export const equalsExpression: EnhancedExpressionImplementation = {
   name: 'equals',
   category: 'Comparison',
   evaluatesTo: 'Boolean',
@@ -19,8 +75,15 @@ export const equalsExpression: ExpressionImplementation = {
   operators: ['is', '==', 'equals'],
   
   async evaluate(context: ExecutionContext, left: any, right: any): Promise<boolean> {
-    // Hyperscript uses loose equality for 'is' and strict equality for other operators
-    return left == right;
+    const startTime = Date.now();
+    try {
+      // Hyperscript uses loose equality for 'is' and strict equality for other operators
+      const result = left == right;
+      return trackEvaluation(this, context, [left, right], result, startTime);
+    } catch (error) {
+      trackEvaluation(this, context, [left, right], false, startTime, false, error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
   },
   
   validate(args: any[]): string | null {
@@ -28,6 +91,81 @@ export const equalsExpression: ExpressionImplementation = {
       return 'equals requires exactly two arguments (left, right)';
     }
     return null;
+  },
+
+  inputSchema: ComparisonInputSchema,
+
+  metadata: {
+    category: 'Logical',
+    complexity: 'simple',
+    sideEffects: [],
+    dependencies: [],
+    returnTypes: ['Boolean'],
+    examples: [
+      {
+        input: 'value is 5',
+        description: 'Check if value equals 5 using loose equality',
+        expectedOutput: true,
+        context: { result: 5 }
+      },
+      {
+        input: '"5" == 5',
+        description: 'String "5" equals number 5 with type coercion',
+        expectedOutput: true
+      }
+    ],
+    relatedExpressions: ['strictEquals', 'notEquals'],
+    performance: {
+      averageTime: 0.001,
+      complexity: 'O(1)'
+    }
+  },
+
+  documentation: {
+    summary: 'Compares two values for loose equality, allowing type coercion',
+    parameters: [
+      {
+        name: 'left',
+        type: 'any',
+        description: 'Left operand for comparison',
+        optional: false,
+        examples: ['5', '"hello"', 'true', 'null']
+      },
+      {
+        name: 'right', 
+        type: 'any',
+        description: 'Right operand for comparison',
+        optional: false,
+        examples: ['5', '"hello"', 'true', 'null']
+      }
+    ],
+    returns: {
+      type: 'Boolean',
+      description: 'True if values are loosely equal, false otherwise',
+      examples: ['true', 'false']
+    },
+    examples: [
+      {
+        title: 'Basic equality check',
+        code: 'if my.value is 10',
+        explanation: 'Check if element value equals 10',
+        output: 'Boolean result'
+      },
+      {
+        title: 'Type coercion',
+        code: 'if "5" == 5',
+        explanation: 'String "5" equals number 5 with automatic type conversion',
+        output: 'true'
+      },
+      {
+        title: 'Null checks',
+        code: 'if value is null',
+        explanation: 'Check if value is null or undefined',
+        output: 'Boolean result'
+      }
+    ],
+    seeAlso: ['strictEquals', 'notEquals', 'matches'],
+    tags: ['comparison', 'equality', 'logic', 'type-coercion']
   }
 };
 
@@ -175,7 +313,7 @@ export const greaterThanOrEqualExpression: ExpressionImplementation = {
 // Boolean Logic Operators
 // ============================================================================
 
-export const andExpression: ExpressionImplementation = {
+export const andExpression: EnhancedExpressionImplementation = {
   name: 'and',
   category: 'Logical',
   evaluatesTo: 'Boolean',
@@ -184,8 +322,15 @@ export const andExpression: ExpressionImplementation = {
   operators: ['and', '&&'],
   
   async evaluate(context: ExecutionContext, left: any, right: any): Promise<boolean> {
-    // Convert to boolean using truthy/falsy rules
-    return Boolean(left) && Boolean(right);
+    const startTime = Date.now();
+    try {
+      // Convert to boolean using truthy/falsy rules
+      const result = Boolean(left) && Boolean(right);
+      return trackEvaluation(this, context, [left, right], result, startTime);
+    } catch (error) {
+      trackEvaluation(this, context, [left, right], false, startTime, false, error instanceof Error ? error : new Error(String(error)));
+      throw error;
+    }
   },
   
   validate(args: any[]): string | null {
@@ -193,6 +338,81 @@ export const andExpression: ExpressionImplementation = {
       return 'and requires exactly two arguments (left, right)';
     }
     return null;
+  },
+
+  inputSchema: ComparisonInputSchema,
+
+  metadata: {
+    category: 'Logical',
+    complexity: 'simple',
+    sideEffects: [],
+    dependencies: [],
+    returnTypes: ['Boolean'],
+    examples: [
+      {
+        input: 'true and false',
+        description: 'Logical AND of boolean values',
+        expectedOutput: false
+      },
+      {
+        input: 'name and age',
+        description: 'Both name and age must be truthy',
+        expectedOutput: true,
+        context: { name: 'John', age: 25 }
+      }
+    ],
+    relatedExpressions: ['or', 'not'],
+    performance: {
+      averageTime: 0.001,
+      complexity: 'O(1)'
+    }
+  },
+
+  documentation: {
+    summary: 'Logical AND operation that returns true only if both operands are truthy',
+    parameters: [
+      {
+        name: 'left',
+        type: 'any',
+        description: 'Left operand (evaluated for truthiness)',
+        optional: false,
+        examples: ['true', 'name', '5', '"hello"']
+      },
+      {
+        name: 'right',
+        type: 'any',
+        description: 'Right operand (evaluated for truthiness)',
+        optional: false,
+        examples: ['false', 'age', '0', '""']
+      }
+    ],
+    returns: {
+      type: 'Boolean',
+      description: 'True if both operands are truthy, false otherwise',
+      examples: ['true', 'false']
+    },
+    examples: [
+      {
+        title: 'Form validation',
+        code: 'if name and email',
+        explanation: 'Check if both name and email have values',
+        output: 'Boolean result'
+      },
+      {
+        title: 'Multiple conditions',
+        code: 'if age > 18 and hasLicense',
+        explanation: 'Combine multiple conditions',
+        output: 'Boolean result'
+      },
+      {
+        title: 'Short-circuit evaluation',
+        code: 'if element and element.value',
+        explanation: 'Check element exists before accessing properties',
+        output: 'Boolean result'
+      }
+    ],
+    seeAlso: ['or', 'not', 'exists'],
+    tags: ['logic', 'boolean', 'conditions', 'validation']
   }
 };
 
@@ -466,40 +686,50 @@ export const endsWithExpression: ExpressionImplementation = {
   }
 };
 
-export const matchesExpression: ExpressionImplementation = {
+export const matchesExpression: EnhancedExpressionImplementation = {
   name: 'matches',
   category: 'Logical',
   evaluatesTo: 'Boolean',
   operators: ['matches'],
   
   async evaluate(context: ExecutionContext, element: any, selector: any): Promise<boolean> {
-    // If it's a DOM element and selector is a CSS selector, use CSS matching with cache
-    if (element instanceof Element && typeof selector === 'string') {
-      // Check if it looks like a CSS selector (starts with . # : [ or is a tag name)
-      if (selector.startsWith('.') || selector.startsWith('#') || selector.startsWith(':') || 
-          selector.startsWith('[') || /^[a-zA-Z][\w-]*$/.test(selector)) {
-        try {
-          return matchesWithCache(element, selector);
-        } catch (error) {
-          return false;
-        }
-      }
-    }
-    
-    // Otherwise, treat as string pattern matching
-    if (typeof element !== 'string' || typeof selector !== 'string') {
-      return false;
-    }
-    
+    const startTime = Date.now();
     try {
-      // Support both string patterns and regex patterns
-      const regex = selector.startsWith('/') && selector.endsWith('/') 
-        ? new RegExp(selector.slice(1, -1))
-        : new RegExp(selector);
-      return regex.test(element);
+      let result: boolean;
+      
+      // If it's a DOM element and selector is a CSS selector, use CSS matching with cache
+      if (element instanceof Element && typeof selector === 'string') {
+        // Check if it looks like a CSS selector (starts with . # : [ or is a tag name)
+        if (selector.startsWith('.') || selector.startsWith('#') || selector.startsWith(':') || 
+            selector.startsWith('[') || /^[a-zA-Z][\w-]*$/.test(selector)) {
+          try {
+            result = matchesWithCache(element, selector);
+          } catch (error) {
+            result = false;
+          }
+        } else {
+          result = false;
+        }
+      } else if (typeof element === 'string' && typeof selector === 'string') {
+        // String pattern matching
+        try {
+          // Support both string patterns and regex patterns
+          const regex = selector.startsWith('/') && selector.endsWith('/') 
+            ? new RegExp(selector.slice(1, -1))
+            : new RegExp(selector);
+          result = regex.test(element);
+        } catch (error) {
+          // If pattern is invalid regex, treat as literal string
+          result = element.includes(selector);
+        }
+      } else {
+        result = false;
+      }
+      
+      return trackEvaluation(this, context, [element, selector], result, startTime);
     } catch (error) {
-      // If pattern is invalid regex, treat as literal string
-      return element.includes(selector);
+      trackEvaluation(this, context, [element, selector], false, startTime, false, error instanceof Error ? error : new Error(String(error)));
+      throw error;
     }
   },
   
@@ -508,6 +738,87 @@ export const matchesExpression: ExpressionImplementation = {
       return 'matches requires exactly two arguments (element, selector)';
     }
     return null;
+  },
+
+  inputSchema: PatternMatchingInputSchema,
+
+  metadata: {
+    category: 'Logical',
+    complexity: 'medium',
+    sideEffects: ['dom-query'],
+    dependencies: [],
+    returnTypes: ['Boolean'],
+    examples: [
+      {
+        input: 'element matches ".active"',
+        description: 'Check if element has active class',
+        expectedOutput: true
+      },
+      {
+        input: 'text matches "/^hello/"',
+        description: 'Check if text starts with "hello" using regex',
+        expectedOutput: true,
+        context: { text: 'hello world' }
+      }
+    ],
+    relatedExpressions: ['contains', 'startsWith', 'endsWith'],
+    performance: {
+      averageTime: 0.5,
+      complexity: 'O(n)'
+    }
+  },
+
+  documentation: {
+    summary: 'Tests if element matches CSS selector or string matches regex pattern',
+    parameters: [
+      {
+        name: 'element',
+        type: 'Element | string',
+        description: 'DOM element or string to test',
+        optional: false,
+        examples: ['<div>', '"hello world"', 'me', 'target']
+      },
+      {
+        name: 'selector',
+        type: 'string',
+        description: 'CSS selector or regex pattern to match against',
+        optional: false,
+        examples: ['".active"', '"#navbar"', '"/^hello/"', '"\\\\d+"']
+      }
+    ],
+    returns: {
+      type: 'Boolean',
+      description: 'True if element matches selector/pattern',
+      examples: ['true', 'false']
+    },
+    examples: [
+      {
+        title: 'CSS class matching',
+        code: 'if me matches ".active"',
+        explanation: 'Check if current element has "active" class',
+        output: 'Boolean result'
+      },
+      {
+        title: 'Attribute matching',
+        code: 'if target matches "[data-role=\\"button\\"]"',
+        explanation: 'Check if element has specific data attribute',
+        output: 'Boolean result'
+      },
+      {
+        title: 'Regex pattern matching',
+        code: 'if email matches "/^[^@]+@[^@]+\\\\.[^@]+$/"',
+        explanation: 'Validate email format with regex',
+        output: 'Boolean result'
+      },
+      {
+        title: 'Complex CSS selector',
+        code: 'if element matches ".card:hover .button"',
+        explanation: 'Match complex CSS selector with pseudo-classes',
+        output: 'Boolean result'
+      }
+    ],
+    seeAlso: ['contains', 'startsWith', 'endsWith', 'querySelector'],
+    tags: ['pattern', 'css', 'regex', 'validation', 'dom']
   }
 };
 
