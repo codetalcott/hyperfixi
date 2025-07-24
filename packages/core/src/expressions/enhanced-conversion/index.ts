@@ -8,10 +8,9 @@ import type {
   TypedExpressionContext, 
   TypedResult,
   ExpressionMetadata,
-  LLMDocumentation,
-  ValidationResult,
   BaseTypedExpression
 } from '../../types/enhanced-expressions.ts';
+import type { ValidationResult, LLMDocumentation } from '../../types/enhanced-core.ts';
 
 // ============================================================================
 // Enhanced Type Conversion Registry
@@ -36,7 +35,7 @@ export interface EnhancedTypeConverter<T = unknown> {
  * Enhanced conversion registry with type safety
  */
 export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
-  Array: (value: unknown): TypedResult<unknown[]> => {
+  Array: (value: unknown, _context: TypedExpressionContext): TypedResult<unknown[]> => {
     try {
       if (Array.isArray(value)) {
         return { success: true, value, type: 'array' };
@@ -61,7 +60,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  String: (value: unknown): TypedResult<string> => {
+  String: (value: unknown, _context: TypedExpressionContext): TypedResult<string> => {
     try {
       if (value == null) {
         return { success: true, value: '', type: 'string' };
@@ -87,7 +86,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Boolean: (value: unknown): TypedResult<boolean> => {
+  Boolean: (value: unknown, _context: TypedExpressionContext): TypedResult<boolean> => {
     try {
       if (typeof value === 'boolean') {
         return { success: true, value, type: 'boolean' };
@@ -119,7 +118,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Number: (value: unknown): TypedResult<number> => {
+  Number: (value: unknown, _context: TypedExpressionContext): TypedResult<number> => {
     try {
       if (typeof value === 'number') {
         return { success: true, value, type: 'number' };
@@ -153,29 +152,29 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Int: (value: any): TypedResult<number> => {
-    const numberResult = enhancedConverters.Number(value);
+  Int: (value: unknown, context: TypedExpressionContext): TypedResult<number> => {
+    const numberResult = enhancedConverters.Number(value, context);
     if (!numberResult.success) {
       return numberResult;
     }
-    return { success: true, value: Math.trunc(numberResult.value), type: 'number' };
+    return { success: true, value: Math.trunc(numberResult.value as number), type: 'number' };
   },
 
-  Float: (value: any): TypedResult<number> => {
-    const numberResult = enhancedConverters.Number(value);
+  Float: (value: unknown, context: TypedExpressionContext): TypedResult<number> => {
+    const numberResult = enhancedConverters.Number(value, context);
     if (!numberResult.success) {
       return numberResult;
     }
-    return { success: true, value: parseFloat(numberResult.value.toString()), type: 'number' };
+    return { success: true, value: parseFloat((numberResult.value as number).toString()), type: 'number' };
   },
 
-  Date: (value: unknown): TypedResult<Date> => {
+  Date: (value: unknown, _context: TypedExpressionContext): TypedResult<Date> => {
     try {
       if (value instanceof Date) {
         return { success: true, value, type: 'object' };
       }
       if (value == null) {
-        return { success: true, value: new Date(NaN), type: 'object' };
+        return { success: true, value: new Date(''), type: 'object' };
       }
       
       // Handle YYYY-MM-DD format specially to avoid timezone issues
@@ -185,7 +184,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
         return { success: true, value: date, type: 'object' };
       }
       
-      const date = new Date(value);
+      const date = new Date(value as string | number | Date);
       if (isNaN(date.getTime())) {
         return {
           success: false,
@@ -211,7 +210,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  JSON: (value: unknown): TypedResult<string> => {
+  JSON: (value: unknown, _context: TypedExpressionContext): TypedResult<string> => {
     try {
       const jsonString = JSON.stringify(value);
       return { success: true, value: jsonString, type: 'string' };
@@ -228,10 +227,10 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Object: (value: unknown): TypedResult<Record<string, unknown>> => {
+  Object: (value: unknown, _context: TypedExpressionContext): TypedResult<Record<string, unknown>> => {
     try {
       if (typeof value === 'object' && value !== null) {
-        return { success: true, value, type: 'object' };
+        return { success: true, value: value as Record<string, unknown>, type: 'object' };
       }
       if (typeof value === 'string') {
         try {
@@ -271,13 +270,13 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
       }
       if (value instanceof HTMLElement) {
         const inputs = value.querySelectorAll('input, select, textarea');
-        const values: Record<string, any> = {};
+        const values: Record<string, unknown> = {};
         inputs.forEach((input: Element) => {
           const htmlInput = input as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-          if ((htmlInput as any).name) {
+          if ((htmlInput as HTMLInputElement).name) {
             const inputValue = extractInputValue(htmlInput);
             if (inputValue !== undefined) {
-              values[(htmlInput as any).name] = inputValue;
+              values[(htmlInput as HTMLInputElement).name] = inputValue;
             }
           }
         });
@@ -335,8 +334,7 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
       {
         input: 'form as Values',
         description: 'Extract form values as object',
-        expectedOutput: { name: 'John', age: '25' },
-        context: { form: '<form with inputs>' }
+        expectedOutput: { name: 'John', age: '25' }
       },
       {
         input: '[1,2,3] as JSON',
@@ -352,7 +350,7 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
     relatedExpressions: ['is', 'Object', 'Array'],
     performance: {
       averageTime: 1.0,
-      complexity: 'O(n) for complex types, O(1) for primitives'
+      complexity: 'O(n)'
     }
   };
 
@@ -361,7 +359,7 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
     parameters: [
       {
         name: 'value',
-        type: 'any',
+        type: 'object',
         description: 'The value to convert',
         optional: false,
         examples: ['"123"', 'form', '[1,2,3]', 'true', 'null']
@@ -375,7 +373,7 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
       }
     ],
     returns: {
-      type: 'TypedResult<T>',
+      type: 'object',
       description: 'Structured result with converted value or detailed error information',
       examples: ['{ success: true, value: 123, type: "number" }', '{ success: false, error: { ... } }']
     },
@@ -439,11 +437,11 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
       if (type.startsWith('Fixed')) {
         const precisionMatch = type.match(/^Fixed:(\d+)$/);
         const precision = precisionMatch ? parseInt(precisionMatch[1], 10) : 2;
-        const numberResult = enhancedConverters.Number(value);
+        const numberResult = enhancedConverters.Number(value, context);
         if (!numberResult.success) {
           return numberResult;
         }
-        const fixed = numberResult.value.toFixed(precision);
+        const fixed = (numberResult.value as number).toFixed(precision);
         const result = { success: true as const, value: fixed, type: 'string' as const };
         this.trackEvaluation(context, input, result, startTime);
         return result;
@@ -525,9 +523,9 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
         return {
           isValid: false,
           errors: parsed.error.errors.map(err => ({
-            path: err.path,
+            type: 'type-mismatch' as const,
             message: err.message,
-            code: err.code
+            suggestion: `Expected valid input structure, got: ${err.code}`
           })),
           suggestions: [
             'Provide both value and type parameters',
@@ -536,11 +534,11 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
           ]
         };
       }
-      return { isValid: true, errors: [] };
-    } catch (error) {
+      return { isValid: true, errors: [], suggestions: [] };
+    } catch (_error) {
       return {
         isValid: false,
-        errors: [{ message: 'Validation failed', code: 'VALIDATION_ERROR' }],
+        errors: [{ type: 'runtime-error' as const, message: 'Validation failed', suggestion: 'Check input structure' }],
         suggestions: ['Check input structure']
       };
     }
@@ -622,7 +620,7 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
     parameters: [
       {
         name: 'value',
-        type: 'any',
+        type: 'object',
         description: 'The value to check',
         optional: false,
         examples: ['42', 'null', 'element', '"text"', '[]']
@@ -636,7 +634,7 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
       }
     ],
     returns: {
-      type: 'TypedResult<boolean>',
+      type: 'object',
       description: 'Boolean result indicating type match',
       examples: ['{ success: true, value: true, type: "boolean" }']
     },
@@ -720,7 +718,7 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
         case 'node':
           isMatch = value instanceof Node;
           break;
-        case 'nodelist':
+        case 'node-list':
           isMatch = value instanceof NodeList;
           break;
         case 'empty':
@@ -759,9 +757,9 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
         return {
           isValid: false,
           errors: parsed.error.errors.map(err => ({
-            path: err.path,
+            type: 'type-mismatch' as const,
             message: err.message,
-            code: err.code
+            suggestion: `Expected valid input structure, got: ${err.code}`
           })),
           suggestions: [
             'Provide both value and type parameters',
@@ -770,11 +768,11 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
           ]
         };
       }
-      return { isValid: true, errors: [] };
-    } catch (error) {
+      return { isValid: true, errors: [], suggestions: [] };
+    } catch (_error) {
       return {
         isValid: false,
-        errors: [{ message: 'Validation failed', code: 'VALIDATION_ERROR' }],
+        errors: [{ type: 'runtime-error' as const, message: 'Validation failed', suggestion: 'Check input structure' }],
         suggestions: ['Check input structure']
       };
     }
@@ -819,7 +817,7 @@ function extractFormValues(form: HTMLFormElement): Record<string, unknown> {
           if (!Array.isArray(values[input.name])) {
             values[input.name] = [values[input.name]];
           }
-          values[input.name].push(value);
+          (values[input.name] as unknown[]).push(value);
         } else {
           values[input.name] = value;
         }

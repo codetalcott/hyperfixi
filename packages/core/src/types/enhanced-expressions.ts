@@ -4,8 +4,8 @@
  */
 
 import { z } from 'zod';
-import type { ValidationResult, EvaluationResult, LLMDocumentation } from './enhanced-core';
-import type { ExecutionContext } from './core';
+import type { ValidationResult, EvaluationResult, LLMDocumentation } from './enhanced-core.ts';
+import type { ExecutionContext } from './core.ts';
 
 /**
  * Expression categories for organization and metadata
@@ -44,6 +44,44 @@ export interface TypedExpressionContext extends ExecutionContext {
   // Performance tracking
   evaluationStartTime?: number;
   evaluationHistory: ExpressionEvaluation[];
+}
+
+/**
+ * Typed result for enhanced expressions with structured success/failure states
+ */
+export type TypedResult<T> = {
+  success: true;
+  value: T;
+  type: string;
+} | {
+  success: false;
+  error: TypedError;
+};
+
+/**
+ * Enhanced error type with suggestions and structured information
+ */
+export interface TypedError {
+  name: string;
+  message: string;
+  code: string;
+  suggestions: string[];
+}
+
+/**
+ * Base interface for typed expressions
+ */
+export interface BaseTypedExpression<T> {
+  readonly name: string;
+  readonly category: string;
+  readonly syntax: string;
+  readonly outputType: string;
+  readonly inputSchema: z.ZodSchema<unknown>;
+  readonly metadata: ExpressionMetadata;
+  readonly documentation: LLMDocumentation;
+  
+  evaluate(context: TypedExpressionContext, input: unknown): Promise<TypedResult<T>>;
+  validate(input: unknown): ValidationResult;
 }
 
 /**
@@ -124,13 +162,14 @@ export interface TypedExpressionImplementation<
  * Expression validation error with position information
  */
 export interface ExpressionValidationError {
-  type: 'syntax-error' | 'type-mismatch' | 'context-error' | 'runtime-error';
+  type: 'type-mismatch' | 'missing-argument' | 'invalid-syntax' | 'runtime-error';
   message: string;
   position?: {
-    start: number;
-    end: number;
-    line?: number;
-    column?: number;
+    line: number;
+    column: number;
+    source: string;
+    start?: number;
+    end?: number;
   };
   suggestion: string;
   code?: string;
@@ -232,7 +271,7 @@ export interface ExpressionFactory {
    */
   createReferenceExpression<T = HTMLElement>(
     name: string,
-    evaluator: (context: TypedExpressionContext, input: any) => Promise<T>
+    evaluator: (context: TypedExpressionContext, input: unknown) => Promise<T>
   ): TypedExpressionImplementation;
   
   /**
@@ -240,7 +279,7 @@ export interface ExpressionFactory {
    */
   createLogicalExpression(
     name: string,
-    evaluator: (context: TypedExpressionContext, left: any, right: any) => Promise<boolean>
+    evaluator: (context: TypedExpressionContext, left: unknown, right: unknown) => Promise<boolean>
   ): TypedExpressionImplementation;
   
   /**
@@ -357,3 +396,6 @@ export const CommonInputSchemas = {
     right: z.boolean()
   })
 } as const;
+
+// Re-export types from enhanced-core for convenience
+export type { ValidationResult, LLMDocumentation } from './enhanced-core.ts';

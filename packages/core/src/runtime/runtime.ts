@@ -157,7 +157,17 @@ export class Runtime {
     
     // Try enhanced commands first if available
     if (this.options.useEnhancedCommands && this.enhancedRegistry.has(commandName)) {
-      return await this.executeEnhancedCommand(commandName, [{ type: 'literal', value: selector }], context);
+      // For pattern-based execution, we need to handle different command types
+      let args: ASTNode[];
+      if (commandName === 'remove' || commandName === 'add') {
+        // For remove/add, pass the class name directly (strip . if present)
+        const className = selector.startsWith('.') ? selector.slice(1) : selector;
+        args = [{ type: 'literal', value: className }];
+      } else {
+        // For other commands (hide/show), pass selector as is
+        args = selector ? [{ type: 'literal', value: selector }] : [];
+      }
+      return await this.executeEnhancedCommand(commandName, args, context);
     }
 
     // Fallback to legacy command handling

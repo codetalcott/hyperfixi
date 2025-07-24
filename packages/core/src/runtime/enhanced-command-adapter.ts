@@ -145,8 +145,8 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
       return { success: true, data: input };
     }
     
-    // Use the command's validate method
-    const result = this.impl.validate([input]);
+    // Use the command's validate method - pass input directly since commands expect tuple format
+    const result = this.impl.validate(input);
     return {
       success: result.isValid,
       data: input,
