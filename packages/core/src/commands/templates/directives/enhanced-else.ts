@@ -4,7 +4,6 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
 import type {
   EnhancedTemplateDirective,
   TemplateExecutionContext,
@@ -174,7 +173,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
   /**
    * Main evaluation method for expressions
    */
-  async evaluate(context: TemplateExecutionContext, input: ElseDirectiveInput): Promise<TypedResult<string>> {
+  evaluate(context: TemplateExecutionContext, input: ElseDirectiveInput): Promise<TypedResult<string>> {
     return this.executeTemplate(context, input, input.templateContent);
   }
 
