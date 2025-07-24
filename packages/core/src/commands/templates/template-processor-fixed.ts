@@ -229,10 +229,10 @@ export class FixedTemplateProcessor {
       if (trimmed.startsWith('unescaped ')) {
         const varName = trimmed.substring('unescaped '.length).trim();
         const value = this.resolveVariable(varName, context);
-        return String(value || '');
+        return this.valueToString(value);
       } else {
         const value = this.resolveVariable(trimmed, context);
-        return this.escapeHtml(String(value || ''));
+        return this.escapeHtml(this.valueToString(value));
       }
     });
   }
@@ -295,6 +295,15 @@ export class FixedTemplateProcessor {
       if (!context.locals) context.locals = new Map();
       context.locals.set(varName, value);
     }
+  }
+
+  /**
+   * Convert value to string with proper null/undefined handling
+   */
+  private valueToString(value: any): string {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    return String(value);
   }
 
   /**

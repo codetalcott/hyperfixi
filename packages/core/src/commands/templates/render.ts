@@ -75,7 +75,7 @@ export class RenderCommand implements CommandImplementation {
     data: any, 
     context: ExecutionContext
   ): Promise<DocumentFragment> {
-    // Use the fixed template processor
+    // Use the fixed template processor which handles HTML escaping correctly
     const { FixedTemplateProcessor } = await import('./template-processor-fixed.js');
     
     const processor = new FixedTemplateProcessor();
@@ -86,7 +86,7 @@ export class RenderCommand implements CommandImplementation {
     // Create template context with data
     const templateContext = this.createTemplateContext(data, context);
     
-    // Process the template to HTML
+    // Process the template to HTML (this handles ${} interpolation with escaping)
     const html = await processor.processTemplate(templateContent, templateContext);
     
     // Convert HTML string back to DocumentFragment
