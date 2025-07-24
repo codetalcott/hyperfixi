@@ -10,8 +10,8 @@ import {
   EnhancedIsExpression,
   enhancedConversionExpressions,
   enhancedConverters
-} from './index';
-import type { TypedExpressionContext } from '../../types/enhanced-expressions';
+} from './index.ts';
+import type { TypedExpressionContext } from '../../types/enhanced-expressions.ts';
 
 // Mock DOM environment
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
@@ -529,7 +529,7 @@ describe('Enhanced Conversion Expressions', () => {
       const { 
         createEnhancedAsExpression,
         createEnhancedIsExpression
-      } = await import('./index');
+      } = await import('./index.ts');
 
       expect(createEnhancedAsExpression()).toBeInstanceOf(EnhancedAsExpression);
       expect(createEnhancedIsExpression()).toBeInstanceOf(EnhancedIsExpression);

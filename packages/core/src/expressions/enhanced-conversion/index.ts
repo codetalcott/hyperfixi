@@ -6,13 +6,12 @@
 import { z } from 'zod';
 import type { 
   TypedExpressionContext, 
-  TypedResult, 
-  TypedError,
+  TypedResult,
   ExpressionMetadata,
   LLMDocumentation,
   ValidationResult,
   BaseTypedExpression
-} from '../../types/enhanced-expressions.js';
+} from '../../types/enhanced-expressions.ts';
 
 // ============================================================================
 // Enhanced Type Conversion Registry
@@ -29,15 +28,15 @@ export type SupportedConversionType =
 /**
  * Enhanced type converter function with structured results
  */
-export interface EnhancedTypeConverter<T = any> {
-  (value: any, context: TypedExpressionContext): TypedResult<T>;
+export interface EnhancedTypeConverter<T = unknown> {
+  (value: unknown, context: TypedExpressionContext): TypedResult<T>;
 }
 
 /**
  * Enhanced conversion registry with type safety
  */
 export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
-  Array: (value: any): TypedResult<any[]> => {
+  Array: (value: unknown): TypedResult<unknown[]> => {
     try {
       if (Array.isArray(value)) {
         return { success: true, value, type: 'array' };
@@ -62,7 +61,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  String: (value: any): TypedResult<string> => {
+  String: (value: unknown): TypedResult<string> => {
     try {
       if (value == null) {
         return { success: true, value: '', type: 'string' };
@@ -88,7 +87,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Boolean: (value: any): TypedResult<boolean> => {
+  Boolean: (value: unknown): TypedResult<boolean> => {
     try {
       if (typeof value === 'boolean') {
         return { success: true, value, type: 'boolean' };
@@ -120,7 +119,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Number: (value: any): TypedResult<number> => {
+  Number: (value: unknown): TypedResult<number> => {
     try {
       if (typeof value === 'number') {
         return { success: true, value, type: 'number' };
@@ -170,7 +169,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     return { success: true, value: parseFloat(numberResult.value.toString()), type: 'number' };
   },
 
-  Date: (value: any): TypedResult<Date> => {
+  Date: (value: unknown): TypedResult<Date> => {
     try {
       if (value instanceof Date) {
         return { success: true, value, type: 'object' };
@@ -212,7 +211,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  JSON: (value: any): TypedResult<string> => {
+  JSON: (value: unknown): TypedResult<string> => {
     try {
       const jsonString = JSON.stringify(value);
       return { success: true, value: jsonString, type: 'string' };
@@ -229,7 +228,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Object: (value: any): TypedResult<Record<string, any>> => {
+  Object: (value: unknown): TypedResult<Record<string, unknown>> => {
     try {
       if (typeof value === 'object' && value !== null) {
         return { success: true, value, type: 'object' };
@@ -264,7 +263,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Values: (value: any, context: TypedExpressionContext): TypedResult<Record<string, any>> => {
+  Values: (value: unknown, _context: TypedExpressionContext): TypedResult<Record<string, unknown>> => {
     try {
       if (value instanceof HTMLFormElement) {
         const formValues = extractFormValues(value);
@@ -314,7 +313,7 @@ const AsExpressionInputSchema = z.object({
 /**
  * Enhanced implementation of the 'as' conversion expression
  */
-export class EnhancedAsExpression implements BaseTypedExpression<any> {
+export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
   readonly name = 'as';
   readonly category = 'Conversion';
   readonly syntax = 'value as Type';
@@ -416,7 +415,7 @@ export class EnhancedAsExpression implements BaseTypedExpression<any> {
     tags: ['conversion', 'types', 'validation', 'forms', 'json', 'parsing']
   };
 
-  async evaluate(context: TypedExpressionContext, input: { value: any; type: string }): Promise<TypedResult<any>> {
+  async evaluate(context: TypedExpressionContext, input: { value: unknown; type: string }): Promise<TypedResult<unknown>> {
     const startTime = Date.now();
     
     try {
@@ -549,8 +548,8 @@ export class EnhancedAsExpression implements BaseTypedExpression<any> {
 
   private trackEvaluation(
     context: TypedExpressionContext,
-    input: any,
-    result: TypedResult<any>,
+    input: unknown,
+    result: TypedResult<unknown>,
     startTime: number
   ): void {
     context.evaluationHistory.push({
@@ -665,7 +664,7 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
     tags: ['validation', 'types', 'checking', 'guards']
   };
 
-  async evaluate(context: TypedExpressionContext, input: { value: any; type: string }): Promise<TypedResult<boolean>> {
+  async evaluate(context: TypedExpressionContext, input: { value: unknown; type: string }): Promise<TypedResult<boolean>> {
     const startTime = Date.now();
     
     try {
@@ -783,7 +782,7 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
 
   private trackEvaluation(
     context: TypedExpressionContext,
-    input: any,
+    input: unknown,
     result: TypedResult<boolean>,
     startTime: number
   ): void {
@@ -806,8 +805,8 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
 /**
  * Extract form values with comprehensive input handling
  */
-function extractFormValues(form: HTMLFormElement): Record<string, any> {
-  const values: Record<string, any> = {};
+function extractFormValues(form: HTMLFormElement): Record<string, unknown> {
+  const values: Record<string, unknown> = {};
   const elements = form.querySelectorAll('input, select, textarea');
   
   elements.forEach((element) => {
@@ -834,7 +833,7 @@ function extractFormValues(form: HTMLFormElement): Record<string, any> {
 /**
  * Extract value from form input with type-aware processing
  */
-function extractInputValue(input: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement): any {
+function extractInputValue(input: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement): unknown {
   if (input instanceof HTMLInputElement) {
     switch (input.type) {
       case 'checkbox':

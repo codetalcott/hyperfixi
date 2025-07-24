@@ -12,9 +12,9 @@ import {
   LegacyCompatibilityLayer,
   ExpressionMigrationUtility,
   ConversionUtilities
-} from './bridge';
-import type { ExecutionContext } from '../../types/core';
-import type { TypedExpressionContext } from '../../types/enhanced-expressions';
+} from './bridge.ts';
+import type { ExecutionContext } from '../../types/core.ts';
+import type { TypedExpressionContext } from '../../types/enhanced-expressions.ts';
 
 // Mock DOM environment
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');

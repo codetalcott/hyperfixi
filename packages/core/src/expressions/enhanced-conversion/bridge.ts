@@ -3,9 +3,9 @@
  * Enables gradual migration from legacy to enhanced expressions while maintaining compatibility
  */
 
-import type { ExecutionContext } from '../../types/core';
-import type { TypedExpressionContext, ExpressionEvaluationOptions } from '../../types/enhanced-expressions';
-import { enhancedConversionExpressions } from './index';
+import type { ExecutionContext } from '../../types/core.ts';
+import type { TypedExpressionContext, ExpressionEvaluationOptions } from '../../types/enhanced-expressions.ts';
+import { enhancedConversionExpressions } from './index.ts';
 
 /**
  * Convert ExecutionContext to TypedExpressionContext for enhanced expressions
@@ -59,7 +59,7 @@ export class EnhancedConversionAdapter {
   /**
    * Evaluate enhanced 'as' expression with legacy context
    */
-  static async evaluateAs(context: ExecutionContext, value: any, type: string): Promise<any> {
+  static async evaluateAs(context: ExecutionContext, value: unknown, type: string): Promise<unknown> {
     const typedContext = createTypedExpressionContext(context);
     const input = { value, type };
     const result = await enhancedConversionExpressions.as.evaluate(typedContext, input);
@@ -76,7 +76,7 @@ export class EnhancedConversionAdapter {
   /**
    * Evaluate enhanced 'is' expression with legacy context
    */
-  static async evaluateIs(context: ExecutionContext, value: any, type: string): Promise<boolean> {
+  static async evaluateIs(context: ExecutionContext, value: unknown, type: string): Promise<boolean> {
     const typedContext = createTypedExpressionContext(context);
     const input = { value, type };
     const result = await enhancedConversionExpressions.is.evaluate(typedContext, input);
@@ -127,11 +127,11 @@ export class LegacyCompatibilityLayer {
     category: 'Conversion' as const,
     evaluatesTo: 'Any' as const,
     
-    async evaluate(context: ExecutionContext, value: any, type: string): Promise<any> {
+    async evaluate(context: ExecutionContext, value: unknown, type: string): Promise<unknown> {
       return EnhancedConversionAdapter.evaluateAs(context, value, type);
     },
     
-    validate(args: any[]): string | null {
+    validate(args: unknown[]): string | null {
       if (args.length !== 2) {
         return 'as expression requires exactly two arguments (value, type)';
       }
@@ -150,11 +150,11 @@ export class LegacyCompatibilityLayer {
     category: 'Conversion' as const,
     evaluatesTo: 'Boolean' as const,
     
-    async evaluate(context: ExecutionContext, value: any, type: string): Promise<boolean> {
+    async evaluate(context: ExecutionContext, value: unknown, type: string): Promise<boolean> {
       return EnhancedConversionAdapter.evaluateIs(context, value, type);
     },
     
-    validate(args: any[]): string | null {
+    validate(args: unknown[]): string | null {
       if (args.length !== 2) {
         return 'is expression requires exactly two arguments (value, type)';
       }
@@ -228,10 +228,10 @@ export class ConversionUtilities {
    */
   static async safeConvert(
     context: ExecutionContext,
-    value: any,
+    value: unknown,
     type: string,
-    fallback?: any
-  ): Promise<{ success: boolean; value: any; error?: any }> {
+    fallback?: unknown
+  ): Promise<{ success: boolean; value: unknown; error?: unknown }> {
     try {
       const typedContext = createTypedExpressionContext(context);
       const input = { value, type };
@@ -260,10 +260,10 @@ export class ConversionUtilities {
    */
   static async batchConvert(
     context: ExecutionContext,
-    conversions: Array<{ value: any; type: string; key?: string }>
-  ): Promise<{ success: boolean; results: Record<string, any>; errors: Array<any> }> {
-    const results: Record<string, any> = {};
-    const errors: Array<any> = [];
+    conversions: Array<{ value: unknown; type: string; key?: string }>
+  ): Promise<{ success: boolean; results: Record<string, unknown>; errors: Array<unknown> }> {
+    const results: Record<string, unknown> = {};
+    const errors: Array<unknown> = [];
     let overallSuccess = true;
 
     for (let i = 0; i < conversions.length; i++) {
