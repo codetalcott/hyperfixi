@@ -1,21 +1,116 @@
 /**
- * Remove Command Implementation
+ * Enhanced Remove Command - Deep TypeScript Integration
  * Removes CSS classes from elements
+ * Enhanced for LLM code agents with full type safety
  */
 
-import type { CommandImplementation, ExecutionContext } from '../../types/core';
-import { dispatchCustomEvent } from '../../core/events';
+import { z } from 'zod';
+import type { 
+  TypedCommandImplementation,
+  TypedExecutionContext,
+  EvaluationResult,
+  ValidationResult,
+  CommandMetadata,
+  LLMDocumentation,
+} from '../../types/enhanced-core.ts';
+import { dispatchCustomEvent } from '../../core/events.ts';
 
 export interface RemoveCommandOptions {
   delimiter?: string;
 }
 
-export class RemoveCommand implements CommandImplementation {
-  public readonly name = 'remove';
+/**
+ * Input validation schema for LLM understanding
+ */
+const RemoveCommandInputSchema = z.tuple([
+  z.union([
+    z.string(),                                    // Class names
+    z.array(z.string()),                          // Array of class names
+  ]),
+  z.union([
+    z.instanceof(HTMLElement),
+    z.array(z.instanceof(HTMLElement)), 
+    z.string(), // CSS selector
+    z.null(),   // Use implicit target (me)
+    z.undefined()
+  ]).optional()
+]);
+
+type RemoveCommandInput = z.infer<typeof RemoveCommandInputSchema>;
+
+/**
+ * Enhanced Remove Command with full type safety for LLM agents
+ */
+export class RemoveCommand implements TypedCommandImplementation<
+  RemoveCommandInput,
+  HTMLElement[],  // Returns list of modified elements
+  TypedExecutionContext
+> {
+  public readonly name = 'remove' as const;
   public readonly syntax = 'remove <class-expression> [from <target-expression>]';
-  public readonly isBlocking = false;
-  public readonly hasBody = false;
-  public readonly implicitTarget = 'me';
+  public readonly description = 'Removes CSS classes from elements';
+  public readonly inputSchema = RemoveCommandInputSchema;
+  public readonly outputType = 'element-list' as const;
+  
+  public readonly metadata: CommandMetadata = {
+    category: 'dom-manipulation',
+    complexity: 'simple',
+    sideEffects: ['dom-mutation'],
+    examples: [
+      {
+        code: 'remove .active from me',
+        description: 'Remove active class from current element',
+        expectedOutput: []
+      },
+      {
+        code: 'remove "loading spinner" from <.buttons/>',
+        description: 'Remove multiple classes from elements with buttons class',
+        expectedOutput: []
+      }
+    ],
+    relatedCommands: ['add', 'toggle', 'hide']
+  };
+
+  public readonly documentation: LLMDocumentation = {
+    summary: 'Removes CSS classes from HTML elements',
+    parameters: [
+      {
+        name: 'classExpression',
+        type: 'string | string[]',
+        description: 'CSS class names to remove',
+        optional: false,
+        examples: ['.active', 'highlighted', 'loading spinner']
+      },
+      {
+        name: 'target',
+        type: 'element',
+        description: 'Element(s) to modify. If omitted, uses the current element (me)',
+        optional: true,
+        examples: ['me', '<#sidebar/>', '<.buttons/>']
+      }
+    ],
+    returns: {
+      type: 'element-list',
+      description: 'Array of elements that were modified',
+      examples: [[]]
+    },
+    examples: [
+      {
+        title: 'Remove single class',
+        code: 'on click remove .active from me',
+        explanation: 'When clicked, removes the "active" class from the element',
+        output: []
+      },
+      {
+        title: 'Remove multiple classes',
+        code: 'remove "loading error" from <#submit-btn/>',
+        explanation: 'Removes both "loading" and "error" classes from submit button',
+        output: []
+      }
+    ],
+    seeAlso: ['add', 'toggle', 'hide', 'show'],
+    tags: ['dom', 'css', 'classes']
+  };
   
   private options: RemoveCommandOptions;
 
@@ -26,19 +121,85 @@ export class RemoveCommand implements CommandImplementation {
     };
   }
 
-  async execute(context: ExecutionContext, classExpression?: any, target?: any): Promise<void> {
-    // Parse arguments - remove command can be called as:
-    // remove("class-name", target) or remove("class-name") 
-    const classes = this.parseClasses(classExpression);
-    const elements = this.resolveTargets(context, target);
-    
-    if (!classes.length) {
-      console.warn('Remove command: No classes provided to remove');
-      return;
-    }
-    
-    for (const element of elements) {
-      await this.removeClass(element, classes, context);
+  async execute(
+    context: TypedExecutionContext,
+    classExpression: RemoveCommandInput[0],
+    target?: RemoveCommandInput[1]
+  ): Promise<EvaluationResult<HTMLElement[]>> {
+    try {
+      // Runtime validation for type safety
+      const validationResult = this.validate([classExpression, target]);
+      if (!validationResult.isValid) {
+        return {
+          success: false,
+          error: {
+            name: 'ValidationError',
+            message: validationResult.errors[0]?.message || 'Invalid input',
+            code: 'REMOVE_VALIDATION_FAILED',
+            suggestions: validationResult.suggestions
+          },
+          type: 'error'
+        };
+      }
+
+      // Parse and validate classes
+      const classes = this.parseClasses(classExpression);
+      if (!classes.length) {
+        return {
+          success: false,
+          error: {
+            name: 'RemoveCommandError',
+            message: 'No valid classes provided to remove',
+            code: 'NO_VALID_CLASSES',
+            suggestions: ['Provide valid CSS class names', 'Check class name syntax']
+          },
+          type: 'error'
+        };
+      }
+      
+      // Type-safe target resolution
+      const elements = this.resolveTargets(context, target);
+      
+      if (!elements.length) {
+        return {
+          success: false,
+          error: {
+            name: 'RemoveCommandError',
+            message: 'No target elements found',
+            code: 'NO_TARGET_ELEMENTS',
+            suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM']
+          },
+          type: 'error'
+        };
+      }
+      
+      // Process elements with enhanced error handling
+      const modifiedElements: HTMLElement[] = [];
+      
+      for (const element of elements) {
+        const classResult = await this.removeClassesFromElement(element, classes, context);
+        if (classResult.success) {
+          modifiedElements.push(element);
+        }
+      }
+
+      return {
+        success: true,
+        value: modifiedElements,
+        type: 'element-list'
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          name: 'RemoveCommandError',
+          message: error instanceof Error ? error.message : 'Unknown error',
+          code: 'REMOVE_EXECUTION_FAILED',
+          suggestions: ['Check if elements exist', 'Verify class names are valid']
+        },
+        type: 'error'
+      };
     }
   }
 
@@ -65,7 +226,10 @@ export class RemoveCommand implements CommandImplementation {
     return [String(classExpression).trim()].filter(cls => cls.length > 0);
   }
 
-  private resolveTargets(context: ExecutionContext, target?: any): HTMLElement[] {
+  private resolveTargets(
+    context: TypedExecutionContext,
+    target?: RemoveCommandInput[1]
+  ): HTMLElement[] {
     // If no target specified, use implicit target (me)
     if (target === undefined || target === null) {
       return context.me ? [context.me] : [];
@@ -88,20 +252,26 @@ export class RemoveCommand implements CommandImplementation {
 
     // Handle CSS selector string
     if (typeof target === 'string') {
-      const elements = document.querySelectorAll(target);
-      return Array.from(elements) as HTMLElement[];
+      try {
+        const elements = document.querySelectorAll(target);
+        return Array.from(elements) as HTMLElement[];
+      } catch (_error) {
+        throw new Error(`Invalid CSS selector: "${target}"`);
+      }
     }
 
-    // Fallback to context.me for invalid targets
-    return context.me ? [context.me] : [];
+    return [];
   }
 
-  private async removeClass(element: HTMLElement, classes: string[], context: ExecutionContext): Promise<void> {
-    if (!element || !classes.length) return;
-
+  private async removeClassesFromElement(
+    element: HTMLElement, 
+    classes: string[], 
+    context: TypedExecutionContext
+  ): Promise<EvaluationResult<HTMLElement>> {
     try {
       const removedClasses: string[] = [];
       
+      // Remove classes with validation
       for (const className of classes) {
         if (this.isValidClassName(className)) {
           if (element.classList.contains(className)) {
@@ -109,33 +279,51 @@ export class RemoveCommand implements CommandImplementation {
             removedClasses.push(className);
           }
         } else {
-          console.warn(`Remove command: Invalid class name "${className}"`);
+          return {
+            success: false,
+            error: {
+              name: 'RemoveClassError',
+              message: `Invalid class name: "${className}"`,
+              code: 'INVALID_CLASS_NAME',
+              suggestions: ['Use valid CSS class names', 'Check for special characters']
+            },
+            type: 'error'
+          };
         }
       }
 
-      // Only dispatch event if classes were actually removed
+      // Dispatch enhanced remove event with rich metadata
       if (removedClasses.length > 0) {
-        // Dispatch remove event
         dispatchCustomEvent(element, 'hyperscript:remove', {
           element,
           context,
-          command: 'remove',
+          command: this.name,
+          type: 'classes',
           classes: removedClasses,
           allClasses: classes,
+          timestamp: Date.now(),
+          metadata: this.metadata,
+          result: 'success'
         });
       }
 
+      return {
+        success: true,
+        value: element,
+        type: 'element'
+      };
+
     } catch (error) {
-      console.warn('Error removing classes from element:', error);
-      
-      // Dispatch error event
-      dispatchCustomEvent(element, 'hyperscript:error', {
-        element,
-        context,
-        command: 'remove',
-        error: error as Error,
-        classes,
-      });
+      return {
+        success: false,
+        error: {
+          name: 'RemoveClassError',
+          message: error instanceof Error ? error.message : 'Failed to remove classes',
+          code: 'CLASS_REMOVE_FAILED',
+          suggestions: ['Check if element is still in DOM', 'Verify class names are valid']
+        },
+        type: 'error'
+      };
     }
   }
 
@@ -151,21 +339,104 @@ export class RemoveCommand implements CommandImplementation {
     return cssClassNameRegex.test(className.trim());
   }
 
-  validate(args: any[]): string | null {
-    if (args.length === 0) {
-      return 'Remove command requires at least one class name';
-    }
+  validate(args: unknown[]): ValidationResult {
+    try {
+      // Schema validation
+      const parsed = RemoveCommandInputSchema.safeParse(args);
+      
+      if (!parsed.success) {
+        return {
+          isValid: false,
+          errors: parsed.error.errors.map(err => ({
+            type: 'type-mismatch' as const,
+            message: `Invalid argument: ${err.message}`,
+            suggestion: this.getValidationSuggestion(err.code, err.path)
+          })),
+          suggestions: ['Use string or string array for classes, and valid target selector']
+        };
+      }
 
-    if (args.length > 2) {
-      return 'Remove command accepts at most two arguments: classes and target';
-    }
+      // Additional semantic validation
+      const [classExpression, target] = parsed.data;
+      
+      // Validate class expression is not empty
+      if (!classExpression || (typeof classExpression === 'string' && classExpression.trim().length === 0)) {
+        return {
+          isValid: false,
+          errors: [{
+            type: 'empty-input',
+            message: 'Class expression cannot be empty',
+            suggestion: 'Provide valid CSS class names'
+          }],
+          suggestions: ['Use class names like "active"', 'Use space-separated class names like "loading error"']
+        };
+      }
+      
+      // Validate target selector if provided
+      if (typeof target === 'string' && !this.isValidCSSSelector(target)) {
+        return {
+          isValid: false,
+          errors: [{
+            type: 'invalid-syntax',
+            message: `Invalid CSS selector: "${target}"`,
+            suggestion: 'Use valid CSS selector syntax like "#id", ".class", or "element"'
+          }],
+          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test']
+        };
+      }
 
-    // First argument should be class expression
-    const classExpression = args[0];
-    if (classExpression === null || classExpression === undefined) {
-      return 'Remove command requires a class expression';
-    }
+      return {
+        isValid: true,
+        errors: [],
+        suggestions: []
+      };
 
-    return null;
+    } catch (error) {
+      return {
+        isValid: false,
+        errors: [{
+          type: 'runtime-error',
+          message: 'Validation failed with exception',
+          suggestion: 'Check input types and values'
+        }],
+        suggestions: ['Ensure arguments match expected types']
+      };
+    }
+  }
+
+  private getValidationSuggestion(errorCode: string, _path: (string | number)[]): string {
+    const suggestions: Record<string, string> = {
+      'invalid_type': 'Use string or string array for classes, HTMLElement or selector for target',
+      'invalid_union': 'Classes must be string or string array, target must be element or selector',
+      'too_small': 'Remove command requires at least a class expression',
+      'too_big': 'Too many arguments - remove command takes 1-2 arguments'
+    };
+    
+    return suggestions[errorCode] || 'Check argument types and syntax';
+  }
+
+  private isValidCSSSelector(selector: string): boolean {
+    try {
+      document.querySelector(selector);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
+
+// ============================================================================
+// Plugin Export for Tree-Shaking
+// ============================================================================
+
+/**
+ * Plugin factory for modular imports
+ * @llm-bundle-size 3KB
+ * @llm-description Type-safe remove command for CSS class manipulation
+ */
+export function createRemoveCommand(options?: RemoveCommandOptions): RemoveCommand {
+  return new RemoveCommand(options);
+}
+
+// Default export for convenience
+export default RemoveCommand;
