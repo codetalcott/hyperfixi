@@ -496,6 +496,171 @@ function resolveVariable(varName: string, context: ExecutionContext): any {
 }
 
 // ============================================================================
+// Global Objects
+// ============================================================================
+
+// Cookies API implementation 
+class CookiesAPI {
+  // Get a cookie value
+  get(name: string): string | undefined {
+    if (typeof document === 'undefined') {
+      // Test environment fallback
+      const testStorage = (globalThis as any).__cookieStorage__ || {};
+      return testStorage[name];
+    }
+    
+    const cookies = document.cookie.split('; ');
+    for (const cookie of cookies) {
+      const [key, value] = cookie.split('=');
+      if (key === name) {
+        return decodeURIComponent(value);
+      }
+    }
+    return undefined;
+  }
+  
+  // Set a cookie value
+  set(name: string, value: string): void {
+    if (typeof document === 'undefined') {
+      // Test environment fallback
+      const testStorage = (globalThis as any).__cookieStorage__ || {};
+      testStorage[name] = value;
+      (globalThis as any).__cookieStorage__ = testStorage;
+      return;
+    }
+    
+    document.cookie = `${name}=${encodeURIComponent(value)}; path=/`;
+  }
+  
+  // Clear a specific cookie
+  clear(name: string): void {
+    if (typeof document === 'undefined') {
+      // Test environment fallback
+      const testStorage = (globalThis as any).__cookieStorage__ || {};
+      delete testStorage[name];
+      return;
+    }
+    
+    document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  }
+  
+  // Clear all cookies
+  clearAll(): void {
+    if (typeof document === 'undefined') {
+      // Test environment fallback
+      (globalThis as any).__cookieStorage__ = {};
+      return;
+    }
+    
+    const cookies = document.cookie.split('; ');
+    for (const cookie of cookies) {
+      const [name] = cookie.split('=');
+      if (name) {
+        document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+      }
+    }
+  }
+  
+  // Get all cookies for iteration
+  getAll(): Array<{name: string, value: string}> {
+    if (typeof document === 'undefined') {
+      // Test environment fallback
+      const testStorage = (globalThis as any).__cookieStorage__ || {};
+      return Object.entries(testStorage).map(([name, value]) => ({ name, value: String(value) }));
+    }
+    
+    const cookies = document.cookie.split('; ');
+    const result: Array<{name: string, value: string}> = [];
+    
+    for (const cookie of cookies) {
+      if (cookie.trim()) {
+        const [name, value] = cookie.split('=');
+        if (name && value) {
+          result.push({ name, value: decodeURIComponent(value) });
+        }
+      }
+    }
+    
+    return result;
+  }
+
+  // Symbol.iterator for 'for...in' loops
+  [Symbol.iterator]() {
+    return this.getAll()[Symbol.iterator]();
+  }
+}
+
+// Create a Proxy to handle property access like cookies.foo
+function createCookiesProxy(): any {
+  const api = new CookiesAPI();
+  
+  return new Proxy(api, {
+    get(target, prop: string | symbol) {
+      if (typeof prop === 'symbol') {
+        return target[prop as keyof CookiesAPI];
+      }
+      
+      // Handle special methods
+      if (prop === 'clear' || prop === 'clearAll' || prop === 'getAll') {
+        return target[prop as keyof CookiesAPI].bind(target);
+      }
+      
+      // Handle Symbol.iterator for for...in loops
+      if (prop === Symbol.iterator) {
+        return target[Symbol.iterator].bind(target);
+      }
+      
+      // Handle property access like cookies.foo
+      return target.get(prop);
+    },
+    
+    set(target, prop: string | symbol, value: any) {
+      if (typeof prop === 'string') {
+        target.set(prop, String(value));
+        return true;
+      }
+      return false;
+    },
+    
+    has(target, prop: string | symbol) {
+      if (typeof prop === 'string') {
+        return target.get(prop) !== undefined;
+      }
+      return false;
+    },
+    
+    ownKeys(target) {
+      return target.getAll().map(item => item.name);
+    },
+    
+    getOwnPropertyDescriptor(target, prop: string | symbol) {
+      if (typeof prop === 'string' && target.get(prop) !== undefined) {
+        return {
+          enumerable: true,
+          configurable: true,
+          value: target.get(prop)
+        };
+      }
+      return undefined;
+    }
+  });
+}
+
+export const cookiesExpression: ExpressionImplementation = {
+  name: 'cookies',
+  category: 'Global',
+  evaluatesTo: 'Object',
+  
+  async evaluate(context: ExecutionContext): Promise<any> {
+    return createCookiesProxy();
+  },
+  
+  validate(): string | null {
+    return null; // cookies requires no arguments
+  }
+};
+
+// ============================================================================
 // Export all special expressions
 // ============================================================================
 
@@ -515,6 +680,7 @@ export const specialExpressions = {
   unaryMinus: unaryMinusExpression,
   unaryPlus: unaryPlusExpression,
   parentheses: parenthesesExpression,
+  cookies: cookiesExpression,
 } as const;
 
 export type SpecialExpressionName = keyof typeof specialExpressions;

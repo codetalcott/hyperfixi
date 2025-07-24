@@ -17,6 +17,8 @@ describe('Special Expressions', () => {
 
   beforeEach(() => {
     context = createMockHyperscriptContext();
+    // Clear cookie storage for tests
+    (globalThis as any).__cookieStorage__ = {};
   });
 
   describe('Literal Expressions', () => {
@@ -530,6 +532,148 @@ describe('Special Expressions', () => {
       expect(specialExpressions.unaryPlus.operators).toContain('+');
       expect(specialExpressions.parentheses.operators).toContain('(');
       expect(specialExpressions.parentheses.operators).toContain(')');
+    });
+  });
+
+  describe('Global Objects', () => {
+    describe('cookies expression', () => {
+      let cookies: any;
+
+      beforeEach(async () => {
+        // Clear all cookies before each test
+        (globalThis as any).__cookieStorage__ = {};
+        
+        // Get a fresh cookies object for each test
+        cookies = await specialExpressions.cookies.evaluate(context);
+        
+        // Extra safety: clear all cookies using the API
+        cookies.clearAll();
+      });
+
+      it('should return undefined for non-existent cookies', async () => {
+        const result = cookies.foo;
+        expect(result).toBeUndefined();
+      });
+
+      it('should set and get cookie values', async () => {
+        // Set cookie value
+        cookies.foo = 'bar';
+        
+        // Get cookie value
+        const result = cookies.foo;
+        expect(result).toBe('bar');
+      });
+
+      it('should update cookie values', async () => {
+        cookies.foo = 'bar';
+        expect(cookies.foo).toBe('bar');
+        
+        cookies.foo = 'doh';
+        expect(cookies.foo).toBe('doh');
+      });
+
+      it('should clear specific cookies', async () => {
+        cookies.foo = 'bar';
+        expect(cookies.foo).toBe('bar');
+        
+        cookies.clear('foo');
+        expect(cookies.foo).toBeUndefined();
+      });
+
+      it('should clear all cookies', async () => {
+        cookies.foo = 'bar';
+        cookies.baz = 'qux';
+        expect(cookies.foo).toBe('bar');
+        expect(cookies.baz).toBe('qux');
+        
+        cookies.clearAll();
+        expect(cookies.foo).toBeUndefined();
+        expect(cookies.baz).toBeUndefined();
+      });
+
+      it('should iterate over cookies', async () => {
+        cookies.foo = 'bar';
+        cookies.test = 'value';
+        
+        const names: string[] = [];
+        const values: string[] = [];
+        
+        for (const cookie of cookies) {
+          names.push(cookie.name);
+          values.push(cookie.value);
+        }
+        
+        expect(names).toContain('foo');
+        expect(names).toContain('test');
+        expect(values).toContain('bar');
+        expect(values).toContain('value');
+      });
+
+      it('should handle getAll method', async () => {
+        cookies.alpha = 'beta';
+        cookies.gamma = 'delta';
+        
+        const allCookies = cookies.getAll();
+        expect(allCookies).toHaveLength(2);
+        expect(allCookies.find((c: any) => c.name === 'alpha')?.value).toBe('beta');
+        expect(allCookies.find((c: any) => c.name === 'gamma')?.value).toBe('delta');
+      });
+
+      it('should handle complex cookie values', async () => {
+        const complexValue = 'complex value with spaces & symbols';
+        cookies.complex = complexValue;
+        expect(cookies.complex).toBe(complexValue);
+      });
+
+      it('should handle empty cookie values', async () => {
+        cookies.empty = '';
+        expect(cookies.empty).toBe('');
+      });
+
+      it('should handle numeric-like cookie values', async () => {
+        cookies.number = '123';
+        expect(cookies.number).toBe('123');
+        
+        cookies.float = '45.67';
+        expect(cookies.float).toBe('45.67');
+      });
+
+      it('should support property existence checks', async () => {
+        cookies.exists = 'yes';
+        
+        expect('exists' in cookies).toBe(true);
+        expect('notExists' in cookies).toBe(false);
+      });
+
+      it('should validate without arguments', () => {
+        expect(specialExpressions.cookies.validate!()).toBeNull();
+      });
+
+      it('should have correct metadata', () => {
+        expect(specialExpressions.cookies.name).toBe('cookies');
+        expect(specialExpressions.cookies.category).toBe('Global');
+        expect(specialExpressions.cookies.evaluatesTo).toBe('Object');
+      });
+
+      it('should handle multiple cookies independently', async () => {
+        const cookies1 = await specialExpressions.cookies.evaluate(context);
+        const cookies2 = await specialExpressions.cookies.evaluate(context);
+        
+        // Both should access the same underlying storage
+        cookies1.shared = 'value1';
+        expect(cookies2.shared).toBe('value1');
+        
+        cookies2.shared = 'value2';
+        expect(cookies1.shared).toBe('value2');
+      });
+
+      it('should persist across cookie object recreations', async () => {
+        cookies.persistent = 'data';
+        
+        // Create a new cookies object
+        const newCookies = await specialExpressions.cookies.evaluate(context);
+        expect(newCookies.persistent).toBe('data');
+      });
     });
   });
 });

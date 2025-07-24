@@ -285,6 +285,147 @@ export const elementWithSelectorExpression: ExpressionImplementation = {
 };
 
 // ============================================================================
+// StyleRef Expressions (CSS property access)
+// ============================================================================
+
+export const styleRefExpression: ExpressionImplementation = {
+  name: 'styleRef',
+  category: 'Reference',
+  evaluatesTo: 'String',
+  
+  async evaluate(context: ExecutionContext, property: string, element?: HTMLElement): Promise<string | undefined> {
+    if (typeof property !== 'string') {
+      throw new Error('StyleRef requires a string property name');
+    }
+    
+    const target = element || context.me;
+    if (!target) {
+      return undefined;
+    }
+    
+    // Check if it's a computed style request
+    if (property.startsWith('computed-')) {
+      const cssProperty = property.substring(9); // Remove 'computed-' prefix
+      const computedStyle = getComputedStyle(target);
+      return computedStyle.getPropertyValue(cssProperty) || '';
+    }
+    
+    // Direct style property access
+    const value = target.style.getPropertyValue(property);
+    return value || undefined;
+  },
+  
+  validate(args: any[]): string | null {
+    if (args.length === 0 || args.length > 2) {
+      return 'styleRef requires 1-2 arguments (property, optional element)';
+    }
+    if (typeof args[0] !== 'string') {
+      return 'styleRef property must be a string';
+    }
+    if (args.length === 2 && args[1] && typeof args[1] !== 'object') {
+      return 'styleRef element must be an HTMLElement';
+    }
+    return null;
+  }
+};
+
+export const possessiveStyleRefExpression: ExpressionImplementation = {
+  name: 'possessiveStyleRef',
+  category: 'Reference',
+  evaluatesTo: 'String',
+  
+  async evaluate(context: ExecutionContext, possessor: string, property: string): Promise<string | undefined> {
+    if (typeof possessor !== 'string' || typeof property !== 'string') {
+      throw new Error('Possessive styleRef requires possessor and property strings');
+    }
+    
+    // Resolve the possessor to an element
+    let target: HTMLElement | null = null;
+    if (possessor === 'my' && context.me) {
+      target = context.me;
+    } else if (possessor === 'its' && context.result) {
+      target = context.result as HTMLElement;
+    }
+    
+    if (!target) {
+      return undefined;
+    }
+    
+    // Check if it's a computed style request
+    if (property.startsWith('computed-')) {
+      const cssProperty = property.substring(9); // Remove 'computed-' prefix
+      const computedStyle = getComputedStyle(target);
+      return computedStyle.getPropertyValue(cssProperty) || '';
+    }
+    
+    // Direct style property access
+    const value = target.style.getPropertyValue(property);
+    return value || undefined;
+  },
+  
+  validate(args: any[]): string | null {
+    if (args.length !== 2) {
+      return 'possessiveStyleRef requires exactly 2 arguments (possessor, property)';
+    }
+    if (typeof args[0] !== 'string') {
+      return 'possessiveStyleRef possessor must be a string';
+    }
+    if (typeof args[1] !== 'string') {
+      return 'possessiveStyleRef property must be a string';
+    }
+    return null;
+  }
+};
+
+export const ofStyleRefExpression: ExpressionImplementation = {
+  name: 'ofStyleRef',
+  category: 'Reference',
+  evaluatesTo: 'String',
+  
+  async evaluate(context: ExecutionContext, property: string, reference: string): Promise<string | undefined> {
+    if (typeof property !== 'string' || typeof reference !== 'string') {
+      throw new Error('Of styleRef requires property and reference strings');
+    }
+    
+    // Resolve the reference to an element
+    let target: HTMLElement | null = null;
+    if (reference === 'me' && context.me) {
+      target = context.me;
+    } else if (reference === 'it' && context.result) {
+      target = context.result as HTMLElement;
+    }
+    
+    if (!target) {
+      return undefined;
+    }
+    
+    // Check if it's a computed style request
+    if (property.startsWith('computed-')) {
+      const cssProperty = property.substring(9); // Remove 'computed-' prefix
+      const computedStyle = getComputedStyle(target);
+      return computedStyle.getPropertyValue(cssProperty) || '';
+    }
+    
+    // Direct style property access
+    const value = target.style.getPropertyValue(property);
+    return value || undefined;
+  },
+  
+  validate(args: any[]): string | null {
+    if (args.length !== 2) {
+      return 'ofStyleRef requires exactly 2 arguments (property, reference)';
+    }
+    if (typeof args[0] !== 'string') {
+      return 'ofStyleRef property must be a string';
+    }
+    if (typeof args[1] !== 'string') {
+      return 'ofStyleRef reference must be a string';
+    }
+    return null;
+  }
+};
+
+// ============================================================================
 // Export all reference expressions
 // ============================================================================
 
@@ -302,6 +443,9 @@ export const referenceExpressions = {
   window: windowExpression,
   document: documentExpression,
   elementWithSelector: elementWithSelectorExpression,
+  styleRef: styleRefExpression,
+  possessiveStyleRef: possessiveStyleRefExpression,
+  ofStyleRef: ofStyleRefExpression,
 } as const;
 
 export type ReferenceExpressionName = keyof typeof referenceExpressions;
