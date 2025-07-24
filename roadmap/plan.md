@@ -12,16 +12,19 @@ that works exactly like the original, with modern TypeScript benefits.
 
 **HyperFixi now includes ALL 9 official _hyperscript features!**
 
-- ✅ **Expression System**: 388/388 tests passing + 147 advanced expressions (535 total)
+- ✅ **Expression System**: 388/388 tests passing + 147 advanced expressions
+  (535 total)
 - ✅ **Core Infrastructure**: Tokenizer + Parser + API structure complete
 - ✅ **DOM Commands**: All 6 essential commands (142/142 tests) ✅
-- ✅ **Event System**: Full event handling (63/63 tests) ✅  
+- ✅ **Event System**: Full event handling (63/63 tests) ✅
 - ✅ **Advanced Commands**: 11 specialized commands (268/268 tests) ✅
 - ✅ **Feature System**: All 9 official features (400+ tests) ✅
-  - behavior | def | eventsource | init | **js** | on | **set** | socket | worker
+  - behavior | def | eventsource | init | **js** | on | **set** | socket |
+    worker
 - ✅ **Extension System**: Tailwind CSS Extension (37+ tests) ✅
   - twDisplay | twVisibility | twOpacity strategies with default config support
-- ✅ **Browser Compatibility**: 100% feature + extension compatibility with official _hyperscript
+- ✅ **Browser Compatibility**: 100% feature + extension compatibility with
+  official _hyperscript
 - ✅ **Official Test Suite**: ~85% compatibility (major improvement achieved)
 
 ## Implementation Plan: Get the Basics Right (4-6 weeks)
@@ -142,21 +145,26 @@ that works exactly like the original, with modern TypeScript benefits.
 
 ## Phase 4: Template System Completion ⚡ **CURRENT FOCUS**
 
-**Goal**: Complete the render command and template.js compatibility for production-ready template processing
+**Goal**: Complete the render command and template.js compatibility for
+production-ready template processing
 
-**Current Status**: Template interpolation partially working, but missing critical directives and proper two-phase processing architecture
+**Current Status**: Template interpolation partially working, but missing
+critical directives and proper two-phase processing architecture
 
 ### **Recent Discovery**: Official _hyperscript Template Architecture
 
-Analysis of `~/projects/_hyperscript/src/template.js` reveals a sophisticated two-phase system:
+Analysis of `~/projects/_hyperscript/src/template.js` reveals a sophisticated
+two-phase system:
 
 **Phase 1: Template Compilation**
+
 - Templates are compiled into hyperscript commands before execution
 - `@` lines become hyperscript commands (like `@set bg to it`)
 - Regular content becomes `call meta.__ht_template_result.push(...)` statements
 - Automatic HTML escaping with `${}` → `${escape html }` conversion
 
 **Phase 2: Template Execution**
+
 - Compiled commands execute in a proper hyperscript context
 - Variables stored in `context.locals` with full scope chain
 - Function calls work through standard hyperscript function resolution
@@ -164,13 +172,17 @@ Analysis of `~/projects/_hyperscript/src/template.js` reveals a sophisticated tw
 ### 📋 **Critical Template System Gaps**
 
 **Current Implementation Issues**:
-- ❌ **@set directive**: Missing completely - blocks variable creation in templates
+
+- ❌ **@set directive**: Missing completely - blocks variable creation in
+  templates
 - ❌ **Function calls**: `getContrastingColor(it)` type calls not supported
-- ❌ **Variable resolution order**: Checking context properties before locals (wrong!)  
+- ❌ **Variable resolution order**: Checking context properties before locals
+  (wrong!)
 - ❌ **Two-phase processing**: Current single-pass approach is fragile
 - ⚠️ **${it} interpolation**: Fixed but blocked by build/browser cache issues
 
 **Real-World Use Case Blocked**:
+
 ```hyperscript
 <template id="color-template">
   <ul>
@@ -185,27 +197,33 @@ Analysis of `~/projects/_hyperscript/src/template.js` reveals a sophisticated tw
 
 ### 🎯 **Phase 4 Implementation Plan**
 
-Based on official _hyperscript template architecture analysis, focus on completing core template functionality first:
+Based on official _hyperscript template architecture analysis, focus on
+completing core template functionality first:
 
-#### **Week 1: @set Directive Implementation** 
+#### **Week 1: @set Directive Implementation**
+
 **CRITICAL FOR REAL-WORLD USAGE**
 
 - [ ] **@set Command**: Implement `@set bg to it` directive processing
-  - [ ] Study `~/projects/_hyperscript/src/hyperscript.js` set command implementation
-  - [ ] Add @set to template directive processing pipeline  
+  - [ ] Study `~/projects/_hyperscript/src/hyperscript.js` set command
+        implementation
+  - [ ] Add @set to template directive processing pipeline
   - [ ] Support variable creation in template context (`context.locals`)
   - [ ] Enable complex expressions: `@set fg to getContrastingColor(it)`
 
-- [ ] **Variable Resolution Order Fix**: 
-  - [ ] Fix `resolveIdentifier` to check `context.locals` BEFORE context properties
+- [ ] **Variable Resolution Order Fix**:
+  - [ ] Fix `resolveIdentifier` to check `context.locals` BEFORE context
+        properties
   - [ ] Follow official resolution chain: Meta → Local → Element → Global
   - [ ] Test ${it} interpolation fix (currently blocked by browser cache)
 
 #### **Week 2: Function Calls in Templates**
+
 **ENABLE DYNAMIC TEMPLATE PROCESSING**
 
 - [ ] **Function Call Support**: Enable `getContrastingColor(it)` in templates
-  - [ ] Study function resolution in `~/projects/_hyperscript/src/hyperscript.js`
+  - [ ] Study function resolution in
+        `~/projects/_hyperscript/src/hyperscript.js`
   - [ ] Add function parsing to template expression evaluator
   - [ ] Support global function calls with template context
   - [ ] Test complex expressions in @set directives
@@ -216,6 +234,7 @@ Based on official _hyperscript template architecture analysis, focus on completi
   - [ ] Add error handling for undefined functions
 
 #### **Week 3-4: Two-Phase Template Architecture**
+
 **ROBUST TEMPLATE PROCESSING**
 
 - [ ] **Template Compilation Phase**:
@@ -225,11 +244,12 @@ Based on official _hyperscript template architecture analysis, focus on completi
   - [ ] Automatic HTML escaping: `${}` → `${escape html }`
 
 - [ ] **Template Execution Phase**:
-  - [ ] Execute compiled commands in proper hyperscript context  
+  - [ ] Execute compiled commands in proper hyperscript context
   - [ ] Use `context.meta.__ht_template_result` buffer pattern
   - [ ] Support nested template execution and scoping
 
 #### **Week 5-6: Template System Completion**
+
 **PRODUCTION-READY TEMPLATES**
 
 - [ ] **Enhanced Directives**:
@@ -238,33 +258,45 @@ Based on official _hyperscript template architecture analysis, focus on completi
   - [ ] Error handling and debugging support
 
 - [ ] **Full Template.js Compatibility**:
-  - [ ] Run official template tests from `~/projects/_hyperscript/test/templates/`
+  - [ ] Run official template tests from
+        `~/projects/_hyperscript/test/templates/`
   - [ ] Achieve 100% template compatibility
   - [ ] Performance optimization and edge case handling
 
-**Success Target**: Complete template system supporting real-world use cases like the color template example
+**Success Target**: Complete template system supporting real-world use cases
+like the color template example
 
 ## Phase 5: Expression System Enhancements (DEFERRED)
 
-**Previous Phase 4**: These items were deprioritized in favor of template system completion but remain valuable for full compatibility:
+**Previous Phase 4**: These items were deprioritized in favor of template system
+completion but remain valuable for full compatibility:
 
 ### 📋 **Deferred Expression System Items**
 
 #### **Priority 1: Core Operators**
-- [ ] **Modulo Operator**: `3 mod 2` → currently throws "Unsupported binary operator: mod"
-- [ ] **Equals Operator**: `1 equals 2` → currently throws "Unsupported binary operator: equals"  
-- [ ] **Contains/Includes**: `array contains item`, `array includes item` → not implemented
-- [ ] **String Templates**: `$variable`, `$window.foo` → currently throws "Unexpected token"
+
+- [ ] **Modulo Operator**: `3 mod 2` → currently throws "Unsupported binary
+      operator: mod"
+- [ ] **Equals Operator**: `1 equals 2` → currently throws "Unsupported binary
+      operator: equals"
+- [ ] **Contains/Includes**: `array contains item`, `array includes item` → not
+      implemented
+- [ ] **String Templates**: `$variable`, `$window.foo` → currently throws
+      "Unexpected token"
 
 #### **Priority 2: English-Style Operators**
+
 - [ ] **English Comparisons**: `is equal to`, `is greater than`, etc.
 - [ ] **Really Equals**: `1 really equals 2` → compound operator parsing
 
 #### **Priority 3: Type and Existence Checking**
-- [ ] **Type Checking**: `is a String`, `is not a String`, `is an Object`
-- [ ] **Existence Operators**: `exists`, `does not exist`, `is empty`, `is not empty`
 
-**Note**: These will be addressed after template system is production-ready (Phase 4 complete).
+- [ ] **Type Checking**: `is a String`, `is not a String`, `is an Object`
+- [ ] **Existence Operators**: `exists`, `does not exist`, `is empty`,
+      `is not empty`
+
+**Note**: These will be addressed after template system is production-ready
+(Phase 4 complete).
 
 ## 🎉 Fixed: JavaScript-Standard Operator Precedence
 
