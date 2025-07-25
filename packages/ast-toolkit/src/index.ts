@@ -90,3 +90,22 @@ export type {
   QualityInsight,
   AIAssistant
 } from './ai/index.js';
+
+// Semantic Analysis functionality - WORKING
+export {
+  extractIntents,
+  calculateSimilarity,
+  generateVariations,
+  extractSemanticPatterns,
+  analyzeSemantics
+} from './semantic/index.js';
+
+export type {
+  SemanticIntent,
+  CodeSimilarity,
+  CodeVariation,
+  SemanticAnalysis,
+  SemanticPattern,
+  SemanticRelationship,
+  SemanticComplexity
+} from './semantic/index.js';
