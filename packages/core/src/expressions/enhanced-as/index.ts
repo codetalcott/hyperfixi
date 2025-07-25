@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import type {
   HyperScriptValue,
+  HyperScriptValueType,
   EvaluationResult,
   TypedExpressionImplementation,
   LLMDocumentation,
@@ -151,7 +152,7 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
     try {
       this.inputSchema.parse(args);
       
-      const [value, targetType] = args as AsExpressionInput;
+      const [_value, targetType] = args as AsExpressionInput;
       const errors: ValidationError[] = [];
       
       // Validate target type
@@ -201,7 +202,7 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
   /**
    * Evaluate 'as' expression
    */
-  async evaluate(
+  evaluate(
     context: TypedExecutionContext,
     ...args: HyperScriptValue[]
   ): Promise<EvaluationResult<HyperScriptValue>> {
@@ -209,7 +210,7 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
       // Validate input arguments
       const validationResult = this.validate(args);
       if (!validationResult.isValid) {
-        return {
+        return Promise.resolve({
           success: false,
           error: {
             name: 'AsExpressionValidationError',
@@ -218,7 +219,7 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
             suggestions: validationResult.suggestions
           },
           type: 'error'
-        };
+        });
       }
 
       const [value, targetType] = this.inputSchema.parse(args);
@@ -226,13 +227,13 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
       // Perform type conversion
       const convertedValue = this.convertValue(value, targetType, context);
       
-      return {
+      return Promise.resolve({
         success: true,
         value: convertedValue,
         type: this.inferValueType(convertedValue)
-      };
+      });
     } catch (error) {
-      return {
+      return Promise.resolve({
         success: false,
         error: {
           name: 'AsExpressionConversionError',
@@ -241,7 +242,7 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
           suggestions: ['Check value is convertible to target type', 'Ensure target type is valid']
         },
         type: 'error'
-      };
+      });
     }
   }
 
@@ -409,12 +410,12 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
   /**
    * Convert to object (parse JSON)
    */
-  private convertToObject(value: unknown): unknown | null {
+  private convertToObject(value: unknown): HyperScriptValue {
     if (value === null || value === undefined) return null;
-    if (typeof value === 'object') return value;
+    if (typeof value === 'object') return value as HyperScriptValue;
     if (typeof value === 'string') {
       try {
-        return JSON.parse(value);
+        return JSON.parse(value) as HyperScriptValue;
       } catch {
         return null;
       }

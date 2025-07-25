@@ -11,7 +11,6 @@ import type {
   TypedExpressionImplementation,
   LLMDocumentation,
   ValidationResult,
-  ValidationError,
   TypedExecutionContext
 } from '../../types/enhanced-core.ts';
 

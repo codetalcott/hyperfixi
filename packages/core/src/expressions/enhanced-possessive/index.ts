@@ -314,13 +314,13 @@ export class EnhancedPossessiveExpression implements TypedExpressionImplementati
           return value.bind(element);
         }
         
-        return value;
+        return value as HyperScriptValue;
       }
     }
 
     // Handle regular objects
     const obj = object as Record<string, unknown>;
-    return obj[property] ?? null;
+    return (obj[property] ?? null) as HyperScriptValue;
   }
 
   /**
