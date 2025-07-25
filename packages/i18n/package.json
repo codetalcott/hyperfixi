@@ -1,0 +1,67 @@
+{
+  "name": "@hyperfixi/i18n",
+  "version": "0.1.0",
+  "description": "Internationalization support for Hyperscript",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./dictionaries": {
+      "import": "./dist/dictionaries/index.mjs",
+      "require": "./dist/dictionaries/index.js",
+      "types": "./dist/dictionaries/index.d.ts"
+    },
+    "./plugins/vite": {
+      "import": "./dist/plugins/vite.mjs",
+      "require": "./dist/plugins/vite.js",
+      "types": "./dist/plugins/vite.d.ts"
+    },
+    "./plugins/webpack": {
+      "import": "./dist/plugins/webpack.mjs",
+      "require": "./dist/plugins/webpack.js",
+      "types": "./dist/plugins/webpack.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext ts,tsx",
+    "validate-dictionaries": "node scripts/validate-dictionaries.js"
+  },
+  "keywords": [
+    "hyperscript",
+    "i18n",
+    "internationalization",
+    "translation",
+    "localization"
+  ],
+  "author": "Hyperfixi Team",
+  "license": "MIT",
+  "dependencies": {
+    "@hyperfixi/ast-toolkit": "workspace:*",
+    "@hyperfixi/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "eslint": "^8.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

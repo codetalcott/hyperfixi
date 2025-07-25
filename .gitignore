@@ -23,6 +23,7 @@ build/
 *.swp
 *.swo
 *~
+.claude/
 
 # OS generated files
 .DS_Store
@@ -89,3 +90,28 @@ debug*.html
 
 # Vitest
 .vitest/
+
+# Test outputs
+test-results/
+
+# MCP server files
+mcp-server-hyperscript/dist/
+mcp-server-hyperscript/node_modules/
+
+# Lock files (keep package-lock.json)
+deno.lock
+
+# Analysis outputs
+hyperscript_i18n_analysis.md
+lsp-reference
+
+# i18n development files
+hyperscript-i18n*.js
+hyperscript-i18n*.html
+test-hyperscript-i18n.js
+README-hyperscript-i18n.md
+
+# i18n package outputs
+packages/i18n/dist/
+packages/i18n/coverage/
+packages/i18n/scripts/validate-dictionaries.js
