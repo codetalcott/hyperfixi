@@ -37,10 +37,32 @@ export {
   createPatternTemplate
 } from './pattern-matching/index.js';
 
-// Placeholder exports for future modules
-export const analyzer = {
-  // Will be implemented
-};
+// Analysis functionality - WORKING
+export {
+  calculateComplexity,
+  detectCodeSmells,
+  analyzeMetrics,
+  analyzeDependencies,
+  findDeadCode,
+  suggestOptimizations,
+  analyzePatterns
+} from './analyzer/index.js';
+
+// LSP Integration functionality - WORKING
+export {
+  astToLSPDiagnostics,
+  astToLSPCompletions,
+  astToLSPHover,
+  astToLSPSymbols,
+  createASTEnhancedLSPHandlers,
+  createLSPIntegration,
+  setDocumentAST,
+  clearDocumentAST,
+  DEFAULT_LSP_CONFIG,
+  DiagnosticSeverity,
+  CompletionItemKind,
+  SymbolKind
+} from './lsp/index.js';
 
 export const transformer = {
   // Will be implemented  
@@ -50,6 +72,21 @@ export const generator = {
   // Will be implemented
 };
 
-export const ai = {
-  // Will be implemented
-};
+// AI-Friendly APIs functionality - WORKING  
+export {
+  explainCode,
+  generateCodeTemplate,
+  recognizeIntent,
+  generateQualityInsights,
+  createAIAssistant
+} from './ai/index.js';
+
+export type {
+  ExplanationOptions,
+  CodeExplanation,
+  CodeGenerationOptions,
+  CodeTemplate,
+  RecognizedIntent,
+  QualityInsight,
+  AIAssistant
+} from './ai/index.js';
