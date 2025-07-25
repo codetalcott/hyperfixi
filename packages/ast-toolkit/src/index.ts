@@ -132,3 +132,28 @@ export type {
   PerformanceConfig,
   OptimizationSuggestion
 } from './performance/index.js';
+
+// MCP Server functionality - WORKING
+export {
+  createASTToolkitMCPServer,
+  createMCPServerWithHandlers,
+  ASTToolkitMCPServer
+} from './mcp/index.js';
+
+export type {
+  InitializeRequest,
+  InitializeResult,
+  ListToolsRequest,
+  ListToolsResult,
+  CallToolRequest,
+  CallToolResult,
+  ListResourcesRequest,
+  ListResourcesResult,
+  ReadResourceRequest,
+  ReadResourceResult,
+  Tool,
+  Resource,
+  MCPRequest,
+  MCPResult,
+  MCPMessage
+} from './mcp/types.js';
