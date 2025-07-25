@@ -1,0 +1,46 @@
+{
+  "name": "@hyperfixi/server-integration",
+  "version": "0.1.0",
+  "description": "Server-side hyperscript integration with multi-language support",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:run": "vitest --run",
+    "dev": "tsx src/server/index.ts",
+    "start": "node dist/server/index.js"
+  },
+  "dependencies": {
+    "@hyperfixi/core": "file:../core",
+    "@hyperfixi/ast-toolkit": "file:../ast-toolkit",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "helmet": "^7.1.0",
+    "node-cache": "^5.1.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "@types/compression": "^1.7.5",
+    "@types/node": "^20.10.0",
+    "tsx": "^4.6.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0",
+    "happy-dom": "^12.10.3",
+    "supertest": "^6.3.3",
+    "@types/supertest": "^6.0.2"
+  },
+  "keywords": [
+    "hyperscript",
+    "server-side",
+    "template",
+    "integration",
+    "compilation"
+  ],
+  "author": "HyperFixi Team",
+  "license": "MIT"
+}
