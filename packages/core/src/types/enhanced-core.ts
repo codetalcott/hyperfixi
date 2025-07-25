@@ -239,7 +239,7 @@ export interface ValidationResult {
 }
 
 export interface ValidationError {
-  readonly type: 'type-mismatch' | 'missing-argument' | 'invalid-syntax' | 'runtime-error';
+  readonly type: 'type-mismatch' | 'missing-argument' | 'invalid-syntax' | 'runtime-error' | 'security-warning';
   readonly message: string;
   readonly position?: SourceLocation;
   readonly suggestion?: string;

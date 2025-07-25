@@ -289,7 +289,9 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
    */
   private convertHyperscriptSelector(selector: string): string {
     // Remove < and />
-    const cssSelector = selector.slice(1, -2);
+    // For <div/> we want to remove the first < and the last />
+    // selector.slice(1, -2) removes 1 char from start and 2 chars from end
+    const cssSelector = selector.slice(1, selector.length - 2);
     
     // Handle class selectors: p.foo -> p.foo
     // Handle ID selectors: div#myId -> div#myId

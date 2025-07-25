@@ -134,7 +134,7 @@ export class EnhancedPossessiveExpression implements TypedExpressionImplementati
         const dangerousProps = ['__proto__', 'constructor', 'prototype'];
         if (dangerousProps.includes(property)) {
           errors.push({
-            type: 'runtime-error',
+            type: 'security-warning',
             message: `Accessing "${property}" property may be unsafe`,
             suggestion: 'Avoid accessing prototype chain properties for security'
           });
