@@ -10,7 +10,7 @@ export class MemorySSRCache implements SSRCache {
     tags: string[];
   }> = new Map();
   
-  private stats = {
+  private statsData = {
     hits: 0,
     misses: 0,
   };
@@ -22,18 +22,18 @@ export class MemorySSRCache implements SSRCache {
     const entry = this.cache.get(key);
     
     if (!entry) {
-      this.stats.misses++;
+      this.statsData.misses++;
       return null;
     }
 
     // Check if expired
     if (Date.now() > entry.expires) {
       this.cache.delete(key);
-      this.stats.misses++;
+      this.statsData.misses++;
       return null;
     }
 
-    this.stats.hits++;
+    this.statsData.hits++;
     return entry.result;
   }
 
@@ -77,8 +77,8 @@ export class MemorySSRCache implements SSRCache {
    */
   async clear(): Promise<void> {
     this.cache.clear();
-    this.stats.hits = 0;
-    this.stats.misses = 0;
+    this.statsData.hits = 0;
+    this.statsData.misses = 0;
   }
 
   /**
@@ -94,8 +94,8 @@ export class MemorySSRCache implements SSRCache {
       .reduce((size, entry) => size + Buffer.byteLength(JSON.stringify(entry.result), 'utf8'), 0);
 
     return {
-      hits: this.stats.hits,
-      misses: this.stats.misses,
+      hits: this.statsData.hits,
+      misses: this.statsData.misses,
       size: totalSize,
       keys: this.cache.size,
     };

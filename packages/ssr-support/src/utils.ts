@@ -21,32 +21,25 @@ export function createSSRContext(data: {
       url: data.url ?? '/',
       method: data.method ?? 'GET',
       headers: data.headers ?? {},
-      userAgent: data.headers?.['user-agent'],
+      ...(data.headers?.['user-agent'] && { userAgent: data.headers['user-agent'] }),
     },
     user: data.user,
-    seo: data.seo ? {
-      title: data.seo.title ?? '',
-      description: data.seo.description ?? '',
-      keywords: data.seo.keywords ?? [],
-      canonical: data.seo.canonical,
-      openGraph: {
-        title: data.seo.openGraph?.title ?? data.seo.title ?? '',
-        description: data.seo.openGraph?.description ?? data.seo.description ?? '',
-        image: data.seo.openGraph?.image,
-        url: data.seo.openGraph?.url,
-        type: data.seo.openGraph?.type ?? 'website',
-        siteName: data.seo.openGraph?.siteName,
-      },
-      twitter: {
-        card: data.seo.twitter?.card ?? 'summary',
-        title: data.seo.twitter?.title ?? data.seo.title ?? '',
-        description: data.seo.twitter?.description ?? data.seo.description ?? '',
-        image: data.seo.twitter?.image,
-        site: data.seo.twitter?.site,
-        creator: data.seo.twitter?.creator,
-      },
-      structuredData: data.seo.structuredData ?? [],
-    } : undefined,
+    ...(data.seo && {
+      seo: {
+        ...(data.seo.title && { title: data.seo.title }),
+        ...(data.seo.description && { description: data.seo.description }),
+        ...(data.seo.keywords && { keywords: data.seo.keywords }),
+        ...(data.seo.canonical && { canonicalUrl: data.seo.canonical }),
+        ...(data.seo.openGraph?.title && { ogTitle: data.seo.openGraph.title }),
+        ...(data.seo.openGraph?.description && { ogDescription: data.seo.openGraph.description }),
+        ...(data.seo.openGraph?.image && { ogImage: data.seo.openGraph.image }),
+        ...(data.seo.twitter?.card && { twitterCard: data.seo.twitter.card }),
+        ...(data.seo.twitter?.title && { twitterTitle: data.seo.twitter.title }),
+        ...(data.seo.twitter?.description && { twitterDescription: data.seo.twitter.description }),
+        ...(data.seo.twitter?.image && { twitterImage: data.seo.twitter.image }),
+        ...(data.seo.structuredData && { structuredData: data.seo.structuredData }),
+      }
+    }),
   };
 }
 
@@ -71,8 +64,8 @@ export function extractHydrationData(
     components: componentData,
     appState: context.variables ?? {},
     config: {
-      apiBaseUrl: process.env.API_BASE_URL,
-      cdnUrl: process.env.CDN_URL,
+      ...(process.env.API_BASE_URL && { apiBaseUrl: process.env.API_BASE_URL }),
+      ...(process.env.CDN_URL && { cdnUrl: process.env.CDN_URL }),
       debug: process.env.NODE_ENV === 'development',
       features: [],
     },
@@ -152,7 +145,7 @@ export function generateBreadcrumbs(
     
     breadcrumbs.push({
       name: labels?.[segment] || segment.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      url: isLast ? undefined : baseUrl + currentPath,
+      ...(!isLast && { url: baseUrl + currentPath }),
     });
   });
 

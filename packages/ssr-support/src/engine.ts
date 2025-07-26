@@ -1,6 +1,9 @@
-import { ComponentDefinition } from '@hyperfixi/component-schema';
-import { HyperFixiTemplateEngine, TemplateContext } from '@hyperfixi/template-integration';
+// import { ComponentDefinition } from '@hyperfixi/component-schema';
+// import { HyperFixiTemplateEngine, TemplateContext } from '@hyperfixi/template-integration';
 import {
+  ComponentDefinition,
+  TemplateContext,
+  CompilationResult,
   SSREngine,
   SSROptions,
   SSRContext,
@@ -10,6 +13,34 @@ import {
   SSRCache,
   SSRError,
 } from './types';
+
+// Placeholder for template engine until package is available
+interface HyperFixiTemplateEngine {
+  compile(template: string, options?: any): Promise<CompilationResult>;
+  render(compiled: CompilationResult, context: TemplateContext): Promise<string>;
+  registerComponent(component: ComponentDefinition): void;
+}
+
+class MockHyperFixiTemplateEngine implements HyperFixiTemplateEngine {
+  constructor(options?: any) {}
+  
+  async compile(template: string, options?: any): Promise<CompilationResult> {
+    return {
+      html: template,
+      css: [],
+      javascript: [],
+      components: []
+    };
+  }
+  
+  async render(compiled: CompilationResult, context: TemplateContext): Promise<string> {
+    return compiled.html;
+  }
+  
+  registerComponent(component: ComponentDefinition): void {
+    // Mock implementation
+  }
+}
 import { CriticalCSSExtractor } from './critical-css';
 import { SEOGenerator } from './seo';
 
@@ -24,7 +55,7 @@ export class HyperFixiSSREngine implements SSREngine {
   private components: Map<string, ComponentDefinition> = new Map();
 
   constructor() {
-    this.templateEngine = new HyperFixiTemplateEngine({
+    this.templateEngine = new MockHyperFixiTemplateEngine({
       target: 'server',
       minify: false, // Will be handled at SSR level
     });
@@ -82,7 +113,7 @@ export class HyperFixiSSREngine implements SSREngine {
           components: this.extractComponentState(compiled.components, context),
           appState: context.variables ?? {},
           config: {
-            apiBaseUrl: process.env.API_BASE_URL,
+            ...(process.env.API_BASE_URL && { apiBaseUrl: process.env.API_BASE_URL }),
             debug: process.env.NODE_ENV === 'development',
           },
           route: {
@@ -97,7 +128,7 @@ export class HyperFixiSSREngine implements SSREngine {
       const renderTime = performance.now() - startTime;
       const result: SSRResult = {
         html: this.injectHydrationData(html, hydrationScript, options),
-        hydrationScript,
+        ...(hydrationScript && { hydrationScript }),
         criticalCSS,
         externalCSS: compiled.css.filter(css => !criticalCSS.includes(css)),
         javascript: compiled.javascript,
@@ -125,7 +156,7 @@ export class HyperFixiSSREngine implements SSREngine {
       return result;
 
     } catch (error) {
-      const ssrError = new Error(`SSR rendering failed: ${error.message}`) as SSRError;
+      const ssrError = new Error(`SSR rendering failed: ${error instanceof Error ? error.message : String(error)}`) as SSRError;
       ssrError.type = 'render';
       ssrError.context = { template: template.substring(0, 100), context };
       throw ssrError;
@@ -312,20 +343,24 @@ export class HyperFixiSSREngine implements SSREngine {
       title: seo?.title ?? '',
       description: seo?.description ?? '',
       keywords: seo?.keywords ?? [],
-      canonical: seo?.canonicalUrl,
+      ...(seo?.canonicalUrl && { canonical: seo.canonicalUrl }),
       openGraph: {
         title: seo?.ogTitle ?? seo?.title ?? '',
         description: seo?.ogDescription ?? seo?.description ?? '',
-        image: seo?.ogImage,
+        ...(seo?.ogImage && { image: seo.ogImage }),
         type: 'website',
       },
       twitter: {
         card: seo?.twitterCard ?? 'summary',
         title: seo?.twitterTitle ?? seo?.title ?? '',
         description: seo?.twitterDescription ?? seo?.description ?? '',
-        image: seo?.twitterImage,
+        ...(seo?.twitterImage && { image: seo.twitterImage }),
       },
-      structuredData: seo?.structuredData ?? [],
+      structuredData: (seo?.structuredData ?? []).map(data => ({
+        '@context': data['@context'] || 'https://schema.org',
+        '@type': data['@type'] || 'WebPage',
+        ...data,
+      })),
     };
   }
 

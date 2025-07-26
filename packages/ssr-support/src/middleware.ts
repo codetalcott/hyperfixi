@@ -391,19 +391,19 @@ export function configureSSRMiddleware(config: SSRMiddlewareConfig = {}) {
 
   return {
     express: createExpressSSRMiddleware(engine, {
-      templatePath: config.templateDir,
-      ssrOptions: config.ssrOptions,
+      ...(config.templateDir && { templatePath: config.templateDir }),
+      ...(config.ssrOptions && { ssrOptions: config.ssrOptions }),
     }),
     koa: createKoaSSRMiddleware(engine, {
-      templatePath: config.templateDir,
-      ssrOptions: config.ssrOptions,
+      ...(config.templateDir && { templatePath: config.templateDir }),
+      ...(config.ssrOptions && { ssrOptions: config.ssrOptions }),
     }),
     fastify: createFastifySSRPlugin(engine, {
-      templatePath: config.templateDir,
-      ssrOptions: config.ssrOptions,
+      ...(config.templateDir && { templatePath: config.templateDir }),
+      ...(config.ssrOptions && { ssrOptions: config.ssrOptions }),
     }),
     next: createNextSSRHandler(engine, {
-      ssrOptions: config.ssrOptions,
+      ...(config.ssrOptions && { ssrOptions: config.ssrOptions }),
     }),
   };
 }

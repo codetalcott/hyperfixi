@@ -63,7 +63,7 @@ export class HyperFixiStaticGenerator implements StaticGenerator {
     let robotsPath: string | undefined;
     if (options.robots) {
       const robotsContent = this.generateRobots({
-        sitemap: options.sitemap ? `${options.baseUrl}/sitemap.xml` : undefined,
+        ...(options.sitemap && { sitemap: `${options.baseUrl}/sitemap.xml` }),
       });
       robotsPath = join(options.outputDir, 'robots.txt');
       await fs.writeFile(robotsPath, robotsContent, 'utf8');
@@ -91,8 +91,8 @@ export class HyperFixiStaticGenerator implements StaticGenerator {
         compressionRatio,
         generationTime: endTime - startTime,
       },
-      sitemapPath,
-      robotsPath,
+      ...(sitemapPath && { sitemapPath }),
+      ...(robotsPath && { robotsPath }),
     };
   }
 

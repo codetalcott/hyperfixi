@@ -1,5 +1,30 @@
-import { ComponentDefinition } from '@hyperfixi/component-schema';
-import { TemplateContext, CompilationResult } from '@hyperfixi/template-integration';
+// Temporary: Import types or create placeholders until packages are built
+// import { ComponentDefinition } from '@hyperfixi/component-schema';
+// import { TemplateContext, CompilationResult } from '@hyperfixi/template-integration';
+
+// Placeholder types until packages are available
+export interface ComponentDefinition {
+  id: string;
+  name: string;
+  hyperscript: string | string[];
+  template?: {
+    html?: string;
+    variables?: Record<string, any>;
+  };
+  metadata?: any;
+}
+
+export interface TemplateContext {
+  variables?: Record<string, any>;
+  components?: ComponentDefinition[];
+}
+
+export interface CompilationResult {
+  html: string;
+  css: string[];
+  javascript: string[];
+  components: ComponentDefinition[];
+}
 
 /**
  * Server-side rendering and hydration types
@@ -25,6 +50,16 @@ export interface SSROptions {
 }
 
 export interface SSRContext extends TemplateContext {
+  /** Template variables for server-side rendering */
+  variables?: Record<string, any>;
+  /** User information for context */
+  user?: {
+    id?: string;
+    name?: string;
+    email?: string;
+    roles?: string[];
+    authenticated?: boolean;
+  };
   /** Request information */
   request?: {
     url: string;
