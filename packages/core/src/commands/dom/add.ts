@@ -163,7 +163,7 @@ export class AddCommand implements TypedCommandImplementation<
             name: 'AddCommandError',
             message: 'No target elements found',
             code: 'NO_TARGET_ELEMENTS',
-            suggestion: ['Check if target selector is valid', 'Ensure elements exist in DOM']
+            suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM']
           },
           type: 'error'
         };
@@ -190,7 +190,7 @@ export class AddCommand implements TypedCommandImplementation<
               name: 'AddCommandError',
               message: 'No valid classes provided to add',
               code: 'NO_VALID_CLASSES',
-              suggestion: ['Provide valid CSS class names', 'Check class name syntax']
+              suggestions: ['Provide valid CSS class names', 'Check class name syntax']
             },
             type: 'error'
           };
@@ -217,7 +217,7 @@ export class AddCommand implements TypedCommandImplementation<
           name: 'AddCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'ADD_EXECUTION_FAILED',
-          suggestion: ['Check if elements exist', 'Verify class names are valid'
+          suggestions: ['Check if elements exist', 'Verify class names are valid']
         },
         type: 'error'
       };
@@ -325,7 +325,7 @@ export class AddCommand implements TypedCommandImplementation<
               name: 'AddClassError',
               message: `Invalid class name: "${className}"`,
               code: 'INVALID_CLASS_NAME',
-              suggestion: ['Use valid CSS class names', 'Check for special characters'
+              suggestions: ['Use valid CSS class names', 'Check for special characters']
             },
             type: 'error'
           };
@@ -360,7 +360,7 @@ export class AddCommand implements TypedCommandImplementation<
           name: 'AddClassError',
           message: error instanceof Error ? error.message : 'Failed to add classes',
           code: 'CLASS_ADD_FAILED',
-          suggestion: ['Check if element is still in DOM', 'Verify class names are valid'
+          suggestions: ['Check if element is still in DOM', 'Verify class names are valid']
         },
         type: 'error'
       };
@@ -388,7 +388,7 @@ export class AddCommand implements TypedCommandImplementation<
               name: 'AddAttributeError',
               message: `Invalid attribute name: "${name}"`,
               code: 'INVALID_ATTRIBUTE_NAME',
-              suggestion: ['Use valid HTML attribute names', 'Check attribute syntax'
+              suggestions: ['Use valid HTML attribute names', 'Check attribute syntax']
             },
             type: 'error'
           };
@@ -422,7 +422,7 @@ export class AddCommand implements TypedCommandImplementation<
           name: 'AddAttributeError',
           message: error instanceof Error ? error.message : 'Failed to add attributes',
           code: 'ATTRIBUTE_ADD_FAILED',
-          suggestion: ['Check attribute syntax', 'Verify element exists'
+          suggestions: ['Check attribute syntax', 'Verify element exists']
         },
         type: 'error'
       };
@@ -478,9 +478,9 @@ export class AddCommand implements TypedCommandImplementation<
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestion: this.getValidationSuggestion(err.code, err.path)
+            suggestions: this.getValidationSuggestion(err.code, err.path)
           })),
-          suggestion: ['Use string or string array for classes, and valid target selector'
+          suggestions: ['Use string or string array for classes, and valid target selector'
         };
       }
 
@@ -494,9 +494,9 @@ export class AddCommand implements TypedCommandImplementation<
           errors: [{
             type: 'empty-input',
             message: 'Class expression cannot be empty',
-            suggestion: ['Provide valid CSS class names or attribute syntax'
+            suggestions: ['Provide valid CSS class names or attribute syntax'
           }],
-          suggestion: ['Use class names like "active"', 'Use attribute syntax like [@data-test="value"']
+          suggestions: ['Use class names like "active"', 'Use attribute syntax like [@data-test="value"']
         };
       }
       
@@ -507,9 +507,9 @@ export class AddCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-syntax',
             message: `Invalid CSS selector: "${target}"`,
-            suggestion: ['Use valid CSS selector syntax like "#id", ".class", or "element"'
+            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"'
           }],
-          suggestion: ['Check CSS selector syntax', 'Use document.querySelector() test'
+          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test'
         };
       }
 
@@ -525,7 +525,7 @@ export class AddCommand implements TypedCommandImplementation<
         errors: [{
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestion: ['Check input types and values'
+          suggestions: ['Check input types and values'
         }],
         suggestion: 'Ensure arguments match expected types'
       };

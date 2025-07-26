@@ -204,7 +204,7 @@ export class PutCommand implements TypedCommandImplementation<
           name: 'PutCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'PUT_EXECUTION_FAILED',
-          suggestion: ['Check if target element exists', 'Verify content is valid', 'Ensure position is supported']
+          suggestions: ['Check if target element exists', 'Verify content is valid', 'Ensure position is supported']
         },
         type: 'error'
       };
@@ -222,9 +222,9 @@ export class PutCommand implements TypedCommandImplementation<
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestion: this.getValidationSuggestion(err.code, err.path)
+            suggestions: this.getValidationSuggestion(err.code, err.path)
           })),
-          suggestion: ['Provide content, position, and target', 'Use valid position keywords', 'Ensure target is element or selector']
+          suggestions: ['Provide content, position, and target', 'Use valid position keywords', 'Ensure target is element or selector']
         };
       }
 
@@ -239,9 +239,9 @@ export class PutCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-syntax' as const,
             message: `Invalid position: "${position}". Must be one of: ${validPositions.join(', ')}`,
-            suggestion: 'Use supported position keywords'
+            suggestions: 'Use supported position keywords'
           }],
-          suggestion: 'Use: into, before, after, at start of, at end of'
+          suggestions: 'Use: into, before, after, at start of, at end of'
         };
       }
 
@@ -252,9 +252,9 @@ export class PutCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-syntax' as const,
             message: `Invalid CSS selector: "${target}"`,
-            suggestion: 'Use valid CSS selector syntax like "#id", ".class", or "element"'
+            suggestions: 'Use valid CSS selector syntax like "#id", ".class", or "element"'
           }],
-          suggestion: ['Check CSS selector syntax', 'Test with document.querySelector()']
+          suggestions: ['Check CSS selector syntax', 'Test with document.querySelector()']
         };
       }
 
@@ -270,7 +270,7 @@ export class PutCommand implements TypedCommandImplementation<
         errors: [{
           type: 'runtime-error' as const,
           message: 'Validation failed with exception',
-          suggestion: 'Check input types and values'
+          suggestions: 'Check input types and values'
         }],
         suggestion: 'Ensure arguments match expected types'
       };
@@ -291,7 +291,7 @@ export class PutCommand implements TypedCommandImplementation<
               name: 'PutTargetError',
               message: 'No target element available - context.me is undefined',
               code: 'NO_TARGET_ELEMENT',
-              suggestion: ['Ensure command is called within element context', 'Provide explicit target element']
+              suggestions: ['Ensure command is called within element context', 'Provide explicit target element']
             },
             type: 'error'
           };
@@ -328,7 +328,7 @@ export class PutCommand implements TypedCommandImplementation<
                 name: 'PutTargetError',
                 message: `Target element not found: ${selector}`,
                 code: 'TARGET_NOT_FOUND',
-                suggestion: ['Check if element exists in DOM', 'Verify selector syntax']
+                suggestions: ['Check if element exists in DOM', 'Verify selector syntax']
               },
               type: 'error'
             };
@@ -350,7 +350,7 @@ export class PutCommand implements TypedCommandImplementation<
                 name: 'PutTargetError',
                 message: `Target element not found: ${target}`,
                 code: 'TARGET_NOT_FOUND',
-                suggestion: ['Check if element exists in DOM', 'Verify selector syntax']
+                suggestions: ['Check if element exists in DOM', 'Verify selector syntax']
               },
               type: 'error'
             };
@@ -370,7 +370,7 @@ export class PutCommand implements TypedCommandImplementation<
           name: 'PutTargetError',
           message: `Invalid target type: ${typeof target}`,
           code: 'INVALID_TARGET_TYPE',
-          suggestion: 'Use HTMLElement, CSS selector string, or omit for implicit target'
+          suggestions: 'Use HTMLElement, CSS selector string, or omit for implicit target'
         },
         type: 'error'
       };
@@ -382,7 +382,7 @@ export class PutCommand implements TypedCommandImplementation<
           name: 'PutTargetError',
           message: error instanceof Error ? error.message : 'Target resolution failed',
           code: 'TARGET_RESOLUTION_FAILED',
-          suggestion: 'Check target syntax and availability'
+          suggestions: 'Check target syntax and availability'
         },
         type: 'error'
       };
@@ -426,7 +426,7 @@ export class PutCommand implements TypedCommandImplementation<
                 name: 'PutOperationError',
                 message: `Property access (${property}) only supports 'into' position`,
                 code: 'INVALID_PROPERTY_POSITION',
-                suggestion: 'Use "into" position for property access', 'Remove property access for other positions'
+                suggestions: 'Use "into" position for property access', 'Remove property access for other positions'
               },
               type: 'error'
             };
@@ -456,7 +456,7 @@ export class PutCommand implements TypedCommandImplementation<
                 name: 'PutOperationError',
                 message: `Invalid position: ${position}`,
                 code: 'INVALID_POSITION',
-                suggestion: 'Use: into, before, after, at start of, at end of'
+                suggestions: 'Use: into, before, after, at start of, at end of'
               },
               type: 'error'
             };
@@ -476,7 +476,7 @@ export class PutCommand implements TypedCommandImplementation<
           name: 'PutOperationError',
           message: error instanceof Error ? error.message : 'Put operation failed',
           code: 'OPERATION_FAILED',
-          suggestion: 'Check if element is still in DOM', 'Verify content is valid'
+          suggestions: 'Check if element is still in DOM', 'Verify content is valid'
         },
         type: 'error'
       };

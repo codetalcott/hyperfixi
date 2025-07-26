@@ -12,11 +12,12 @@ import { z } from 'zod';
 
 /**
  * Standard validation error structure used throughout the system
+ * Unified to use suggestions: string[] for consistency with HyperScriptError
  */
 export interface ValidationError {
   readonly type: 'syntax-error' | 'type-mismatch' | 'runtime-error' | 'missing-argument' | 'invalid-reference';
   readonly message: string;
-  readonly suggestion: string;
+  readonly suggestions: string[];
 }
 
 /**

@@ -160,7 +160,7 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
         errors.push({
           type: 'type-mismatch',
           message: 'Target type must be a non-empty string',
-          suggestion: 'Provide a valid type like "String", "Int", "JSON", or "Values"'
+          suggestions: ['Provide a valid type like "String", "Int", "JSON", or "Values"']
         });
       } else {
         // Check if type is supported
@@ -169,7 +169,7 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
           errors.push({
             type: 'runtime-error',
             message: `Conversion type "${targetType}" is not supported`,
-            suggestion: 'Use supported types: String, Int, JSON, Values, HTML, Boolean, Fixed, etc.'
+            suggestions: ['Use supported types: String, Int, JSON, Values, HTML, Boolean, Fixed, etc.']
           });
         }
       }
@@ -189,7 +189,7 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
         errors: [{
           type: 'missing-argument',
           message: error instanceof Error ? error.message : 'Invalid as expression arguments',
-          suggestion: 'Provide value and target type'
+          suggestions: ['Provide value and target type']
         }],
         suggestions: [
           'Use format: value as TargetType',
