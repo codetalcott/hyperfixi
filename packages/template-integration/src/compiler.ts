@@ -97,7 +97,7 @@ export class TemplateCompiler {
         throw error;
       }
 
-      const templateError = new Error(`Compilation failed: ${error.message}`) as TemplateError;
+      const templateError = new Error(`Compilation failed: ${error instanceof Error ? error.message : String(error)}`) as TemplateError;
       templateError.type = 'compile';
       throw templateError;
     }
@@ -184,7 +184,7 @@ export class TemplateCompiler {
         context.warnings.push({
           type: 'invalid-hyperscript',
           message: `Unknown node type: ${node.type}`,
-          location: node.location,
+          ...(node.location && { location: node.location }),
         });
         return '';
     }
@@ -251,7 +251,7 @@ export class TemplateCompiler {
       context.warnings.push({
         type: 'invalid-hyperscript',
         message: `Unknown directive: ${node.directive.name}`,
-        location: node.location,
+        ...(node.location && { location: node.location }),
       });
       return '';
     }
@@ -262,8 +262,8 @@ export class TemplateCompiler {
     } catch (error) {
       context.warnings.push({
         type: 'invalid-hyperscript',
-        message: `Directive processing failed: ${error.message}`,
-        location: node.location,
+        message: `Directive processing failed: ${error instanceof Error ? error.message : String(error)}`,
+        ...(node.location && { location: node.location }),
       });
       return '';
     }
@@ -352,7 +352,7 @@ export class TemplateCompiler {
             context.warnings.push({
               type: 'missing-component',
               message: `Component not found: ${componentId}`,
-              location: block.location,
+              ...(block.location && { location: block.location }),
             });
           }
         }
@@ -364,8 +364,8 @@ export class TemplateCompiler {
       } catch (error) {
         context.warnings.push({
           type: 'invalid-hyperscript',
-          message: `Failed to compile hyperscript: ${error.message}`,
-          location: block.location,
+          message: `Failed to compile hyperscript: ${error instanceof Error ? error.message : String(error)}`,
+          ...(block.location && { location: block.location }),
         });
       }
     }
@@ -472,29 +472,32 @@ export class TemplateCompiler {
    */
   private registerBuiltinDirectives(): void {
     // If directive
+    // Helper function for expression evaluation
+    const evaluateExpression = (expr: string, context: TemplateContext): boolean => {
+      // Basic expression evaluation (would be more sophisticated in practice)
+      if (context.variables && expr in context.variables) {
+        return Boolean(context.variables[expr]);
+      }
+      return false;
+    };
+
     this.addDirective('if', {
       async process(directive, context) {
         // Simple conditional logic
-        const condition = this.evaluateExpression(directive.expression, context);
+        const condition = evaluateExpression(directive.expression, context);
         if (condition) {
           return directive.children || [];
         }
         return [];
-      },
-      evaluateExpression(expr: string, context: TemplateContext): boolean {
-        // Basic expression evaluation (would be more sophisticated in practice)
-        if (context.variables && expr in context.variables) {
-          return Boolean(context.variables[expr]);
-        }
-        return false;
       }
     });
 
     // Component directive
+    const registry = this.registry; // Capture registry in closure
     this.addDirective('component', {
       async process(directive, context) {
         const componentId = directive.expression;
-        const component = await this.registry.get(componentId);
+        const component = await registry.get(componentId);
         
         if (!component) {
           return [];
@@ -503,7 +506,7 @@ export class TemplateCompiler {
         return [{
           type: 'component' as const,
           component,
-          children: directive.children,
+          children: directive.children || [],
         }];
       }
     });

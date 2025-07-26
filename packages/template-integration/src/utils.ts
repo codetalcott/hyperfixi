@@ -210,13 +210,13 @@ export function mergeTemplateContexts(...contexts: TemplateContext[]): TemplateC
 
   for (const context of contexts) {
     if (context.variables) {
-      Object.assign(merged.variables, context.variables);
+      Object.assign(merged.variables!, context.variables);
     }
     if (context.components) {
-      Object.assign(merged.components, context.components);
+      Object.assign(merged.components!, context.components);
     }
     if (context.functions) {
-      Object.assign(merged.functions, context.functions);
+      Object.assign(merged.functions!, context.functions);
     }
     if (context.request) {
       merged.request = { ...merged.request, ...context.request };

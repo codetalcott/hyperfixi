@@ -79,14 +79,14 @@ export class TemplateParser {
 
     // Handle self-closing tags and closing tags
     if (this.peek() === '/') {
-      // This is a closing tag, skip it gracefully and return null
+      // This is a closing tag, skip it gracefully
       while (!this.isAtEnd() && this.peek() !== '>') {
         this.advance();
       }
       if (!this.isAtEnd()) {
         this.advance(); // consume '>'
       }
-      return null; // indicate this tag was handled
+      throw this.error('Unexpected closing tag');
     }
 
     const tagName = this.parseTagName();
@@ -370,7 +370,7 @@ export class TemplateParser {
           variables: this.extractVariablesFromCode(code),
           components: this.extractComponentsFromCode(code),
           type: 'attribute',
-          location: node.location,
+          ...(node.location && { location: node.location }),
         });
       }
 

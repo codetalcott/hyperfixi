@@ -7,13 +7,23 @@
 import { z } from 'zod';
 import type { 
   TypedExpressionContext,
-  ExpressionCategory,
   EvaluationType,
   ExpressionMetadata,
-  ValidationResult,
-  EvaluationResult
+  ValidationResult
 } from './enhanced-expressions.js';
 import type { LLMDocumentation } from './enhanced-core.js';
+
+// ============================================================================
+// Enhanced Context Result Types
+// ============================================================================
+
+export interface EvaluationResult<TOutput> {
+  success: boolean;
+  value?: TOutput;
+  errors?: Array<{ type: string; message: string; path?: string }>;
+  suggestions?: string[];
+  type?: EvaluationType;
+}
 
 // ============================================================================
 // Context Categories
@@ -159,7 +169,7 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
     return suggestions;
   }
 
-  protected trackPerformance(startTime: number, success: boolean, output?: any): void {
+  public trackPerformance(startTime: number, success: boolean, output?: any): void {
     this.evaluationHistory.push({
       contextName: this.name,
       category: this.category,

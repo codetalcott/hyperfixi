@@ -221,7 +221,7 @@ export interface CacheEntry {
   };
 }
 
-export interface TemplateError extends Error {
+export interface ITemplateError {
   /** Error type */
   type: 'parse' | 'compile' | 'render' | 'validation';
   /** Source location */
@@ -234,4 +234,32 @@ export interface TemplateError extends Error {
   code?: string;
   /** Additional context */
   context?: Record<string, any>;
+}
+
+export class TemplateError extends Error implements ITemplateError {
+  public location?: {
+    line: number;
+    column: number;
+    file?: string;
+  };
+  public code?: string;
+  public context?: Record<string, any>;
+
+  constructor(
+    message: string,
+    public type: 'parse' | 'compile' | 'render' | 'validation',
+    location?: {
+      line: number;
+      column: number;
+      file?: string;
+    },
+    code?: string,
+    context?: Record<string, any>
+  ) {
+    super(message);
+    this.name = 'TemplateError';
+    if (location) this.location = location;
+    if (code) this.code = code;
+    if (context) this.context = context;
+  }
 }
