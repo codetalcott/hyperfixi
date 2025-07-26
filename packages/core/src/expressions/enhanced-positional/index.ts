@@ -1,849 +1,922 @@
 /**
  * Enhanced Positional Expressions for HyperScript
- * Provides deep TypeScript integration for positional navigation with comprehensive validation
+ * Provides deep TypeScript integration for positional navigation expressions
  */
 
 import { z } from 'zod';
 import type { 
-  TypedExpressionContext, 
-  TypedResult,
+  TypedExpressionImplementation,
+  TypedExpressionContext,
+  ExpressionCategory,
+  EvaluationType,
   ExpressionMetadata,
-  LLMDocumentation,
-  ValidationResult,
-  BaseTypedExpression
-} from '../../types/enhanced-expressions.ts';
+  ValidationResult
+} from '../../types/enhanced-expressions.js';
+import type { 
+  EvaluationResult,
+  LLMDocumentation
+} from '../../types/enhanced-core.js';
 
 // ============================================================================
-// Enhanced Positional Expression Types
+// Input Schemas
 // ============================================================================
 
-/**
- * Supported collection types for positional operations
- */
-export type PositionalCollection = 
-  | unknown[]
-  | NodeList
-  | HTMLCollection
-  | HTMLElement
-  | string
-  | { length: number; [key: number]: unknown };
+const CollectionInputSchema = z.object({
+  collection: z.unknown().describe('Collection to operate on (array, NodeList, or string)')
+}).strict();
 
-/**
- * DOM traversal directions for navigation expressions
- */
-export type TraversalDirection = 'next' | 'previous';
+const IndexInputSchema = z.object({
+  collection: z.unknown().describe('Collection to access'),
+  index: z.number().describe('Index position to access')
+}).strict();
 
-/**
- * Enhanced positional operation result
- */
-export interface PositionalOperationResult<T = unknown> {
-  value: T;
-  index: number;
-  collection: PositionalCollection;
-  metadata: {
-    collectionType: string;
-    collectionLength: number;
-    operation: string;
-  };
-}
+const SliceInputSchema = z.object({
+  collection: z.unknown().describe('Collection to slice'),
+  start: z.number().optional().describe('Start index (inclusive)'),
+  end: z.number().optional().describe('End index (exclusive)')
+}).strict();
+
+const RandomInputSchema = z.object({
+  collection: z.unknown().describe('Collection to select random item from')
+}).strict();
+
+type CollectionInput = z.infer<typeof CollectionInputSchema>;
+type IndexInput = z.infer<typeof IndexInputSchema>;
+type SliceInput = z.infer<typeof SliceInputSchema>;
+type RandomInput = z.infer<typeof RandomInputSchema>;
 
 // ============================================================================
-// Enhanced First Expression Implementation
+// Enhanced First Expression
 // ============================================================================
 
-/**
- * Input schema for the 'first' positional expression
- */
-const FirstExpressionInputSchema = z.object({
-  collection: z.unknown().optional()
-});
+export class EnhancedFirstExpression implements TypedExpressionImplementation<CollectionInput, unknown> {
+  public readonly name = 'first';
+  public readonly category: ExpressionCategory = 'Positional';
+  public readonly syntax = 'first in collection';
+  public readonly description = 'Gets the first element from a collection';
+  public readonly inputSchema = CollectionInputSchema;
+  public readonly outputType: EvaluationType = 'Any';
 
-/**
- * Enhanced implementation of the 'first' positional expression
- */
-export class EnhancedFirstExpression implements BaseTypedExpression<unknown> {
-  readonly name = 'first';
-  readonly category = 'Positional';
-  readonly syntax = 'first [of collection]';
-  readonly outputType = 'Any';
-  readonly inputSchema = FirstExpressionInputSchema;
-
-  readonly metadata: ExpressionMetadata = {
+  public readonly metadata: ExpressionMetadata = {
     category: 'Positional',
     complexity: 'simple',
     sideEffects: [],
     dependencies: [],
-    returnTypes: ['Any', 'Null'],
+    returnTypes: ['Any'],
     examples: [
       {
-        input: 'first of [1, 2, 3]',
+        input: 'first in [1, 2, 3]',
         description: 'Get first element from array',
         expectedOutput: 1
       },
       {
-        input: 'first of it',
-        description: 'Get first element from context collection',
-        expectedOutput: '<first-item>',
-        context: { it: ['item1', 'item2', 'item3'] }
+        input: 'first in <div/>',
+        description: 'Get first element from NodeList',
+        expectedOutput: 'HTMLElement'
       },
       {
-        input: 'first',
-        description: 'Get first element from context.it',
-        expectedOutput: '<first-element>',
-        context: { it: document.querySelectorAll('.items') }
-      },
-      {
-        input: 'first of element',
-        description: 'Get first child element',
-        expectedOutput: '<first-child>',
-        context: { element: '<div with children>' }
+        input: 'first in "hello"',
+        description: 'Get first character from string',
+        expectedOutput: 'h'
       }
     ],
-    relatedExpressions: ['last', 'at', 'next', 'previous'],
+    relatedExpressions: ['last', 'at', 'slice'],
     performance: {
       averageTime: 0.1,
       complexity: 'O(1)'
     }
   };
 
-  readonly documentation: LLMDocumentation = {
-    summary: 'Returns the first element from a collection, array, NodeList, or DOM element children',
+  public readonly documentation: LLMDocumentation = {
+    summary: 'Retrieves the first element from a collection (array, NodeList, or string)',
     parameters: [
       {
         name: 'collection',
-        type: 'any',
-        description: 'Collection to get first element from (optional, defaults to context.it)',
-        optional: true,
-        examples: ['[1, 2, 3]', 'document.querySelectorAll(".items")', 'element', '"hello"']
+        type: 'array | NodeList | string',
+        description: 'Collection to get first element from',
+        optional: false,
+        examples: ['[1, 2, 3]', 'document.querySelectorAll("div")', '"hello"', 'items']
       }
     ],
     returns: {
       type: 'any',
-      description: 'First element from collection or null if empty/invalid',
-      examples: [1, 'first item', document.createElement('div'), 'h', null]
+      description: 'First element of collection, or undefined if empty',
+      examples: ['1', 'HTMLElement', '"h"', 'undefined']
     },
     examples: [
       {
         title: 'Array first element',
-        code: 'put first of [10, 20, 30] into result',
-        explanation: 'Get first element from array literal',
-        output: 10
+        code: 'first in [1, 2, 3]',
+        explanation: 'Get first number from array',
+        output: '1'
       },
       {
-        title: 'NodeList first element',
-        code: 'put first of <button/> into firstButton',
-        explanation: 'Get first button element from page',
-        output: 'HTMLButtonElement'
+        title: 'DOM element selection',
+        code: 'first in <.item/>',
+        explanation: 'Get first element matching CSS selector',
+        output: 'HTMLElement'
       },
       {
         title: 'String first character',
-        code: 'if first of my.value is "A" then proceed',
-        explanation: 'Check if input starts with letter A',
-        output: 'A'
+        code: 'first in "hello world"',
+        explanation: 'Get first character of string',
+        output: '"h"'
       },
       {
-        title: 'DOM children first',
-        code: 'put first of closest <ul/> into firstItem',
-        explanation: 'Get first child element of list',
-        output: 'HTMLLIElement'
-      },
-      {
-        title: 'Context collection first',
-        code: 'put first into selected',
-        explanation: 'Get first element from context.it collection',
-        output: 'varies'
+        title: 'Empty collection handling',
+        code: 'first in []',
+        explanation: 'Returns undefined for empty collections',
+        output: 'undefined'
       }
     ],
-    seeAlso: ['last', 'at', 'next', 'previous', 'children'],
-    tags: ['positional', 'navigation', 'collection', 'array', 'dom']
+    seeAlso: ['last', 'at', 'slice', 'random'],
+    tags: ['positional', 'array', 'collection', 'navigation', 'first']
   };
 
-  async evaluate(context: TypedExpressionContext, input: { collection?: unknown }): Promise<TypedResult<unknown>> {
+  async evaluate(
+    context: TypedExpressionContext,
+    input: CollectionInput
+  ): Promise<EvaluationResult<unknown>> {
     const startTime = Date.now();
-    
+
     try {
-      // Validate input
       const validation = this.validate(input);
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'FirstExpressionValidationError',
-            message: validation.errors[0]?.message || 'Invalid input',
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
-      const { collection } = input;
-      const target = collection !== undefined ? collection : context.it;
+      const collection = this.normalizeCollection(input.collection);
+      const result = collection.length > 0 ? collection[0] : undefined;
 
-      // Handle null/undefined
-      if (target == null) {
-        const result = { success: true as const, value: null, type: 'null' as const };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
+      this.trackPerformance(context, startTime, true, result);
 
-      // Handle arrays
-      if (Array.isArray(target)) {
-        const value = target.length > 0 ? target[0] : null;
-        const result = { success: true as const, value, type: value == null ? 'null' : typeof value };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle NodeList or HTMLCollection
-      if (target instanceof NodeList || target instanceof HTMLCollection) {
-        const value = target.length > 0 ? target[0] : null;
-        const result = { success: true as const, value, type: value ? 'element' : 'null' };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle DOM element - get first child element
-      if (target instanceof Element) {
-        const value = target.children.length > 0 ? target.children[0] : null;
-        const result = { success: true as const, value, type: value ? 'element' : 'null' };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle string
-      if (typeof target === 'string') {
-        const value = target.length > 0 ? target[0] : null;
-        const result = { success: true as const, value, type: value ? 'string' : 'null' };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle object with length property and numeric indexing
-      if (typeof target === 'object' && 'length' in target && typeof (target as any).length === 'number') {
-        const lengthObj = target as { length: number; [key: number]: unknown };
-        const value = lengthObj.length > 0 ? lengthObj[0] : null;
-        const result = { success: true as const, value, type: value == null ? 'null' : typeof value };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Unsupported type
-      const errorResult = {
-        success: false as const,
-        error: {
-          name: 'UnsupportedCollectionTypeError',
-          message: `Cannot get first element from type: ${typeof target}`,
-          code: 'UNSUPPORTED_COLLECTION_TYPE',
-          suggestions: [
-            'Use arrays, NodeList, HTMLCollection, Element, or string',
-            'Ensure collection has a length property and numeric indexing',
-            'Check if the collection is properly initialized'
-          ]
-        }
+      return {
+        success: true,
+        value: result,
+        type: this.inferResultType(result)
       };
-      this.trackEvaluation(context, input, errorResult, startTime);
-      return errorResult;
 
     } catch (error) {
-      const errorResult = {
-        success: false as const,
-        error: {
-          name: 'FirstExpressionError',
-          message: `First operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'FIRST_OPERATION_FAILED',
-          suggestions: ['Check collection validity', 'Ensure collection is accessible']
-        }
+      this.trackPerformance(context, startTime, false);
+
+      return {
+        success: false,
+        errors: [{
+          type: 'runtime-error',
+          message: `First operation failed: ${error instanceof Error ? error.message : String(error)}`
+        }],
+        suggestions: [
+          'Ensure collection is array, NodeList, or string',
+          'Check that collection is not null or undefined'
+        ]
       };
-      this.trackEvaluation(context, input, errorResult, startTime);
-      return errorResult;
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
+      
       if (!parsed.success) {
         return {
           isValid: false,
           errors: parsed.error.errors.map(err => ({
-            path: err.path,
-            message: err.message,
-            code: err.code
+            type: 'type-mismatch',
+            message: `Invalid first input: ${err.message}`
           })),
           suggestions: [
-            'Provide optional collection parameter',
-            'Check parameter structure: { collection?: any }'
+            'Provide a collection parameter',
+            'Ensure collection is array, NodeList, or string'
           ]
         };
       }
-      return { isValid: true, errors: [] };
+
+      return {
+        isValid: true,
+        errors: [],
+        suggestions: []
+      };
+
     } catch (error) {
       return {
         isValid: false,
-        errors: [{ message: 'Validation failed', code: 'VALIDATION_ERROR' }],
-        suggestions: ['Check input structure']
+        errors: [{
+          type: 'runtime-error',
+          message: 'Validation failed with exception'
+        }],
+        suggestions: ['Check input structure and types']
       };
     }
   }
 
-  private trackEvaluation(
-    context: TypedExpressionContext,
-    input: unknown,
-    result: TypedResult<unknown>,
-    startTime: number
-  ): void {
-    context.evaluationHistory.push({
-      expressionName: this.name,
-      category: this.category,
-      input,
-      output: result.success ? result.value : result.error,
-      timestamp: startTime,
-      duration: Date.now() - startTime,
-      success: result.success
-    });
+  private normalizeCollection(collection: unknown): unknown[] {
+    if (Array.isArray(collection)) {
+      return collection;
+    }
+    if (collection instanceof NodeList) {
+      return Array.from(collection);
+    }
+    if (typeof collection === 'string') {
+      return collection.split('');
+    }
+    if (collection == null) {
+      return [];
+    }
+    // Try to iterate other iterable objects
+    if (typeof collection === 'object' && Symbol.iterator in collection) {
+      return Array.from(collection as Iterable<unknown>);
+    }
+    return [];
+  }
+
+  private inferResultType(result: unknown): EvaluationType {
+    if (result === undefined) return 'Undefined';
+    if (result === null) return 'Null';
+    if (typeof result === 'string') return 'String';
+    if (typeof result === 'number') return 'Number';
+    if (typeof result === 'boolean') return 'Boolean';
+    if (Array.isArray(result)) return 'Array';
+    if (result instanceof HTMLElement) return 'Element';
+    return 'Object';
+  }
+
+  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+    if (context.evaluationHistory) {
+      context.evaluationHistory.push({
+        expressionName: this.name,
+        category: this.category,
+        input: 'first operation',
+        output: success ? output : 'error',
+        timestamp: startTime,
+        duration: Date.now() - startTime,
+        success
+      });
+    }
   }
 }
 
 // ============================================================================
-// Enhanced Last Expression Implementation
+// Enhanced Last Expression
 // ============================================================================
 
-/**
- * Input schema for the 'last' positional expression
- */
-const LastExpressionInputSchema = z.object({
-  collection: z.unknown().optional()
-});
+export class EnhancedLastExpression implements TypedExpressionImplementation<CollectionInput, unknown> {
+  public readonly name = 'last';
+  public readonly category: ExpressionCategory = 'Positional';
+  public readonly syntax = 'last in collection';
+  public readonly description = 'Gets the last element from a collection';
+  public readonly inputSchema = CollectionInputSchema;
+  public readonly outputType: EvaluationType = 'Any';
 
-/**
- * Enhanced implementation of the 'last' positional expression
- */
-export class EnhancedLastExpression implements BaseTypedExpression<unknown> {
-  readonly name = 'last';
-  readonly category = 'Positional';
-  readonly syntax = 'last [of collection]';
-  readonly outputType = 'Any';
-  readonly inputSchema = LastExpressionInputSchema;
-
-  readonly metadata: ExpressionMetadata = {
+  public readonly metadata: ExpressionMetadata = {
     category: 'Positional',
     complexity: 'simple',
     sideEffects: [],
     dependencies: [],
-    returnTypes: ['Any', 'Null'],
+    returnTypes: ['Any'],
     examples: [
       {
-        input: 'last of [1, 2, 3]',
+        input: 'last in [1, 2, 3]',
         description: 'Get last element from array',
         expectedOutput: 3
       },
       {
-        input: 'last of it',
-        description: 'Get last element from context collection',
-        expectedOutput: '<last-item>',
-        context: { it: ['item1', 'item2', 'item3'] }
-      },
-      {
-        input: 'last',
-        description: 'Get last element from context.it',
-        expectedOutput: '<last-element>',
-        context: { it: document.querySelectorAll('.items') }
-      },
-      {
-        input: 'last of element',
-        description: 'Get last child element',
-        expectedOutput: '<last-child>',
-        context: { element: '<div with children>' }
+        input: 'last in "hello"',
+        description: 'Get last character from string',
+        expectedOutput: 'o'
       }
     ],
-    relatedExpressions: ['first', 'at', 'next', 'previous'],
+    relatedExpressions: ['first', 'at', 'slice'],
     performance: {
       averageTime: 0.1,
       complexity: 'O(1)'
     }
   };
 
-  readonly documentation: LLMDocumentation = {
-    summary: 'Returns the last element from a collection, array, NodeList, or DOM element children',
+  public readonly documentation: LLMDocumentation = {
+    summary: 'Retrieves the last element from a collection (array, NodeList, or string)',
     parameters: [
       {
         name: 'collection',
-        type: 'any',
-        description: 'Collection to get last element from (optional, defaults to context.it)',
-        optional: true,
-        examples: ['[1, 2, 3]', 'document.querySelectorAll(".items")', 'element', '"hello"']
+        type: 'array | NodeList | string',
+        description: 'Collection to get last element from',
+        optional: false,
+        examples: ['[1, 2, 3]', 'document.querySelectorAll("div")', '"hello"']
       }
     ],
     returns: {
       type: 'any',
-      description: 'Last element from collection or null if empty/invalid',
-      examples: [3, 'last item', document.createElement('div'), 'o', null]
+      description: 'Last element of collection, or undefined if empty',
+      examples: ['3', 'HTMLElement', '"o"', 'undefined']
     },
     examples: [
       {
         title: 'Array last element',
-        code: 'put last of [10, 20, 30] into result',
-        explanation: 'Get last element from array literal',
-        output: 30
-      },
-      {
-        title: 'NodeList last element',
-        code: 'put last of <button/> into lastButton',
-        explanation: 'Get last button element from page',
-        output: 'HTMLButtonElement'
+        code: 'last in [1, 2, 3]',
+        explanation: 'Get last number from array',
+        output: '3'
       },
       {
         title: 'String last character',
-        code: 'if last of my.value is "Z" then proceed',
-        explanation: 'Check if input ends with letter Z',
-        output: 'Z'
+        code: 'last in "hello"',
+        explanation: 'Get last character of string',
+        output: '"o"'
       },
       {
-        title: 'DOM children last',
-        code: 'put last of closest <ul/> into lastItem',
-        explanation: 'Get last child element of list',
-        output: 'HTMLLIElement'
-      },
-      {
-        title: 'Context collection last',
-        code: 'put last into selected',
-        explanation: 'Get last element from context.it collection',
-        output: 'varies'
+        title: 'DOM elements',
+        code: 'last in <.item/>',
+        explanation: 'Get last element matching selector',
+        output: 'HTMLElement'
       }
     ],
-    seeAlso: ['first', 'at', 'next', 'previous', 'children'],
-    tags: ['positional', 'navigation', 'collection', 'array', 'dom']
+    seeAlso: ['first', 'at', 'slice', 'random'],
+    tags: ['positional', 'array', 'collection', 'navigation', 'last']
   };
 
-  async evaluate(context: TypedExpressionContext, input: { collection?: unknown }): Promise<TypedResult<unknown>> {
+  async evaluate(
+    context: TypedExpressionContext,
+    input: CollectionInput
+  ): Promise<EvaluationResult<unknown>> {
     const startTime = Date.now();
-    
+
     try {
-      // Validate input
       const validation = this.validate(input);
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'LastExpressionValidationError',
-            message: validation.errors[0]?.message || 'Invalid input',
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
-      const { collection } = input;
-      const target = collection !== undefined ? collection : context.it;
+      const collection = this.normalizeCollection(input.collection);
+      const result = collection.length > 0 ? collection[collection.length - 1] : undefined;
 
-      // Handle null/undefined
-      if (target == null) {
-        const result = { success: true as const, value: null, type: 'null' as const };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
+      this.trackPerformance(context, startTime, true, result);
 
-      // Handle arrays
-      if (Array.isArray(target)) {
-        const value = target.length > 0 ? target[target.length - 1] : null;
-        const result = { success: true as const, value, type: value == null ? 'null' : typeof value };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle NodeList or HTMLCollection
-      if (target instanceof NodeList || target instanceof HTMLCollection) {
-        const value = target.length > 0 ? target[target.length - 1] : null;
-        const result = { success: true as const, value, type: value ? 'element' : 'null' };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle DOM element - get last child element
-      if (target instanceof Element) {
-        const children = target.children;
-        const value = children.length > 0 ? children[children.length - 1] : null;
-        const result = { success: true as const, value, type: value ? 'element' : 'null' };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle string
-      if (typeof target === 'string') {
-        const value = target.length > 0 ? target[target.length - 1] : null;
-        const result = { success: true as const, value, type: value ? 'string' : 'null' };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle object with length property and numeric indexing
-      if (typeof target === 'object' && 'length' in target && typeof (target as any).length === 'number') {
-        const lengthObj = target as { length: number; [key: number]: unknown };
-        const value = lengthObj.length > 0 ? lengthObj[lengthObj.length - 1] : null;
-        const result = { success: true as const, value, type: value == null ? 'null' : typeof value };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Unsupported type
-      const errorResult = {
-        success: false as const,
-        error: {
-          name: 'UnsupportedCollectionTypeError',
-          message: `Cannot get last element from type: ${typeof target}`,
-          code: 'UNSUPPORTED_COLLECTION_TYPE',
-          suggestions: [
-            'Use arrays, NodeList, HTMLCollection, Element, or string',
-            'Ensure collection has a length property and numeric indexing',
-            'Check if the collection is properly initialized'
-          ]
-        }
+      return {
+        success: true,
+        value: result,
+        type: this.inferResultType(result)
       };
-      this.trackEvaluation(context, input, errorResult, startTime);
-      return errorResult;
 
     } catch (error) {
-      const errorResult = {
-        success: false as const,
-        error: {
-          name: 'LastExpressionError',
-          message: `Last operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'LAST_OPERATION_FAILED',
-          suggestions: ['Check collection validity', 'Ensure collection is accessible']
-        }
+      this.trackPerformance(context, startTime, false);
+
+      return {
+        success: false,
+        errors: [{
+          type: 'runtime-error',
+          message: `Last operation failed: ${error instanceof Error ? error.message : String(error)}`
+        }],
+        suggestions: [
+          'Ensure collection is array, NodeList, or string',
+          'Check that collection is not null or undefined'
+        ]
       };
-      this.trackEvaluation(context, input, errorResult, startTime);
-      return errorResult;
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
+      
       if (!parsed.success) {
         return {
           isValid: false,
           errors: parsed.error.errors.map(err => ({
-            path: err.path,
-            message: err.message,
-            code: err.code
+            type: 'type-mismatch',
+            message: `Invalid last input: ${err.message}`
           })),
           suggestions: [
-            'Provide optional collection parameter',
-            'Check parameter structure: { collection?: any }'
+            'Provide a collection parameter',
+            'Ensure collection is array, NodeList, or string'
           ]
         };
       }
-      return { isValid: true, errors: [] };
+
+      return {
+        isValid: true,
+        errors: [],
+        suggestions: []
+      };
+
     } catch (error) {
       return {
         isValid: false,
-        errors: [{ message: 'Validation failed', code: 'VALIDATION_ERROR' }],
-        suggestions: ['Check input structure']
+        errors: [{
+          type: 'runtime-error',
+          message: 'Validation failed with exception'
+        }],
+        suggestions: ['Check input structure and types']
       };
     }
   }
 
-  private trackEvaluation(
-    context: TypedExpressionContext,
-    input: unknown,
-    result: TypedResult<unknown>,
-    startTime: number
-  ): void {
-    context.evaluationHistory.push({
-      expressionName: this.name,
-      category: this.category,
-      input,
-      output: result.success ? result.value : result.error,
-      timestamp: startTime,
-      duration: Date.now() - startTime,
-      success: result.success
-    });
+  private normalizeCollection(collection: unknown): unknown[] {
+    if (Array.isArray(collection)) {
+      return collection;
+    }
+    if (collection instanceof NodeList) {
+      return Array.from(collection);
+    }
+    if (typeof collection === 'string') {
+      return collection.split('');
+    }
+    if (collection == null) {
+      return [];
+    }
+    if (typeof collection === 'object' && Symbol.iterator in collection) {
+      return Array.from(collection as Iterable<unknown>);
+    }
+    return [];
+  }
+
+  private inferResultType(result: unknown): EvaluationType {
+    if (result === undefined) return 'Undefined';
+    if (result === null) return 'Null';
+    if (typeof result === 'string') return 'String';
+    if (typeof result === 'number') return 'Number';
+    if (typeof result === 'boolean') return 'Boolean';
+    if (Array.isArray(result)) return 'Array';
+    if (result instanceof HTMLElement) return 'Element';
+    return 'Object';
+  }
+
+  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+    if (context.evaluationHistory) {
+      context.evaluationHistory.push({
+        expressionName: this.name,
+        category: this.category,
+        input: 'last operation',
+        output: success ? output : 'error',
+        timestamp: startTime,
+        duration: Date.now() - startTime,
+        success
+      });
+    }
   }
 }
 
 // ============================================================================
-// Enhanced At Expression Implementation
+// Enhanced At Expression (Index Access)
 // ============================================================================
 
-/**
- * Input schema for the 'at' positional expression
- */
-const AtExpressionInputSchema = z.object({
-  index: z.number().int(),
-  collection: z.unknown().optional()
-});
+export class EnhancedAtExpression implements TypedExpressionImplementation<IndexInput, unknown> {
+  public readonly name = 'at';
+  public readonly category: ExpressionCategory = 'Positional';
+  public readonly syntax = 'collection[index] or collection at index';
+  public readonly description = 'Gets element at specific index from a collection';
+  public readonly inputSchema = IndexInputSchema;
+  public readonly outputType: EvaluationType = 'Any';
 
-/**
- * Enhanced implementation of the 'at' positional expression
- */
-export class EnhancedAtExpression implements BaseTypedExpression<unknown> {
-  readonly name = 'at';
-  readonly category = 'Positional';
-  readonly syntax = 'at index [of collection]';
-  readonly outputType = 'Any';
-  readonly inputSchema = AtExpressionInputSchema;
-
-  readonly metadata: ExpressionMetadata = {
+  public readonly metadata: ExpressionMetadata = {
     category: 'Positional',
     complexity: 'simple',
     sideEffects: [],
     dependencies: [],
-    returnTypes: ['Any', 'Null'],
+    returnTypes: ['Any'],
     examples: [
       {
-        input: 'at 1 of [1, 2, 3]',
-        description: 'Get element at index 1 from array',
+        input: '[1, 2, 3] at 1',
+        description: 'Get element at index 1',
         expectedOutput: 2
       },
       {
-        input: 'at -1 of [1, 2, 3]',
-        description: 'Get last element using negative index',
-        expectedOutput: 3
-      },
-      {
-        input: 'at 0 of it',
-        description: 'Get first element from context collection',
-        expectedOutput: '<first-item>',
-        context: { it: ['item1', 'item2', 'item3'] }
-      },
-      {
-        input: 'at 2',
-        description: 'Get element at index 2 from context.it',
-        expectedOutput: '<third-element>',
-        context: { it: document.querySelectorAll('.items') }
+        input: '"hello" at 0',
+        description: 'Get character at index 0',
+        expectedOutput: 'h'
       }
     ],
-    relatedExpressions: ['first', 'last', 'next', 'previous'],
+    relatedExpressions: ['first', 'last', 'slice'],
     performance: {
       averageTime: 0.1,
       complexity: 'O(1)'
     }
   };
 
-  readonly documentation: LLMDocumentation = {
-    summary: 'Returns the element at a specific index from a collection, with support for negative indexing',
+  public readonly documentation: LLMDocumentation = {
+    summary: 'Retrieves element at specific index from a collection with negative index support',
     parameters: [
+      {
+        name: 'collection',
+        type: 'array | NodeList | string',
+        description: 'Collection to access',
+        optional: false,
+        examples: ['[1, 2, 3]', '"hello"', 'items']
+      },
       {
         name: 'index',
         type: 'number',
-        description: 'Zero-based index (negative values count from end)',
+        description: 'Index position (supports negative indexing)',
         optional: false,
         examples: ['0', '1', '-1', '-2']
-      },
-      {
-        name: 'collection',
-        type: 'any',
-        description: 'Collection to get element from (optional, defaults to context.it)',
-        optional: true,
-        examples: ['[1, 2, 3]', 'document.querySelectorAll(".items")', 'element', '"hello"']
       }
     ],
     returns: {
       type: 'any',
-      description: 'Element at specified index or null if index is out of bounds',
-      examples: [2, 'item at index', document.createElement('div'), 'l', null]
+      description: 'Element at specified index, or undefined if out of bounds',
+      examples: ['2', '"h"', 'HTMLElement', 'undefined']
     },
     examples: [
       {
-        title: 'Array element by index',
-        code: 'put at 1 of [10, 20, 30] into result',
-        explanation: 'Get second element (index 1) from array',
-        output: 20
+        title: 'Positive index',
+        code: '[1, 2, 3] at 1',
+        explanation: 'Get second element (index 1)',
+        output: '2'
       },
       {
-        title: 'Negative index access',
-        code: 'put at -1 of items into lastItem',
+        title: 'Negative index',
+        code: '[1, 2, 3] at -1',
         explanation: 'Get last element using negative index',
-        output: 'last item'
+        output: '3'
       },
       {
-        title: 'NodeList element by index',
-        code: 'put at 0 of <button/> into firstButton',
-        explanation: 'Get first button element from page',
-        output: 'HTMLButtonElement'
+        title: 'String character access',
+        code: '"hello" at 0',
+        explanation: 'Get first character of string',
+        output: '"h"'
       },
       {
-        title: 'String character by index',
-        code: 'if at 0 of my.value is "A" then proceed',
-        explanation: 'Check first character of input',
-        output: 'A'
-      },
-      {
-        title: 'DOM children by index',
-        code: 'put at 2 of closest <ul/> into thirdItem',
-        explanation: 'Get third child element of list',
-        output: 'HTMLLIElement'
+        title: 'Out of bounds',
+        code: '[1, 2] at 5',
+        explanation: 'Returns undefined for invalid index',
+        output: 'undefined'
       }
     ],
-    seeAlso: ['first', 'last', 'next', 'previous', 'slice'],
-    tags: ['positional', 'navigation', 'collection', 'array', 'dom', 'indexing']
+    seeAlso: ['first', 'last', 'slice', 'length'],
+    tags: ['positional', 'array', 'index', 'access', 'negative-index']
   };
 
-  async evaluate(context: TypedExpressionContext, input: { index: number; collection?: unknown }): Promise<TypedResult<unknown>> {
+  async evaluate(
+    context: TypedExpressionContext,
+    input: IndexInput
+  ): Promise<EvaluationResult<unknown>> {
     const startTime = Date.now();
-    
+
     try {
-      // Validate input
       const validation = this.validate(input);
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'AtExpressionValidationError',
-            message: validation.errors[0]?.message || 'Invalid input',
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
-      const { index, collection } = input;
-      const target = collection !== undefined ? collection : context.it;
+      const collection = this.normalizeCollection(input.collection);
+      const index = this.normalizeIndex(input.index, collection.length);
+      
+      const result = (index >= 0 && index < collection.length) ? collection[index] : undefined;
 
-      // Handle null/undefined
-      if (target == null) {
-        const result = { success: true as const, value: null, type: 'null' as const };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
+      this.trackPerformance(context, startTime, true, result);
 
-      // Handle arrays
-      if (Array.isArray(target)) {
-        const actualIndex = index < 0 ? target.length + index : index;
-        const value = actualIndex >= 0 && actualIndex < target.length ? target[actualIndex] : null;
-        const result = { success: true as const, value, type: value == null ? 'null' : typeof value };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle NodeList or HTMLCollection
-      if (target instanceof NodeList || target instanceof HTMLCollection) {
-        const actualIndex = index < 0 ? target.length + index : index;
-        const value = actualIndex >= 0 && actualIndex < target.length ? target[actualIndex] : null;
-        const result = { success: true as const, value, type: value ? 'element' : 'null' };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle DOM element - get nth child element
-      if (target instanceof Element) {
-        const children = target.children;
-        const actualIndex = index < 0 ? children.length + index : index;
-        const value = actualIndex >= 0 && actualIndex < children.length ? children[actualIndex] : null;
-        const result = { success: true as const, value, type: value ? 'element' : 'null' };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle string
-      if (typeof target === 'string') {
-        const actualIndex = index < 0 ? target.length + index : index;
-        const value = actualIndex >= 0 && actualIndex < target.length ? target[actualIndex] : null;
-        const result = { success: true as const, value, type: value ? 'string' : 'null' };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Handle object with length property and numeric indexing
-      if (typeof target === 'object' && 'length' in target && typeof (target as any).length === 'number') {
-        const lengthObj = target as { length: number; [key: number]: unknown };
-        const actualIndex = index < 0 ? lengthObj.length + index : index;
-        const value = actualIndex >= 0 && actualIndex < lengthObj.length ? lengthObj[actualIndex] : null;
-        const result = { success: true as const, value, type: value == null ? 'null' : typeof value };
-        this.trackEvaluation(context, input, result, startTime);
-        return result;
-      }
-
-      // Unsupported type
-      const errorResult = {
-        success: false as const,
-        error: {
-          name: 'UnsupportedCollectionTypeError',
-          message: `Cannot get element at index from type: ${typeof target}`,
-          code: 'UNSUPPORTED_COLLECTION_TYPE',
-          suggestions: [
-            'Use arrays, NodeList, HTMLCollection, Element, or string',
-            'Ensure collection has a length property and numeric indexing',
-            'Check if the collection is properly initialized'
-          ]
-        }
+      return {
+        success: true,
+        value: result,
+        type: this.inferResultType(result)
       };
-      this.trackEvaluation(context, input, errorResult, startTime);
-      return errorResult;
 
     } catch (error) {
-      const errorResult = {
-        success: false as const,
-        error: {
-          name: 'AtExpressionError',
-          message: `At operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'AT_OPERATION_FAILED',
-          suggestions: ['Check index and collection validity', 'Ensure index is within bounds']
-        }
+      this.trackPerformance(context, startTime, false);
+
+      return {
+        success: false,
+        errors: [{
+          type: 'runtime-error',
+          message: `At operation failed: ${error instanceof Error ? error.message : String(error)}`
+        }],
+        suggestions: [
+          'Ensure collection is array, NodeList, or string',
+          'Check that index is a valid number',
+          'Verify index is within collection bounds'
+        ]
       };
-      this.trackEvaluation(context, input, errorResult, startTime);
-      return errorResult;
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
+      
       if (!parsed.success) {
         return {
           isValid: false,
           errors: parsed.error.errors.map(err => ({
-            path: err.path,
-            message: err.message,
-            code: err.code
+            type: 'type-mismatch',
+            message: `Invalid at input: ${err.message}`
           })),
           suggestions: [
-            'Provide required index parameter as integer',
-            'Provide optional collection parameter',
-            'Check parameter structure: { index: number, collection?: any }'
+            'Provide collection and index parameters',
+            'Ensure index is a number'
           ]
         };
       }
-      return { isValid: true, errors: [] };
+
+      return {
+        isValid: true,
+        errors: [],
+        suggestions: []
+      };
+
     } catch (error) {
       return {
         isValid: false,
-        errors: [{ message: 'Validation failed', code: 'VALIDATION_ERROR' }],
-        suggestions: ['Check input structure']
+        errors: [{
+          type: 'runtime-error',
+          message: 'Validation failed with exception'
+        }],
+        suggestions: ['Check input structure and types']
       };
     }
   }
 
-  private trackEvaluation(
-    context: TypedExpressionContext,
-    input: unknown,
-    result: TypedResult<unknown>,
-    startTime: number
-  ): void {
-    context.evaluationHistory.push({
-      expressionName: this.name,
-      category: this.category,
-      input,
-      output: result.success ? result.value : result.error,
-      timestamp: startTime,
-      duration: Date.now() - startTime,
-      success: result.success
-    });
+  private normalizeCollection(collection: unknown): unknown[] {
+    if (Array.isArray(collection)) {
+      return collection;
+    }
+    if (collection instanceof NodeList) {
+      return Array.from(collection);
+    }
+    if (typeof collection === 'string') {
+      return collection.split('');
+    }
+    if (collection == null) {
+      return [];
+    }
+    if (typeof collection === 'object' && Symbol.iterator in collection) {
+      return Array.from(collection as Iterable<unknown>);
+    }
+    return [];
+  }
+
+  private normalizeIndex(index: number, length: number): number {
+    // Handle negative indices
+    if (index < 0) {
+      return length + index;
+    }
+    return index;
+  }
+
+  private inferResultType(result: unknown): EvaluationType {
+    if (result === undefined) return 'Undefined';
+    if (result === null) return 'Null';
+    if (typeof result === 'string') return 'String';
+    if (typeof result === 'number') return 'Number';
+    if (typeof result === 'boolean') return 'Boolean';
+    if (Array.isArray(result)) return 'Array';
+    if (result instanceof HTMLElement) return 'Element';
+    return 'Object';
+  }
+
+  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+    if (context.evaluationHistory) {
+      context.evaluationHistory.push({
+        expressionName: this.name,
+        category: this.category,
+        input: 'at operation',
+        output: success ? output : 'error',
+        timestamp: startTime,
+        duration: Date.now() - startTime,
+        success
+      });
+    }
   }
 }
 
 // ============================================================================
-// Enhanced Expression Registry
+// Enhanced Random Expression
 // ============================================================================
 
-export const enhancedPositionalExpressions = {
-  first: new EnhancedFirstExpression(),
-  last: new EnhancedLastExpression(),
-  at: new EnhancedAtExpression()
-} as const;
+export class EnhancedRandomExpression implements TypedExpressionImplementation<RandomInput, unknown> {
+  public readonly name = 'random';
+  public readonly category: ExpressionCategory = 'Positional';
+  public readonly syntax = 'random in collection';
+  public readonly description = 'Gets a random element from a collection';
+  public readonly inputSchema = RandomInputSchema;
+  public readonly outputType: EvaluationType = 'Any';
 
-export type EnhancedPositionalExpressionName = keyof typeof enhancedPositionalExpressions;
+  public readonly metadata: ExpressionMetadata = {
+    category: 'Positional',
+    complexity: 'simple',
+    sideEffects: ['random-generation'],
+    dependencies: [],
+    returnTypes: ['Any'],
+    examples: [
+      {
+        input: 'random in [1, 2, 3]',
+        description: 'Get random element from array',
+        expectedOutput: 'random number 1-3'
+      },
+      {
+        input: 'random in "abc"',
+        description: 'Get random character from string',
+        expectedOutput: 'random character a-c'
+      }
+    ],
+    relatedExpressions: ['first', 'last', 'at'],
+    performance: {
+      averageTime: 0.1,
+      complexity: 'O(1)'
+    }
+  };
+
+  public readonly documentation: LLMDocumentation = {
+    summary: 'Selects a random element from a collection using cryptographically secure randomness when available',
+    parameters: [
+      {
+        name: 'collection',
+        type: 'array | NodeList | string',
+        description: 'Collection to select random element from',
+        optional: false,
+        examples: ['[1, 2, 3]', '"abc"', 'items', 'document.querySelectorAll("div")']
+      }
+    ],
+    returns: {
+      type: 'any',
+      description: 'Random element from collection, or undefined if empty',
+      examples: ['2', '"b"', 'HTMLElement', 'undefined']
+    },
+    examples: [
+      {
+        title: 'Random array element',
+        code: 'random in [1, 2, 3, 4, 5]',
+        explanation: 'Get random number from array',
+        output: 'random number 1-5'
+      },
+      {
+        title: 'Random character',
+        code: 'random in "abcdef"',
+        explanation: 'Get random character from string',
+        output: 'random character a-f'
+      },
+      {
+        title: 'Random DOM element',
+        code: 'random in <.item/>',
+        explanation: 'Get random element matching selector',
+        output: 'random HTMLElement'
+      },
+      {
+        title: 'Empty collection',
+        code: 'random in []',
+        explanation: 'Returns undefined for empty collections',
+        output: 'undefined'
+      }
+    ],
+    seeAlso: ['first', 'last', 'at', 'shuffle'],
+    tags: ['positional', 'random', 'selection', 'array', 'collection']
+  };
+
+  async evaluate(
+    context: TypedExpressionContext,
+    input: RandomInput
+  ): Promise<EvaluationResult<unknown>> {
+    const startTime = Date.now();
+
+    try {
+      const validation = this.validate(input);
+      if (!validation.isValid) {
+        return {
+          success: false,
+          errors: validation.errors,
+          suggestions: validation.suggestions
+        };
+      }
+
+      const collection = this.normalizeCollection(input.collection);
+      
+      if (collection.length === 0) {
+        this.trackPerformance(context, startTime, true, undefined);
+        return {
+          success: true,
+          value: undefined,
+          type: 'Undefined'
+        };
+      }
+
+      const randomIndex = this.getSecureRandomIndex(collection.length);
+      const result = collection[randomIndex];
+
+      this.trackPerformance(context, startTime, true, result);
+
+      return {
+        success: true,
+        value: result,
+        type: this.inferResultType(result)
+      };
+
+    } catch (error) {
+      this.trackPerformance(context, startTime, false);
+
+      return {
+        success: false,
+        errors: [{
+          type: 'runtime-error',
+          message: `Random operation failed: ${error instanceof Error ? error.message : String(error)}`
+        }],
+        suggestions: [
+          'Ensure collection is array, NodeList, or string',
+          'Check that collection is not null or undefined'
+        ]
+      };
+    }
+  }
+
+  validate(input: unknown): ValidationResult {
+    try {
+      const parsed = this.inputSchema.safeParse(input);
+      
+      if (!parsed.success) {
+        return {
+          isValid: false,
+          errors: parsed.error.errors.map(err => ({
+            type: 'type-mismatch',
+            message: `Invalid random input: ${err.message}`
+          })),
+          suggestions: [
+            'Provide a collection parameter',
+            'Ensure collection is array, NodeList, or string'
+          ]
+        };
+      }
+
+      return {
+        isValid: true,
+        errors: [],
+        suggestions: []
+      };
+
+    } catch (error) {
+      return {
+        isValid: false,
+        errors: [{
+          type: 'runtime-error',
+          message: 'Validation failed with exception'
+        }],
+        suggestions: ['Check input structure and types']
+      };
+    }
+  }
+
+  private normalizeCollection(collection: unknown): unknown[] {
+    if (Array.isArray(collection)) {
+      return collection;
+    }
+    if (collection instanceof NodeList) {
+      return Array.from(collection);
+    }
+    if (typeof collection === 'string') {
+      return collection.split('');
+    }
+    if (collection == null) {
+      return [];
+    }
+    if (typeof collection === 'object' && Symbol.iterator in collection) {
+      return Array.from(collection as Iterable<unknown>);
+    }
+    return [];
+  }
+
+  private getSecureRandomIndex(length: number): number {
+    // Use crypto.getRandomValues if available for better randomness
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const array = new Uint32Array(1);
+      crypto.getRandomValues(array);
+      return array[0] % length;
+    }
+    
+    // Fallback to Math.random
+    return Math.floor(Math.random() * length);
+  }
+
+  private inferResultType(result: unknown): EvaluationType {
+    if (result === undefined) return 'Undefined';
+    if (result === null) return 'Null';
+    if (typeof result === 'string') return 'String';
+    if (typeof result === 'number') return 'Number';
+    if (typeof result === 'boolean') return 'Boolean';
+    if (Array.isArray(result)) return 'Array';
+    if (result instanceof HTMLElement) return 'Element';
+    return 'Object';
+  }
+
+  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+    if (context.evaluationHistory) {
+      context.evaluationHistory.push({
+        expressionName: this.name,
+        category: this.category,
+        input: 'random operation',
+        output: success ? output : 'error',
+        timestamp: startTime,
+        duration: Date.now() - startTime,
+        success
+      });
+    }
+  }
+}
 
 // ============================================================================
 // Factory Functions
@@ -860,3 +933,20 @@ export function createEnhancedLastExpression(): EnhancedLastExpression {
 export function createEnhancedAtExpression(): EnhancedAtExpression {
   return new EnhancedAtExpression();
 }
+
+export function createEnhancedRandomExpression(): EnhancedRandomExpression {
+  return new EnhancedRandomExpression();
+}
+
+// ============================================================================
+// Expression Registry
+// ============================================================================
+
+export const enhancedPositionalExpressions = {
+  first: createEnhancedFirstExpression(),
+  last: createEnhancedLastExpression(),
+  at: createEnhancedAtExpression(),
+  random: createEnhancedRandomExpression()
+} as const;
+
+export type EnhancedPositionalExpressionName = keyof typeof enhancedPositionalExpressions;

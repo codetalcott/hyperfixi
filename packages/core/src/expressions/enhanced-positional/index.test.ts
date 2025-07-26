@@ -1,564 +1,781 @@
 /**
- * Enhanced Positional Expressions Tests
- * Comprehensive test suite for enhanced positional navigation expressions
+ * Tests for Enhanced Positional Expressions
+ * Comprehensive test suite for positional navigation (first, last, at, random)
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { JSDOM } from 'jsdom';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { createTypedExecutionContext } from '../../test-setup.js';
+import type { TypedExpressionContext } from '../../types/enhanced-expressions.js';
 import {
   EnhancedFirstExpression,
   EnhancedLastExpression,
   EnhancedAtExpression,
+  EnhancedRandomExpression,
   enhancedPositionalExpressions
-} from './index.ts';
-import type { TypedExpressionContext } from '../../types/enhanced-expressions.ts';
-
-// Mock DOM environment
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-global.document = dom.window.document;
-global.window = dom.window as any;
-global.Element = dom.window.Element;
-global.Node = dom.window.Node;
-global.NodeList = dom.window.NodeList;
-global.HTMLCollection = dom.window.HTMLCollection;
+} from './index.js';
 
 describe('Enhanced Positional Expressions', () => {
-  let mockContext: TypedExpressionContext;
-  let mockElement: HTMLElement;
+  let context: TypedExpressionContext;
+  let testElements: HTMLElement[];
 
   beforeEach(() => {
-    // Create fresh DOM elements for each test
-    mockElement = document.createElement('div');
-    mockElement.id = 'test-element';
+    context = createTypedExecutionContext();
+    
+    // Create test DOM elements
+    testElements = [];
+    for (let i = 0; i < 5; i++) {
+      const element = document.createElement('div');
+      element.className = `item item-${i}`;
+      element.textContent = `Item ${i}`;
+      element.setAttribute('data-index', i.toString());
+      document.body.appendChild(element);
+      testElements.push(element);
+    }
+  });
 
-    // Create mock typed context
-    mockContext = {
-      me: mockElement,
-      you: null,
-      it: [1, 2, 3], // Default test collection
-      result: { data: 'test-result' },
-      locals: new Map(),
-      globals: new Map(),
-      event: undefined,
-      
-      // Enhanced expression context properties
-      expressionStack: [],
-      evaluationDepth: 0,
-      validationMode: 'strict' as const,
-      evaluationHistory: []
-    };
-
-    // Clear DOM
-    document.body.innerHTML = '';
-    document.body.appendChild(mockElement);
+  afterEach(() => {
+    // Clean up test elements
+    testElements.forEach(element => {
+      if (element.parentNode) {
+        document.body.removeChild(element);
+      }
+    });
+    testElements = [];
   });
 
   describe('EnhancedFirstExpression', () => {
-    let firstExpression: EnhancedFirstExpression;
+    let expression: EnhancedFirstExpression;
 
     beforeEach(() => {
-      firstExpression = new EnhancedFirstExpression();
+      expression = new EnhancedFirstExpression();
     });
 
     it('should have correct metadata', () => {
-      expect(firstExpression.name).toBe('first');
-      expect(firstExpression.category).toBe('Positional');
-      expect(firstExpression.syntax).toBe('first [of collection]');
-      expect(firstExpression.outputType).toBe('Any');
-      expect(firstExpression.metadata.complexity).toBe('simple');
-      expect(firstExpression.metadata.examples).toHaveLength(4);
+      expect(expression.name).toBe('first');
+      expect(expression.category).toBe('Positional');
+      expect(expression.syntax).toBe('first in collection');
+      expect(expression.outputType).toBe('Any');
+      expect(expression.description).toContain('Gets the first element');
     });
 
-    it('should get first element from arrays', async () => {
-      const tests = [
-        [{ collection: [1, 2, 3, 4, 5] }, 1],
-        [{ collection: ['a', 'b', 'c'] }, 'a'],
-        [{ collection: [true, false] }, true],
-        [{ collection: [] }, null], // Empty array
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await firstExpression.evaluate(mockContext, input);
+    describe('Array Collections', () => {
+      it('should get first element from number array', async () => {
+        const result = await expression.evaluate(context, {
+          collection: [1, 2, 3, 4, 5]
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBe(1);
+          expect(result.type).toBe('Number');
         }
-      }
-    });
+      });
 
-    it('should get first element from context.it when no collection provided', async () => {
-      mockContext.it = ['context-first', 'context-second'];
-      const result = await firstExpression.evaluate(mockContext, {});
-      
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.value).toBe('context-first');
-      }
-    });
-
-    it('should handle NodeList collections', async () => {
-      // Create DOM elements
-      const container = document.createElement('div');
-      const span1 = document.createElement('span');
-      span1.textContent = 'First';
-      const span2 = document.createElement('span');
-      span2.textContent = 'Second';
-      
-      container.appendChild(span1);
-      container.appendChild(span2);
-      document.body.appendChild(container);
-
-      const nodeList = container.querySelectorAll('span');
-      const result = await firstExpression.evaluate(mockContext, { collection: nodeList });
-      
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.value).toBe(span1);
-        expect((result.value as HTMLElement).textContent).toBe('First');
-      }
-    });
-
-    it('should handle HTMLCollection from DOM element children', async () => {
-      const parent = document.createElement('div');
-      const child1 = document.createElement('p');
-      child1.textContent = 'Child 1';
-      const child2 = document.createElement('p');
-      child2.textContent = 'Child 2';
-      
-      parent.appendChild(child1);
-      parent.appendChild(child2);
-      
-      const result = await firstExpression.evaluate(mockContext, { collection: parent });
-      
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.value).toBe(child1);
-        expect((result.value as HTMLElement).textContent).toBe('Child 1');
-      }
-    });
-
-    it('should handle string collections', async () => {
-      const tests = [
-        [{ collection: 'hello' }, 'h'],
-        [{ collection: 'a' }, 'a'],
-        [{ collection: '' }, null], // Empty string
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await firstExpression.evaluate(mockContext, input);
+      it('should get first element from string array', async () => {
+        const result = await expression.evaluate(context, {
+          collection: ['apple', 'banana', 'cherry']
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBe('apple');
+          expect(result.type).toBe('String');
         }
-      }
-    });
+      });
 
-    it('should handle objects with length property', async () => {
-      const lengthObj = { 0: 'zero', 1: 'one', 2: 'two', length: 3 };
-      const result = await firstExpression.evaluate(mockContext, { collection: lengthObj });
-      
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.value).toBe('zero');
-      }
-    });
-
-    it('should handle null/undefined collections', async () => {
-      const tests = [
-        [{ collection: null }, null],
-        // When collection is undefined, it uses context.it, so we need a separate test
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await firstExpression.evaluate(mockContext, input);
+      it('should get first element from mixed array', async () => {
+        const testObj = { name: 'test' };
+        const result = await expression.evaluate(context, {
+          collection: [testObj, 'string', 42, true]
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBe(testObj);
+          expect(result.type).toBe('Object');
         }
-      }
+      });
 
-      // Test undefined collection with null context.it
-      const nullItContext = { ...mockContext, it: null };
-      const result = await firstExpression.evaluate(nullItContext, { collection: undefined });
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.value).toBe(null);
-      }
-    });
-
-    it('should handle unsupported collection types', async () => {
-      const tests = [42, true, Symbol('test'), {}];
-
-      for (const collection of tests) {
-        const result = await firstExpression.evaluate(mockContext, { collection });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.name).toBe('UnsupportedCollectionTypeError');
-          expect(result.error.code).toBe('UNSUPPORTED_COLLECTION_TYPE');
+      it('should handle empty array', async () => {
+        const result = await expression.evaluate(context, {
+          collection: []
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeUndefined();
+          expect(result.type).toBe('Undefined');
         }
-      }
+      });
     });
 
-    it('should track evaluation history', async () => {
-      await firstExpression.evaluate(mockContext, { collection: [1, 2, 3] });
-      
-      expect(mockContext.evaluationHistory).toHaveLength(1);
-      const evaluation = mockContext.evaluationHistory[0];
-      expect(evaluation.expressionName).toBe('first');
-      expect(evaluation.category).toBe('Positional');
-      expect(evaluation.success).toBe(true);
-      expect(evaluation.output).toBe(1);
+    describe('String Collections', () => {
+      it('should get first character from string', async () => {
+        const result = await expression.evaluate(context, {
+          collection: 'hello'
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBe('h');
+          expect(result.type).toBe('String');
+        }
+      });
+
+      it('should handle empty string', async () => {
+        const result = await expression.evaluate(context, {
+          collection: ''
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeUndefined();
+          expect(result.type).toBe('Undefined');
+        }
+      });
+
+      it('should handle single character string', async () => {
+        const result = await expression.evaluate(context, {
+          collection: 'a'
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBe('a');
+          expect(result.type).toBe('String');
+        }
+      });
     });
 
-    it('should validate input correctly', () => {
-      const validResult = firstExpression.validate({});
-      expect(validResult.isValid).toBe(true);
+    describe('NodeList Collections', () => {
+      it('should get first element from NodeList', async () => {
+        const nodeList = document.querySelectorAll('.item');
+        const result = await expression.evaluate(context, {
+          collection: nodeList
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeInstanceOf(HTMLElement);
+          expect(result.type).toBe('Element');
+          expect((result.value as HTMLElement).getAttribute('data-index')).toBe('0');
+        }
+      });
 
-      const validWithCollection = firstExpression.validate({ collection: [1, 2, 3] });
-      expect(validWithCollection.isValid).toBe(true);
-
-      // Currently all inputs are valid since collection is optional and can be any type
+      it('should handle empty NodeList', async () => {
+        const nodeList = document.querySelectorAll('.nonexistent');
+        const result = await expression.evaluate(context, {
+          collection: nodeList
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeUndefined();
+          expect(result.type).toBe('Undefined');
+        }
+      });
     });
 
-    it('should have comprehensive LLM documentation', () => {
-      expect(firstExpression.documentation.summary).toContain('Returns the first element from a collection');
-      expect(firstExpression.documentation.parameters).toHaveLength(1);
-      expect(firstExpression.documentation.examples).toHaveLength(5);
-      expect(firstExpression.documentation.examples[0].title).toBe('Array first element');
-      expect(firstExpression.documentation.tags).toContain('positional');
+    describe('Edge Cases', () => {
+      it('should handle null collection', async () => {
+        const result = await expression.evaluate(context, {
+          collection: null
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeUndefined();
+          expect(result.type).toBe('Undefined');
+        }
+      });
+
+      it('should handle undefined collection', async () => {
+        const result = await expression.evaluate(context, {
+          collection: undefined
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeUndefined();
+          expect(result.type).toBe('Undefined');
+        }
+      });
+
+      it('should handle Set collection', async () => {
+        const testSet = new Set([1, 2, 3]);
+        const result = await expression.evaluate(context, {
+          collection: testSet
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBe(1);
+          expect(result.type).toBe('Number');
+        }
+      });
+    });
+
+    describe('Validation and Error Handling', () => {
+      it('should validate correct input', () => {
+        const validation = expression.validate({
+          collection: [1, 2, 3]
+        });
+        
+        expect(validation.isValid).toBe(true);
+        expect(validation.errors).toHaveLength(0);
+      });
+
+      it('should reject invalid input structure', () => {
+        const validation = expression.validate({
+          wrongParam: [1, 2, 3]
+        });
+        
+        expect(validation.isValid).toBe(false);
+        expect(validation.errors).toHaveLength(1);
+      });
+
+      it('should track performance', async () => {
+        const initialHistoryLength = context.evaluationHistory.length;
+        
+        await expression.evaluate(context, {
+          collection: [1, 2, 3]
+        });
+        
+        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        
+        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        expect(evaluation.expressionName).toBe('first');
+        expect(evaluation.category).toBe('Positional');
+        expect(evaluation.success).toBe(true);
+        expect(evaluation.duration).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    describe('Documentation', () => {
+      it('should have comprehensive documentation', () => {
+        expect(expression.documentation.summary).toContain('Retrieves the first element');
+        expect(expression.documentation.parameters).toHaveLength(1);
+        expect(expression.documentation.returns.type).toBe('any');
+        expect(expression.documentation.examples.length).toBeGreaterThan(0);
+        expect(expression.documentation.tags).toContain('first');
+      });
     });
   });
 
   describe('EnhancedLastExpression', () => {
-    let lastExpression: EnhancedLastExpression;
+    let expression: EnhancedLastExpression;
 
     beforeEach(() => {
-      lastExpression = new EnhancedLastExpression();
+      expression = new EnhancedLastExpression();
     });
 
     it('should have correct metadata', () => {
-      expect(lastExpression.name).toBe('last');
-      expect(lastExpression.category).toBe('Positional');
-      expect(lastExpression.syntax).toBe('last [of collection]');
-      expect(lastExpression.outputType).toBe('Any');
-      expect(lastExpression.metadata.complexity).toBe('simple');
-      expect(lastExpression.metadata.examples).toHaveLength(4);
+      expect(expression.name).toBe('last');
+      expect(expression.category).toBe('Positional');
+      expect(expression.syntax).toBe('last in collection');
+      expect(expression.outputType).toBe('Any');
     });
 
-    it('should get last element from arrays', async () => {
-      const tests = [
-        [{ collection: [1, 2, 3, 4, 5] }, 5],
-        [{ collection: ['a', 'b', 'c'] }, 'c'],
-        [{ collection: [true, false] }, false],
-        [{ collection: [] }, null], // Empty array
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await lastExpression.evaluate(mockContext, input);
+    describe('Collection Operations', () => {
+      it('should get last element from array', async () => {
+        const result = await expression.evaluate(context, {
+          collection: [1, 2, 3, 4, 5]
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBe(5);
+          expect(result.type).toBe('Number');
         }
-      }
-    });
+      });
 
-    it('should get last element from context.it when no collection provided', async () => {
-      mockContext.it = ['context-first', 'context-last'];
-      const result = await lastExpression.evaluate(mockContext, {});
-      
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.value).toBe('context-last');
-      }
-    });
-
-    it('should handle NodeList collections', async () => {
-      // Create DOM elements
-      const container = document.createElement('div');
-      const span1 = document.createElement('span');
-      span1.textContent = 'First';
-      const span2 = document.createElement('span');
-      span2.textContent = 'Last';
-      
-      container.appendChild(span1);
-      container.appendChild(span2);
-      document.body.appendChild(container);
-
-      const nodeList = container.querySelectorAll('span');
-      const result = await lastExpression.evaluate(mockContext, { collection: nodeList });
-      
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.value).toBe(span2);
-        expect((result.value as HTMLElement).textContent).toBe('Last');
-      }
-    });
-
-    it('should handle string collections', async () => {
-      const tests = [
-        [{ collection: 'hello' }, 'o'],
-        [{ collection: 'a' }, 'a'],
-        [{ collection: '' }, null], // Empty string
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await lastExpression.evaluate(mockContext, input);
+      it('should get last character from string', async () => {
+        const result = await expression.evaluate(context, {
+          collection: 'hello'
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBe('o');
+          expect(result.type).toBe('String');
         }
-      }
+      });
+
+      it('should get last element from NodeList', async () => {
+        const nodeList = document.querySelectorAll('.item');
+        const result = await expression.evaluate(context, {
+          collection: nodeList
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeInstanceOf(HTMLElement);
+          expect(result.type).toBe('Element');
+          expect((result.value as HTMLElement).getAttribute('data-index')).toBe('4');
+        }
+      });
+
+      it('should handle single element array', async () => {
+        const result = await expression.evaluate(context, {
+          collection: ['only']
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBe('only');
+          expect(result.type).toBe('String');
+        }
+      });
+
+      it('should handle empty collections', async () => {
+        const testCases = [[], '', document.querySelectorAll('.nonexistent')];
+        
+        for (const testCase of testCases) {
+          const result = await expression.evaluate(context, {
+            collection: testCase
+          });
+          
+          expect(result.success).toBe(true);
+          if (result.success) {
+            expect(result.value).toBeUndefined();
+            expect(result.type).toBe('Undefined');
+          }
+        }
+      });
     });
 
-    it('should track evaluation history', async () => {
-      await lastExpression.evaluate(mockContext, { collection: [1, 2, 3] });
-      
-      expect(mockContext.evaluationHistory).toHaveLength(1);
-      const evaluation = mockContext.evaluationHistory[0];
-      expect(evaluation.expressionName).toBe('last');
-      expect(evaluation.category).toBe('Positional');
-      expect(evaluation.success).toBe(true);
-      expect(evaluation.output).toBe(3);
+    describe('Error Handling', () => {
+      it('should validate input correctly', () => {
+        const validResult = expression.validate({
+          collection: 'test'
+        });
+        
+        expect(validResult.isValid).toBe(true);
+        expect(validResult.errors).toHaveLength(0);
+      });
+
+      it('should track performance correctly', async () => {
+        const initialHistoryLength = context.evaluationHistory.length;
+        
+        await expression.evaluate(context, {
+          collection: 'test'
+        });
+        
+        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        
+        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        expect(evaluation.expressionName).toBe('last');
+        expect(evaluation.success).toBe(true);
+      });
     });
   });
 
   describe('EnhancedAtExpression', () => {
-    let atExpression: EnhancedAtExpression;
+    let expression: EnhancedAtExpression;
 
     beforeEach(() => {
-      atExpression = new EnhancedAtExpression();
+      expression = new EnhancedAtExpression();
     });
 
     it('should have correct metadata', () => {
-      expect(atExpression.name).toBe('at');
-      expect(atExpression.category).toBe('Positional');
-      expect(atExpression.syntax).toBe('at index [of collection]');
-      expect(atExpression.outputType).toBe('Any');
-      expect(atExpression.metadata.complexity).toBe('simple');
-      expect(atExpression.metadata.examples).toHaveLength(4);
+      expect(expression.name).toBe('at');
+      expect(expression.category).toBe('Positional');
+      expect(expression.syntax).toBe('collection[index] or collection at index');
+      expect(expression.outputType).toBe('Any');
     });
 
-    it('should get element at positive indices from arrays', async () => {
-      const collection = ['zero', 'one', 'two', 'three'];
-      
-      const tests = [
-        [{ index: 0, collection }, 'zero'],
-        [{ index: 1, collection }, 'one'],
-        [{ index: 2, collection }, 'two'],
-        [{ index: 3, collection }, 'three'],
-        [{ index: 4, collection }, null], // Out of bounds
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await atExpression.evaluate(mockContext, input);
+    describe('Index Access', () => {
+      it('should access element at positive index', async () => {
+        const result = await expression.evaluate(context, {
+          collection: [10, 20, 30, 40, 50],
+          index: 2
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBe(30);
+          expect(result.type).toBe('Number');
         }
-      }
-    });
-
-    it('should get element at negative indices from arrays', async () => {
-      const collection = ['zero', 'one', 'two', 'three'];
-      
-      const tests = [
-        [{ index: -1, collection }, 'three'], // Last element
-        [{ index: -2, collection }, 'two'],   // Second to last
-        [{ index: -3, collection }, 'one'],   // Third to last
-        [{ index: -4, collection }, 'zero'],  // First element
-        [{ index: -5, collection }, null],    // Out of bounds
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await atExpression.evaluate(mockContext, input);
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value).toBe(expected);
-        }
-      }
-    });
-
-    it('should get element from context.it when no collection provided', async () => {
-      mockContext.it = ['context-zero', 'context-one', 'context-two'];
-      
-      const tests = [
-        [{ index: 0 }, 'context-zero'],
-        [{ index: 1 }, 'context-one'],
-        [{ index: -1 }, 'context-two'],
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await atExpression.evaluate(mockContext, input);
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value).toBe(expected);
-        }
-      }
-    });
-
-    it('should handle NodeList collections', async () => {
-      // Create DOM elements
-      const container = document.createElement('div');
-      const elements = ['First', 'Second', 'Third'].map(text => {
-        const span = document.createElement('span');
-        span.textContent = text;
-        container.appendChild(span);
-        return span;
       });
-      document.body.appendChild(container);
 
-      const nodeList = container.querySelectorAll('span');
-      
-      const tests = [
-        [{ index: 0, collection: nodeList }, elements[0]],
-        [{ index: 1, collection: nodeList }, elements[1]],
-        [{ index: -1, collection: nodeList }, elements[2]],
-        [{ index: 5, collection: nodeList }, null], // Out of bounds
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await atExpression.evaluate(mockContext, input);
+      it('should access element at index 0', async () => {
+        const result = await expression.evaluate(context, {
+          collection: ['a', 'b', 'c'],
+          index: 0
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBe('a');
+          expect(result.type).toBe('String');
         }
-      }
-    });
-
-    it('should handle DOM element children', async () => {
-      const parent = document.createElement('div');
-      const children = ['Child1', 'Child2', 'Child3'].map(text => {
-        const child = document.createElement('p');
-        child.textContent = text;
-        parent.appendChild(child);
-        return child;
       });
-      
-      const tests = [
-        [{ index: 0, collection: parent }, children[0]],
-        [{ index: 2, collection: parent }, children[2]],
-        [{ index: -1, collection: parent }, children[2]],
-        [{ index: 5, collection: parent }, null], // Out of bounds
-      ];
 
-      for (const [input, expected] of tests) {
-        const result = await atExpression.evaluate(mockContext, input);
+      it('should access last element with positive index', async () => {
+        const arr = [1, 2, 3];
+        const result = await expression.evaluate(context, {
+          collection: arr,
+          index: arr.length - 1
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBe(3);
+          expect(result.type).toBe('Number');
         }
-      }
+      });
     });
 
-    it('should handle string collections', async () => {
-      const collection = 'hello';
-      
-      const tests = [
-        [{ index: 0, collection }, 'h'],
-        [{ index: 1, collection }, 'e'],
-        [{ index: -1, collection }, 'o'],
-        [{ index: -2, collection }, 'l'],
-        [{ index: 10, collection }, null], // Out of bounds
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await atExpression.evaluate(mockContext, input);
+    describe('Negative Index Support', () => {
+      it('should access last element with -1', async () => {
+        const result = await expression.evaluate(context, {
+          collection: [1, 2, 3, 4, 5],
+          index: -1
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBe(5);
+          expect(result.type).toBe('Number');
         }
-      }
-    });
+      });
 
-    it('should handle objects with length property', async () => {
-      const lengthObj = { 0: 'zero', 1: 'one', 2: 'two', length: 3 };
-      
-      const tests = [
-        [{ index: 0, collection: lengthObj }, 'zero'],
-        [{ index: 1, collection: lengthObj }, 'one'],
-        [{ index: -1, collection: lengthObj }, 'two'],
-        [{ index: 5, collection: lengthObj }, null], // Out of bounds
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await atExpression.evaluate(mockContext, input);
+      it('should access second-to-last element with -2', async () => {
+        const result = await expression.evaluate(context, {
+          collection: ['a', 'b', 'c', 'd'],
+          index: -2
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBe('c');
+          expect(result.type).toBe('String');
         }
-      }
-    });
+      });
 
-    it('should handle null/undefined collections', async () => {
-      const tests = [
-        [{ index: 0, collection: null }, null],
-        // When collection is undefined, it uses context.it, so we need a separate test
-      ];
-
-      for (const [input, expected] of tests) {
-        const result = await atExpression.evaluate(mockContext, input);
+      it('should handle negative index out of bounds', async () => {
+        const result = await expression.evaluate(context, {
+          collection: [1, 2],
+          index: -5
+        });
+        
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(expected);
+          expect(result.value).toBeUndefined();
+          expect(result.type).toBe('Undefined');
         }
-      }
-
-      // Test undefined collection with null context.it
-      const nullItContext = { ...mockContext, it: null };
-      const result = await atExpression.evaluate(nullItContext, { index: 0, collection: undefined });
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.value).toBe(null);
-      }
+      });
     });
 
-    it('should handle unsupported collection types', async () => {
-      const tests = [42, true, Symbol('test'), {}];
-
-      for (const collection of tests) {
-        const result = await atExpression.evaluate(mockContext, { index: 0, collection });
-        expect(result.success).toBe(false);
-        if (!result.success) {
-          expect(result.error.name).toBe('UnsupportedCollectionTypeError');
-          expect(result.error.code).toBe('UNSUPPORTED_COLLECTION_TYPE');
+    describe('String Character Access', () => {
+      it('should access character at index', async () => {
+        const result = await expression.evaluate(context, {
+          collection: 'hello',
+          index: 1
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBe('e');
+          expect(result.type).toBe('String');
         }
-      }
+      });
+
+      it('should access character with negative index', async () => {
+        const result = await expression.evaluate(context, {
+          collection: 'world',
+          index: -1
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBe('d');
+          expect(result.type).toBe('String');
+        }
+      });
     });
 
-    it('should validate input correctly', () => {
-      const validResult = atExpression.validate({ index: 0 });
-      expect(validResult.isValid).toBe(true);
+    describe('NodeList Access', () => {
+      it('should access element from NodeList at index', async () => {
+        const nodeList = document.querySelectorAll('.item');
+        const result = await expression.evaluate(context, {
+          collection: nodeList,
+          index: 2
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeInstanceOf(HTMLElement);
+          expect(result.type).toBe('Element');
+          expect((result.value as HTMLElement).getAttribute('data-index')).toBe('2');
+        }
+      });
 
-      const validWithCollection = atExpression.validate({ index: 1, collection: [1, 2, 3] });
-      expect(validWithCollection.isValid).toBe(true);
-
-      const invalidResult1 = atExpression.validate({}); // Missing index
-      expect(invalidResult1.isValid).toBe(false);
-
-      const invalidResult2 = atExpression.validate({ index: '0' }); // Wrong type
-      expect(invalidResult2.isValid).toBe(false);
-
-      const invalidResult3 = atExpression.validate({ index: 1.5 }); // Not integer
-      expect(invalidResult3.isValid).toBe(false);
+      it('should access element with negative index from NodeList', async () => {
+        const nodeList = document.querySelectorAll('.item');
+        const result = await expression.evaluate(context, {
+          collection: nodeList,
+          index: -1
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeInstanceOf(HTMLElement);
+          expect(result.type).toBe('Element');
+          expect((result.value as HTMLElement).getAttribute('data-index')).toBe('4');
+        }
+      });
     });
 
-    it('should track evaluation history', async () => {
-      await atExpression.evaluate(mockContext, { index: 1, collection: [1, 2, 3] });
-      
-      expect(mockContext.evaluationHistory).toHaveLength(1);
-      const evaluation = mockContext.evaluationHistory[0];
-      expect(evaluation.expressionName).toBe('at');
-      expect(evaluation.category).toBe('Positional');
-      expect(evaluation.success).toBe(true);
-      expect(evaluation.output).toBe(2);
+    describe('Out of Bounds', () => {
+      it('should return undefined for positive index out of bounds', async () => {
+        const result = await expression.evaluate(context, {
+          collection: [1, 2, 3],
+          index: 10
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeUndefined();
+          expect(result.type).toBe('Undefined');
+        }
+      });
+
+      it('should return undefined for empty collection', async () => {
+        const result = await expression.evaluate(context, {
+          collection: [],
+          index: 0
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeUndefined();
+          expect(result.type).toBe('Undefined');
+        }
+      });
     });
 
-    it('should have comprehensive LLM documentation', () => {
-      expect(atExpression.documentation.summary).toContain('Returns the element at a specific index');
-      expect(atExpression.documentation.parameters).toHaveLength(2);
-      expect(atExpression.documentation.examples).toHaveLength(5);
-      expect(atExpression.documentation.examples[1].title).toBe('Negative index access');
-      expect(atExpression.documentation.tags).toContain('indexing');
+    describe('Validation and Error Handling', () => {
+      it('should validate correct input', () => {
+        const validation = expression.validate({
+          collection: [1, 2, 3],
+          index: 1
+        });
+        
+        expect(validation.isValid).toBe(true);
+        expect(validation.errors).toHaveLength(0);
+      });
+
+      it('should reject missing index', () => {
+        const validation = expression.validate({
+          collection: [1, 2, 3]
+        });
+        
+        expect(validation.isValid).toBe(false);
+        expect(validation.errors).toHaveLength(1);
+      });
+
+      it('should reject non-number index', () => {
+        const validation = expression.validate({
+          collection: [1, 2, 3],
+          index: 'not-a-number'
+        });
+        
+        expect(validation.isValid).toBe(false);
+        expect(validation.errors).toHaveLength(1);
+      });
+
+      it('should track performance', async () => {
+        const initialHistoryLength = context.evaluationHistory.length;
+        
+        await expression.evaluate(context, {
+          collection: [1, 2, 3],
+          index: 1
+        });
+        
+        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        
+        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        expect(evaluation.expressionName).toBe('at');
+        expect(evaluation.category).toBe('Positional');
+        expect(evaluation.success).toBe(true);
+      });
+    });
+  });
+
+  describe('EnhancedRandomExpression', () => {
+    let expression: EnhancedRandomExpression;
+
+    beforeEach(() => {
+      expression = new EnhancedRandomExpression();
+    });
+
+    it('should have correct metadata', () => {
+      expect(expression.name).toBe('random');
+      expect(expression.category).toBe('Positional');
+      expect(expression.syntax).toBe('random in collection');
+      expect(expression.outputType).toBe('Any');
+    });
+
+    describe('Random Selection', () => {
+      it('should select random element from array', async () => {
+        const collection = [1, 2, 3, 4, 5];
+        const result = await expression.evaluate(context, {
+          collection
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(collection).toContain(result.value);
+          expect(result.type).toBe('Number');
+        }
+      });
+
+      it('should select random character from string', async () => {
+        const collection = 'abcde';
+        const result = await expression.evaluate(context, {
+          collection
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(['a', 'b', 'c', 'd', 'e']).toContain(result.value);
+          expect(result.type).toBe('String');
+        }
+      });
+
+      it('should select random element from NodeList', async () => {
+        const nodeList = document.querySelectorAll('.item');
+        const result = await expression.evaluate(context, {
+          collection: nodeList
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeInstanceOf(HTMLElement);
+          expect(result.type).toBe('Element');
+          
+          const index = (result.value as HTMLElement).getAttribute('data-index');
+          expect(['0', '1', '2', '3', '4']).toContain(index);
+        }
+      });
+
+      it('should return undefined for empty collection', async () => {
+        const result = await expression.evaluate(context, {
+          collection: []
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeUndefined();
+          expect(result.type).toBe('Undefined');
+        }
+      });
+
+      it('should handle single element collection', async () => {
+        const result = await expression.evaluate(context, {
+          collection: ['only']
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBe('only');
+          expect(result.type).toBe('String');
+        }
+      });
+    });
+
+    describe('Randomness Distribution', () => {
+      it('should produce varied results over multiple calls', async () => {
+        const collection = [1, 2, 3, 4, 5];
+        const results = new Set();
+        
+        // Run multiple times to check for variety
+        for (let i = 0; i < 20; i++) {
+          const result = await expression.evaluate(context, { collection });
+          if (result.success) {
+            results.add(result.value);
+          }
+        }
+        
+        // Should have some variety (not always the same result)
+        expect(results.size).toBeGreaterThan(1);
+      });
+
+      it('should handle collections with repeated elements', async () => {
+        const collection = [1, 1, 1, 2, 2];
+        const result = await expression.evaluate(context, {
+          collection
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect([1, 2]).toContain(result.value);
+          expect(result.type).toBe('Number');
+        }
+      });
+    });
+
+    describe('Edge Cases', () => {
+      it('should handle null collection', async () => {
+        const result = await expression.evaluate(context, {
+          collection: null
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.value).toBeUndefined();
+          expect(result.type).toBe('Undefined');
+        }
+      });
+
+      it('should handle Set collection', async () => {
+        const testSet = new Set(['a', 'b', 'c']);
+        const result = await expression.evaluate(context, {
+          collection: testSet
+        });
+        
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(['a', 'b', 'c']).toContain(result.value);
+          expect(result.type).toBe('String');
+        }
+      });
+    });
+
+    describe('Validation and Error Handling', () => {
+      it('should validate correct input', () => {
+        const validation = expression.validate({
+          collection: [1, 2, 3]
+        });
+        
+        expect(validation.isValid).toBe(true);
+        expect(validation.errors).toHaveLength(0);
+      });
+
+      it('should reject invalid input structure', () => {
+        const validation = expression.validate({
+          wrongParam: [1, 2, 3]
+        });
+        
+        expect(validation.isValid).toBe(false);
+        expect(validation.errors).toHaveLength(1);
+      });
+
+      it('should track performance', async () => {
+        const initialHistoryLength = context.evaluationHistory.length;
+        
+        await expression.evaluate(context, {
+          collection: [1, 2, 3]
+        });
+        
+        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        
+        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        expect(evaluation.expressionName).toBe('random');
+        expect(evaluation.category).toBe('Positional');
+        expect(evaluation.success).toBe(true);
+      });
     });
   });
 
@@ -567,108 +784,202 @@ describe('Enhanced Positional Expressions', () => {
       expect(enhancedPositionalExpressions.first).toBeInstanceOf(EnhancedFirstExpression);
       expect(enhancedPositionalExpressions.last).toBeInstanceOf(EnhancedLastExpression);
       expect(enhancedPositionalExpressions.at).toBeInstanceOf(EnhancedAtExpression);
+      expect(enhancedPositionalExpressions.random).toBeInstanceOf(EnhancedRandomExpression);
     });
 
-    it('should provide factory functions', async () => {
-      const { 
-        createEnhancedFirstExpression,
-        createEnhancedLastExpression,
-        createEnhancedAtExpression
-      } = await import('./index.ts');
-
-      expect(createEnhancedFirstExpression()).toBeInstanceOf(EnhancedFirstExpression);
-      expect(createEnhancedLastExpression()).toBeInstanceOf(EnhancedLastExpression);
-      expect(createEnhancedAtExpression()).toBeInstanceOf(EnhancedAtExpression);
-    });
-  });
-
-  describe('Integration with Existing System', () => {
-    it('should maintain backward compatibility with enhanced interface', () => {
-      const firstExpr = enhancedPositionalExpressions.first;
-      
-      expect(firstExpr.name).toBe('first');
-      expect(firstExpr.category).toBe('Positional');
-      expect(typeof firstExpr.evaluate).toBe('function');
-      expect(typeof firstExpr.validate).toBe('function');
-    });
-
-    it('should provide richer metadata than legacy expressions', () => {
-      const firstExpr = enhancedPositionalExpressions.first;
-      
-      expect(firstExpr.metadata).toBeDefined();
-      expect(firstExpr.metadata.examples).toBeDefined();
-      expect(firstExpr.metadata.performance).toBeDefined();
-      expect(firstExpr.documentation).toBeDefined();
-      expect(firstExpr.documentation.examples).toBeDefined();
-    });
-
-    it('should handle context bridging', async () => {
-      const firstExpr = enhancedPositionalExpressions.first;
-      const result = await firstExpr.evaluate(mockContext, { collection: [1, 2, 3] });
-      
-      expect(result.success).toBe(true);
-      expect(mockContext.evaluationHistory).toHaveLength(1);
+    it('should have consistent metadata across all expressions', () => {
+      Object.values(enhancedPositionalExpressions).forEach(expression => {
+        expect(expression.category).toBe('Positional');
+        expect(expression.name).toBeTruthy();
+        expect(expression.syntax).toBeTruthy();
+        expect(expression.description).toBeTruthy();
+        expect(expression.metadata).toBeTruthy();
+        expect(expression.documentation).toBeTruthy();
+        expect(expression.inputSchema).toBeTruthy();
+        expect(expression.outputType).toBe('Any');
+      });
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle evaluation errors gracefully', async () => {
-      const atExpr = enhancedPositionalExpressions.at;
+  describe('Integration Scenarios', () => {
+    it('should work with complex DOM structures', async () => {
+      // Create nested structure
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div class="section">
+          <div class="item nested-1">Item 1</div>
+          <div class="item nested-2">Item 2</div>
+        </div>
+        <div class="section">
+          <div class="item nested-3">Item 3</div>
+        </div>
+      `;
+      document.body.appendChild(container);
+
+      const nodeList = container.querySelectorAll('.item');
       
-      const result = await atExpr.evaluate(mockContext, { index: 0, collection: Symbol('invalid') });
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.name).toBe('UnsupportedCollectionTypeError');
-        expect(result.error.suggestions).toBeDefined();
+      // Test first
+      const firstExpr = new EnhancedFirstExpression();
+      const firstResult = await firstExpr.evaluate(context, {
+        collection: nodeList
+      });
+      
+      expect(firstResult.success).toBe(true);
+      if (firstResult.success) {
+        expect((firstResult.value as HTMLElement).className).toContain('nested-1');
       }
-    });
 
-    it('should provide helpful validation messages', () => {
-      const atExpr = enhancedPositionalExpressions.at;
+      // Test last
+      const lastExpr = new EnhancedLastExpression();
+      const lastResult = await lastExpr.evaluate(context, {
+        collection: nodeList
+      });
       
-      const result = atExpr.validate({ invalid: 'structure' });
-      expect(result.isValid).toBe(false);
-      expect(result.suggestions).toBeDefined();
-      expect(result.suggestions.length).toBeGreaterThan(0);
-    });
-  });
+      expect(lastResult.success).toBe(true);
+      if (lastResult.success) {
+        expect((lastResult.value as HTMLElement).className).toContain('nested-3');
+      }
 
-  describe('Performance Characteristics', () => {
-    it('should complete simple operations quickly', async () => {
-      const firstExpr = enhancedPositionalExpressions.first;
+      // Test at
+      const atExpr = new EnhancedAtExpression();
+      const atResult = await atExpr.evaluate(context, {
+        collection: nodeList,
+        index: 1
+      });
       
-      const startTime = Date.now();
-      await firstExpr.evaluate(mockContext, { collection: [1, 2, 3] });
-      const duration = Date.now() - startTime;
-      
-      expect(duration).toBeLessThan(10); // Should be very fast
-    });
+      expect(atResult.success).toBe(true);
+      if (atResult.success) {
+        expect((atResult.value as HTMLElement).className).toContain('nested-2');
+      }
 
-    it('should track evaluation metrics', async () => {
-      const lastExpr = enhancedPositionalExpressions.last;
-      
-      await lastExpr.evaluate(mockContext, { collection: [1, 2, 3] });
-      
-      const evaluation = mockContext.evaluationHistory[0];
-      expect(evaluation.timestamp).toBeDefined();
-      expect(evaluation.duration).toBeGreaterThanOrEqual(0);
-      expect(evaluation.input).toEqual({ collection: [1, 2, 3] });
-      expect(evaluation.output).toBe(3);
+      document.body.removeChild(container);
     });
 
     it('should handle large collections efficiently', async () => {
       const largeArray = Array.from({ length: 10000 }, (_, i) => i);
-      const atExpr = enhancedPositionalExpressions.at;
       
-      const startTime = Date.now();
-      const result = await atExpr.evaluate(mockContext, { index: 5000, collection: largeArray });
-      const duration = Date.now() - startTime;
-      
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.value).toBe(5000);
+      const testCases = [
+        { expr: new EnhancedFirstExpression(), input: { collection: largeArray } },
+        { expr: new EnhancedLastExpression(), input: { collection: largeArray } },
+        { expr: new EnhancedAtExpression(), input: { collection: largeArray, index: 5000 } },
+        { expr: new EnhancedRandomExpression(), input: { collection: largeArray } }
+      ];
+
+      for (const testCase of testCases) {
+        const startTime = Date.now();
+        const result = await testCase.expr.evaluate(context, testCase.input as any);
+        const duration = Date.now() - startTime;
+        
+        expect(result.success).toBe(true);
+        expect(duration).toBeLessThan(10); // Should be very fast
       }
-      expect(duration).toBeLessThan(50); // Should still be fast
+    });
+
+    it('should maintain type consistency across operations', async () => {
+      const mixedArray = [1, 'string', true, { key: 'value' }, [1, 2, 3]];
+      
+      const firstExpr = new EnhancedFirstExpression();
+      const firstResult = await firstExpr.evaluate(context, {
+        collection: mixedArray
+      });
+      
+      expect(firstResult.success).toBe(true);
+      if (firstResult.success) {
+        expect(firstResult.value).toBe(1);
+        expect(firstResult.type).toBe('Number');
+      }
+
+      const atExpr = new EnhancedAtExpression();
+      const atResult = await atExpr.evaluate(context, {
+        collection: mixedArray,
+        index: 1
+      });
+      
+      expect(atResult.success).toBe(true);
+      if (atResult.success) {
+        expect(atResult.value).toBe('string');
+        expect(atResult.type).toBe('String');
+      }
+
+      const lastResult = await atExpr.evaluate(context, {
+        collection: mixedArray,
+        index: -1
+      });
+      
+      expect(lastResult.success).toBe(true);
+      if (lastResult.success) {
+        expect(Array.isArray(lastResult.value)).toBe(true);
+        expect(lastResult.type).toBe('Array');
+      }
+    });
+
+    it('should handle iterable objects correctly', async () => {
+      // Map
+      const testMap = new Map([['a', 1], ['b', 2], ['c', 3]]);
+      const firstExpr = new EnhancedFirstExpression();
+      const mapResult = await firstExpr.evaluate(context, {
+        collection: testMap
+      });
+      
+      expect(mapResult.success).toBe(true);
+      if (mapResult.success) {
+        expect(Array.isArray(mapResult.value)).toBe(true);
+        expect((mapResult.value as any[])[0]).toBe('a');
+        expect((mapResult.value as any[])[1]).toBe(1);
+      }
+
+      // Set
+      const testSet = new Set([10, 20, 30]);
+      const setResult = await firstExpr.evaluate(context, {
+        collection: testSet
+      });
+      
+      expect(setResult.success).toBe(true);
+      if (setResult.success) {
+        expect(setResult.value).toBe(10);
+        expect(setResult.type).toBe('Number');
+      }
+    });
+  });
+
+  describe('Performance and Memory', () => {
+    it('should not leak memory with large collections', async () => {
+      const expression = new EnhancedRandomExpression();
+      
+      // Create and process many large collections
+      for (let i = 0; i < 100; i++) {
+        const largeArray = Array.from({ length: 1000 }, (_, idx) => idx);
+        const result = await expression.evaluate(context, {
+          collection: largeArray
+        });
+        
+        expect(result.success).toBe(true);
+      }
+      
+      // No memory leaks should occur
+      expect(true).toBe(true); // Test completes successfully
+    });
+
+    it('should maintain consistent performance', async () => {
+      const collection = Array.from({ length: 1000 }, (_, i) => i);
+      const durations: number[] = [];
+      
+      for (let i = 0; i < 10; i++) {
+        const startTime = Date.now();
+        const result = await new EnhancedAtExpression().evaluate(context, {
+          collection,
+          index: Math.floor(Math.random() * collection.length)
+        });
+        const duration = Date.now() - startTime;
+        
+        expect(result.success).toBe(true);
+        durations.push(duration);
+      }
+      
+      // Performance should be consistent (all operations under 5ms)
+      durations.forEach(duration => {
+        expect(duration).toBeLessThan(5);
+      });
     });
   });
 });

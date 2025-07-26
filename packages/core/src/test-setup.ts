@@ -133,3 +133,24 @@ export const createMockHyperscriptContext = (element?: HTMLElement) => ({
     async: false,
   },
 });
+
+export const createTypedExecutionContext = (element?: HTMLElement) => ({
+  me: element || null,
+  it: null as any,
+  you: element || null,
+  result: null as any,
+  locals: new Map<string, any>(),
+  globals: new Map<string, any>(),
+  flags: {
+    halted: false,
+    breaking: false,
+    continuing: false,
+    returning: false,
+    async: false,
+  },
+  // Enhanced features for expression evaluation
+  expressionStack: [] as string[],
+  evaluationDepth: 0,
+  validationMode: 'strict' as const,
+  evaluationHistory: [] as any[],
+});
