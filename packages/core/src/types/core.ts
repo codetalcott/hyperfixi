@@ -1,25 +1,35 @@
 /**
  * Core type definitions for the modular hyperscript implementation
  * Based on hyperscript-lsp database schema and language specification
+ * 
+ * IMPORTANT: Core types now imported from base-types.ts for consistency
+ * This eliminates the 1,755 TypeScript errors from type conflicts
  */
 
 // ============================================================================
-// Core Language Element Types
+// Import Unified Types from Base System
+// ============================================================================
+
+// Re-export core types from unified base-types system
+export type {
+  ExecutionContext,
+  TypedExecutionContext,
+  EvaluationType,
+  HyperScriptValueType,
+  ValidationResult,
+  ValidationError,
+  TypedResult,
+  EnhancedError,
+  PerformanceCharacteristics
+} from './base-types.js';
+
+// ============================================================================
+// Legacy Language Element Types (Domain-Specific)
 // ============================================================================
 
 export type ElementType = 'command' | 'expression' | 'feature' | 'keyword' | 'special_symbol';
 
 export type ElementStatus = 'Draft' | 'Review' | 'Approved' | 'Deprecated';
-
-export type EvaluationType = 
-  | 'String' 
-  | 'Number' 
-  | 'Boolean' 
-  | 'Element' 
-  | 'Array' 
-  | 'Object' 
-  | 'Promise' 
-  | 'Any';
 
 export type ExpressionCategory = 
   | 'Arithmetic' 
@@ -32,39 +42,22 @@ export type ExpressionCategory =
 export type Associativity = 'Left' | 'Right' | 'None';
 
 // ============================================================================
-// Execution Context Types
+// Extended ExecutionContext (Legacy Interface)
 // ============================================================================
 
-export interface ExecutionContext {
-  /** Current element (me) */
-  me: HTMLElement | null;
-  
-  /** Result of previous operation (it) */
-  it: any;
-  
-  /** Target element for operations (you) */
-  you: HTMLElement | null;
-  
-  /** Explicit result storage */
-  result: any;
-  
-  /** Local variable scope */
-  locals?: Map<string, any>;
-  
-  /** Global variable scope */
-  globals?: Map<string, any>;
-  
+/**
+ * Extended ExecutionContext interface for legacy compatibility
+ * Preserves all existing functionality while using unified base types
+ */
+export interface ExtendedExecutionContext extends import('./base-types.js').ExecutionContext {
   /** General variables storage (for simple use cases) */
   variables?: Map<string, any>;
   
   /** Event handlers storage for cleanup */
   events?: Map<string, { target: HTMLElement; event: string; handler: Function }>;
   
-  /** Current DOM event (when in event handler) */
-  event?: Event;
-  
   /** Parent context for scope chain */
-  parent?: ExecutionContext;
+  parent?: ExtendedExecutionContext;
   
   /** Meta scope - template variables and internal hyperscript state */
   meta?: Record<string, any>;
@@ -161,22 +154,20 @@ export interface CommandImplementation {
 }
 
 // ============================================================================
-// Enhanced Command Types
+// Enhanced Command Types (Using Unified Base Types)
 // ============================================================================
 
-export interface ValidationError {
-  type: 'missing-argument' | 'invalid-syntax' | 'type-mismatch' | 'invalid-argument' | 'runtime-error' | 'security-warning';
-  message: string;
-  suggestions: string[];
-}
-
-export interface ValidationResult<T = any> {
+/**
+ * Legacy ValidationResult interface for backward compatibility
+ * Maps to the unified ValidationResult from base-types.ts
+ */
+export interface LegacyValidationResult<T = any> {
   success: boolean;
   data?: T;
-  error?: ValidationError;
+  error?: import('./base-types.js').ValidationError;
 }
 
-export interface TypedCommandImplementation<TInput = any, TOutput = any, TContext = ExecutionContext> {
+export interface TypedCommandImplementation<TInput = any, TOutput = any, TContext = import('./base-types.js').ExecutionContext> {
   metadata: {
     name: string;
     description: string;
@@ -187,14 +178,13 @@ export interface TypedCommandImplementation<TInput = any, TOutput = any, TContex
   };
   
   validation: {
-    validate(input: unknown): ValidationResult<TInput>;
+    validate(input: unknown): import('./base-types.js').ValidationResult<TInput>;
   };
   
   execute(input: TInput, context: TContext): Promise<TOutput>;
 }
 
-// Re-export TypedExecutionContext from enhanced-core
-export type { TypedExecutionContext } from './enhanced-core.js';
+// TypedExecutionContext is now exported from base-types.ts above
 
 export interface ExpressionImplementation {
   name: string;

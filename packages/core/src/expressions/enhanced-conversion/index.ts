@@ -8,9 +8,10 @@ import type {
   TypedExpressionContext, 
   TypedResult,
   ExpressionMetadata,
-  BaseTypedExpression
-} from '../../types/enhanced-expressions.ts';
-import type { ValidationResult, LLMDocumentation } from '../../types/enhanced-core.ts';
+  BaseTypedExpression,
+  ValidationResult, 
+  LLMDocumentation
+} from '../../types/base-types.js';
 
 // ============================================================================
 // Enhanced Type Conversion Registry

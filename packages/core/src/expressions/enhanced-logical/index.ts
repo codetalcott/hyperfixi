@@ -6,17 +6,16 @@
 
 import { z } from 'zod';
 import type {
-  TypedExpressionImplementation,
+  BaseTypedExpression,
   TypedExpressionContext,
   ExpressionCategory,
   EvaluationType,
   ExpressionMetadata,
-  ValidationResult
-} from '../../types/enhanced-expressions.ts';
-import type { 
-  EvaluationResult,
-  LLMDocumentation
-} from '../../types/enhanced-core.ts';
+  ValidationResult,
+  TypedResult,
+  LLMDocumentation,
+  HyperScriptValueType
+} from '../../types/base-types.js';
 
 // ============================================================================
 // Input Schemas

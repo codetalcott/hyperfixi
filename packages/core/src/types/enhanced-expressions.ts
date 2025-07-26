@@ -1,14 +1,28 @@
 /**
  * Enhanced Expression Types - Deep TypeScript Integration for Expression System
  * Extends enhanced patterns to hyperscript expression evaluation with full type safety
+ * 
+ * IMPORTANT: Core types now imported from base-types.ts for consistency
  */
 
 import { z } from 'zod';
-import type { ValidationResult, EvaluationResult, LLMDocumentation } from './enhanced-core.ts';
-import type { ExecutionContext } from './core.ts';
+// Import unified types from base-types system
+export type { 
+  ValidationResult, 
+  LLMDocumentation,
+  ExecutionContext,
+  TypedExecutionContext,
+  TypedExpressionContext,
+  EvaluationType,
+  HyperScriptValueType,
+  TypedResult
+} from './base-types.js';
+
+// Core types now imported from base-types.ts above
 
 /**
  * Expression categories for organization and metadata
+ * Extends base categories with expression-specific types
  */
 export type ExpressionCategory = 
   | 'Reference'      // me, you, it, CSS selectors
@@ -19,45 +33,9 @@ export type ExpressionCategory =
   | 'Special'        // literals, math operations, string manipulation
   | 'Template';      // template directives, conditional rendering, iteration
 
-/**
- * Expression evaluation result types
- */
-export type EvaluationType = 
-  | 'Element'        // HTMLElement or null
-  | 'ElementList'    // HTMLElement[]
-  | 'String'         // string
-  | 'Number'         // number
-  | 'Boolean'        // boolean
-  | 'Object'         // any object
-  | 'Array'          // any[]
-  | 'Null'           // null
-  | 'Any';           // unknown
+// EvaluationType and TypedExpressionContext now imported from base-types.ts above
 
-/**
- * Enhanced execution context for expressions with additional expression-specific properties
- */
-export interface TypedExpressionContext extends ExecutionContext {
-  // Enhanced features for expression evaluation
-  expressionStack: string[];       // Stack of expressions being evaluated (for debugging)
-  evaluationDepth: number;         // Current evaluation depth (prevent infinite recursion)
-  validationMode: 'strict' | 'permissive';
-  
-  // Performance tracking
-  evaluationStartTime?: number;
-  evaluationHistory: ExpressionEvaluation[];
-}
-
-/**
- * Typed result for enhanced expressions with structured success/failure states
- */
-export type TypedResult<T> = {
-  success: true;
-  value: T;
-  type: string;
-} | {
-  success: false;
-  error: TypedError;
-};
+// TypedResult now imported from base-types.ts above
 
 /**
  * Enhanced error type with suggestions and structured information

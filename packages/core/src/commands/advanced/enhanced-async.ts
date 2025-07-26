@@ -7,8 +7,8 @@
  * Modernized with TypedCommandImplementation interface
  */
 
-import type { TypedCommandImplementation, ValidationResult } from '../../types/core.js';
-import type { TypedExecutionContext } from '../../types/enhanced-core.js';
+import type { TypedCommandImplementation } from '../../types/core.js';
+import type { ValidationResult, TypedExecutionContext } from '../../types/base-types.js';
 
 // Input type definition
 export interface AsyncCommandInput {

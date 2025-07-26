@@ -1,10 +1,37 @@
 /**
  * Enhanced Core Types - Deep TypeScript Integration
  * Designed for LLM code agents with maximum type safety
+ * 
+ * IMPORTANT: Core types now imported from base-types.ts for consistency
+ * This file now focuses on enhanced features while using unified base types
  */
 
 import { z } from 'zod';
 import type { CommandImplementation } from './core.js';
+
+// ============================================================================
+// Re-export Unified Types from Base System
+// ============================================================================
+
+// Re-export all base types for backward compatibility
+export type {
+  ExecutionContext,
+  TypedExecutionContext,
+  TypedExpressionContext,
+  EvaluationType,
+  HyperScriptValueType,
+  ValidationResult,
+  ValidationError,
+  TypedResult,
+  EnhancedError,
+  PerformanceCharacteristics,
+  BaseTypedExpression,
+  BaseTypedFeature,
+  FeatureCategory,
+  ExpressionMetadata,
+  LLMDocumentation,
+  ExpressionEvaluationOptions
+} from './base-types.js';
 
 // ============================================================================
 // Enhanced Type System for LLM Agents
@@ -55,40 +82,11 @@ export const HyperScriptValueSchema = z.union([
   z.array(z.unknown())
 ]);
 
+// TypedExecutionContext and TypedExpressionContext now imported from base-types.ts above
+
 /**
- * Type-safe context with generic constraints
+ * Legacy ExecutionMeta for enhanced-core compatibility
  */
-export interface TypedExecutionContext<
-  TMe extends HTMLElement | null = HTMLElement | null,
-  TYou extends HTMLElement | null = HTMLElement | null,
-  TIt extends HyperScriptValue = HyperScriptValue,
-  TLocals extends Record<string, HyperScriptValue> = Record<string, HyperScriptValue>
-> {
-  /** Current element - strongly typed */
-  readonly me: TMe;
-  
-  /** Target element - strongly typed */
-  readonly you: TYou;
-  
-  /** Previous result - strongly typed */
-  it: TIt;
-  
-  /** Local variables - strongly typed */
-  readonly locals: Map<string, HyperScriptValue>;
-  
-  /** Global variables - strongly typed */
-  readonly globals: Map<string, HyperScriptValue>;
-
-  /** General variables storage - strongly typed */
-  readonly variables: Map<string, HyperScriptValue>;
-  
-  /** Current result - strongly typed */
-  result: HyperScriptValue;
-  
-  /** Execution metadata */
-  readonly meta: ExecutionMeta;
-}
-
 export interface ExecutionMeta {
   readonly startTime: number;
   readonly commandStack: string[];
@@ -96,14 +94,14 @@ export interface ExecutionMeta {
   readonly debugMode: boolean;
 }
 
+/**
+ * Source location information for enhanced debugging
+ */
 export interface SourceLocation {
   readonly line: number;
   readonly column: number;
   readonly source: string;
 }
-
-// Re-export TypedExpressionContext from enhanced-expressions
-export type { TypedExpressionContext } from './enhanced-expressions.js';
 
 // ============================================================================
 // Enhanced Command Interface for LLM Type Safety
@@ -238,15 +236,12 @@ export type ExpressionCategory =
   | 'conversion'
   | 'special';
 
-export interface ValidationResult {
-  readonly isValid: boolean;
-  readonly errors: ValidationError[];
-  readonly suggestions: string[];
-}
+// ValidationResult and ValidationError now imported from base-types.ts above
 
-export interface ValidationError {
-  readonly type: 'type-mismatch' | 'missing-argument' | 'invalid-syntax' | 'runtime-error' | 'security-warning';
-  readonly message: string;
+/**
+ * Enhanced validation error for backward compatibility with legacy enhanced-core usage
+ */
+export interface EnhancedValidationError extends ValidationError {
   readonly position?: SourceLocation;
   readonly suggestion?: string;
 }
