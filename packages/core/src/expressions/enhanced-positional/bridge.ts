@@ -22,7 +22,7 @@ export function createTypedExpressionContext(
     result: context.result,
     locals: context.locals || new Map(),
     globals: context.globals || new Map(),
-    event: context.event || undefined,
+    event: context.event || null,
     
     // Enhanced expression context properties
     expressionStack: [],
@@ -67,12 +67,8 @@ export class EnhancedPositionalAdapter {
     if (result.success) {
       return result.value;
     } else {
-      console.warn('Enhanced first expression failed:', result.error);
-      // Fallback to basic first operation
-      const target = collection !== undefined ? collection : context.it;
-      if (Array.isArray(target)) {
-        return target.length > 0 ? target[0] : null;
-      }
+      console.warn('Enhanced first expression failed:', result.errors);
+      // Return null when enhanced expression fails
       return null;
     }
   }
@@ -289,7 +285,7 @@ export class PositionalUtilities {
         return {
           success: false,
           value: fallback !== undefined ? fallback : null,
-          error: result.error
+          error: result.errors
         };
       }
     } catch (error) {
@@ -320,7 +316,7 @@ export class PositionalUtilities {
         return {
           success: false,
           value: fallback !== undefined ? fallback : null,
-          error: result.error
+          error: result.errors
         };
       }
     } catch (error) {
@@ -352,7 +348,7 @@ export class PositionalUtilities {
         return {
           success: false,
           value: fallback !== undefined ? fallback : null,
-          error: result.error
+          error: result.errors
         };
       }
     } catch (error) {

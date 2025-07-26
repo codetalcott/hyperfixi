@@ -297,7 +297,7 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Retrieves the last element from a collection (array, NodeList, or string)',
+    summary: 'Returns the last element from a collection (array, NodeList, or string)',
     parameters: [
       {
         name: 'collection',
