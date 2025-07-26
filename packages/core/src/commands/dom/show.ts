@@ -160,7 +160,7 @@ export class ShowCommand implements TypedCommandImplementation<
           name: 'ShowCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'SHOW_EXECUTION_FAILED',
-          suggestions: ['Check if element exists', 'Verify element is not null']
+          suggestion: 'Check if element exists', 'Verify element is not null'
         },
         type: 'error'
       };
@@ -230,7 +230,7 @@ export class ShowCommand implements TypedCommandImplementation<
           name: 'ShowElementError',
           message: error instanceof Error ? error.message : 'Failed to show element',
           code: 'ELEMENT_SHOW_FAILED',
-          suggestions: ['Check if element is still in DOM', 'Verify element is not null']
+          suggestion: 'Check if element is still in DOM', 'Verify element is not null'
         },
         type: 'error'
       };
@@ -274,7 +274,7 @@ export class ShowCommand implements TypedCommandImplementation<
             message: `Invalid argument: ${err.message}`,
             suggestion: this.getValidationSuggestion(err.code, err.path)
           })),
-          suggestions: ['Use HTMLElement, CSS selector string, or omit for implicit target']
+          suggestion: 'Use HTMLElement, CSS selector string, or omit for implicit target'
         };
       }
 
@@ -289,14 +289,14 @@ export class ShowCommand implements TypedCommandImplementation<
             message: `Invalid CSS selector: "${target}"`,
             suggestion: 'Use valid CSS selector syntax like "#id", ".class", or "element"'
           }],
-          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test']
+          suggestion: 'Check CSS selector syntax', 'Use document.querySelector() test'
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestion: 
       };
 
     } catch (error) {
@@ -307,7 +307,7 @@ export class ShowCommand implements TypedCommandImplementation<
           message: 'Validation failed with exception',
           suggestion: 'Check input types and values'
         }],
-        suggestions: ['Ensure arguments match expected types']
+        suggestion: 'Ensure arguments match expected types'
       };
     }
   }

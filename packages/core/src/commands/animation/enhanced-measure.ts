@@ -68,7 +68,7 @@ export class EnhancedMeasureCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Property must be a string',
-            suggestions: ['Use property names like "width", "height", "top", "left"']
+            suggestion: 'Use property names like "width", "height", "top", "left"'
           }
         };
       }
@@ -80,7 +80,7 @@ export class EnhancedMeasureCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Variable name must be a string',
-            suggestions: ['Use valid variable names']
+            suggestion: 'Use valid variable names'
           }
         };
       }

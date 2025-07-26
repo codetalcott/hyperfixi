@@ -56,7 +56,7 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'Make command requires an object input',
-            suggestions: ['Provide an object with article and expression properties']
+            suggestion: 'Provide an object with article and expression properties'
           }
         };
       }
@@ -70,7 +70,7 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Make command requires "a" or "an" article',
-            suggestions: ['Use "a" before consonant sounds, "an" before vowel sounds']
+            suggestion: 'Use "a" before consonant sounds, "an" before vowel sounds'
           }
         };
       }
@@ -81,7 +81,7 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'Make command requires "a" or "an" article',
-            suggestions: ['Use "a" or "an" as the article']
+            suggestion: 'Use "a" or "an" as the article'
           }
         };
       }
@@ -93,7 +93,7 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Make command requires class name or DOM element expression',
-            suggestions: ['Provide a class name like "URL" or DOM element like "<div/>"']
+            suggestion: 'Provide a class name like "URL" or DOM element like "<div/>"'
           }
         };
       }
@@ -104,7 +104,7 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Expression must be a string (class name or DOM element) or HTMLElement',
-            suggestions: ['Use a string like "URL" or "<div/>"']
+            suggestion: 'Use a string like "URL" or "<div/>"'
           }
         };
       }
@@ -116,7 +116,7 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Constructor arguments must be an array',
-            suggestions: ['Provide an array of constructor arguments']
+            suggestion: 'Provide an array of constructor arguments'
           }
         };
       }
@@ -128,7 +128,7 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Variable name must be a string',
-            suggestions: ['Provide a valid identifier string']
+            suggestion: 'Provide a valid identifier string'
           }
         };
       }

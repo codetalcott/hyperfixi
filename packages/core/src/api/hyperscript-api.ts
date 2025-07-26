@@ -6,7 +6,7 @@
 import { parse } from '../parser/parser.js';
 import { Runtime, type RuntimeOptions } from '../runtime/runtime.js';
 import { createContext, createChildContext } from '../core/context.js';
-import type { ASTNode, ExecutionContext, ParseError } from '../types/core.js';
+import type { ASTNode, ExecutionContext, ParseError } from '../types/base-types.js';
 
 // ============================================================================
 // API Types

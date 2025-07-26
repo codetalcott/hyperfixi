@@ -167,7 +167,7 @@ export class SendCommand implements TypedCommandImplementation<
             name: 'SendCommandError',
             message: parseResult.error || 'Failed to parse arguments',
             code: 'ARGUMENT_PARSE_FAILED',
-            suggestions: ['Check argument syntax', 'Use proper to/on keyword placement']
+            suggestion: 'Check argument syntax', 'Use proper to/on keyword placement'
           },
           type: 'error'
         };
@@ -184,7 +184,7 @@ export class SendCommand implements TypedCommandImplementation<
             name: 'SendCommandError',
             message: targetResult.error || 'Failed to resolve target elements',
             code: 'TARGET_RESOLUTION_FAILED',
-            suggestions: ['Check if target elements exist', 'Verify selector syntax']
+            suggestion: 'Check if target elements exist', 'Verify selector syntax'
           },
           type: 'error'
         };
@@ -207,7 +207,7 @@ export class SendCommand implements TypedCommandImplementation<
             name: 'SendCommandError',
             message: eventResult.error || 'Failed to dispatch event',
             code: 'EVENT_DISPATCH_FAILED',
-            suggestions: ['Check if target elements are valid', 'Verify event name format']
+            suggestion: 'Check if target elements are valid', 'Verify event name format'
           },
           type: 'error'
         };
@@ -231,7 +231,7 @@ export class SendCommand implements TypedCommandImplementation<
           name: 'SendCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'SEND_EXECUTION_FAILED',
-          suggestions: ['Check event name and arguments', 'Verify target elements exist']
+          suggestion: 'Check event name and arguments', 'Verify target elements exist'
         },
         type: 'error'
       };
@@ -414,7 +414,7 @@ export class SendCommand implements TypedCommandImplementation<
             message: 'Send command requires an event name',
             suggestion: 'Provide an event name as the first argument'
           }],
-          suggestions: ['Use: send "eventName" to target', 'Use: trigger "eventName" on target']
+          suggestion: 'Use: send "eventName" to target', 'Use: trigger "eventName" on target'
         };
       }
       
@@ -427,7 +427,7 @@ export class SendCommand implements TypedCommandImplementation<
             message: 'Event name must be a string',
             suggestion: 'Use a string for the event name'
           }],
-          suggestions: ['Use quotes around event name', 'Example: send "click" to element']
+          suggestion: 'Use quotes around event name', 'Example: send "click" to element'
         };
       }
       
@@ -439,7 +439,7 @@ export class SendCommand implements TypedCommandImplementation<
             message: 'Event name cannot be empty',
             suggestion: 'Provide a valid event name'
           }],
-          suggestions: ['Use meaningful event names like "click", "custom", etc.']
+          suggestion: 'Use meaningful event names like "click", "custom", etc.'
         };
       }
       
@@ -452,7 +452,7 @@ export class SendCommand implements TypedCommandImplementation<
             message: 'Event name cannot contain spaces',
             suggestion: 'Use camelCase or kebab-case for event names'
           }],
-          suggestions: ['Use "customEvent" instead of "custom event"']
+          suggestion: 'Use "customEvent" instead of "custom event"'
         };
       }
       
@@ -477,7 +477,7 @@ export class SendCommand implements TypedCommandImplementation<
             message: 'Cannot use both "to" and "on" keywords in the same send command',
             suggestion: 'Use either "to" or "on", not both'
           }],
-          suggestions: ['Use "send event to target"', 'Use "trigger event on target"']
+          suggestion: 'Use "send event to target"', 'Use "trigger event on target"'
         };
       }
       
@@ -490,7 +490,7 @@ export class SendCommand implements TypedCommandImplementation<
             message: 'Send command requires target after "to"',
             suggestion: 'Specify target element after "to" keyword'
           }],
-          suggestions: ['Use: send event to <#element/>', 'Use: send event to me']
+          suggestion: 'Use: send event to <#element/>', 'Use: send event to me'
         };
       }
       if (onIndex !== -1 && onIndex === args.length - 1) {
@@ -501,14 +501,14 @@ export class SendCommand implements TypedCommandImplementation<
             message: 'Send command requires target after "on"',
             suggestion: 'Specify target element after "on" keyword'
           }],
-          suggestions: ['Use: trigger event on <#element/>', 'Use: trigger event on me']
+          suggestion: 'Use: trigger event on <#element/>', 'Use: trigger event on me'
         };
       }
       
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestion: 
       };
       
     } catch (error) {
@@ -519,7 +519,7 @@ export class SendCommand implements TypedCommandImplementation<
           message: 'Validation failed with exception',
           suggestion: 'Check input types and values'
         }],
-        suggestions: ['Ensure arguments match expected types']
+        suggestion: 'Ensure arguments match expected types'
       };
     }
   }

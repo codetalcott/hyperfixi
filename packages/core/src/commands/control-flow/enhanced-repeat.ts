@@ -61,7 +61,7 @@ export class EnhancedRepeatCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Repeat command requires loop configuration',
-            suggestions: ['Provide loop type and parameters']
+            suggestion: 'Provide loop type and parameters'
           }
         };
       }
@@ -74,7 +74,7 @@ export class EnhancedRepeatCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Repeat command requires a loop type',
-            suggestions: ['Use types: for, times, while, until, forever']
+            suggestion: 'Use types: for, times, while, until, forever'
           }
         };
       }
@@ -86,7 +86,7 @@ export class EnhancedRepeatCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: `Invalid repeat type: ${inputObj.type}`,
-            suggestions: ['Use types: for, times, while, until, forever']
+            suggestion: 'Use types: for, times, while, until, forever'
           }
         };
       }
@@ -98,7 +98,7 @@ export class EnhancedRepeatCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'For loops require variable and collection',
-            suggestions: ['Use: repeat for item in items']
+            suggestion: 'Use: repeat for item in items'
           }
         };
       }
@@ -109,7 +109,7 @@ export class EnhancedRepeatCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Times loops require a count number',
-            suggestions: ['Use: repeat 5 times']
+            suggestion: 'Use: repeat 5 times'
           }
         };
       }
@@ -120,7 +120,7 @@ export class EnhancedRepeatCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: `${inputObj.type} loops require a condition`,
-            suggestions: [`Use: repeat ${inputObj.type} condition`]
+            suggestion: `Use: repeat ${inputObj.type} condition`
           }
         };
       }

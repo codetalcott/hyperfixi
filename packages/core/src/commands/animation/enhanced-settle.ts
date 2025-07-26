@@ -68,7 +68,7 @@ export class EnhancedSettleCommand implements TypedCommandImplementation<
               error: {
                 type: 'invalid-syntax',
                 message: 'Invalid timeout format',
-                suggestions: ['Use format like "3s", "500ms", or numeric milliseconds']
+                suggestion: 'Use format like "3s", "500ms", or numeric milliseconds'
               }
             };
           }
@@ -79,7 +79,7 @@ export class EnhancedSettleCommand implements TypedCommandImplementation<
               error: {
                 type: 'invalid-syntax',
                 message: 'Timeout cannot be negative',
-                suggestions: ['Use positive timeout values']
+                suggestion: 'Use positive timeout values'
               }
             };
           }
@@ -89,7 +89,7 @@ export class EnhancedSettleCommand implements TypedCommandImplementation<
             error: {
               type: 'type-mismatch',
               message: 'Timeout must be a number or string',
-              suggestions: ['Use numeric milliseconds or string with unit like "3s"']
+              suggestion: 'Use numeric milliseconds or string with unit like "3s"'
             }
           };
         }

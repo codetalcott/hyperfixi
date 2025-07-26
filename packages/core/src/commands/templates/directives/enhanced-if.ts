@@ -293,14 +293,14 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
             message: 'Template content cannot be empty',
             suggestion: 'Provide content to render when condition is true'
           }],
-          suggestions: ['Add content between @if and @end directives']
+          suggestion: 'Add content between @if and @end directives'
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestion: 
       };
 
     } catch (error) {
@@ -311,7 +311,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
           message: 'Validation failed with exception',
           suggestion: 'Check @if directive input structure'
         }],
-        suggestions: ['Ensure input matches expected format']
+        suggestion: 'Ensure input matches expected format'
       };
     }
   }

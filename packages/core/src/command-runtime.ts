@@ -5,8 +5,11 @@
  * Compatible with _hyperscript command execution patterns
  */
 
-import type { ExecutionContext } from './types/core.js';
-import { CommandNode, ExpressionNode } from './hyperscript-parser.js';
+import type { ExecutionContext, ASTNode } from './types/base-types.js';
+
+// Type aliases for backward compatibility
+type ExpressionNode = ASTNode;
+type CommandNode = ASTNode;
 
 /**
  * Runtime for executing hyperscript commands

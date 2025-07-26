@@ -151,7 +151,7 @@ export class RemoveCommand implements TypedCommandImplementation<
             name: 'RemoveCommandError',
             message: 'No valid classes provided to remove',
             code: 'NO_VALID_CLASSES',
-            suggestions: ['Provide valid CSS class names', 'Check class name syntax']
+            suggestion: 'Provide valid CSS class names', 'Check class name syntax'
           },
           type: 'error'
         };
@@ -167,7 +167,7 @@ export class RemoveCommand implements TypedCommandImplementation<
             name: 'RemoveCommandError',
             message: 'No target elements found',
             code: 'NO_TARGET_ELEMENTS',
-            suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM']
+            suggestion: 'Check if target selector is valid', 'Ensure elements exist in DOM'
           },
           type: 'error'
         };
@@ -196,7 +196,7 @@ export class RemoveCommand implements TypedCommandImplementation<
           name: 'RemoveCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'REMOVE_EXECUTION_FAILED',
-          suggestions: ['Check if elements exist', 'Verify class names are valid']
+          suggestion: 'Check if elements exist', 'Verify class names are valid'
         },
         type: 'error'
       };
@@ -285,7 +285,7 @@ export class RemoveCommand implements TypedCommandImplementation<
               name: 'RemoveClassError',
               message: `Invalid class name: "${className}"`,
               code: 'INVALID_CLASS_NAME',
-              suggestions: ['Use valid CSS class names', 'Check for special characters']
+              suggestion: 'Use valid CSS class names', 'Check for special characters'
             },
             type: 'error'
           };
@@ -320,7 +320,7 @@ export class RemoveCommand implements TypedCommandImplementation<
           name: 'RemoveClassError',
           message: error instanceof Error ? error.message : 'Failed to remove classes',
           code: 'CLASS_REMOVE_FAILED',
-          suggestions: ['Check if element is still in DOM', 'Verify class names are valid']
+          suggestion: 'Check if element is still in DOM', 'Verify class names are valid'
         },
         type: 'error'
       };
@@ -352,7 +352,7 @@ export class RemoveCommand implements TypedCommandImplementation<
             message: `Invalid argument: ${err.message}`,
             suggestion: this.getValidationSuggestion(err.code, err.path)
           })),
-          suggestions: ['Use string or string array for classes, and valid target selector']
+          suggestion: 'Use string or string array for classes, and valid target selector'
         };
       }
 
@@ -368,7 +368,7 @@ export class RemoveCommand implements TypedCommandImplementation<
             message: 'Class expression cannot be empty',
             suggestion: 'Provide valid CSS class names'
           }],
-          suggestions: ['Use class names like "active"', 'Use space-separated class names like "loading error"']
+          suggestion: 'Use class names like "active"', 'Use space-separated class names like "loading error"'
         };
       }
       
@@ -381,14 +381,14 @@ export class RemoveCommand implements TypedCommandImplementation<
             message: `Invalid CSS selector: "${target}"`,
             suggestion: 'Use valid CSS selector syntax like "#id", ".class", or "element"'
           }],
-          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test']
+          suggestion: 'Check CSS selector syntax', 'Use document.querySelector() test'
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestion: 
       };
 
     } catch (error) {
@@ -399,7 +399,7 @@ export class RemoveCommand implements TypedCommandImplementation<
           message: 'Validation failed with exception',
           suggestion: 'Check input types and values'
         }],
-        suggestions: ['Ensure arguments match expected types']
+        suggestion: 'Ensure arguments match expected types'
       };
     }
   }

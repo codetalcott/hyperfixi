@@ -55,7 +55,7 @@ export class EnhancedUnlessCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Unless command requires condition and commands',
-            suggestions: ['Provide condition and commands to execute']
+            suggestion: 'Provide condition and commands to execute'
           }
         };
       }
@@ -68,7 +68,7 @@ export class EnhancedUnlessCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Unless command requires a condition',
-            suggestions: ['Provide a condition to evaluate']
+            suggestion: 'Provide a condition to evaluate'
           }
         };
       }
@@ -79,7 +79,7 @@ export class EnhancedUnlessCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Unless command requires commands to execute',
-            suggestions: ['Provide commands to execute when condition is false']
+            suggestion: 'Provide commands to execute when condition is false'
           }
         };
       }
@@ -90,7 +90,7 @@ export class EnhancedUnlessCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Unless command requires at least one command',
-            suggestions: ['Provide at least one command to execute']
+            suggestion: 'Provide at least one command to execute'
           }
         };
       }

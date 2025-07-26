@@ -54,7 +54,7 @@ export class EnhancedJSCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'JS command requires JavaScript code',
-            suggestions: ['Provide JavaScript code to execute']
+            suggestion: 'Provide JavaScript code to execute'
           }
         };
       }
@@ -67,7 +67,7 @@ export class EnhancedJSCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'JS command requires code string',
-            suggestions: ['Provide JavaScript code as a string']
+            suggestion: 'Provide JavaScript code as a string'
           }
         };
       }
@@ -79,7 +79,7 @@ export class EnhancedJSCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Parameters must be an array of strings',
-            suggestions: ['Use array format: ["param1", "param2"]']
+            suggestion: 'Use array format: ["param1", "param2"]'
           }
         };
       }

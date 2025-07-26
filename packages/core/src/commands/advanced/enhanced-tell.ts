@@ -54,7 +54,7 @@ export class EnhancedTellCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'Tell command requires an object input',
-            suggestions: ['Provide an object with target and commands properties']
+            suggestion: 'Provide an object with target and commands properties'
           }
         };
       }
@@ -68,7 +68,7 @@ export class EnhancedTellCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Tell command requires a target element or selector',
-            suggestions: ['Provide an element reference, CSS selector, or element array']
+            suggestion: 'Provide an element reference, CSS selector, or element array'
           }
         };
       }
@@ -83,7 +83,7 @@ export class EnhancedTellCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Target must be a string (selector), HTMLElement, or array of elements',
-            suggestions: ['Use a CSS selector, element reference, or array of elements']
+            suggestion: 'Use a CSS selector, element reference, or array of elements'
           }
         };
       }
@@ -95,7 +95,7 @@ export class EnhancedTellCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Tell command requires at least one command to execute',
-            suggestions: ['Provide an array of commands to execute in the target context']
+            suggestion: 'Provide an array of commands to execute in the target context'
           }
         };
       }
@@ -106,7 +106,7 @@ export class EnhancedTellCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Tell command requires at least one command to execute',
-            suggestions: ['Provide at least one command in the commands array']
+            suggestion: 'Provide at least one command in the commands array'
           }
         };
       }

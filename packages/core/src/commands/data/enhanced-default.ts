@@ -56,7 +56,7 @@ export class EnhancedDefaultCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Default command requires target and value',
-            suggestions: ['Provide target and value with "to" keyword']
+            suggestion: 'Provide target and value with "to" keyword'
           }
         };
       }
@@ -69,7 +69,7 @@ export class EnhancedDefaultCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Default command requires a target',
-            suggestions: ['Provide a variable name, attribute, or property reference']
+            suggestion: 'Provide a variable name, attribute, or property reference'
           }
         };
       }
@@ -80,7 +80,7 @@ export class EnhancedDefaultCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Default command requires a value',
-            suggestions: ['Provide a default value to set']
+            suggestion: 'Provide a default value to set'
           }
         };
       }

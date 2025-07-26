@@ -339,14 +339,14 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
             message: 'Template content cannot be empty',
             suggestion: 'Provide content to render for each iteration'
           }],
-          suggestions: ['Add content between @repeat and @end directives']
+          suggestion: 'Add content between @repeat and @end directives'
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestion: 
       };
 
     } catch (error) {
@@ -357,7 +357,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
           message: 'Validation failed with exception',
           suggestion: 'Check @repeat directive input structure'
         }],
-        suggestions: ['Ensure input matches expected format']
+        suggestion: 'Ensure input matches expected format'
       };
     }
   }
@@ -409,23 +409,23 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
           message: 'Collection is null or undefined',
           suggestion: 'Provide a valid array or iterable collection'
         }],
-        suggestions: ['Check collection exists before template execution']
+        suggestion: 'Check collection exists before template execution'
       };
     }
 
     // Check for array
     if (Array.isArray(collection)) {
-      return { isValid: true, errors: [], suggestions: [] };
+      return { isValid: true, errors: [], suggestion:  };
     }
 
     // Check for array-like objects (NodeList, HTMLCollection, etc.)
     if (typeof collection === 'object' && 'length' in collection && typeof (collection as any).length === 'number') {
-      return { isValid: true, errors: [], suggestions: [] };
+      return { isValid: true, errors: [], suggestion:  };
     }
 
     // Check for iterables (Set, Map, etc.)
     if (typeof collection === 'object' && Symbol.iterator in collection) {
-      return { isValid: true, errors: [], suggestions: [] };
+      return { isValid: true, errors: [], suggestion:  };
     }
 
     return {

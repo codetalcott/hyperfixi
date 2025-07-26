@@ -56,7 +56,7 @@ export class EnhancedRenderCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Render command requires a template',
-            suggestions: ['Provide template element or selector']
+            suggestion: 'Provide template element or selector'
           }
         };
       }
@@ -69,7 +69,7 @@ export class EnhancedRenderCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Render command requires a template argument',
-            suggestions: ['Provide template element or CSS selector']
+            suggestion: 'Provide template element or CSS selector'
           }
         };
       }

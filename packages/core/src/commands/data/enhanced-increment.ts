@@ -57,7 +57,7 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'Increment command requires an object input',
-            suggestions: ['Provide an object with target property']
+            suggestion: 'Provide an object with target property'
           }
         };
       }
@@ -71,7 +71,7 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Increment command requires a target',
-            suggestions: ['Provide a target variable, element, or property to increment']
+            suggestion: 'Provide a target variable, element, or property to increment'
           }
         };
       }
@@ -85,7 +85,7 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Target must be a string (variable name), number, or HTMLElement',
-            suggestions: ['Use a variable name like "counter" or an element reference']
+            suggestion: 'Use a variable name like "counter" or an element reference'
           }
         };
       }
@@ -100,7 +100,7 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
             error: {
               type: 'type-mismatch',
               message: 'Amount must be a number',
-              suggestions: ['Provide a numeric value like 1, 5, or 10.5']
+              suggestion: 'Provide a numeric value like 1, 5, or 10.5'
             }
           };
         }
@@ -114,7 +114,7 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'Scope must be "global" or "local"',
-            suggestions: ['Use "global" or "local" scope, or omit for default behavior']
+            suggestion: 'Use "global" or "local" scope, or omit for default behavior'
           }
         };
       }

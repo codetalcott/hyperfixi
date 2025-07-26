@@ -57,7 +57,7 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'Set command requires an object input',
-            suggestions: ['Provide an object with target and value properties']
+            suggestion: 'Provide an object with target and value properties'
           }
         };
       }
@@ -71,7 +71,7 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Set command requires a target to set',
-            suggestions: ['Provide a variable name, element reference, or property path']
+            suggestion: 'Provide a variable name, element reference, or property path'
           }
         };
       }
@@ -83,7 +83,7 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Target must be a string (variable/property name) or HTMLElement',
-            suggestions: ['Use a variable name like "counter" or element reference']
+            suggestion: 'Use a variable name like "counter" or element reference'
           }
         };
       }
@@ -95,7 +95,7 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Set command requires a value to assign',
-            suggestions: ['Provide the value to assign to the target']
+            suggestion: 'Provide the value to assign to the target'
           }
         };
       }
@@ -108,7 +108,7 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'Scope must be "global" or "local"',
-            suggestions: ['Use "global" or "local" scope, or omit for default behavior']
+            suggestion: 'Use "global" or "local" scope, or omit for default behavior'
           }
         };
       }

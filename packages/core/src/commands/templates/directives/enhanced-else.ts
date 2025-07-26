@@ -292,14 +292,14 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
             message: 'Template content cannot be empty',
             suggestion: 'Provide content to render in else branch'
           }],
-          suggestions: ['Add content between @else and @end directives']
+          suggestion: 'Add content between @else and @end directives'
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestion: 
       };
 
     } catch (error) {
@@ -310,7 +310,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
           message: 'Validation failed with exception',
           suggestion: 'Check @else directive input structure'
         }],
-        suggestions: ['Ensure input matches expected format']
+        suggestion: 'Ensure input matches expected format'
       };
     }
   }
