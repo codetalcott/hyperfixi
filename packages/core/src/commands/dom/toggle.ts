@@ -76,7 +76,7 @@ export class ToggleCommand implements TypedCommandImplementation<
     parameters: [
       {
         name: 'classExpression',
-        type: 'string | string[]',
+        type: 'string',
         description: 'CSS class names to toggle',
         optional: false,
         examples: ['.active', 'highlighted', 'loading spinner']
@@ -348,9 +348,9 @@ export class ToggleCommand implements TypedCommandImplementation<
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestions: [] this.getValidationSuggestion(err.code, err.path)
+            suggestions: this.getValidationSuggestion(err.code, err.path)
           })),
-          suggestions: [] 'Use string or string array for classes, and valid target selector'
+          suggestions: ['Use string or string array for classes, and valid target selector']
         };
       }
 
@@ -395,9 +395,9 @@ export class ToggleCommand implements TypedCommandImplementation<
         errors: [{
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: [] 'Check input types and values'
+          suggestions: ['Check input types and values']
         }],
-        suggestions: [] 'Ensure arguments match expected types'
+        suggestions: ['Ensure arguments match expected types']
       };
     }
   }

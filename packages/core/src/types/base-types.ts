@@ -67,7 +67,7 @@ export type EvaluationType =
  */
 export type HyperScriptValueType = 
   | 'string' | 'number' | 'boolean' | 'element' | 'element-list'
-  | 'array' | 'object' | 'promise' | 'fragment' | 'null' | 'undefined' | 'function';
+  | 'array' | 'object' | 'promise' | 'fragment' | 'null' | 'undefined' | 'function' | 'event';
 
 /**
  * Mapping between EvaluationType and HyperScriptValueType

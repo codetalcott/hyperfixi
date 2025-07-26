@@ -264,7 +264,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
           context,
           collection,
           index,
-          item,
+          item as HyperScriptValue,
           input.iteratorVariable
         );
 
@@ -415,17 +415,17 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
 
     // Check for array
     if (Array.isArray(collection)) {
-      return { isValid: true, errors: [], suggestion:  };
+      return { isValid: true, errors: [], suggestions: [] };
     }
 
     // Check for array-like objects (NodeList, HTMLCollection, etc.)
     if (typeof collection === 'object' && 'length' in collection && typeof (collection as any).length === 'number') {
-      return { isValid: true, errors: [], suggestion:  };
+      return { isValid: true, errors: [], suggestions: [] };
     }
 
     // Check for iterables (Set, Map, etc.)
     if (typeof collection === 'object' && Symbol.iterator in collection) {
-      return { isValid: true, errors: [], suggestion:  };
+      return { isValid: true, errors: [], suggestions: [] };
     }
 
     return {
@@ -479,13 +479,9 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
     const totalItems = items.length;
     const varName = iteratorVariable || 'it';
 
-    return {
+    const newContext = {
       ...context,
-      
-      // Set current item as 'it' or custom variable
       it: currentItem,
-      
-      // Create iteration context
       iterationContext: {
         collection,
         currentIndex,
@@ -507,6 +503,8 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
         ['length', totalItems]
       ])
     };
+    
+    return newContext as TemplateExecutionContext;
   }
 
   /**
@@ -598,7 +596,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
   ): void {
     if (context.evaluationHistory) {
       const items = this.toArray(input.collection);
-      context.evaluationHistory.push({
+      (context.evaluationHistory as any).push({
         expressionName: this.name,
         category: this.category,
         input: { ...input, collectionSize: items.length },

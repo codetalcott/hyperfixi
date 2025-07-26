@@ -473,7 +473,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
     startTime: number
   ): void {
     if (context.evaluationHistory) {
-      context.evaluationHistory.push({
+      (context.evaluationHistory as any).push({
         expressionName: this.name,
         category: this.category,
         input,

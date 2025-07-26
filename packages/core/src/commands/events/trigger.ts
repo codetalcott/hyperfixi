@@ -85,14 +85,14 @@ export class TriggerCommand implements TypedCommandImplementation<
       },
       {
         name: 'eventData',
-        type: 'object | any',
+        type: 'object',
         description: 'Optional data to include in event.detail',
         optional: true,
         examples: ['{data: "value"}', '{count: 5}', 'null']
       },
       {
         name: 'onKeyword',
-        type: '"on"',
+        type: 'string',
         description: 'Keyword "on" indicating target specification',
         optional: false,
         examples: ['on']

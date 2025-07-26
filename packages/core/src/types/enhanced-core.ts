@@ -52,7 +52,9 @@ export type HyperScriptValue =
   | Record<string, unknown>
   | unknown[]
   | Date
-  | DocumentFragment;
+  | DocumentFragment
+  | Event
+  | CustomEvent;
 
 /**
  * Strongly typed evaluation results with error handling
@@ -158,7 +160,8 @@ export type CommandCategory =
   | 'control-flow'
   | 'animation'
   | 'network'
-  | 'utility';
+  | 'utility'
+  | 'navigation';
 
 export type SideEffect = 
   | 'dom-mutation'
@@ -166,7 +169,10 @@ export type SideEffect =
   | 'local-storage'
   | 'global-state'
   | 'event-emission'
-  | 'timer-creation';
+  | 'timer-creation'
+  | 'navigation'
+  | 'dom-query'
+  | 'history';
 
 export interface CommandExample {
   readonly code: string;

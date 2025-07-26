@@ -53,11 +53,11 @@ export class GoCommand implements TypedCommandImplementation<
   public readonly syntax = 'go [to] url <url> [in new window] | go [to] [position] [of] <target> [offset] [behavior] | go back';
   public readonly description = 'Provides navigation functionality including URL navigation, element scrolling, and browser history management';
   public readonly inputSchema = GoCommandInputSchema;
-  public readonly outputType = 'unknown' as const;
+  public readonly outputType = 'object' as const;
 
   public readonly metadata: CommandMetadata = {
     category: 'navigation',
-    complexity: 'high',
+    complexity: 'complex',
     sideEffects: ['navigation', 'dom-query', 'history'],
     examples: [
       {
@@ -91,14 +91,14 @@ export class GoCommand implements TypedCommandImplementation<
       },
       {
         name: 'target',
-        type: 'string | element',
+        type: 'string',
         description: 'URL string or target element for scrolling',
         optional: true,
         examples: ['"https://example.com"', '<#header/>', 'me']
       }
     ],
     returns: {
-      type: 'string | element',
+      type: 'object',
       description: 'URL string for navigation or target element for scrolling',
       examples: ['"https://example.com"', 'HTMLElement', '"back"']
     },
@@ -170,7 +170,7 @@ export class GoCommand implements TypedCommandImplementation<
             name: 'GoCommandError',
             message: 'Go command requires arguments',
             code: 'NO_ARGUMENTS',
-            suggestion: 'Use: go back, go to url <url>, or go to <position> of <element>'
+            suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>']
           },
           type: 'error'
         };
@@ -199,7 +199,7 @@ export class GoCommand implements TypedCommandImplementation<
           name: 'GoCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'GO_EXECUTION_FAILED',
-          suggestion: ['Check navigation parameters', 'Verify target elements exist', 'Ensure URLs are valid']
+          suggestions: ['Check navigation parameters', 'Verify target elements exist', 'Ensure URLs are valid']
         },
         type: 'error'
       };
@@ -217,9 +217,9 @@ export class GoCommand implements TypedCommandImplementation<
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestion: this.getValidationSuggestion(err.code, err.path)
+            suggestions: [this.getValidationSuggestion(err.code, err.path)]
           })),
-          suggestion: 'Use: go back, go to url <url>, or go to <position> of <element>'
+          suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>']
         };
       }
 
@@ -230,9 +230,9 @@ export class GoCommand implements TypedCommandImplementation<
           errors: [{
             type: 'empty-input' as const,
             message: 'Go command requires at least one argument',
-            suggestion: 'Use supported go command patterns'
+            suggestions: ['Use supported go command patterns']
           }],
-          suggestion: 'Use: go back, go to url <url>, or go to <position> of <element>'
+          suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>']
         };
       }
 
@@ -244,9 +244,9 @@ export class GoCommand implements TypedCommandImplementation<
             errors: [{
               type: 'invalid-syntax' as const,
               message: 'Go back command does not accept additional arguments',
-              suggestion: 'Use "go back" without additional parameters'
+              suggestions: ['Use "go back" without additional parameters']
             }],
-            suggestion: 'Use: go back'
+            suggestions: ['Use: go back']
           };
         }
         return {
@@ -270,9 +270,9 @@ export class GoCommand implements TypedCommandImplementation<
         errors: [{
           type: 'runtime-error' as const,
           message: 'Validation failed with exception',
-          suggestion: 'Check input types and values'
+          suggestions: ['Check input types and values']
         }],
-        suggestion: 'Ensure arguments match expected types'
+        suggestions: ['Ensure arguments match expected types']
       };
     }
   }
@@ -321,7 +321,7 @@ export class GoCommand implements TypedCommandImplementation<
             name: 'NavigationError',
             message: 'URL is required after "url" keyword',
             code: 'MISSING_URL',
-            suggestion: 'Provide URL string after "url" keyword'
+            suggestions: ['Provide URL string after "url" keyword']
           },
           type: 'error'
         };
@@ -341,7 +341,7 @@ export class GoCommand implements TypedCommandImplementation<
             name: 'NavigationError',
             message: `Invalid URL: "${resolvedUrl}"`,
             code: 'INVALID_URL',
-            suggestion: ['Use valid URL format', 'Include protocol for absolute URLs']
+            suggestions: ['Use valid URL format', 'Include protocol for absolute URLs']
           },
           type: 'error'
         };
@@ -378,7 +378,7 @@ export class GoCommand implements TypedCommandImplementation<
                 name: 'NavigationError',
                 message: `Navigation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 code: 'NAVIGATION_FAILED',
-                suggestion: ['Check if URL is accessible', 'Verify network connectivity']
+                suggestions: ['Check if URL is accessible', 'Verify network connectivity']
               },
               type: 'error'
             };
@@ -411,7 +411,7 @@ export class GoCommand implements TypedCommandImplementation<
           name: 'NavigationError',
           message: error instanceof Error ? error.message : 'URL navigation failed',
           code: 'URL_NAVIGATION_FAILED',
-          suggestion: 'Check URL format and accessibility'
+          suggestions: ['Check URL format and accessibility']
         },
         type: 'error'
       };
@@ -434,7 +434,7 @@ export class GoCommand implements TypedCommandImplementation<
             name: 'ScrollError',
             message: `Target element not found: ${target}`,
             code: 'TARGET_NOT_FOUND',
-            suggestion: ['Check if element exists in DOM', 'Verify selector syntax']
+            suggestions: ['Check if element exists in DOM', 'Verify selector syntax']
           },
           type: 'error'
         };
@@ -514,7 +514,7 @@ export class GoCommand implements TypedCommandImplementation<
                 name: 'ScrollError',
                 message: `Scroll with offset failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 code: 'SCROLL_OFFSET_FAILED',
-                suggestion: ['Check if element is visible', 'Verify scroll container']
+                suggestions: ['Check if element is visible', 'Verify scroll container']
               },
               type: 'error'
             };
@@ -538,7 +538,7 @@ export class GoCommand implements TypedCommandImplementation<
                 name: 'ScrollError',
                 message: `Scroll failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 code: 'SCROLL_FAILED',
-                suggestion: ['Check if element is visible', 'Verify element is scrollable']
+                suggestions: ['Check if element is visible', 'Verify element is scrollable']
               },
               type: 'error'
             };
@@ -573,7 +573,7 @@ export class GoCommand implements TypedCommandImplementation<
           name: 'ScrollError',
           message: error instanceof Error ? error.message : 'Element scrolling failed',
           code: 'SCROLL_EXECUTION_FAILED',
-          suggestion: ['Check target element validity', 'Verify scroll parameters']
+          suggestions: ['Check target element validity', 'Verify scroll parameters']
         },
         type: 'error'
       };
@@ -712,7 +712,7 @@ export class GoCommand implements TypedCommandImplementation<
 
   private resolveScrollTarget(target: unknown, context: TypedExecutionContext): HTMLElement | null {
     // Handle direct HTMLElement objects
-    if (typeof target === 'object' && target && target.nodeType) {
+    if (typeof target === 'object' && target && (target as any).nodeType) {
       return target as HTMLElement;
     }
     
@@ -748,14 +748,14 @@ export class GoCommand implements TypedCommandImplementation<
     if (typeof document !== 'undefined') {
       try {
         // Try as CSS selector first
-        const element = document.querySelector(target);
+        const element = document.querySelector(target as string);
         if (element) {
           return element as HTMLElement;
         }
       } catch (error) {
         // If selector fails, try as tag name
         try {
-          const elements = document.getElementsByTagName(target);
+          const elements = document.getElementsByTagName(target as string);
           if (elements.length > 0) {
             return elements[0] as HTMLElement;
           }
@@ -824,7 +824,7 @@ export class GoCommand implements TypedCommandImplementation<
             name: 'HistoryError',
             message: 'Browser history API not available',
             code: 'HISTORY_API_UNAVAILABLE',
-            suggestion: 'Check if running in browser environment'
+            suggestions: ['Check if running in browser environment']
           },
           type: 'error'
         };
@@ -854,7 +854,7 @@ export class GoCommand implements TypedCommandImplementation<
           name: 'HistoryError',
           message: error instanceof Error ? error.message : 'History navigation failed',
           code: 'HISTORY_NAVIGATION_FAILED',
-          suggestion: ['Check browser history support', 'Verify navigation context']
+          suggestions: ['Check browser history support', 'Verify navigation context']
         },
         type: 'error'
       };
@@ -869,9 +869,9 @@ export class GoCommand implements TypedCommandImplementation<
         errors: [{
           type: 'invalid-syntax' as const,
           message: 'URL navigation requires "url" keyword',
-          suggestion: 'Use syntax: go to url <url>'
+          suggestions: ['Use syntax: go to url <url>']
         }],
-        suggestion: 'Use: go to url "https://example.com"'
+        suggestions: ['Use: go to url "https://example.com"']
       };
     }
 
@@ -881,9 +881,9 @@ export class GoCommand implements TypedCommandImplementation<
         errors: [{
           type: 'missing-argument' as const,
           message: 'URL is required after "url" keyword',
-          suggestion: 'Provide URL string after "url" keyword'
+          suggestions: ['Provide URL string after "url" keyword']
         }],
-        suggestion: ['Use: go to url "https://example.com"', 'Include URL string as next argument']
+        suggestions: ['Use: go to url "https://example.com"', 'Include URL string as next argument']
       };
     }
 
@@ -896,9 +896,9 @@ export class GoCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-format' as const,
             message: `Invalid URL format: "${url}"`,
-            suggestion: 'Use valid URL format like "https://example.com"'
+            suggestions: ['Use valid URL format like "https://example.com"']
           }],
-          suggestion: ['Include protocol (http:// or https://)', 'Check URL syntax']
+          suggestions: ['Include protocol (http:// or https://)', 'Check URL syntax']
         };
       }
     }
@@ -926,9 +926,9 @@ export class GoCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-syntax' as const,
             message: 'Invalid go command syntax',
-            suggestion: 'Use valid go command patterns'
+            suggestions: ['Use valid go command patterns']
           }],
-          suggestion: ['Use: go to top of <element>', 'Use: go to <element>', 'Use: go back']
+          suggestions: ['Use: go to top of <element>', 'Use: go to <element>', 'Use: go back']
         };
       }
     }

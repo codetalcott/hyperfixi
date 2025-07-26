@@ -87,14 +87,14 @@ export class SendCommand implements TypedCommandImplementation<
       },
       {
         name: 'eventDetail',
-        type: 'object | any',
+        type: 'object',
         description: 'Optional data to include in event.detail',
         optional: true,
         examples: ['{data: "value"}', '{count: 5}', 'null']
       },
       {
         name: 'targetKeyword',
-        type: '"to" | "on"',
+        type: 'string',
         description: 'Keyword indicating target specification',
         optional: true,
         examples: ['to', 'on']

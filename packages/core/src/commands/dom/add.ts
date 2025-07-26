@@ -81,7 +81,7 @@ export class AddCommand implements TypedCommandImplementation<
     parameters: [
       {
         name: 'classExpression',
-        type: 'string | string[]',
+        type: 'string',
         description: 'CSS class names to add or attribute syntax [@name="value"]',
         optional: false,
         examples: ['.active', 'highlighted', 'active selected', '[@data-state="loaded"]']
@@ -496,7 +496,7 @@ export class AddCommand implements TypedCommandImplementation<
             message: 'Class expression cannot be empty',
             suggestions: ['Provide valid CSS class names or attribute syntax']
           }],
-          suggestions: ['Use class names like "active"', 'Use attribute syntax like [@data-test="value"']]
+          suggestions: ['Use class names like "active"', 'Use attribute syntax like [@data-test="value"]']
         };
       }
       

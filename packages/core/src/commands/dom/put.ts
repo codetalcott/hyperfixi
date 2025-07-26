@@ -74,7 +74,7 @@ export class PutCommand implements TypedCommandImplementation<
     parameters: [
       {
         name: 'content',
-        type: 'unknown',
+        type: 'string',
         description: 'Content to insert (text, HTML, or values)',
         optional: false,
         examples: ['"Hello"', '<div>HTML</div>', 'variable']
@@ -370,7 +370,7 @@ export class PutCommand implements TypedCommandImplementation<
           name: 'PutTargetError',
           message: `Invalid target type: ${typeof target}`,
           code: 'INVALID_TARGET_TYPE',
-          suggestions: 'Use HTMLElement, CSS selector string, or omit for implicit target'
+          suggestions: ['Use HTMLElement, CSS selector string, or omit for implicit target']
         },
         type: 'error'
       };
@@ -382,7 +382,7 @@ export class PutCommand implements TypedCommandImplementation<
           name: 'PutTargetError',
           message: error instanceof Error ? error.message : 'Target resolution failed',
           code: 'TARGET_RESOLUTION_FAILED',
-          suggestions: 'Check target syntax and availability'
+          suggestions: ['Check target syntax and availability']
         },
         type: 'error'
       };
@@ -417,7 +417,7 @@ export class PutCommand implements TypedCommandImplementation<
       if (property) {
         switch (position) {
           case 'into':
-            (targetElement as Record<string, unknown>)[property] = content;
+            (targetElement as unknown as Record<string, unknown>)[property] = content;
             break;
           default:
             return {
@@ -456,7 +456,7 @@ export class PutCommand implements TypedCommandImplementation<
                 name: 'PutOperationError',
                 message: `Invalid position: ${position}`,
                 code: 'INVALID_POSITION',
-                suggestions: 'Use: into, before, after, at start of, at end of'
+                suggestions: ['Use: into, before, after, at start of, at end of']
               },
               type: 'error'
             };
