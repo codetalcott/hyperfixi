@@ -1,420 +1,841 @@
 /**
- * Test suite for Enhanced On Feature
- * Validates enhanced TypeScript patterns applied to features
+ * Enhanced On Feature Implementation Tests
+ * Comprehensive testing following enhanced pattern validation
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { createTestElement } from '../test-setup';
-import { Runtime } from '../runtime/runtime';
-import { EnhancedOnFeature, createEnhancedOnFeature } from './enhanced-on';
-import type { TypedFeatureContext } from '../types/enhanced-features';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import {
+  TypedOnFeatureImplementation,
+  createOnFeature,
+  createEnhancedOn,
+  enhancedOnImplementation,
+  type EnhancedOnInput,
+  type EnhancedOnOutput
+} from './enhanced-on.js';
 
-describe('Enhanced On Feature', () => {
-  let feature: EnhancedOnFeature;
-  let runtime: Runtime;
-  let testElement: HTMLElement;
-  let context: TypedFeatureContext;
-
+describe('Enhanced On Feature Implementation', () => {
+  let onFeature: TypedOnFeatureImplementation;
+  
   beforeEach(() => {
-    runtime = new Runtime({ useEnhancedCommands: true });
-    feature = createEnhancedOnFeature(runtime);
-    testElement = createTestElement('<button id="test-btn">Test</button>');
-    document.body.appendChild(testElement);
-
-    context = {
-      me: testElement,
-      it: null,
-      you: null,
-      result: null,
-      event: undefined,
-      
-      variables: new Map(),
-      locals: new Map(),
-      globals: new Map(),
-      
-      feature: 'on',
-      syntax: '',
-      element: testElement,
-      
-      errors: [],
-      featureHistory: [],
-      validationMode: 'strict'
-    };
+    onFeature = createOnFeature();
+    vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    document.body.innerHTML = '';
+  describe('Context Initialization', () => {
+    it('should initialize with minimal event configuration', async () => {
+      const input: EnhancedOnInput = {
+        event: {
+          type: 'click',
+        },
+        commands: [{ type: 'command', name: 'log', args: ['clicked'] }],
+        context: {
+          variables: {},
+        },
+        options: {
+          enableErrorHandling: true,
+        },
+      };
+
+      const result = await onFeature.initialize(input);
+      
+      expect(result.success).toBe(true);
+      expect(result.value).toBeDefined();
+      
+      if (result.success && result.value) {
+        expect(result.value.category).toBe('Frontend');
+        expect(result.value.capabilities).toContain('event-listening');
+        expect(result.value.capabilities).toContain('command-execution');
+        expect(result.value.capabilities).toContain('event-filtering');
+      }
+    });
+
+    it('should initialize with comprehensive event configuration', async () => {
+      const input: EnhancedOnInput = {
+        event: {
+          type: 'submit',
+          target: 'form.contact',
+          preventDefault: true,
+          throttle: 1000,
+          filter: 'event.target.checkValidity()',
+        },
+        commands: [
+          { type: 'command', name: 'log', args: ['Form submitted'] },
+          { type: 'command', name: 'hide', args: [] }
+        ],
+        context: {
+          variables: { debug: true },
+          me: null,
+        },
+        options: {
+          enableErrorHandling: true,
+          enableEventCapture: true,
+          enableAsyncExecution: true,
+          maxCommandCount: 50,
+        },
+        environment: 'frontend',
+        debug: true,
+      };
+
+      const result = await onFeature.initialize(input);
+      
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        expect(result.value.capabilities).toContain('event-listening');
+        expect(result.value.capabilities).toContain('performance-optimization');
+        expect(result.value.capabilities).toContain('error-handling');
+        expect(result.value.state).toBe('ready');
+      }
+    });
+
+    it('should handle keyboard events with debouncing', async () => {
+      const input: EnhancedOnInput = {
+        event: {
+          type: 'keydown',
+          target: 'input.search',
+          debounce: 300,
+          filter: 'event.key.length === 1', // Only letter/number keys
+        },
+        commands: [{ type: 'command', name: 'validateInput', args: [] }],
+        options: {
+          enableAsyncExecution: true,
+        },
+      };
+
+      const result = await onFeature.initialize(input);
+      
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        expect(result.value.capabilities).toContain('performance-optimization');
+        expect(result.value.state).toBe('ready');
+      }
+    });
   });
 
-  describe('Feature Implementation Interface', () => {
-    it('should implement TypedFeatureImplementation interface', () => {
-      expect(feature.name).toBe('on');
-      expect(feature.syntax).toContain('on');
-      expect(feature.description).toContain('event handlers');
-      expect(feature.inputSchema).toBeDefined();
-      expect(feature.outputType).toBe('feature-registration-list');
-      expect(feature.metadata).toBeDefined();
-      expect(feature.documentation).toBeDefined();
+  describe('Event Management', () => {
+    it('should create and manage event listeners', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'click',
+          target: '.button',
+        },
+        commands: [{ type: 'command', name: 'toggle', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Test listener management
+        const listeners = result.value.events.getListeners();
+        expect(Array.isArray(listeners)).toBe(true);
+
+        const clickListeners = result.value.events.getListeners('click');
+        expect(Array.isArray(clickListeners)).toBe(true);
+      }
+    });
+
+    it('should trigger custom events', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'custom:dataUpdate',
+        },
+        commands: [{ type: 'command', name: 'refreshView', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Test event triggering
+        expect(typeof result.value.events.trigger).toBe('function');
+        
+        // Should not throw when triggering events
+        expect(() => {
+          result.value.events.trigger('custom:testEvent', { data: 'test' });
+        }).not.toThrow();
+      }
+    });
+
+    it('should pause and resume listeners', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'scroll',
+          throttle: 100,
+        },
+        commands: [{ type: 'command', name: 'updateScrollPosition', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        const listeners = result.value.events.getListeners('scroll');
+        if (listeners.length > 0) {
+          const listenerId = listeners[0].id;
+          
+          // Test pausing
+          const paused = result.value.events.pauseListener(listenerId);
+          expect(paused).toBe(true);
+
+          // Test resuming
+          const resumed = result.value.events.resumeListener(listenerId);
+          expect(resumed).toBe(true);
+        }
+      }
+    });
+
+    it('should unlisten event handlers', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'input',
+          debounce: 250,
+        },
+        commands: [{ type: 'command', name: 'validateField', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        const listeners = result.value.events.getListeners('input');
+        if (listeners.length > 0) {
+          const listenerId = listeners[0].id;
+          
+          // Test unlistening
+          const unlistened = result.value.events.unlisten(listenerId);
+          expect(unlistened).toBe(true);
+        }
+      }
+    });
+  });
+
+  describe('Command Execution', () => {
+    it('should execute commands synchronously', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'click',
+        },
+        commands: [
+          { type: 'command', name: 'log', args: ['Button clicked'] },
+          { type: 'command', name: 'hide', args: [] }
+        ],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Test command execution
+        const commands = [
+          { name: 'log', args: ['Test execution'] },
+          { name: 'show', args: [] }
+        ];
+        
+        const execResult = await result.value.execution.execute(commands, { me: null });
+        expect(execResult).toBeDefined();
+      }
+    });
+
+    it('should execute commands asynchronously', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'submit',
+        },
+        commands: [{ type: 'command', name: 'submitForm', args: [] }],
+        options: {
+          enableAsyncExecution: true,
+        },
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Test async command execution
+        const commands = [{ name: 'log', args: ['Async execution'] }];
+        
+        const execResult = await result.value.execution.executeAsync(commands, { me: null });
+        expect(execResult).toBeDefined();
+      }
+    });
+
+    it('should track execution history', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'change',
+        },
+        commands: [{ type: 'command', name: 'updateValue', args: [] }],
+      });
+
+      expect(result.success && result.value).toBeTruthy();
+      
+      if (result.success && result.value) {
+        // Execute some commands to build history
+        await result.value.execution.execute([{ name: 'log', args: ['test1'] }], {});
+        await result.value.execution.execute([{ name: 'log', args: ['test2'] }], {});
+        
+        // Check execution history
+        const history = result.value.execution.getExecutionHistory();
+        expect(Array.isArray(history)).toBe(true);
+
+        // Test history limits
+        const limitedHistory = result.value.execution.getExecutionHistory(1);
+        expect(Array.isArray(limitedHistory)).toBe(true);
+        expect(limitedHistory.length).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it('should clear execution history', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'focus',
+        },
+        commands: [{ type: 'command', name: 'highlightField', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Clear history
+        const cleared = result.value.execution.clearHistory();
+        expect(cleared).toBe(true);
+      }
+    });
+  });
+
+  describe('Event Filtering', () => {
+    it('should add and manage event filters', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'keydown',
+          filter: 'event.key === "Enter"',
+        },
+        commands: [{ type: 'command', name: 'submitOnEnter', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Add a custom filter
+        const added = result.value.filtering.addFilter('enterKey', 'event.key === "Enter" && !event.shiftKey');
+        expect(added).toBe(true);
+
+        // Get all filters
+        const filters = result.value.filtering.getFilters();
+        expect(Array.isArray(filters)).toBe(true);
+
+        // Test filter with mock event
+        const mockEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+        const testResult = result.value.filtering.testFilter('enterKey', mockEvent);
+        expect(typeof testResult).toBe('boolean');
+      }
+    });
+
+    it('should remove filters', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'click',
+        },
+        commands: [{ type: 'command', name: 'handleClick', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Add then remove filter
+        result.value.filtering.addFilter('testFilter', 'event.buttons === 1');
+        const removed = result.value.filtering.removeFilter('testFilter');
+        expect(removed).toBe(true);
+      }
+    });
+
+    it('should handle invalid filter expressions', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'mouseover',
+        },
+        commands: [{ type: 'command', name: 'showTooltip', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Try to add invalid filter
+        const added = result.value.filtering.addFilter('invalidFilter', 'invalid javascript syntax [[[');
+        expect(added).toBe(false);
+      }
+    });
+  });
+
+  describe('Performance Control', () => {
+    it('should manage throttling settings', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'scroll',
+          throttle: 100,
+        },
+        commands: [{ type: 'command', name: 'updateScrollbar', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        const listeners = result.value.events.getListeners('scroll');
+        if (listeners.length > 0) {
+          const listenerId = listeners[0].id;
+          
+          // Test throttle control
+          const throttled = result.value.performance.throttle(listenerId, 200);
+          expect(throttled).toBe(true);
+
+          // Test throttle delay setting
+          const delaySet = result.value.performance.setThrottleDelay(listenerId, 150);
+          expect(delaySet).toBe(true);
+        }
+      }
+    });
+
+    it('should manage debouncing settings', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'input',
+          debounce: 300,
+        },
+        commands: [{ type: 'command', name: 'searchAsYouType', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        const listeners = result.value.events.getListeners('input');
+        if (listeners.length > 0) {
+          const listenerId = listeners[0].id;
+          
+          // Test debounce control
+          const debounced = result.value.performance.debounce(listenerId, 500);
+          expect(debounced).toBe(true);
+
+          // Test debounce delay setting
+          const delaySet = result.value.performance.setDebounceDelay(listenerId, 400);
+          expect(delaySet).toBe(true);
+        }
+      }
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle and track errors', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'error',
+        },
+        commands: [{ type: 'command', name: 'logError', args: [] }],
+        options: {
+          enableErrorHandling: true,
+        },
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Test error handling
+        const error = new Error('Test error');
+        const handled = await result.value.errors.handle(error, { context: 'test' });
+        expect(handled).toBe(true);
+
+        // Check error history
+        const errorHistory = result.value.errors.getErrorHistory();
+        expect(Array.isArray(errorHistory)).toBe(true);
+      }
+    });
+
+    it('should clear error history', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'click',
+        },
+        commands: [{ type: 'command', name: 'risky', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Clear errors
+        const cleared = result.value.errors.clearErrors();
+        expect(cleared).toBe(true);
+      }
+    });
+
+    it('should set custom error handlers', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'unhandledrejection',
+        },
+        commands: [{ type: 'command', name: 'reportError', args: [] }],
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        // Set custom error handler
+        const customHandler = (error: Error, context: any) => {
+          console.warn('Custom error handler:', error.message);
+        };
+        
+        const handlerSet = result.value.errors.setErrorHandler(customHandler);
+        expect(handlerSet).toBe(true);
+      }
+    });
+  });
+
+  describe('Validation and Error Handling', () => {
+    it('should validate event type', () => {
+      const validationResult = onFeature.validate({
+        event: {
+          type: 'invalidEventType123',
+        },
+        commands: [{ type: 'command', name: 'log', args: [] }],
+      });
+
+      expect(validationResult.isValid).toBe(false);
+      expect(validationResult.errors).toHaveLength(1);
+      expect(validationResult.errors[0].type).toBe('invalid-event-type');
+      expect(validationResult.suggestions).toContain('Use standard DOM event types like "click", "input", "submit", "keydown", etc.');
+    });
+
+    it('should validate target selector', () => {
+      const validationResult = onFeature.validate({
+        event: {
+          type: 'click',
+          target: '>>>invalid-selector<<<',
+        },
+        commands: [{ type: 'command', name: 'log', args: [] }],
+      });
+
+      expect(validationResult.isValid).toBe(false);
+      expect(validationResult.errors.length).toBeGreaterThan(0);
+      expect(validationResult.errors.some(e => e.type === 'invalid-target-selector')).toBe(true);
+    });
+
+    it('should validate conflicting performance options', () => {
+      const validationResult = onFeature.validate({
+        event: {
+          type: 'scroll',
+          throttle: 100,
+          debounce: 200, // Cannot have both
+        },
+        commands: [{ type: 'command', name: 'log', args: [] }],
+      });
+
+      expect(validationResult.isValid).toBe(false);
+      expect(validationResult.errors.some(e => e.type === 'conflicting-performance-options')).toBe(true);
+    });
+
+    it('should validate timing values', () => {
+      const validationResult = onFeature.validate({
+        event: {
+          type: 'input',
+          throttle: -100, // Invalid negative value
+        },
+        commands: [{ type: 'command', name: 'log', args: [] }],
+      });
+
+      expect(validationResult.isValid).toBe(false);
+      expect(validationResult.errors.some(e => e.type === 'invalid-throttle-delay')).toBe(true);
+    });
+
+    it('should validate empty commands array', () => {
+      const validationResult = onFeature.validate({
+        event: {
+          type: 'click',
+        },
+        commands: [], // Empty commands array
+      });
+
+      expect(validationResult.isValid).toBe(false);
+      expect(validationResult.errors.some(e => e.type === 'empty-commands-array')).toBe(true);
+    });
+
+    it('should validate command count limits', () => {
+      const validationResult = onFeature.validate({
+        event: {
+          type: 'change',
+        },
+        commands: Array.from({length: 150}, (_, i) => ({ name: `command${i}`, args: [] })), // Too many commands
+        options: {
+          maxCommandCount: 100,
+        },
+      });
+
+      expect(validationResult.isValid).toBe(false);
+      expect(validationResult.errors.some(e => e.type === 'too-many-commands')).toBe(true);
+    });
+
+    it('should validate filter expressions', () => {
+      const validationResult = onFeature.validate({
+        event: {
+          type: 'keydown',
+          filter: 'invalid javascript syntax <<<', // Invalid expression
+        },
+        commands: [{ type: 'command', name: 'log', args: [] }],
+      });
+
+      expect(validationResult.isValid).toBe(false);
+      expect(validationResult.errors.some(e => e.type === 'invalid-filter-expression')).toBe(true);
+    });
+
+    it('should handle initialization failures gracefully', async () => {
+      const result = await onFeature.initialize({
+        event: {} as any, // Invalid event definition
+        commands: [],
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.errors).toBeDefined();
+      expect(result.suggestions).toBeDefined();
+    });
+  });
+
+  describe('Performance Tracking', () => {
+    it('should track performance metrics', async () => {
+      // Initialize multiple times to build performance history
+      for (let i = 0; i < 3; i++) {
+        await onFeature.initialize({
+          event: {
+            type: `testEvent${i}`,
+          },
+          commands: [{ type: 'command', name: 'log', args: [`Event ${i}`] }],
+        });
+      }
+
+      const metrics = onFeature.getPerformanceMetrics();
+      
+      expect(metrics.totalInitializations).toBeGreaterThanOrEqual(3);
+      expect(typeof metrics.successRate).toBe('number');
+      expect(typeof metrics.averageDuration).toBe('number');
+      expect(metrics.evaluationHistory).toBeDefined();
+      expect(typeof metrics.totalListeners).toBe('number');
+      expect(typeof metrics.totalExecutions).toBe('number');
+      expect(typeof metrics.averageExecutionTime).toBe('number');
+    });
+  });
+
+  describe('Factory Functions', () => {
+    it('should create context through factory function', () => {
+      const context = createOnFeature();
+      expect(context).toBeInstanceOf(TypedOnFeatureImplementation);
+      expect(context.name).toBe('onFeature');
+      expect(context.category).toBe('Frontend');
+    });
+
+    it('should create enhanced on through convenience function', async () => {
+      const result = await createEnhancedOn(
+        {
+          type: 'click',
+          target: '.test-button',
+        },
+        [{ name: 'log', args: ['Clicked!'] }],
+        {
+          environment: 'frontend',
+        }
+      );
+
+      expect(result).toBeDefined();
+      expect(typeof result.success).toBe('boolean');
+    });
+  });
+
+  describe('Enhanced Pattern Compliance', () => {
+    it('should have required enhanced pattern properties', () => {
+      expect(onFeature.name).toBe('onFeature');
+      expect(onFeature.category).toBe('Frontend');
+      expect(onFeature.description).toBeDefined();
+      expect(onFeature.inputSchema).toBeDefined();
+      expect(onFeature.outputType).toBe('Context');
+      expect(onFeature.metadata).toBeDefined();
+      expect(onFeature.documentation).toBeDefined();
     });
 
     it('should have comprehensive metadata', () => {
-      const { metadata } = feature;
+      const { metadata } = onFeature;
       
-      expect(metadata.category).toBe('event-handling');
+      expect(metadata.category).toBe('Frontend');
       expect(metadata.complexity).toBe('complex');
-      expect(metadata.sideEffects).toContain('event-listeners');
-      expect(metadata.syntaxElements.keywords).toContain('on');
-      expect(metadata.syntaxElements.keywords).toContain('every');
-      expect(metadata.triggerTypes).toContain('event');
-      expect(metadata.scope).toBe('element');
-      expect(metadata.lifecycle).toBe('continuous');
+      expect(Array.isArray(metadata.sideEffects)).toBe(true);
+      expect(Array.isArray(metadata.dependencies)).toBe(true);
+      expect(Array.isArray(metadata.examples)).toBe(true);
+      expect(metadata.examples.length).toBeGreaterThan(0);
+      expect(metadata.environmentRequirements).toBeDefined();
+      expect(metadata.performance).toBeDefined();
     });
 
-    it('should have rich LLM documentation', () => {
-      const { documentation } = feature;
+    it('should have LLM-compatible documentation', () => {
+      const { documentation } = onFeature;
       
-      expect(documentation.summary).toContain('event handlers');
-      expect(documentation.parameters).toHaveLength(7); // eventName, parameters, filter, count, source, timing, queue
-      expect(documentation.returns.type).toBe('feature-registration-list');
-      expect(documentation.examples).toHaveLength(5);
-      expect(documentation.seeAlso).toContain('send');
+      expect(documentation.summary).toBeDefined();
+      expect(Array.isArray(documentation.parameters)).toBe(true);
+      expect(documentation.returns).toBeDefined();
+      expect(Array.isArray(documentation.examples)).toBe(true);
+      expect(documentation.examples.length).toBeGreaterThan(0);
+      expect(Array.isArray(documentation.tags)).toBe(true);
       expect(documentation.tags).toContain('events');
+      expect(documentation.tags).toContain('enhanced-pattern');
     });
   });
 
-  describe('Input Validation', () => {
-    it('should validate correct input structure', () => {
-      const validInput = {
-        handlers: [
-          {
-            eventName: 'click',
-            commands: [{ type: 'command', name: 'log', args: [] }]
-          }
-        ]
-      };
-
-      const result = feature.validate(validInput);
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-    });
-
-    it('should reject empty handlers array', () => {
-      const invalidInput = {
-        handlers: []
-      };
-
-      const result = feature.validate(invalidInput);
-      expect(result.isValid).toBe(false);
-      expect(result.errors[0]?.message).toContain('Array must contain at least 1 element');
-    });
-
-    it('should reject invalid event names', () => {
-      const invalidInput = {
-        handlers: [
-          {
-            eventName: '123invalid',
-            commands: [{ type: 'command', name: 'log', args: [] }]
-          }
-        ]
-      };
-
-      const result = feature.validate(invalidInput);
-      expect(result.isValid).toBe(false);
-      expect(result.errors[0]?.message).toContain('Invalid event name');
-    });
-
-    it('should validate count ranges', () => {
-      const invalidInput = {
-        handlers: [
-          {
-            eventName: 'click',
-            count: { from: 5, to: 2 }, // Invalid: from > to
-            commands: [{ type: 'command', name: 'log', args: [] }]
-          }
-        ]
-      };
-
-      const result = feature.validate(invalidInput);
-      expect(result.isValid).toBe(false);
-      expect(result.errors[0]?.message).toContain('Count range');
-    });
-
-    it('should accept valid queue strategies', () => {
-      const validInput = {
-        handlers: [
-          {
-            eventName: 'click',
-            queue: 'first' as const,
-            commands: [{ type: 'command', name: 'log', args: [] }]
-          }
-        ]
-      };
-
-      const result = feature.validate(validInput);
-      expect(result.isValid).toBe(true);
-    });
-
-    it('should reject invalid queue strategies', () => {
-      const invalidInput = {
-        handlers: [
-          {
-            eventName: 'click',
-            queue: 'invalid',
-            commands: [{ type: 'command', name: 'log', args: [] }]
-          }
-        ]
-      };
-
-      const result = feature.validate(invalidInput);
-      expect(result.isValid).toBe(false);
-    });
-  });
-
-  describe('Syntax Parsing', () => {
-    it('should parse simple event handler syntax', async () => {
-      const syntax = 'on click log "clicked"';
-      
-      const result = await feature.parse(syntax, testElement);
-      
-      expect(result.success).toBe(true);
-      expect(result.value?.handlers).toHaveLength(1);
-      expect(result.value?.handlers[0]?.eventName).toBe('click');
-    });
-
-    it('should handle parse errors gracefully', async () => {
-      const invalidSyntax = 'on [invalid syntax';
-      
-      const result = await feature.parse(invalidSyntax, testElement);
-      
-      expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('SYNTAX_PARSE_FAILED');
-      expect(result.error?.suggestions).toContain('Check event handler syntax');
-    });
-  });
-
-  describe('Feature Execution', () => {
-    it('should execute simple event handler', async () => {
-      const input = {
-        handlers: [
-          {
-            eventName: 'click',
-            commands: [{ type: 'command', name: 'log', args: [{ type: 'literal', value: 'test' }] }]
-          }
-        ]
-      };
-
-      const result = await feature.execute(context, input);
-      
-      expect(result.success).toBe(true);
-      expect(result.value).toHaveLength(1);
-      expect(result.value?.[0]?.featureName).toBe('on');
-      expect(result.value?.[0]?.element).toBe(testElement);
-      expect(result.value?.[0]?.active).toBe(true);
-    });
-
-    it('should handle execution errors', async () => {
-      const input = {
-        handlers: [
-          {
-            eventName: '', // Invalid empty event name
-            commands: [{ type: 'command', name: 'log', args: [] }]
-          }
-        ]
-      };
-
-      const result = await feature.execute(context, input);
-      
-      expect(result.success).toBe(false);
-      expect(result.error?.code).toBe('ON_VALIDATION_FAILED');
-    });
-
-    it('should provide cleanup functions', async () => {
-      const input = {
-        handlers: [
-          {
-            eventName: 'click',
-            commands: [{ type: 'command', name: 'log', args: [] }]
-          }
-        ]
-      };
-
-      const result = await feature.execute(context, input);
-      
-      expect(result.success).toBe(true);
-      expect(result.value?.[0]?.cleanup).toBeDefined();
-      expect(typeof result.value?.[0]?.cleanup).toBe('function');
-    });
-  });
-
-  describe('Event Handler Creation', () => {
-    it('should create handlers with proper context', async () => {
-      const input = {
-        handlers: [
-          {
-            eventName: 'custom',
-            parameters: ['data', 'action'],
-            commands: [{ type: 'command', name: 'log', args: [{ type: 'identifier', name: 'data' }] }]
-          }
-        ]
-      };
-
-      const result = await feature.execute(context, input);
-      expect(result.success).toBe(true);
-      
-      // Test parameter extraction by dispatching a custom event
-      const customEvent = new CustomEvent('custom', {
-        detail: { data: 'test-data', action: 'save' }
-      });
-      
-      testElement.dispatchEvent(customEvent);
-      // In a real implementation, we'd verify the parameters were extracted
-    });
-
-    it('should support different event sources', async () => {
-      const input = {
-        handlers: [
-          {
-            eventName: 'click',
-            source: 'elsewhere',
-            commands: [{ type: 'command', name: 'log', args: [] }]
-          }
-        ]
-      };
-
-      const result = await feature.execute(context, input);
-      expect(result.success).toBe(true);
-    });
-  });
-
-  describe('Cleanup and Resource Management', () => {
-    it('should cleanup registrations properly', async () => {
-      const input = {
-        handlers: [
-          {
-            eventName: 'click',
-            commands: [{ type: 'command', name: 'log', args: [] }]
-          }
-        ]
-      };
-
-      const result = await feature.execute(context, input);
-      expect(result.success).toBe(true);
-      
-      const registrations = result.value!;
-      
-      // Cleanup should not throw
-      await expect(feature.cleanup(context, registrations)).resolves.not.toThrow();
-    });
-
-    it('should handle cleanup errors gracefully', async () => {
-      const mockRegistration = {
-        id: 'test',
-        featureName: 'on',
-        element: testElement,
-        syntax: 'on click',
-        active: true,
-        cleanup: vi.fn().mockRejectedValue(new Error('Cleanup failed'))
-      };
-
-      // Should handle cleanup errors without throwing
-      await expect(feature.cleanup(context, [mockRegistration])).resolves.not.toThrow();
-    });
-  });
-
-  describe('Integration with Enhanced Commands', () => {
-    it('should integrate with enhanced command system', async () => {
-      // Mock enhanced command execution
-      const executeSpy = vi.spyOn(runtime, 'execute');
-      
-      const input = {
-        handlers: [
-          {
-            eventName: 'click',
-            commands: [{ type: 'command', name: 'hide', args: [] }]
-          }
-        ]
-      };
-
-      await feature.execute(context, input);
-      
-      // Trigger the event to test command execution
-      testElement.click();
-      
-      // In a more complete implementation, we'd verify the enhanced command was called
-    });
-  });
-
-  describe('Error Handling and Debugging', () => {
-    it('should provide helpful error messages', async () => {
-      const input = {
-        handlers: [
-          {
-            eventName: 'click',
-            commands: [] // Empty commands array (invalid)
-          }
-        ]
-      };
-
-      const result = await feature.execute(context, input);
-      
-      expect(result.success).toBe(false);
-      expect(result.error?.suggestions).toBeDefined();
-      expect(result.error?.suggestions?.length).toBeGreaterThan(0);
-    });
-
-    it('should handle runtime errors gracefully', async () => {
-      // Test with malformed input that passes schema validation but fails at runtime
-      const input = {
-        handlers: [
-          {
-            eventName: 'click',
-            commands: null as any // Will cause runtime error
-          }
-        ]
-      };
-
-      const result = await feature.execute(context, input);
-      
-      // Should succeed but have no registrations due to error handling
-      expect(result.success).toBe(true);
-      expect(result.value).toHaveLength(0); // No registrations created
-    });
-  });
-
-  describe('Performance and Scalability', () => {
-    it('should handle multiple event handlers efficiently', async () => {
-      const input = {
-        handlers: Array.from({ length: 10 }, (_, i) => ({
-          eventName: `event${i}`,
-          commands: [{ type: 'command', name: 'log', args: [{ type: 'literal', value: `Event ${i}` }] }]
-        }))
-      };
-
-      const result = await feature.execute(context, input);
-      
-      expect(result.success).toBe(true);
-      expect(result.value).toHaveLength(10);
-    });
-
-    it('should generate unique registration IDs', async () => {
-      const input = {
-        handlers: [
-          {
-            eventName: 'click',
-            commands: [{ type: 'command', name: 'log', args: [] }]
+  describe('Real-world Usage Scenarios', () => {
+    it('should handle complete event handling workflow', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'submit',
+          target: 'form.contact',
+          preventDefault: true,
+          throttle: 2000,
+          filter: 'event.target.checkValidity() && !event.target.classList.contains("submitting")',
+        },
+        commands: [
+          { type: 'command', name: 'addClass', args: ['submitting'] },
+          { type: 'command', name: 'log', args: ['Submitting form...'] },
+          { type: 'command', name: 'fetch', args: ['/api/contact', 'POST'] },
+          { type: 'command', name: 'removeClass', args: ['submitting'] },
+          { type: 'command', name: 'showMessage', args: ['Form submitted successfully!'] }
+        ],
+        context: {
+          variables: { 
+            apiEndpoint: '/api/contact',
+            timeout: 5000,
+            retries: 3
           },
-          {
-            eventName: 'hover',
-            commands: [{ type: 'command', name: 'log', args: [] }]
-          }
-        ]
-      };
+        },
+        options: {
+          enableErrorHandling: true,
+          enableEventCapture: true,
+          enableAsyncExecution: true,
+          maxCommandCount: 20,
+        },
+        environment: 'frontend',
+        debug: true,
+      });
 
-      const result = await feature.execute(context, input);
-      
       expect(result.success).toBe(true);
-      const ids = result.value!.map(reg => reg.id);
-      expect(new Set(ids).size).toBe(ids.length); // All IDs should be unique
+      
+      if (result.success && result.value) {
+        // Verify event registration
+        const listeners = result.value.events.getListeners('submit');
+        expect(listeners.length).toBeGreaterThan(0);
+
+        // Verify listener configuration
+        const listener = listeners[0];
+        expect(listener.eventType).toBe('submit');
+        expect(listener.target).toBe('form.contact');
+        expect(listener.options.throttle).toBe(2000);
+        expect(listener.options.filter).toContain('checkValidity');
+
+        // Verify command execution capabilities
+        const execResult = await result.value.execution.execute(
+          [{ name: 'log', args: ['Test execution'] }],
+          { me: null }
+        );
+        expect(execResult).toBeDefined();
+
+        // Verify filtering capabilities
+        const filterAdded = result.value.filtering.addFilter(
+          'validForm',
+          'event.target.checkValidity()'
+        );
+        expect(filterAdded).toBe(true);
+
+        // Verify performance controls
+        if (listeners.length > 0) {
+          const listenerId = listeners[0].id;
+          const throttleSet = result.value.performance.setThrottleDelay(listenerId, 1500);
+          expect(throttleSet).toBe(true);
+        }
+
+        // Verify error handling
+        const error = new Error('Form validation failed');
+        const handled = await result.value.errors.handle(error, { form: 'contact' });
+        expect(handled).toBe(true);
+
+        // Verify context state
+        expect(result.value.state).toBe('ready');
+        expect(result.value.capabilities).toContain('event-listening');
+        expect(result.value.capabilities).toContain('performance-optimization');
+        expect(result.value.capabilities).toContain('error-handling');
+      }
     });
+
+    it('should handle complex keyboard interaction patterns', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'keydown',
+          target: 'textarea.editor',
+          filter: '(event.ctrlKey || event.metaKey) && event.key === "s"', // Ctrl+S or Cmd+S
+          preventDefault: true,
+        },
+        commands: [
+          { type: 'command', name: 'preventDefault', args: [] },
+          { type: 'command', name: 'addClass', args: ['saving'] },
+          { type: 'command', name: 'autoSave', args: [] },
+          { type: 'command', name: 'removeClass', args: ['saving'] },
+          { type: 'command', name: 'showNotification', args: ['Document saved'] }
+        ],
+        context: {
+          variables: { autoSaveDelay: 500, maxRetries: 3 },
+        },
+        options: {
+          enableAsyncExecution: true,
+          maxCommandCount: 10,
+        },
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        const listeners = result.value.events.getListeners('keydown');
+        expect(listeners.length).toBeGreaterThan(0);
+
+        const listener = listeners[0];
+        expect(listener.eventType).toBe('keydown');
+        expect(listener.options.filter).toContain('ctrlKey');
+        expect(listener.commands.length).toBe(5);
+      }
+    });
+
+    it('should handle high-frequency events with performance optimization', async () => {
+      const result = await onFeature.initialize({
+        event: {
+          type: 'scroll',
+          target: 'window',
+          throttle: 16, // ~60fps
+        },
+        commands: [
+          { type: 'command', name: 'updateScrollPosition', args: [] },
+          { type: 'command', name: 'updateProgressBar', args: [] },
+          { type: 'command', name: 'lazyLoadImages', args: [] }
+        ],
+        options: {
+          enableAsyncExecution: true,
+        },
+      });
+
+      expect(result.success).toBe(true);
+      
+      if (result.success && result.value) {
+        const listeners = result.value.events.getListeners('scroll');
+        expect(listeners.length).toBeGreaterThan(0);
+
+        const listener = listeners[0];
+        expect(listener.options.throttle).toBe(16);
+        expect(listener.isActive).toBe(true);
+        
+        // Test performance management
+        const throttleAdjusted = result.value.performance.setThrottleDelay(listener.id, 33); // 30fps
+        expect(throttleAdjusted).toBe(true);
+      }
+    });
+  });
+});
+
+describe('Enhanced On Export', () => {
+  it('should export singleton implementation', () => {
+    expect(enhancedOnImplementation).toBeInstanceOf(TypedOnFeatureImplementation);
+    expect(enhancedOnImplementation.name).toBe('onFeature');
   });
 });
