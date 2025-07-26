@@ -261,7 +261,7 @@ export class PutCommand implements TypedCommandImplementation<
       return {
         isValid: true,
         errors: [],
-        suggestion: 
+        suggestions: [] 
       };
 
     } catch (_error) {
@@ -426,7 +426,7 @@ export class PutCommand implements TypedCommandImplementation<
                 name: 'PutOperationError',
                 message: `Property access (${property}) only supports 'into' position`,
                 code: 'INVALID_PROPERTY_POSITION',
-                suggestions: 'Use "into" position for property access', 'Remove property access for other positions'
+                suggestions: ['Use "into" position for property access', 'Remove property access for other positions']
               },
               type: 'error'
             };
@@ -476,7 +476,7 @@ export class PutCommand implements TypedCommandImplementation<
           name: 'PutOperationError',
           message: error instanceof Error ? error.message : 'Put operation failed',
           code: 'OPERATION_FAILED',
-          suggestions: 'Check if element is still in DOM', 'Verify content is valid'
+          suggestions: ['Check if element is still in DOM', 'Verify content is valid']
         },
         type: 'error'
       };

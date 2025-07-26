@@ -158,7 +158,7 @@ export class HideCommand implements TypedCommandImplementation<
           name: 'HideCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'HIDE_EXECUTION_FAILED',
-          suggestion: [suggestion: 'Check if element exists', 'Verify element is not null']
+          suggestions: ['Check if element exists', 'Verify element is not null']
         },
         type: 'error'
       };
@@ -228,7 +228,7 @@ export class HideCommand implements TypedCommandImplementation<
           name: 'HideElementError',
           message: error instanceof Error ? error.message : 'Failed to hide element',
           code: 'ELEMENT_HIDE_FAILED',
-          suggestion: [suggestion: 'Check if element is still in DOM', 'Verify element is not null']
+          suggestions: ['Check if element is still in DOM', 'Verify element is not null']
         },
         type: 'error'
       };
@@ -278,16 +278,16 @@ export class HideCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-syntax',
             message: `Invalid CSS selector: "${target}"`,
-            suggestion: 'Use valid CSS selector syntax like "#id", ".class", or "element"'
+            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"']
           }],
-          suggestion: [suggestion: 'Check CSS selector syntax', 'Use document.querySelector() test']
+          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test']
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestion: 
+        suggestions: [] 
       };
 
     } catch (error) {

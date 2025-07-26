@@ -604,9 +604,9 @@ export function createFailureValidation(
 export function createValidationError(
   type: ValidationError['type'],
   message: string,
-  suggestion: string = 'Check the documentation for proper usage'
+  suggestions: string[] = ['Check the documentation for proper usage']
 ): ValidationError {
-  return { type, message, suggestion };
+  return { type, message, suggestions };
 }
 
 // ============================================================================

@@ -299,7 +299,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
       return {
         isValid: true,
         errors: [],
-        suggestion: 
+        suggestions: []
       };
 
     } catch (error) {

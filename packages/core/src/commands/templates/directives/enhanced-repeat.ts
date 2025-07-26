@@ -346,7 +346,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
       return {
         isValid: true,
         errors: [],
-        suggestion: 
+        suggestions: []
       };
 
     } catch (error) {

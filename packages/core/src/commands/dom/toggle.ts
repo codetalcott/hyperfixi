@@ -151,7 +151,7 @@ export class ToggleCommand implements TypedCommandImplementation<
             name: 'ToggleCommandError',
             message: 'No valid classes provided to toggle',
             code: 'NO_VALID_CLASSES',
-            suggestion: [suggestion: 'Provide valid CSS class names', 'Check class name syntax']
+            suggestions: [ 'Provide valid CSS class names', 'Check class name syntax']
           },
           type: 'error'
         };
@@ -167,7 +167,7 @@ export class ToggleCommand implements TypedCommandImplementation<
             name: 'ToggleCommandError',
             message: 'No target elements found',
             code: 'NO_TARGET_ELEMENTS',
-            suggestion: [suggestion: 'Check if target selector is valid', 'Ensure elements exist in DOM']
+            suggestions: [ 'Check if target selector is valid', 'Ensure elements exist in DOM']
           },
           type: 'error'
         };
@@ -196,7 +196,7 @@ export class ToggleCommand implements TypedCommandImplementation<
           name: 'ToggleCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'TOGGLE_EXECUTION_FAILED',
-          suggestion: [suggestion: 'Check if elements exist', 'Verify class names are valid']
+          suggestions: [ 'Check if elements exist', 'Verify class names are valid']
         },
         type: 'error'
       };
@@ -283,7 +283,7 @@ export class ToggleCommand implements TypedCommandImplementation<
               name: 'ToggleClassError',
               message: `Invalid class name: "${className}"`,
               code: 'INVALID_CLASS_NAME',
-              suggestion: [suggestion: 'Use valid CSS class names', 'Check for special characters']
+              suggestions: [ 'Use valid CSS class names', 'Check for special characters']
             },
             type: 'error'
           };
@@ -318,7 +318,7 @@ export class ToggleCommand implements TypedCommandImplementation<
           name: 'ToggleClassError',
           message: error instanceof Error ? error.message : 'Failed to toggle classes',
           code: 'CLASS_TOGGLE_FAILED',
-          suggestion: [suggestion: 'Check if element is still in DOM', 'Verify class names are valid']
+          suggestions: [ 'Check if element is still in DOM', 'Verify class names are valid']
         },
         type: 'error'
       };
@@ -348,9 +348,9 @@ export class ToggleCommand implements TypedCommandImplementation<
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestion: this.getValidationSuggestion(err.code, err.path)
+            suggestions: [] this.getValidationSuggestion(err.code, err.path)
           })),
-          suggestion: 'Use string or string array for classes, and valid target selector'
+          suggestions: [] 'Use string or string array for classes, and valid target selector'
         };
       }
 
@@ -364,9 +364,9 @@ export class ToggleCommand implements TypedCommandImplementation<
           errors: [{
             type: 'empty-input',
             message: 'Class expression cannot be empty',
-            suggestion: 'Provide valid CSS class names'
+            suggestions: ['Provide valid CSS class names']
           }],
-          suggestion: [suggestion: 'Use class names like "active"', 'Use space-separated class names like "loading error"']
+          suggestions: [ 'Use class names like "active"', 'Use space-separated class names like "loading error"']
         };
       }
       
@@ -377,16 +377,16 @@ export class ToggleCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-syntax',
             message: `Invalid CSS selector: "${target}"`,
-            suggestion: 'Use valid CSS selector syntax like "#id", ".class", or "element"'
+            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"']
           }],
-          suggestion: [suggestion: 'Check CSS selector syntax', 'Use document.querySelector() test']
+          suggestions: [ 'Check CSS selector syntax', 'Use document.querySelector() test']
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestion: 
+        suggestions: [] 
       };
 
     } catch (error) {
@@ -395,9 +395,9 @@ export class ToggleCommand implements TypedCommandImplementation<
         errors: [{
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestion: 'Check input types and values'
+          suggestions: [] 'Check input types and values'
         }],
-        suggestion: 'Ensure arguments match expected types'
+        suggestions: [] 'Ensure arguments match expected types'
       };
     }
   }

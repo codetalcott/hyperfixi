@@ -480,7 +480,7 @@ export class AddCommand implements TypedCommandImplementation<
             message: `Invalid argument: ${err.message}`,
             suggestions: this.getValidationSuggestion(err.code, err.path)
           })),
-          suggestions: ['Use string or string array for classes, and valid target selector'
+          suggestions: ['Use string or string array for classes, and valid target selector']
         };
       }
 
@@ -494,9 +494,9 @@ export class AddCommand implements TypedCommandImplementation<
           errors: [{
             type: 'empty-input',
             message: 'Class expression cannot be empty',
-            suggestions: ['Provide valid CSS class names or attribute syntax'
+            suggestions: ['Provide valid CSS class names or attribute syntax']
           }],
-          suggestions: ['Use class names like "active"', 'Use attribute syntax like [@data-test="value"']
+          suggestions: ['Use class names like "active"', 'Use attribute syntax like [@data-test="value"']]
         };
       }
       
@@ -507,9 +507,9 @@ export class AddCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-syntax',
             message: `Invalid CSS selector: "${target}"`,
-            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"'
+            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"']
           }],
-          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test'
+          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test']
         };
       }
 
@@ -525,9 +525,9 @@ export class AddCommand implements TypedCommandImplementation<
         errors: [{
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: ['Check input types and values'
+          suggestions: ['Check input types and values']
         }],
-        suggestion: 'Ensure arguments match expected types'
+        suggestions: ['Ensure arguments match expected types']
       };
     }
   }

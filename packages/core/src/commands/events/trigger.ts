@@ -163,7 +163,7 @@ export class TriggerCommand implements TypedCommandImplementation<
             name: 'TriggerCommandError',
             message: parseResult.error || 'Failed to parse arguments',
             code: 'ARGUMENT_PARSE_FAILED',
-            suggestion: [suggestion: 'Use: trigger eventName on target', 'Use: trigger eventName data on target']
+            suggestions: [ 'Use: trigger eventName on target', 'Use: trigger eventName data on target']
           },
           type: 'error'
         };
@@ -180,7 +180,7 @@ export class TriggerCommand implements TypedCommandImplementation<
             name: 'TriggerCommandError',
             message: targetResult.error || 'Failed to resolve target elements',
             code: 'TARGET_RESOLUTION_FAILED',
-            suggestion: [suggestion: 'Check if target elements exist', 'Verify selector syntax']
+            suggestions: [ 'Check if target elements exist', 'Verify selector syntax']
           },
           type: 'error'
         };
@@ -203,7 +203,7 @@ export class TriggerCommand implements TypedCommandImplementation<
             name: 'TriggerCommandError',
             message: eventResult.error || 'Failed to trigger event',
             code: 'EVENT_TRIGGER_FAILED',
-            suggestion: [suggestion: 'Check if target elements are valid', 'Verify event name format']
+            suggestions: [ 'Check if target elements are valid', 'Verify event name format']
           },
           type: 'error'
         };
@@ -227,7 +227,7 @@ export class TriggerCommand implements TypedCommandImplementation<
           name: 'TriggerCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'TRIGGER_EXECUTION_FAILED',
-          suggestion: [suggestion: 'Check event name and arguments', 'Verify target elements exist']
+          suggestions: [ 'Check event name and arguments', 'Verify target elements exist']
         },
         type: 'error'
       };
@@ -508,9 +508,9 @@ export class TriggerCommand implements TypedCommandImplementation<
           errors: [{
             type: 'insufficient-arguments',
             message: 'Trigger command requires at least: eventName, "on", target',
-            suggestion: 'Use: trigger eventName on target'
+            suggestions: ['Use: trigger eventName on target']
           }],
-          suggestion: [suggestion: 'Use: trigger "click" on element', 'Use: trigger "custom" data on target']
+          suggestions: [ 'Use: trigger "click" on element', 'Use: trigger "custom" data on target']
         };
       }
       
@@ -521,9 +521,9 @@ export class TriggerCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-type',
             message: 'Event name must be a string',
-            suggestion: 'Use a string for the event name'
+            suggestions: ['Use a string for the event name']
           }],
-          suggestion: [suggestion: 'Use quotes around event name', 'Example: trigger "click" on element']
+          suggestions: [ 'Use quotes around event name', 'Example: trigger "click" on element']
         };
       }
       
@@ -533,9 +533,9 @@ export class TriggerCommand implements TypedCommandImplementation<
           errors: [{
             type: 'empty-value',
             message: 'Event name cannot be empty',
-            suggestion: 'Provide a valid event name'
+            suggestions: ['Provide a valid event name']
           }],
-          suggestion: 'Use meaningful event names like "click", "custom", etc.'
+          suggestions: ['Use meaningful event names like "click", "custom", etc.']
         };
       }
       
@@ -552,9 +552,9 @@ export class TriggerCommand implements TypedCommandImplementation<
               errors: [{
                 type: 'missing-target',
                 message: 'Trigger command requires target after "on"',
-                suggestion: 'Specify target element after "on" keyword'
+                suggestions: ['Specify target element after "on" keyword']
               }],
-              suggestion: [suggestion: 'Use: trigger event on <#element/>', 'Use: trigger event on me']
+              suggestions: [ 'Use: trigger event on <#element/>', 'Use: trigger event on me']
             };
           }
           break;
@@ -567,16 +567,16 @@ export class TriggerCommand implements TypedCommandImplementation<
           errors: [{
             type: 'missing-keyword',
             message: 'Trigger command requires "on" keyword to specify target',
-            suggestion: 'Use "on" keyword before target specification'
+            suggestions: ['Use "on" keyword before target specification']
           }],
-          suggestion: [suggestion: 'Use: trigger eventName on target', 'Use: trigger eventName data on target']
+          suggestions: [ 'Use: trigger eventName on target', 'Use: trigger eventName data on target']
         };
       }
       
       return {
         isValid: true,
         errors: [],
-        suggestion: 
+        suggestions: []
       };
       
     } catch (error) {
@@ -585,9 +585,9 @@ export class TriggerCommand implements TypedCommandImplementation<
         errors: [{
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestion: 'Check input types and values'
+          suggestions: ['Check input types and values']
         }],
-        suggestion: 'Ensure arguments match expected types'
+        suggestions: ['Ensure arguments match expected types']
       };
     }
   }

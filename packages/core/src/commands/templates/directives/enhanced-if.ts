@@ -300,7 +300,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
       return {
         isValid: true,
         errors: [],
-        suggestion: 
+        suggestions: []
       };
 
     } catch (error) {

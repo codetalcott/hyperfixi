@@ -160,7 +160,7 @@ export class ShowCommand implements TypedCommandImplementation<
           name: 'ShowCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'SHOW_EXECUTION_FAILED',
-          suggestion: [suggestion: 'Check if element exists', 'Verify element is not null']
+          suggestions: [ 'Check if element exists', 'Verify element is not null']
         },
         type: 'error'
       };
@@ -230,7 +230,7 @@ export class ShowCommand implements TypedCommandImplementation<
           name: 'ShowElementError',
           message: error instanceof Error ? error.message : 'Failed to show element',
           code: 'ELEMENT_SHOW_FAILED',
-          suggestion: [suggestion: 'Check if element is still in DOM', 'Verify element is not null']
+          suggestions: [ 'Check if element is still in DOM', 'Verify element is not null']
         },
         type: 'error'
       };
@@ -272,9 +272,9 @@ export class ShowCommand implements TypedCommandImplementation<
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestion: this.getValidationSuggestion(err.code, err.path)
+            suggestions: [] this.getValidationSuggestion(err.code, err.path)
           })),
-          suggestion: 'Use HTMLElement, CSS selector string, or omit for implicit target'
+          suggestions: [] 'Use HTMLElement, CSS selector string, or omit for implicit target'
         };
       }
 
@@ -287,16 +287,16 @@ export class ShowCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-syntax',
             message: `Invalid CSS selector: "${target}"`,
-            suggestion: 'Use valid CSS selector syntax like "#id", ".class", or "element"'
+            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"']
           }],
-          suggestion: [suggestion: 'Check CSS selector syntax', 'Use document.querySelector() test']
+          suggestions: [ 'Check CSS selector syntax', 'Use document.querySelector() test']
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestion: 
+        suggestions: [] 
       };
 
     } catch (error) {
@@ -305,9 +305,9 @@ export class ShowCommand implements TypedCommandImplementation<
         errors: [{
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestion: 'Check input types and values'
+          suggestions: [] 'Check input types and values'
         }],
-        suggestion: 'Ensure arguments match expected types'
+        suggestions: [] 'Ensure arguments match expected types'
       };
     }
   }

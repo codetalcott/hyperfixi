@@ -252,7 +252,7 @@ export class GoCommand implements TypedCommandImplementation<
         return {
           isValid: true,
           errors: [],
-          suggestion: 
+          suggestions: [] 
         };
       }
 
@@ -906,7 +906,7 @@ export class GoCommand implements TypedCommandImplementation<
     return {
       isValid: true,
       errors: [],
-      suggestion: 
+      suggestions: [] 
     };
   }
 
@@ -937,7 +937,7 @@ export class GoCommand implements TypedCommandImplementation<
     return {
       isValid: true,
       errors: [],
-      suggestion: 
+      suggestions: [] 
     };
   }
 
