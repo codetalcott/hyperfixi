@@ -11,7 +11,7 @@ import { logicalExpressions } from '../expressions/logical/index.js';
 import { conversionExpressions } from '../expressions/conversion/index.js';
 import { positionalExpressions } from '../expressions/positional/index.js';
 import { propertyExpressions } from '../expressions/properties/index.js';
-import { specialExpressions } from '../expressions/special/index.js';
+import { specialExpressions } from '../expressions/enhanced-special/index.js';
 
 export class ExpressionEvaluator {
   private expressionRegistry: Map<string, any>;

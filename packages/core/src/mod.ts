@@ -63,8 +63,8 @@ export { GoCommand } from './commands/navigation/go.js';
 // Commands - Control Flow
 // ============================================================================
 
-export { IfCommand } from './commands/control/if.js';
-export { RepeatCommand } from './commands/control/repeat.js';
+export { IfCommand } from './commands/control-flow/index.js';
+export { RepeatCommand } from './commands/control-flow/index.js';
 
 // ============================================================================
 // Expressions - All Categories
@@ -104,21 +104,23 @@ export {
   // Special expressions (literals, math)
   evaluateSpecial,
   type SpecialExpression,
-} from './expressions/special/index.js';
+} from './expressions/enhanced-special/index.js';
 
 // ============================================================================
 // Features - Top-level hyperscript features
 // ============================================================================
 
-export { BehaviorFeature } from './features/behavior.js';
-export { InitFeature } from './features/init.js';
-export { InstallFeature } from './features/install.js';
-export { WorkerFeature } from './features/worker.js';
-export { EverywhereFeature } from './features/everywhere.js';
-export { DefFeature } from './features/def.js';
-export { ClassFeature, type ClassFeatureOptions } from './features/class.js';
-export { JSFeature } from './features/js.js';
-export { SetFeature } from './features/set.js';
+export { EnhancedBehaviorFeature as BehaviorFeature } from './features/enhanced-behaviors.js';
+export { EnhancedInitFeature as InitFeature } from './features/enhanced-init.js';
+export { EnhancedDefFeature as DefFeature } from './features/enhanced-def.js';
+export { EnhancedWebWorkerFeature as WorkerFeature } from './features/enhanced-webworker.js';
+// Note: Install, Everywhere, Class, JS, Set features need enhanced implementations
+// Temporarily commenting out until enhanced versions are created
+// export { InstallFeature } from './features/install.js';
+// export { EverywhereFeature } from './features/everywhere.js';
+// export { ClassFeature, type ClassFeatureOptions } from './features/class.js';
+// export { JSFeature } from './features/js.js';
+// export { SetFeature } from './features/set.js';
 
 // ============================================================================
 // Extensions

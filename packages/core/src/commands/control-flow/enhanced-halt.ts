@@ -46,7 +46,9 @@ export class EnhancedHaltCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<HaltCommandInput> {
       // Halt command accepts any input or no input
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {}
       };
     }

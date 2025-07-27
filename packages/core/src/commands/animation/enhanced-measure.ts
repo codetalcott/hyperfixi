@@ -54,7 +54,9 @@ export class EnhancedMeasureCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<MeasureCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: true,
+          isValid: true,
+          errors: [],
+          suggestions: [],
           data: {} // Measure can work with no arguments
         };
       }
@@ -68,7 +70,7 @@ export class EnhancedMeasureCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Property must be a string',
-            suggestion: 'Use property names like "width", "height", "top", "left"'
+            suggestions: 'Use property names like "width", "height", "top", "left"'
           }
         };
       }
@@ -80,13 +82,15 @@ export class EnhancedMeasureCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Variable name must be a string',
-            suggestion: 'Use valid variable names'
+            suggestions: 'Use valid variable names'
           }
         };
       }
 
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           target: inputObj.target,
           property: inputObj.property,

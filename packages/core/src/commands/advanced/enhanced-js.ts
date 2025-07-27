@@ -7,8 +7,23 @@
  * Modernized with TypedCommandImplementation interface
  */
 
-import type { TypedCommandImplementation, ValidationResult } from '../../types/core.js';
-import type { TypedExecutionContext } from '../../types/enhanced-core.js';
+import type { ValidationResult, TypedExecutionContext } from '../../types/index.js';
+
+// Define TypedCommandImplementation locally for now
+interface TypedCommandImplementation<TInput, TOutput, TContext> {
+  readonly metadata: {
+    readonly name: string;
+    readonly description: string;
+    readonly examples: string[];
+    readonly syntax: string;
+    readonly category: string;
+    readonly version: string;
+  };
+  readonly validation: {
+    validate(input: unknown): ValidationResult<TInput>;
+  };
+  execute(input: TInput, context: TContext): Promise<TOutput>;
+}
 
 // Input type definition
 export interface JSCommandInput {
@@ -50,12 +65,13 @@ export class EnhancedJSCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<JSCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'JS command requires JavaScript code',
-            suggestions: 'Provide JavaScript code to execute'
-          }
+            suggestions: ['Provide JavaScript code to execute']
+          }],
+          suggestions: ['Provide JavaScript code to execute']
         };
       }
 
@@ -63,29 +79,33 @@ export class EnhancedJSCommand implements TypedCommandImplementation<
 
       if (!inputObj.code || typeof inputObj.code !== 'string') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'JS command requires code string',
-            suggestions: 'Provide JavaScript code as a string'
-          }
+            suggestions: ['Provide JavaScript code as a string']
+          }],
+          suggestions: ['Provide JavaScript code as a string']
         };
       }
 
       // Validate parameters if provided
       if (inputObj.parameters && !Array.isArray(inputObj.parameters)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'type-mismatch',
             message: 'Parameters must be an array of strings',
-            suggestions: 'Use array format: ["param1", "param2"]'
-          }
+            suggestions: ['Use array format: ["param1", "param2"]']
+          }],
+          suggestions: ['Use array format: ["param1", "param2"]']
         };
       }
 
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           code: inputObj.code,
           parameters: inputObj.parameters

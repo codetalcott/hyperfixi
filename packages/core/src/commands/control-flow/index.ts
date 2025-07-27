@@ -3,11 +3,11 @@
  * Exports all control flow commands for the hyperscript runtime
  */
 
-export { BreakCommand } from './break';
-export { ContinueCommand } from './continue';
-export { HaltCommand } from './halt';
-export { IfCommand } from './if';
-export { UnlessCommand } from './unless';
-export { RepeatCommand } from './repeat';
-export { ReturnCommand } from './return';
-export { ThrowCommand } from './throw';
+export { EnhancedBreakCommand as BreakCommand } from './enhanced-break';
+export { EnhancedContinueCommand as ContinueCommand } from './enhanced-continue';
+export { EnhancedHaltCommand as HaltCommand } from './enhanced-halt';
+export { EnhancedIfCommand as IfCommand } from './enhanced-if';
+export { EnhancedUnlessCommand as UnlessCommand } from './enhanced-unless';
+export { EnhancedRepeatCommand as RepeatCommand } from './enhanced-repeat';
+export { EnhancedReturnCommand as ReturnCommand } from './enhanced-return';
+export { EnhancedThrowCommand as ThrowCommand } from './enhanced-throw';

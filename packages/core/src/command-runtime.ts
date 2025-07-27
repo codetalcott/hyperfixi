@@ -5,7 +5,10 @@
  * Compatible with _hyperscript command execution patterns
  */
 
-import type { ExecutionContext, ASTNode } from './types/base-types.js';
+import type { 
+  UnifiedExecutionContext as ExecutionContext,
+  UnifiedASTNode as ASTNode
+} from './types/index.js';
 
 // Type aliases for backward compatibility
 type ExpressionNode = ASTNode;

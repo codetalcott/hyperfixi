@@ -6,15 +6,27 @@
 
 import { z } from 'zod';
 import type {
-  BaseTypedExpression,
-  TypedExpressionContext,
-  EvaluationType,
-  ExpressionMetadata,
   ValidationResult,
-  TypedResult,
-  LLMDocumentation
-} from '../../types/base-types.js';
-import type { ExpressionCategory } from '../../types/enhanced-expressions.js';
+  TypedExecutionContext as TypedExpressionContext,
+  UnifiedEvaluationType as EvaluationType,
+  UnifiedExpressionMetadata as ExpressionMetadata,
+  UnifiedTypedResult as TypedResult,
+  UnifiedLLMDocumentation as LLMDocumentation,
+  UnifiedExpressionCategory as ExpressionCategory
+} from '../../types/index.js';
+
+// Define BaseTypedExpression locally for now
+interface BaseTypedExpression<T> {
+  readonly name: string;
+  readonly category: string;
+  readonly syntax: string;
+  readonly outputType: EvaluationType;
+  readonly inputSchema: any;
+  readonly metadata: ExpressionMetadata;
+  readonly documentation: LLMDocumentation;
+  evaluate(context: TypedExpressionContext, input: unknown): Promise<TypedResult<T>>;
+  validate(input: unknown): ValidationResult;
+}
 
 // ============================================================================
 // Input Schemas
@@ -135,12 +147,8 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'ValidationError',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
@@ -425,12 +433,8 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<number
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'ValidationError',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
@@ -574,12 +578,8 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'ValidationError',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
@@ -718,12 +718,8 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'ValidationError',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
@@ -879,12 +875,8 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'ValidationError',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 

@@ -7,15 +7,27 @@
 // Advanced expressions implementation
 import { z } from 'zod';
 import type {
-  BaseTypedExpression,
-  TypedExecutionContext,
-  TypedResult,
-  LLMDocumentation,
-  EvaluationType,
   ValidationResult,
-  ExpressionMetadata
-} from '../../types/base-types.js';
-import type { ExpressionCategory } from '../../types/enhanced-expressions.js';
+  TypedExecutionContext,
+  UnifiedTypedResult as TypedResult,
+  UnifiedLLMDocumentation as LLMDocumentation,
+  UnifiedEvaluationType as EvaluationType,
+  UnifiedExpressionMetadata as ExpressionMetadata,
+  UnifiedExpressionCategory as ExpressionCategory
+} from '../../types/index.js';
+
+// Define BaseTypedExpression locally for now
+interface BaseTypedExpression<T> {
+  readonly name: string;
+  readonly category: string;
+  readonly syntax: string;
+  readonly outputType: EvaluationType;
+  readonly inputSchema: any;
+  readonly metadata: ExpressionMetadata;
+  readonly documentation: LLMDocumentation;
+  evaluate(context: TypedExecutionContext, input: unknown): Promise<TypedResult<T>>;
+  validate(input: unknown): ValidationResult;
+}
 
 // ============================================================================
 // Enhanced Lambda Expression

@@ -526,7 +526,7 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: err.message,
-            suggestion: `Expected valid input structure, got: ${err.code}`
+            suggestions: `Expected valid input structure, got: ${err.code}`
           })),
           suggestions: [
             'Provide both value and type parameters',
@@ -539,7 +539,7 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
     } catch (_error) {
       return {
         isValid: false,
-        errors: [{ type: 'runtime-error' as const, message: 'Validation failed', suggestion: 'Check input structure' }],
+        errors: [{ type: 'runtime-error' as const, message: 'Validation failed', suggestions: 'Check input structure' }],
         suggestions: ['Check input structure']
       };
     }
@@ -760,7 +760,7 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: err.message,
-            suggestion: `Expected valid input structure, got: ${err.code}`
+            suggestions: `Expected valid input structure, got: ${err.code}`
           })),
           suggestions: [
             'Provide both value and type parameters',
@@ -773,7 +773,7 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
     } catch (_error) {
       return {
         isValid: false,
-        errors: [{ type: 'runtime-error' as const, message: 'Validation failed', suggestion: 'Check input structure' }],
+        errors: [{ type: 'runtime-error' as const, message: 'Validation failed', suggestions: 'Check input structure' }],
         suggestions: ['Check input structure']
       };
     }

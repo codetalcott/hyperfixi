@@ -118,7 +118,7 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
         errors: [{
           type: 'missing-argument',
           message: error instanceof Error ? error.message : 'Invalid some expression arguments',
-          suggestion: 'Provide a value to test for existence'
+          suggestions: 'Provide a value to test for existence'
         }],
         suggestions: [
           'Provide a single value to test',

@@ -46,7 +46,9 @@ export class EnhancedBreakCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<BreakCommandInput> {
       // Break command accepts any input or no input
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {}
       };
     }

@@ -263,9 +263,9 @@ export class HideCommand implements TypedCommandImplementation<
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestion: this.getValidationSuggestion(err.code, err.path)
+            suggestions: this.getValidationSuggestion(err.code, err.path)
           })),
-          suggestion: 'Use HTMLElement, CSS selector string, or omit for implicit target'
+          suggestions: 'Use HTMLElement, CSS selector string, or omit for implicit target'
         };
       }
 
@@ -296,9 +296,9 @@ export class HideCommand implements TypedCommandImplementation<
         errors: [{
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestion: 'Check input types and values'
+          suggestions: 'Check input types and values'
         }],
-        suggestion: 'Ensure arguments match expected types'
+        suggestions: 'Ensure arguments match expected types'
       };
     }
   }

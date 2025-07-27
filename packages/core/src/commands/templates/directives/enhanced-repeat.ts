@@ -318,7 +318,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid @repeat directive: ${err.message}`,
-            suggestion: `Expected { collection: any, templateContent: string }, got: ${typeof input}`
+            suggestions: `Expected { collection: any, templateContent: string }, got: ${typeof input}`
           })),
           suggestions: [
             'Provide collection and templateContent',
@@ -337,9 +337,9 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
           errors: [{
             type: 'invalid-syntax',
             message: 'Template content cannot be empty',
-            suggestion: 'Provide content to render for each iteration'
+            suggestions: 'Provide content to render for each iteration'
           }],
-          suggestion: 'Add content between @repeat and @end directives'
+          suggestions: 'Add content between @repeat and @end directives'
         };
       }
 
@@ -355,9 +355,9 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
         errors: [{
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestion: 'Check @repeat directive input structure'
+          suggestions: 'Check @repeat directive input structure'
         }],
-        suggestion: 'Ensure input matches expected format'
+        suggestions: 'Ensure input matches expected format'
       };
     }
   }
@@ -369,14 +369,14 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
     context: TemplateExecutionContext,
     input: RepeatDirectiveInput
   ): ValidationResult {
-    const errors: Array<{ type: string; message: string; suggestion: string }> = [];
+    const errors: Array<{ type: string; message: string; suggestions: string }> = [];
     
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {
       errors.push({
         type: 'context-error',
         message: 'Template buffer not initialized',
-        suggestion: 'Ensure template context is properly created'
+        suggestions: 'Ensure template context is properly created'
       });
     }
     
@@ -385,7 +385,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
       errors.push({
         type: 'nesting-error',
         message: `Template nesting too deep (${context.templateDepth})`,
-        suggestion: 'Reduce template nesting complexity'
+        suggestions: 'Reduce template nesting complexity'
       });
     }
     
@@ -407,9 +407,9 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
         errors: [{
           type: 'collection-error',
           message: 'Collection is null or undefined',
-          suggestion: 'Provide a valid array or iterable collection'
+          suggestions: 'Provide a valid array or iterable collection'
         }],
-        suggestion: 'Check collection exists before template execution'
+        suggestions: 'Check collection exists before template execution'
       };
     }
 
@@ -433,7 +433,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
       errors: [{
         type: 'collection-error',
         message: `Collection type ${typeof collection} is not iterable`,
-        suggestion: 'Provide an array, NodeList, or other iterable collection'
+        suggestions: 'Provide an array, NodeList, or other iterable collection'
       }],
       suggestions: [
         'Convert to array using Array.from()',

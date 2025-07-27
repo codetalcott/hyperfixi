@@ -51,7 +51,7 @@ export class EnhancedThrowCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Throw command requires a message or error object',
-            suggestion: 'Provide an error message string or Error object to throw'
+            suggestions: 'Provide an error message string or Error object to throw'
           }
         };
       }
@@ -64,13 +64,15 @@ export class EnhancedThrowCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Throw command requires a message property',
-            suggestion: 'Provide a message property with the error message'
+            suggestions: 'Provide a message property with the error message'
           }
         };
       }
 
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           message: inputObj.message
         }

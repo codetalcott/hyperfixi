@@ -271,7 +271,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid @else directive: ${err.message}`,
-            suggestion: `Expected { templateContent: string }, got: ${typeof input}`
+            suggestions: `Expected { templateContent: string }, got: ${typeof input}`
           })),
           suggestions: [
             'Provide templateContent as a string',
@@ -290,9 +290,9 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
           errors: [{
             type: 'invalid-syntax',
             message: 'Template content cannot be empty',
-            suggestion: 'Provide content to render in else branch'
+            suggestions: 'Provide content to render in else branch'
           }],
-          suggestion: 'Add content between @else and @end directives'
+          suggestions: 'Add content between @else and @end directives'
         };
       }
 
@@ -308,9 +308,9 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
         errors: [{
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestion: 'Check @else directive input structure'
+          suggestions: 'Check @else directive input structure'
         }],
-        suggestion: 'Ensure input matches expected format'
+        suggestions: 'Ensure input matches expected format'
       };
     }
   }
@@ -322,14 +322,14 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
     context: TemplateExecutionContext,
     input: ElseDirectiveInput
   ): ValidationResult {
-    const errors: Array<{ type: string; message: string; suggestion: string }> = [];
+    const errors: Array<{ type: string; message: string; suggestions: string }> = [];
     
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {
       errors.push({
         type: 'context-error',
         message: 'Template buffer not initialized',
-        suggestion: 'Ensure template context is properly created'
+        suggestions: 'Ensure template context is properly created'
       });
     }
     
@@ -338,7 +338,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
       errors.push({
         type: 'conditional-error',
         message: '@else directive requires preceding @if directive',
-        suggestion: 'Ensure @else follows @if in the same scope'
+        suggestions: 'Ensure @else follows @if in the same scope'
       });
     }
     
@@ -347,7 +347,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
       errors.push({
         type: 'nesting-error',
         message: `Template nesting too deep (${context.templateDepth})`,
-        suggestion: 'Reduce template nesting complexity'
+        suggestions: 'Reduce template nesting complexity'
       });
     }
     

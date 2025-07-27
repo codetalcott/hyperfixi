@@ -40,7 +40,7 @@ export {
   enhancedOnImplementation,
   type EnhancedOnInput,
   type EnhancedOnOutput
-} from './features/enhanced-on.js';
+} from './features/on.js';
 
 export {
   TypedBehaviorsFeatureImplementation,

@@ -516,7 +516,7 @@ export class AddCommand implements TypedCommandImplementation<
       return {
         isValid: true,
         errors: [],
-        suggestion: []
+        suggestions: []
       };
 
     } catch (error) {

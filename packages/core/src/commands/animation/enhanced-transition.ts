@@ -62,7 +62,7 @@ export class EnhancedTransitionCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Transition command requires property and value',
-            suggestion: 'Provide CSS property and target value'
+            suggestions: 'Provide CSS property and target value'
           }
         };
       }
@@ -75,7 +75,7 @@ export class EnhancedTransitionCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Transition command requires a CSS property',
-            suggestion: 'Provide a CSS property name like "opacity", "width", "left"'
+            suggestions: 'Provide a CSS property name like "opacity", "width", "left"'
           }
         };
       }
@@ -86,13 +86,15 @@ export class EnhancedTransitionCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Transition command requires a target value',
-            suggestion: 'Provide a target value for the CSS property'
+            suggestions: 'Provide a target value for the CSS property'
           }
         };
       }
 
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           target: inputObj.target,
           property: inputObj.property,

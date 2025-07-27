@@ -13,7 +13,7 @@ import type {
 
 import { ExpressionEvaluator } from '../core/expression-evaluator.js';
 import { PutCommand } from '../commands/dom/put.js';
-import { SetCommand } from '../commands/data/set.js';
+// SetCommand now imported from data/index.js above
 
 // Enhanced command imports
 import { EnhancedCommandRegistry } from './enhanced-command-adapter.js';
@@ -28,41 +28,42 @@ import { createTriggerCommand } from '../commands/events/trigger.js';
 import { createPutCommand } from '../commands/dom/put.js';
 
 // Additional command imports
-import { IncrementCommand } from '../commands/data/increment.js';
-import { DecrementCommand } from '../commands/data/decrement.js';
-import { MakeCommand } from '../commands/creation/make.js';
-import { AppendCommand } from '../commands/content/append.js';
-import { CallCommand } from '../commands/execution/call.js';
-import { JSCommand } from '../commands/advanced/js.js';
-import { TellCommand } from '../commands/advanced/tell.js';
-import { PickCommand } from '../commands/utility/pick.js';
+// IncrementCommand and DecrementCommand now imported from data/index.js above
+import { MakeCommand } from '../commands/creation/index.js';
+import { AppendCommand } from '../commands/content/index.js';
+import { CallCommand } from '../commands/execution/index.js';
+// JSCommand and TellCommand now imported from advanced/index.js above
+import { PickCommand } from '../commands/utility/index.js';
 import { GoCommand } from '../commands/navigation/go.js';
 
 // Control flow commands
-import { IfCommand } from '../commands/control-flow/if.js';
-import { HaltCommand } from '../commands/control-flow/halt.js';
-import { BreakCommand } from '../commands/control-flow/break.js';
-import { ContinueCommand } from '../commands/control-flow/continue.js';
-import { ReturnCommand } from '../commands/control-flow/return.js';
-import { ThrowCommand } from '../commands/control-flow/throw.js';
-import { UnlessCommand } from '../commands/control-flow/unless.js';
-import { RepeatCommand } from '../commands/control-flow/repeat.js';
+import { 
+  IfCommand, 
+  HaltCommand, 
+  BreakCommand, 
+  ContinueCommand, 
+  ReturnCommand, 
+  ThrowCommand, 
+  UnlessCommand, 
+  RepeatCommand 
+} from '../commands/control-flow/index.js';
 
 // Animation commands
-import { MeasureCommand } from '../commands/animation/measure.js';
-import { SettleCommand } from '../commands/animation/settle.js';
-import { TakeCommand } from '../commands/animation/take.js';
-import { TransitionCommand } from '../commands/animation/transition.js';
+import { 
+  MeasureCommand, 
+  SettleCommand, 
+  TakeCommand, 
+  TransitionCommand 
+} from '../commands/animation/index.js';
 
 // Data commands
-import { DefaultCommand } from '../commands/data/default.js';
+import { DefaultCommand, SetCommand, IncrementCommand, DecrementCommand } from '../commands/data/index.js';
 
 // Advanced commands
-import { BeepCommand } from '../commands/advanced/beep.js';
-import { AsyncCommand } from '../commands/advanced/async.js';
+import { BeepCommand, AsyncCommand, TellCommand, JSCommand } from '../commands/advanced/index.js';
 
 // Template commands
-import { RenderCommand } from '../commands/templates/render.js';
+import { RenderCommand } from '../commands/templates/index.js';
 
 export interface RuntimeOptions {
   enableAsyncCommands?: boolean;

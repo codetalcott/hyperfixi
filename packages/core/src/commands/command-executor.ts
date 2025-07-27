@@ -8,12 +8,12 @@ import { parseAndEvaluateExpression } from '../parser/expression-parser.js';
 
 // Command implementations
 import { logCommand } from './implementations/log.js';
-import { SetCommand } from './data/set.js';
+import { SetCommand } from './data/index.js';
 import { PutCommand } from './dom/put.js';
 import { AddCommand } from './dom/add.js';
 import { ShowCommand } from './dom/show.js';
 import { HideCommand } from './dom/hide.js';
-import { RenderCommand } from './templates/render.js';
+import { RenderCommand } from './templates/index.js';
 
 export interface Command {
   name: string;

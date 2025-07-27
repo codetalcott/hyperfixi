@@ -54,7 +54,7 @@ export class EnhancedIfCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'If command requires an object input',
-            suggestion: 'Provide an object with condition and thenCommands properties'
+            suggestions: 'Provide an object with condition and thenCommands properties'
           }
         };
       }
@@ -68,7 +68,7 @@ export class EnhancedIfCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'If command requires a condition to evaluate',
-            suggestion: 'Provide a boolean expression as the condition'
+            suggestions: 'Provide a boolean expression as the condition'
           }
         };
       }
@@ -80,7 +80,7 @@ export class EnhancedIfCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'If command requires commands for the then branch',
-            suggestion: 'Provide commands to execute when condition is true'
+            suggestions: 'Provide commands to execute when condition is true'
           }
         };
       }
@@ -91,7 +91,7 @@ export class EnhancedIfCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Then commands must be an array',
-            suggestion: 'Provide an array of commands for the then branch'
+            suggestions: 'Provide an array of commands for the then branch'
           }
         };
       }
@@ -103,13 +103,15 @@ export class EnhancedIfCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Else commands must be an array',
-            suggestion: 'Provide an array of commands for the else branch'
+            suggestions: 'Provide an array of commands for the else branch'
           }
         };
       }
 
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           condition: inputObj.condition,
           thenCommands: inputObj.thenCommands,

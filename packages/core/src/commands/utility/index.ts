@@ -3,9 +3,9 @@
  * Provides all utility commands for hyperscript
  */
 
-import { PickCommand } from './pick';
+import { EnhancedPickCommand as PickCommand } from './enhanced-pick';
 
-export { PickCommand } from './pick';
+export { EnhancedPickCommand as PickCommand } from './enhanced-pick';
 
 // Create instances with default options for easy access
 export const utilityCommands = {

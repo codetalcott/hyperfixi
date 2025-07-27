@@ -272,7 +272,7 @@ export class PutCommand implements TypedCommandImplementation<
           message: 'Validation failed with exception',
           suggestions: 'Check input types and values'
         }],
-        suggestion: 'Ensure arguments match expected types'
+        suggestions: 'Ensure arguments match expected types'
       };
     }
   }

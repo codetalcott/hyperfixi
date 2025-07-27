@@ -221,7 +221,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           name: 'TakeCommandError',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'TAKE_EXECUTION_FAILED',
-          suggestion: 'Check if elements exist and verify property names are valid'
+          suggestions: ['Check if elements exist and verify property names are valid']
         },
         type: 'error'
       };
@@ -237,9 +237,9 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           errors: [{
             type: 'missing-argument' as const,
             message: 'Take command requires property, "from", and source element',
-            suggestion: 'Use: take <property> from <source> [and put it on <target>]'
+            suggestions: 'Use: take <property> from <source> [and put it on <target>]'
           }],
-          suggestion: ['Use: take class from <element>', 'Use: take @attr from <element> and put it on <target>']
+          suggestions: ['Use: take class from <element>', 'Use: take @attr from <element> and put it on <target>']
         };
       }
 
@@ -251,9 +251,9 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-syntax' as const,
             message: 'Property name must be a non-empty string',
-            suggestion: 'Use valid property names like "class", "@data-attr", or "title"'
+            suggestions: 'Use valid property names like "class", "@data-attr", or "title"'
           }],
-          suggestion: ['Use: class, title, id, @data-*', 'Use: CSS property names', 'Use: .className for specific classes']
+          suggestions: ['Use: class, title, id, @data-*', 'Use: CSS property names', 'Use: .className for specific classes']
         };
       }
 
@@ -264,9 +264,9 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-syntax' as const,
             message: 'Expected "from" keyword after property name',
-            suggestion: 'Use syntax: take <property> from <source>'
+            suggestions: 'Use syntax: take <property> from <source>'
           }],
-          suggestion: ['Use: take class from <element>', 'Include "from" keyword between property and source']
+          suggestions: ['Use: take class from <element>', 'Include "from" keyword between property and source']
         };
       }
 
@@ -278,9 +278,9 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           errors: [{
             type: 'invalid-argument' as const,
             message: 'Source must be an HTMLElement or valid CSS selector',
-            suggestion: 'Use HTMLElement or CSS selector like "#id", ".class", "tag"'
+            suggestions: 'Use HTMLElement or CSS selector like "#id", ".class", "tag"'
           }],
-          suggestion: ['Use: <#element-id/>', 'Use: <.class-name/>', 'Use: HTMLElement references']
+          suggestions: ['Use: <#element-id/>', 'Use: <.class-name/>', 'Use: HTMLElement references']
         };
       }
 
@@ -296,7 +296,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           return {
             isValid: true,
             errors: [],
-            suggestion: []
+            suggestions: []
           };
         }
 
@@ -314,9 +314,9 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
               errors: [{
                 type: 'invalid-syntax' as const,
                 message: `Invalid take syntax. Expected "${expectedSequence[sequenceIndex]}" but got "${args[index]}"`,
-                suggestion: 'Use: take <property> from <source> and put it on <target>'
+                suggestions: 'Use: take <property> from <source> and put it on <target>'
               }],
-              suggestion: ['Use full syntax: and put it on <target>', 'Or just provide target element directly']
+              suggestions: ['Use full syntax: and put it on <target>', 'Or just provide target element directly']
             };
           }
         }
@@ -330,9 +330,9 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
               errors: [{
                 type: 'invalid-argument' as const,
                 message: 'Target must be an HTMLElement or valid CSS selector',
-                suggestion: 'Use HTMLElement or CSS selector like "#id", ".class", "tag"'
+                suggestions: 'Use HTMLElement or CSS selector like "#id", ".class", "tag"'
               }],
-              suggestion: ['Use: <#element-id/>', 'Use: <.class-name/>', 'Use: HTMLElement references']
+              suggestions: ['Use: <#element-id/>', 'Use: <.class-name/>', 'Use: HTMLElement references']
             };
           }
         }
@@ -341,7 +341,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
       return {
         isValid: true,
         errors: [],
-        suggestion: []
+        suggestions: []
       };
 
     } catch (error) {
@@ -350,9 +350,9 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
         errors: [{
           type: 'runtime-error' as const,
           message: 'Validation failed with exception',
-          suggestion: 'Check input types and values'
+          suggestions: 'Check input types and values'
         }],
-        suggestion: 'Ensure arguments match expected types'
+        suggestions: 'Ensure arguments match expected types'
       };
     }
   }
@@ -380,7 +380,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
             name: 'TakeParseError',
             message: `Cannot resolve source element: ${sourceResult.error?.message}`,
             code: 'SOURCE_RESOLUTION_FAILED',
-            suggestion: ['Check if source element exists in DOM', 'Verify selector syntax']
+            suggestions: ['Check if source element exists in DOM', 'Verify selector syntax']
           },
           type: 'error'
         };
@@ -411,7 +411,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
               name: 'TakeParseError',
               message: `Cannot resolve target element: ${targetResult.error?.message}`,
               code: 'TARGET_RESOLUTION_FAILED',
-              suggestion: ['Check if target element exists in DOM', 'Verify selector syntax']
+              suggestions: ['Check if target element exists in DOM', 'Verify selector syntax']
             },
             type: 'error'
           };
@@ -426,7 +426,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
               name: 'TakeParseError',
               message: 'No target element available - context.me is undefined',
               code: 'NO_TARGET_ELEMENT',
-              suggestion: ['Ensure command is called within element context', 'Provide explicit target element']
+              suggestions: ['Ensure command is called within element context', 'Provide explicit target element']
             },
             type: 'error'
           };
@@ -451,7 +451,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           name: 'TakeParseError',
           message: error instanceof Error ? error.message : 'Failed to parse take arguments',
           code: 'PARSE_FAILED',
-          suggestion: 'Check argument syntax and types'
+          suggestions: 'Check argument syntax and types'
         },
         type: 'error'
       };
@@ -516,7 +516,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
                 name: 'ElementResolutionError',
                 message: `Invalid CSS selector: "${trimmed}"`,
                 code: 'INVALID_SELECTOR',
-                suggestion: ['Use valid CSS selector syntax', 'Check for typos in selector']
+                suggestions: ['Use valid CSS selector syntax', 'Check for typos in selector']
               },
               type: 'error'
             };
@@ -529,7 +529,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
             name: 'ElementResolutionError',
             message: `Element not found: "${trimmed}"`,
             code: 'ELEMENT_NOT_FOUND',
-            suggestion: ['Check if element exists in DOM', 'Verify selector matches existing elements']
+            suggestions: ['Check if element exists in DOM', 'Verify selector matches existing elements']
           },
           type: 'error'
         };
@@ -541,7 +541,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           name: 'ElementResolutionError',
           message: `Invalid element reference: ${typeof element}`,
           code: 'INVALID_ELEMENT_REFERENCE',
-          suggestion: 'Use HTMLElement or CSS selector string'
+          suggestions: 'Use HTMLElement or CSS selector string'
         },
         type: 'error'
       };
@@ -553,7 +553,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           name: 'ElementResolutionError',
           message: error instanceof Error ? error.message : 'Element resolution failed',
           code: 'RESOLUTION_FAILED',
-          suggestion: 'Check element reference validity'
+          suggestions: 'Check element reference validity'
         },
         type: 'error'
       };
@@ -577,7 +577,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
             name: 'TakePropertyError',
             message: `Invalid property name: "${prop}"`,
             code: 'INVALID_PROPERTY',
-            suggestion: ['Use valid property names', 'Check property syntax']
+            suggestions: ['Use valid property names', 'Check property syntax']
           },
           type: 'error'
         };
@@ -704,7 +704,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           name: 'TakePropertyError',
           message: error instanceof Error ? error.message : 'Failed to take property',
           code: 'PROPERTY_TAKE_FAILED',
-          suggestion: ['Check if element supports the property', 'Verify property name is valid']
+          suggestions: ['Check if element supports the property', 'Verify property name is valid']
         },
         type: 'error'
       };
@@ -837,7 +837,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           name: 'PutPropertyError',
           message: error instanceof Error ? error.message : 'Failed to put property',
           code: 'PROPERTY_PUT_FAILED',
-          suggestion: ['Check if element supports the property', 'Verify property value is valid']
+          suggestions: ['Check if element supports the property', 'Verify property value is valid']
         },
         type: 'error'
       };

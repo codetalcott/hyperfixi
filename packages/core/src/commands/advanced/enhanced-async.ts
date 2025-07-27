@@ -7,8 +7,23 @@
  * Modernized with TypedCommandImplementation interface
  */
 
-import type { TypedCommandImplementation } from '../../types/core.js';
-import type { ValidationResult, TypedExecutionContext } from '../../types/base-types.js';
+import type { ValidationResult, TypedExecutionContext } from '../../types/index.js';
+
+// Define TypedCommandImplementation locally for now
+interface TypedCommandImplementation<TInput, TOutput, TContext> {
+  readonly metadata: {
+    readonly name: string;
+    readonly description: string;
+    readonly examples: string[];
+    readonly syntax: string;
+    readonly category: string;
+    readonly version: string;
+  };
+  readonly validation: {
+    validate(input: unknown): ValidationResult<TInput>;
+  };
+  execute(input: TInput, context: TContext): Promise<TOutput>;
+}
 
 // Input type definition
 export interface AsyncCommandInput {
@@ -52,7 +67,8 @@ export class EnhancedAsyncCommand implements TypedCommandImplementation<
           isValid: false,
           errors: [{
             type: 'missing-argument',
-            message: 'Async command requires at least one command to execute'
+            message: 'Async command requires at least one command to execute',
+            suggestions: ['Provide command objects to execute asynchronously']
           }],
           suggestions: ['Provide command objects to execute asynchronously']
         };
@@ -65,7 +81,8 @@ export class EnhancedAsyncCommand implements TypedCommandImplementation<
           isValid: false,
           errors: [{
             type: 'type-mismatch',
-            message: 'Commands must be provided as an array'
+            message: 'Commands must be provided as an array',
+            suggestions: ['Provide an array of command objects']
           }],
           suggestions: ['Provide an array of command objects']
         };
@@ -76,7 +93,8 @@ export class EnhancedAsyncCommand implements TypedCommandImplementation<
           isValid: false,
           errors: [{
             type: 'missing-argument',
-            message: 'Async command requires at least one command to execute'
+            message: 'Async command requires at least one command to execute',
+            suggestions: ['Provide at least one command to execute']
           }],
           suggestions: ['Provide at least one command to execute']
         };
@@ -91,7 +109,8 @@ export class EnhancedAsyncCommand implements TypedCommandImplementation<
             isValid: false,
             errors: [{
               type: 'type-mismatch',
-              message: 'All items must be valid command objects with name and execute method'
+              message: 'All items must be valid command objects with name and execute method',
+              suggestions: ['Ensure all commands have name and execute properties']
             }],
             suggestions: ['Ensure all commands have name and execute properties']
           };

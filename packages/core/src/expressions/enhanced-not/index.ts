@@ -112,7 +112,7 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<
         errors: [{
           type: 'missing-argument',
           message: error instanceof Error ? error.message : 'Invalid not expression arguments',
-          suggestion: 'Provide a value to negate'
+          suggestions: 'Provide a value to negate'
         }],
         suggestions: [
           'Provide a single value to negate',

@@ -142,7 +142,9 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
    */
   validate(input: unknown): ValidationResult<unknown> {
     if (!this.impl.validate) {
-      return { success: true, data: input };
+      return { isValid: true,
+        errors: [],
+        suggestions: [], data: input };
     }
     
     // Use the command's validate method - pass input directly since commands expect tuple format

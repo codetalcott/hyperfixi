@@ -7,8 +7,23 @@
  * Modernized with TypedCommandImplementation interface
  */
 
-import type { TypedCommandImplementation, ValidationResult } from '../../types/core.js';
-import type { TypedExecutionContext } from '../../types/enhanced-core.js';
+import type { ValidationResult, TypedExecutionContext } from '../../types/index.js';
+
+// Define TypedCommandImplementation locally for now
+interface TypedCommandImplementation<TInput, TOutput, TContext> {
+  readonly metadata: {
+    readonly name: string;
+    readonly description: string;
+    readonly examples: string[];
+    readonly syntax: string;
+    readonly category: string;
+    readonly version: string;
+  };
+  readonly validation: {
+    validate(input: unknown): ValidationResult<TInput>;
+  };
+  execute(input: TInput, context: TContext): Promise<TOutput>;
+}
 
 // Input type definition
 export interface TellCommandInput {
@@ -50,12 +65,13 @@ export class EnhancedTellCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<TellCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
-            type: 'invalid-syntax',
+          isValid: false,
+          errors: [{
+            type: 'validation-error',
             message: 'Tell command requires an object input',
-            suggestions: 'Provide an object with target and commands properties'
-          }
+            suggestions: ['Provide an object with target and commands properties']
+          }],
+          suggestions: ['Provide an object with target and commands properties']
         };
       }
 
@@ -64,12 +80,13 @@ export class EnhancedTellCommand implements TypedCommandImplementation<
       // Validate target is present
       if (!inputObj.target) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Tell command requires a target element or selector',
-            suggestions: 'Provide an element reference, CSS selector, or element array'
-          }
+            suggestions: ['Provide an element reference, CSS selector, or element array']
+          }],
+          suggestions: ['Provide an element reference, CSS selector, or element array']
         };
       }
 
@@ -79,40 +96,45 @@ export class EnhancedTellCommand implements TypedCommandImplementation<
           !(target instanceof HTMLElement) && 
           !Array.isArray(target)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'type-mismatch',
             message: 'Target must be a string (selector), HTMLElement, or array of elements',
-            suggestions: 'Use a CSS selector, element reference, or array of elements'
-          }
+            suggestions: ['Use a CSS selector, element reference, or array of elements']
+          }],
+          suggestions: ['Use a CSS selector, element reference, or array of elements']
         };
       }
 
       // Validate commands are present
       if (!inputObj.commands || !Array.isArray(inputObj.commands)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Tell command requires at least one command to execute',
-            suggestions: 'Provide an array of commands to execute in the target context'
-          }
+            suggestions: ['Provide an array of commands to execute in the target context']
+          }],
+          suggestions: ['Provide an array of commands to execute in the target context']
         };
       }
 
       if (inputObj.commands.length === 0) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Tell command requires at least one command to execute',
-            suggestions: 'Provide at least one command in the commands array'
-          }
+            suggestions: ['Provide at least one command in the commands array']
+          }],
+          suggestions: ['Provide at least one command in the commands array']
         };
       }
 
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           target: inputObj.target,
           commands: inputObj.commands

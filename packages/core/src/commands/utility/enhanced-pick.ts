@@ -56,7 +56,7 @@ export class EnhancedPickCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'Pick command requires an object input',
-            suggestion: 'Provide an object with items array or array property'
+            suggestions: 'Provide an object with items array or array property'
           }
         };
       }
@@ -70,7 +70,7 @@ export class EnhancedPickCommand implements TypedCommandImplementation<
           error: {
             type: 'missing-argument',
             message: 'Pick command requires items to choose from',
-            suggestion: 'Provide an items array or use "from" with an array'
+            suggestions: 'Provide an items array or use "from" with an array'
           }
         };
       }
@@ -82,7 +82,7 @@ export class EnhancedPickCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'Pick command cannot have both direct items and array',
-            suggestion: 'Use either direct items or "from" array syntax, not both'
+            suggestions: 'Use either direct items or "from" array syntax, not both'
           }
         };
       }
@@ -94,7 +94,7 @@ export class EnhancedPickCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Items must be an array',
-            suggestion: 'Provide an array of items to pick from'
+            suggestions: 'Provide an array of items to pick from'
           }
         };
       }
@@ -106,7 +106,7 @@ export class EnhancedPickCommand implements TypedCommandImplementation<
           error: {
             type: 'type-mismatch',
             message: 'Array must be an array type',
-            suggestion: 'Provide a valid array to pick from'
+            suggestions: 'Provide a valid array to pick from'
           }
         };
       }
@@ -119,13 +119,15 @@ export class EnhancedPickCommand implements TypedCommandImplementation<
           error: {
             type: 'invalid-syntax',
             message: 'Cannot pick from empty collection',
-            suggestion: 'Provide at least one item to pick from'
+            suggestions: 'Provide at least one item to pick from'
           }
         };
       }
 
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           items: inputObj.items,
           array: inputObj.array,

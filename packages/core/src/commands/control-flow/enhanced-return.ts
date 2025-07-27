@@ -49,7 +49,9 @@ export class EnhancedReturnCommand implements TypedCommandImplementation<
       // Return command accepts any input (the return value) or no input
       if (!input || typeof input !== 'object') {
         return {
-          success: true,
+          isValid: true,
+        errors: [],
+        suggestions: [],
           data: {
             value: input // Use the input directly as the value
           }
@@ -58,7 +60,9 @@ export class EnhancedReturnCommand implements TypedCommandImplementation<
 
       const inputObj = input as any;
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           value: inputObj.value
         }

@@ -6,15 +6,27 @@
 
 import { z } from 'zod';
 import type {
-  BaseTypedExpression,
-  TypedExpressionContext,
-  EvaluationType,
-  ExpressionMetadata,
   ValidationResult,
-  TypedResult,
-  LLMDocumentation
-} from '../../types/base-types.js';
-import type { ExpressionCategory } from '../../types/enhanced-expressions.js';
+  TypedExecutionContext as TypedExpressionContext,
+  UnifiedEvaluationType as EvaluationType,
+  UnifiedExpressionMetadata as ExpressionMetadata,
+  UnifiedTypedResult as TypedResult,
+  UnifiedLLMDocumentation as LLMDocumentation,
+  UnifiedExpressionCategory as ExpressionCategory
+} from '../../types/index.js';
+
+// Define BaseTypedExpression locally for now
+interface BaseTypedExpression<T> {
+  readonly name: string;
+  readonly category: string;
+  readonly syntax: string;
+  readonly outputType: EvaluationType;
+  readonly inputSchema: any;
+  readonly metadata: ExpressionMetadata;
+  readonly documentation: LLMDocumentation;
+  evaluate(context: TypedExpressionContext, input: unknown): Promise<TypedResult<T>>;
+  validate(input: unknown): ValidationResult;
+}
 
 // ============================================================================
 // Input Schemas
@@ -135,12 +147,8 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'ValidationError',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
@@ -183,8 +191,7 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
           isValid: false,
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch',
-            message: `Invalid comparison input: ${err.message}`,
-            suggestions: 'Provide valid left and right operands for comparison'
+            message: `Invalid comparison input: ${err.message}`
           })),
           suggestions: [
             'Provide both left and right operands',
@@ -371,12 +378,8 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'ValidationError',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
@@ -537,12 +540,8 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'ValidationError',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
@@ -700,12 +699,8 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'ValidationError',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 
@@ -869,12 +864,8 @@ export class EnhancedEqualityExpression implements BaseTypedExpression<boolean> 
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
-            name: 'ValidationError',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+          errors: validation.errors,
+          suggestions: validation.suggestions
         };
       }
 

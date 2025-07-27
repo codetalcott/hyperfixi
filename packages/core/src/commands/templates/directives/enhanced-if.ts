@@ -272,7 +272,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid @if directive: ${err.message}`,
-            suggestion: `Expected { condition: any, templateContent: string }, got: ${typeof input}`
+            suggestions: `Expected { condition: any, templateContent: string }, got: ${typeof input}`
           })),
           suggestions: [
             'Provide both condition and templateContent',
@@ -291,9 +291,9 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
           errors: [{
             type: 'invalid-syntax',
             message: 'Template content cannot be empty',
-            suggestion: 'Provide content to render when condition is true'
+            suggestions: 'Provide content to render when condition is true'
           }],
-          suggestion: 'Add content between @if and @end directives'
+          suggestions: 'Add content between @if and @end directives'
         };
       }
 
@@ -309,9 +309,9 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
         errors: [{
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestion: 'Check @if directive input structure'
+          suggestions: 'Check @if directive input structure'
         }],
-        suggestion: 'Ensure input matches expected format'
+        suggestions: 'Ensure input matches expected format'
       };
     }
   }

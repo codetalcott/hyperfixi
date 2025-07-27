@@ -125,7 +125,7 @@ export class EnhancedPossessiveExpression implements TypedExpressionImplementati
         errors.push({
           type: 'type-mismatch',
           message: 'Property name must be a non-empty string',
-          suggestion: 'Provide a valid property name like "value", "@data-foo", or "*color"'
+          suggestions: 'Provide a valid property name like "value", "@data-foo", or "*color"'
         });
       }
       
@@ -136,7 +136,7 @@ export class EnhancedPossessiveExpression implements TypedExpressionImplementati
           errors.push({
             type: 'security-warning',
             message: `Accessing "${property}" property may be unsafe`,
-            suggestion: 'Avoid accessing prototype chain properties for security'
+            suggestions: 'Avoid accessing prototype chain properties for security'
           });
         }
       }
@@ -156,7 +156,7 @@ export class EnhancedPossessiveExpression implements TypedExpressionImplementati
         errors: [{
           type: 'missing-argument',
           message: error instanceof Error ? error.message : 'Invalid possessive expression arguments',
-          suggestion: 'Provide object and property name'
+          suggestions: 'Provide object and property name'
         }],
         suggestions: [
           'Provide both object and property arguments',

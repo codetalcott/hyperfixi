@@ -46,7 +46,9 @@ export class EnhancedContinueCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<ContinueCommandInput> {
       // Continue command accepts any input or no input
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {}
       };
     }

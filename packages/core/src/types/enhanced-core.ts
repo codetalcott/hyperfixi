@@ -7,78 +7,66 @@
  */
 
 import { z } from 'zod';
-import type { CommandImplementation } from './core.js';
-
 // ============================================================================
-// Re-export Unified Types from Base System
+// Import Unified Types
 // ============================================================================
 
-// Re-export all base types for backward compatibility
-export type {
-  ExecutionContext,
-  TypedExecutionContext,
-  TypedExpressionContext,
-  EvaluationType,
-  HyperScriptValueType,
-  ValidationResult,
-  ValidationError,
-  TypedResult,
-  EnhancedError,
-  PerformanceCharacteristics,
-  BaseTypedExpression,
-  BaseTypedFeature,
-  FeatureCategory,
-  ExpressionMetadata,
-  LLMDocumentation,
-  ExpressionEvaluationOptions,
-  ParseError,
-  ASTNode
-} from './base-types.js';
-
-// Import types needed for definitions in this file
+// Import from unified type system
 import type {
-  TypedExecutionContext,
-  ValidationResult,
-  ValidationError,
-  HyperScriptValue,
-  HyperScriptValueType
-} from './base-types.js';
+  UnifiedExecutionContext,
+  UnifiedValidationResult,
+  UnifiedValidationError,
+  UnifiedHyperScriptValue,
+  UnifiedHyperScriptValueType,
+  UnifiedEvaluationType,
+  UnifiedCommandCategory,
+  UnifiedSideEffect,
+  UnifiedExpressionCategory,
+  UnifiedExpressionMetadata,
+  UnifiedLLMDocumentation,
+  UnifiedASTNode,
+  UnifiedParseError,
+  UnifiedResult,
+  UnifiedTypedResult
+} from './index.js';
+
+// ============================================================================
+// Re-export Unified Types with Legacy Names
+// ============================================================================
+
+// Re-export unified types with legacy names for backward compatibility
+export type {
+  UnifiedExecutionContext as ExecutionContext,
+  UnifiedExecutionContext as TypedExecutionContext,
+  UnifiedExecutionContext as TypedExpressionContext,
+  UnifiedEvaluationType as EvaluationType,
+  UnifiedHyperScriptValueType as HyperScriptValueType,
+  UnifiedValidationResult as ValidationResult,
+  UnifiedValidationError as ValidationError,
+  UnifiedTypedResult as TypedResult,
+  UnifiedExpressionMetadata as ExpressionMetadata,
+  UnifiedLLMDocumentation as LLMDocumentation,
+  UnifiedParseError as ParseError,
+  UnifiedASTNode as ASTNode,
+  UnifiedHyperScriptValue as HyperScriptValue
+} from './index.js';
 
 // ============================================================================
 // Enhanced Type System for LLM Agents
 // ============================================================================
 
 /**
- * Strict value types that LLMs can understand and predict
+ * Use unified HyperScript value type
  */
-export type HyperScriptValue = 
-  | string 
-  | number 
-  | boolean 
-  | null 
-  | undefined
-  | HTMLElement 
-  | HTMLElement[]
-  | NodeList
-  | Record<string, unknown>
-  | unknown[]
-  | Date
-  | DocumentFragment
-  | Event
-  | CustomEvent;
+export type HyperScriptValue = UnifiedHyperScriptValue;
 
 /**
  * Strongly typed evaluation results with error handling
  */
-export type EvaluationResult<T extends HyperScriptValue = HyperScriptValue> = {
-  success: true;
-  value: T;
-  type: HyperScriptValueType;
-} | {
-  success: false;
-  error: HyperScriptError;
-  type: 'error';
-};
+/**
+ * Use unified result type
+ */
+export type EvaluationResult<T = unknown> = UnifiedResult<T>;
 
 /**
  * Runtime type validation schema
@@ -141,13 +129,13 @@ export interface TypedCommandImplementation<
   readonly inputSchema: z.ZodSchema<TInput>;
   
   /** Output type information for LLMs */
-  readonly outputType: HyperScriptValueType;
+  readonly outputType: UnifiedHyperScriptValueType;
   
   /** Type-safe execution with validated inputs */
-  execute(context: TContext, ...args: TInput): Promise<EvaluationResult<TOutput>>;
+  execute(context: TContext, ...args: TInput): Promise<UnifiedResult<TOutput>>;
   
   /** Compile-time validation for static analysis */
-  validate(args: unknown[]): ValidationResult;
+  validate(args: unknown[]): UnifiedValidationResult;
   
   /** Runtime metadata */
   readonly metadata: CommandMetadata;
@@ -164,26 +152,11 @@ export interface CommandMetadata {
   readonly relatedCommands: string[];
 }
 
-export type CommandCategory = 
-  | 'dom-manipulation'
-  | 'event-handling' 
-  | 'data-processing'
-  | 'control-flow'
-  | 'animation'
-  | 'network'
-  | 'utility'
-  | 'navigation';
+// Use unified command category
+export type CommandCategory = UnifiedCommandCategory;
 
-export type SideEffect = 
-  | 'dom-mutation'
-  | 'network-request'
-  | 'local-storage'
-  | 'global-state'
-  | 'event-emission'
-  | 'timer-creation'
-  | 'navigation'
-  | 'dom-query'
-  | 'history';
+// Use unified side effect type
+export type SideEffect = UnifiedSideEffect;
 
 export interface CommandExample {
   readonly code: string;

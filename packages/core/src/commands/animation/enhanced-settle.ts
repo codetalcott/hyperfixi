@@ -51,7 +51,9 @@ export class EnhancedSettleCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<SettleCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: true,
+          isValid: true,
+        errors: [],
+        suggestions: [],
           data: {} // Settle can work with no arguments
         };
       }
@@ -68,7 +70,7 @@ export class EnhancedSettleCommand implements TypedCommandImplementation<
               error: {
                 type: 'invalid-syntax',
                 message: 'Invalid timeout format',
-                suggestion: 'Use format like "3s", "500ms", or numeric milliseconds'
+                suggestions: 'Use format like "3s", "500ms", or numeric milliseconds'
               }
             };
           }
@@ -79,7 +81,7 @@ export class EnhancedSettleCommand implements TypedCommandImplementation<
               error: {
                 type: 'invalid-syntax',
                 message: 'Timeout cannot be negative',
-                suggestion: 'Use positive timeout values'
+                suggestions: 'Use positive timeout values'
               }
             };
           }
@@ -89,14 +91,16 @@ export class EnhancedSettleCommand implements TypedCommandImplementation<
             error: {
               type: 'type-mismatch',
               message: 'Timeout must be a number or string',
-              suggestion: 'Use numeric milliseconds or string with unit like "3s"'
+              suggestions: 'Use numeric milliseconds or string with unit like "3s"'
             }
           };
         }
       }
 
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           target: inputObj.target,
           timeout: inputObj.timeout,
