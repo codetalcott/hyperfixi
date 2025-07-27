@@ -52,12 +52,13 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<MakeCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Make command requires an object input',
             suggestions: ['Provide an object with article and expression properties']
-          }
+          }],
+          suggestions: ['Provide an object with article and expression properties']
         };
       }
 
@@ -66,70 +67,76 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
       // Validate article
       if (!inputObj.article) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Make command requires "a" or "an" article',
             suggestions: ['Use "a" before consonant sounds, "an" before vowel sounds']
-          }
+          }],
+          suggestions: ['Use "a" before consonant sounds, "an" before vowel sounds']
         };
       }
 
       if (inputObj.article !== 'a' && inputObj.article !== 'an') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Make command requires "a" or "an" article',
             suggestions: ['Use "a" or "an" as the article']
-          }
+          }],
+          suggestions: ['Use "a" or "an" as the article']
         };
       }
 
       // Validate expression
       if (!inputObj.expression) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Make command requires class name or DOM element expression',
             suggestions: ['Provide a class name like "URL" or DOM element like "<div/>"']
-          }
+          }],
+          suggestions: ['Provide a class name like "URL" or DOM element like "<div/>"']
         };
       }
 
       if (typeof inputObj.expression !== 'string' && !(inputObj.expression instanceof HTMLElement)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'type-mismatch',
             message: 'Expression must be a string (class name or DOM element) or HTMLElement',
             suggestions: ['Use a string like "URL" or "<div/>"']
-          }
+          }],
+          suggestions: ['Use a string like "URL" or "<div/>"']
         };
       }
 
       // Validate constructorArgs if provided
       if (inputObj.constructorArgs !== undefined && !Array.isArray(inputObj.constructorArgs)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'type-mismatch',
             message: 'Constructor arguments must be an array',
             suggestions: ['Provide an array of constructor arguments']
-          }
+          }],
+          suggestions: ['Provide an array of constructor arguments']
         };
       }
 
       // Validate variableName if provided
       if (inputObj.variableName !== undefined && typeof inputObj.variableName !== 'string') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'type-mismatch',
             message: 'Variable name must be a string',
             suggestions: ['Provide a valid identifier string']
-          }
+          }],
+          suggestions: ['Provide a valid identifier string']
         };
       }
 
@@ -177,7 +184,7 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
     return {
       instance: result,
       type,
-      variableName
+      ...(variableName !== undefined && { variableName })
     };
   }
 
@@ -264,9 +271,6 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
 
   private setVariableValue(name: string, value: any, context: TypedExecutionContext): void {
     // Set in local variables by default
-    if (!context.locals) {
-      context.locals = new Map();
-    }
     context.locals.set(name, value);
   }
 }

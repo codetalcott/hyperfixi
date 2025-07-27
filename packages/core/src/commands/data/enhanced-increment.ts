@@ -53,12 +53,13 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<IncrementCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Increment command requires an object input',
             suggestions: ['Provide an object with target property']
-          }
+          }],
+          suggestions: ['Provide an object with target property']
         };
       }
 
@@ -67,12 +68,13 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
       // Validate target is present
       if (!inputObj.target) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Increment command requires a target',
             suggestions: ['Provide a target variable, element, or property to increment']
-          }
+          }],
+          suggestions: ['Provide a target variable, element, or property to increment']
         };
       }
 
@@ -81,12 +83,13 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
       if (typeof target !== 'string' && typeof target !== 'number' && 
           !(target instanceof HTMLElement)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'type-mismatch',
             message: 'Target must be a string (variable name), number, or HTMLElement',
             suggestions: ['Use a variable name like "counter" or an element reference']
-          }
+          }],
+          suggestions: ['Use a variable name like "counter" or an element reference']
         };
       }
 
@@ -96,12 +99,13 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
         if (typeof amount !== 'number' && 
             (typeof amount !== 'string' || isNaN(parseFloat(amount)))) {
           return {
-            success: false,
-            error: {
+            isValid: false,
+            errors: [{
               type: 'type-mismatch',
               message: 'Amount must be a number',
               suggestions: ['Provide a numeric value like 1, 5, or 10.5']
-            }
+            }],
+            suggestions: ['Provide a numeric value like 1, 5, or 10.5']
           };
         }
       }
@@ -110,12 +114,13 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
       if (inputObj.scope !== undefined && 
           inputObj.scope !== 'global' && inputObj.scope !== 'local') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Scope must be "global" or "local"',
             suggestions: ['Use "global" or "local" scope, or omit for default behavior']
-          }
+          }],
+          suggestions: ['Use "global" or "local" scope, or omit for default behavior']
         };
       }
 

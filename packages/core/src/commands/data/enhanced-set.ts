@@ -16,7 +16,8 @@ export interface SetCommandInput {
   value: any;
   toKeyword?: 'to'; // For syntax validation
   scope?: 'global' | 'local';
-}
+}],
+          suggestions: []
 
 // Output type definition  
 export interface SetCommandOutput {
@@ -24,7 +25,8 @@ export interface SetCommandOutput {
   oldValue: any;
   newValue: any;
   targetType: 'variable' | 'element-property' | 'element-attribute' | 'context';
-}
+}],
+          suggestions: []
 
 /**
  * Enhanced Set Command with full type safety and validation
@@ -53,65 +55,75 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<SetCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Set command requires an object input',
             suggestions: ['Provide an object with target and value properties']
-          }
+          }],
+          suggestions: []
         };
-      }
+      }],
+          suggestions: []
 
       const inputObj = input as any;
 
       // Validate target is present
       if (!inputObj.target) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Set command requires a target to set',
             suggestions: ['Provide a variable name, element reference, or property path']
-          }
+          }],
+          suggestions: []
         };
-      }
+      }],
+          suggestions: []
 
       // Validate target type
       if (typeof inputObj.target !== 'string' && !(inputObj.target instanceof HTMLElement)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'type-mismatch',
             message: 'Target must be a string (variable/property name) or HTMLElement',
             suggestions: ['Use a variable name like "counter" or element reference']
-          }
+          }],
+          suggestions: []
         };
-      }
+      }],
+          suggestions: []
 
       // Validate value is present (can be any type including null/undefined)
       if (!('value' in inputObj)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Set command requires a value to assign',
             suggestions: ['Provide the value to assign to the target']
-          }
+          }],
+          suggestions: []
         };
-      }
+      }],
+          suggestions: []
 
       // Validate scope if provided
       if (inputObj.scope !== undefined && 
           inputObj.scope !== 'global' && inputObj.scope !== 'local') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Scope must be "global" or "local"',
             suggestions: ['Use "global" or "local" scope, or omit for default behavior']
-          }
+          }],
+          suggestions: []
         };
-      }
+      }],
+          suggestions: []
 
       return {
         isValid: true,
@@ -122,9 +134,11 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
           value: inputObj.value,
           toKeyword: inputObj.toKeyword,
           scope: inputObj.scope
-        }
+        }],
+          suggestions: []
       };
-    }
+    }],
+          suggestions: []
   };
 
   async execute(
@@ -158,13 +172,15 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
         oldValue = this.getVariableValue(target, context, scope);
         this.setVariableValue(target, value, context, scope);
         targetType = 'variable';
-      }
+      }],
+          suggestions: []
     } else {
       // Fallback for other types
       oldValue = undefined;
       context.it = value;
       targetType = 'context';
-    }
+    }],
+          suggestions: []
 
     return {
       target,
@@ -172,7 +188,8 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
       newValue: value,
       targetType
     };
-  }
+  }],
+          suggestions: []
 
   private setPropertyPath(path: string, value: any, context: TypedExecutionContext): { oldValue: any; targetType: 'element-property' | 'element-attribute' } {
     const parts = path.split('.');
@@ -191,11 +208,13 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
     } else {
       // Try to resolve as variable
       targetObject = this.getVariableValue(objectRef, context);
-    }
+    }],
+          suggestions: []
 
     if (!targetObject) {
       throw new Error(`Cannot resolve target object: ${objectRef}`);
-    }
+    }],
+          suggestions: []
 
     const oldValue = targetObject[propertyName];
 
@@ -209,8 +228,10 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
       // Regular property assignment
       targetObject[propertyName] = value;
       return { oldValue, targetType: 'element-property' };
-    }
-  }
+    }],
+          suggestions: []
+  }],
+          suggestions: []
 
   private getContextValue(ref: string, context: TypedExecutionContext): any {
     switch (ref) {
@@ -219,8 +240,10 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
       case 'you': return context.you;
       case 'result': return context.it; // result is an alias for it
       default: return undefined;
-    }
-  }
+    }],
+          suggestions: []
+  }],
+          suggestions: []
 
   private setContextValue(ref: string, value: any, context: TypedExecutionContext): void {
     switch (ref) {
@@ -234,79 +257,96 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
       case 'you':
         context.you = value;
         break;
-    }
-  }
+    }],
+          suggestions: []
+  }],
+          suggestions: []
 
   private getVariableValue(name: string, context: TypedExecutionContext, preferredScope?: string): any {
     // If preferred scope is specified, check that first
     if (preferredScope === 'global' && context.globals && context.globals.has(name)) {
       return context.globals.get(name);
-    }
+    }],
+          suggestions: []
     
     // Check local variables first (unless global is preferred)
     if (preferredScope !== 'global' && context.locals && context.locals.has(name)) {
       return context.locals.get(name);
-    }
+    }],
+          suggestions: []
     
     // Check global variables
     if (context.globals && context.globals.has(name)) {
       return context.globals.get(name);
-    }
+    }],
+          suggestions: []
     
     // Check general variables  
     if (context.variables && context.variables.has(name)) {
       return context.variables.get(name);
-    }
+    }],
+          suggestions: []
     
     // Check local variables as fallback
     if (preferredScope === 'global' && context.locals && context.locals.has(name)) {
       return context.locals.get(name);
-    }
+    }],
+          suggestions: []
     
     return undefined;
-  }
+  }],
+          suggestions: []
 
   private setVariableValue(name: string, value: any, context: TypedExecutionContext, preferredScope?: string): void {
     // If preferred scope is specified, handle it
     if (preferredScope === 'global') {
       if (!context.globals) {
         context.globals = new Map();
-      }
+      }],
+          suggestions: []
       context.globals.set(name, value);
       return;
-    }
+    }],
+          suggestions: []
     
     // If variable exists in local scope, update it
     if (context.locals && context.locals.has(name)) {
       context.locals.set(name, value);
       return;
-    }
+    }],
+          suggestions: []
     
     // If variable exists in global scope, update it
     if (context.globals && context.globals.has(name)) {
       context.globals.set(name, value);
       return;
-    }
+    }],
+          suggestions: []
     
     // If variable exists in general variables, update it
     if (context.variables && context.variables.has(name)) {
       context.variables.set(name, value);
       return;
-    }
+    }],
+          suggestions: []
     
     // Create new local variable
     if (!context.locals) {
       context.locals = new Map();
-    }
+    }],
+          suggestions: []
     context.locals.set(name, value);
-  }
-}
+  }],
+          suggestions: []
+}],
+          suggestions: []
 
 /**
  * Factory function to create the enhanced set command
  */
 export function createEnhancedSetCommand(): EnhancedSetCommand {
   return new EnhancedSetCommand();
-}
+}],
+          suggestions: []
 
 export default EnhancedSetCommand;

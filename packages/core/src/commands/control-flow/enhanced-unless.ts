@@ -51,12 +51,13 @@ export class EnhancedUnlessCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<UnlessCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Unless command requires condition and commands',
             suggestions: ['Provide condition and commands to execute']
-          }
+          }],
+          suggestions: ['Provide condition and commands to execute']
         };
       }
 
@@ -64,34 +65,37 @@ export class EnhancedUnlessCommand implements TypedCommandImplementation<
 
       if (inputObj.condition === undefined) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Unless command requires a condition',
             suggestions: ['Provide a condition to evaluate']
-          }
+          }],
+          suggestions: ['Provide a condition to evaluate']
         };
       }
 
       if (!inputObj.commands || !Array.isArray(inputObj.commands)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Unless command requires commands to execute',
             suggestions: ['Provide commands to execute when condition is false']
-          }
+          }],
+          suggestions: ['Provide commands to execute when condition is false']
         };
       }
 
       if (inputObj.commands.length === 0) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Unless command requires at least one command',
             suggestions: ['Provide at least one command to execute']
-          }
+          }],
+          suggestions: ['Provide at least one command to execute']
         };
       }
 

@@ -57,12 +57,13 @@ export class EnhancedRepeatCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<RepeatCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Repeat command requires loop configuration',
             suggestions: ['Provide loop type and parameters']
-          }
+          }],
+          suggestions: ['Provide loop type and parameters']
         };
       }
 
@@ -70,58 +71,63 @@ export class EnhancedRepeatCommand implements TypedCommandImplementation<
 
       if (!inputObj.type) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Repeat command requires a loop type',
             suggestions: ['Use types: for, times, while, until, forever']
-          }
+          }],
+          suggestions: ['Use types: for, times, while, until, forever']
         };
       }
 
       const validTypes = ['for', 'times', 'while', 'until', 'forever'];
       if (!validTypes.includes(inputObj.type)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: `Invalid repeat type: ${inputObj.type}`,
             suggestions: ['Use types: for, times, while, until, forever']
-          }
+          }],
+          suggestions: ['Use types: for, times, while, until, forever']
         };
       }
 
       // Validate type-specific requirements
       if (inputObj.type === 'for' && (!inputObj.variable || !inputObj.collection)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'For loops require variable and collection',
             suggestions: ['Use: repeat for item in items']
-          }
+          }],
+          suggestions: ['Use: repeat for item in items']
         };
       }
 
       if (inputObj.type === 'times' && typeof inputObj.count !== 'number') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Times loops require a count number',
             suggestions: ['Use: repeat 5 times']
-          }
+          }],
+          suggestions: ['Use: repeat 5 times']
         };
       }
 
       if (['while', 'until'].includes(inputObj.type) && !inputObj.condition) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: `${inputObj.type} loops require a condition`,
-            suggestions: `Use: repeat ${inputObj.type} condition`
-          }
+            suggestions: [`Use: repeat ${inputObj.type} condition`]
+          }],
+          suggestions: [`Use: repeat ${inputObj.type} condition`]
         };
       }
 

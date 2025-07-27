@@ -47,12 +47,13 @@ export class EnhancedThrowCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<ThrowCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Throw command requires a message or error object',
             suggestions: ['Provide an error message string or Error object to throw']
-          }
+          }],
+          suggestions: ['Provide an error message string or Error object to throw']
         };
       }
 
@@ -60,12 +61,13 @@ export class EnhancedThrowCommand implements TypedCommandImplementation<
 
       if (!('message' in inputObj) && !inputObj.message) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Throw command requires a message property',
             suggestions: ['Provide a message property with the error message']
-          }
+          }],
+          suggestions: ['Provide a message property with the error message']
         };
       }
 
