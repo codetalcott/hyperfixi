@@ -31,7 +31,7 @@ type BinaryOperationInput = z.infer<typeof BinaryOperationInputSchema>;
 // Enhanced Addition Expression
 // ============================================================================
 
-export class EnhancedAdditionExpression implements BaseTypedExpression<BinaryOperationInput, number> {
+export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
   public readonly name = 'addition';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left + right';
@@ -331,7 +331,7 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<BinaryOpe
 // Enhanced Subtraction Expression
 // ============================================================================
 
-export class EnhancedSubtractionExpression implements BaseTypedExpression<BinaryOperationInput, number> {
+export class EnhancedSubtractionExpression implements BaseTypedExpression<number> {
   public readonly name = 'subtraction';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left - right';
@@ -482,7 +482,7 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<Binary
 // Enhanced Multiplication Expression
 // ============================================================================
 
-export class EnhancedMultiplicationExpression implements BaseTypedExpression<BinaryOperationInput, number> {
+export class EnhancedMultiplicationExpression implements BaseTypedExpression<number> {
   public readonly name = 'multiplication';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left * right';
@@ -626,7 +626,7 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<Bin
 // Enhanced Division Expression
 // ============================================================================
 
-export class EnhancedDivisionExpression implements BaseTypedExpression<BinaryOperationInput, number> {
+export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
   public readonly name = 'division';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left / right';
@@ -787,7 +787,7 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<BinaryOpe
 // Enhanced Modulo Expression
 // ============================================================================
 
-export class EnhancedModuloExpression implements BaseTypedExpression<BinaryOperationInput, number> {
+export class EnhancedModuloExpression implements BaseTypedExpression<number> {
   public readonly name = 'modulo';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left mod right';

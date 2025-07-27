@@ -141,6 +141,30 @@ export interface TypedExecutionContext extends ExecutionContext {
 // ============================================================================
 
 /**
+ * Parse error for hyperscript compilation
+ */
+export interface ParseError {
+  readonly name: string;
+  readonly message: string;
+  readonly line: number;
+  readonly column: number;
+  readonly source?: string;
+}
+
+/**
+ * AST Node for parser compatibility (unified definition)
+ */
+export interface ASTNode {
+  readonly type: string;
+  readonly line?: number;
+  readonly column?: number;
+  readonly start?: number;
+  readonly end?: number;
+  readonly raw?: string;
+  [key: string]: unknown;
+}
+
+/**
  * Enhanced error structure with detailed information
  */
 export interface EnhancedError {
@@ -331,17 +355,7 @@ export interface BaseCommand {
 // AST Integration Types
 // ============================================================================
 
-/**
- * AST node base type for parser integration
- */
-export interface ASTNode {
-  readonly type: string;
-  readonly start?: number | undefined;
-  readonly end?: number | undefined;
-  readonly raw?: string | undefined;
-  // Allow additional properties for different node types
-  [key: string]: unknown;
-}
+// ASTNode is already defined above - this was a duplicate
 
 /**
  * Binary expression AST node

@@ -30,7 +30,18 @@ export type {
   FeatureCategory,
   ExpressionMetadata,
   LLMDocumentation,
-  ExpressionEvaluationOptions
+  ExpressionEvaluationOptions,
+  ParseError,
+  ASTNode
+} from './base-types.js';
+
+// Import types needed for definitions in this file
+import type {
+  TypedExecutionContext,
+  ValidationResult,
+  ValidationError,
+  HyperScriptValue,
+  HyperScriptValueType
 } from './base-types.js';
 
 // ============================================================================

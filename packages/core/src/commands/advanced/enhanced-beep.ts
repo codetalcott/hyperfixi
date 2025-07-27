@@ -52,7 +52,9 @@ export class EnhancedBeepCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<BeepCommandInput> {
       // Beep command accepts any input including no input
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           expressions: Array.isArray(input) ? input : (input !== undefined ? [input] : [])
         }

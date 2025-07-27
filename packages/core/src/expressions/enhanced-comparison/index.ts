@@ -31,7 +31,7 @@ type ComparisonInput = z.infer<typeof ComparisonInputSchema>;
 // Enhanced Greater Than Expression
 // ============================================================================
 
-export class EnhancedGreaterThanExpression implements BaseTypedExpression<ComparisonInput, boolean> {
+export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'greaterThan';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left > right';
@@ -184,7 +184,7 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<Compar
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid comparison input: ${err.message}`,
-            suggestion: 'Provide valid left and right operands for comparison'
+            suggestions: 'Provide valid left and right operands for comparison'
           })),
           suggestions: [
             'Provide both left and right operands',
@@ -204,8 +204,7 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<Compar
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestion: 'Check input structure and types'
+          message: 'Validation failed with exception'
         }],
         suggestions: ['Check input structure and types']
       };
@@ -285,7 +284,7 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<Compar
 // Enhanced Less Than Expression
 // ============================================================================
 
-export class EnhancedLessThanExpression implements BaseTypedExpression<ComparisonInput, boolean> {
+export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'lessThan';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left < right';
@@ -454,7 +453,7 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<Compariso
 // Enhanced Greater Than Or Equal Expression
 // ============================================================================
 
-export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression<ComparisonInput, boolean> {
+export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'greaterThanOrEqual';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left >= right';
@@ -617,7 +616,7 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
 // Enhanced Less Than Or Equal Expression
 // ============================================================================
 
-export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<ComparisonInput, boolean> {
+export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'lessThanOrEqual';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left <= right';
@@ -780,7 +779,7 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<Co
 // Enhanced Equality Expression
 // ============================================================================
 
-export class EnhancedEqualityExpression implements BaseTypedExpression<ComparisonInput, boolean> {
+export class EnhancedEqualityExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'equals';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left == right';
@@ -948,7 +947,7 @@ export class EnhancedEqualityExpression implements BaseTypedExpression<Compariso
 // Enhanced Inequality Expression
 // ============================================================================
 
-export class EnhancedInequalityExpression implements BaseTypedExpression<ComparisonInput, boolean> {
+export class EnhancedInequalityExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'notEquals';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left != right';

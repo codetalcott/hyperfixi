@@ -308,7 +308,7 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
 // Enhanced Its Expression (Generic Property Access)
 // ============================================================================
 
-export class EnhancedItsExpression implements BaseTypedExpression<PossessiveAccessInput, HyperScriptValue> {
+export class EnhancedItsExpression implements BaseTypedExpression<HyperScriptValue> {
   public readonly name = 'its';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'target its property';
@@ -523,7 +523,7 @@ export class EnhancedItsExpression implements BaseTypedExpression<PossessiveAcce
 // Enhanced Attribute Expression (@attribute syntax)
 // ============================================================================
 
-export class EnhancedAttributeExpression implements BaseTypedExpression<AttributeAccessInput, string | null> {
+export class EnhancedAttributeExpression implements BaseTypedExpression<string | null> {
   public readonly name = 'attribute';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = '@attribute or element@attribute';

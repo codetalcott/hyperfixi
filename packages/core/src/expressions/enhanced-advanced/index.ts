@@ -104,8 +104,7 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
           isValid: false,
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch',
-            message: `Invalid lambda input: ${err.message}`,
-            suggestion: 'Provide parameters array and body string'
+            message: `Invalid lambda input: ${err.message}`
           })),
           suggestions: ['Provide valid parameters and body']
         };
@@ -114,7 +113,7 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
     } catch (error) {
       return {
         isValid: false,
-        errors: [{ type: 'runtime-error', message: 'Validation failed', suggestion: 'Check input' }],
+        errors: [{ type: 'runtime-error', message: 'Validation failed' }],
         suggestions: ['Check input structure']
       };
     }
@@ -294,8 +293,7 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
           isValid: false,
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch',
-            message: `Invalid promise input: ${err.message}`,
-            suggestion: 'Provide executor string'
+            message: `Invalid promise input: ${err.message}`
           })),
           suggestions: ['Provide valid executor string']
         };
@@ -304,7 +302,7 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
     } catch (error) {
       return {
         isValid: false,
-        errors: [{ type: 'runtime-error', message: 'Validation failed', suggestion: 'Check input' }],
+        errors: [{ type: 'runtime-error', message: 'Validation failed' }],
         suggestions: ['Check input structure']
       };
     }
@@ -461,8 +459,7 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
           isValid: false,
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch',
-            message: `Invalid await input: ${err.message}`,
-            suggestion: 'Provide promise to await'
+            message: `Invalid await input: ${err.message}`
           })),
           suggestions: ['Provide valid promise']
         };
@@ -471,7 +468,7 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
     } catch (error) {
       return {
         isValid: false,
-        errors: [{ type: 'runtime-error', message: 'Validation failed', suggestion: 'Check input' }],
+        errors: [{ type: 'runtime-error', message: 'Validation failed' }],
         suggestions: ['Check input structure']
       };
     }
@@ -598,8 +595,7 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
           isValid: false,
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch',
-            message: `Invalid error input: ${err.message}`,
-            suggestion: 'Provide message string'
+            message: `Invalid error input: ${err.message}`
           })),
           suggestions: ['Provide valid error message']
         };
@@ -608,7 +604,7 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
     } catch (error) {
       return {
         isValid: false,
-        errors: [{ type: 'runtime-error', message: 'Validation failed', suggestion: 'Check input' }],
+        errors: [{ type: 'runtime-error', message: 'Validation failed' }],
         suggestions: ['Check input structure']
       };
     }
@@ -719,8 +715,7 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
           isValid: false,
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch',
-            message: `Invalid typeof input: ${err.message}`,
-            suggestion: 'Provide value to check'
+            message: `Invalid typeof input: ${err.message}`
           })),
           suggestions: ['Provide valid value']
         };
@@ -729,7 +724,7 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
     } catch (error) {
       return {
         isValid: false,
-        errors: [{ type: 'runtime-error', message: 'Validation failed', suggestion: 'Check input' }],
+        errors: [{ type: 'runtime-error', message: 'Validation failed' }],
         suggestions: ['Check input structure']
       };
     }

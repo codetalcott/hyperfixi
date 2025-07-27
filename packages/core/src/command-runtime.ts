@@ -55,7 +55,8 @@ export class CommandRuntime {
    * Execute PUT command: put <value> into/before/after/at <target>
    */
   private async executePutCommand(command: CommandNode, context: ExecutionContext): Promise<void> {
-    const [valueExpr, targetExpr] = command.args;
+    const args = command.args as unknown[];
+    const [valueExpr, targetExpr] = args;
     const value = await this.evaluateExpression(valueExpr, context);
     const target = await this.resolveTarget(targetExpr, context);
 
@@ -80,7 +81,8 @@ export class CommandRuntime {
    * Execute ADD command: add <class/attribute> to <target>
    */
   private async executeAddCommand(command: CommandNode, context: ExecutionContext): Promise<void> {
-    const [itemExpr, targetExpr] = command.args;
+    const args = command.args as unknown[];
+    const [itemExpr, targetExpr] = args;
     const item = await this.evaluateExpression(itemExpr, context);
     const targets = await this.resolveTargets(targetExpr, context);
 
@@ -105,7 +107,8 @@ export class CommandRuntime {
    * Execute REMOVE command: remove <class/attribute> from <target>
    */
   private async executeRemoveCommand(command: CommandNode, context: ExecutionContext): Promise<void> {
-    const [itemExpr, targetExpr] = command.args;
+    const args = command.args as unknown[];
+    const [itemExpr, targetExpr] = args;
     const item = await this.evaluateExpression(itemExpr, context);
     const targets = await this.resolveTargets(targetExpr, context);
 
@@ -130,7 +133,8 @@ export class CommandRuntime {
    * Execute TOGGLE command: toggle <class/attribute> on <target>
    */
   private async executeToggleCommand(command: CommandNode, context: ExecutionContext): Promise<void> {
-    const [itemExpr, targetExpr] = command.args;
+    const args = command.args as unknown[];
+    const [itemExpr, targetExpr] = args;
     const item = await this.evaluateExpression(itemExpr, context);
     const targets = targetExpr ? await this.resolveTargets(targetExpr, context) : [context.me];
     const validTargets = Array.isArray(targets) ? targets.filter((t): t is Element => t != null) : targets;
@@ -160,7 +164,8 @@ export class CommandRuntime {
    * Execute SET command: set <variable> to <value>
    */
   private async executeSetCommand(command: CommandNode, context: ExecutionContext): Promise<void> {
-    const [variableExpr, valueExpr] = command.args;
+    const args = command.args as unknown[];
+    const [variableExpr, valueExpr] = args;
     const value = await this.evaluateExpression(valueExpr, context);
     
     // Handle variable assignment
@@ -173,7 +178,8 @@ export class CommandRuntime {
    * Execute LOG command: log <expression>
    */
   private async executeLogCommand(command: CommandNode, context: ExecutionContext): Promise<void> {
-    const [expressionArg] = command.args;
+    const args = command.args as unknown[];
+    const [expressionArg] = args;
     const value = await this.evaluateExpression(expressionArg, context);
     console.log(value);
   }

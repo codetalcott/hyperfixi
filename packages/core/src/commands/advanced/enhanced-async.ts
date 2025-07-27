@@ -49,12 +49,12 @@ export class EnhancedAsyncCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<AsyncCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
-            message: 'Async command requires at least one command to execute',
-            suggestion: 'Provide command objects to execute asynchronously'
-          }
+            message: 'Async command requires at least one command to execute'
+          }],
+          suggestions: ['Provide command objects to execute asynchronously']
         };
       }
 
@@ -62,23 +62,23 @@ export class EnhancedAsyncCommand implements TypedCommandImplementation<
 
       if (!inputObj.commands || !Array.isArray(inputObj.commands)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'type-mismatch',
-            message: 'Commands must be provided as an array',
-            suggestion: 'Provide an array of command objects'
-          }
+            message: 'Commands must be provided as an array'
+          }],
+          suggestions: ['Provide an array of command objects']
         };
       }
 
       if (inputObj.commands.length === 0) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
-            message: 'Async command requires at least one command to execute',
-            suggestion: 'Provide at least one command to execute'
-          }
+            message: 'Async command requires at least one command to execute'
+          }],
+          suggestions: ['Provide at least one command to execute']
         };
       }
 
@@ -88,18 +88,20 @@ export class EnhancedAsyncCommand implements TypedCommandImplementation<
             typeof command.name !== 'string' || 
             typeof command.execute !== 'function') {
           return {
-            success: false,
-            error: {
+            isValid: false,
+            errors: [{
               type: 'type-mismatch',
-              message: 'All items must be valid command objects with name and execute method',
-              suggestion: 'Ensure all commands have name and execute properties'
-            }
+              message: 'All items must be valid command objects with name and execute method'
+            }],
+            suggestions: ['Ensure all commands have name and execute properties']
           };
         }
       }
 
       return {
-        success: true,
+        isValid: true,
+        errors: [],
+        suggestions: [],
         data: {
           commands: inputObj.commands
         }
@@ -121,7 +123,7 @@ export class EnhancedAsyncCommand implements TypedCommandImplementation<
 
       // Set the last result in context
       if (results.length > 0) {
-        context.it = results[results.length - 1];
+        (context as any).it = results[results.length - 1];
       }
 
       return {
