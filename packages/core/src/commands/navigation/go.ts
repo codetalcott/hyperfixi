@@ -13,7 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
-import { dispatchCustomEvent } from '../../core/events.ts';
+import { dispatchCustomEvent } from '../../core/events.js';
 
 export interface GoCommandOptions {
   validateUrls?: boolean;
@@ -228,7 +228,7 @@ export class GoCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'empty-input' as const,
+            type: 'missing-argument' as const,
             message: 'Go command requires at least one argument',
             suggestions: ['Use supported go command patterns']
           }],
@@ -894,7 +894,7 @@ export class GoCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'invalid-format' as const,
+            type: 'syntax-error' as const,
             message: `Invalid URL format: "${url}"`,
             suggestions: ['Use valid URL format like "https://example.com"']
           }],

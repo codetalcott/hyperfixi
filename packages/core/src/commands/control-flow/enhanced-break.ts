@@ -43,7 +43,7 @@ export class EnhancedBreakCommand implements TypedCommandImplementation<
   };
 
   validation = {
-    validate(input: unknown): ValidationResult<BreakCommandInput> {
+    validate(_input: unknown): ValidationResult<BreakCommandInput> {
       // Break command accepts any input or no input
       return {
         isValid: true,
@@ -55,8 +55,8 @@ export class EnhancedBreakCommand implements TypedCommandImplementation<
   };
 
   async execute(
-    input: BreakCommandInput,
-    context: TypedExecutionContext
+    _input: BreakCommandInput,
+    _context: TypedExecutionContext
   ): Promise<BreakCommandOutput> {
     // Throw a special break error that can be caught and handled by loop commands
     const breakError = new Error('BREAK_LOOP');

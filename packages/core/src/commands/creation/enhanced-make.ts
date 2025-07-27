@@ -158,7 +158,7 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
     input: MakeCommandInput,
     context: TypedExecutionContext
   ): Promise<MakeCommandOutput> {
-    const { article, expression, constructorArgs = [], variableName } = input;
+    const { expression, constructorArgs = [], variableName } = input;
 
     let result: any;
     let type: 'dom-element' | 'class-instance';
@@ -188,7 +188,7 @@ export class EnhancedMakeCommand implements TypedCommandImplementation<
     };
   }
 
-  private createDOMElement(elementExpression: string, context: TypedExecutionContext): HTMLElement {
+  private createDOMElement(elementExpression: string, _context: TypedExecutionContext): HTMLElement {
     // Parse the element expression: <tag#id.class1.class2/>
     const content = elementExpression.slice(1, -2); // Remove < and />
     

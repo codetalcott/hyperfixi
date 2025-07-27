@@ -7,6 +7,11 @@
 // Core Context Types and Base Classes
 // ============================================================================
 
+import type {
+  TypedContextImplementation,
+  ValidationResult
+} from '../types/enhanced-context.js';
+
 export type {
   ContextCategory,
   ContextMetadata,

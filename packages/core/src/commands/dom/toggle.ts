@@ -13,7 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
-import { dispatchCustomEvent } from '../../core/events.ts';
+import { dispatchCustomEvent } from '../../core/events.js';
 
 export interface ToggleCommandOptions {
   delimiter?: string;
@@ -112,10 +112,10 @@ export class ToggleCommand implements TypedCommandImplementation<
     tags: ['dom', 'css', 'classes']
   };
   
-  private options: ToggleCommandOptions;
+  private _options: ToggleCommandOptions;
 
   constructor(options: ToggleCommandOptions = {}) {
-    this.options = {
+    this._options = {
       delimiter: ' ',
       ...options,
     };
@@ -348,7 +348,7 @@ export class ToggleCommand implements TypedCommandImplementation<
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestions: this.getValidationSuggestion(err.code, err.path)
+            suggestions: [this.getValidationSuggestion(err.code, err.path)]
           })),
           suggestions: ['Use string or string array for classes, and valid target selector']
         };
@@ -362,7 +362,7 @@ export class ToggleCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'empty-input',
+            type: 'missing-argument',
             message: 'Class expression cannot be empty',
             suggestions: ['Provide valid CSS class names']
           }],

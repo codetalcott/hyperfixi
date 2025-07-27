@@ -11,8 +11,9 @@ import type {
   EvaluationResult,
   TypedExpressionImplementation,
   LLMDocumentation,
-  ValidationResult
-} from '../../types/enhanced-core.ts';
+  ValidationResult,
+  ValidationError
+} from '../../types/enhanced-core.js';
 import type { TypedExpressionContext } from '../../test-utilities.ts';
 
 // ============================================================================

@@ -1,6 +1,6 @@
 /**
  * Enhanced Set Command Implementation
- * Sets variables and element properties to specified values
+ * Sets values to variables, element properties, or attributes
  * 
  * Syntax: set <target> to <value>
  * 
@@ -16,17 +16,15 @@ export interface SetCommandInput {
   value: any;
   toKeyword?: 'to'; // For syntax validation
   scope?: 'global' | 'local';
-}],
-          suggestions: []
+}
 
 // Output type definition  
 export interface SetCommandOutput {
   target: string | HTMLElement;
-  oldValue: any;
-  newValue: any;
-  targetType: 'variable' | 'element-property' | 'element-attribute' | 'context';
-}],
-          suggestions: []
+  value: any;
+  previousValue?: any;
+  targetType: 'variable' | 'attribute' | 'property' | 'element';
+}
 
 /**
  * Enhanced Set Command with full type safety and validation
@@ -38,13 +36,12 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
 > {
   metadata = {
     name: 'set',
-    description: 'The set command assigns values to variables, element properties, or context references. It supports both local and global scope assignment.',
+    description: 'The set command assigns values to variables, element properties, or attributes. It supports both local and global scope assignment.',
     examples: [
-      'set counter to 0',
-      'set global theme to "dark"',
-      'set me.className to "active"',
-      'set #myElement.value to "Hello World"',
-      'set result to user.name'
+      'set myVar to "value"',
+      'set @data-theme to "dark"',
+      'set my innerHTML to "content"',
+      'set global count to 10'
     ],
     syntax: 'set <target> to <value>',
     category: 'data' as const,
@@ -57,73 +54,39 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'syntax-error',
-            message: 'Set command requires an object input',
-            suggestions: ['Provide an object with target and value properties']
+            type: 'missing-argument',
+            message: 'Set command requires target and value',
+            suggestions: ['Provide target and value with "to" keyword']
           }],
-          suggestions: []
+          suggestions: ['Provide target and value with "to" keyword']
         };
-      }],
-          suggestions: []
+      }
 
       const inputObj = input as any;
 
-      // Validate target is present
       if (!inputObj.target) {
         return {
           isValid: false,
           errors: [{
             type: 'missing-argument',
-            message: 'Set command requires a target to set',
-            suggestions: ['Provide a variable name, element reference, or property path']
+            message: 'Set command requires a target',
+            suggestions: ['Provide a variable name, attribute, or property reference']
           }],
-          suggestions: []
+          suggestions: ['Provide a variable name, attribute, or property reference']
         };
-      }],
-          suggestions: []
+      }
 
-      // Validate target type
-      if (typeof inputObj.target !== 'string' && !(inputObj.target instanceof HTMLElement)) {
-        return {
-          isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Target must be a string (variable/property name) or HTMLElement',
-            suggestions: ['Use a variable name like "counter" or element reference']
-          }],
-          suggestions: []
-        };
-      }],
-          suggestions: []
-
-      // Validate value is present (can be any type including null/undefined)
-      if (!('value' in inputObj)) {
+      if (inputObj.value === undefined) {
         return {
           isValid: false,
           errors: [{
             type: 'missing-argument',
-            message: 'Set command requires a value to assign',
-            suggestions: ['Provide the value to assign to the target']
+            message: 'Set command requires a value',
+            suggestions: ['Provide a value to set']
           }],
-          suggestions: []
+          suggestions: ['Provide a value to set']
         };
-      }],
-          suggestions: []
-
-      // Validate scope if provided
-      if (inputObj.scope !== undefined && 
-          inputObj.scope !== 'global' && inputObj.scope !== 'local') {
-        return {
-          isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Scope must be "global" or "local"',
-            suggestions: ['Use "global" or "local" scope, or omit for default behavior']
-          }],
-          suggestions: []
-        };
-      }],
-          suggestions: []
+      }
 
       return {
         isValid: true,
@@ -134,11 +97,9 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
           value: inputObj.value,
           toKeyword: inputObj.toKeyword,
           scope: inputObj.scope
-        }],
-          suggestions: []
+        }
       };
-    }],
-          suggestions: []
+    }
   };
 
   async execute(
@@ -147,206 +108,246 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
   ): Promise<SetCommandOutput> {
     const { target, value, scope } = input;
 
-    let oldValue: any;
-    let targetType: 'variable' | 'element-property' | 'element-attribute' | 'context';
+    // Handle different target types
+    if (typeof target === 'string') {
+      // Handle attribute syntax: @attr or @data-attr
+      if (target.startsWith('@')) {
+        return this.setElementAttribute(context, target.substring(1), value);
+      }
 
+      // Handle possessive expressions like "my innerHTML", "my textContent"
+      const possessiveMatch = target.match(/^(my|its?|your?)\\s+(.+)$/);
+      if (possessiveMatch) {
+        const [, possessive, property] = possessiveMatch;
+        return this.setElementProperty(context, possessive, property, value);
+      }
+
+      // Handle scoped variables
+      if (scope === 'global') {
+        return this.setGlobalVariable(context, target, value);
+      }
+
+      // Handle regular variable
+      return this.setLocalVariable(context, target, value);
+    }
+
+    // Handle HTML element
     if (target instanceof HTMLElement) {
-      // Direct element assignment
-      oldValue = target.textContent;
-      target.textContent = String(value);
-      targetType = 'element-property';
-    } else if (typeof target === 'string') {
-      // Handle different string target types
-      if (target.includes('.')) {
-        // Property/attribute access (e.g., "me.className", "element.value")
-        const result = this.setPropertyPath(target, value, context);
-        oldValue = result.oldValue;
-        targetType = result.targetType;
-      } else if (target === 'me' || target === 'it' || target === 'you' || target === 'result') {
-        // Context references
-        oldValue = this.getContextValue(target, context);
-        this.setContextValue(target, value, context);
-        targetType = 'context';
-      } else {
-        // Variable assignment
-        oldValue = this.getVariableValue(target, context, scope);
-        this.setVariableValue(target, value, context, scope);
-        targetType = 'variable';
-      }],
-          suggestions: []
-    } else {
-      // Fallback for other types
-      oldValue = undefined;
-      context.it = value;
-      targetType = 'context';
-    }],
-          suggestions: []
+      return this.setElementValue(context, target, value);
+    }
+
+    throw new Error(`Invalid target type: ${typeof target}`);
+  }
+
+  private setLocalVariable(
+    context: TypedExecutionContext,
+    variableName: string,
+    value: any
+  ): SetCommandOutput {
+    // Get previous value
+    const previousValue = context.locals?.get(variableName) || 
+                         context.globals?.get(variableName) || 
+                         context.variables?.get(variableName);
+
+    // Set the value
+    context.locals.set(variableName, value);
+
+    // Set in context.it
+    context.it = value;
 
     return {
-      target,
-      oldValue,
-      newValue: value,
-      targetType
+      target: variableName,
+      value,
+      previousValue,
+      targetType: 'variable'
     };
-  }],
-          suggestions: []
+  }
 
-  private setPropertyPath(path: string, value: any, context: TypedExecutionContext): { oldValue: any; targetType: 'element-property' | 'element-attribute' } {
-    const parts = path.split('.');
-    const objectRef = parts[0];
-    const propertyName = parts[1];
+  private setGlobalVariable(
+    context: TypedExecutionContext,
+    variableName: string,
+    value: any
+  ): SetCommandOutput {
+    // Get previous value
+    const previousValue = context.globals?.get(variableName) || 
+                         context.locals?.get(variableName) || 
+                         context.variables?.get(variableName);
 
-    let targetObject: any;
+    // Set the value in global scope
+    context.globals.set(variableName, value);
 
-    // Resolve the target object
-    if (objectRef === 'me') {
-      targetObject = context.me;
-    } else if (objectRef === 'it') {
-      targetObject = context.it;
-    } else if (objectRef === 'you') {
-      targetObject = context.you;
-    } else {
-      // Try to resolve as variable
-      targetObject = this.getVariableValue(objectRef, context);
-    }],
-          suggestions: []
+    // Set in context.it
+    context.it = value;
 
-    if (!targetObject) {
-      throw new Error(`Cannot resolve target object: ${objectRef}`);
-    }],
-          suggestions: []
+    return {
+      target: variableName,
+      value,
+      previousValue,
+      targetType: 'variable'
+    };
+  }
 
-    const oldValue = targetObject[propertyName];
+  private setElementAttribute(
+    context: TypedExecutionContext,
+    attributeName: string,
+    value: any
+  ): SetCommandOutput {
+    if (!context.me) {
+      throw new Error('No element context available for attribute setting');
+    }
 
-    // Check if this is an element attribute (starts with data- or common attributes)
-    if (targetObject instanceof HTMLElement && 
-        (propertyName.startsWith('data-') || 
-         ['id', 'class', 'title', 'alt', 'src', 'href', 'value'].includes(propertyName))) {
-      targetObject.setAttribute(propertyName, String(value));
-      return { oldValue, targetType: 'element-attribute' };
-    } else {
-      // Regular property assignment
-      targetObject[propertyName] = value;
-      return { oldValue, targetType: 'element-property' };
-    }],
-          suggestions: []
-  }],
-          suggestions: []
+    const previousValue = context.me.getAttribute(attributeName);
 
-  private getContextValue(ref: string, context: TypedExecutionContext): any {
-    switch (ref) {
-      case 'me': return context.me;
-      case 'it': return context.it;
-      case 'you': return context.you;
-      case 'result': return context.it; // result is an alias for it
-      default: return undefined;
-    }],
-          suggestions: []
-  }],
-          suggestions: []
+    // Set the attribute
+    context.me.setAttribute(attributeName, String(value));
+    context.it = value;
 
-  private setContextValue(ref: string, value: any, context: TypedExecutionContext): void {
-    switch (ref) {
-      case 'me':
-        context.me = value;
+    return {
+      target: `@${attributeName}`,
+      value,
+      previousValue,
+      targetType: 'attribute'
+    };
+  }
+
+  private setElementProperty(
+    context: TypedExecutionContext,
+    possessive: string,
+    property: string,
+    value: any
+  ): SetCommandOutput {
+    let targetElement: HTMLElement;
+
+    // Resolve possessive reference
+    switch (possessive) {
+      case 'my':
+        if (!context.me) throw new Error('No "me" element in context');
+        targetElement = context.me;
         break;
+      case 'its':
       case 'it':
-      case 'result':
-        context.it = value;
+        if (!(context.it instanceof HTMLElement)) throw new Error('Context "it" is not an element');
+        targetElement = context.it;
         break;
+      case 'your':
       case 'you':
-        context.you = value;
+        if (!context.you) throw new Error('No "you" element in context');
+        targetElement = context.you;
         break;
-    }],
-          suggestions: []
-  }],
-          suggestions: []
+      default:
+        throw new Error(`Unknown possessive: ${possessive}`);
+    }
 
-  private getVariableValue(name: string, context: TypedExecutionContext, preferredScope?: string): any {
-    // If preferred scope is specified, check that first
-    if (preferredScope === 'global' && context.globals && context.globals.has(name)) {
-      return context.globals.get(name);
-    }],
-          suggestions: []
-    
-    // Check local variables first (unless global is preferred)
-    if (preferredScope !== 'global' && context.locals && context.locals.has(name)) {
-      return context.locals.get(name);
-    }],
-          suggestions: []
-    
-    // Check global variables
-    if (context.globals && context.globals.has(name)) {
-      return context.globals.get(name);
-    }],
-          suggestions: []
-    
-    // Check general variables  
-    if (context.variables && context.variables.has(name)) {
-      return context.variables.get(name);
-    }],
-          suggestions: []
-    
-    // Check local variables as fallback
-    if (preferredScope === 'global' && context.locals && context.locals.has(name)) {
-      return context.locals.get(name);
-    }],
-          suggestions: []
-    
-    return undefined;
-  }],
-          suggestions: []
+    // Get previous property value
+    const previousValue = this.getElementProperty(targetElement, property);
 
-  private setVariableValue(name: string, value: any, context: TypedExecutionContext, preferredScope?: string): void {
-    // If preferred scope is specified, handle it
-    if (preferredScope === 'global') {
-      if (!context.globals) {
-        context.globals = new Map();
-      }],
-          suggestions: []
-      context.globals.set(name, value);
+    // Set the property
+    this.setElementPropertyValue(targetElement, property, value);
+    context.it = value;
+
+    return {
+      target: `${possessive} ${property}`,
+      value,
+      previousValue,
+      targetType: 'property'
+    };
+  }
+
+  private setElementValue(
+    context: TypedExecutionContext,
+    element: HTMLElement,
+    value: any
+  ): SetCommandOutput {
+    const previousValue = this.getElementValue(element);
+
+    // Set the value
+    this.setElementValueDirect(element, value);
+    context.it = value;
+
+    return {
+      target: element,
+      value,
+      previousValue,
+      targetType: 'element'
+    };
+  }
+
+  private getElementProperty(element: HTMLElement, property: string): any {
+    // Handle common properties
+    if (property === 'textContent') return element.textContent;
+    if (property === 'innerHTML') return element.innerHTML;
+    if (property === 'innerText') return element.innerText;
+    if (property === 'value' && 'value' in element) return (element as any).value;
+    if (property === 'id') return element.id;
+    if (property === 'className') return element.className;
+
+    // Handle style properties
+    if (property.includes('-') || property in element.style) {
+      return element.style.getPropertyValue(property) || (element.style as any)[property];
+    }
+
+    // Handle generic property
+    return (element as any)[property];
+  }
+
+  private setElementPropertyValue(element: HTMLElement, property: string, value: any): void {
+    // Handle common properties
+    if (property === 'textContent') {
+      element.textContent = String(value);
       return;
-    }],
-          suggestions: []
-    
-    // If variable exists in local scope, update it
-    if (context.locals && context.locals.has(name)) {
-      context.locals.set(name, value);
+    }
+    if (property === 'innerHTML') {
+      element.innerHTML = String(value);
       return;
-    }],
-          suggestions: []
-    
-    // If variable exists in global scope, update it
-    if (context.globals && context.globals.has(name)) {
-      context.globals.set(name, value);
+    }
+    if (property === 'innerText') {
+      element.innerText = String(value);
       return;
-    }],
-          suggestions: []
-    
-    // If variable exists in general variables, update it
-    if (context.variables && context.variables.has(name)) {
-      context.variables.set(name, value);
+    }
+    if (property === 'value' && 'value' in element) {
+      (element as any).value = value;
       return;
-    }],
-          suggestions: []
-    
-    // Create new local variable
-    if (!context.locals) {
-      context.locals = new Map();
-    }],
-          suggestions: []
-    context.locals.set(name, value);
-  }],
-          suggestions: []
-}],
-          suggestions: []
+    }
+    if (property === 'id') {
+      element.id = String(value);
+      return;
+    }
+    if (property === 'className') {
+      element.className = String(value);
+      return;
+    }
+
+    // Handle style properties
+    if (property.includes('-') || property in element.style) {
+      element.style.setProperty(property, String(value));
+      return;
+    }
+
+    // Handle generic property
+    (element as any)[property] = value;
+  }
+
+  private getElementValue(element: HTMLElement): any {
+    if ('value' in element) {
+      return (element as any).value;
+    }
+    return element.textContent;
+  }
+
+  private setElementValueDirect(element: HTMLElement, value: any): void {
+    if ('value' in element) {
+      (element as any).value = value;
+    } else {
+      element.textContent = String(value);
+    }
+  }
+}
 
 /**
  * Factory function to create the enhanced set command
  */
 export function createEnhancedSetCommand(): EnhancedSetCommand {
   return new EnhancedSetCommand();
-}],
-          suggestions: []
+}
 
 export default EnhancedSetCommand;

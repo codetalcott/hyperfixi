@@ -12,13 +12,13 @@ import type {
   TemplateRenderStrategy,
   TemplateLLMDocumentation
 } from '../../../types/enhanced-templates.ts';
-import { IfDirectiveInputSchema } from '../../../types/enhanced-templates.ts';
+import { IfDirectiveInputSchema } from '../../../types/enhanced-templates.js';
 import type {
   TypedResult,
   ExpressionMetadata,
   ValidationResult
 } from '../../../types/enhanced-expressions.ts';
-import { TemplateContextUtils } from '../enhanced-template-context.ts';
+import { TemplateContextUtils } from '../enhanced-template-context.js';
 
 /**
  * Enhanced @if directive with full type safety for LLM agents

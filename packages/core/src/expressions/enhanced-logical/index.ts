@@ -14,7 +14,9 @@ import type {
   ValidationResult,
   TypedResult,
   LLMDocumentation,
-  HyperScriptValueType
+  HyperScriptValueType,
+  TypedExpressionImplementation,
+  EvaluationResult
 } from '../../types/base-types.js';
 
 // ============================================================================

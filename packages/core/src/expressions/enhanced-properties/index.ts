@@ -12,7 +12,8 @@ import type {
   ValidationResult,
   TypedResult,
   LLMDocumentation,
-  HyperScriptValueType
+  HyperScriptValueType,
+  EvaluationResult
 } from '../../types/base-types.js';
 import type { ExpressionCategory } from '../../types/enhanced-expressions.js';
 

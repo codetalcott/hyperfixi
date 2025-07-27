@@ -33,6 +33,10 @@ export type {
 // Commands - DOM Manipulation
 // ============================================================================
 
+import { HideCommand } from './commands/dom/hide.js';
+import { ShowCommand } from './commands/dom/show.js';
+import { ToggleCommand } from './commands/dom/toggle.js';
+
 export { HideCommand, createHideCommand } from './commands/dom/hide.js';
 export { ShowCommand } from './commands/dom/show.js';
 export { ToggleCommand } from './commands/dom/toggle.js';

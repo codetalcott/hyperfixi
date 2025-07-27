@@ -43,7 +43,7 @@ export class EnhancedContinueCommand implements TypedCommandImplementation<
   };
 
   validation = {
-    validate(input: unknown): ValidationResult<ContinueCommandInput> {
+    validate(_input: unknown): ValidationResult<ContinueCommandInput> {
       // Continue command accepts any input or no input
       return {
         isValid: true,
@@ -55,8 +55,8 @@ export class EnhancedContinueCommand implements TypedCommandImplementation<
   };
 
   async execute(
-    input: ContinueCommandInput,
-    context: TypedExecutionContext
+    _input: ContinueCommandInput,
+    _context: TypedExecutionContext
   ): Promise<ContinueCommandOutput> {
     // Throw a special continue error that can be caught and handled by loop commands
     const continueError = new Error('CONTINUE_LOOP');

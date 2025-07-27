@@ -423,7 +423,7 @@ export class SendCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'invalid-type',
+            type: 'type-mismatch',
             message: 'Event name must be a string',
             suggestions: ['Use a string for the event name']
           }],
@@ -435,7 +435,7 @@ export class SendCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'empty-value',
+            type: 'missing-argument',
             message: 'Event name cannot be empty',
             suggestions: ['Provide a valid event name']
           }],
@@ -448,7 +448,7 @@ export class SendCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'invalid-format',
+            type: 'syntax-error',
             message: 'Event name cannot contain spaces',
             suggestions: ['Use camelCase or kebab-case for event names']
           }],
@@ -473,7 +473,7 @@ export class SendCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'conflicting-keywords',
+            type: 'syntax-error',
             message: 'Cannot use both "to" and "on" keywords in the same send command',
             suggestions: ['Use either "to" or "on", not both']
           }],

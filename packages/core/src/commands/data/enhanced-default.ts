@@ -52,12 +52,13 @@ export class EnhancedDefaultCommand implements TypedCommandImplementation<
     validate(input: unknown): ValidationResult<DefaultCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Default command requires target and value',
             suggestions: ['Provide target and value with "to" keyword']
-          }
+          }],
+          suggestions: ['Provide target and value with "to" keyword']
         };
       }
 
@@ -65,23 +66,25 @@ export class EnhancedDefaultCommand implements TypedCommandImplementation<
 
       if (!inputObj.target) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Default command requires a target',
             suggestions: ['Provide a variable name, attribute, or property reference']
-          }
+          }],
+          suggestions: ['Provide a variable name, attribute, or property reference']
         };
       }
 
       if (inputObj.value === undefined) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Default command requires a value',
             suggestions: ['Provide a default value to set']
-          }
+          }],
+          suggestions: ['Provide a default value to set']
         };
       }
 

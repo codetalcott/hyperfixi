@@ -11,7 +11,9 @@ import type {
   ExpressionMetadata,
   ValidationResult,
   TypedResult,
-  LLMDocumentation
+  LLMDocumentation,
+  TypedExpressionImplementation,
+  EvaluationResult
 } from '../../types/base-types.js';
 import type { ExpressionCategory } from '../../types/enhanced-expressions.js';
 

@@ -11,14 +11,14 @@ import type {
   TemplateDirectiveType,
   TemplateRenderStrategy,
   TemplateLLMDocumentation
-} from '../../../types/enhanced-templates.ts';
-import { ElseDirectiveInputSchema } from '../../../types/enhanced-templates.ts';
+} from '../../../types/enhanced-templates.js';
+import { ElseDirectiveInputSchema } from '../../../types/enhanced-templates.js';
 import type {
   TypedResult,
   ExpressionMetadata,
   ValidationResult
-} from '../../../types/enhanced-expressions.ts';
-import { TemplateContextUtils } from '../enhanced-template-context.ts';
+} from '../../../types/enhanced-expressions.js';
+import { TemplateContextUtils } from '../enhanced-template-context.js';
 
 /**
  * Enhanced @else directive with full type safety for LLM agents
@@ -271,7 +271,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid @else directive: ${err.message}`,
-            suggestions: `Expected { templateContent: string }, got: ${typeof input}`
+            suggestions: [`Expected { templateContent: string }, got: ${typeof input}`]
           })),
           suggestions: [
             'Provide templateContent as a string',
@@ -320,9 +320,9 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
    */
   validateTemplateContext(
     context: TemplateExecutionContext,
-    input: ElseDirectiveInput
+    _input: ElseDirectiveInput
   ): ValidationResult {
-    const errors: Array<{ type: string; message: string; suggestions: string }> = [];
+    const errors: Array<{ type: string; message: string; suggestions: string[] }> = [];
     
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {

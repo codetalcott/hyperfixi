@@ -15,7 +15,7 @@ import {
   getLLMRuntimeInfo,
   logger,
   performance,
-} from '../mod.ts';
+} from '../mod.js';
 
 // ============================================================================
 // CLI Interface

@@ -4,7 +4,7 @@
  */
 
 import type { ExecutionContext, TypedExpressionContext, ExpressionEvaluationOptions } from '../../types/base-types.js';
-import { enhancedPositionalExpressions } from './index.ts';
+import { enhancedPositionalExpressions } from './index.js';
 
 /**
  * Convert ExecutionContext to TypedExpressionContext for enhanced expressions

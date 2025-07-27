@@ -43,7 +43,7 @@ export class EnhancedHaltCommand implements TypedCommandImplementation<
   };
 
   validation = {
-    validate(input: unknown): ValidationResult<HaltCommandInput> {
+    validate(_input: unknown): ValidationResult<HaltCommandInput> {
       // Halt command accepts any input or no input
       return {
         isValid: true,
@@ -55,7 +55,7 @@ export class EnhancedHaltCommand implements TypedCommandImplementation<
   };
 
   async execute(
-    input: HaltCommandInput,
+    _input: HaltCommandInput,
     context: TypedExecutionContext
   ): Promise<HaltCommandOutput> {
     // Set a halt flag in the context if it supports it

@@ -151,7 +151,7 @@ export class TemplateCompiler {
    */
   private processContentForBuffer(content: string): string {
     // Handle ${} interpolation with automatic HTML escaping
-    return content.replace(/\$\{([^}]+)\}/g, (match, expression) => {
+    return content.replace(/\$\{([^}]+)\}/g, (_match, expression) => {
       const trimmedExpr = expression.trim();
       
       // Check for "unescaped" prefix

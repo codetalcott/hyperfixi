@@ -4,7 +4,7 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+// import { z } from 'zod'; // Currently unused
 import type {
   EnhancedTemplateDirective,
   TemplateExecutionContext,
@@ -13,14 +13,14 @@ import type {
   TemplateRenderStrategy,
   TemplateLLMDocumentation
 } from '../../../types/enhanced-templates.ts';
-import { RepeatDirectiveInputSchema } from '../../../types/enhanced-templates.ts';
+import { RepeatDirectiveInputSchema } from '../../../types/enhanced-templates.js';
 import type {
   TypedResult,
   ExpressionMetadata,
   ValidationResult
 } from '../../../types/enhanced-expressions.ts';
 import type { HyperScriptValue } from '../../../types/enhanced-core.ts';
-import { TemplateContextUtils } from '../enhanced-template-context.ts';
+import { TemplateContextUtils } from '../enhanced-template-context.js';
 
 /**
  * Enhanced @repeat directive with full type safety for LLM agents

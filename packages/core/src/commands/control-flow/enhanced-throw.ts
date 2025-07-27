@@ -82,9 +82,9 @@ export class EnhancedThrowCommand implements TypedCommandImplementation<
     }
   };
 
-  async execute(
+  execute(
     input: ThrowCommandInput,
-    context: TypedExecutionContext
+    _context: TypedExecutionContext
   ): Promise<ThrowCommandOutput> {
     const { message } = input;
 

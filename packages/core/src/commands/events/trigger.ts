@@ -506,7 +506,7 @@ export class TriggerCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'insufficient-arguments',
+            type: 'missing-argument',
             message: 'Trigger command requires at least: eventName, "on", target',
             suggestions: ['Use: trigger eventName on target']
           }],
@@ -519,7 +519,7 @@ export class TriggerCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'invalid-type',
+            type: 'type-mismatch',
             message: 'Event name must be a string',
             suggestions: ['Use a string for the event name']
           }],
@@ -531,7 +531,7 @@ export class TriggerCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'empty-value',
+            type: 'missing-argument',
             message: 'Event name cannot be empty',
             suggestions: ['Provide a valid event name']
           }],
@@ -565,7 +565,7 @@ export class TriggerCommand implements TypedCommandImplementation<
         return {
           isValid: false,
           errors: [{
-            type: 'missing-keyword',
+            type: 'syntax-error',
             message: 'Trigger command requires "on" keyword to specify target',
             suggestions: ['Use "on" keyword before target specification']
           }],

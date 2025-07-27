@@ -13,7 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
-import { dispatchCustomEvent } from '../../core/events.ts';
+import { dispatchCustomEvent } from '../../core/events.js';
 
 export interface ShowCommandOptions {
   useClass?: boolean;
@@ -272,7 +272,7 @@ export class ShowCommand implements TypedCommandImplementation<
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestions: this.getValidationSuggestion(err.code, err.path)
+            suggestions: [this.getValidationSuggestion(err.code, err.path)]
           })),
           suggestions: ['Use HTMLElement, CSS selector string, or omit for implicit target']
         };

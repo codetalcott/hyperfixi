@@ -160,7 +160,7 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
     return {
       oldValue: currentValue,
       newValue,
-      target
+      target: typeof target === 'number' ? String(target) : target
     };
   }
 
@@ -422,9 +422,6 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
   private setVariableValue(name: string, value: number, context: TypedExecutionContext, preferredScope?: string): void {
     // If preferred scope is specified, handle it
     if (preferredScope === 'global') {
-      if (!context.globals) {
-        context.globals = new Map();
-      }
       context.globals.set(name, value);
       return;
     }
@@ -448,9 +445,6 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
     }
     
     // Create new local variable
-    if (!context.locals) {
-      context.locals = new Map();
-    }
     context.locals.set(name, value);
   }
 }
