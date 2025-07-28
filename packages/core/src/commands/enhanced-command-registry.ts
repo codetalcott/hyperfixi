@@ -190,7 +190,7 @@ export const ENHANCED_COMMAND_CATEGORIES = {
  * Get commands by category
  */
 export function getCommandsByCategory(category: keyof typeof ENHANCED_COMMAND_CATEGORIES): string[] {
-  return ENHANCED_COMMAND_CATEGORIES[category] || [];
+  return [...(ENHANCED_COMMAND_CATEGORIES[category] || [])];
 }
 
 /**
@@ -211,7 +211,7 @@ export interface CommandMetadata {
 export function getAllCommandMetadata(): CommandMetadata[] {
   const metadata: CommandMetadata[] = [];
   
-  for (const [name, factory] of Object.entries(ENHANCED_COMMAND_FACTORIES)) {
+  for (const [_name, factory] of Object.entries(ENHANCED_COMMAND_FACTORIES)) {
     const command = factory();
     metadata.push(command.metadata);
   }
