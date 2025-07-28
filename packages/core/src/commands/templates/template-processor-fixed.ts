@@ -69,7 +69,7 @@ export class FixedTemplateProcessor {
             content: '',
             condition,
             children: ifBlock.ifChildren,
-            elseChildren: ifBlock.elseChildren
+            ...(ifBlock.elseChildren !== undefined && { elseChildren: ifBlock.elseChildren })
           });
           i = ifBlock.nextIndex;
         } else {
@@ -138,7 +138,7 @@ export class FixedTemplateProcessor {
 
     return {
       ifChildren,
-      elseChildren,
+      ...(elseChildren !== undefined && { elseChildren }),
       nextIndex: endIndex + 1
     };
   }

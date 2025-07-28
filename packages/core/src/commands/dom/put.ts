@@ -9,10 +9,10 @@ import type {
   TypedCommandImplementation,
   TypedExecutionContext,
   EvaluationResult,
-  ValidationResult,
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
+import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 
 export interface PutCommandOptions {
@@ -229,7 +229,7 @@ export class PutCommand implements TypedCommandImplementation<
     }
   }
 
-  validate(args: unknown[]): ValidationResult {
+  validate(args: unknown[]): UnifiedValidationResult {
     try {
       // Schema validation
       const parsed = this.inputSchema.safeParse(args);

@@ -10,10 +10,10 @@ import type {
   TypedCommandImplementation,
   TypedExecutionContext,
   EvaluationResult,
-  ValidationResult,
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core';
+import type { UnifiedValidationResult } from '../../types/unified-types';
 
 /**
  * Input validation schema for LLM understanding
@@ -216,7 +216,7 @@ export class TriggerCommand implements TypedCommandImplementation<
       
       return {
         success: true,
-        value: event,
+        ...(event && { value: event }),
         type: 'event'
       };
       
@@ -499,7 +499,7 @@ export class TriggerCommand implements TypedCommandImplementation<
     }
   }
 
-  validate(args: unknown[]): ValidationResult {
+  validate(args: unknown[]): UnifiedValidationResult {
     try {
       // Basic argument validation
       if (args.length < 3) {

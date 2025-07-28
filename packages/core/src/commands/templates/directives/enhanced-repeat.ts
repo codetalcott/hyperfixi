@@ -16,9 +16,9 @@ import type {
 import { RepeatDirectiveInputSchema } from '../../../types/enhanced-templates';
 import type {
   TypedResult,
-  ExpressionMetadata,
-  ValidationResult
+  ExpressionMetadata
 } from '../../../types/enhanced-expressions.ts';
+import type { UnifiedValidationResult, UnifiedValidationError } from '../../../types/unified-types.ts';
 import type { HyperScriptValue } from '../../../types/enhanced-core.ts';
 import { TemplateContextUtils } from '../enhanced-template-context';
 
@@ -308,7 +308,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
   /**
    * Validate input according to schema
    */
-  validate(input: unknown): ValidationResult {
+  validate(input: unknown): UnifiedValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
       
@@ -318,7 +318,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid @repeat directive: ${err.message}`,
-            suggestions: `Expected { collection: any, templateContent: string }, got: ${typeof input}`
+            suggestions: [`Expected { collection: any, templateContent: string }, got: ${typeof input}`]
           })),
           suggestions: [
             'Provide collection and templateContent',
@@ -368,13 +368,13 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
   validateTemplateContext(
     context: TemplateExecutionContext,
     input: RepeatDirectiveInput
-  ): ValidationResult {
-    const errors: Array<{ type: string; message: string; suggestions: string }> = [];
+  ): UnifiedValidationResult {
+    const errors: UnifiedValidationError[] = [];
     
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {
       errors.push({
-        type: 'context-error',
+        type: 'runtime-error',
         message: 'Template buffer not initialized',
         suggestions: ['Ensure template context is properly created']
       });
@@ -383,7 +383,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
     // Check nesting depth
     if (context.templateDepth > 10) {
       errors.push({
-        type: 'nesting-error',
+        type: 'runtime-error',
         message: `Template nesting too deep (${context.templateDepth})`,
         suggestions: ['Reduce template nesting complexity']
       });
@@ -399,7 +399,7 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
   /**
    * Validate that collection is iterable
    */
-  private validateIterable(collection: unknown): ValidationResult {
+  private validateIterable(collection: unknown): UnifiedValidationResult {
     // Check for null/undefined
     if (collection == null) {
       return {

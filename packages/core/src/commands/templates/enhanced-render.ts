@@ -7,8 +7,9 @@
  * Modernized with TypedCommandImplementation interface
  */
 
-import type { TypedCommandImplementation, ValidationResult } from '../../types/core';
+import type { TypedCommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
+import type { UnifiedValidationResult } from '../../types/unified-types';
 
 // Input type definition
 export interface RenderCommandInput {
@@ -49,15 +50,16 @@ export class EnhancedRenderCommand implements TypedCommandImplementation<
   };
 
   validation = {
-    validate(input: unknown): ValidationResult<RenderCommandInput> {
+    validate(input: unknown): UnifiedValidationResult<RenderCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Render command requires a template',
             suggestions: ['Provide template element or selector']
-          }
+          }],
+          suggestions: ['Provide template element or selector']
         };
       }
 
@@ -65,12 +67,13 @@ export class EnhancedRenderCommand implements TypedCommandImplementation<
 
       if (!inputObj.template) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Render command requires a template argument',
             suggestions: ['Provide template element or CSS selector']
-          }
+          }],
+          suggestions: ['Provide template element or CSS selector']
         };
       }
 

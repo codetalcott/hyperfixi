@@ -15,9 +15,9 @@ import type {
 import { IfDirectiveInputSchema } from '../../../types/enhanced-templates';
 import type {
   TypedResult,
-  ExpressionMetadata,
-  ValidationResult
+  ExpressionMetadata
 } from '../../../types/enhanced-expressions.ts';
+import type { UnifiedValidationResult, UnifiedValidationError } from '../../../types/unified-types.ts';
 import { TemplateContextUtils } from '../enhanced-template-context';
 
 /**
@@ -262,7 +262,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
   /**
    * Validate input according to schema
    */
-  validate(input: unknown): ValidationResult {
+  validate(input: unknown): UnifiedValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
       
@@ -272,7 +272,7 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid @if directive: ${err.message}`,
-            suggestions: `Expected { condition: any, templateContent: string }, got: ${typeof input}`
+            suggestions: [`Expected { condition: any, templateContent: string }, got: ${typeof input}`]
           })),
           suggestions: [
             'Provide both condition and templateContent',
@@ -322,14 +322,15 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
   validateTemplateContext(
     context: TemplateExecutionContext,
     _input: IfDirectiveInput
-  ): ValidationResult {
-    const errors: ValidationResult['errors'] = [];
+  ): UnifiedValidationResult {
+    const errors: UnifiedValidationResult['errors'] = [];
     
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {
       errors.push({
         type: 'runtime-error',
-        message: 'Template buffer not initialized'
+        message: 'Template buffer not initialized',
+        suggestions: ['Ensure template context is properly created']
       });
     }
     
@@ -337,7 +338,8 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
     if (context.templateDepth > 10) {
       errors.push({
         type: 'runtime-error',
-        message: `Template nesting too deep (${context.templateDepth})`
+        message: `Template nesting too deep (${context.templateDepth})`,
+        suggestions: ['Reduce template nesting complexity']
       });
     }
     

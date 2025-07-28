@@ -7,8 +7,9 @@
  * Modernized with TypedCommandImplementation interface
  */
 
-import type { TypedCommandImplementation, ValidationResult } from '../../types/core';
+import type { TypedCommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
+import type { UnifiedValidationResult } from '../../types/unified-types';
 
 // Input type definition
 export interface PickCommandInput {
@@ -49,15 +50,16 @@ export class EnhancedPickCommand implements TypedCommandImplementation<
   };
 
   validation = {
-    validate(input: unknown): ValidationResult<PickCommandInput> {
+    validate(input: unknown): UnifiedValidationResult<PickCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Pick command requires an object input',
             suggestions: ['Provide an object with items array or array property']
-          }
+          }],
+          suggestions: ['Provide an object with items array or array property']
         };
       }
 
@@ -66,48 +68,52 @@ export class EnhancedPickCommand implements TypedCommandImplementation<
       // Must have either items or array
       if (!inputObj.items && !inputObj.array) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Pick command requires items to choose from',
             suggestions: ['Provide an items array or use "from" with an array']
-          }
+          }],
+          suggestions: ['Provide an items array or use "from" with an array']
         };
       }
 
       // Cannot have both items and array
       if (inputObj.items && inputObj.array) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Pick command cannot have both direct items and array',
             suggestions: ['Use either direct items or "from" array syntax, not both']
-          }
+          }],
+          suggestions: ['Use either direct items or "from" array syntax, not both']
         };
       }
 
       // Validate items if provided
       if (inputObj.items && !Array.isArray(inputObj.items)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'type-mismatch',
             message: 'Items must be an array',
             suggestions: ['Provide an array of items to pick from']
-          }
+          }],
+          suggestions: ['Provide an array of items to pick from']
         };
       }
 
       // Validate array if provided
       if (inputObj.array && !Array.isArray(inputObj.array)) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'type-mismatch',
             message: 'Array must be an array type',
             suggestions: ['Provide a valid array to pick from']
-          }
+          }],
+          suggestions: ['Provide a valid array to pick from']
         };
       }
 
@@ -115,12 +121,13 @@ export class EnhancedPickCommand implements TypedCommandImplementation<
       const sourceArray = inputObj.items || inputObj.array;
       if (sourceArray.length === 0) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Cannot pick from empty collection',
             suggestions: ['Provide at least one item to pick from']
-          }
+          }],
+          suggestions: ['Provide at least one item to pick from']
         };
       }
 

@@ -15,9 +15,9 @@ import type {
 import { ElseDirectiveInputSchema } from '../../../types/enhanced-templates';
 import type {
   TypedResult,
-  ExpressionMetadata,
-  ValidationResult
+  ExpressionMetadata
 } from '../../../types/enhanced-expressions';
+import type { UnifiedValidationResult, UnifiedValidationError } from '../../../types/unified-types';
 import { TemplateContextUtils } from '../enhanced-template-context';
 
 /**
@@ -261,7 +261,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
   /**
    * Validate input according to schema
    */
-  validate(input: unknown): ValidationResult {
+  validate(input: unknown): UnifiedValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
       
@@ -321,13 +321,13 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
   validateTemplateContext(
     context: TemplateExecutionContext,
     _input: ElseDirectiveInput
-  ): ValidationResult {
-    const errors: Array<{ type: string; message: string; suggestions: string[] }> = [];
+  ): UnifiedValidationResult {
+    const errors: UnifiedValidationError[] = [];
     
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {
       errors.push({
-        type: 'context-error',
+        type: 'runtime-error',
         message: 'Template buffer not initialized',
         suggestions: ['Ensure template context is properly created']
       });
@@ -336,7 +336,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
     // Check conditional context exists (required for @else)
     if (!context.conditionalContext) {
       errors.push({
-        type: 'conditional-error',
+        type: 'validation-error',
         message: '@else directive requires preceding @if directive',
         suggestions: ['Ensure @else follows @if in the same scope']
       });
@@ -345,7 +345,7 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
     // Check nesting depth
     if (context.templateDepth > 10) {
       errors.push({
-        type: 'nesting-error',
+        type: 'runtime-error',
         message: `Template nesting too deep (${context.templateDepth})`,
         suggestions: ['Reduce template nesting complexity']
       });

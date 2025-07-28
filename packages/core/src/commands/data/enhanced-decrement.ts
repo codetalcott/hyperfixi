@@ -7,8 +7,9 @@
  * Modernized with TypedCommandImplementation interface
  */
 
-import type { TypedCommandImplementation, ValidationResult } from '../../types/core';
+import type { TypedCommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
+import type { UnifiedValidationResult } from '../../types/unified-types';
 
 // Input type definition
 export interface DecrementCommandInput {
@@ -50,7 +51,7 @@ export class EnhancedDecrementCommand implements TypedCommandImplementation<
   };
 
   validation = {
-    validate(input: unknown): ValidationResult<DecrementCommandInput> {
+    validate(input: unknown): UnifiedValidationResult<DecrementCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
@@ -130,10 +131,10 @@ export class EnhancedDecrementCommand implements TypedCommandImplementation<
         suggestions: [],
         data: {
           target: inputObj.target,
-          property: inputObj.property,
-          scope: inputObj.scope,
+          ...(inputObj.property !== undefined && { property: inputObj.property }),
+          ...(inputObj.scope !== undefined && { scope: inputObj.scope }),
           amount: inputObj.amount || 1,
-          byKeyword: inputObj.byKeyword
+          ...(inputObj.byKeyword !== undefined && { byKeyword: inputObj.byKeyword })
         }
       };
     }

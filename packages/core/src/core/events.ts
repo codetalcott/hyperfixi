@@ -87,7 +87,7 @@ export function registerEventListener(
     element,
     eventType,
     handler,
-    options: options || undefined,
+    ...(options && { options }),
     wrappedHandler,
   };
   

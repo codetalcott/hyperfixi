@@ -7,8 +7,9 @@
  * Modernized with TypedCommandImplementation interface
  */
 
-import type { TypedCommandImplementation, ValidationResult } from '../../types/core';
+import type { TypedCommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
+import type { UnifiedValidationResult } from '../../types/unified-types';
 
 // Input type definition
 export interface SetCommandInput {
@@ -49,7 +50,7 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
   };
 
   validation = {
-    validate(input: unknown): ValidationResult<SetCommandInput> {
+    validate(input: unknown): UnifiedValidationResult<SetCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
@@ -95,8 +96,8 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
         data: {
           target: inputObj.target!,
           value: inputObj.value!,
-          toKeyword: inputObj.toKeyword as 'to' | undefined,
-          scope: inputObj.scope
+          ...(inputObj.toKeyword && { toKeyword: inputObj.toKeyword as 'to' }),
+          ...(inputObj.scope && { scope: inputObj.scope })
         }
       };
     }

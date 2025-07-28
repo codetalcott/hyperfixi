@@ -1,0 +1,31 @@
+{
+  "name": "@hyperfixi/plugin-system",
+  "version": "1.0.0",
+  "description": "Plugin-based architecture for Hyperfixi inspired by Datastar patterns",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hyperfixi/core": "^1.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12.1.2",
+    "rollup": "^2.79.2",
+    "typescript": "^5.8.3",
+    "vitest": "^1.0.0"
+  }
+}

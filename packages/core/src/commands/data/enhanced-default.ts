@@ -7,8 +7,9 @@
  * Modernized with TypedCommandImplementation interface
  */
 
-import type { TypedCommandImplementation, ValidationResult } from '../../types/core';
+import type { TypedCommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
+import type { UnifiedValidationResult } from '../../types/unified-types';
 
 // Input type definition
 export interface DefaultCommandInput {
@@ -49,7 +50,7 @@ export class EnhancedDefaultCommand implements TypedCommandImplementation<
   };
 
   validation = {
-    validate(input: unknown): ValidationResult<DefaultCommandInput> {
+    validate(input: unknown): UnifiedValidationResult<DefaultCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,

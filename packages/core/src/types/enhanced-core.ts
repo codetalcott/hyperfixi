@@ -34,22 +34,15 @@ import type {
 // Re-export Unified Types with Legacy Names
 // ============================================================================
 
-// Re-export unified types with legacy names for backward compatibility
+// Enhanced-specific type aliases - import directly to avoid conflicts
 export type {
   UnifiedExecutionContext as ExecutionContext,
   UnifiedExecutionContext as TypedExecutionContext,
   UnifiedExecutionContext as TypedExpressionContext,
-  UnifiedEvaluationType as EvaluationType,
-  UnifiedHyperScriptValueType as HyperScriptValueType,
   UnifiedValidationResult as ValidationResult,
-  UnifiedValidationError as ValidationError,
   UnifiedTypedResult as TypedResult,
-  UnifiedExpressionMetadata as ExpressionMetadata,
-  UnifiedLLMDocumentation as LLMDocumentation,
-  UnifiedParseError as ParseError,
-  UnifiedASTNode as ASTNode,
-  UnifiedHyperScriptValue as HyperScriptValue
-} from './index';
+  UnifiedExpressionMetadata as ExpressionMetadata
+} from './unified-types';
 
 // ============================================================================
 // Enhanced Type System for LLM Agents
@@ -114,7 +107,7 @@ export interface SourceLocation {
 export interface TypedCommandImplementation<
   TInput extends readonly HyperScriptValue[] = readonly HyperScriptValue[],
   TOutput extends HyperScriptValue = HyperScriptValue,
-  TContext extends TypedExecutionContext = TypedExecutionContext
+  TContext extends ExecutionContext = ExecutionContext
 > {
   /** Command name - must be literal for LLM understanding */
   readonly name: string;
@@ -173,7 +166,7 @@ export interface CommandExample {
  */
 export interface TypedExpressionImplementation<
   TOutput extends HyperScriptValue = HyperScriptValue,
-  TContext extends TypedExecutionContext = TypedExecutionContext
+  TContext extends ExecutionContext = ExecutionContext
 > {
   readonly name: string;
   readonly category: ExpressionCategory;
@@ -201,19 +194,8 @@ export interface ExpressionAnalysisInfo {
 // Type System Enums and Utilities
 // ============================================================================
 
-export type HyperScriptValueType = 
-  | 'string'
-  | 'number' 
-  | 'boolean'
-  | 'null'
-  | 'undefined'
-  | 'element'
-  | 'element-list'
-  | 'object'
-  | 'array'
-  | 'function'
-  | 'promise'
-  | 'fragment';
+// Use UnifiedHyperScriptValueType from unified-types.ts instead of local definition
+export type { UnifiedHyperScriptValueType as HyperScriptValueType } from './index';
 
 export type ExpressionCategory = 
   | 'reference'
@@ -231,7 +213,7 @@ export type ExpressionCategory =
 /**
  * Enhanced validation error for backward compatibility with legacy enhanced-core usage
  */
-export interface EnhancedValidationError extends ValidationError {
+export interface EnhancedValidationError extends UnifiedValidationError {
   readonly position?: SourceLocation;
   readonly suggestion?: string;
 }
@@ -271,7 +253,7 @@ export class TypeChecker {
     throw new Error(`Unknown type for value: ${value}`);
   }
 
-  static validateType(value: unknown, expectedType: HyperScriptValueType): ValidationResult {
+  static validateType(value: unknown, expectedType: HyperScriptValueType): UnifiedValidationResult {
     const actualType = this.getType(value);
     
     if (actualType === expectedType) {

@@ -76,7 +76,7 @@ export class EnhancedTemplateContextBridge implements TemplateContextBridge {
       conditionalContext: undefined,
       
       templateMeta: {
-        templateName: options.templateName,
+        ...(options.templateName !== undefined && { templateName: options.templateName }),
         compiledAt: now,
         executionStartTime: now,
         directiveStack: []

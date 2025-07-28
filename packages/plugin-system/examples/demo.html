@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyperfixi Plugin System Demo</title>
+    <script type="module">
+        // In a real setup, this would be bundled
+        import { pluginRegistry } from '../dist/index.js';
+        
+        // Custom plugin example
+        const NotificationPlugin = {
+            type: 'command',
+            name: 'notify',
+            pattern: /^notify\s+/,
+            
+            execute: async (ctx) => {
+                const { args } = ctx;
+                const [message, type = 'info'] = args;
+                
+                // Create notification element
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                // Auto-remove after 3 seconds
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        };
+        
+        // Load plugins
+        pluginRegistry.load(NotificationPlugin);
+        pluginRegistry.apply();
+    </script>
+    <style>
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 4px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .notification-info {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .notification-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .notification-error {
+            background: #ef4444;
+            color: white;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .demo-section {
+            margin: 2rem;
+            padding: 2rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            margin: 4px;
+            border: none;
+            border-radius: 4px;
+            background: #3b82f6;
+            color: white;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-section">
+        <h2>Plugin System Demo</h2>
+        
+        <!-- Using standard plugins -->
+        <div>
+            <h3>Event Handling (On Plugin)</h3>
+            <button _="on click toggle .highlight on me">
+                Click to toggle highlight
+            </button>
+        </div>
+        
+        <!-- Using custom notify plugin -->
+        <div>
+            <h3>Custom Notification Plugin</h3>
+            <button _="on click notify 'Hello from Hyperfixi!' 'success'">
+                Show Success Notification
+            </button>
+            <button _="on click notify 'Something went wrong!' 'error'">
+                Show Error Notification
+            </button>
+        </div>
+        
+        <!-- Reactive state example -->
+        <div data-state='{"count": 0}'>
+            <h3>Reactive State</h3>
+            <p>Count: <span _="on state:change put event.detail.value into me"></span></p>
+            <button _="on click increment $count">Increment</button>
+        </div>
+        
+        <!-- Auto-fetch example -->
+        <div data-fetch="/api/data" data-fetch-interval="5000">
+            <h3>Auto Fetch</h3>
+            <div _="on fetch:success put event.detail into me as JSON"></div>
+            <div _="on fetch:error put 'Error loading data' into me"></div>
+        </div>
+        
+        <!-- Intersection observer -->
+        <div style="height: 200vh;">
+            <div data-intersect-threshold="0.5" 
+                 _="on intersect:enter add .visible 
+                    on intersect:leave remove .visible">
+                <h3>Scroll to see intersection observer in action</h3>
+                <p>This element will animate when it enters the viewport</p>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .highlight {
+            background-color: yellow !important;
+        }
+        
+        .visible {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</body>
+</html>

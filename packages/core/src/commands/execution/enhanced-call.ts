@@ -9,8 +9,9 @@
  * Modernized with TypedCommandImplementation interface
  */
 
-import type { TypedCommandImplementation, ValidationResult } from '../../types/core';
+import type { TypedCommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
+import type { UnifiedValidationResult } from '../../types/unified-types';
 
 // Input type definition
 export interface CallCommandInput {
@@ -49,15 +50,16 @@ export class EnhancedCallCommand implements TypedCommandImplementation<
   };
 
   validation = {
-    validate(input: unknown): ValidationResult<CallCommandInput> {
+    validate(input: unknown): UnifiedValidationResult<CallCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Call command requires an object input',
             suggestions: ['Provide an object with expression property']
-          }
+          }],
+          suggestions: ['Provide an object with expression property']
         };
       }
 
@@ -66,12 +68,13 @@ export class EnhancedCallCommand implements TypedCommandImplementation<
       // Validate expression is present
       if (inputObj.expression === undefined) {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'missing-argument',
             message: 'Call command requires an expression to evaluate',
             suggestions: ['Provide a function, Promise, or value to evaluate']
-          }
+          }],
+          suggestions: ['Provide a function, Promise, or value to evaluate']
         };
       }
 
@@ -79,12 +82,13 @@ export class EnhancedCallCommand implements TypedCommandImplementation<
       if (inputObj.alias !== undefined && 
           inputObj.alias !== 'call' && inputObj.alias !== 'get') {
         return {
-          success: false,
-          error: {
+          isValid: false,
+          errors: [{
             type: 'syntax-error',
             message: 'Call command alias must be "call" or "get"',
             suggestions: ['Use "call" or "get" as the command alias']
-          }
+          }],
+          suggestions: ['Use "call" or "get" as the command alias']
         };
       }
 
