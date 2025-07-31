@@ -507,4 +507,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log('Available globals: hyperscript, context, debugLogger');
   console.log('All navigation and interactions handled by HyperFixi');
   console.log('Try: hyperscript.run("5 + 3 * 2", context)');
+  
+  // Add a test to verify JavaScript click events work
+  console.log('🧪 Testing JavaScript click events...');
+  const hyperscriptButtons = document.querySelectorAll('button[_]');
+  hyperscriptButtons.forEach((button, index) => {
+    // Add a simple JavaScript click handler for testing
+    const jsHandler = () => {
+      console.log(`🧪 JavaScript click handler fired for button ${index + 1}:`, button);
+    };
+    button.addEventListener('click', jsHandler);
+    console.log(`🧪 Added JavaScript click handler to button ${index + 1}:`, button);
+  });
 });

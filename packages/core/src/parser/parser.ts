@@ -808,21 +808,14 @@ export class Parser {
            !this.check('else') && 
            !this.checkTokenType(TokenType.COMMAND)) {
       
-      // For simple arguments like identifiers, selectors, literals
-      if (this.checkTokenType(TokenType.CONTEXT_VAR) || 
-          this.checkTokenType(TokenType.IDENTIFIER) ||
-          this.checkTokenType(TokenType.KEYWORD) ||  // Add KEYWORD support for words like "into", "from"
-          this.checkTokenType(TokenType.CSS_SELECTOR) ||
-          this.checkTokenType(TokenType.ID_SELECTOR) ||
-          this.checkTokenType(TokenType.CLASS_SELECTOR) ||
-          this.checkTokenType(TokenType.STRING) ||
-          this.checkTokenType(TokenType.NUMBER) ||
-          this.checkTokenType(TokenType.TIME_EXPRESSION) ||
-          this.match('<')) {
-        args.push(this.parsePrimary());
+      // Always use parseExpression for arguments to handle complex expressions
+      // This allows for expressions like 'Result: ' + (#math-input's value as Math)
+      const expr = this.parseExpression();
+      if (expr) {
+        args.push(expr);
       } else {
-        // For more complex expressions
-        args.push(this.parseExpression());
+        // If parseExpression fails, try parsePrimary as fallback
+        args.push(this.parsePrimary());
       }
       
       // For comma-separated arguments, consume the comma and continue

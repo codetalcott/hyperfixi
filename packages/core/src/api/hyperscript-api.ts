@@ -199,11 +199,20 @@ function processHyperscriptAttribute(element: Element, hyperscriptCode: string):
     if (!compileResult.success) {
       console.error(`❌ Failed to compile hyperscript on element:`, element);
       console.error(`❌ Hyperscript code: "${hyperscriptCode}"`);
-      console.error(`❌ Parse errors:`, compileResult.errors);
-      compileResult.errors.forEach((error, index) => {
-        console.error(`❌ Error ${index + 1}: ${error.message} at line ${error.line}, column ${error.column}`);
-        console.error(`❌ Error details:`, error);
-      });
+      console.error(`❌ Parse errors (count: ${compileResult.errors.length}):`, compileResult.errors);
+      
+      // Enhanced error logging
+      if (compileResult.errors.length === 0) {
+        console.error(`❌ No specific error details available - compilation failed without errors`);
+      } else {
+        compileResult.errors.forEach((error, index) => {
+          console.error(`❌ Error ${index + 1}:`);
+          console.error(`   Message: ${error.message || 'No message'}`);
+          console.error(`   Line: ${error.line || 'Unknown'}, Column: ${error.column || 'Unknown'}`);
+          console.error(`   Name: ${error.name || 'Unknown'}`);
+          console.error(`   Full error object:`, JSON.stringify(error, null, 2));
+        });
+      }
       
       // Try to identify the specific syntax issue
       const lines = hyperscriptCode.split('\n');
@@ -215,8 +224,23 @@ function processHyperscriptAttribute(element: Element, hyperscriptCode: string):
       try {
         const tokens = tokenize(hyperscriptCode);
         console.error(`🔍 Tokens generated:`, tokens.map(t => `${t.type}:"${t.value}"`).join(', '));
+        console.error(`🔍 Token count: ${tokens.length}`);
       } catch (tokenError) {
         console.error(`❌ Tokenization failed:`, tokenError);
+      }
+      
+      // Also try to parse manually to get more details
+      try {
+        console.error(`🔧 Attempting manual parse for debugging...`);
+        const parseResult = parse(hyperscriptCode);
+        console.error(`🔧 Manual parse result:`, {
+          success: parseResult.success,
+          errorCount: parseResult.error ? 1 : 0,
+          error: parseResult.error,
+          nodeType: parseResult.node?.type || 'none'
+        });
+      } catch (manualError) {
+        console.error(`❌ Manual parse also failed:`, manualError);
       }
       
       return;
@@ -236,7 +260,18 @@ function processHyperscriptAttribute(element: Element, hyperscriptCode: string):
     // Check if this is an event handler (starts with "on ")
     if (hyperscriptCode.trim().startsWith('on ')) {
       console.log('🎯 Setting up event handler for:', hyperscriptCode);
-      setupEventHandler(element, compileResult.ast, context);
+      console.log('🎯 Element for event handler:', element);
+      console.log('🎯 AST for event handler:', compileResult.ast);
+      
+      try {
+        console.log('🎯 About to call setupEventHandler...');
+        setupEventHandler(element, compileResult.ast, context);
+        console.log('🎯 setupEventHandler completed successfully');
+      } catch (setupError) {
+        console.error('❌ Error in setupEventHandler:', setupError);
+        console.error('❌ setupError stack:', setupError.stack);
+        throw setupError; // Re-throw to see it in outer catch
+      }
     } else {
       console.log('⚡ Executing immediate hyperscript:', hyperscriptCode);
       // Execute immediately for non-event code
@@ -253,30 +288,49 @@ function processHyperscriptAttribute(element: Element, hyperscriptCode: string):
  */
 function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionContext): void {
   try {
+    console.log('🔧 setupEventHandler called with:');
+    console.log('🔧 Element:', element);
+    console.log('🔧 AST:', ast);
+    console.log('🔧 Context:', context);
+    
     // Parse the event from the AST (simplified - assumes "on eventName" structure)
     const eventInfo = extractEventInfo(ast);
+    console.log('🔧 extractEventInfo returned:', eventInfo);
+    
     if (!eventInfo) {
-      console.error('Could not extract event information from AST:', ast);
+      console.error('❌ Could not extract event information from AST:', ast);
       return;
     }
     
     // Add event listener
-    element.addEventListener(eventInfo.eventType, async (event) => {
+    const eventHandler = async (event) => {
       console.log(`🎯 Event handler triggered: ${eventInfo.eventType} on element:`, element);
+      console.log(`🎯 Event object:`, event);
+      console.log(`🎯 Event target:`, event.target);
+      console.log(`🎯 Current element:`, element);
+      
       try {
         // Set event context
         context.locals.set('event', event);
         context.locals.set('target', event.target);
         
         console.log('🎯 About to execute hyperscript AST:', eventInfo.body);
+        console.log('🎯 Context:', context);
+        
         // Execute the event handler body
-        await executeHyperscriptAST(eventInfo.body, context);
-        console.log('🎯 Hyperscript AST execution completed');
+        const result = await executeHyperscriptAST(eventInfo.body, context);
+        console.log('🎯 Hyperscript AST execution completed, result:', result);
       } catch (error) {
         console.error('❌ Error executing hyperscript event handler:', error);
         console.error('❌ Error stack:', error.stack);
+        console.error('❌ Event info body:', eventInfo.body);
+        console.error('❌ Context:', context);
       }
-    });
+    };
+    
+    element.addEventListener(eventInfo.eventType, eventHandler);
+    console.log(`✅ Event listener attached: ${eventInfo.eventType} on element:`, element);
+    console.log(`✅ Event handler function:`, eventHandler);
     
     console.log(`Set up ${eventInfo.eventType} event handler on element:`, element);
     
@@ -291,6 +345,9 @@ function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionCon
 function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNode } | null {
   try {
     console.log('🔍 Extracting event info from AST:', ast);
+    console.log('🔍 AST type:', ast.type);
+    console.log('🔍 AST keys:', Object.keys(ast));
+    console.log('🔍 Full AST structure:', JSON.stringify(ast, null, 2));
     
     // Handle the actual HyperFixi AST structure
     if (ast.type === 'eventHandler') {
