@@ -11,7 +11,7 @@ import type { ExecutionContext, ExpressionImplementation, EvaluationType } from 
 
 type ConversionType = 
   | 'Array' | 'Boolean' | 'Date' | 'Float' | 'Fragment' | 'HTML' | 'Int' 
-  | 'JSON' | 'Number' | 'Object' | 'String' | 'Values' 
+  | 'JSON' | 'Math' | 'Number' | 'Object' | 'String' | 'Values' 
   | 'Values:Form' | 'Values:JSON' | string; // Allow custom conversions
 
 // ============================================================================
@@ -59,6 +59,24 @@ export const defaultConversions: Record<string, ConversionFunction> = {
     if (value == null) return 0;
     const num = Number(value);
     return isNaN(num) ? 0 : num;
+  },
+
+  Math: (value: unknown) => {
+    if (typeof value === 'number') return value;
+    if (value == null) return 0;
+    
+    // Convert to string for expression evaluation
+    const expression = String(value).trim();
+    if (!expression) return 0;
+    
+    try {
+      // Simple mathematical expression evaluator
+      // Handle basic arithmetic with proper precedence
+      return evaluateMathExpression(expression);
+    } catch (error) {
+      console.warn('Math conversion failed:', error);
+      return 0;
+    }
   },
 
   Int: (value: unknown) => {
@@ -171,6 +189,35 @@ export const defaultConversions: Record<string, ConversionFunction> = {
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+/**
+ * Safe mathematical expression evaluator
+ * Handles basic arithmetic with proper operator precedence
+ */
+function evaluateMathExpression(expression: string): number {
+  // Remove whitespace
+  expression = expression.replace(/\s/g, '');
+  
+  // Basic security check - only allow numbers, operators, parentheses, and decimal points
+  if (!/^[0-9+\-*/().]+$/.test(expression)) {
+    throw new Error('Invalid characters in math expression');
+  }
+  
+  // Use Function constructor for safe evaluation (safer than eval)
+  // This creates a function that returns the expression result
+  try {
+    const result = new Function(`"use strict"; return (${expression})`)();
+    
+    // Ensure result is a finite number
+    if (typeof result !== 'number' || !isFinite(result)) {
+      throw new Error('Expression did not evaluate to a finite number');
+    }
+    
+    return result;
+  } catch (error) {
+    throw new Error(`Math expression evaluation failed: ${error.message}`);
+  }
+}
 
 function getFormValues(form: HTMLFormElement): Record<string, unknown> {
   const formData = new FormData(form);

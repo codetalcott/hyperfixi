@@ -3,10 +3,10 @@ import { hyperscript } from '../../../packages/core/src/index.ts';
 // Initialize HyperFixi and set up the demo environment
 const context = hyperscript.createContext();
 
-// Add sample data to the context for demos
-context.variables?.set('items', [1, 2, 2, 3, 4, 5]);
-context.variables?.set('name', 'john doe');
-context.variables?.set('users', [
+// Add sample data to the context for demos  
+context.globals.set('items', [1, 2, 2, 3, 4, 5]);
+context.globals.set('name', 'john doe');
+context.globals.set('users', [
   { name: 'Alice', age: 25, category: 'admin' },
   { name: 'Bob', age: 30, category: 'user' },
   { name: 'Charlie', age: 35, category: 'admin' }
@@ -426,25 +426,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   // Test HyperFixi compilation with detailed AST logging
-  try {
-    updateDebugStatus('Testing HyperFixi compilation: on click hide me', 'info');
-    const compileResult = hyperscript.compile('on click hide me');
-    const success = compileResult?.success === true;
-    updateDebugStatus(`Compilation test: ${success ? 'SUCCESS ✅' : 'FAILED ❌'}`, success ? 'success' : 'error');
-    debugLogger.log(`HyperFixi compilation test: ${success ? 'SUCCESS' : 'FAILED'}`, success ? 'success' : 'error');
-    
-    // Log detailed AST structure for debugging
-    if (success && compileResult.ast) {
-      debugLogger.log(`AST structure: ${JSON.stringify(compileResult.ast, null, 2)}`, 'info');
-      console.log('🔍 Full AST:', compileResult.ast);
+  const testCases = [
+    'on click hide me',
+    'put "hello" into #target',
+    'show #result',
+    'add .active to me',
+    'on click put "test" into #output'
+  ];
+  
+  for (const testCode of testCases) {
+    try {
+      updateDebugStatus(`Testing compilation: ${testCode}`, 'info');
+      const compileResult = hyperscript.compile(testCode);
+      const success = compileResult?.success === true;
+      
+      debugLogger.log(`Test "${testCode}": ${success ? 'SUCCESS ✅' : 'FAILED ❌'}`, success ? 'success' : 'error');
+      
+      if (!success && compileResult?.errors) {
+        debugLogger.log(`  Errors: ${compileResult.errors.map((e: any) => e.message).join(', ')}`, 'error');
+      }
+    } catch (error) {
+      debugLogger.log(`Test "${testCode}" exception: ${error}`, 'error');
     }
-    
-    if (!success && compileResult?.errors) {
-      debugLogger.log(`Compilation errors: ${compileResult.errors.map((e: any) => e.message).join(', ')}`, 'error');
-    }
-  } catch (error) {
-    updateDebugStatus(`❌ Compilation test failed: ${error}`, 'error');
-    debugLogger.log(`❌ HyperFixi compilation test failed: ${error}`, 'error');
   }
   
   // Add HyperFixi to global scope for debugging

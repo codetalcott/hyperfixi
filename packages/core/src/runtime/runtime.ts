@@ -200,7 +200,7 @@ export class Runtime {
       this.registerLegacyCommand(new DefaultCommand());
       
       // Register advanced commands
-      this.registerLegacyCommand(new BeepCommand());
+      this.enhancedRegistry.register(new BeepCommand());
       this.registerLegacyCommand(new AsyncCommand());
       
       // Register template commands
@@ -342,11 +342,43 @@ export class Runtime {
       throw new Error(`Enhanced command not found: ${name}`);
     }
 
-    // Evaluate arguments in current context
-    const evaluatedArgs = await Promise.all(
-      args.map(arg => this.execute(arg, context))
-    );
-
+    let evaluatedArgs: unknown[];
+    
+    // Special handling for PUT command - target should be handled specially
+    if (name === 'put' && args.length >= 3) {
+      // For put command: evaluate content and position, but handle target specially
+      const content = await this.execute(args[0], context);
+      const position = await this.execute(args[1], context);
+      let target = args[2];
+      
+      // Handle target resolution for enhanced put command
+      if (target?.type === 'identifier' && target.name === 'me') {
+        target = context.me;
+      } else if (target?.type === 'selector') {
+        // Keep selector as string for enhanced put command
+        target = target.value;
+      } else if (target?.type === 'identifier') {
+        // For other identifiers, keep as string
+        target = target.name;
+      } else if (target?.type === 'literal') {
+        target = target.value;
+      } else {
+        // Evaluate and extract first element if it's an array
+        const evaluated = await this.execute(target, context);
+        if (Array.isArray(evaluated) && evaluated.length > 0 && evaluated[0] instanceof HTMLElement) {
+          target = evaluated[0];
+        } else {
+          target = evaluated;
+        }
+      }
+      
+      evaluatedArgs = [content, position, target];
+    } else {
+      // For other commands, evaluate all arguments normally
+      evaluatedArgs = await Promise.all(
+        args.map(arg => this.execute(arg, context))
+      );
+    }
 
     // Execute through enhanced adapter
     return await adapter.execute(context, ...evaluatedArgs);
@@ -405,8 +437,19 @@ export class Runtime {
   private async executeCommand(node: CommandNode, context: ExecutionContext): Promise<unknown> {
     const { name, args } = node;
     
+    // Debug logging for put command
+    if (name === 'put') {
+      console.log('🔧 PUT Command Debug:', {
+        name,
+        useEnhancedCommands: this.options.useEnhancedCommands,
+        hasEnhancedPut: this.enhancedRegistry.has('put'),
+        availableCommands: this.enhancedRegistry.getCommandNames()
+      });
+    }
+    
     // Try enhanced commands first if enabled
     if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
+      console.log(`🔧 Using enhanced command: ${name}`);
       return await this.executeEnhancedCommand(name.toLowerCase(), args || [], context);
     }
     
@@ -455,6 +498,13 @@ export class Runtime {
         // Log command evaluates all arguments and logs them
         const logArgs = await Promise.all(rawArgs.map((arg: ExpressionNode) => this.execute(arg, context)));
         return this.executeLogCommand(logArgs, context);
+      }
+      
+      case 'beep':
+      case 'beep!': {
+        // Beep command for debugging - evaluates all arguments and logs them
+        const beepArgs = await Promise.all(rawArgs.map((arg: ExpressionNode) => this.execute(arg, context)));
+        return this.executeBeepCommand(beepArgs, context);
       }
       
       default: {
@@ -702,6 +752,95 @@ export class Runtime {
     
     // Log all arguments
     console.log(...args);
+  }
+
+  /**
+   * Execute BEEP command - debugging output with enhanced formatting
+   */
+  private executeBeepCommand(args: unknown[], context: ExecutionContext): void {
+    // If no arguments, beep with context info
+    if (args.length === 0) {
+      console.group('🔔 Beep! Hyperscript Context Debug');
+      console.log('me:', context.me);
+      console.log('it:', context.it);
+      console.log('you:', context.you);
+      console.log('locals:', context.locals);
+      console.log('globals:', context.globals);
+      console.log('variables:', context.variables);
+      console.groupEnd();
+      return;
+    }
+    
+    // Debug each argument with enhanced formatting
+    args.forEach((value, index) => {
+      console.group(`🔔 Beep! Argument ${index + 1}`);
+      console.log('Value:', value);
+      console.log('Type:', this.getDetailedType(value));
+      console.log('Representation:', this.getSourceRepresentation(value));
+      console.groupEnd();
+    });
+  }
+
+  /**
+   * Get detailed type information for beep command
+   */
+  private getDetailedType(value: any): string {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    
+    if (Array.isArray(value)) return 'array';
+    if (value instanceof HTMLElement) return 'HTMLElement';
+    if (value instanceof Date) return 'Date';
+    if (value instanceof RegExp) return 'RegExp';
+    if (value instanceof Error) return 'Error';
+    
+    return typeof value;
+  }
+
+  /**
+   * Get source representation for beep command
+   */
+  private getSourceRepresentation(value: any): string {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    
+    if (typeof value === 'string') {
+      return `"${value}"`;
+    }
+    
+    if (typeof value === 'number') {
+      return value.toString();
+    }
+    
+    if (typeof value === 'boolean') {
+      return value.toString();
+    }
+    
+    if (typeof value === 'function') {
+      return `[Function: ${value.name || 'anonymous'}]`;
+    }
+    
+    if (value instanceof HTMLElement) {
+      const tag = value.tagName.toLowerCase();
+      const id = value.id ? `#${value.id}` : '';
+      const classes = value.className ? `.${value.className.split(' ').join('.')}` : '';
+      return `<${tag}${id}${classes}/>`;
+    }
+    
+    if (Array.isArray(value)) {
+      return `[${value.length} items]`;
+    }
+    
+    if (typeof value === 'object') {
+      try {
+        const keys = Object.keys(value);
+        return `{${keys.slice(0, 3).join(', ')}${keys.length > 3 ? ', ...' : ''}}`;
+      } catch {
+        return '[Object]';
+      }
+    }
+    
+    return String(value);
   }
 
 

@@ -183,6 +183,14 @@ export class PutCommand implements TypedCommandImplementation<
       // Convert content to string, handling null/undefined
       const contentStr = content == null ? '' : String(content);
       
+      // Debug logging
+      console.log('🔧 PUT command execution:', {
+        content: contentStr,
+        position,
+        targetElement,
+        property
+      });
+
       // Execute the put operation
       const putResult = this.performPutOperation(
         contentStr, 
@@ -191,6 +199,8 @@ export class PutCommand implements TypedCommandImplementation<
         property,
         context
       );
+
+      console.log('🔧 PUT command result:', putResult);
 
       if (!putResult.success) {
         return putResult;
@@ -231,8 +241,8 @@ export class PutCommand implements TypedCommandImplementation<
 
   validate(args: unknown[]): UnifiedValidationResult {
     try {
-      // Schema validation
-      const parsed = this.inputSchema.safeParse(args);
+      // Schema validation - the schema expects a tuple, so we need to validate the args as a tuple
+      const parsed = this.inputSchema.safeParse(args.slice(0, 3)); // Take first 3 args for tuple validation
       
       if (!parsed.success) {
         return {
@@ -326,6 +336,15 @@ export class PutCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: { element: target },
+          type: 'object'
+        };
+      }
+
+      // Handle arrays of HTMLElements (take the first one)
+      if (Array.isArray(target) && target.length > 0 && target[0] instanceof HTMLElement) {
+        return {
+          success: true,
+          value: { element: target[0] },
           type: 'object'
         };
       }

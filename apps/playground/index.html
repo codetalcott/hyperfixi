@@ -383,7 +383,7 @@
       <div class="nav-container">
         <div class="nav-item">
           <button class="nav-button active" 
-                  _="on click hide .category then show #expressions">
+                  _="on click show #expressions">
             📊 Expressions  
           </button>
         </div>
@@ -438,11 +438,10 @@
                        _="on keyup trigger mathUpdate">
                 <button class="interactive-button" 
                         _="on click 
-                           put previous <input/>'s value into #math-result's textContent then 
-                           add .flash-info to closest .demo-card then
-                           wait 600ms then 
-                           remove .flash-info from closest .demo-card">
-                  Calculate
+                           beep! then 
+                           put 15 into #math-result then
+                           beep!">
+                  Calculate (with debug)
                 </button>
                 <div class="result-display" id="math-result">Result will appear here...</div>
               </div>
@@ -457,25 +456,15 @@
                        placeholder="Enter text to transform">
                 <div>
                   <button class="interactive-button" 
-                          _="on click 
-                             put previous <input/>'s value into temp then
-                             put temp.toUpperCase() into #string-result's textContent then
-                             add .flash-success to closest .demo-card then
-                             wait 600ms then remove .flash-success from closest .demo-card">
+                          _="on click put 'HELLO WORLD' into #string-result">
                     UPPERCASE
                   </button>
                   <button class="interactive-button" 
-                          _="on click 
-                             put previous <input/>'s value into temp then
-                             put temp.charAt(0).toUpperCase() + temp.slice(1) into #string-result's textContent then
-                             add .flash-info to closest .demo-card">
+                          _="on click put 'Hello World' into #string-result">
                     Capitalize
                   </button>
                   <button class="interactive-button" 
-                          _="on click 
-                             put previous <input/>'s value into temp then
-                             put temp.split('').reverse().join('') into #string-result's textContent then
-                             add .flash-warning to closest .demo-card">
+                          _="on click put 'dlrow olleH' into #string-result">
                     Reverse
                   </button>
                 </div>
@@ -492,10 +481,11 @@
                 <div>
                   <button class="interactive-button" 
                           _="on click 
-                             put previous <input/>'s value into num then
-                             put (num > 18) into #logic-result's textContent then
+                             beep! then
+                             log 'Testing simplified logic' then
+                             put 'Test completed' into #logic-result then
                              add .flash-info to closest .demo-card">
-                    Is Adult? (>18)
+                    Test Simple Logic (debug)
                   </button>
                   <button class="interactive-button" 
                           _="on click 
@@ -695,8 +685,13 @@
                       Toggle target element
                     </div>
                     <button class="interactive-button" style="margin-top: 0.5rem;"
-                            _="on click toggle .hidden from #toggle-target-new">
-                      Test TOGGLE FROM
+                            _="on click 
+                               beep! then
+                               log 'Starting toggle command' then
+                               toggle .hidden from #toggle-target-new then
+                               beep! then
+                               log 'Toggle command completed'">
+                      Test TOGGLE FROM (with debug)
                     </button>
                   </div>
                 </div>
@@ -1057,6 +1052,33 @@
               </div>
             </div>
 
+            <!-- Debugging Demo -->
+            <div class="demo-card">
+              <div class="demo-title">Debugging & Development</div>
+              <div class="demo-description">Debugging tools and development helpers</div>
+              <div class="demo-area">
+                <button class="interactive-button" 
+                        _="on click 
+                           beep! then
+                           put 'Debug checkpoint triggered!' into #debug-result">
+                  Trigger Debug Beep
+                </button>
+                <button class="interactive-button" 
+                        _="on click 
+                           beep! then
+                           put 'Simple conditional test' into #debug-result">
+                  Simple Debug Test
+                </button>
+                <button class="interactive-button" 
+                        _="on click 
+                           beep! then
+                           put 'Loop test completed' into #debug-result">
+                  Simple Loop Test
+                </button>
+                <div class="result-display" id="debug-result">Debugging output will appear here...</div>
+              </div>
+            </div>
+
             <!-- Performance Demo -->
             <div class="demo-card">
               <div class="demo-title">Performance Monitoring</div>
@@ -1106,8 +1128,13 @@
   <!-- Debug Panel -->
   <div class="debug-panel" id="debug-panel">
     <div class="debug-header" 
-         _="on click toggle .open from #debug-panel">
-      <span>🐛 Debug Console</span>
+         _="on click 
+            beep! then
+            log 'Debug panel toggle clicked' then
+            toggle .open from #debug-panel then
+            beep! then
+            log 'Debug panel toggle completed'">
+      <span>🐛 Debug Console (with debug beeps)</span>
       <span>▲</span>
     </div>
     <div class="debug-content" id="debug-content">

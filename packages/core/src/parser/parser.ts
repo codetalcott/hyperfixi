@@ -526,7 +526,7 @@ export class Parser {
       }
 
       // Handle hyperscript navigation functions
-      if (token.value === 'closest' || token.value === 'first' || token.value === 'last') {
+      if (token.value === 'closest' || token.value === 'first' || token.value === 'last' || token.value === 'previous' || token.value === 'next') {
         // Check if followed by function call syntax or expression
         if (this.check('(') || this.checkTokenType(TokenType.CSS_SELECTOR) || this.check('<') || this.checkTokenType(TokenType.QUERY_REFERENCE)) {
           return this.parseNavigationFunction(token.value);
@@ -706,14 +706,14 @@ export class Parser {
     // Look for commands after the event (and optional selector)
     while (!this.isAtEnd()) {
       if (this.checkTokenType(TokenType.COMMAND)) {
-        this.advance(); // consume the command token
+        this.advance(); // consume the command token - parseCommand expects this as previous()
         commands.push(this.parseCommand());
       } else if (this.checkTokenType(TokenType.IDENTIFIER)) {
         // Check if this identifier is a command or function call
         const token = this.peek();
         if (this.isCommand(token.value)) {
           // It's a command - parse as command
-          this.advance(); // consume the command token
+          this.advance(); // consume the command token - parseCommand expects this as previous()
           commands.push(this.parseCommand());
         } else {
           // Parse as expression (could be function call like focus())
@@ -791,6 +791,14 @@ export class Parser {
 
   private parseCommand(): CommandNode {
     const commandToken = this.previous();
+    let commandName = commandToken.value;
+    
+    // Handle special case for beep! command - check if beep is followed by !
+    if (commandName === 'beep' && this.check('!')) {
+      this.advance(); // consume the !
+      commandName = 'beep!';
+    }
+    
     const args: ASTNode[] = [];
 
     // Parse command arguments - continue until we hit a separator or end
@@ -817,16 +825,38 @@ export class Parser {
         args.push(this.parseExpression());
       }
       
-      // Break after parsing one argument unless there's a comma
-      if (!this.match(',')) {
-        break;
+      // For comma-separated arguments, consume the comma and continue
+      if (this.match(',')) {
+        // Comma-separated - continue to next argument
+        continue;
       }
+      
+      // For hyperscript natural language syntax, continue if we see keywords that indicate more arguments
+      // This handles patterns like "put X into Y", "add X to Y", "remove X from Y", etc.
+      const continuationKeywords = ['into', 'from', 'to', 'with', 'by', 'at', 'before', 'after'];
+      if (continuationKeywords.some(keyword => this.check(keyword))) {
+        // Continue parsing - this is likely part of the command
+        continue;
+      }
+      
+      // Also continue if the previous argument was a continuation keyword
+      // This handles the case where we just parsed "from" and need to parse the target
+      const lastArg = args[args.length - 1];
+      if (lastArg && 
+          (lastArg.type === 'identifier' || lastArg.type === 'keyword') &&
+          continuationKeywords.includes((lastArg as any).name || (lastArg as any).value)) {
+        // The previous argument was a continuation keyword, so continue parsing
+        continue;
+      }
+      
+      // No comma and no continuation context - this argument sequence is complete
+      break;
     }
 
     const pos = this.getPosition();
     return {
       type: 'command',
-      name: commandToken.value,
+      name: commandName,
       args: args as ExpressionNode[],
       isBlocking: false,
       start: pos.start,

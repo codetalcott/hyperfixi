@@ -4,6 +4,7 @@
  */
 
 import { parse } from '../parser/parser';
+import { tokenize } from '../parser/tokenizer';
 import { Runtime, type RuntimeOptions } from '../runtime/runtime';
 import { createContext, createChildContext } from '../core/context';
 import type { ASTNode, ExecutionContext, ParseError } from '../types/base-types';
@@ -201,7 +202,23 @@ function processHyperscriptAttribute(element: Element, hyperscriptCode: string):
       console.error(`❌ Parse errors:`, compileResult.errors);
       compileResult.errors.forEach((error, index) => {
         console.error(`❌ Error ${index + 1}: ${error.message} at line ${error.line}, column ${error.column}`);
+        console.error(`❌ Error details:`, error);
       });
+      
+      // Try to identify the specific syntax issue
+      const lines = hyperscriptCode.split('\n');
+      lines.forEach((line, lineIndex) => {
+        console.error(`❌ Line ${lineIndex + 1}: "${line.trim()}"`);
+      });
+      
+      // Test tokenization of the failing code
+      try {
+        const tokens = tokenize(hyperscriptCode);
+        console.error(`🔍 Tokens generated:`, tokens.map(t => `${t.type}:"${t.value}"`).join(', '));
+      } catch (tokenError) {
+        console.error(`❌ Tokenization failed:`, tokenError);
+      }
+      
       return;
     }
     
@@ -247,8 +264,8 @@ function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionCon
     element.addEventListener(eventInfo.eventType, async (event) => {
       try {
         // Set event context
-        context.variables?.set('event', event);
-        context.variables?.set('target', event.target);
+        context.locals.set('event', event);
+        context.locals.set('target', event.target);
         
         // Execute the event handler body
         await executeHyperscriptAST(eventInfo.body, context);

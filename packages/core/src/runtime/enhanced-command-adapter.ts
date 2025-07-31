@@ -101,6 +101,11 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
    */
   async execute(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     try {
+      // Debug logging for put command
+      if (this.impl.name === 'put') {
+        console.log('🔧 Enhanced PUT adapter received args:', args);
+      }
+      
       // Convert to typed context
       const typedContext = ContextBridge.toTyped(context);
       
