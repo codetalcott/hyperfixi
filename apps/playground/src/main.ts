@@ -458,6 +458,51 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateDebugStatus('🎯 HyperFixi Demo ready - Check debug panel for details', 'success');
   debugLogger.log('🎯 HyperFixi Demo ready - All functionality depends on HyperFixi working correctly', 'success');
   
+  // Manually process our test buttons to make sure they're included
+  console.log('🔧 MANUAL PROCESSING: Starting manual button processing...');
+  
+  // First, let's see ALL buttons
+  const allButtons = document.querySelectorAll('button');
+  console.log(`🔧 MANUAL PROCESSING: Found ${allButtons.length} total buttons`);
+  console.log(`🔧 MANUAL PROCESSING: Starting button enumeration...`);
+  
+  // Now buttons with hyperscript attributes
+  const testButtons = document.querySelectorAll('button[_]');
+  console.log(`🔧 MANUAL PROCESSING: Found ${testButtons.length} buttons with hyperscript attributes`);
+  
+  // Let's check each button individually with error handling
+  allButtons.forEach((button, index) => {
+    try {
+      const script = button.getAttribute('_');
+      const text = button.textContent?.trim();
+      const hasAttribute = button.hasAttribute('_');
+      const rawAttribute = button.outerHTML.includes('_=');
+      console.log(`🔧 Button ${index + 1}: "${text}"`);
+      console.log(`   Has _attribute: ${hasAttribute}, Raw HTML has _=: ${rawAttribute}`);
+      console.log(`   Hyperscript: ${script ? `"${script}"` : 'NO'}`);
+      console.log(`   OuterHTML: ${button.outerHTML.substring(0, 150)}...`);
+    } catch (error) {
+      console.error(`❌ Error processing button ${index + 1}:`, error);
+    }
+  });
+  
+  debugLogger.log(`Found ${testButtons.length} buttons with hyperscript attributes`, 'info');
+  testButtons.forEach((button, index) => {
+    const script = button.getAttribute('_');
+    console.log(`🔧 Processing button ${index + 1}: "${script}"`);
+    debugLogger.log(`Button ${index + 1}: ${script}`, 'info');
+    hyperscript.processNode(button);
+  });
+  
+  // Manually process the debug panel header
+  const debugHeader = document.querySelector('.debug-header[_]');
+  if (debugHeader) {
+    debugLogger.log('Manually processing debug header', 'info');
+    hyperscript.processNode(debugHeader);
+  } else {
+    debugLogger.log('Debug header not found', 'warning');
+  }
+  
   console.log('🎯 HyperFixi Demo Environment Ready - PURE HYPERFIXI MODE');
   console.log('Available globals: hyperscript, context, debugLogger');
   console.log('All navigation and interactions handled by HyperFixi');

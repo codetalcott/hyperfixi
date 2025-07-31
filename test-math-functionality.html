@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperFixi Math Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result-display {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            min-height: 50px;
+        }
+        .test-cases {
+            margin-top: 20px;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .test-case {
+            margin: 5px 0;
+            padding: 5px;
+            background: white;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .test-case:hover {
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧮 HyperFixi Math Calculation Test</h1>
+        <p>Testing the complete math calculation functionality using PUT commands + Math conversion</p>
+        
+        <div>
+            <label for="math-input"><strong>Mathematical Expression:</strong></label>
+            <input type="text" class="test-input" value="(5 + 3) * 2 - 1" 
+                   id="math-input" placeholder="Enter a mathematical expression">
+        </div>
+        
+        <div>
+            <button class="test-button" 
+                    _="on click put (#math-input's value as Math) into #math-result">
+                🧮 Calculate Expression
+            </button>
+            <button class="test-button" 
+                    _="on click put 'Result: ' + (#math-input's value as Math) into #math-result">
+                📊 Calculate with Label
+            </button>
+            <button class="test-button" 
+                    _="on click put 'Test successful!' into #math-result">
+                ✅ Test PUT Command
+            </button>
+        </div>
+        
+        <div>
+            <label><strong>Result:</strong></label>
+            <div class="result-display" id="math-result">Result will appear here...</div>
+        </div>
+        
+        <div class="test-cases">
+            <h3>📋 Test Cases (click to try):</h3>
+            <div class="test-case" onclick="document.getElementById('math-input').value = '2 + 3'">
+                Basic Addition: 2 + 3 = 5
+            </div>
+            <div class="test-case" onclick="document.getElementById('math-input').value = '10 - 4'">
+                Basic Subtraction: 10 - 4 = 6
+            </div>
+            <div class="test-case" onclick="document.getElementById('math-input').value = '6 * 7'">
+                Basic Multiplication: 6 * 7 = 42
+            </div>
+            <div class="test-case" onclick="document.getElementById('math-input').value = '15 / 3'">
+                Basic Division: 15 / 3 = 5
+            </div>
+            <div class="test-case" onclick="document.getElementById('math-input').value = '(5 + 3) * 2'">
+                Parentheses: (5 + 3) * 2 = 16
+            </div>
+            <div class="test-case" onclick="document.getElementById('math-input').value = '2 + 3 * 4'">
+                Operator Precedence: 2 + 3 * 4 = 14
+            </div>
+            <div class="test-case" onclick="document.getElementById('math-input').value = '(2 + 3) * (4 + 1)'">
+                Complex: (2 + 3) * (4 + 1) = 25
+            </div>
+            <div class="test-case" onclick="document.getElementById('math-input').value = '10.5 + 2.3'">
+                Decimals: 10.5 + 2.3 = 12.8
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #d1ecf1; border-radius: 4px;">
+            <h4>🎯 Test Instructions:</h4>
+            <ol>
+                <li>Click on any test case above to load it into the input field</li>
+                <li>Click "Calculate Expression" to evaluate the math</li> 
+                <li>Try "Calculate with Label" for formatted output</li>
+                <li>Use "Test PUT Command" to verify basic functionality</li>
+                <li>Create your own expressions in the input field</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

@@ -262,15 +262,19 @@ function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionCon
     
     // Add event listener
     element.addEventListener(eventInfo.eventType, async (event) => {
+      console.log(`🎯 Event handler triggered: ${eventInfo.eventType} on element:`, element);
       try {
         // Set event context
         context.locals.set('event', event);
         context.locals.set('target', event.target);
         
+        console.log('🎯 About to execute hyperscript AST:', eventInfo.body);
         // Execute the event handler body
         await executeHyperscriptAST(eventInfo.body, context);
+        console.log('🎯 Hyperscript AST execution completed');
       } catch (error) {
-        console.error('Error executing hyperscript event handler:', error);
+        console.error('❌ Error executing hyperscript event handler:', error);
+        console.error('❌ Error stack:', error.stack);
       }
     });
     

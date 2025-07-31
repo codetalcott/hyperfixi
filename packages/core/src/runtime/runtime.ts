@@ -437,6 +437,9 @@ export class Runtime {
   private async executeCommand(node: CommandNode, context: ExecutionContext): Promise<unknown> {
     const { name, args } = node;
     
+    // Debug logging for all commands
+    console.log('🎯 Executing command:', name, 'with args:', args);
+    
     // Debug logging for put command
     if (name === 'put') {
       console.log('🔧 PUT Command Debug:', {
@@ -490,13 +493,16 @@ export class Runtime {
       }
       
       case 'set': {
+        console.log('🚨 SET command case reached in runtime switch!');
         // Set command should get mixed arguments - variable name raw, value evaluated  
         return await this.executeSetCommand(rawArgs, context);
       }
       
       case 'log': {
+        console.log('🚨 LOG command case reached in runtime switch!');
         // Log command evaluates all arguments and logs them
         const logArgs = await Promise.all(rawArgs.map((arg: ExpressionNode) => this.execute(arg, context)));
+        console.log('🔧 LOG command about to execute with args:', logArgs);
         return this.executeLogCommand(logArgs, context);
       }
       
@@ -713,6 +719,8 @@ export class Runtime {
    * Execute set command (set variables)
    */
   private async executeSetCommand(rawArgs: ExpressionNode[], context: ExecutionContext): Promise<void> {
+    console.log('🔧 SET command executing with args:', rawArgs);
+    
     // Process arguments: variable name (raw), "to" (evaluate), value (evaluate)
     if (rawArgs.length >= 3) {
       let varName = rawArgs[0];
@@ -727,17 +735,34 @@ export class Runtime {
       const toKeyword = await this.execute(rawArgs[1], context);
       const value = await this.execute(rawArgs[2], context);
       
+      console.log('🔧 SET command processed:', { varName, toKeyword, value });
+      
       // Handle special context variables directly
       if (varName === 'result') {
         context.result = value;
         return;
       }
       
-      return this.setCommand.execute(context, varName, toKeyword, value);
+      // Use the enhanced command API
+      const input = {
+        target: varName,
+        value: value,
+        toKeyword: 'to' as const
+      };
+      
+      const typedContext = context as any; // Cast to avoid type issues for now
+      
+      try {
+        const result = await this.setCommand.execute(input, typedContext);
+        console.log('🔧 SET command completed:', result);
+        return;
+      } catch (error) {
+        console.error('❌ SET command failed:', error);
+        throw error;
+      }
     }
     
-    // Fallback: use raw args
-    return this.setCommand.execute(context, ...rawArgs);
+    throw new Error('SET command requires at least 3 arguments (variable, "to", value)');
   }
 
   /**
