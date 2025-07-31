@@ -1,62 +1,67 @@
 # Hyperfixi Plugin System
 
-This experimental plugin system is inspired by Datastar's modular architecture, adapted for Hyperfixi's needs.
+This experimental plugin system is inspired by Datastar's modular architecture,
+adapted for Hyperfixi's needs.
 
 ## Overview
 
 The plugin system allows Hyperfixi to be extended through four types of plugins:
 
 ### 1. Command Plugins
+
 Handle hyperscript commands like `on`, `toggle`, `send`:
 
 ```typescript
 const OnCommandPlugin: CommandPlugin = {
-  type: 'command',
-  name: 'on',
+  type: "command",
+  name: "on",
   pattern: /^on\s+(\w+)/,
   execute: async (ctx) => {
     // Handle event binding
-  }
+  },
 };
 ```
 
 ### 2. Feature Plugins
+
 Add new capabilities to elements:
 
 ```typescript
 const ReactiveStateFeature: FeaturePlugin = {
-  type: 'feature',
-  name: 'reactive-state',
+  type: "feature",
+  name: "reactive-state",
   onElementInit: (ctx) => {
     // Initialize reactive state
-  }
+  },
 };
 ```
 
 ### 3. Transform Plugins
+
 Modify the AST during parsing:
 
 ```typescript
 const OptimizeTransform: TransformPlugin = {
-  type: 'transform',
-  name: 'optimize',
+  type: "transform",
+  name: "optimize",
   transformNode: (node, ctx) => {
     // Optimize AST node
     return node;
-  }
+  },
 };
 ```
 
 ### 4. Runtime Plugins
+
 Enhance runtime execution:
 
 ```typescript
 const DebugRuntime: RuntimePlugin = {
-  type: 'runtime',
-  name: 'debug',
+  type: "runtime",
+  name: "debug",
   beforeExecute: (ctx) => {
-    console.log('Executing:', ctx);
-  }
+    console.log("Executing:", ctx);
+  },
 };
 ```
 
@@ -65,8 +70,8 @@ const DebugRuntime: RuntimePlugin = {
 ### Loading Plugins
 
 ```typescript
-import { pluginRegistry } from '@hyperfixi/plugin-system';
-import { OnCommandPlugin } from './plugins/commands';
+import { pluginRegistry } from "@hyperfixi/plugin-system";
+import { OnCommandPlugin } from "./plugins/commands";
 
 // Load individual plugins
 pluginRegistry.load(OnCommandPlugin);
@@ -75,7 +80,7 @@ pluginRegistry.load(OnCommandPlugin);
 pluginRegistry.load(
   OnCommandPlugin,
   ReactiveStateFeature,
-  AutoFetchFeature
+  AutoFetchFeature,
 );
 
 // Apply to DOM
@@ -94,14 +99,14 @@ pluginRegistry.load(
   SendCommandPlugin,
   ReactiveStateFeature,
   AutoFetchFeature,
-  IntersectionFeature
+  IntersectionFeature,
 );
 
 // minimal.ts - Just core commands
 pluginRegistry.load(
   OnCommandPlugin,
   ToggleCommandPlugin,
-  SendCommandPlugin
+  SendCommandPlugin,
 );
 ```
 
@@ -134,23 +139,24 @@ To adopt this in Hyperfixi:
 
 ```typescript
 const CustomCommandPlugin: CommandPlugin = {
-  type: 'command',
-  name: 'animate',
+  type: "command",
+  name: "animate",
   pattern: /^animate\s+/,
-  
+
   execute: async (ctx) => {
     const { element, args } = ctx;
     const [animation, duration] = args;
-    
+
     element.animate(
       getKeyframes(animation),
-      { duration: parseDuration(duration) }
+      { duration: parseDuration(duration) },
     );
-  }
+  },
 };
 
 // Register and use
 pluginRegistry.load(CustomCommandPlugin);
 ```
 
-This plugin system provides a flexible foundation for extending Hyperfixi while maintaining compatibility with the existing architecture.
+This plugin system provides a flexible foundation for extending Hyperfixi while
+maintaining compatibility with the existing architecture.

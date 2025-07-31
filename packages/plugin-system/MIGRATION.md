@@ -2,7 +2,8 @@
 
 ## Overview
 
-This guide helps migrate existing Hyperfixi features to the new plugin system while maintaining backward compatibility.
+This guide helps migrate existing Hyperfixi features to the new plugin system
+while maintaining backward compatibility.
 
 ## Phase 1: Parallel Installation
 
@@ -10,16 +11,16 @@ This guide helps migrate existing Hyperfixi features to the new plugin system wh
 
 ```typescript
 // Keep existing imports
-import { hyperscript } from '@hyperfixi/core';
+import { hyperscript } from "@hyperfixi/core";
 
 // Add plugin system
-import { initializeHyperfixi } from '@hyperfixi/plugin-system';
-import { OnCommand, ToggleCommand } from '@hyperfixi/plugin-system/plugins';
+import { initializeHyperfixi } from "@hyperfixi/plugin-system";
+import { OnCommand, ToggleCommand } from "@hyperfixi/plugin-system/plugins";
 
 // Initialize both
 const hs = hyperscript();
-initializeHyperfixi({ 
-  plugins: [OnCommand, ToggleCommand] 
+initializeHyperfixi({
+  plugins: [OnCommand, ToggleCommand],
 });
 ```
 
@@ -45,23 +46,25 @@ export const OnPlugin = defineCommand('on', {
 ## Phase 2: Type-Safe Migration
 
 ### Before: Loose typing
+
 ```typescript
 const onFeature = {
   pattern: /on\s+(\w+)/,
   handler: (match, element) => {
     const [_, event] = match;
     // Manual parsing
-  }
+  },
 };
 ```
 
 ### After: Strong typing
+
 ```typescript
-const OnCommand = defineCommand('on', {
+const OnCommand = defineCommand("on", {
   execute: async (ctx) => {
     const [event, ...handlers] = ctx.args;
     // TypeScript knows args structure
-  }
+  },
 });
 ```
 
@@ -79,18 +82,18 @@ npx hyperfixi-analyze --src ./src --out ./plugin-report.json
 ```typescript
 // build.config.ts
 export default {
-  srcDirs: ['./src'],
-  outDir: './dist/bundles',
+  srcDirs: ["./src"],
+  outDir: "./dist/bundles",
   bundles: [
     {
-      name: 'minimal',
-      include: ['on', 'toggle', 'send']
+      name: "minimal",
+      include: ["on", "toggle", "send"],
     },
     {
-      name: 'auto',
-      analyze: true  // Auto-detect from source
-    }
-  ]
+      name: "auto",
+      analyze: true, // Auto-detect from source
+    },
+  ],
 };
 ```
 
@@ -105,7 +108,7 @@ export default {
 
 <!-- Or dynamic loading -->
 <script>
-  import { createHybridLoader } from '@hyperfixi/plugin-system';
+  import { createHybridLoader } from "@hyperfixi/plugin-system";
   const loader = createHybridLoader();
   loader.initialize();
 </script>
@@ -116,17 +119,17 @@ export default {
 ### Custom plugins
 
 ```typescript
-const AnimatePlugin = defineCommand('animate', {
+const AnimatePlugin = defineCommand("animate", {
   pattern: /^animate\s+(\w+)(?:\s+(\d+))?/,
   execute: async (ctx) => {
-    const [animation, duration = '300'] = ctx.args;
-    
+    const [animation, duration = "300"] = ctx.args;
+
     const keyframes = getAnimationKeyframes(animation);
     ctx.element.animate(keyframes, {
       duration: parseInt(duration),
-      easing: ctx.modifiers.has('ease') ? 'ease' : 'linear'
+      easing: ctx.modifiers.has("ease") ? "ease" : "linear",
     });
-  }
+  },
 });
 
 // Register
@@ -137,12 +140,12 @@ optimizedRegistry.load(AnimatePlugin);
 
 ```typescript
 // Load plugins based on device capabilities
-if ('IntersectionObserver' in window) {
-  await loader.loadOptional('intersection');
+if ("IntersectionObserver" in window) {
+  await loader.loadOptional("intersection");
 }
 
-if (window.matchMedia('(min-width: 1024px)').matches) {
-  await loader.loadOptional('advanced-animations');
+if (window.matchMedia("(min-width: 1024px)").matches) {
+  await loader.loadOptional("advanced-animations");
 }
 ```
 
@@ -152,18 +155,21 @@ if (window.matchMedia('(min-width: 1024px)').matches) {
 // Track plugin performance
 setInterval(() => {
   const metrics = optimizedRegistry.getMetrics();
-  
+
   metrics.forEach((stats, pluginName) => {
     if (stats.errorCount > 0) {
       console.warn(`Plugin ${pluginName} has errors:`, stats.lastError);
     }
-    
-    const avgTime = stats.executionTime.reduce((a, b) => a + b, 0) / stats.executionTime.length;
+
+    const avgTime = stats.executionTime.reduce((a, b) => a + b, 0) /
+      stats.executionTime.length;
     if (avgTime > 10) {
-      console.warn(`Plugin ${pluginName} is slow: ${avgTime.toFixed(2)}ms average`);
+      console.warn(
+        `Plugin ${pluginName} is slow: ${avgTime.toFixed(2)}ms average`,
+      );
     }
   });
-  
+
   // Optimize based on usage
   optimizedRegistry.optimize();
 }, 60000); // Every minute
@@ -198,4 +204,5 @@ const hs = hyperscript();
 4. Gradually expand to production
 5. Encourage community plugins
 
-The plugin system is designed to enhance, not replace, Hyperfixi's core strengths.
+The plugin system is designed to enhance, not replace, Hyperfixi's core
+strengths.
