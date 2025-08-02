@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>HyperFixi Live Demo - Progressive Feature Testing</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .demo-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .test-button.active {
+            background: #28a745;
+        }
+        .test-button.failed {
+            background: #dc3545;
+        }
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .work-area {
+            min-height: 100px;
+            border: 2px dashed #ccc;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .work-area.active {
+            border-color: #007bff;
+            background: #f0f8ff;
+        }
+        h1, h2 { color: #333; }
+        .test-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+        .progress-indicator {
+            background: #e9ecef;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            background: #28a745;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 HyperFixi Live Demo - Progressive Feature Testing</h1>
+    
+    <div class="demo-section">
+        <h2>📊 Feature Compatibility Progress</h2>
+        <div class="progress-indicator">
+            <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+        </div>
+        <div id="progress-text">0% - Ready to test</div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🧪 Level 1: Basic Expressions</h2>
+        <p>Test fundamental expression evaluation</p>
+        <button class="test-button" onclick="testBasicExpressions()">Test Basic Expressions</button>
+        <div class="output" id="basic-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔧 Level 2: Simple Commands</h2>
+        <p>Test basic DOM manipulation commands</p>
+        <div class="work-area" id="work-area-simple">
+            <div id="test-element" style="padding: 10px; background: yellow;">Test Element</div>
+        </div>
+        <button class="test-button" onclick="testSimpleCommands()">Test Simple Commands</button>
+        <div class="output" id="simple-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>⚡ Level 3: Compound Commands with 'then'</h2>
+        <p>Test command sequences and the 'then' keyword</p>
+        <div class="work-area" id="work-area-compound">
+            <div id="compound-element" style="padding: 20px; background: lightblue; transition: all 0.3s;">Compound Test Element</div>
+        </div>
+        <button class="test-button" onclick="testCompoundCommands()">Test Compound Commands</button>
+        <div class="output" id="compound-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🎯 Level 4: Event Handlers</h2>
+        <p>Test event-driven behavior</p>
+        <div class="work-area" id="work-area-events">
+            <button id="event-button" style="padding: 10px; margin: 5px;">Click Me!</button>
+            <div id="event-output" style="margin: 10px 0; padding: 10px; background: #f0f0f0;">Event output will appear here</div>
+        </div>
+        <button class="test-button" onclick="testEventHandlers()">Test Event Handlers</button>
+        <div class="output" id="events-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>✨ Level 5: Interactive Testing</h2>
+        <p>Test your own _hyperscript code live</p>
+        <textarea class="test-input" id="custom-script" placeholder="Enter your _hyperscript code here... 
+Example: 
+hide #test-element then show #test-element"></textarea>
+        <button class="test-button" onclick="testCustomScript()">Execute Custom Script</button>
+        <div class="work-area" id="work-area-custom">
+            <div id="custom-target" style="padding: 15px; background: lightgreen;">Custom Test Target</div>
+        </div>
+        <div class="output" id="custom-output"></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔍 Debug Console</h2>
+        <p>Real-time debugging information from HyperFixi runtime</p>
+        <button class="test-button" onclick="clearDebugConsole()">Clear Debug Console</button>
+        <button class="test-button" onclick="toggleDebugMode()">Toggle Debug Mode</button>
+        <div class="output" id="debug-console" style="max-height: 300px; overflow-y: auto; font-size: 12px;"></div>
+    </div>
+
+    <!-- Include our HyperFixi library -->
+    <script src="/dist/hyperfixi-browser.js"></script>
+    
+    <script>
+        let testsCompleted = 0;
+        let totalTests = 5;
+        
+        function updateProgress() {
+            const percentage = Math.round((testsCompleted / totalTests) * 100);
+            document.getElementById('progress-bar').style.width = percentage + '%';
+            document.getElementById('progress-text').textContent = 
+                `${percentage}% - ${testsCompleted}/${totalTests} test levels completed`;
+        }
+
+        // Enhanced logging with debugging features
+        let debugLogs = [];
+        
+        function log(message, type = 'info', outputId) {
+            const output = document.getElementById(outputId);
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            output.innerHTML += `<span class="${type}">${logEntry}</span>`;
+            console.log(message);
+            
+            // Store for debugging
+            debugLogs.push({
+                timestamp,
+                message,
+                type,
+                outputId
+            });
+        }
+        
+        function logDebug(message, outputId, data = null) {
+            log(`🔍 DEBUG: ${message}`, 'info', outputId);
+            if (data) {
+                log(`    Data: ${JSON.stringify(data, null, 2)}`, 'info', outputId);
+            }
+        }
+        
+        function logError(message, outputId, error = null) {
+            log(`❌ ERROR: ${message}`, 'error', outputId);
+            if (error) {
+                log(`    Error: ${error.message}`, 'error', outputId);
+                if (error.stack) {
+                    log(`    Stack: ${error.stack}`, 'error', outputId);
+                }
+            }
+        }
+        
+        function logSuccess(message, outputId, result = null) {
+            log(`✅ SUCCESS: ${message}`, 'success', outputId);
+            if (result !== null && result !== undefined) {
+                log(`    Result: ${JSON.stringify(result)}`, 'success', outputId);
+            }
+        }
+
+        function clearOutput(outputId) {
+            document.getElementById(outputId).innerHTML = '';
+        }
+
+        async function testBasicExpressions() {
+            clearOutput('basic-output');
+            logDebug('Starting Basic Expression Tests', 'basic-output');
+            
+            const expressions = [
+                { expr: '5 + 3', expected: 8 },
+                { expr: '10 * 2', expected: 20 },
+                { expr: '"hello" + " world"', expected: 'hello world' },
+                { expr: 'true and false', expected: false },
+                { expr: 'not false', expected: true },
+                { expr: '2 > 1', expected: true }
+            ];
+            
+            let passed = 0;
+            
+            if (!hyperfixi || !hyperfixi.evalHyperScript) {
+                logError('HyperFixi not available', 'basic-output');
+                logDebug('Available globals', 'basic-output', { 
+                    hyperfixi: typeof hyperfixi, 
+                    hyperfixiKeys: hyperfixi ? Object.keys(hyperfixi) : 'undefined' 
+                });
+                return;
+            }
+            
+            for (const test of expressions) {
+                logDebug(`Testing expression: ${test.expr}`, 'basic-output');
+                
+                try {
+                    const startTime = performance.now();
+                    const result = await hyperfixi.evalHyperScript(test.expr);
+                    const duration = performance.now() - startTime;
+                    
+                    const isCorrect = result === test.expected;
+                    
+                    if (isCorrect) {
+                        logSuccess(`${test.expr} = ${result}`, 'basic-output', { 
+                            result, 
+                            expected: test.expected, 
+                            duration: `${duration.toFixed(2)}ms`,
+                            type: typeof result
+                        });
+                        passed++;
+                    } else {
+                        logError(`${test.expr}: Expected ${test.expected}, got ${result}`, 'basic-output', { 
+                            result, 
+                            expected: test.expected, 
+                            duration: `${duration.toFixed(2)}ms`,
+                            resultType: typeof result,
+                            expectedType: typeof test.expected
+                        });
+                    }
+                } catch (error) {
+                    logError(`${test.expr} failed`, 'basic-output', error);
+                    logDebug('Error details', 'basic-output', {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    });
+                }
+            }
+            
+            const successRate = Math.round((passed / expressions.length) * 100);
+            log(`\n📊 Basic expressions: ${passed}/${expressions.length} passed (${successRate}%)`, 
+                passed === expressions.length ? 'success' : 'error', 'basic-output');
+            
+            if (passed === expressions.length) {
+                testsCompleted = Math.max(testsCompleted, 1);
+                updateProgress();
+                document.querySelector('#basic-output').parentElement.querySelector('.test-button').classList.add('active');
+            }
+        }
+
+        async function testSimpleCommands() {
+            clearOutput('simple-output');
+            logDebug('Starting Simple Commands Test with DOM manipulation', 'simple-output');
+            
+            const commands = [
+                {
+                    name: 'Hide Element',
+                    script: 'hide #test-element',
+                    description: 'Tests basic element hiding'
+                },
+                {
+                    name: 'Show Element', 
+                    script: 'show #test-element',
+                    description: 'Tests basic element showing'
+                },
+                {
+                    name: 'Add CSS Class',
+                    script: 'add .highlight to #test-element',
+                    description: 'Tests adding CSS classes to elements'
+                },
+                {
+                    name: 'Remove CSS Class',
+                    script: 'remove .highlight from #test-element', 
+                    description: 'Tests removing CSS classes from elements'
+                }
+            ];
+            
+            let passed = 0;
+            
+            if (!hyperfixi || !hyperfixi.processNode) {
+                logError('HyperFixi processNode not available', 'simple-output');
+                logDebug('Available HyperFixi methods', 'simple-output', { 
+                    hyperfixi: typeof hyperfixi, 
+                    methods: hyperfixi ? Object.keys(hyperfixi) : 'undefined' 
+                });
+                return;
+            }
+            
+            // Add debug CSS for visual feedback
+            const style = document.createElement('style');
+            style.textContent = `
+                .highlight { 
+                    background: #ffeb3b !important; 
+                    border: 2px solid #ffc107 !important;
+                    box-shadow: 0 2px 4px rgba(255,193,7,0.3) !important;
+                }
+                #test-element {
+                    transition: all 0.3s ease;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            for (const test of commands) {
+                logDebug(`Testing: ${test.name}`, 'simple-output', { 
+                    script: test.script,
+                    description: test.description 
+                });
+                
+                try {
+                    const startTime = performance.now();
+                    
+                    // Get initial state of target element
+                    const targetElement = document.getElementById('test-element');
+                    const initialState = {
+                        visible: targetElement ? !targetElement.style.display || targetElement.style.display !== 'none' : false,
+                        classes: targetElement ? targetElement.className : 'element not found',
+                        computedDisplay: targetElement ? getComputedStyle(targetElement).display : 'unknown'
+                    };
+                    
+                    logDebug('Element state before command', 'simple-output', initialState);
+                    
+                    // Create script element
+                    const scriptElement = document.createElement('div');
+                    scriptElement.setAttribute('_', test.script);
+                    scriptElement.style.display = 'none'; // Hide the script element itself
+                    document.body.appendChild(scriptElement);
+                    
+                    logDebug('Script element created', 'simple-output', {
+                        element: scriptElement.tagName,
+                        attribute: scriptElement.getAttribute('_'),
+                        attached: document.body.contains(scriptElement)
+                    });
+                    
+                    // Process with HyperFixi
+                    logDebug('Processing with HyperFixi...', 'simple-output');
+                    const result = await hyperfixi.processNode(scriptElement);
+                    const duration = performance.now() - startTime;
+                    
+                    // Get final state of target element
+                    const finalState = {
+                        visible: targetElement ? !targetElement.style.display || targetElement.style.display !== 'none' : false,
+                        classes: targetElement ? targetElement.className : 'element not found',
+                        computedDisplay: targetElement ? getComputedStyle(targetElement).display : 'unknown'
+                    };
+                    
+                    logSuccess(`${test.name} completed`, 'simple-output', {
+                        duration: `${duration.toFixed(2)}ms`,
+                        result: result || 'undefined',
+                        stateChange: {
+                            before: initialState,
+                            after: finalState,
+                            changed: JSON.stringify(initialState) !== JSON.stringify(finalState)
+                        }
+                    });
+                    
+                    passed++;
+                    
+                    // Cleanup
+                    document.body.removeChild(scriptElement);
+                    
+                    // Wait to see the effects
+                    logDebug('Waiting to observe effects...', 'simple-output');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                } catch (error) {
+                    const duration = performance.now() - startTime;
+                    logError(`${test.name} failed`, 'simple-output', error);
+                    logDebug('Failure details', 'simple-output', {
+                        duration: `${duration.toFixed(2)}ms`,
+                        errorName: error.name,
+                        errorMessage: error.message,
+                        stack: error.stack,
+                        targetElementExists: !!document.getElementById('test-element')
+                    });
+                }
+            }
+            
+            const successRate = Math.round((passed / commands.length) * 100);
+            log(`\n📊 Simple commands: ${passed}/${commands.length} passed (${successRate}%)`, 
+                passed === commands.length ? 'success' : 'error', 'simple-output');
+            
+            if (passed === commands.length) {
+                testsCompleted = Math.max(testsCompleted, 2);
+                updateProgress();
+                document.querySelector('#simple-output').parentElement.querySelector('.test-button').classList.add('active');
+            }
+        }
+
+        async function testCompoundCommands() {
+            clearOutput('compound-output');
+            logDebug('Starting Compound Commands Test with "then" sequences', 'compound-output');
+            
+            const compoundCommands = [
+                {
+                    name: 'Hide then Show',
+                    script: 'hide #compound-element then show #compound-element',
+                    description: 'Tests basic sequence with then'
+                },
+                {
+                    name: 'Multi-step with Classes',
+                    script: 'add .highlight to #compound-element then wait 1s then remove .highlight from #compound-element',
+                    description: 'Tests multi-step sequence with timing'
+                },
+                {
+                    name: 'Content Updates',
+                    script: 'set the textContent of #compound-element to "Step 1" then wait 1s then set the textContent of #compound-element to "Step 2"',
+                    description: 'Tests content manipulation in sequence'
+                }
+            ];
+            
+            let passed = 0;
+            
+            if (!hyperfixi || !hyperfixi.processNode) {
+                logError('HyperFixi processNode not available', 'compound-output');
+                logDebug('Available HyperFixi methods', 'compound-output', { 
+                    hyperfixi: typeof hyperfixi, 
+                    methods: hyperfixi ? Object.keys(hyperfixi) : 'undefined' 
+                });
+                return;
+            }
+            
+            // Add debug CSS for visual feedback
+            const style = document.createElement('style');
+            style.textContent = `
+                .highlight { 
+                    background: #ffeb3b !important; 
+                    transform: scale(1.05);
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 8px rgba(255,235,59,0.4);
+                }
+                #compound-element {
+                    transition: all 0.3s ease;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            for (const test of compoundCommands) {
+                logDebug(`Testing: ${test.name}`, 'compound-output', { 
+                    script: test.script,
+                    description: test.description 
+                });
+                
+                try {
+                    const startTime = performance.now();
+                    
+                    // Create script element
+                    const scriptElement = document.createElement('div');
+                    scriptElement.setAttribute('_', test.script);
+                    scriptElement.style.display = 'none'; // Hide the script element itself
+                    document.body.appendChild(scriptElement);
+                    
+                    logDebug('Script element created', 'compound-output', {
+                        element: scriptElement.tagName,
+                        attribute: scriptElement.getAttribute('_'),
+                        attached: document.body.contains(scriptElement)
+                    });
+                    
+                    // Process with HyperFixi
+                    logDebug('Processing with HyperFixi...', 'compound-output');
+                    const result = await hyperfixi.processNode(scriptElement);
+                    const duration = performance.now() - startTime;
+                    
+                    logSuccess(`${test.name} completed`, 'compound-output', {
+                        duration: `${duration.toFixed(2)}ms`,
+                        result: result || 'undefined',
+                        elementState: {
+                            visible: !document.getElementById('compound-element').style.display || 
+                                    document.getElementById('compound-element').style.display !== 'none',
+                            classes: document.getElementById('compound-element').className,
+                            content: document.getElementById('compound-element').textContent
+                        }
+                    });
+                    
+                    passed++;
+                    
+                    // Cleanup
+                    document.body.removeChild(scriptElement);
+                    
+                    // Wait to see the effects
+                    logDebug('Waiting to observe effects...', 'compound-output');
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                } catch (error) {
+                    const duration = performance.now() - startTime;
+                    logError(`${test.name} failed`, 'compound-output', error);
+                    logDebug('Failure details', 'compound-output', {
+                        duration: `${duration.toFixed(2)}ms`,
+                        errorName: error.name,
+                        errorMessage: error.message,
+                        stack: error.stack,
+                        elementState: {
+                            exists: !!document.getElementById('compound-element'),
+                            visible: !document.getElementById('compound-element')?.style.display || 
+                                    document.getElementById('compound-element')?.style.display !== 'none',
+                            classes: document.getElementById('compound-element')?.className,
+                            content: document.getElementById('compound-element')?.textContent
+                        }
+                    });
+                }
+            }
+            
+            const successRate = Math.round((passed / compoundCommands.length) * 100);
+            log(`\n📊 Compound commands: ${passed}/${compoundCommands.length} passed (${successRate}%)`, 
+                passed === compoundCommands.length ? 'success' : 'error', 'compound-output');
+            
+            if (passed === compoundCommands.length) {
+                testsCompleted = Math.max(testsCompleted, 3);
+                updateProgress();
+                document.querySelector('#compound-output').parentElement.querySelector('.test-button').classList.add('active');
+            }
+        }
+
+        async function testEventHandlers() {
+            clearOutput('events-output');
+            logDebug('Starting Event Handlers Test with click events', 'events-output');
+            
+            const eventTests = [
+                {
+                    name: 'Basic Click Handler',
+                    script: 'on click set the textContent of #event-output to "Button clicked at " + (new Date()).toLocaleTimeString()',
+                    description: 'Tests basic click event handling with DOM content updates'
+                },
+                {
+                    name: 'Style Change Handler', 
+                    script: 'on click add .clicked to me then wait 2s then remove .clicked from me',
+                    description: 'Tests event handling with CSS class manipulation and timing'
+                }
+            ];
+            
+            let passed = 0;
+            
+            if (!hyperfixi || !hyperfixi.processNode) {
+                logError('HyperFixi processNode not available', 'events-output');
+                logDebug('Available HyperFixi methods', 'events-output', { 
+                    hyperfixi: typeof hyperfixi, 
+                    methods: hyperfixi ? Object.keys(hyperfixi) : 'undefined' 
+                });
+                return;
+            }
+            
+            // Add debug CSS for visual feedback
+            const style = document.createElement('style');
+            style.textContent = `
+                .clicked { 
+                    background: #28a745 !important; 
+                    color: white !important;
+                    transform: scale(1.1);
+                    transition: all 0.3s ease;
+                }
+                #event-button {
+                    transition: all 0.3s ease;
+                }
+            `;
+            document.head.appendChild(style);
+            
+            for (const test of eventTests) {
+                logDebug(`Testing: ${test.name}`, 'events-output', { 
+                    script: test.script,
+                    description: test.description 
+                });
+                
+                try {
+                    const startTime = performance.now();
+                    
+                    // Get target elements
+                    const button = document.getElementById('event-button');
+                    const output = document.getElementById('event-output');
+                    
+                    if (!button || !output) {
+                        throw new Error('Required elements not found');
+                    }
+                    
+                    // Store initial state
+                    const initialState = {
+                        buttonText: button.textContent,
+                        buttonClasses: button.className,
+                        outputText: output.textContent,
+                        eventListenerCount: button.onclick ? 1 : 0
+                    };
+                    
+                    logDebug('Element state before event handler setup', 'events-output', initialState);
+                    
+                    // Apply the event handler script
+                    button.setAttribute('_', test.script);
+                    
+                    logDebug('Script attribute set', 'events-output', {
+                        element: button.tagName,
+                        id: button.id,
+                        attribute: button.getAttribute('_')
+                    });
+                    
+                    // Process with HyperFixi
+                    logDebug('Processing event handler with HyperFixi...', 'events-output');
+                    const result = await hyperfixi.processNode(button);
+                    const duration = performance.now() - startTime;
+                    
+                    // Verify event handler was attached
+                    const finalState = {
+                        buttonText: button.textContent,
+                        buttonClasses: button.className,
+                        outputText: output.textContent,
+                        hasEventAttribute: !!button.getAttribute('_'),
+                        processResult: result || 'undefined'
+                    };
+                    
+                    logSuccess(`${test.name} event handler attached`, 'events-output', {
+                        duration: `${duration.toFixed(2)}ms`,
+                        result: result || 'undefined',
+                        stateChange: {
+                            before: initialState,
+                            after: finalState
+                        }
+                    });
+                    
+                    passed++;
+                    
+                    // Test the event by programmatically clicking (for first test only)
+                    if (test.name === 'Basic Click Handler') {
+                        logDebug('Testing programmatic click...', 'events-output');
+                        const clickStartTime = performance.now();
+                        
+                        const preClickOutput = output.textContent;
+                        button.click();
+                        
+                        // Wait a bit for the event to process
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        const postClickOutput = output.textContent;
+                        const clickDuration = performance.now() - clickStartTime;
+                        
+                        if (preClickOutput !== postClickOutput) {
+                            logSuccess('Programmatic click test successful', 'events-output', {
+                                duration: `${clickDuration.toFixed(2)}ms`,
+                                outputChanged: true,
+                                beforeClick: preClickOutput,
+                                afterClick: postClickOutput
+                            });
+                        } else {
+                            logError('Programmatic click had no effect', 'events-output', {
+                                duration: `${clickDuration.toFixed(2)}ms`,
+                                outputChanged: false,
+                                output: postClickOutput
+                            });
+                        }
+                    }
+                    
+                } catch (error) {
+                    const duration = performance.now() - startTime;
+                    logError(`${test.name} failed`, 'events-output', error);
+                    logDebug('Failure details', 'events-output', {
+                        duration: `${duration.toFixed(2)}ms`,
+                        errorName: error.name,
+                        errorMessage: error.message,
+                        stack: error.stack,
+                        buttonExists: !!document.getElementById('event-button'),
+                        outputExists: !!document.getElementById('event-output')
+                    });
+                }
+            }
+            
+            const successRate = Math.round((passed / eventTests.length) * 100);
+            log(`\n📊 Event handlers: ${passed}/${eventTests.length} passed (${successRate}%)`, 
+                passed === eventTests.length ? 'success' : 'error', 'events-output');
+            
+            if (passed > 0) {
+                log('👆 Try clicking the button above to test interactively!', 'info', 'events-output');
+                testsCompleted = Math.max(testsCompleted, 4);
+                updateProgress();
+                document.querySelector('#events-output').parentElement.querySelector('.test-button').classList.add('active');
+            }
+        }
+
+        async function testCustomScript() {
+            clearOutput('custom-output');
+            const script = document.getElementById('custom-script').value.trim();
+            
+            if (!script) {
+                logError('Please enter a script to test', 'custom-output');
+                logDebug('No script provided for custom testing', 'custom-output');
+                return;
+            }
+            
+            logDebug(`Starting Custom Script Test`, 'custom-output', {
+                script: script,
+                length: script.length,
+                containsCommands: script.includes('hide') || script.includes('show') || script.includes('set') || script.includes('add'),
+                containsThen: script.includes('then')
+            });
+            
+            if (!hyperfixi || !hyperfixi.processNode) {
+                logError('HyperFixi processNode not available', 'custom-output');
+                logDebug('Available HyperFixi methods', 'custom-output', { 
+                    hyperfixi: typeof hyperfixi, 
+                    methods: hyperfixi ? Object.keys(hyperfixi) : 'undefined' 
+                });
+                return;
+            }
+            
+            try {
+                const startTime = performance.now();
+                
+                // Get initial state of target element
+                const targetElement = document.getElementById('custom-target');
+                const initialState = {
+                    visible: targetElement ? !targetElement.style.display || targetElement.style.display !== 'none' : false,
+                    classes: targetElement ? targetElement.className : 'element not found',
+                    content: targetElement ? targetElement.textContent : 'element not found',
+                    styles: targetElement ? {
+                        background: targetElement.style.background || getComputedStyle(targetElement).backgroundColor,
+                        display: targetElement.style.display || getComputedStyle(targetElement).display
+                    } : {}
+                };
+                
+                logDebug('Target element state before script execution', 'custom-output', initialState);
+                
+                // Create script element
+                const scriptElement = document.createElement('div');
+                scriptElement.setAttribute('_', script);
+                scriptElement.style.display = 'none'; // Hide the script element itself
+                document.body.appendChild(scriptElement);
+                
+                logDebug('Script element created and attached', 'custom-output', {
+                    element: scriptElement.tagName,
+                    attribute: scriptElement.getAttribute('_'),
+                    attached: document.body.contains(scriptElement),
+                    scriptLength: script.length
+                });
+                
+                // Process with HyperFixi
+                logDebug('Processing custom script with HyperFixi...', 'custom-output');
+                const result = await hyperfixi.processNode(scriptElement);
+                const duration = performance.now() - startTime;
+                
+                // Get final state of target element
+                const finalState = {
+                    visible: targetElement ? !targetElement.style.display || targetElement.style.display !== 'none' : false,
+                    classes: targetElement ? targetElement.className : 'element not found',
+                    content: targetElement ? targetElement.textContent : 'element not found',
+                    styles: targetElement ? {
+                        background: targetElement.style.background || getComputedStyle(targetElement).backgroundColor,
+                        display: targetElement.style.display || getComputedStyle(targetElement).display
+                    } : {}
+                };
+                
+                // Analyze what changed
+                const changes = {
+                    visibilityChanged: initialState.visible !== finalState.visible,
+                    classesChanged: initialState.classes !== finalState.classes,
+                    contentChanged: initialState.content !== finalState.content,
+                    stylesChanged: JSON.stringify(initialState.styles) !== JSON.stringify(finalState.styles)
+                };
+                
+                const anyChanges = Object.values(changes).some(changed => changed);
+                
+                logSuccess('Custom script executed successfully', 'custom-output', {
+                    duration: `${duration.toFixed(2)}ms`,
+                    result: result || 'undefined',
+                    stateChange: {
+                        before: initialState,
+                        after: finalState,
+                        changes: changes,
+                        anyChanges: anyChanges
+                    }
+                });
+                
+                if (anyChanges) {
+                    logSuccess('DOM changes detected - script had visible effects', 'custom-output', changes);
+                } else {
+                    logDebug('No DOM changes detected - script may be expression-only or failed silently', 'custom-output');
+                }
+                
+                // Cleanup
+                document.body.removeChild(scriptElement);
+                
+                testsCompleted = Math.max(testsCompleted, 5);
+                updateProgress();
+                document.querySelector('#custom-output').parentElement.querySelector('.test-button').classList.add('active');
+                
+            } catch (error) {
+                const duration = performance.now() - startTime;
+                logError('Custom script execution failed', 'custom-output', error);
+                logDebug('Custom script failure details', 'custom-output', {
+                    duration: `${duration.toFixed(2)}ms`,
+                    errorName: error.name,
+                    errorMessage: error.message,
+                    stack: error.stack,
+                    scriptContent: script,
+                    targetElementExists: !!document.getElementById('custom-target')
+                });
+            }
+        }
+
+        // Debug console functions
+        function clearDebugConsole() {
+            document.getElementById('debug-console').innerHTML = '';
+            debugLogs = [];
+            logDebug('Debug console cleared', 'debug-console');
+        }
+        
+        let debugMode = false;
+        
+        function toggleDebugMode() {
+            debugMode = !debugMode;
+            const button = document.querySelector('button[onclick="toggleDebugMode()"]');
+            
+            if (debugMode) {
+                button.textContent = 'Disable Debug Mode';
+                button.style.background = '#dc3545';
+                logSuccess('Debug mode enabled - enhanced logging active', 'debug-console');
+                
+                // Show current system state
+                logDebug('System State', 'debug-console', {
+                    hyperfixi: {
+                        available: typeof hyperfixi !== 'undefined',
+                        methods: hyperfixi ? Object.keys(hyperfixi) : 'undefined'
+                    },
+                    browser: {
+                        userAgent: navigator.userAgent,
+                        language: navigator.language,
+                        cookieEnabled: navigator.cookieEnabled
+                    },
+                    performance: {
+                        timing: performance.timing ? 'available' : 'not available',
+                        memory: performance.memory ? {
+                            used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024) + 'MB',
+                            total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024) + 'MB'
+                        } : 'not available'
+                    }
+                });
+            } else {
+                button.textContent = 'Enable Debug Mode';
+                button.style.background = '#007bff';
+                logDebug('Debug mode disabled - basic logging active', 'debug-console');
+            }
+        }
+        
+        // Initialize on load
+        window.addEventListener('load', function() {
+            logSuccess('HyperFixi Live Demo Ready!', 'basic-output');
+            
+            const systemInfo = {
+                hyperfixi: {
+                    available: typeof hyperfixi !== 'undefined',
+                    methods: hyperfixi ? Object.keys(hyperfixi) : 'undefined',
+                    version: hyperfixi ? hyperfixi.version || 'unknown' : 'N/A'
+                },
+                browser: {
+                    name: navigator.userAgent.includes('Chrome') ? 'Chrome' : 
+                           navigator.userAgent.includes('Firefox') ? 'Firefox' : 
+                           navigator.userAgent.includes('Safari') ? 'Safari' : 'Unknown',
+                    language: navigator.language
+                },
+                features: {
+                    performance: typeof performance !== 'undefined',
+                    asyncAwait: true, // We're using it
+                    modules: typeof import !== 'undefined'
+                }
+            };
+            
+            logDebug('System initialization complete', 'basic-output', systemInfo);
+            
+            if (typeof hyperfixi !== 'undefined') {
+                logSuccess('HyperFixi library loaded successfully', 'basic-output', {
+                    methods: Object.keys(hyperfixi),
+                    readyForTesting: true
+                });
+            } else {
+                logError('HyperFixi library not available', 'basic-output', {
+                    suggestion: 'Check if /dist/hyperfixi-browser.js is accessible',
+                    debugInfo: 'This may indicate a build or server issue'
+                });
+            }
+            
+            updateProgress();
+            
+            // Initialize debug console
+            logDebug('Live Demo initialized with enhanced debugging', 'debug-console', {
+                timestamp: new Date().toISOString(),
+                features: ['Performance timing', 'State inspection', 'Error analysis', 'Step-by-step debugging']
+            });
+        });
+    </script>
+</body>
+</html>
