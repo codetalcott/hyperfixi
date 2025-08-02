@@ -144,11 +144,11 @@ describe('Boolean Type Conversion - TDD Fix', () => {
   });
 
   describe('Current Behavior Documentation', () => {
-    it('documents current Boolean conversion failure', async () => {
-      // Currently returns "false" (string) instead of false (boolean)
+    it('documents Boolean conversion now working correctly', async () => {
+      // Fixed: now correctly returns false (boolean) instead of "false" (string)
       const result = await parseAndEvaluateExpression('"false" as Boolean', context);
-      expect(typeof result).toBe('string'); // Current behavior
-      expect(result).toBe('false'); // Current behavior - should be false (boolean)
+      expect(typeof result).toBe('boolean'); // Fixed behavior
+      expect(result).toBe(false); // Fixed behavior - correctly boolean false
     });
   });
 });

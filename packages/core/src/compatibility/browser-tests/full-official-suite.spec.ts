@@ -9,7 +9,7 @@ import { join } from 'path';
  * across all categories: core, expressions, commands, and features
  */
 
-const HYPERSCRIPT_TEST_ROOT = process.env.HYPERSCRIPT_TEST_ROOT || '../_hyperscript/test';
+const HYPERSCRIPT_TEST_ROOT = process.env.HYPERSCRIPT_TEST_ROOT || '../../../_hyperscript/test';
 
 interface TestFile {
   category: string;

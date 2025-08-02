@@ -153,7 +153,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
   });
 
   describe('Current Behavior Documentation', () => {
-    it('documents current failing behavior', async () => {
+    it('documents dot notation now working correctly', async () => {
       const context = {
         me: { className: 'test' },
         you: null,
@@ -169,10 +169,9 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         async: false
       };
 
-      // This currently fails with "Unexpected token: . at position 1"
-      await expect(parseAndEvaluateExpression('me.className', context))
-        .rejects
-        .toThrow('Unexpected token: .');
+      // Fixed: dot notation now works correctly
+      const result = await parseAndEvaluateExpression('me.className', context);
+      expect(result).toBe('test');
     });
   });
 });
