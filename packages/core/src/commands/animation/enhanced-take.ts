@@ -155,7 +155,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
   async execute(
     context: TypedExecutionContext,
     ...args: unknown[]
-  ): Promise<EvaluationResult<HTMLElement>> {
+  ): Promise<TypedResult<HTMLElement>> {
     try {
       // Runtime validation for type safety
       const validationResult = this.validate(args);
@@ -167,8 +167,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
             message: validationResult.errors[0]?.message || 'Invalid input',
             code: 'TAKE_VALIDATION_FAILED',
             suggestions: validationResult.suggestions
-          },
-          type: 'error'
+          }
         };
       }
 
@@ -226,8 +225,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'TAKE_EXECUTION_FAILED',
           suggestions: ['Check if elements exist and verify property names are valid']
-        },
-        type: 'error'
+        }
       };
     }
   }

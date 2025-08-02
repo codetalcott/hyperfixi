@@ -52,19 +52,6 @@ export {
 // Legacy Compatibility (temporary)
 // ============================================================================
 
-// Re-export some types with legacy names for backward compatibility
-export type {
-  UnifiedValidationError as ValidationError,
-  UnifiedValidationResult as ValidationResult,
-  UnifiedExecutionContext as TypedExecutionContext,
-  UnifiedHyperScriptValue as HyperScriptValue,
-  UnifiedHyperScriptValueType as HyperScriptValueType,
-  UnifiedEvaluationType as EvaluationType,
-  UnifiedASTNode as ASTNode,
-  UnifiedParseError as ParseError,
-  UnifiedLLMDocumentation as LLMDocumentation
-} from './unified-types';
-
 // Export base types for runtime usage
 export type {
   ExpressionNode,
@@ -72,7 +59,13 @@ export type {
   ValidationResult,
   ValidationError,
   EvaluationResult,
-  ExecutionContext
+  ExecutionContext,
+  TypedExecutionContext,
+  HyperScriptValueType,
+  EvaluationType,
+  ASTNode,
+  ParseError,
+  LLMDocumentation
 } from './base-types';
 
 // ============================================================================

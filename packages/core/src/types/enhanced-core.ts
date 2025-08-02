@@ -11,29 +11,30 @@ import { z } from 'zod';
 // Import Unified Types
 // ============================================================================
 
-// Import from unified type system
+// Import from base type system
 import type {
-  UnifiedExecutionContext,
-  UnifiedValidationResult,
-  UnifiedValidationError,
-  UnifiedHyperScriptValue,
-  UnifiedHyperScriptValueType,
-  UnifiedEvaluationType
-} from './index';
+  ExecutionContext,
+  ValidationResult,
+  ValidationError,
+  HyperScriptValueType,
+  EvaluationType,
+  TypedResult,
+  LLMDocumentation
+} from './base-types';
 
 // ============================================================================
 // Re-export Unified Types with Legacy Names
 // ============================================================================
 
-// Enhanced-specific type aliases - import directly to avoid conflicts
+// Enhanced-specific type aliases - re-export from base types
 export type {
-  UnifiedExecutionContext as ExecutionContext,
-  UnifiedExecutionContext as TypedExecutionContext,
-  UnifiedExecutionContext as TypedExpressionContext,
-  UnifiedValidationResult as ValidationResult,
-  UnifiedTypedResult as TypedResult,
-  UnifiedExpressionMetadata as ExpressionMetadata
-} from './unified-types';
+  ExecutionContext,
+  TypedExecutionContext,
+  TypedExecutionContext as TypedExpressionContext,
+  ValidationResult,
+  TypedResult,
+  LLMDocumentation
+} from './base-types';
 
 // ============================================================================
 // Enhanced Type System for LLM Agents
@@ -42,7 +43,7 @@ export type {
 /**
  * Use unified HyperScript value type
  */
-export type HyperScriptValue = UnifiedHyperScriptValue;
+export type HyperScriptValue = unknown;
 
 /**
  * Strongly typed evaluation results with error handling
@@ -50,7 +51,7 @@ export type HyperScriptValue = UnifiedHyperScriptValue;
 /**
  * Use unified result type
  */
-export type EvaluationResult<T = unknown> = UnifiedResult<T>;
+export type { EvaluationResult } from './base-types';
 
 /**
  * Runtime type validation schema
@@ -98,7 +99,7 @@ export interface SourceLocation {
 export interface TypedCommandImplementation<
   TInput extends readonly HyperScriptValue[] = readonly HyperScriptValue[],
   TOutput extends HyperScriptValue = HyperScriptValue,
-  TContext extends UnifiedExecutionContext = UnifiedExecutionContext
+  TContext extends TypedExecutionContext = TypedExecutionContext
 > {
   /** Command name - must be literal for LLM understanding */
   readonly name: string;
@@ -113,13 +114,13 @@ export interface TypedCommandImplementation<
   readonly inputSchema: z.ZodSchema<TInput>;
   
   /** Output type information for LLMs */
-  readonly outputType: UnifiedUnifiedHyperScriptValueType;
+  readonly outputType: HyperScriptValueType;
   
   /** Type-safe execution with validated inputs */
-  execute(context: TContext, ...args: TInput): Promise<UnifiedResult<TOutput>>;
+  execute(context: TContext, ...args: TInput): Promise<TypedResult<TOutput>>;
   
   /** Compile-time validation for static analysis */
-  validate(args: unknown[]): UnifiedValidationResult;
+  validate(args: unknown[]): ValidationResult;
   
   /** Runtime metadata */
   readonly metadata: CommandMetadata;
@@ -136,11 +137,11 @@ export interface CommandMetadata {
   readonly relatedCommands: string[];
 }
 
-// Use unified command category
-export type CommandCategory = UnifiedCommandCategory;
+// Define command category
+export type CommandCategory = 'DOM' | 'Event' | 'Control' | 'Data' | 'Communication' | 'Style';
 
-// Use unified side effect type
-export type SideEffect = UnifiedSideEffect;
+// Define side effect type
+export type SideEffect = string;
 
 export interface CommandExample {
   readonly code: string;
@@ -157,7 +158,7 @@ export interface CommandExample {
  */
 export interface TypedExpressionImplementation<
   TOutput extends HyperScriptValue = HyperScriptValue,
-  TContext extends UnifiedExecutionContext = UnifiedExecutionContext
+  TContext extends TypedExecutionContext = TypedExecutionContext
 > {
   readonly name: string;
   readonly category: ExpressionCategory;
@@ -204,7 +205,7 @@ export type ExpressionCategory =
 /**
  * Enhanced validation error for backward compatibility with legacy enhanced-core usage
  */
-export interface EnhancedValidationError extends UnifiedValidationError {
+export interface EnhancedValidationError extends ValidationError {
   readonly position?: SourceLocation;
   readonly suggestion?: string;
 }
@@ -244,7 +245,7 @@ export class TypeChecker {
     throw new Error(`Unknown type for value: ${value}`);
   }
 
-  static validateType(value: unknown, expectedType: string): UnifiedValidationResult {
+  static validateType(value: unknown, expectedType: string): ValidationResult {
     const actualType = this.getType(value);
     
     if (actualType === expectedType) {
@@ -283,17 +284,7 @@ export class TypeChecker {
 // LLM-Friendly Documentation Types  
 // ============================================================================
 
-/**
- * Rich documentation for LLM understanding
- */
-export interface LLMDocumentation {
-  readonly summary: string;
-  readonly parameters: ParameterDoc[];
-  readonly returns: ReturnDoc;
-  readonly examples: DocumentationExample[];
-  readonly seeAlso: string[];
-  readonly tags: string[];
-}
+// LLMDocumentation is imported from base-types.ts
 
 export interface ParameterDoc {
   readonly name: string;
@@ -801,18 +792,7 @@ export const HyperScriptProgramSchema = z.object({
 // Export Enhanced Types
 // ============================================================================
 
-// Export additional EvaluationType for enhanced features
-export type EvaluationType = 
-  | 'Element'        // HTMLElement or null
-  | 'ElementList'    // HTMLElement[]
-  | 'String'         // string
-  | 'Number'         // number
-  | 'Boolean'        // boolean
-  | 'Object'         // any object
-  | 'Array'          // any[]
-  | 'Context'        // enhanced context object
-  | 'Null'           // null
-  | 'Any';           // unknown
+// EvaluationType is imported from base-types.ts
 
 // Note: ValidationResult is exported via interface declaration above (line 241)
 // Additional exports can be added here if needed for specific use cases

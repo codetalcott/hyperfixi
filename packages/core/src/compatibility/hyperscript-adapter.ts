@@ -60,7 +60,6 @@ export async function evalHyperScript(
     result: undefined,
     locals: new Map(),
     globals: new Map(),
-    parent: undefined,
     halted: false,
     returned: false,
     broke: false,

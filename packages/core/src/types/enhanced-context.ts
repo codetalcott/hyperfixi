@@ -117,7 +117,8 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
           errors: parsed.error.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid ${this.category.toLowerCase()} context input: ${err.message}`,
-            path: err.path?.join('.') || 'root'
+            path: err.path?.join('.') || 'root',
+            suggestions: []
           })),
           suggestions: this.generateValidationSuggestions(parsed.error)
         };
@@ -140,7 +141,8 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: `Context validation failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Context validation failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: ['Check input structure and types', 'Verify context requirements']
       };
