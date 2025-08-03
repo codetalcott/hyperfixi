@@ -1320,14 +1320,25 @@ export class Parser {
     
     const args: ASTNode[] = [];
 
-    // Parse all arguments until 'then' or end
+    // Use command-specific parsing instead of parseExpression to preserve natural language syntax
     while (!this.isAtEnd() && !this.check('then')) {
-      const expr = this.parseExpression();
-      if (expr) {
-        args.push(expr);
-      } else {
-        // If parseExpression fails, try parsePrimary as fallback
+      // Parse individual tokens/primitives instead of full expressions
+      // This prevents "add .highlight to #element" from being split into separate expressions
+      if (this.checkTokenType(TokenType.CSS_SELECTOR) || 
+          this.checkTokenType(TokenType.ID_SELECTOR) || 
+          this.checkTokenType(TokenType.CLASS_SELECTOR) ||
+          this.checkTokenType(TokenType.CONTEXT_VAR) ||
+          this.checkTokenType(TokenType.IDENTIFIER) ||
+          this.checkTokenType(TokenType.KEYWORD) ||
+          this.checkTokenType(TokenType.STRING) ||
+          this.checkTokenType(TokenType.NUMBER) ||
+          this.checkTokenType(TokenType.TIME_EXPRESSION) ||
+          this.match('<')) {
+        
         args.push(this.parsePrimary());
+      } else {
+        // Unknown token type - break to avoid infinite loop
+        break;
       }
       
       // For comma-separated arguments, consume the comma and continue
