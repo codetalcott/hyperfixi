@@ -69,10 +69,19 @@
             margin: 10px 0;
         }
         .highlight {
-            background: #ffeb3b !important;
-            transform: scale(1.05);
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 8px rgba(255,235,59,0.4);
+            background: #ff4444 !important;
+            color: white !important;
+            border: 3px solid #ff0000 !important;
+            transform: scale(1.1) !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 8px 16px rgba(255,68,68,0.8) !important;
+            animation: pulse 0.5s ease-in-out !important;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1.1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1.1); }
         }
         .clicked {
             background: #28a745 !important;
@@ -107,6 +116,8 @@
         </div>
         <button class="test-button" _="on click hide #compound-element then wait 1s then show #compound-element">Hide → Wait → Show</button>
         <button class="test-button" _="on click add .highlight to #compound-element then wait 2s then remove .highlight from #compound-element">Highlight → Wait → Remove</button>
+        <button class="test-button" onclick="document.getElementById('compound-element').classList.add('highlight')">Manual Add Highlight (Test)</button>
+        <button class="test-button" onclick="document.getElementById('compound-element').classList.remove('highlight')">Manual Remove Highlight (Test)</button>
         <button class="test-button" _="on click set the textContent of #compound-element to 'Step 1' then wait 1s then set the textContent of #compound-element to 'Step 2' then wait 1s then set the textContent of #compound-element to 'Complete!'">Multi-Step Content</button>
     </div>
 
@@ -161,7 +172,7 @@ on click hide #custom-target then wait 1s then show #custom-target"></textarea>
     </div>
 
     <!-- Include our HyperFixi library -->
-    <script src="/dist/hyperfixi-browser.js?v=19.0.parser-fix"></script>
+    <script src="/dist/hyperfixi-browser.js?v=21.6.remove-fix"></script>
     
     <!-- Minimal initialization - just process the page -->
     <script>

@@ -348,7 +348,7 @@ export class Runtime {
 
     let evaluatedArgs: unknown[];
     
-    // Special handling for PUT command - target should be handled specially
+    // Special handling for commands with natural language syntax
     if (name === 'put' && args.length >= 3) {
       // For put command: evaluate content and position, but handle target specially
       const content = await this.execute(args[0], context);
@@ -377,6 +377,61 @@ export class Runtime {
       }
       
       evaluatedArgs = [content, position, target];
+    } else if ((name === 'add' || name === 'remove') && args.length === 3) {
+      // Handle "add .class to #target" and "remove .class from #target" patterns
+      console.log(`🔧 ${name.toUpperCase()} Command Debug:`, {
+        name,
+        argsLength: args.length,
+        args: args.map(arg => ({ type: arg.type, value: (arg as any).value || (arg as any).name }))
+      });
+      
+      // For add/remove, the first argument (class) should be treated as a literal value, not evaluated as selector
+      let classArg = args[0];
+      if (classArg?.type === 'selector' || classArg?.type === 'literal') {
+        classArg = classArg.value;
+      } else if (classArg?.type === 'identifier') {
+        classArg = classArg.name;
+      } else {
+        classArg = await this.execute(args[0], context);
+      }
+      
+      const keywordArg = await this.execute(args[1], context); // 'to' or 'from'
+      let target = args[2];
+      
+      console.log(`🔧 ${name.toUpperCase()} Evaluated:`, {
+        classArg,
+        keywordArg,
+        targetNode: { type: target?.type, value: (target as any)?.value || (target as any)?.name }
+      });
+      
+      // Extract target selector/element
+      if (target?.type === 'identifier' && target.name === 'me') {
+        target = context.me;
+      } else if (target?.type === 'selector') {
+        target = target.value;
+      } else if (target?.type === 'identifier') {
+        target = target.name;
+      } else if (target?.type === 'literal') {
+        target = target.value;
+      } else {
+        const evaluated = await this.execute(target, context);
+        target = evaluated;
+      }
+      
+      console.log(`🔧 ${name.toUpperCase()} Final Args:`, { classArg, target });
+      
+      // Debug target resolution
+      if (typeof target === 'string' && target.startsWith('#')) {
+        const elements = document.querySelectorAll(target);
+        console.log(`🔍 Target resolution debug for "${target}":`, {
+          selector: target,
+          foundElements: elements.length,
+          elements: Array.from(elements)
+        });
+      }
+      
+      // Enhanced commands expect [classExpression, target]
+      evaluatedArgs = [classArg, target];
     } else {
       // For other commands, evaluate all arguments normally
       evaluatedArgs = await Promise.all(
@@ -385,7 +440,15 @@ export class Runtime {
     }
 
     // Execute through enhanced adapter
-    return await adapter.execute(context, ...evaluatedArgs);
+    console.log(`🚀 Executing enhanced ${name} command with:`, evaluatedArgs);
+    
+    // Debug for add/remove commands to see class parsing
+    if ((name === 'add' || name === 'remove') && evaluatedArgs.length >= 1) {
+      console.log(`🔍 ${name.toUpperCase()} class argument type:`, typeof evaluatedArgs[0], evaluatedArgs[0]);
+    }
+    const result = await adapter.execute(context, ...evaluatedArgs);
+    console.log(`✅ Enhanced ${name} command completed with result:`, result);
+    return result;
   }
 
   /**
@@ -442,7 +505,7 @@ export class Runtime {
     const { name, args } = node;
     
     // Debug logging for all commands
-    console.log('🎯 Executing command:', name, 'with args:', args);
+    console.log('🎯 Executing command:', name, 'with args:', args, 'at', new Date().toLocaleTimeString());
     
     // Debug logging for put command
     if (name === 'put') {

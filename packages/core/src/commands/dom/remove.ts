@@ -213,10 +213,14 @@ export class RemoveCommand implements TypedCommandImplementation<
     }
 
     if (typeof classExpression === 'string') {
-      // Split by various delimiters and filter out empty strings
+      // Split by various delimiters and clean up class names (like ADD command)
       return classExpression
         .split(/[\s,]+/)
-        .map(cls => cls.trim())
+        .map(cls => {
+          // Remove leading dot from CSS class selectors (same as ADD command)
+          const trimmed = cls.trim();
+          return trimmed.startsWith('.') ? trimmed.substring(1) : trimmed;
+        })
         .filter(cls => cls.length > 0);
     }
 
