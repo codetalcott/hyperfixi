@@ -1280,22 +1280,17 @@ export class Parser {
   private parseCommandSequence(): ASTNode {
     const commands: CommandNode[] = [];
     
-    // Parse the first command
-    if (this.checkTokenType(TokenType.COMMAND) || (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))) {
-      this.advance(); // consume the command token
-      commands.push(this.parseCommand());
-    }
-    
-    // Look for 'then' followed by more commands
-    while (this.match('then')) {
+    // Parse commands separated by 'then'
+    do {
+      // Parse a single command - consume all tokens until 'then' or end
       if (this.checkTokenType(TokenType.COMMAND) || (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))) {
         this.advance(); // consume the command token
-        commands.push(this.parseCommand());
+        commands.push(this.parseFullCommand());
       } else {
-        this.addError(`Expected command after 'then', got: ${this.peek().value}`);
+        this.addError(`Expected command, got: ${this.peek().value}`);
         break;
       }
-    }
+    } while (this.match('then'));
     
     // If we only have one command, return it directly
     if (commands.length === 1) {
@@ -1310,6 +1305,52 @@ export class Parser {
       end: commands[commands.length - 1]?.end || 0,
       line: commands[0]?.line || 1,
       column: commands[0]?.column || 1
+    };
+  }
+
+  private parseFullCommand(): CommandNode {
+    const commandToken = this.previous();
+    let commandName = commandToken.value;
+    
+    // Handle special case for beep! command
+    if (commandName === 'beep' && this.check('!')) {
+      this.advance(); // consume the !
+      commandName = 'beep!';
+    }
+    
+    const args: ASTNode[] = [];
+
+    // Parse all arguments until 'then' or end
+    while (!this.isAtEnd() && !this.check('then')) {
+      const expr = this.parseExpression();
+      if (expr) {
+        args.push(expr);
+      } else {
+        // If parseExpression fails, try parsePrimary as fallback
+        args.push(this.parsePrimary());
+      }
+      
+      // For comma-separated arguments, consume the comma and continue
+      if (this.match(',')) {
+        continue;
+      }
+      
+      // If we hit another command (not preceded by 'then'), we've gone too far
+      if (this.checkTokenType(TokenType.COMMAND) && !this.check('then')) {
+        break;
+      }
+    }
+
+    const pos = this.getPosition();
+    return {
+      type: 'command',
+      name: commandName,
+      args: args as ExpressionNode[],
+      isBlocking: false,
+      start: pos.start,
+      end: pos.end,
+      line: pos.line,
+      column: pos.column
     };
   }
 
