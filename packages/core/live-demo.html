@@ -890,7 +890,7 @@ hide #test-element then show #test-element"></textarea>
                 features: {
                     performance: typeof performance !== 'undefined',
                     asyncAwait: true, // We're using it
-                    modules: typeof import !== 'undefined'
+                    modules: 'import' in window
                 }
             };
             

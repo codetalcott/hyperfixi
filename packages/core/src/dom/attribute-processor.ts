@@ -126,8 +126,12 @@ export class AttributeProcessor {
           it: event.target
         };
         
-        // For simple commands, try direct execution through evalHyperScript
-        await (window as any).hyperfixi?.evalHyperScript?.(commandCode, eventContext);
+        // Use the full hyperscript API for command execution
+        if ((window as any).hyperfixi?.run) {
+          await (window as any).hyperfixi.run(commandCode, eventContext);
+        } else {
+          throw new Error('HyperFixi run method not available for command execution');
+        }
       } catch (error) {
         console.error(`Error executing hyperscript event handler:`, error);
       }

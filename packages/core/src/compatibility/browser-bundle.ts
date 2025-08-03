@@ -35,6 +35,17 @@ const hyperfixi = {
   run: hyperscript.run,
   createContext: hyperscript.createContext,
   
+  // DOM processing for HTMX/manual compatibility
+  processNode: async (element: Element | Document): Promise<void> => {
+    if (element === document) {
+      defaultAttributeProcessor.scanAndProcessAll();
+    } else if (element instanceof HTMLElement) {
+      defaultAttributeProcessor.processElement(element);
+    }
+    return Promise.resolve();
+  },
+  process: (element: Element | Document) => hyperfixi.processNode(element), // Alias
+  
   // Extensions
   tailwindExtension,
   

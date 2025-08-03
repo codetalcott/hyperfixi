@@ -103,6 +103,30 @@ export class Parser {
         };
       }
 
+      // Check if this looks like a command sequence (starts with command)
+      if (this.checkTokenType(TokenType.COMMAND) || (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))) {
+        const commandSequence = this.parseCommandSequence();
+        if (commandSequence) {
+          // Check for unexpected tokens after parsing
+          if (!this.isAtEnd()) {
+            this.addError(`Unexpected token: ${this.peek().value}`);
+            return {
+              success: false,
+              node: commandSequence || this.createErrorNode(),
+              tokens: this.tokens,
+              error: this.error!
+            };
+          }
+          
+          return {
+            success: true,
+            node: commandSequence,
+            tokens: this.tokens
+          };
+        }
+      }
+
+      // Fall back to expression parsing
       const ast = this.parseExpression();
       
       // Check if we have an error or unexpected remaining tokens
@@ -368,6 +392,17 @@ export class Parser {
       'transition', 'trigger', 'wait'
     ]);
     return COMMANDS.has(name.toLowerCase());
+  }
+
+  private isKeyword(name: string): boolean {
+    // Check if the name is in the KEYWORDS set from tokenizer
+    const KEYWORDS = new Set([
+      'if', 'else', 'unless', 'for', 'repeat', 'while', 'until', 'end', 'and', 'or', 
+      'not', 'in', 'to', 'from', 'into', 'with', 'without', 'as', 'matches', 'contains',
+      'then', 'on', 'when', 'every', 'init', 'def', 'behavior', 'the', 'of', 'first',
+      'last', 'next', 'previous', 'closest', 'within', 'pseudo', 'async', 'await'
+    ]);
+    return KEYWORDS.has(name.toLowerCase());
   }
 
   private createCommandFromIdentifier(identifierNode: IdentifierNode): CommandNode | null {
@@ -1240,6 +1275,42 @@ export class Parser {
     }
 
     return node;
+  }
+
+  private parseCommandSequence(): ASTNode {
+    const commands: CommandNode[] = [];
+    
+    // Parse the first command
+    if (this.checkTokenType(TokenType.COMMAND) || (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))) {
+      this.advance(); // consume the command token
+      commands.push(this.parseCommand());
+    }
+    
+    // Look for 'then' followed by more commands
+    while (this.match('then')) {
+      if (this.checkTokenType(TokenType.COMMAND) || (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))) {
+        this.advance(); // consume the command token
+        commands.push(this.parseCommand());
+      } else {
+        this.addError(`Expected command after 'then', got: ${this.peek().value}`);
+        break;
+      }
+    }
+    
+    // If we only have one command, return it directly
+    if (commands.length === 1) {
+      return commands[0];
+    }
+    
+    // Return a CommandSequence node
+    return {
+      type: 'CommandSequence',
+      commands: commands,
+      start: commands[0]?.start || 0,
+      end: commands[commands.length - 1]?.end || 0,
+      line: commands[0]?.line || 1,
+      column: commands[0]?.column || 1
+    };
   }
 
   private parseCommand(): CommandNode {
