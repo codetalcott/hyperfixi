@@ -46,6 +46,14 @@ import { createEnhancedTransitionCommand, EnhancedTransitionCommand } from './an
 // Template Commands
 import { createEnhancedRenderCommand, EnhancedRenderCommand } from './templates/enhanced-render';
 
+// DOM Commands
+import { createAddCommand, AddCommand } from './dom/add';
+import { createRemoveCommand, RemoveCommand } from './dom/remove';
+import { createToggleCommand, ToggleCommand } from './dom/toggle';
+import { createShowCommand, ShowCommand } from './dom/show';
+import { createHideCommand, HideCommand } from './dom/hide';
+import { createPutCommand, PutCommand } from './dom/put';
+
 // Re-export everything
 export {
   // Data Commands
@@ -89,6 +97,14 @@ export {
   
   // Template Commands
   createEnhancedRenderCommand, EnhancedRenderCommand,
+  
+  // DOM Commands
+  createAddCommand, AddCommand,
+  createRemoveCommand, RemoveCommand,
+  createToggleCommand, ToggleCommand,
+  createShowCommand, ShowCommand,
+  createHideCommand, HideCommand,
+  createPutCommand, PutCommand,
 };
 
 import type { TypedCommandImplementation } from '../types/core';
@@ -141,6 +157,14 @@ export const ENHANCED_COMMAND_FACTORIES = {
 
   // Template Commands
   render: createEnhancedRenderCommand,
+  
+  // DOM Commands
+  add: createAddCommand,
+  remove: createRemoveCommand,
+  toggle: createToggleCommand,
+  show: createShowCommand,
+  hide: createHideCommand,
+  put: createPutCommand,
 } as const;
 
 /**
@@ -184,6 +208,7 @@ export const ENHANCED_COMMAND_CATEGORIES = {
   advanced: ['tell', 'js', 'beep', 'async'],
   animation: ['settle', 'measure', 'transition'],
   templates: ['render'],
+  dom: ['add', 'remove', 'toggle', 'show', 'hide', 'put'],
 } as const;
 
 /**

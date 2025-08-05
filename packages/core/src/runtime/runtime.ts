@@ -472,8 +472,11 @@ export class Runtime {
         }
       }
       
+      console.log(`🔧 SET: Found 'to' at index:`, toIndex);
+      
       if (toIndex === -1) {
         // No "to" found, fall back to normal evaluation
+        console.log(`🔧 SET: No 'to' keyword found, falling back to normal evaluation`);
         evaluatedArgs = await Promise.all(
           args.map(arg => this.execute(arg, context))
         );
@@ -499,8 +502,19 @@ export class Runtime {
         if (targetArgs.length === 1) {
           // Simple case: "set count to X"
           const targetArg = targetArgs[0];
+          console.log('🔧 SET: Processing single target arg:', {
+            type: targetArg.type,
+            name: (targetArg as any).name,
+            value: (targetArg as any).value,
+            fullNode: targetArg
+          });
+          
           if (targetArg.type === 'identifier') {
             target = (targetArg as any).name;
+            console.log('🔧 SET: Set target from identifier:', target);
+          } else if (targetArg.type === 'literal') {
+            target = (targetArg as any).value;
+            console.log('🔧 SET: Set target from literal:', target);
           } else if (targetArg.type === 'memberExpression') {
             // Handle memberExpression like "my textContent"
             console.log('🚨 SET: MEMBEREXPRESSION DETECTED - PROCESSING NOW!');
@@ -535,7 +549,21 @@ export class Runtime {
             target = `the ${property} of ${selector}`;
             console.log('🔧 SET: Converted propertyOfExpression to string:', { target });
           } else {
+            // Fallback: try to evaluate the target arg
+            console.log('🔧 SET: Fallback - evaluating target arg:', targetArg);
             target = await this.execute(targetArg, context);
+            console.log('🔧 SET: Fallback result:', target);
+          }
+          
+          // Safety check - ensure target is not undefined
+          if (target === undefined || target === null) {
+            console.error('🚨 SET: Target is undefined/null after processing!', {
+              targetArg,
+              targetArgType: targetArg?.type,
+              targetArgName: (targetArg as any)?.name,
+              targetArgValue: (targetArg as any)?.value
+            });
+            throw new Error(`Invalid target type: ${typeof target}. Target arg: ${JSON.stringify(targetArg)}`);
           }
         } else if (targetArgs.length === 2 && 
                    (targetArgs[0].type === 'identifier' || targetArgs[0].type === 'context_var') && 

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimal SET Debug</title>
+</head>
+<body>
+    <div id="test">Test</div>
+    
+    <script src="dist/hyperfixi-browser.js"></script>
+    <script>
+        async function debugSetCommand() {
+            console.log('=== SET Command Debug ===');
+            
+            try {
+                // Test simple SET command
+                const code = 'set x to 42';
+                console.log('Code:', code);
+                
+                // First, test compilation
+                const compileResult = hyperscript.compile(code);
+                console.log('Compile result:', compileResult);
+                
+                if (compileResult.success) {
+                    console.log('AST:', JSON.stringify(compileResult.ast, null, 2));
+                    
+                    // Test execution
+                    const testDiv = document.getElementById('test');
+                    const context = hyperscript.createContext(testDiv);
+                    
+                    console.log('Context before:', context);
+                    
+                    const result = await hyperscript.execute(compileResult.ast, context);
+                    console.log('Execute result:', result);
+                    console.log('Context after:', context);
+                    console.log('Locals:', context.locals);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                console.error('Stack:', error.stack);
+            }
+        }
+        
+        debugSetCommand();
+    </script>
+</body>
+</html>

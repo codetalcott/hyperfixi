@@ -1401,7 +1401,9 @@ async function evaluateContextPossessive(node: any, context: ExecutionContext): 
     case 'my':
       return await extractValue(propertyExpressions.my.evaluate(toTypedContext(context), { property: propertyName }));
     case 'its':
-      return await extractValue(propertyExpressions.its.evaluate(toTypedContext(context), { target: context.me, property: propertyName }));
+      // 'its' refers to the 'result' context variable (or 'it' if no result)
+      const itsTarget = context.result || context.it;
+      return await extractValue(propertyExpressions.its.evaluate(toTypedContext(context), { target: itsTarget, property: propertyName }));
     case 'your':
       return await extractValue(propertyExpressions.its.evaluate(toTypedContext(context), { target: context.you, property: propertyName }));
     default:

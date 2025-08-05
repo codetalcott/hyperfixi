@@ -275,8 +275,19 @@ export class EnhancedCommandRegistry {
   static createWithDefaults(): EnhancedCommandRegistry {
     const registry = new EnhancedCommandRegistry();
     
-    // Import and register all enhanced commands
-    // This will be populated as we integrate each command
+    // Import and register all enhanced commands from the enhanced command registry
+    try {
+      // Dynamic import to avoid circular dependencies
+      const { createAllEnhancedCommands } = require('../commands/enhanced-command-registry');
+      const commands = createAllEnhancedCommands();
+      
+      // Register all commands
+      for (const [name, command] of commands.entries()) {
+        registry.register(command);
+      }
+    } catch (error) {
+      console.warn('Failed to load enhanced commands:', error);
+    }
     
     return registry;
   }
