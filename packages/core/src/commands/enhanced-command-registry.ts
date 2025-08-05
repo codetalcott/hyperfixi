@@ -54,6 +54,17 @@ import { createShowCommand, ShowCommand } from './dom/show';
 import { createHideCommand, HideCommand } from './dom/hide';
 import { createPutCommand, PutCommand } from './dom/put';
 
+// Event Commands
+import { createSendCommand, SendCommand } from './events/send';
+import { createTriggerCommand, TriggerCommand } from './events/trigger';
+
+// Navigation Commands
+import { createGoCommand, GoCommand } from './navigation/go';
+
+// Async Commands - using legacy for now
+import { createWaitCommand } from '../legacy/commands/async/wait';
+import { createFetchCommand } from '../legacy/commands/async/fetch';
+
 // Re-export everything
 export {
   // Data Commands
@@ -105,6 +116,17 @@ export {
   createShowCommand, ShowCommand,
   createHideCommand, HideCommand,
   createPutCommand, PutCommand,
+  
+  // Event Commands
+  createSendCommand, SendCommand,
+  createTriggerCommand, TriggerCommand,
+  
+  // Navigation Commands
+  createGoCommand, GoCommand,
+  
+  // Async Commands
+  createWaitCommand,
+  createFetchCommand,
 };
 
 import type { TypedCommandImplementation } from '../types/core';
@@ -165,6 +187,17 @@ export const ENHANCED_COMMAND_FACTORIES = {
   show: createShowCommand,
   hide: createHideCommand,
   put: createPutCommand,
+  
+  // Event Commands
+  send: createSendCommand,
+  trigger: createTriggerCommand,
+  
+  // Navigation Commands
+  go: createGoCommand,
+  
+  // Async Commands
+  wait: createWaitCommand,
+  fetch: createFetchCommand,
 } as const;
 
 /**

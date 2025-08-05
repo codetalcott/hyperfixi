@@ -225,17 +225,10 @@ export class EnhancedRenderCommand implements TypedCommandImplementation<
 
     // Process template with directives
     const rendered = await this.processTemplate(templateContent, templateContext, directivesProcessed, variablesUsed);
-    
-    console.log('🎆 Final rendered content:', rendered);
-    console.log('🎆 Rendered content length:', rendered.length);
-    console.log('🎆 Rendered content type:', typeof rendered);
 
     // Create a DOM element with the rendered content for _hyperscript compatibility
     const resultElement = document.createElement('div');
     resultElement.innerHTML = rendered;
-    
-    console.log('🎆 Result element innerHTML:', resultElement.innerHTML);
-    console.log('🎆 Result element textContent:', resultElement.textContent);
     
     // If there's only one child element, return it directly (cleaner for single elements)
     const content = resultElement.children.length === 1 ? resultElement.firstElementChild : resultElement;
@@ -574,30 +567,19 @@ export class EnhancedRenderCommand implements TypedCommandImplementation<
    * Process variable interpolation in content
    */
   private processVariableInterpolation(content: string, context: any): string {
-    console.log('🔧 Processing variable interpolation for content:', content);
-    console.log('🔧 Context locals size:', context.locals?.size);
-    console.log('🔧 Context locals entries:', Array.from(context.locals?.entries() || []));
-    
     return content.replace(/\$\{([^}]+)\}/g, (match, expression) => {
       try {
         const trimmedExpr = expression.trim();
-        console.log('🔧 Processing expression:', trimmedExpr);
         
         if (trimmedExpr.startsWith('unescaped ')) {
           // Unescaped expression
           const varName = trimmedExpr.substring('unescaped '.length).trim();
-          console.log('🔧 Unescaped variable name:', varName);
           const value = this.evaluateExpression(varName, context);
-          console.log('🔧 Unescaped variable value:', value);
           return String(value || '');
         } else {
           // HTML escaped expression (default)
-          console.log('🔧 Escaped variable name:', trimmedExpr);
           const value = this.evaluateExpression(trimmedExpr, context);
-          console.log('🔧 Escaped variable value:', value);
-          const escapedValue = this.escapeHtml(String(value || ''));
-          console.log('🔧 Final escaped value:', escapedValue);
-          return escapedValue;
+          return this.escapeHtml(String(value || ''));
         }
       } catch (error) {
         console.warn(`Template interpolation error for ${expression}:`, error);
