@@ -276,8 +276,8 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
         }
       }
 
-      // Join all results
-      const finalResult = results.join('');
+      // Join all results with newlines to preserve template structure
+      const finalResult = results.join('\n');
 
       // Track evaluation
       this.trackEvaluation(context, input, finalResult, startTime);
