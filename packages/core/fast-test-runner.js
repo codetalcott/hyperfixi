@@ -14,12 +14,9 @@
 
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 import crypto from 'crypto';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import process from 'node:process';
 
 class FastTestRunner {
     constructor(options = {}) {
@@ -104,7 +101,7 @@ class FastTestRunner {
         const startTime = Date.now();
         
         // Check cache first
-        const cacheKey = await this.getCacheKey(['src/parser/', 'src/expressions/', 'dist/']);
+        const cacheKey = this.getCacheKey(['src/parser/', 'src/expressions/', 'dist/']);
         if (this.options.skipUnchanged && this.cache.has(`node-${cacheKey}`)) {
             const cached = this.cache.get(`node-${cacheKey}`);
             console.log(`💾 Using cached Node.js results: ${cached.passed}/${cached.total} passed`);
@@ -202,7 +199,7 @@ class FastTestRunner {
                 passed = stats.passed || 0;
                 failed = stats.failed || 0;
                 total = passed + failed;
-            } catch (parseError) {
+            } catch (_parseError) {
                 // Fallback to text parsing
                 const output = result.stdout + result.stderr;
                 const passedMatch = output.match(/(\d+) passed/);
@@ -230,7 +227,7 @@ class FastTestRunner {
         }
     }
 
-    async executeCommand(command) {
+    executeCommand(command) {
         return new Promise((resolve, reject) => {
             const [cmd, ...args] = command.split(' ');
             
@@ -261,7 +258,7 @@ class FastTestRunner {
         });
     }
 
-    async getCacheKey(paths) {
+    getCacheKey(paths) {
         const hash = crypto.createHash('md5');
         
         for (const checkPath of paths) {
@@ -290,7 +287,7 @@ class FastTestRunner {
                 this.cache = new Map(Object.entries(cacheData));
                 console.log(`💾 Loaded test cache: ${this.cache.size} entries`);
             }
-        } catch (error) {
+        } catch (_error) {
             console.log('⚠️  Could not load test cache, starting fresh');
         }
     }

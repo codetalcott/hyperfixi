@@ -12,12 +12,8 @@
  */
 
 import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import process from 'node:process';
 
 class ContinuousTestWatcher {
     constructor(options = {}) {
@@ -56,7 +52,7 @@ class ContinuousTestWatcher {
         await this.runTests('Initial run');
 
         // Setup file watchers
-        await this.setupWatchers();
+        this.setupWatchers();
         
         console.log('👁️  File watching active. Press Ctrl+C to stop.\n');
         
@@ -68,7 +64,7 @@ class ContinuousTestWatcher {
         process.on('SIGTERM', () => this.stop());
     }
 
-    async setupWatchers() {
+    setupWatchers() {
         for (const watchPath of this.options.watchPaths) {
             const fullPath = path.resolve(watchPath);
             
@@ -223,7 +219,7 @@ class ContinuousTestWatcher {
         );
     }
 
-    displayResults(result, duration, trigger) {
+    displayResults(result, duration, _trigger) {
         const durationText = `${Math.round(duration / 1000)}s`;
         const statusIcon = result.success ? '✅' : '❌';
         const statusText = result.success ? 'PASSED' : 'FAILED';
