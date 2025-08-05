@@ -140,6 +140,11 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
             variables: args[2],
             withKeyword: 'with' as const
           };
+        } else if (this.impl.name === 'log') {
+          // LOG command - all arguments are values to log
+          input = {
+            values: Array.isArray(args) ? args : [args]
+          };
         } else {
           // Default input handling
           console.log('🔧 SET: Using default input handling:', { args, argsLength: args.length });

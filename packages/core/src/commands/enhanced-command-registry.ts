@@ -31,6 +31,7 @@ import { createEnhancedBreakCommand, EnhancedBreakCommand } from './control-flow
 
 // Utility Commands
 import { createEnhancedPickCommand, EnhancedPickCommand } from './utility/enhanced-pick';
+import { createEnhancedLogCommand, EnhancedLogCommand } from './utility/enhanced-log';
 
 // Advanced Commands
 import { createEnhancedTellCommand, EnhancedTellCommand } from './advanced/enhanced-tell';
@@ -94,6 +95,7 @@ export {
   
   // Utility Commands
   createEnhancedPickCommand, EnhancedPickCommand,
+  createEnhancedLogCommand, EnhancedLogCommand,
   
   // Advanced Commands
   createEnhancedTellCommand, EnhancedTellCommand,
@@ -165,6 +167,7 @@ export const ENHANCED_COMMAND_FACTORIES = {
 
   // Utility Commands
   pick: createEnhancedPickCommand,
+  log: createEnhancedLogCommand,
 
   // Advanced Commands
   tell: createEnhancedTellCommand,

@@ -126,7 +126,7 @@ export function createTokenizer(): Tokenizer {
 }
 
 export function tokenize(input: string): Token[] {
-  console.log('🔍 TOKENIZER: starting tokenization', { input });
+  // console.log('🔍 TOKENIZER: starting tokenization', { input });
   
   const tokenizer = createTokenizer();
   tokenizer.input = input;
@@ -311,10 +311,10 @@ export function tokenize(input: string): Token[] {
     advance(tokenizer);
   }
   
-  console.log('✅ TOKENIZER: completed tokenization', { 
-    tokenCount: tokenizer.tokens.length,
-    tokens: tokenizer.tokens.map(t => ({ type: t.type, value: t.value }))
-  });
+  // console.log('✅ TOKENIZER: completed tokenization', { 
+  //   tokenCount: tokenizer.tokens.length,
+  //   tokens: tokenizer.tokens.map(t => ({ type: t.type, value: t.value }))
+  // });
   
   return tokenizer.tokens;
 }
@@ -821,7 +821,7 @@ function classifyIdentifier(value: string): TokenType {
     return TokenType.KEYWORD;
   }
   
-  console.log('🔍 TOKENIZER: classified as IDENTIFIER (fallback)', { value, lowerValue });
+  // console.log('🔍 TOKENIZER: classified as IDENTIFIER (fallback)', { value, lowerValue });
   return TokenType.IDENTIFIER;
 }
 

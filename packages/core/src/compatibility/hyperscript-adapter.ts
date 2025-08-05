@@ -86,7 +86,7 @@ export async function evalHyperScript(
   
   try {
     // Check if this is a command (starts with command keywords)
-    const commandKeywords = ['set', 'put', 'add', 'remove', 'hide', 'show', 'toggle', 'render', 'increment', 'decrement'];
+    const commandKeywords = ['set', 'put', 'add', 'remove', 'hide', 'show', 'toggle', 'render', 'increment', 'decrement', 'log'];
     const trimmedSource = expressionSource.trim();
     const isCommand = commandKeywords.some(keyword => trimmedSource.toLowerCase().startsWith(keyword + ' '));
     

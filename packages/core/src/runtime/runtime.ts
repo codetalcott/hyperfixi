@@ -909,11 +909,9 @@ export class Runtime {
       }
       
       case 'log': {
-        console.log('🚨 LOG command case reached in runtime switch!');
-        // Log command evaluates all arguments and logs them
-        const logArgs = await Promise.all(rawArgs.map((arg: ExpressionNode) => this.execute(arg, context)));
-        console.log('🔧 LOG command about to execute with args:', logArgs);
-        return this.executeLogCommand(logArgs, context);
+        console.log('🚨 LOG command case reached in runtime switch - should not happen with enhanced commands!');
+        // This should not be reached since LOG command should go through enhanced registry
+        throw new Error('LOG command should be handled by enhanced registry');
       }
       
       case 'beep':
