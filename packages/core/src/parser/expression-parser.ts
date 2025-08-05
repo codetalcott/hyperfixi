@@ -419,6 +419,33 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
         end: property.end
       };
     }
+    // Handle "the X of Y" pattern (the property of element)
+    else if (left.type === 'identifier' && 
+             (left as any).name === 'the' &&
+             token.type === TokenType.IDENTIFIER) {
+      
+      const property = parsePrimaryExpression(state); // property name
+      
+      // Check for "of" keyword
+      const ofToken = peek(state);
+      if (ofToken && ofToken.type === TokenType.KEYWORD && ofToken.value === 'of') {
+        state.position++; // consume 'of'
+        
+        const target = parsePrimaryExpression(state); // target element
+        
+        left = {
+          type: 'propertyOfExpression',
+          property,
+          target,
+          start: left.start,
+          end: target.end
+        };
+      } else {
+        // No "of" found, treat as separate tokens (fallback)
+        // This shouldn't happen in well-formed "the X of Y" expressions
+        throw new ExpressionParseError('Expected "of" after property in "the X of Y" pattern');
+      }
+    }
     // Handle dot notation property access (obj.property)
     else if (token.type === TokenType.OPERATOR && token.value === '.') {
       state.position++; // consume '.'
@@ -1008,7 +1035,61 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     };
   }
   
-  throw new ExpressionParseError(`Unexpected token: ${token.value}`, state.position);
+  // Handle constructor calls with 'new' keyword
+  if (token.type === TokenType.KEYWORD && token.value === 'new') {
+    console.log('🔧 EXPR: Found constructor call, parsing...', { token: token.value, type: token.type });
+    const newToken = advance(state); // consume 'new'
+    const constructorToken = peek(state);
+    console.log('🔧 EXPR: Constructor token:', { token: constructorToken?.value, type: constructorToken?.type });
+    
+    if (!constructorToken || constructorToken.type !== TokenType.IDENTIFIER) {
+      throw new ExpressionParseError('Expected constructor name after "new"');
+    }
+    
+    advance(state); // consume constructor name
+    
+    // Expect opening parenthesis
+    const openParen = peek(state);
+    if (!openParen || openParen.value !== '(') {
+      throw new ExpressionParseError('Expected "(" after constructor name');
+    }
+    
+    advance(state); // consume '('
+    
+    // Parse arguments (for now, support empty argument list)
+    const args: ASTNode[] = [];
+    
+    // Check for closing parenthesis (empty args)
+    const closeParen = peek(state);
+    if (!closeParen || closeParen.value !== ')') {
+      throw new ExpressionParseError('Expected ")" after constructor arguments (argument parsing not yet implemented)');
+    }
+    
+    advance(state); // consume ')'
+    
+    return {
+      type: 'constructorCall',
+      constructor: constructorToken.value,
+      arguments: args,
+      start: newToken!.start,
+      end: closeParen.end
+    };
+  }
+  
+  // Debug: Check if we're hitting this case for constructor calls
+  if (token.type === TokenType.IDENTIFIER && token.value === 'Date') {
+    console.log('🚨 EXPR: Date token reached unexpected case - this suggests constructor parsing failed earlier');
+    console.log('🚨 EXPR: Previous tokens:', state.tokens.slice(Math.max(0, state.position - 3), state.position).map(t => ({type: t.type, value: t.value})));
+  }
+  
+  // Enhanced debugging for other unexpected tokens
+  console.log('🚨 EXPR: Unexpected token debug info:', {
+    token: { type: token.type, value: token.value },
+    position: state.position,
+    allTokens: state.tokens.slice(Math.max(0, state.position - 2), state.position + 3).map(t => ({type: t.type, value: t.value}))
+  });
+  
+  throw new ExpressionParseError(`Unexpected token: ${token.value} (type: ${token.type}) at position ${state.position}`, state.position);
 }
 
 /**
@@ -1047,6 +1128,12 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
       
     case 'contextPossessive':
       return evaluateContextPossessive(node, context);
+      
+    case 'propertyOfExpression':
+      return evaluatePropertyOfExpression(node, context);
+      
+    case 'constructorCall':
+      return evaluateConstructorCall(node, context);
       
     case 'propertyAccess':
       return evaluatePropertyAccess(node, context);
@@ -1319,6 +1406,50 @@ async function evaluateContextPossessive(node: any, context: ExecutionContext): 
       return await extractValue(propertyExpressions.its.evaluate(toTypedContext(context), { target: context.you, property: propertyName }));
     default:
       throw new ExpressionParseError(`Unknown context type: ${contextType}`);
+  }
+}
+
+/**
+ * Evaluate "the X of Y" property access (the property of element)
+ */
+async function evaluatePropertyOfExpression(node: any, context: ExecutionContext): Promise<any> {
+  // Extract property name
+  const propertyNode = node.property;
+  let propertyName: string;
+  if (propertyNode.type === 'identifier') {
+    propertyName = propertyNode.name;
+  } else {
+    throw new ExpressionParseError('Property name must be an identifier in "the X of Y" pattern');
+  }
+  
+  // Evaluate target element
+  const target = await evaluateASTNode(node.target, context);
+  
+  // Handle null/undefined targets gracefully
+  if (target === null || target === undefined) {
+    throw new ExpressionParseError(`Cannot access property "${propertyName}" of ${target}`);
+  }
+  
+  // For DOM elements, use our property expressions system
+  if (target && typeof target === 'object' && target.nodeType === Node.ELEMENT_NODE) {
+    return await extractValue(propertyExpressions.its.evaluate(toTypedContext(context), { 
+      target: target, 
+      property: propertyName 
+    }));
+  }
+  
+  // For other objects, use standard JavaScript property access
+  try {
+    const value = target[propertyName];
+    
+    // Handle method calls - if it's a function, bind it to the target
+    if (typeof value === 'function') {
+      return value.bind(target);
+    }
+    
+    return value;
+  } catch (error) {
+    throw new ExpressionParseError(`Failed to access property "${propertyName}" on target: ${error}`);
   }
 }
 
@@ -1845,6 +1976,30 @@ async function replaceAsyncBatch(str: string, regex: RegExp, replacer: (match: s
   }
   
   return result;
+}
+
+/**
+ * Evaluate constructor calls (new ConstructorName())
+ */
+async function evaluateConstructorCall(node: any, context: ExecutionContext): Promise<any> {
+  const constructorName = node.constructor;
+  
+  try {
+    // Try to resolve the constructor from global context
+    const globalObj = typeof globalThis !== 'undefined' ? globalThis : 
+                     (typeof window !== 'undefined' ? window : global);
+    
+    const Constructor = (globalObj as any)[constructorName];
+    if (typeof Constructor === 'function') {
+      // For now, only support constructors with no arguments
+      const result = new Constructor();
+      return result;
+    } else {
+      throw new ExpressionParseError(`Constructor "${constructorName}" not found or is not a function`);
+    }
+  } catch (error) {
+    throw new ExpressionParseError(`Failed to call constructor "${constructorName}": ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 /**

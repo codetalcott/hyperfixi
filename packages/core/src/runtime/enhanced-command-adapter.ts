@@ -104,8 +104,18 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
       // Convert to typed context
       const typedContext = ContextBridge.toTyped(context);
       
-      // Execute enhanced command with typed context and spread args
-      const result = await this.impl.execute(typedContext, ...args);
+      // Execute enhanced command - different signature for enhanced vs legacy commands
+      let result;
+      
+      // Check if this is a TypedCommandImplementation (enhanced command)
+      if (this.impl.execute && this.impl.execute.length === 2) {
+        // Enhanced command expects (context, input) signature
+        const input = args.length === 1 ? args[0] : args;
+        result = await this.impl.execute(typedContext, input);
+      } else {
+        // Legacy command adapter expects (context, ...args) signature
+        result = await this.impl.execute(typedContext, ...args);
+      }
       
       // Update original context with changes
       Object.assign(context, ContextBridge.fromTyped(typedContext, context));

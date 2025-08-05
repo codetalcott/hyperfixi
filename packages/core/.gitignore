@@ -45,6 +45,26 @@ playwright-report/
 test-reports/
 .vitest/
 
+# Automated Test System Generated Files
+*test-results*.json
+*-results*.json  
+quick-test-results.json
+production-test-results.json
+test-history/
+
+# Temporary Debug and Development Test Files
+ultra-minimal-test.html
+minimal-test.html  
+immediate-debug-test.html
+fresh-set-test.html
+simple-set-test.html
+test-set-fix.html
+test-set-execution.html
+test-compilation-direct.html
+test-debug-verification.html
+test-fix-verification.html
+final-the-x-of-y-test.html
+
 # ============================================================================
 # IDE and Editor Files
 # ============================================================================

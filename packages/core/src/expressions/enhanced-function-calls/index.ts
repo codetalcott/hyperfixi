@@ -24,6 +24,7 @@ import type {
  * Schema for function call expression input validation
  */
 export const FunctionCallExpressionInputSchema = z.union([
+  // Standard function call: functionName, [args]
   z.tuple([
     z.union([
       z.string().describe('Function name or object.method path'),
@@ -31,11 +32,23 @@ export const FunctionCallExpressionInputSchema = z.union([
     ]).describe('Function to call'),
     z.array(z.unknown()).describe('Function arguments')
   ]),
+  // Function call without arguments: functionName
   z.tuple([
     z.union([
       z.string().describe('Function name or object.method path'),
       z.function().describe('Direct function reference')
     ]).describe('Function to call')
+  ]),
+  // Constructor call: 'new', constructorName, [args]
+  z.tuple([
+    z.literal('new').describe('Constructor keyword'),
+    z.string().describe('Constructor name'),
+    z.array(z.unknown()).describe('Constructor arguments')
+  ]),
+  // Constructor call without arguments: 'new', constructorName
+  z.tuple([
+    z.literal('new').describe('Constructor keyword'),
+    z.string().describe('Constructor name')
   ])
 ]);
 
@@ -100,6 +113,18 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         output: 5
       },
       {
+        title: 'Constructor call',
+        code: 'new Date()',
+        explanation: 'Creates new Date instance using constructor',
+        output: 'Date object'
+      },
+      {
+        title: 'Constructor with arguments',
+        code: 'new Array(10)',
+        explanation: 'Creates new Array with specified length using constructor',
+        output: 'Array of length 10'
+      },
+      {
         title: 'Async function call',
         code: 'fetchData("url")',
         explanation: 'Calls async function and awaits the result',
@@ -116,36 +141,61 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
   async validate(args: unknown[]): Promise<ValidationResult> {
     try {
       const validatedArgs = this.inputSchema.parse(args);
-      const functionReference = validatedArgs[0];
-      const functionArgs = validatedArgs.length > 1 ? validatedArgs[1] : [];
-
       const issues: string[] = [];
       
-      // Validate function reference
-      if (typeof functionReference === 'string') {
-        if (functionReference.trim().length === 0) {
-          issues.push('Function name cannot be empty');
+      // Check if this is a constructor call
+      const isConstructorCall = validatedArgs[0] === 'new';
+      
+      if (isConstructorCall) {
+        // Constructor call validation
+        const constructorName = validatedArgs[1] as string;
+        const constructorArgs = validatedArgs.length > 2 ? validatedArgs[2] : [];
+        
+        if (!constructorName || constructorName.trim().length === 0) {
+          issues.push('Constructor name cannot be empty');
         }
         
-        if (functionReference.includes('..')) {
-          issues.push('Invalid function path - contains consecutive dots');
+        // Check for potentially dangerous constructors
+        const dangerousConstructors = ['Function', 'eval'];
+        if (dangerousConstructors.includes(constructorName)) {
+          issues.push(`Constructor "${constructorName}" may pose security risks - use with caution`);
         }
         
-        if (functionReference.startsWith('.') || functionReference.endsWith('.')) {
-          issues.push('Function path cannot start or end with a dot');
+        // Validate arguments array for constructor
+        if (constructorArgs && !Array.isArray(constructorArgs)) {
+          issues.push('Constructor arguments must be provided as an array');
         }
+      } else {
+        // Regular function call validation
+        const functionReference = validatedArgs[0];
+        const functionArgs = validatedArgs.length > 1 ? validatedArgs[1] : [];
         
-        // Check for potentially dangerous function names
-        const dangerousFunctions = ['eval', 'Function', 'setTimeout', 'setInterval'];
-        const functionName = functionReference.split('.').pop() || '';
-        if (dangerousFunctions.includes(functionName)) {
-          issues.push(`Function "${functionName}" may pose security risks - use with caution`);
+        // Validate function reference
+        if (typeof functionReference === 'string') {
+          if (functionReference.trim().length === 0) {
+            issues.push('Function name cannot be empty');
+          }
+          
+          if (functionReference.includes('..')) {
+            issues.push('Invalid function path - contains consecutive dots');
+          }
+          
+          if (functionReference.startsWith('.') || functionReference.endsWith('.')) {
+            issues.push('Function path cannot start or end with a dot');
+          }
+          
+          // Check for potentially dangerous function names
+          const dangerousFunctions = ['eval', 'Function', 'setTimeout', 'setInterval'];
+          const functionName = functionReference.split('.').pop() || '';
+          if (dangerousFunctions.includes(functionName)) {
+            issues.push(`Function "${functionName}" may pose security risks - use with caution`);
+          }
         }
-      }
 
-      // Validate arguments array
-      if (!Array.isArray(functionArgs)) {
-        issues.push('Function arguments must be provided as an array');
+        // Validate arguments array
+        if (functionArgs && !Array.isArray(functionArgs)) {
+          issues.push('Function arguments must be provided as an array');
+        }
       }
 
       return {
@@ -196,24 +246,37 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
       }
 
       const parsedArgs = this.inputSchema.parse(args);
-      const functionReference = parsedArgs[0];
-      const functionArgs = parsedArgs.length > 1 ? parsedArgs[1] : [];
+      
+      // Check if this is a constructor call
+      const isConstructorCall = parsedArgs[0] === 'new';
+      
+      if (isConstructorCall) {
+        // Handle constructor call: ['new', constructorName, args?]
+        const constructorName = parsedArgs[1] as string;
+        const constructorArgs = parsedArgs.length > 2 ? parsedArgs[2] : [];
+        
+        return await this.executeConstructor(constructorName, constructorArgs, context);
+      } else {
+        // Handle regular function call: [functionReference, args?]
+        const functionReference = parsedArgs[0];
+        const functionArgs = parsedArgs.length > 1 ? parsedArgs[1] : [];
 
-      // Resolve the function to call
-      const resolvedFunction = await this.resolveFunction(functionReference, context);
-      if (!resolvedFunction.success) {
-        return resolvedFunction;
+        // Resolve the function to call
+        const resolvedFunction = await this.resolveFunction(functionReference, context);
+        if (!resolvedFunction.success) {
+          return resolvedFunction;
+        }
+
+        // Execute the function call
+        const result = await this.executeFunction(
+          resolvedFunction.value.func,
+          resolvedFunction.value.thisBinding,
+          functionArgs,
+          context
+        );
+        
+        return result;
       }
-
-      // Execute the function call
-      const result = await this.executeFunction(
-        resolvedFunction.value.func,
-        resolvedFunction.value.thisBinding,
-        functionArgs,
-        context
-      );
-
-      return result;
     } catch (error) {
       return {
         success: false,
@@ -444,6 +507,124 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           code: 'FUNCTION_EXECUTION_ERROR',
           severity: 'error',
           context: { func: func.name || 'anonymous', args, error }
+        },
+        type: 'error'
+      };
+    }
+  }
+
+  /**
+   * Execute constructor with 'new' keyword and proper argument handling
+   */
+  private async executeConstructor(
+    constructorName: string,
+    args: unknown[],
+    context: TypedExpressionContext
+  ): Promise<EvaluationResult<HyperScriptValue>> {
+    try {
+      // Resolve constructor from context
+      const constructor = await this.resolveConstructor(constructorName, context);
+      if (!constructor.success) {
+        return constructor;
+      }
+
+      // Resolve any promise arguments first
+      const resolvedArgs = await Promise.all(
+        args.map(arg => this.resolveArgument(arg, context))
+      );
+
+      // Execute the constructor with new keyword
+      const result = new constructor.value(...resolvedArgs);
+
+      // Handle promise results
+      let finalResult = result;
+      if (result && typeof result === 'object' && 'then' in result) {
+        finalResult = await result;
+      }
+
+      const valueType = this.inferType(finalResult);
+
+      return {
+        success: true,
+        value: finalResult as HyperScriptValue,
+        type: valueType
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          name: 'ConstructorExecutionError',
+          message: `Constructor execution failed: ${error instanceof Error ? error.message : String(error)}`,
+          code: 'CONSTRUCTOR_EXECUTION_ERROR',
+          severity: 'error',
+          context: { constructorName, args, error }
+        },
+        type: 'error'
+      };
+    }
+  }
+
+  /**
+   * Resolve constructor function from contexts
+   */
+  private async resolveConstructor(
+    constructorName: string,
+    context: TypedExpressionContext
+  ): Promise<EvaluationResult<Function>> {
+    try {
+      // Start resolution from multiple contexts
+      const resolutionContexts = [
+        // 1. Local context and variables
+        { name: 'local', obj: context.locals },
+        { name: 'variables', obj: context.variables },
+        { name: 'meta', obj: context.meta },
+        // 2. Direct context properties
+        { name: 'context', obj: context },
+        // 3. Current element
+        { name: 'element', obj: context.me },
+        // 4. Global context
+        { name: 'global', obj: typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : global) }
+      ];
+
+      for (const resolutionContext of resolutionContexts) {
+        let constructor = null;
+        
+        if (resolutionContext.obj instanceof Map) {
+          constructor = resolutionContext.obj.get(constructorName);
+        } else if (resolutionContext.obj && typeof resolutionContext.obj === 'object' && constructorName in resolutionContext.obj) {
+          constructor = resolutionContext.obj[constructorName];
+        }
+        
+        if (typeof constructor === 'function') {
+          return {
+            success: true,
+            value: constructor,
+            type: 'function'
+          };
+        }
+      }
+
+      // Constructor not found
+      return {
+        success: false,
+        error: {
+          name: 'ConstructorNotFoundError',
+          message: `Constructor "${constructorName}" not found in any accessible context`,
+          code: 'CONSTRUCTOR_NOT_FOUND',
+          severity: 'error',
+          context: { constructorName, availableContexts: resolutionContexts.map(c => c.name) }
+        },
+        type: 'error'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          name: 'ConstructorResolutionError',
+          message: `Failed to resolve constructor "${constructorName}": ${error instanceof Error ? error.message : String(error)}`,
+          code: 'CONSTRUCTOR_RESOLUTION_ERROR',
+          severity: 'error',
+          context: { constructorName, error }
         },
         type: 'error'
       };

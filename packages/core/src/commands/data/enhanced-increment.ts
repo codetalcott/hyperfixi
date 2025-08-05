@@ -35,6 +35,8 @@ export class EnhancedIncrementCommand implements TypedCommandImplementation<
   IncrementCommandOutput,
   TypedExecutionContext
 > {
+  name = 'increment';
+  
   metadata = {
     name: 'increment',
     description: 'The increment command adds to an existing variable, property, or attribute. It defaults to adding the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then incremented by the specified amount.',

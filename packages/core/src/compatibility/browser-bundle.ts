@@ -30,10 +30,16 @@ const hyperfixi = {
   evaluate: evalHyperScript,
   
   // Full hyperscript API for advanced usage
-  compile: hyperscript.compile,
+  compile: (code: string) => {
+    console.log('🎯 BROWSER-BUNDLE: hyperfixi.compile() called', { code });
+    const result = hyperscript.compile(code);
+    console.log('🏁 BROWSER-BUNDLE: hyperscript.compile() returned', { result });
+    return result;
+  },
   execute: hyperscript.execute,
   run: hyperscript.run,
   createContext: hyperscript.createContext,
+  createRuntime: hyperscript.createRuntime,
   
   // DOM processing for HTMX/manual compatibility
   processNode: async (element: Element | Document): Promise<void> => {

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>HyperFixi Test Navigation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f5;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .navbar h1 {
+            margin: 0 0 15px 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .navbar .subtitle {
+            margin: 5px 0 20px 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .nav-link {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.2);
+            display: block;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255,255,255,0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .nav-link .title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .nav-link .description {
+            font-size: 14px;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+        
+        .nav-link.primary {
+            background: rgba(255,255,255,0.25);
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+        
+        .nav-link.debug {
+            background: rgba(255,87,87,0.2);
+            border: 1px solid rgba(255,87,87,0.3);
+        }
+        
+        .nav-link.debug:hover {
+            background: rgba(255,87,87,0.3);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-working { background: #28a745; }
+        .status-failing { background: #dc3545; }
+        .status-unknown { background: #ffc107; }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <h1>🚀 HyperFixi Test Suite</h1>
+            <p class="subtitle">Comprehensive testing environment for HyperFixi parser and runtime</p>
+            
+            <div class="nav-grid">
+                <!-- Main Demo -->
+                <a href="/hyperfixi-demo.html" class="nav-link primary">
+                    <div class="title">
+                        <span class="status-indicator status-working"></span>
+                        Main Demo
+                    </div>
+                    <div class="description">Original comprehensive demo with all features and Date() constructor tests</div>
+                </a>
+                
+                <!-- The X of Y Debugging -->
+                <a href="/final-the-x-of-y-test.html" class="nav-link debug">
+                    <div class="title">
+                        <span class="status-indicator status-failing"></span>
+                        Final "The X of Y" Test
+                    </div>
+                    <div class="description">Targeted test for the failing "set the X of Y" pattern with compilation debugging</div>
+                </a>
+                
+                <a href="/fresh-set-test.html" class="nav-link debug">
+                    <div class="title">
+                        <span class="status-indicator status-failing"></span>
+                        Fresh SET Test
+                    </div>
+                    <div class="description">Comprehensive SET command test with auto-running compilation tests</div>
+                </a>
+                
+                <a href="/debug-the-x-of-y.html" class="nav-link debug">
+                    <div class="title">
+                        <span class="status-indicator status-failing"></span>
+                        Debug "The X of Y"
+                    </div>
+                    <div class="description">Step-by-step debugging page for the problematic pattern</div>
+                </a>
+                
+                <a href="/simple-set-test.html" class="nav-link debug">
+                    <div class="title">
+                        <span class="status-indicator status-failing"></span>
+                        Simple SET Test
+                    </div>
+                    <div class="description">Minimal test setup for SET command patterns</div>
+                </a>
+                
+                <!-- Security Tests -->
+                <a href="/secure-demo.html" class="nav-link">
+                    <div class="title">
+                        <span class="status-indicator status-working"></span>
+                        Secure Demo
+                    </div>
+                    <div class="description">CSP-protected demo page with network monitoring (blocks third-party tracking)</div>
+                </a>
+                
+                <!-- Utilities -->
+                <a href="javascript:location.reload()" class="nav-link">
+                    <div class="title">🔄 Refresh Current Page</div>
+                    <div class="description">Reload the current test page to get latest changes</div>
+                </a>
+                
+                <a href="javascript:window.location.href=window.location.href+'?v='+Date.now()" class="nav-link">
+                    <div class="title">💨 Cache Bust</div>
+                    <div class="description">Reload with cache-busting parameter to ensure fresh assets</div>
+                </a>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 14px; opacity: 0.8;">
+                <strong>Current Status:</strong> "The X of Y" pattern parser fix implemented with enhanced debug logging. 
+                <br><strong>Latest Bundle:</strong> ENHANCED_DEBUG_LOGGING_FOR_PARSER
+                <br><strong>Next:</strong> Check console logs in test pages to verify parseSetCommand execution and pattern recognition.
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <h2>🎯 Current Development Focus</h2>
+            <p><strong>Primary Issue:</strong> The "the X of Y" syntax pattern in SET commands is not being parsed correctly.</p>
+            
+            <h3>🔧 Technical Details:</h3>
+            <ul>
+                <li><strong>Error:</strong> "Expected 'to' in set command, found: textContent" at position 17</li>
+                <li><strong>Pattern:</strong> <code>set the textContent of #test-target to "value"</code></li>
+                <li><strong>Root Cause:</strong> SET command parser not properly invoking enhanced expression parser</li>
+                <li><strong>Fix in Progress:</strong> Integrating enhanced expression parser into SET command parsing</li>
+            </ul>
+            
+            <h3>📋 Test Status:</h3>
+            <ul>
+                <li>✅ <strong>Possessive syntax:</strong> <code>set my textContent to "value"</code> - Working</li>
+                <li>✅ <strong>Direct possessive:</strong> <code>set #element's property to "value"</code> - Working</li>
+                <li>❌ <strong>"The X of Y" pattern:</strong> <code>set the textContent of #element to "value"</code> - Failing</li>
+                <li>❌ <strong>Nested properties:</strong> <code>set the style.backgroundColor of #element to "value"</code> - Failing</li>
+            </ul>
+            
+            <h3>🚀 Quick Actions:</h3>
+            <p>
+                <button onclick="location.href='/final-the-x-of-y-test.html'" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                    🔍 Test "The X of Y" Pattern
+                </button>
+                <button onclick="location.href='/hyperfixi-demo.html'" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                    🚀 View Main Demo
+                </button>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

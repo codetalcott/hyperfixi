@@ -58,6 +58,12 @@ const defaultRuntime = new Runtime();
  * Compile hyperscript code into an Abstract Syntax Tree (AST)
  */
 function compile(code: string): CompilationResult {
+  console.log('🚀 COMPILE: hyperscript-api compile() called', { 
+    code, 
+    codeLength: code.length,
+    codeType: typeof code 
+  });
+  
   // Input validation
   if (typeof code !== 'string') {
     throw new TypeError('Code must be a string');
@@ -66,7 +72,13 @@ function compile(code: string): CompilationResult {
   const startTime = performance.now();
   
   try {
+    console.log('🔍 COMPILE: about to call parse()');
     const parseResult = parse(code);
+    console.log('🏁 COMPILE: parse() returned', { 
+      success: parseResult.success,
+      hasNode: !!parseResult.node,
+      hasError: !!parseResult.error 
+    });
     const compilationTime = performance.now() - startTime;
     
     if (parseResult.success && parseResult.node) {

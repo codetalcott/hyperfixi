@@ -35,6 +35,8 @@ export class EnhancedDecrementCommand implements TypedCommandImplementation<
   DecrementCommandOutput,
   TypedExecutionContext
 > {
+  name = 'decrement';
+  
   metadata = {
     name: 'decrement',
     description: 'The decrement command subtracts from an existing variable, property, or attribute. It defaults to subtracting the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then decremented by the specified amount.',

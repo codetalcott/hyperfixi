@@ -346,6 +346,80 @@ describe('Enhanced Function Call Expression', () => {
     });
   });
 
+  describe('Constructor Calls', () => {
+    test('validates constructor call input', async () => {
+      const result = await functionCallExpression.validate(['new', 'Date', []]);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    test('validates constructor call without arguments', async () => {
+      const result = await functionCallExpression.validate(['new', 'Date']);
+      expect(result.isValid).toBe(true);
+    });
+
+    test('rejects empty constructor name', async () => {
+      const result = await functionCallExpression.validate(['new', '', []]);
+      expect(result.isValid).toBe(false);
+      expect(result.errors[0]).toContain('Constructor name cannot be empty');
+    });
+
+    test('warns about dangerous constructors', async () => {
+      const result = await functionCallExpression.validate(['new', 'Function', ['code']]);
+      expect(result.isValid).toBe(false);
+      expect(result.errors[0]).toContain('security risks');
+    });
+
+    test('calls Date constructor', async () => {
+      const result = await functionCallExpression.evaluate(context, 'new', 'Date', []);
+      
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.value).toBeInstanceOf(Date);
+        expect(result.type).toBe('object');
+      }
+    });
+
+    test('calls Array constructor with arguments', async () => {
+      const result = await functionCallExpression.evaluate(context, 'new', 'Array', [5]);
+      
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(Array.isArray(result.value)).toBe(true);
+        expect((result.value as Array<any>).length).toBe(5);
+        expect(result.type).toBe('array');
+      }
+    });
+
+    test('handles constructor not found', async () => {
+      const result = await functionCallExpression.evaluate(context, 'new', 'NonExistentConstructor');
+      
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.name).toBe('ConstructorNotFoundError');
+        expect(result.error.message).toContain('not found');
+      }
+    });
+
+    test('handles constructor execution errors', async () => {
+      const errorConstructor = function() {
+        throw new Error('Constructor error');
+      };
+      
+      (globalThis as any).ErrorConstructor = errorConstructor;
+      
+      const result = await functionCallExpression.evaluate(context, 'new', 'ErrorConstructor');
+      
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.name).toBe('ConstructorExecutionError');
+        expect(result.error.message).toContain('Constructor error');
+      }
+      
+      delete (globalThis as any).ErrorConstructor;
+    });
+  });
+
   describe('Built-in Functions', () => {
     test('calls Math functions', async () => {
       const result = await functionCallExpression.evaluate(context, 'Math.max', [1, 5, 3]);
@@ -507,7 +581,7 @@ describe('Enhanced Function Call Expression', () => {
       expect(docs.summary).toContain('JavaScript functions');
       expect(docs.parameters).toHaveLength(2);
       expect(docs.parameters[0].name).toBe('functionReference');
-      expect(docs.examples).toHaveLength(4);
+      expect(docs.examples).toHaveLength(6);
       expect(docs.tags).toContain('function');
       expect(docs.tags).toContain('interoperability');
     });

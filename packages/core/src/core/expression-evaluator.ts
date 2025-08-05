@@ -236,8 +236,28 @@ export class ExpressionEvaluator {
         return notEqualsExpr ? notEqualsExpr.evaluate(context, leftValue, rightValue) : leftValue !== rightValue;
       
       case '+':
-        const addExpr = this.expressionRegistry.get('add');
-        return addExpr ? addExpr.evaluate(context, leftValue, rightValue) : leftValue + rightValue;
+        // Smart operator resolution: choose between numeric addition and string concatenation
+        const shouldUseStringConcatenation = typeof leftValue === 'string' || typeof rightValue === 'string';
+        
+        if (shouldUseStringConcatenation) {
+          const stringConcatExpr = this.expressionRegistry.get('stringConcatenation');
+          if (stringConcatExpr) {
+            console.log('🔧 Using string concatenation for:', { leftValue, rightValue });
+            const result = await stringConcatExpr.evaluate(context, { left: leftValue, right: rightValue });
+            return result.success ? result.value : leftValue + rightValue;
+          }
+        } else {
+          const additionExpr = this.expressionRegistry.get('addition');
+          if (additionExpr) {
+            console.log('🔧 Using numeric addition for:', { leftValue, rightValue });
+            const result = await additionExpr.evaluate(context, { left: leftValue, right: rightValue });
+            return result.success ? result.value : leftValue + rightValue;
+          }
+        }
+        
+        // Fallback to native JavaScript addition/concatenation
+        console.log('🔧 Using fallback + operation for:', { leftValue, rightValue });
+        return leftValue + rightValue;
       
       case '-':
         const subtractExpr = this.expressionRegistry.get('subtract');

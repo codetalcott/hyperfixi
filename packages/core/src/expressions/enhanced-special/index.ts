@@ -876,6 +876,201 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
 }
 
 // ============================================================================
+// Enhanced String Concatenation Expression
+// ============================================================================
+
+export class EnhancedStringConcatenationExpression implements BaseTypedExpression<string> {
+  public readonly name = 'stringConcatenation';
+  public readonly category: ExpressionCategory = 'Special';
+  public readonly syntax = 'left + right (string concatenation)';
+  public readonly description = 'Concatenation of two values into a string';
+  public readonly inputSchema = BinaryOperationInputSchema;
+  public readonly outputType: EvaluationType = 'String';
+
+  public readonly metadata: ExpressionMetadata = {
+    category: 'Special',
+    complexity: 'simple',
+    sideEffects: [],
+    dependencies: [],
+    returnTypes: ['String'],
+    examples: [
+      {
+        input: '"Hello " + "World"',
+        description: 'Concatenate two strings',
+        expectedOutput: 'Hello World'
+      },
+      {
+        input: '"Count: " + 42',
+        description: 'Concatenate string and number',
+        expectedOutput: 'Count: 42'
+      },
+      {
+        input: '"Time: " + (new Date()).toLocaleTimeString()',
+        description: 'Concatenate string and function result',
+        expectedOutput: 'Time: 3:45:30 PM'
+      }
+    ],
+    relatedExpressions: ['stringLiteral', 'addition'],
+    performance: {
+      averageTime: 0.1,
+      complexity: 'O(n)'
+    }
+  };
+
+  public readonly documentation: LLMDocumentation = {
+    summary: 'Performs string concatenation of two values by converting them to strings',
+    parameters: [
+      {
+        name: 'left',
+        type: 'any',
+        description: 'Left operand (converted to string)',
+        optional: false,
+        examples: ['"Hello"', '42', 'true', 'new Date()']
+      },
+      {
+        name: 'right',
+        type: 'any',
+        description: 'Right operand (converted to string)',
+        optional: false,
+        examples: ['"World"', '123', 'false', 'variable']
+      }
+    ],
+    returnValue: {
+      type: 'string',
+      description: 'Concatenated string result',
+      examples: ['"Hello World"', '"Count: 42"', '"Time: 3:45:30 PM"']
+    },
+    examples: [
+      {
+        title: 'Basic string concatenation',
+        code: '"Hello " + "World"',
+        explanation: 'Concatenate two string literals',
+        output: '"Hello World"'
+      },
+      {
+        title: 'String and number',
+        code: '"Count: " + count',
+        explanation: 'Concatenate string with variable',
+        output: '"Count: 5"'
+      },
+      {
+        title: 'Function result concatenation',
+        code: '"Time: " + (new Date()).toLocaleTimeString()',
+        explanation: 'Concatenate string with function call result',
+        output: '"Time: 3:45:30 PM"'
+      }
+    ],
+    seeAlso: ['stringLiteral', 'addition', 'templateString'],
+    tags: ['string', 'concatenation', 'join', 'binary', 'operator']
+  };
+
+  async evaluate(
+    context: TypedExpressionContext,
+    input: BinaryOperationInput
+  ): Promise<TypedResult<string>> {
+    const startTime = Date.now();
+
+    try {
+      const validation = this.validate(input);
+      if (!validation.isValid) {
+        return {
+          success: false,
+          error: {
+            name: 'ValidationError',
+            message: validation.errors[0]?.message || 'Invalid input',
+            code: 'STRING_CONCATENATION_VALIDATION_FAILED',
+            suggestions: validation.suggestions
+          },
+          type: 'error'
+        };
+      }
+
+      // Convert both operands to strings
+      const leftStr = this.convertToString(input.left);
+      const rightStr = this.convertToString(input.right);
+      
+      const result = leftStr + rightStr;
+      
+      this.trackPerformance(context, startTime, true, result);
+
+      return {
+        success: true,
+        value: result,
+        type: 'string'
+      };
+
+    } catch (error) {
+      this.trackPerformance(context, startTime, false);
+      
+      return {
+        success: false,
+        error: {
+          name: 'StringConcatenationError',
+          message: error instanceof Error ? error.message : 'String concatenation failed',
+          code: 'STRING_CONCATENATION_ERROR',
+          suggestions: ['Check that operands can be converted to strings']
+        },
+        type: 'error'
+      };
+    }
+  }
+
+  validate(input: unknown): ValidationResult<BinaryOperationInput> {
+    const parsed = BinaryOperationInputSchema.safeParse(input);
+    
+    if (!parsed.success) {
+      return {
+        isValid: false,
+        errors: parsed.error.errors.map(err => ({
+          type: 'type-mismatch',
+          message: `Invalid string concatenation input: ${err.message}`,
+          suggestions: []
+        })),
+        suggestions: [
+          'Provide left and right operands for concatenation'
+        ]
+      };
+    }
+
+    return {
+      isValid: true,
+      errors: [],
+      suggestions: [],
+      data: parsed.data
+    };
+  }
+
+  private convertToString(value: unknown): string {
+    if (value === null) return 'null';
+    if (value === undefined) return 'undefined';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return value.toString();
+    if (typeof value === 'boolean') return value.toString();
+    if (value instanceof Date) return value.toString();
+    
+    try {
+      return String(value);
+    } catch {
+      return '[object Object]';
+    }
+  }
+
+  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+    if (context.evaluationHistory) {
+      context.evaluationHistory.push({
+        expressionName: this.name,
+        category: this.category,
+        input: 'string concatenation operation',
+        output: success ? output : 'error',
+        timestamp: startTime,
+        duration: Date.now() - startTime,
+        success
+      });
+    }
+  }
+}
+
+// ============================================================================
 // Enhanced Multiplication Expression
 // ============================================================================
 
@@ -1108,6 +1303,10 @@ export function createEnhancedAdditionExpression(): EnhancedAdditionExpression {
   return new EnhancedAdditionExpression();
 }
 
+export function createEnhancedStringConcatenationExpression(): EnhancedStringConcatenationExpression {
+  return new EnhancedStringConcatenationExpression();
+}
+
 export function createEnhancedMultiplicationExpression(): EnhancedMultiplicationExpression {
   return new EnhancedMultiplicationExpression();
 }
@@ -1121,6 +1320,7 @@ export const enhancedSpecialExpressions = {
   numberLiteral: createEnhancedNumberLiteralExpression(),
   booleanLiteral: createEnhancedBooleanLiteralExpression(),
   addition: createEnhancedAdditionExpression(),
+  stringConcatenation: createEnhancedStringConcatenationExpression(),
   multiplication: createEnhancedMultiplicationExpression()
 } as const;
 

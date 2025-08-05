@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Browser Console Debug Test</title>
+    <style>
+        body { font-family: monospace; margin: 20px; background: #f0f0f0; }
+        .console-log { 
+            background: #1e1e1e; 
+            color: #00ff00; 
+            padding: 15px; 
+            margin: 10px 0;
+            border-radius: 8px; 
+            white-space: pre-wrap; 
+            font-family: 'Courier New', monospace; 
+            border-left: 4px solid #00ff00;
+        }
+        .console-error { 
+            background: #2d1b1b; 
+            color: #ff6b6b; 
+            padding: 15px; 
+            margin: 10px 0;
+            border-radius: 8px; 
+            white-space: pre-wrap; 
+            font-family: 'Courier New', monospace; 
+            border-left: 4px solid #ff6b6b;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Browser Console Debug Test</h1>
+    <p>This page captures all console output to show debug logs from the rebuilt browser bundle.</p>
+    
+    <div id="test-target">Original Content</div>
+    
+    <div class="test-section">
+        <h2>Console Output</h2>
+        <div id="console-container"></div>
+    </div>
+    
+    <script src="/dist/hyperfixi-browser.js?v=CONSOLE_DEBUG_TEST"></script>
+    
+    <script>
+        // Capture all console output
+        const consoleContainer = document.getElementById('console-container');
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToConsole(type, args) {
+            const div = document.createElement('div');
+            div.className = `console-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            const message = args.map(arg => {
+                if (typeof arg === 'object' && arg !== null) {
+                    return JSON.stringify(arg, null, 2);
+                }
+                return String(arg);
+            }).join(' ');
+            
+            div.textContent = `[${timestamp}] ${message}`;
+            consoleContainer.appendChild(div);
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToConsole('log', args);
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToConsole('error', args);
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            addToConsole('error', args);
+        };
+        
+        // Start testing once loaded
+        window.addEventListener('load', function() {
+            console.log('🚀 BROWSER TEST: Page loaded, hyperfixi available:', typeof hyperfixi);
+            
+            if (typeof hyperfixi === 'undefined') {
+                console.error('❌ BROWSER TEST: hyperfixi is not available!');
+                return;
+            }
+            
+            console.log('✅ BROWSER TEST: hyperfixi.compile type:', typeof hyperfixi.compile);
+            
+            // Test 1: Simple SET command (should work)
+            console.log('\n=== TEST 1: Simple SET Command ===');
+            try {
+                const result1 = hyperfixi.compile('set myVar to "test"');
+                console.log('✅ TEST 1 Result:', result1.success ? 'SUCCESS' : 'FAILED');
+                if (!result1.success) {
+                    console.error('❌ TEST 1 Errors:', result1.errors);
+                }
+            } catch (e) {
+                console.error('💥 TEST 1 Exception:', e);
+            }
+            
+            // Test 2: The problematic "the X of Y" pattern
+            console.log('\n=== TEST 2: The X of Y Pattern ===');
+            try {
+                const problemCode = 'set the textContent of #test-target to "success"';
+                console.log('🧪 TEST 2: Testing code:', problemCode);
+                
+                const result2 = hyperfixi.compile(problemCode);
+                console.log('🏁 TEST 2 Result:', result2.success ? 'SUCCESS' : 'FAILED');
+                
+                if (result2.success) {
+                    console.log('🎉 BREAKTHROUGH: The X of Y pattern is now working!');
+                } else {
+                    console.error('❌ TEST 2 still failing. Errors:', result2.errors);
+                    result2.errors.forEach((error, i) => {
+                        console.error(`   Error ${i + 1}: ${error.message} at line ${error.line}, column ${error.column}`);
+                    });
+                }
+            } catch (e) {
+                console.error('💥 TEST 2 Exception:', e);
+            }
+            
+            // Test 3: Event handler with "the X of Y"
+            console.log('\n=== TEST 3: Event Handler with The X of Y ===');
+            try {
+                const eventCode = 'on click set the textContent of #test-target to "clicked"';
+                console.log('🧪 TEST 3: Testing code:', eventCode);
+                
+                const result3 = hyperfixi.compile(eventCode);
+                console.log('🏁 TEST 3 Result:', result3.success ? 'SUCCESS' : 'FAILED');
+                
+                if (!result3.success) {
+                    console.error('❌ TEST 3 Errors:', result3.errors);
+                }
+            } catch (e) {
+                console.error('💥 TEST 3 Exception:', e);
+            }
+            
+            console.log('\n=== ALL TESTS COMPLETED ===');
+        });
+    </script>
+</body>
+</html>

@@ -60,6 +60,21 @@ export const itExpression: ExpressionImplementation = {
   }
 };
 
+export const itsExpression: ExpressionImplementation = {
+  name: 'its',
+  category: 'Reference',
+  evaluatesTo: 'Any',
+  
+  async evaluate(context: ExecutionContext): Promise<unknown> {
+    // 'its' refers to the same context as 'it' - they are aliases
+    return context.it;
+  },
+  
+  validate() {
+    return null; // 'its' requires no arguments
+  }
+};
+
 export const resultExpression: ExpressionImplementation = {
   name: 'result',
   category: 'Reference',
@@ -442,6 +457,7 @@ export const referenceExpressions = {
   me: meExpression,
   you: youExpression,
   it: itExpression,
+  its: itsExpression,
   result: resultExpression,
   querySelector: querySelectorExpression,
   querySelectorAll: querySelectorAllExpression,

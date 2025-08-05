@@ -127,24 +127,75 @@
         <div class="work-area">
             <button id="click-me" class="test-button" _="on click add .clicked to me then wait 2s then remove .clicked from me">Click Me (Self-Modify)</button>
             <div id="event-output" style="margin: 10px 0; padding: 10px; background: #f0f0f0;">Event output will appear here</div>
-            <button class="test-button" _="on click set the textContent of #event-output to 'Clicked at ' + (new Date()).toLocaleTimeString()">Update Time</button>
+            <button class="test-button" _="on click set my textContent to 'Simple: Works!'">Update Time (Simple)</button>
+            <button class="test-button" _="on click set my textContent to 'Time' + 'test'">Test Basic String</button>
+            <button class="test-button" _="on click set my textContent to 'Count: ' + 42">Test Number Concat</button>
+            <button class="test-button" _="on click add .highlight to me">Test ADD (should work)</button>
+            <button class="test-button" _="on click set #event-output's textContent to 'Debug Test Works'">Debug Test (Simple - Possessive)</button>
+            <button class="test-button" _="on click log 'THE X OF Y TEST CLICKED'">Debug Test (Log Test)</button>
+            <button class="test-button" _="on click set the textContent of #event-output to 'Debug Test Works'">Debug Test (Simple - The X of Y)</button>
+            <button class="test-button" _="on click set #event-output's textContent to Date()">Test Date() Function</button>
+            <button class="test-button" _="on click set #event-output's textContent to Math.max(1, 5, 3)">Test Math.max() Function</button>
+            <button class="test-button" _="on click log 'Constructor button clicked'">Test Log (Constructor Debug)</button>
+            <button class="test-button" _="on click set #event-output's textContent to new Date()">Test new Date() Constructor</button>
+            <button class="test-button" _="on click log 'Step 1: Starting constructor test' then log 'Step 2: About to call SET command' then set #event-output's textContent to new Date() then log 'Step 3: SET command completed'">🔍 Debug Constructor Test</button>
+            <button class="test-button" onclick="testDirectHyperfixi()">🔧 Test Direct hyperfixi.run()</button>
+            <button class="test-button" onclick="testCompilation()">🔍 Test Compilation</button>
+            <button class="test-button" _="on click set #event-output's textContent to 'Manual button works!'">✅ Test Manual Button</button>
+            <button class="test-button" _="on click set #event-output's textContent to new Date().toLocaleTimeString()">🕒 Update Time (Real Time!)</button>
+            <button class="test-button" _="on click set #event-output's textContent to 'Simple Counter Test'">Simple Counter Test</button>
+            <button class="test-button" onclick="alert('JavaScript works!')">JS Test (should work)</button>
         </div>
     </div>
 
     <div class="demo-section">
         <h2>🔧 Level 4: Variables & Expressions</h2>
-        <p>Test variable assignment and expression evaluation</p>
+        <p>Test variable assignment and expression evaluation with counter examples</p>
+        
+        <!-- Manual Arithmetic Approach -->
+        <h3>📊 Manual Arithmetic Counter</h3>
         <div class="work-area">
-            <div id="counter-display" style="font-size: 24px; padding: 10px; text-align: center;">Count: 0</div>
+            <div id="counter-display" style="font-size: 24px; padding: 10px; text-align: center; background: #f0f0f0; border-radius: 5px; margin: 10px 0;">Count: 0</div>
             <button class="test-button" _="on click 
-                set count to (count or 0) + 1 then 
-                set the textContent of #counter-display to 'Count: ' + count">Increment Counter</button>
+                set global count to (count or 0) + 1 then 
+                set the textContent of #counter-display to 'Count: ' + count">➕ Manual Increment</button>
             <button class="test-button" _="on click 
-                set count to (count or 0) - 1 then 
-                set the textContent of #counter-display to 'Count: ' + count">Decrement Counter</button>
+                set global count to (count or 0) - 1 then 
+                set the textContent of #counter-display to 'Count: ' + count">➖ Manual Decrement</button>
             <button class="test-button" _="on click 
-                set count to 0 then 
-                set the textContent of #counter-display to 'Count: 0'">Reset Counter</button>
+                set global count to 0 then 
+                set the textContent of #counter-display to 'Count: 0'">🔄 Reset</button>
+        </div>
+
+        <!-- HyperFixi Enhanced Commands Approach -->
+        <h3>⚡ HyperFixi Enhanced Commands</h3>
+        <div class="work-area">
+            <div id="enhanced-counter-display" style="font-size: 24px; padding: 10px; text-align: center; background: #e8f5e8; border-radius: 5px; margin: 10px 0;">Enhanced Count: 0</div>
+            <button class="test-button" _="on click 
+                increment global enhancedCount then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: ' + enhancedCount">⬆️ Increment Command</button>
+            <button class="test-button" _="on click 
+                decrement global enhancedCount then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: ' + enhancedCount">⬇️ Decrement Command</button>
+            <button class="test-button" _="on click 
+                increment global enhancedCount by 5 then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: ' + enhancedCount">➕5 Increment by 5</button>
+            <button class="test-button" _="on click 
+                decrement global enhancedCount by 3 then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: ' + enhancedCount">➖3 Decrement by 3</button>
+            <button class="test-button" _="on click 
+                set global enhancedCount to 0 then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: 0'">🔄 Reset Enhanced</button>
+        </div>
+
+        <!-- Advanced Counter with DOM Integration -->
+        <h3>🎯 Advanced Counter with Element Properties</h3>
+        <div class="work-area">
+            <input type="number" id="advanced-counter" value="10" style="font-size: 18px; padding: 8px; text-align: center; width: 100px;">
+            <button class="test-button" _="on click increment #advanced-counter.value">📈 Increment Input</button>
+            <button class="test-button" _="on click decrement #advanced-counter.value">📉 Decrement Input</button>
+            <button class="test-button" _="on click increment #advanced-counter.value by 10">⏫ +10</button>
+            <button class="test-button" _="on click decrement #advanced-counter.value by 5">⏬ -5</button>
         </div>
     </div>
 
@@ -162,6 +213,17 @@ on click hide #custom-target then wait 1s then show #custom-target"></textarea>
     </div>
 
     <div class="demo-section">
+        <h2>🤖 Automated Test Suite</h2>
+        <p>Automated tests that run without manual interaction</p>
+        <div id="test-results" style="background: #f8f9fa; padding: 15px; border-radius: 4px; font-family: monospace; max-height: 400px; overflow-y: auto;">
+            Running automated tests...
+        </div>
+        <button id="run-tests" class="test-button">Run All Tests</button>
+        <button id="clear-tests" class="test-button">Clear Results</button>
+        <button id="copy-results" class="test-button">Copy Results to Clipboard</button>
+    </div>
+
+    <div class="demo-section">
         <h2>🔍 HyperFixi Status</h2>
         <p>Pure HyperScript implementation status</p>
         <div id="status-output" style="background: #f8f9fa; padding: 15px; border-radius: 4px; font-family: monospace;">
@@ -172,38 +234,501 @@ on click hide #custom-target then wait 1s then show #custom-target"></textarea>
     </div>
 
     <!-- Include our HyperFixi library -->
-    <script src="/dist/hyperfixi-browser.js?v=21.6.remove-fix"></script>
+    <script src="/dist/hyperfixi-browser.js?v=21.22.detailed-error-logging"></script>
     
-    <!-- Minimal initialization - just process the page -->
+    <!-- Automated Test Suite -->
     <script>
-        window.addEventListener('load', function() {
-            if (typeof hyperfixi !== 'undefined' && hyperfixi.processNode) {
-                // Process all elements with _ attributes
-                hyperfixi.processNode(document.body).then(() => {
-                    // Try to get available commands for debugging
-                    let commandInfo = 'Commands not available';
-                    try {
-                        if (hyperfixi.createRuntime) {
-                            const runtime = hyperfixi.createRuntime();
-                            const availableCommands = runtime.getAvailableCommands ? runtime.getAvailableCommands() : 'method not found';
-                            commandInfo = 'Available commands: ' + (Array.isArray(availableCommands) ? availableCommands.join(', ') : availableCommands);
+        let testResults = [];
+        let testElement = null;
+        
+        function logTest(name, result, details = '') {
+            const status = result ? '✅ PASS' : '❌ FAIL';
+            const message = `${status}: ${name}${details ? ' - ' + details : ''}`;
+            testResults.push(message);
+            console.log(message);
+            updateTestDisplay();
+        }
+        
+        function updateTestDisplay() {
+            const resultsDiv = document.getElementById('test-results');
+            if (resultsDiv) {
+                resultsDiv.textContent = testResults.join('\n');
+                resultsDiv.scrollTop = resultsDiv.scrollHeight;
+            }
+        }
+        
+        async function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        async function runAutomatedTests() {
+            testResults = ['🤖 Starting Automated Test Suite...', ''];
+            updateTestDisplay();
+            
+            // Clear the event output div
+            const eventOutput = document.getElementById('event-output');
+            if (eventOutput) {
+                eventOutput.textContent = 'Event output will appear here';
+            }
+            
+            try {
+                // Test 1: HyperFixi API availability
+                logTest('HyperFixi API loaded', typeof hyperfixi !== 'undefined');
+                logTest('processNode method available', typeof hyperfixi?.processNode === 'function');
+                logTest('run method available', typeof hyperfixi?.run === 'function');
+                
+                // Test 1.5: Enhanced command registration diagnostics
+                try {
+                    const runtime = hyperfixi.createRuntime();
+                    const availableCommands = runtime.getAvailableCommands();
+                    const hasSetCommand = availableCommands.includes('set');
+                    logTest('SET command in available commands', hasSetCommand, 
+                        hasSetCommand ? '' : `Available: ${availableCommands.join(', ')}`);
+                    
+                    const enhancedCommands = runtime.enhancedRegistry ? 
+                        runtime.enhancedRegistry.getCommandNames() : [];
+                    const hasEnhancedSet = enhancedCommands.includes('set');
+                    const hasEnhancedIncrement = enhancedCommands.includes('increment');
+                    const hasEnhancedDecrement = enhancedCommands.includes('decrement');
+                    
+                    logTest('SET command in enhanced registry', hasEnhancedSet,
+                        hasEnhancedSet ? '' : `Enhanced: ${enhancedCommands.join(', ')}`);
+                    logTest('INCREMENT command in enhanced registry', hasEnhancedIncrement,
+                        hasEnhancedIncrement ? '' : `Missing from: ${enhancedCommands.join(', ')}`);
+                    logTest('DECREMENT command in enhanced registry', hasEnhancedDecrement,
+                        hasEnhancedDecrement ? '' : `Missing from: ${enhancedCommands.join(', ')}`);
+                        
+                    logTest('Enhanced commands enabled', runtime.isUsingEnhancedCommands());
+                } catch (e) {
+                    logTest('Enhanced command diagnostics', false, e.message);
+                }
+                
+                // Test 2: Create test element
+                testElement = document.createElement('div');
+                testElement.id = 'auto-test-element';
+                testElement.style.cssText = 'padding: 10px; background: lightgray; margin: 5px;';
+                testElement.textContent = 'Auto Test Element';
+                document.body.appendChild(testElement);
+                logTest('Test element created', testElement !== null);
+                
+                // Test 3: Basic ADD command
+                try {
+                    await hyperfixi.run('add .highlight to #auto-test-element');
+                    const hasClass = testElement.classList.contains('highlight');
+                    logTest('ADD command - add class', hasClass);
+                } catch (e) {
+                    logTest('ADD command - add class', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 4: Basic REMOVE command
+                try {
+                    await hyperfixi.run('remove .highlight from #auto-test-element');
+                    const hasClass = testElement.classList.contains('highlight');
+                    logTest('REMOVE command - remove class', !hasClass);
+                } catch (e) {
+                    logTest('REMOVE command - remove class', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 5: HIDE command
+                try {
+                    await hyperfixi.run('hide #auto-test-element');
+                    const isHidden = testElement.style.display === 'none';
+                    logTest('HIDE command', isHidden);
+                } catch (e) {
+                    logTest('HIDE command', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 6: SHOW command
+                try {
+                    await hyperfixi.run('show #auto-test-element');
+                    const isVisible = testElement.style.display !== 'none';
+                    logTest('SHOW command', isVisible);
+                } catch (e) {
+                    logTest('SHOW command', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 7: SET command - simple variable
+                try {
+                    // Capture console output to see execution path
+                    const originalLog = console.log;
+                    let executionPath = 'unknown';
+                    console.log = function(...args) {
+                        if (args[0] && typeof args[0] === 'string') {
+                            if (args[0].includes('Using enhanced command path for: set')) {
+                                executionPath = 'enhanced';
+                            } else if (args[0].includes('Using legacy command path for: set')) {
+                                executionPath = 'legacy';
+                            }
                         }
-                    } catch (e) {
-                        commandInfo = 'Error getting commands: ' + e.message;
+                        originalLog.apply(console, args);
+                    };
+                    
+                    await hyperfixi.run('set testVar to 42');
+                    console.log = originalLog;
+                    
+                    logTest('SET command - variable', true, `No error thrown (${executionPath} path)`);
+                } catch (e) {
+                    logTest('SET command - variable', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 8: SET command - textContent
+                try {
+                    const originalText = testElement.textContent;
+                    await hyperfixi.run('set the textContent of #auto-test-element to "Modified by SET"');
+                    const wasModified = testElement.textContent === 'Modified by SET';
+                    logTest('SET command - textContent', wasModified);
+                    if (!wasModified) {
+                        logTest('SET textContent details', false, `Expected: "Modified by SET", Got: "${testElement.textContent}"`);
+                    }
+                } catch (e) {
+                    logTest('SET command - textContent', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 9: Compound command with THEN
+                try {
+                    testElement.classList.remove('highlight');
+                    await hyperfixi.run('add .highlight to #auto-test-element then wait 200ms then remove .highlight from #auto-test-element');
+                    // Check immediately if class was added
+                    const hadClass = testElement.classList.contains('highlight');
+                    logTest('THEN sequence - initial add', hadClass);
+                    
+                    // Wait for removal and check
+                    await sleep(300);
+                    const classRemoved = !testElement.classList.contains('highlight');
+                    logTest('THEN sequence - final remove', classRemoved);
+                } catch (e) {
+                    logTest('THEN sequence', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 10: Progressive Update Time Button Tests
+                try {
+                    // Test 10.1: Basic string concatenation
+                    const basicConcatResult = await hyperfixi.run('set the textContent of #event-output to "Hello " + "World"');
+                    const basicContent = document.getElementById('event-output')?.textContent;
+                    logTest('String concatenation - basic', basicContent === 'Hello World');
+                    
+                    // Test 10.2: String + number concatenation  
+                    await hyperfixi.run('set the textContent of #event-output to "Count: " + 42');
+                    const numberConcatContent = document.getElementById('event-output')?.textContent;
+                    logTest('String concatenation - with number', numberConcatContent === 'Count: 42');
+                    
+                    // Test 10.3: Compilation test for complex expression (should compile even if execution fails)
+                    let compilationPassed = false;
+                    try {
+                        const complexResult = hyperfixi.compile('set the textContent of #event-output to "Result: " + "success"');
+                        compilationPassed = complexResult.success;
+                        logTest('Complex expression compilation', compilationPassed);
+                        
+                        if (compilationPassed) {
+                            // Test 10.4: Execution test for string concatenation
+                            try {
+                                await hyperfixi.run('set the textContent of #event-output to "Result: " + "success"');
+                                const resultContent = document.getElementById('event-output')?.textContent;
+                                const hasExpectedContent = resultContent === 'Result: success';
+                                logTest('Complex expression execution', hasExpectedContent);
+                            } catch (execError) {
+                                logTest('Complex expression execution', false, `Execution failed: ${execError.message}`);
+                            }
+                        }
+                    } catch (compileError) {
+                        logTest('Complex expression compilation', false, compileError.message);
                     }
                     
+                } catch (e) {
+                    logTest('Update Time Button tests', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 11: Function call tests
+                try {
+                    // Test 11.1: Basic Date() function call
+                    await hyperfixi.run("set #auto-test-element's textContent to Date()");
+                    const dateContent = testElement.textContent;
+                    const hasDateString = dateContent && dateContent.includes('202') && dateContent.length > 10;
+                    logTest('Function call - Date()', hasDateString, hasDateString ? '' : 'Got: ' + dateContent);
+                    
+                    // Test 11.2: Reset for next test
+                    testElement.textContent = 'Test Element';
+                    
+                } catch (e) {
+                    logTest('Function call tests', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 12: Direct "the X of Y" syntax test (CRITICAL FIX VERIFICATION)
+                try {
+                    // Test 12.1: Compilation verification for "the X of Y" pattern
+                    const theXofYCode = 'set the textContent of #auto-test-element to "Direct X of Y Works"';
+                    const compilationResult = hyperfixi.compile(theXofYCode);
+                    logTest('THE X OF Y - Compilation', compilationResult.success, 
+                        compilationResult.success ? '✅ Parser fix working' : 
+                        `❌ Compilation failed: ${compilationResult.errors.map(e => e.message).join(', ')}`);
+                    
+                    if (compilationResult.success) {
+                        // Test 12.2: Execution verification
+                        await hyperfixi.run(theXofYCode);
+                        const directContent = testElement.textContent;
+                        const hasExpectedContent = directContent === 'Direct X of Y Works';
+                        logTest('THE X OF Y - Execution', hasExpectedContent, 
+                            hasExpectedContent ? '🚀 Runtime propertyOfExpression fix working' : 'Got: ' + directContent);
+                    }
+                    
+                    // Test 12.3: Compare with possessive syntax (should both work)
+                    await hyperfixi.run("set #auto-test-element's textContent to 'Possessive Works'");
+                    const possessiveContent = testElement.textContent;
+                    const possessiveWorks = possessiveContent === 'Possessive Works';
+                    logTest('Possessive syntax comparison', possessiveWorks, possessiveWorks ? '' : 'Got: ' + possessiveContent);
+                    
+                    // Test 12.4: Event handler with "the X of Y" pattern
+                    const eventHandlerCode = 'on click set the textContent of #auto-test-element to "Event X of Y Works"';
+                    const eventCompilation = hyperfixi.compile(eventHandlerCode);
+                    logTest('THE X OF Y - Event handler compilation', eventCompilation.success,
+                        eventCompilation.success ? '✅ Event + X of Y pattern working' :
+                        `❌ Event compilation failed: ${eventCompilation.errors.map(e => e.message).join(', ')}`);
+                    
+                    // Test 12.5: Reset for next test
+                    testElement.textContent = 'Test Element';
+                    
+                } catch (e) {
+                    logTest('Direct "the X of Y" syntax', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 13: Constructor call tests (new keyword)
+                try {
+                    // Test 13.1: Direct hyperfixi.run() vs DOM attribute comparison
+                    console.log('🧪 TEST: Starting comprehensive constructor call analysis...');
+                    
+                    // Test direct hyperfixi.run() call (this should work)
+                    await hyperfixi.run('set #auto-test-element\'s textContent to new Date()');
+                    const constructorContent = testElement.textContent;
+                    const hasDateString = constructorContent && constructorContent.includes('202') && constructorContent.length > 10;
+                    logTest('Constructor call - new Date() (direct run)', hasDateString, hasDateString ? '' : 'Got: ' + constructorContent);
+                    
+                    testElement.textContent = 'Test Element';
+                    
+                    // Test 13.2: Test compilation differences
+                    console.log('🧪 TEST: Testing compilation patterns...');
+                    
+                    // Test compilation of direct command (should work)
+                    const directCompile = hyperfixi.compile('set #auto-test-element\'s textContent to new Date()');
+                    logTest('Direct command compilation', directCompile.success, 
+                        directCompile.success ? 'Compiled successfully' : `Errors: ${directCompile.errors?.map(e => e.message).join(', ')}`);
+                    
+                    // Test compilation of event handler (might fail)
+                    const eventCompile = hyperfixi.compile('on click set #auto-test-element\'s textContent to new Date()');
+                    logTest('Event handler compilation', eventCompile.success,
+                        eventCompile.success ? 'Compiled successfully' : `Errors: ${eventCompile.errors?.map(e => e.message).join(', ')}`);
+                    
+                    // Test 13.3: DOM attribute processor analysis
+                    console.log('🧪 TEST: Analyzing DOM attribute processing...');
+                    
+                    // Count processed vs unprocessed buttons
+                    const allButtons = document.querySelectorAll('button[_]');
+                    const workingButtons = document.querySelectorAll('button[_*="log "]'); // Buttons with log commands (these work)
+                    const constructorButtons = document.querySelectorAll('button[_*="new Date()"]'); // Buttons with constructor calls
+                    
+                    logTest('DOM Analysis - Total hyperscript buttons', allButtons.length > 0, `Found: ${allButtons.length} buttons`);
+                    logTest('DOM Analysis - Working buttons (log)', workingButtons.length > 0, `Found: ${workingButtons.length} working buttons`);
+                    logTest('DOM Analysis - Constructor buttons', constructorButtons.length > 0, `Found: ${constructorButtons.length} constructor buttons`);
+                    
+                    // Test 13.4: Event listener attachment check
+                    const testConstructorButton = document.querySelector('button[_*="new Date()"]');
+                    if (testConstructorButton) {
+                        console.log('🧪 TEST: Constructor button element:', testConstructorButton);
+                        console.log('🧪 TEST: Constructor button _attribute:', testConstructorButton.getAttribute('_'));
+                        
+                        // Check if click event listeners are attached
+                        const listeners = getEventListeners ? getEventListeners(testConstructorButton) : null;
+                        logTest('Constructor button has click listeners', 
+                            listeners?.click?.length > 0 || 'Unknown (getEventListeners not available)',
+                            listeners ? `${listeners.click?.length || 0} click listeners` : 'Cannot inspect listeners');
+                    }
+                    
+                    // Test 13.5: Manual event trigger test
+                    console.log('🧪 TEST: Attempting programmatic constructor button trigger...');
+                    if (testConstructorButton && testConstructorButton instanceof HTMLElement) {
+                        try {
+                            // Reset output area
+                            const eventOutput = document.getElementById('event-output');
+                            if (eventOutput) {
+                                eventOutput.textContent = 'Before programmatic click';
+                                
+                                // Trigger click programmatically
+                                testConstructorButton.click();
+                                
+                                // Check result after a small delay
+                                await sleep(100);
+                                const afterClick = eventOutput.textContent;
+                                const clickWorked = afterClick !== 'Before programmatic click' && afterClick.includes('202');
+                                
+                                logTest('Programmatic constructor button click', clickWorked, 
+                                    clickWorked ? `Result: ${afterClick}` : `No change, still: ${afterClick}`);
+                            }
+                        } catch (clickError) {
+                            logTest('Programmatic constructor button click', false, `Error: ${clickError.message}`);
+                        }
+                    }
+                    
+                } catch (e) {
+                    logTest('Constructor call tests', false, e.message);
+                }
+                
+                await sleep(100);
+                
+                // Test 14: Tokenizer classification test
+                try {
+                    // Capture console output to check tokenizer
+                    const originalLog = console.log;
+                    let tokenLogs = [];
+                    console.log = function(...args) {
+                        if (args[0] && args[0].includes && args[0].includes('TOKENIZER: classified as')) {
+                            tokenLogs.push(args);
+                        }
+                        originalLog.apply(console, args);
+                    };
+                    
+                    await hyperfixi.run('add .test to #auto-test-element');
+                    console.log = originalLog;
+                    
+                    const setIsCommand = tokenLogs.some(log => 
+                        log[0].includes('classified as COMMAND') && 
+                        log[1] && log[1].value === 'add'
+                    );
+                    logTest('Tokenizer - ADD as COMMAND', setIsCommand);
+                } catch (e) {
+                    logTest('Tokenizer test', false, e.message);
+                }
+                
+                // Test counter increment/decrement functionality
+                try {
+                    // Test increment command
+                    await hyperfixi.run('set testCounter to 5');
+                    await hyperfixi.run('increment testCounter');
+                    const incrementResult = await hyperfixi.run('testCounter');
+                    logTest('Increment command functionality', incrementResult === 6);
+                    
+                    // Test decrement command  
+                    await hyperfixi.run('decrement testCounter');
+                    const decrementResult = await hyperfixi.run('testCounter');
+                    logTest('Decrement command functionality', decrementResult === 5);
+                    
+                    // Test increment by amount
+                    await hyperfixi.run('increment testCounter by 3');
+                    const incrementByResult = await hyperfixi.run('testCounter');
+                    logTest('Increment by amount functionality', incrementByResult === 8);
+                    
+                    // Test decrement by amount
+                    await hyperfixi.run('decrement testCounter by 2');
+                    const decrementByResult = await hyperfixi.run('testCounter');
+                    logTest('Decrement by amount functionality', decrementByResult === 6);
+                } catch (e) {
+                    logTest('Counter functionality tests', false, e.message);
+                }
+                
+                // Cleanup
+                if (testElement && testElement.parentNode) {
+                    testElement.parentNode.removeChild(testElement);
+                }
+                
+                testResults.push('', '🏁 Test Suite Complete!');
+                const passCount = testResults.filter(r => r.includes('✅ PASS')).length;
+                const failCount = testResults.filter(r => r.includes('❌ FAIL')).length;
+                testResults.push(`📊 Results: ${passCount} passed, ${failCount} failed`);
+                
+            } catch (e) {
+                logTest('Test Suite Error', false, e.message);
+            }
+            
+            updateTestDisplay();
+        }
+        
+        // Test function for direct hyperfixi.run() call
+        async function testDirectHyperfixi() {
+            try {
+                console.log('🔧 Testing direct hyperfixi.run() call...');
+                await hyperfixi.run('set #event-output\'s textContent to new Date()');
+                console.log('🔧 Direct hyperfixi.run() completed successfully');
+            } catch (error) {
+                console.error('🔧 Direct hyperfixi.run() failed:', error);
+            }
+        }
+
+        // Test compilation directly
+        function testCompilation() {
+            try {
+                console.log('🔧 Testing compilation of constructor call...');
+                const result = hyperfixi.compile('on click set #event-output\'s textContent to new Date()');
+                console.log('🔧 Compilation result:', result);
+                if (!result.success) {
+                    console.error('🔧 Compilation failed:', result.errors);
+                } else {
+                    console.log('🔧 Compilation succeeded');
+                }
+            } catch (error) {
+                console.error('🔧 Compilation threw error:', error);
+            }
+        }
+
+        window.addEventListener('load', function() {
+            // Setup test buttons
+            document.getElementById('run-tests').onclick = runAutomatedTests;
+            document.getElementById('clear-tests').onclick = function() {
+                testResults = [];
+                updateTestDisplay();
+            };
+            document.getElementById('copy-results').onclick = function() {
+                const resultsText = testResults.join('\n');
+                navigator.clipboard.writeText(resultsText).then(() => {
+                    alert('Test results copied to clipboard!');
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = resultsText;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    alert('Test results copied to clipboard!');
+                });
+            };
+            
+            // Initialize HyperFixi and run initial tests
+            if (typeof hyperfixi !== 'undefined' && hyperfixi.processNode) {
+                hyperfixi.processNode(document.body).then(() => {
                     document.getElementById('status-output').textContent = 
                         '✅ HyperFixi loaded and processed successfully!\n' +
                         'Available methods: ' + Object.keys(hyperfixi).join(', ') + '\n' +
-                        commandInfo + '\n' +
-                        'All buttons above should now respond to HyperScript commands.';
+                        'Available commands: ' + (hyperfixi.createRuntime ? 
+                            hyperfixi.createRuntime().getAvailableCommands().join(', ') : 'unknown') + '\n' +
+                        'Auto-tests ready to run.';
+                    
+                    // Auto-run tests after 1 second
+                    setTimeout(runAutomatedTests, 1000);
                 }).catch(error => {
                     document.getElementById('status-output').textContent = 
                         '❌ HyperFixi processing failed: ' + error.message;
                 });
             } else {
                 document.getElementById('status-output').textContent = 
-                    '❌ HyperFixi not available. Check if /dist/hyperfixi-browser.js loaded properly.';
+                    '❌ HyperFixi not available. Check if browser bundle loaded properly.';
             }
         });
     </script>

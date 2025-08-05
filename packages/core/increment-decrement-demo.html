@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>HyperFixi Enhanced Increment/Decrement Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .demo-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 16px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .counter-display {
+            font-size: 28px;
+            padding: 15px;
+            text-align: center;
+            background: #e8f5e8;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 2px solid #28a745;
+            color: #155724;
+            font-weight: bold;
+        }
+        .work-area {
+            min-height: 80px;
+            border: 2px dashed #28a745;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background: #f8fff8;
+        }
+        h1, h2 { color: #333; }
+        .status {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        .debug-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 HyperFixi Enhanced Increment/Decrement Demo</h1>
+    
+    <div class="demo-section">
+        <h2>⚡ Enhanced Increment/Decrement Commands</h2>
+        <p>Test the enhanced increment and decrement commands with global scope and custom amounts.</p>
+        
+        <div class="work-area">
+            <div id="enhanced-counter-display" class="counter-display">Enhanced Count: 0</div>
+            
+            <!-- Basic increment/decrement -->
+            <button class="test-button" _="on click 
+                increment global enhancedCount then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: ' + enhancedCount">
+                ⬆️ Increment (+1)
+            </button>
+            
+            <button class="test-button" _="on click 
+                decrement global enhancedCount then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: ' + enhancedCount">
+                ⬇️ Decrement (-1)
+            </button>
+            
+            <!-- Increment/decrement by custom amounts -->
+            <button class="test-button" _="on click 
+                increment global enhancedCount by 5 then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: ' + enhancedCount">
+                ➕5 Increment by 5
+            </button>
+            
+            <button class="test-button" _="on click 
+                decrement global enhancedCount by 3 then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: ' + enhancedCount">
+                ➖3 Decrement by 3
+            </button>
+            
+            <!-- Large increments -->
+            <button class="test-button" _="on click 
+                increment global enhancedCount by 10 then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: ' + enhancedCount">
+                ⏫ +10
+            </button>
+            
+            <button class="test-button" _="on click 
+                decrement global enhancedCount by 10 then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: ' + enhancedCount">
+                ⏬ -10
+            </button>
+            
+            <!-- Reset button -->
+            <button class="test-button" _="on click 
+                set global enhancedCount to 0 then 
+                set the textContent of #enhanced-counter-display to 'Enhanced Count: 0'">
+                🔄 Reset to 0
+            </button>
+            
+            <!-- Simple test button to verify HyperFixi is working -->
+            <button class="test-button" _="on click 
+                log 'Simple test button clicked!' then
+                set the textContent of #enhanced-counter-display to 'Test: HyperFixi Working!'">
+                🧪 Simple Test
+            </button>
+            
+            <!-- Even simpler test without log command -->
+            <button class="test-button" _="on click 
+                set the textContent of #enhanced-counter-display to 'Basic SET works!'">
+                🔧 Basic SET Test
+            </button>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>🔍 Command Status & Diagnostics</h2>
+        <div id="status-output" class="status">Loading HyperFixi...</div>
+        <button class="test-button" _="on click 
+            log 'Status check button clicked' then
+            set the textContent of #status-output to 'Status check initiated at: ' + new Date().toLocaleTimeString()">
+            📊 Check Status
+        </button>
+    </div>
+
+    <div class="demo-section">
+        <h2>🧪 Manual Test Commands</h2>
+        <p>Test individual commands for debugging:</p>
+        
+        <div class="debug-info">
+            <strong>Test Commands:</strong><br>
+            • <code>increment global testVar</code><br>
+            • <code>decrement global testVar by 2</code><br>
+            • <code>set global debugCount to 42</code>
+        </div>
+        
+        <button class="test-button" _="on click 
+            log 'Testing increment command...' then
+            increment global testVar then 
+            log 'Increment test completed. testVar value:' then log testVar then
+            set the textContent of #debug-output to '✅ Increment command executed. Check console for details.'">
+            🔧 Test Increment Command</button>
+        
+        <button class="test-button" _="on click 
+            log 'Testing decrement command...' then
+            decrement global testVar by 2 then 
+            log 'Decrement test completed. testVar value:' then log testVar then
+            set the textContent of #debug-output to '✅ Decrement command executed. Check console for details.'">
+            🔧 Test Decrement Command</button>
+        
+        <button class="test-button" _="on click 
+            log 'Checking available commands...' then
+            set the textContent of #debug-output to 'Command check completed. See console for full command list.'">
+            📋 Check Console Log</button>
+        
+        <div id="debug-output" class="status">Click test buttons to see debug output...</div>
+    </div>
+
+    <!-- Include HyperFixi library -->
+    <script src="/dist/hyperfixi-browser.js?v=21.22.detailed-error-logging"></script>
+    
+    <script>
+        // Minimal initialization - let HyperFixi handle everything
+        window.addEventListener('load', function() {
+            console.log('🚀 HyperFixi Enhanced Increment/Decrement Demo loaded');
+            
+            if (typeof hyperfixi !== 'undefined' && hyperfixi.processNode) {
+                hyperfixi.processNode(document.body).then(() => {
+                    console.log('✅ HyperFixi processed page elements successfully');
+                    document.getElementById('status-output').textContent = 
+                        '✅ HyperFixi loaded and ready! Try the increment/decrement buttons.';
+                }).catch(error => {
+                    console.error('❌ HyperFixi processing failed:', error);
+                    document.getElementById('status-output').textContent = 
+                        '❌ HyperFixi processing failed: ' + error.message;
+                });
+            } else {
+                document.getElementById('status-output').textContent = 
+                    '❌ HyperFixi not available. Check browser bundle.';
+            }
+        });
+    </script>
+</body>
+</html>

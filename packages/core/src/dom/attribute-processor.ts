@@ -61,32 +61,52 @@ export class AttributeProcessor {
    * Process a single element's hyperscript attribute
    */
   processElement(element: HTMLElement): void {
+    console.log(`🔧 ATTR: Attempting to process element:`, element);
+    
     // Skip if already processed and we only process new elements
     if (this.options.processOnlyNewElements && this.processedElements.has(element)) {
+      console.log(`🔧 ATTR: Skipping already processed element`);
       return;
     }
 
     const hyperscriptCode = element.getAttribute(this.options.attributeName);
+    console.log(`🔧 ATTR: Found hyperscript code:`, hyperscriptCode);
+    
     if (!hyperscriptCode) {
+      console.log(`🔧 ATTR: No hyperscript code found on element`);
       return;
     }
 
     try {
+      console.log(`🔧 ATTR: Processing element with code: "${hyperscriptCode}"`);
+      
       // Create execution context with the element as 'me'
       const context = createContext(element);
+      console.log(`🔧 ATTR: Created context for element`);
       
       // Parse and prepare the hyperscript code
+      console.log(`🔧 ATTR: About to compile hyperscript code`);
       const compilationResult = hyperscript.compile(hyperscriptCode);
+      console.log(`🔧 ATTR: Compilation result:`, compilationResult);
       
       if (!compilationResult.success) {
-        console.error(`Hyperscript compilation failed for element:`, element, compilationResult.errors);
+        console.error(`🔧 ATTR: Hyperscript compilation failed for element:`, element);
+        console.error(`🔧 ATTR: Code that failed:`, hyperscriptCode);
+        console.error(`🔧 ATTR: Compilation errors:`, JSON.stringify(compilationResult.errors, null, 2));
+        compilationResult.errors.forEach((error, i) => {
+          console.error(`🔧 ATTR: Error ${i + 1}:`, error.message, `at line ${error.line}, column ${error.column}`);
+        });
         return;
       }
 
+      console.log(`🔧 ATTR: Compilation succeeded, processing handler type`);
+      
       // For event handlers (on syntax), we need to parse and bind them
       if (hyperscriptCode.trim().startsWith('on ')) {
+        console.log(`🔧 ATTR: Processing as event handler`);
         this.processEventHandler(element, hyperscriptCode, context);
       } else {
+        console.log(`🔧 ATTR: Processing as immediate execution`);
         // For other syntax, execute immediately (like init)
         hyperscript.execute(compilationResult.ast!, context);
       }
@@ -119,6 +139,8 @@ export class AttributeProcessor {
     // Add event listener with simplified command execution
     element.addEventListener(eventType, async (event) => {
       try {
+        console.log(`🔧 EVENT: Executing command: "${commandCode}"`);
+        
         // Update context with event information
         const eventContext = {
           ...context,
@@ -128,12 +150,16 @@ export class AttributeProcessor {
         
         // Use the full hyperscript API for command execution
         if ((window as any).hyperfixi?.run) {
-          await (window as any).hyperfixi.run(commandCode, eventContext);
+          console.log(`🔧 EVENT: About to call hyperfixi.run with context`);
+          const result = await (window as any).hyperfixi.run(commandCode, eventContext);
+          console.log(`🔧 EVENT: Command execution completed:`, result);
         } else {
           throw new Error('HyperFixi run method not available for command execution');
         }
       } catch (error) {
-        console.error(`Error executing hyperscript event handler:`, error);
+        console.error(`🔧 EVENT: Error executing hyperscript event handler:`, error);
+        console.error(`🔧 EVENT: Command was: "${commandCode}"`);
+        console.error(`🔧 EVENT: Element:`, element);
       }
     });
   }

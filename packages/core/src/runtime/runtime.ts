@@ -27,7 +27,9 @@ import { createTriggerCommand } from '../commands/events/trigger';
 import { createWaitCommand } from '../legacy/commands/async/wait';
 import { createFetchCommand } from '../legacy/commands/async/fetch';
 import { createPutCommand } from '../commands/dom/put';
-import { SetCommand } from '../commands/data/index';
+import { createEnhancedSetCommand } from '../commands/data/enhanced-set';
+import { createEnhancedIncrementCommand } from '../commands/data/enhanced-increment';
+import { createEnhancedDecrementCommand } from '../commands/data/enhanced-decrement';
 
 // Additional command imports
 // IncrementCommand and DecrementCommand now imported from data/index.js above
@@ -59,7 +61,7 @@ import {
 } from '../commands/animation/index';
 
 // Data commands
-import { DefaultCommand, SetCommand, IncrementCommand, DecrementCommand } from '../commands/data/index';
+import { DefaultCommand, IncrementCommand, DecrementCommand } from '../commands/data/index';
 
 // Advanced commands
 import { BeepCommand, AsyncCommand, TellCommand, JSCommand } from '../commands/advanced/index';
@@ -78,7 +80,6 @@ export class Runtime {
   private options: RuntimeOptions;
   private expressionEvaluator: ExpressionEvaluator;
   private putCommand: PutCommand;
-  private setCommand: SetCommand;
   private enhancedRegistry: EnhancedCommandRegistry;
   
   constructor(options: RuntimeOptions = {}) {
@@ -92,7 +93,6 @@ export class Runtime {
     
     this.expressionEvaluator = new ExpressionEvaluator();
     this.putCommand = new PutCommand();
-    this.setCommand = new SetCommand();
     
     // Initialize enhanced command registry
     this.enhancedRegistry = new EnhancedCommandRegistry();
@@ -157,15 +157,37 @@ export class Runtime {
       this.enhancedRegistry.register(createTriggerCommand());
       
       // Register data commands (enhanced)
-      this.enhancedRegistry.register(new SetCommand());
+      try {
+        const setCommand = createEnhancedSetCommand();
+        console.log('🔧 Registering Enhanced SET command:', setCommand.name);
+        this.enhancedRegistry.register(setCommand);
+        console.log('✅ Enhanced SET command registered successfully');
+      } catch (e) {
+        console.error('❌ Failed to register Enhanced SET command:', e);
+      }
       
       // Register async commands
       this.enhancedRegistry.register(createWaitCommand());
       this.enhancedRegistry.register(createFetchCommand());
       
-      // Register data commands (legacy interface - need adapters)
-      this.registerLegacyCommand(new IncrementCommand());
-      this.registerLegacyCommand(new DecrementCommand());
+      // Register data commands (enhanced)
+      try {
+        const incrementCommand = createEnhancedIncrementCommand();
+        console.log('🔧 Registering Enhanced INCREMENT command:', incrementCommand.name);
+        this.enhancedRegistry.register(incrementCommand);
+        console.log('✅ Enhanced INCREMENT command registered successfully');
+      } catch (e) {
+        console.error('❌ Failed to register Enhanced INCREMENT command:', e);
+      }
+      
+      try {
+        const decrementCommand = createEnhancedDecrementCommand();
+        console.log('🔧 Registering Enhanced DECREMENT command:', decrementCommand.name);
+        this.enhancedRegistry.register(decrementCommand);
+        console.log('✅ Enhanced DECREMENT command registered successfully');
+      } catch (e) {
+        console.error('❌ Failed to register Enhanced DECREMENT command:', e);
+      }
       
       // Register content/creation commands
       this.registerLegacyCommand(new MakeCommand());
@@ -432,6 +454,218 @@ export class Runtime {
       
       // Enhanced commands expect [classExpression, target]
       evaluatedArgs = [classArg, target];
+    } else if (name === 'set' && args.length >= 3) {
+      // Handle "set X to Y" and "set the property of element to value" patterns
+      console.log(`🔧 SET Command Debug:`, {
+        name,
+        argsLength: args.length,
+        args: args.map(arg => ({ type: arg.type, value: (arg as any).value || (arg as any).name }))
+      });
+      
+      // Find the "to" keyword that separates target from value
+      let toIndex = -1;
+      for (let i = 0; i < args.length; i++) {
+        const arg = args[i];
+        if (arg.type === 'identifier' && (arg as any).name === 'to') {
+          toIndex = i;
+          break;
+        }
+      }
+      
+      if (toIndex === -1) {
+        // No "to" found, fall back to normal evaluation
+        evaluatedArgs = await Promise.all(
+          args.map(arg => this.execute(arg, context))
+        );
+      } else {
+        // Split into target (before "to") and value (after "to")
+        const targetArgs = args.slice(0, toIndex);
+        const valueArgs = args.slice(toIndex + 1);
+        
+        console.log('🔧 SET: Target args debug - length:', targetArgs.length);
+        targetArgs.forEach((arg, i) => {
+          console.log(`🔧 SET: Target arg ${i}:`, {
+            type: arg.type,
+            name: (arg as any).name,
+            value: (arg as any).value,
+            object: (arg as any).object,
+            property: (arg as any).property,
+            computed: (arg as any).computed
+          });
+        });
+        
+        // Construct target path from multiple args
+        let target;
+        if (targetArgs.length === 1) {
+          // Simple case: "set count to X"
+          const targetArg = targetArgs[0];
+          if (targetArg.type === 'identifier') {
+            target = (targetArg as any).name;
+          } else if (targetArg.type === 'memberExpression') {
+            // Handle memberExpression like "my textContent"
+            console.log('🚨 SET: MEMBEREXPRESSION DETECTED - PROCESSING NOW!');
+            const memberExpr = targetArg as any;
+            const objectName = memberExpr.object?.name || memberExpr.object?.value;
+            const propertyName = memberExpr.property?.name || memberExpr.property?.value;
+            
+            console.log('🔧 SET: MemberExpression details:', { objectName, propertyName, fullObject: memberExpr });
+            
+            if (['my', 'me', 'its', 'it', 'your', 'you'].includes(objectName)) {
+              target = `${objectName} ${propertyName}`;
+              console.log('🔧 SET: Converted memberExpression to possessive:', { objectName, propertyName, target });
+            } else {
+              // Not a possessive, evaluate normally
+              console.log('🔧 SET: Not a possessive memberExpression, evaluating normally');
+              target = await this.execute(targetArg, context);
+            }
+          } else if (targetArg.type === 'propertyOfExpression') {
+            // Handle "the X of Y" pattern
+            console.log('🚨 SET: PROPERTYOFEXPRESSION DETECTED - THE X OF Y PATTERN!');
+            const propOfExpr = targetArg as any;
+            const property = propOfExpr.property?.name || propOfExpr.property?.value;
+            const selector = propOfExpr.target?.value || propOfExpr.target?.name;
+            
+            console.log('🔧 SET: PropertyOfExpression details:', { 
+              property, 
+              selector, 
+              fullObject: propOfExpr 
+            });
+            
+            // Create the string format expected by Enhanced SET command
+            target = `the ${property} of ${selector}`;
+            console.log('🔧 SET: Converted propertyOfExpression to string:', { target });
+          } else {
+            target = await this.execute(targetArg, context);
+          }
+        } else if (targetArgs.length === 2 && 
+                   (targetArgs[0].type === 'identifier' || targetArgs[0].type === 'context_var') && 
+                   ['my', 'me', 'its', 'it', 'your', 'you'].includes((targetArgs[0] as any).name || (targetArgs[0] as any).value)) {
+          // Handle possessive syntax: "my textContent", "its value", etc.
+          const possessive = (targetArgs[0] as any).name;
+          const property = (targetArgs[1] as any).name || (targetArgs[1] as any).value;
+          target = `${possessive} ${property}`;
+          console.log('🔧 SET: Detected possessive syntax:', { possessive, property, target });
+        } else if (targetArgs.length === 3 && 
+                   targetArgs[0].type === 'selector' &&
+                   targetArgs[1].type === 'identifier' && (targetArgs[1] as any).name === "'s" &&
+                   targetArgs[2].type === 'identifier') {
+          // Handle selector possessive syntax: "#element's property"
+          const selector = (targetArgs[0] as any).value;
+          const property = (targetArgs[2] as any).name;
+          target = { element: selector, property: property };
+          console.log('🔧 SET: Detected selector possessive syntax:', { selector, property, target });
+        } else {
+          // Complex case: "set the textContent of #element to X"
+          // Parse: ["the", "textContent", "of", "#element"] -> { element: "#element", property: "textContent" }
+          let property = null;
+          let element = null;
+          
+          // Look for property name (first identifier after "the")
+          for (let i = 0; i < targetArgs.length; i++) {
+            const arg = targetArgs[i];
+            if (arg.type === 'identifier' && (arg as any).name !== 'the' && (arg as any).name !== 'of') {
+              property = (arg as any).name;
+              break;
+            }
+          }
+          
+          // Look for element selector
+          for (let i = 0; i < targetArgs.length; i++) {
+            const arg = targetArgs[i];
+            if (arg.type === 'selector') {
+              element = (arg as any).value;
+              break;
+            }
+          }
+          
+          if (property && element) {
+            // Create a structured target for property setting
+            target = { element, property };
+          } else {
+            // Fallback to simple concatenation
+            target = targetArgs.map(arg => {
+              if (arg.type === 'identifier') return (arg as any).name;
+              if (arg.type === 'selector') return (arg as any).value;
+              if (arg.type === 'literal') return (arg as any).value;
+              return arg;
+            }).join('.');
+          }
+        }
+        
+        // Evaluate value expression
+        let value;
+        // Debug: Check if this is a function call
+        const isFunctionCall = this.isSimpleFunctionCall(valueArgs);
+        console.log('🔧 SET: Function call check:', { 
+          count: valueArgs.length, 
+          isFunctionCall,
+          firstThreeTypes: valueArgs.slice(0, 3).map(arg => arg.type),
+          firstThreeValues: valueArgs.slice(0, 3).map(arg => (arg as any).name || (arg as any).value)
+        });
+        if (isFunctionCall) {
+          console.log('🔧 SET: Function call detected for evaluation');
+        }
+        
+        if (valueArgs.length === 1) {
+          value = await this.execute(valueArgs[0], context);
+        } else if (this.isSimpleFunctionCall(valueArgs)) {
+          // Handle function calls like Date(), Math.max(1, 2, 3), etc.
+          console.log('🔧 SET: Detected function call pattern, evaluating as function');
+          value = await this.evaluateFunctionCall(valueArgs, context);
+        } else if (valueArgs.length === 3 && valueArgs[1].type === 'identifier') {
+          // Check if this is a binary expression pattern: value + operator + value
+          const operatorNode = valueArgs[1];
+          const operator = (operatorNode as any).name || (operatorNode as any).value;
+          
+          if (['+', '-', '*', '/', 'mod'].includes(operator)) {
+            // Evaluate as binary expression
+            const leftValue = await this.execute(valueArgs[0], context);
+            const rightValue = await this.execute(valueArgs[2], context);
+            
+            console.log('🔧 SET: Evaluating binary expression:', { leftValue, operator, rightValue });
+            
+            // Perform the operation
+            switch (operator) {
+              case '+':
+                value = leftValue + rightValue; // String concatenation or numeric addition
+                break;
+              case '-':
+                value = Number(leftValue) - Number(rightValue);
+                break;
+              case '*':
+                value = Number(leftValue) * Number(rightValue);
+                break;
+              case '/':
+                value = Number(leftValue) / Number(rightValue);
+                break;
+              case 'mod':
+                value = Number(leftValue) % Number(rightValue);
+                break;
+              default:
+                // Fallback to joining
+                const valueResults = await Promise.all(
+                  valueArgs.map(arg => this.execute(arg, context))
+                );
+                value = valueResults.join(' ');
+            }
+          } else {
+            // Not a binary operator, fall back to joining
+            const valueResults = await Promise.all(
+              valueArgs.map(arg => this.execute(arg, context))
+            );
+            value = valueResults.join(' ');
+          }
+        } else {
+          // Multiple value args - evaluate each and join
+          const valueResults = await Promise.all(
+            valueArgs.map(arg => this.execute(arg, context))
+          );
+          value = valueResults.join(' ');
+        }
+        
+        console.log(`🔧 SET Final Args:`, { target, value, targetType: typeof target });
+        evaluatedArgs = [target, value];
+      }
     } else {
       // For other commands, evaluate all arguments normally
       evaluatedArgs = await Promise.all(
@@ -446,7 +680,53 @@ export class Runtime {
     if ((name === 'add' || name === 'remove') && evaluatedArgs.length >= 1) {
       console.log(`🔍 ${name.toUpperCase()} class argument type:`, typeof evaluatedArgs[0], evaluatedArgs[0]);
     }
-    const result = await adapter.execute(context, ...evaluatedArgs);
+    
+    let result;
+    if (name === 'set' && evaluatedArgs.length >= 2) {
+      // SET command expects input object format
+      const [target, value] = evaluatedArgs;
+      console.log('🔧 SET: Converting args to input object:', { target, value });
+      
+      // Handle complex target object (for "the X of Y" syntax)
+      let inputTarget;
+      if (target && typeof target === 'object' && 'element' in target && 'property' in target) {
+        // Convert structured target to "the X of Y" string format
+        inputTarget = `the ${target.property} of ${target.element}`;
+      } else {
+        inputTarget = target;
+      }
+      
+      const input = { target: inputTarget, value, toKeyword: 'to' as const };
+      console.log('🔧 SET: Final input object:', input);
+      result = await adapter.execute(context, input);
+    } else if ((name === 'increment' || name === 'decrement') && evaluatedArgs.length >= 1) {
+      // INCREMENT/DECREMENT commands expect input object format
+      const [target, ...rest] = evaluatedArgs;
+      console.log(`🔧 ${name.toUpperCase()}: Converting args to input object:`, { target, rest });
+      
+      // Build input object for increment/decrement
+      let input: any = { target };
+      
+      // Handle "by" amount syntax
+      if (rest.length >= 2 && rest[0] === 'by' && typeof rest[1] === 'number') {
+        input.amount = rest[1];
+        input.byKeyword = 'by';
+      } else if (rest.length === 1 && typeof rest[0] === 'number') {
+        input.amount = rest[0];
+      }
+      
+      // Handle global scope (detect from target string)
+      if (typeof target === 'string' && target.startsWith('global ')) {
+        input.target = target.replace('global ', '');
+        input.scope = 'global';
+      }
+      
+      console.log(`🔧 ${name.toUpperCase()}: Final input object:`, input);
+      result = await adapter.execute(context, input);
+    } else {
+      result = await adapter.execute(context, ...evaluatedArgs);
+    }
+    
     console.log(`✅ Enhanced ${name} command completed with result:`, result);
     return result;
   }
@@ -507,6 +787,19 @@ export class Runtime {
     // Debug logging for all commands
     console.log('🎯 Executing command:', name, 'with args:', args, 'at', new Date().toLocaleTimeString());
     
+    // Special debug for SET commands
+    if (name.toLowerCase() === 'set') {
+      console.log('🔧 SET Command Detailed Debug:', {
+        name,
+        argsLength: args.length,
+        args: args.map(arg => ({ 
+          type: arg.type, 
+          value: (arg as any).value || (arg as any).name || (arg as any).operator,
+          raw: arg
+        }))
+      });
+    }
+    
     // Debug logging for put command
     if (name === 'put') {
       console.log('🔧 PUT Command Debug:', {
@@ -519,7 +812,10 @@ export class Runtime {
     
     // Try enhanced commands first if enabled
     if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
+      console.log(`🚀 Using enhanced command path for: ${name}`);
       return await this.executeEnhancedCommand(name.toLowerCase(), args || [], context);
+    } else {
+      console.log(`🔄 Using legacy command path for: ${name} (enhanced available: ${this.enhancedRegistry.has(name.toLowerCase())})`);
     }
     
     // For now, let commands handle their own argument evaluation
@@ -559,9 +855,9 @@ export class Runtime {
       }
       
       case 'set': {
-        console.log('🚨 SET command case reached in runtime switch!');
-        // Set command should get mixed arguments - variable name raw, value evaluated  
-        return await this.executeSetCommand(rawArgs, context);
+        console.log('🚨 SET command case reached in runtime switch - should not happen with enhanced commands!');
+        // This should not be reached since SET command should go through enhanced registry
+        throw new Error('SET command should be handled by enhanced registry');
       }
       
       case 'log': {
@@ -842,55 +1138,6 @@ export class Runtime {
     return this.putCommand.execute(context, ...rawArgs);
   }
 
-  /**
-   * Execute set command (set variables)
-   */
-  private async executeSetCommand(rawArgs: ExpressionNode[], context: ExecutionContext): Promise<void> {
-    console.log('🔧 SET command executing with args:', rawArgs);
-    
-    // Process arguments: variable name (raw), "to" (evaluate), value (evaluate)
-    if (rawArgs.length >= 3) {
-      let varName = rawArgs[0];
-      if (varName?.type === 'identifier') {
-        varName = varName.name;
-      } else if (varName?.type === 'literal') {
-        varName = varName.value;
-      } else {
-        varName = String(varName);
-      }
-      
-      const toKeyword = await this.execute(rawArgs[1], context);
-      const value = await this.execute(rawArgs[2], context);
-      
-      console.log('🔧 SET command processed:', { varName, toKeyword, value });
-      
-      // Handle special context variables directly
-      if (varName === 'result') {
-        context.result = value;
-        return;
-      }
-      
-      // Use the enhanced command API
-      const input = {
-        target: varName,
-        value: value,
-        toKeyword: 'to' as const
-      };
-      
-      const typedContext = context as any; // Cast to avoid type issues for now
-      
-      try {
-        const result = await this.setCommand.execute(input, typedContext);
-        console.log('🔧 SET command completed:', result);
-        return;
-      } catch (error) {
-        console.error('❌ SET command failed:', error);
-        throw error;
-      }
-    }
-    
-    throw new Error('SET command requires at least 3 arguments (variable, "to", value)');
-  }
 
   /**
    * Execute LOG command - output values to console
@@ -1029,6 +1276,228 @@ export class Runtime {
            obj.style && 
            typeof obj.style === 'object' &&
            obj.classList;
+  }
+
+  /**
+   * Check if valueArgs represent a simple function call pattern like Date() or Math.max(1,2,3)
+   */
+  private isSimpleFunctionCall(valueArgs: ASTNode[]): boolean {
+    if (valueArgs.length < 2) return false;
+    
+    // Pattern 1: identifier + opening parenthesis + closing parenthesis (e.g., Date())
+    if (valueArgs.length === 3 &&
+        valueArgs[0].type === 'identifier' &&
+        (valueArgs[1] as any).value === '(' &&
+        (valueArgs[2] as any).value === ')') {
+      return true;
+    }
+    
+    // Pattern 2: identifier + combined parentheses (e.g., Date + "()")
+    if (valueArgs.length === 2 &&
+        valueArgs[0].type === 'identifier' &&
+        ((valueArgs[1] as any).value === ')' || (valueArgs[1] as any).name === ')')) {
+      console.log('🔧 SET: Found 2-token function pattern:', {
+        functionName: (valueArgs[0] as any).name,
+        secondToken: (valueArgs[1] as any).value || (valueArgs[1] as any).name
+      });
+      return true;
+    }
+    
+    // Pattern 3: Constructor call with 'new' keyword (e.g., new Date())
+    if (this.isConstructorCall(valueArgs)) {
+      console.log('🔧 SET: Found constructor call pattern');
+      return true;
+    }
+    
+    // Pattern 4: Method call with arguments (e.g., Math.max(1, 5, 3))
+    if (this.isMathMethodCall(valueArgs)) {
+      console.log('🔧 SET: Found Math method call pattern');
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Check if this is a constructor call with 'new' keyword (e.g., new Date())
+   */
+  private isConstructorCall(valueArgs: ASTNode[]): boolean {
+    if (valueArgs.length < 3) return false;
+    
+    // Debug the first few tokens
+    console.log('🔧 SET: Checking constructor pattern:', {
+      token0: { type: valueArgs[0].type, name: (valueArgs[0] as any).name, value: (valueArgs[0] as any).value },
+      token1: { type: valueArgs[1].type, name: (valueArgs[1] as any).name, value: (valueArgs[1] as any).value },
+      token2: { type: valueArgs[2].type, name: (valueArgs[2] as any).name, value: (valueArgs[2] as any).value }
+    });
+    
+    // Pattern: new + identifier + ) (e.g., new Date())
+    // Check for different ways 'new' might be tokenized
+    const firstToken = valueArgs[0];
+    const isNewKeyword = (firstToken.type === 'keyword' && (firstToken as any).name === 'new') ||
+                        (firstToken.type === 'identifier' && (firstToken as any).name === 'new') ||
+                        ((firstToken as any).value === 'new');
+    
+    if (valueArgs.length === 3 &&
+        isNewKeyword &&
+        valueArgs[1].type === 'identifier' &&
+        ((valueArgs[2] as any).value === ')' || (valueArgs[2] as any).name === ')')) {
+      console.log('🔧 SET: Constructor pattern matched!');
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Check if this is a Math method call like Math.max(1, 5, 3)
+   */
+  private isMathMethodCall(valueArgs: ASTNode[]): boolean {
+    if (valueArgs.length < 4) return false;
+    
+    // Debug the first few tokens
+    console.log('🔧 SET: Checking Math method pattern:', {
+      token0: { type: valueArgs[0].type, name: (valueArgs[0] as any).name, value: (valueArgs[0] as any).value },
+      token1: { type: valueArgs[1].type, name: (valueArgs[1] as any).name, value: (valueArgs[1] as any).value },
+      token2: { type: valueArgs[2].type, name: (valueArgs[2] as any).name, value: (valueArgs[2] as any).value },
+      lastToken: { type: valueArgs[valueArgs.length - 1].type, name: (valueArgs[valueArgs.length - 1] as any).name, value: (valueArgs[valueArgs.length - 1] as any).value }
+    });
+    
+    // Look for pattern: Math . methodName [args...] )
+    if (valueArgs.length >= 4 &&
+        valueArgs[0].type === 'identifier' && (valueArgs[0] as any).name === 'Math' &&
+        ((valueArgs[1] as any).value === '.' || (valueArgs[1] as any).name === '.') &&
+        valueArgs[2].type === 'identifier' &&
+        ((valueArgs[valueArgs.length - 1] as any).value === ')' || (valueArgs[valueArgs.length - 1] as any).name === ')')) {
+      console.log('🔧 SET: Math method pattern matched!');
+      return true;
+    }
+    
+    return false;
+  }
+
+  /**
+   * Evaluate a Math method call like Math.max(1, 5, 3)
+   */
+  private evaluateMathMethodCall(valueArgs: ASTNode[]): any {
+    try {
+      // Pattern: Math . methodName [args...] )
+      const methodName = (valueArgs[2] as any).name;
+      console.log('🔧 SET: Evaluating Math method call:', methodName);
+      
+      // Extract arguments (everything between methodName and closing parenthesis)
+      const argTokens = valueArgs.slice(3, -1); // Skip Math, ., methodName, and closing )
+      const args: number[] = [];
+      
+      console.log('🔧 SET: Raw arg tokens:', argTokens.map(token => ({
+        type: token.type,
+        name: (token as any).name,
+        value: (token as any).value
+      })));
+      
+      // Parse numeric arguments from tokens
+      for (const token of argTokens) {
+        const tokenValue = (token as any).name || (token as any).value;
+        console.log('🔧 SET: Processing token:', { type: token.type, tokenValue, isNumber: !isNaN(Number(tokenValue)) });
+        
+        if (token.type === 'number' || token.type === 'literal' || (token.type === 'identifier' && !isNaN(Number(tokenValue)))) {
+          const value = (token.type === 'number' || token.type === 'literal') ? 
+                        (token as any).value : Number(tokenValue);
+          args.push(value);
+          console.log('🔧 SET: Added arg:', value);
+        }
+      }
+      
+      console.log('🔧 SET: Math method args:', args);
+      
+      // Call the Math method
+      const mathMethod = (Math as any)[methodName];
+      if (typeof mathMethod === 'function') {
+        const result = mathMethod(...args);
+        console.log('🔧 SET: Math method result:', result);
+        return result;
+      } else {
+        console.warn('🔧 SET: Math method not found:', methodName);
+        return `Math.${methodName}(${args.join(', ')})`;
+      }
+    } catch (error) {
+      console.error('🔧 SET: Math method call error:', error);
+      return `Math.${(valueArgs[2] as any).name}(...)`;
+    }
+  }
+
+  /**
+   * Evaluate a constructor call with 'new' keyword like new Date()
+   */
+  private evaluateConstructorCall(valueArgs: ASTNode[]): any {
+    try {
+      // Pattern: new + constructorName + ) (e.g., new Date())
+      const constructorName = (valueArgs[1] as any).name;
+      console.log('🔧 SET: Evaluating constructor call:', constructorName);
+      
+      // Try to resolve the constructor from global context
+      const globalObj = typeof globalThis !== 'undefined' ? globalThis : 
+                       (typeof window !== 'undefined' ? window : global);
+      
+      const constructor = (globalObj as any)[constructorName];
+      if (typeof constructor === 'function') {
+        const result = new constructor();
+        console.log('🔧 SET: Constructor call result:', result);
+        return result;
+      } else {
+        console.warn('🔧 SET: Constructor not found:', constructorName);
+        return `new ${constructorName}()`;
+      }
+    } catch (error) {
+      console.error('🔧 SET: Constructor call error:', error);
+      return `new ${(valueArgs[1] as any).name}()`;
+    }
+  }
+
+  /**
+   * Evaluate a function call from parsed tokens
+   */
+  private async evaluateFunctionCall(valueArgs: ASTNode[], context: ExecutionContext): Promise<any> {
+    // Handle constructor calls with 'new' keyword
+    if (this.isConstructorCall(valueArgs)) {
+      return this.evaluateConstructorCall(valueArgs);
+    }
+    
+    // Handle Math method calls
+    if (this.isMathMethodCall(valueArgs)) {
+      return this.evaluateMathMethodCall(valueArgs);
+    }
+    
+    if (valueArgs.length === 3 || valueArgs.length === 2) {
+      // Simple function call: functionName() (either 3 tokens or 2 tokens)
+      const functionName = (valueArgs[0] as any).name;
+      console.log('🔧 SET: Evaluating function call:', functionName);
+      
+      try {
+        // Try to resolve the function from global context
+        const globalObj = typeof globalThis !== 'undefined' ? globalThis : 
+                         (typeof window !== 'undefined' ? window : global);
+        
+        const func = (globalObj as any)[functionName];
+        if (typeof func === 'function') {
+          const result = func();
+          console.log('🔧 SET: Function call result:', result);
+          return result;
+        } else {
+          console.warn('🔧 SET: Function not found:', functionName);
+          return `${functionName}()`;
+        }
+      } catch (error) {
+        console.error('🔧 SET: Function call error:', error);
+        return `${functionName}()`;
+      }
+    }
+    
+    // Fallback to string concatenation
+    const results = await Promise.all(
+      valueArgs.map(arg => this.execute(arg, context))
+    );
+    return results.join(' ');
   }
 
   /**

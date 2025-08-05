@@ -58,9 +58,13 @@ export enum TokenType {
 
 // Hyperscript language element sets (based on LSP database)
 const KEYWORDS = new Set([
-  'on', 'init', 'behavior', 'def', 'set', 'if', 'else', 'unless', 'repeat', 'for',
+  'on', 'init', 'behavior', 'def', 'if', 'else', 'unless', 'repeat', 'for',
   'while', 'until', 'end', 'and', 'or', 'not', 'in', 'to', 'from', 'into',
   'with', 'as', 'then', 'when', 'where', 'after', 'before', 'by', 'at', 'async', 'no',
+  // Constructor keyword
+  'new',
+  // Scope keywords
+  'global', 'local',
   // Additional keywords for English-style operators
   'equal', 'equals', 'greater', 'less', 'than', 'really'
 ]);
@@ -69,7 +73,7 @@ const COMMANDS = new Set([
   'add', 'append', 'async', 'beep', 'break', 'call', 'continue', 'decrement',
   'default', 'fetch', 'get', 'go', 'halt', 'hide', 'increment', 'js', 'log',
   'make', 'measure', 'pick', 'put', 'remove', 'render', 'return',
-  'send', 'settle', 'show', 'take', 'tell', 'throw', 'toggle',
+  'send', 'set', 'settle', 'show', 'take', 'tell', 'throw', 'toggle',
   'transition', 'trigger', 'wait'
 ]);
 
@@ -89,7 +93,7 @@ const COMPARISON_OPERATORS = new Set([
   'really equals'
 ]);
 
-const MATHEMATICAL_OPERATORS = new Set(['mod']);
+const MATHEMATICAL_OPERATORS = new Set(['+', '-', '*', '/', 'mod']);
 
 const TIME_UNITS = new Set(['ms', 's', 'seconds', 'minutes', 'hours', 'days']);
 
@@ -609,9 +613,13 @@ function tokenizeOperator(tokenizer: Tokenizer): void {
     value = advance(tokenizer);
   }
   
-  const type = COMPARISON_OPERATORS.has(value) 
-    ? TokenType.COMPARISON_OPERATOR 
-    : TokenType.OPERATOR;
+  // Determine the correct token type
+  let type = TokenType.OPERATOR;
+  if (COMPARISON_OPERATORS.has(value)) {
+    type = TokenType.COMPARISON_OPERATOR;
+  } else if (MATHEMATICAL_OPERATORS.has(value)) {
+    type = TokenType.OPERATOR;
+  }
     
   addToken(tokenizer, type, value, start);
 }
@@ -778,8 +786,8 @@ function classifyIdentifier(value: string): TokenType {
     return TokenType.LOGICAL_OPERATOR;
   }
   
-  if (MATHEMATICAL_OPERATORS.has(lowerValue)) {
-    console.log('🔍 TOKENIZER: classified as OPERATOR', { value, lowerValue });
+  if (MATHEMATICAL_OPERATORS.has(value) || MATHEMATICAL_OPERATORS.has(lowerValue)) {
+    console.log('🔍 TOKENIZER: classified as OPERATOR (mathematical)', { value, lowerValue });
     return TokenType.OPERATOR;
   }
   

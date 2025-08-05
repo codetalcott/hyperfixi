@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>HyperFixi Secure Demo - No Third Party Calls</title>
+    
+    <!-- Content Security Policy to block third-party tracking -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval';
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data:;
+        font-src 'self';
+        connect-src 'self';
+        media-src 'self';
+        object-src 'none';
+        frame-src 'none';
+        worker-src 'self';
+        child-src 'none';
+        form-action 'self';
+        base-uri 'self';
+        manifest-src 'self';
+    ">
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .demo-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 16px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .counter-display {
+            font-size: 28px;
+            padding: 15px;
+            text-align: center;
+            background: #e8f5e8;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 2px solid #28a745;
+            color: #155724;
+            font-weight: bold;
+        }
+        .status {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        .security-info {
+            background: #e8f5e8;
+            border: 1px solid #28a745;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔒 HyperFixi Secure Demo</h1>
+    
+    <div class="security-info">
+        <h3>🛡️ Security Features Active</h3>
+        <ul>
+            <li>✅ Content Security Policy (CSP) enabled</li>
+            <li>✅ Third-party tracking blocked (bat.bing.com, j.clarity, api.getkoala.com)</li>
+            <li>✅ Only localhost connections allowed</li>
+            <li>✅ No external scripts or resources</li>
+        </ul>
+    </div>
+    
+    <div class="demo-section">
+        <h2>🧪 Test HyperFixi Commands (Secure)</h2>
+        <p>All commands run locally with no third-party calls.</p>
+        
+        <div id="test-display" class="counter-display">Initial Display</div>
+        
+        <!-- Basic SET commands -->
+        <button class="test-button" _="on click set my textContent to 'SET Command Works!'">
+            Test SET Command
+        </button>
+        
+        <button class="test-button" _="on click set the textContent of #test-display to 'The X of Y Pattern Works!'">
+            Test "The X of Y" Pattern
+        </button>
+        
+        <!-- Counter commands -->
+        <button class="test-button" _="on click 
+            increment global secureCounter then 
+            set the textContent of #test-display to 'Secure Count: ' + secureCounter">
+            ⬆️ Increment Counter
+        </button>
+        
+        <button class="test-button" _="on click 
+            decrement global secureCounter then 
+            set the textContent of #test-display to 'Secure Count: ' + secureCounter">
+            ⬇️ Decrement Counter
+        </button>
+        
+        <button class="test-button" _="on click 
+            set global secureCounter to 0 then 
+            set the textContent of #test-display to 'Counter Reset'">
+            🔄 Reset Counter
+        </button>
+        
+        <!-- LOG command test -->
+        <button class="test-button" _="on click 
+            log 'Secure demo button clicked - no tracking!' then
+            set the textContent of #test-display to 'Log command executed (check console)'">
+            📝 Test LOG Command
+        </button>
+    </div>
+    
+    <div class="demo-section">
+        <h2>📊 Network Monitor</h2>
+        <div id="network-log" class="status">Monitoring network calls...</div>
+        <button onclick="clearNetworkLog()">Clear Log</button>
+    </div>
+    
+    <div id="status-output" class="status">Loading secure HyperFixi...</div>
+    
+    <!-- Load HyperFixi from local server only -->
+    <script src="/dist/hyperfixi-browser.js"></script>
+    
+    <script>
+        // Network monitoring to catch any third-party calls
+        const networkLog = document.getElementById('network-log');
+        const blockedDomains = ['bat.bing.com', 'j.clarity', 'api.getkoala.com', 'clarity.ms', 'koala.com', 'microsoft.com', 'bing.com'];
+        
+        function logNetwork(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            networkLog.textContent += logEntry;
+            
+            if (type === 'blocked') {
+                console.warn('🚫 BLOCKED:', message);
+            } else {
+                console.log('ℹ️', message);
+            }
+        }
+        
+        function clearNetworkLog() {
+            networkLog.textContent = 'Network log cleared.\n';
+        }
+        
+        // Override fetch to monitor requests
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            const url = args[0];
+            const urlString = typeof url === 'string' ? url : url.url || url.toString();
+            
+            const isBlocked = blockedDomains.some(domain => urlString.includes(domain));
+            
+            if (isBlocked) {
+                logNetwork(`🚫 BLOCKED fetch to: ${urlString}`, 'blocked');
+                return Promise.reject(new Error('Request blocked by CSP'));
+            } else if (!urlString.startsWith('http://localhost') && !urlString.startsWith('/')) {
+                logNetwork(`⚠️ External fetch to: ${urlString}`, 'warning');
+            } else {
+                logNetwork(`✅ Local fetch to: ${urlString}`, 'allowed');
+            }
+            
+            return originalFetch.apply(this, args);
+        };
+        
+        // Monitor script insertions
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeName === 'SCRIPT' && node.src) {
+                        const isBlocked = blockedDomains.some(domain => node.src.includes(domain));
+                        if (isBlocked) {
+                            logNetwork(`🚫 BLOCKED script: ${node.src}`, 'blocked');
+                            node.remove();
+                        } else if (!node.src.startsWith('http://localhost') && !node.src.startsWith('/')) {
+                            logNetwork(`⚠️ External script: ${node.src}`, 'warning');
+                        }
+                    }
+                });
+            });
+        });
+        
+        observer.observe(document.head, { childList: true, subtree: true });
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        // Initialize HyperFixi
+        window.addEventListener('load', function() {
+            logNetwork('🚀 Secure demo loaded');
+            
+            if (typeof hyperfixi !== 'undefined' && hyperfixi.processNode) {
+                hyperfixi.processNode(document.body).then(() => {
+                    logNetwork('✅ HyperFixi processed successfully');
+                    document.getElementById('status-output').textContent = 
+                        '✅ HyperFixi loaded securely with no third-party calls!';
+                    
+                    // Initialize counter
+                    hyperfixi.run('set global secureCounter to 0').catch(err => {
+                        logNetwork(`❌ Counter init failed: ${err.message}`, 'error');
+                    });
+                }).catch(error => {
+                    logNetwork(`❌ HyperFixi processing failed: ${error.message}`, 'error');
+                    document.getElementById('status-output').textContent = 
+                        '❌ HyperFixi processing failed: ' + error.message;
+                });
+            } else {
+                logNetwork('❌ HyperFixi not available', 'error');
+                document.getElementById('status-output').textContent = 
+                    '❌ HyperFixi not available. Check browser bundle.';
+            }
+        });
+        
+        logNetwork('🛡️ Security monitoring active');
+    </script>
+</body>
+</html>
