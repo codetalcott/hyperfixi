@@ -172,61 +172,13 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
   }
 
   async execute(
-    context: TypedExecutionContext,
-    input: SetCommandInput | string | string[]
+    input: SetCommandInputType,
+    context: TypedExecutionContext
   ): Promise<SetCommandOutput> {
     console.log('🔧 Enhanced SET command executing with:', { input, contextMe: context.me?.id });
     
-    // Add stack trace to identify where this is being called from
-    console.log('🔍 SET command call stack:');
-    console.trace();
-    
-    // Handle legacy argument formats from command executor
-    let normalizedInput: SetCommandInput;
-    
-    if (typeof input === 'string') {
-      // Single string argument - could be just target, or could be a full command string
-      console.log('🚨 SET command received single string argument:', input);
-      
-      // Try to parse as full command string first
-      const fullCommandMatch = input.match(/^set\s+(.+)\s+to\s+(.+)$/i);
-      if (fullCommandMatch) {
-        console.log('🔧 SET: Detected full command string, parsing:', fullCommandMatch);
-        normalizedInput = {
-          target: fullCommandMatch[1].trim(),
-          value: fullCommandMatch[2].trim(),
-          scope: undefined
-        };
-      } else {
-        // Just the target, missing value
-        throw new Error('SET command requires both target and value. Use syntax: set <target> to <value>');
-      }
-    } else if (Array.isArray(input)) {
-      // Array arguments from command executor: ['my innerHTML', 'to', 'test'] or similar
-      console.log('🔧 SET command processing array arguments:', input);
-      
-      if (input.length >= 3 && input[1] === 'to') {
-        normalizedInput = {
-          target: input[0] as string,
-          value: input[2],
-          scope: undefined
-        };
-      } else if (input.length >= 2) {
-        // Fallback: assume first is target, second is value
-        normalizedInput = {
-          target: input[0] as string,
-          value: input[1],
-          scope: undefined
-        };
-      } else {
-        throw new Error('SET command requires both target and value');
-      }
-    } else {
-      // Already properly formatted input
-      normalizedInput = input as SetCommandInput;
-    }
-    
-    const { target, value, scope } = normalizedInput;
+    // Input should be properly formatted by enhanced command adapter
+    const { target, value, scope } = input;
 
     console.log('🔍 SET Debug - target type:', typeof target, 'target value:', target);
 

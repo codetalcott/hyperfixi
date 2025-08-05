@@ -119,20 +119,55 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
       
       // Check if this is a TypedCommandImplementation (enhanced command)
       if (this.impl.execute && this.impl.execute.length === 2) {
-        // Enhanced command expects (context, input) signature
+        console.log('🔧 Detected enhanced command with proper signature');
+        // Enhanced command expects (input, context) signature
         let input: unknown;
         
         // Special handling for SET command arguments
-        if (this.impl.name === 'set' && Array.isArray(args) && args.length >= 3 && args[1] === 'to') {
-          console.log('🔧 SET: Converting structured arguments to input:', { args });
-          // Convert ['target', 'to', 'value'] to structured input
-          input = {
-            target: args[0],
-            value: args[2],
-            toKeyword: 'to' as const,
-            scope: undefined
-          };
-          console.log('🔧 SET: Structured input created:', input);
+        if (this.impl.name === 'set') {
+          console.log('🔧 SET: Received arguments:', { 
+            args, 
+            isArray: Array.isArray(args), 
+            length: Array.isArray(args) ? args.length : 'not array',
+            secondArg: Array.isArray(args) && args.length > 1 ? args[1] : 'missing'
+          });
+          
+          if (Array.isArray(args) && args.length >= 2) {
+            // Find the 'to' keyword in the arguments
+            const toIndex = args.findIndex(arg => arg === 'to');
+            console.log('🔧 SET: Found "to" at index:', toIndex);
+            
+            if (toIndex !== -1 && toIndex < args.length - 1) {
+              // Everything before 'to' is the target, everything after is the value
+              const targetArgs = args.slice(0, toIndex);
+              const valueArgs = args.slice(toIndex + 1);
+              
+              console.log('🔧 SET: Converting structured arguments to input:', { 
+                targetArgs, 
+                valueArgs, 
+                originalArgs: args 
+              });
+              
+              // Join target parts if multiple (e.g., ['my', 'textContent'] -> 'my textContent')
+              const target = targetArgs.join(' ');
+              // Use first value arg (usually just one)
+              const value = valueArgs.length === 1 ? valueArgs[0] : valueArgs;
+              
+              input = {
+                target,
+                value,
+                toKeyword: 'to' as const,
+                scope: undefined
+              };
+              console.log('🔧 SET: Structured input created:', input);
+            } else {
+              console.log('🚨 SET: No "to" keyword found, using default handling');
+              input = args.length === 1 ? args[0] : args;
+            }
+          } else {
+            console.log('🚨 SET: Too few arguments, using default handling');
+            input = args.length === 1 ? args[0] : args;
+          }
         } else if (this.impl.name === 'render' && Array.isArray(args) && args.length >= 3 && args[1] === 'with') {
           // Convert ['template', 'with', 'data'] to structured input  
           input = {
@@ -146,13 +181,11 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
             values: Array.isArray(args) ? args : [args]
           };
         } else {
-          // Default input handling
-          console.log('🔧 SET: Using default input handling:', { args, argsLength: args.length });
+          // Default input handling for non-SET/non-RENDER/non-LOG commands
           input = args.length === 1 ? args[0] : args;
-          console.log('🔧 SET: Default input result:', input);
         }
         
-        result = await this.impl.execute(typedContext, input);
+        result = await this.impl.execute(input, typedContext);
       } else {
         // Legacy command adapter expects (context, ...args) signature
         result = await this.impl.execute(typedContext, ...args);
