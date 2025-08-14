@@ -23,7 +23,11 @@
     "release:publish": "lerna publish from-git",
     "dev": "npm run dev --workspace=apps/playground",
     "docs:dev": "npm run dev --workspace=apps/docs-site",
-    "docs:build": "npm run build --workspace=apps/docs-site"
+    "docs:build": "npm run build --workspace=apps/docs-site",
+    "compatibility:monitor": "node scripts/compatibility-monitor.js",
+    "compatibility:improve": "node scripts/improvement-workflow.js",
+    "compatibility:cycle": "npm run compatibility:monitor && npm run compatibility:improve",
+    "compatibility:dashboard": "node scripts/metrics-dashboard.js"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.0.0",

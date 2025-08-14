@@ -1280,6 +1280,7 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       return await extractValue(specialExpressions.multiplication.evaluate(toTypedContext(context), { left, right }));
     case '/':
       return await extractValue(specialExpressions.division.evaluate(toTypedContext(context), { left, right }));
+    case '%':
     case 'mod':
       return await extractValue(specialExpressions.modulo.evaluate(toTypedContext(context), { left, right }));
     case '^':
@@ -1527,25 +1528,21 @@ async function evaluateCSSSelector(node: any, _context: ExecutionContext): Promi
 /**
  * Evaluate query reference expressions (<selector/>)
  */
-async function evaluateQueryReference(node: any, context: ExecutionContext): Promise<any> {
+async function evaluateQueryReference(node: any, context: ExecutionContext): Promise<NodeList> {
   const selector = node.selector;
   
   // Remove the < and /> wrapper to get the actual selector
   const cleanSelector = selector.slice(1, -2); // Remove '<' and '/>'
   
-  // Handle different query types - Query references ALWAYS return collections
-  if (cleanSelector.startsWith('#')) {
-    // ID query: <#id/> returns collection (unlike direct #id which returns single element)
-    return Array.from(document.querySelectorAll(cleanSelector));
-  } else if (cleanSelector.startsWith('.')) {
-    // Class query: <.class/> returns array of elements  
-    return Array.from(document.querySelectorAll(cleanSelector));
-  } else if (cleanSelector.startsWith('[') && cleanSelector.endsWith(']')) {
-    // Attribute query: <[attr="value"]/> 
-    return Array.from(document.querySelectorAll(cleanSelector));
-  } else {
-    // Complex selector query: <input.foo:checked/>
-    return Array.from(document.querySelectorAll(cleanSelector));
+  // Query references ALWAYS return NodeList (not arrays)
+  // This is the key difference from other CSS selector expressions
+  try {
+    return document.querySelectorAll(cleanSelector);
+  } catch (error) {
+    // If CSS selector is invalid, return empty NodeList instead of throwing
+    // Create a mock empty NodeList for compatibility
+    const emptyNodeList = document.createDocumentFragment().childNodes;
+    return emptyNodeList;
   }
 }
 

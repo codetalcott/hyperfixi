@@ -56,7 +56,7 @@
     "size:analysis": "echo 'Size Analysis:' && echo 'ES Module: '$(wc -c < dist/index.mjs)' bytes' && echo 'CJS Module: '$(wc -c < dist/index.js)' bytes' && echo 'Gzipped: '$(gzip -c dist/index.mjs | wc -c)' bytes'"
   },
   "devDependencies": {
-    "@playwright/test": "^1.54.1",
+    "@playwright/test": "^1.54.2",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-terser": "^0.4.4",

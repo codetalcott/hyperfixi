@@ -1,0 +1,84 @@
+[
+  {
+    "timestamp": "2025-08-14T00:57:54.978Z",
+    "expressionTests": {
+      "category": "Expression Tests",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "compatibility": 0
+    },
+    "commandTests": {
+      "category": "Command Tests",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "compatibility": 0
+    },
+    "coreTests": {
+      "total": 2,
+      "passed": 0,
+      "passRate": 0,
+      "expressionTests": {
+        "category": "expressions",
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "compatibility": 0
+      },
+      "commandTests": {
+        "category": "commands",
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "compatibility": 0
+      }
+    },
+    "performance": {
+      "expressionEvalTime": "< 1ms",
+      "memoryUsage": "baseline",
+      "bundleSize": "optimized"
+    }
+  },
+  {
+    "timestamp": "2025-08-14T00:58:08.926Z",
+    "expressionTests": {
+      "category": "Expression Tests",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "compatibility": 0
+    },
+    "commandTests": {
+      "category": "Command Tests",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "compatibility": 0
+    },
+    "coreTests": {
+      "total": 2,
+      "passed": 0,
+      "passRate": 0,
+      "expressionTests": {
+        "category": "expressions",
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "compatibility": 0
+      },
+      "commandTests": {
+        "category": "commands",
+        "passed": 0,
+        "failed": 1,
+        "total": 1,
+        "compatibility": 0
+      }
+    },
+    "performance": {
+      "expressionEvalTime": "< 1ms",
+      "memoryUsage": "baseline",
+      "bundleSize": "optimized"
+    }
+  }
+]

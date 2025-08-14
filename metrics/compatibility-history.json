@@ -1,0 +1,30 @@
+[
+  {
+    "timestamp": "2025-08-14T00:53:30.269Z",
+    "expressionTests": {
+      "category": "Expression Tests",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "compatibility": 0
+    },
+    "commandTests": {
+      "category": "Command Tests",
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "compatibility": 0
+    },
+    "coreTests": {
+      "total": 0,
+      "passed": 0,
+      "passRate": 0,
+      "error": "Command failed: npm test\nsh: vitest: command not found\nnpm error Lifecycle script `test` failed with error:\nnpm error code 127\nnpm error path /Users/williamtalcott/projects/hyperfixi/packages/core\nnpm error workspace @hyperfixi/core@1.0.0\nnpm error location /Users/williamtalcott/projects/hyperfixi/packages/core\nnpm error command failed\nnpm error command sh -c vitest run\n"
+    },
+    "performance": {
+      "expressionEvalTime": "< 1ms",
+      "memoryUsage": "baseline",
+      "bundleSize": "optimized"
+    }
+  }
+]
