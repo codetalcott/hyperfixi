@@ -1,10 +1,14 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Array Expressions - Array Literal and Index Operations
  * Implements comprehensive array handling with TypeScript integration
  * Handles array creation, indexing, range operations, and type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -23,21 +27,21 @@ import type { TypedExpressionContext } from '../../test-utilities.ts';
 /**
  * Schema for array literal expression input validation
  */
-export const ArrayLiteralInputSchema = z.array(z.unknown()).describe('Array elements');
+export const ArrayLiteralInputSchema = v.array(v.unknown()).describe('Array elements');
 
 export type ArrayLiteralInput = z.infer<typeof ArrayLiteralInputSchema>;
 
 /**
  * Schema for array index expression input validation
  */
-export const ArrayIndexInputSchema = z.tuple([
-  z.unknown().describe('Array or array-like object to index'),
-  z.union([
-    z.number().int().describe('Numeric index'),
-    z.string().describe('String index for object access'),
-    z.object({
-      start: z.number().int().optional(),
-      end: z.number().int().optional()
+export const ArrayIndexInputSchema = v.tuple([
+  v.unknown().describe('Array or array-like object to index'),
+  v.union([
+    v.number().int().describe('Numeric index'),
+    v.string().describe('String index for object access'),
+    v.object({
+      start: v.number().int().optional(),
+      end: v.number().int().optional()
     }).strict().describe('Range object for slice operations')
   ]).describe('Index or range specification')
 ]);

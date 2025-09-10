@@ -5,7 +5,7 @@
  * conflicts and establish consistent types across the HyperFixi codebase.
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 
 // ============================================================================
 // Core Validation Types

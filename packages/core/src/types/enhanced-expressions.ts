@@ -1,3 +1,7 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Expression Types - Deep TypeScript Integration for Expression System
  * Extends enhanced patterns to hyperscript expression evaluation with full type safety
@@ -5,7 +9,7 @@
  * IMPORTANT: Core types now imported from base-types.ts for consistency
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 // Import unified types from base-types system for local use and re-export
 import type { 
   ValidationResult, 
@@ -372,21 +376,21 @@ export interface ExpressionDebugger {
  * Default schemas for common expression input types
  */
 export const CommonInputSchemas = {
-  NoInput: z.undefined(),
-  StringInput: z.string(),
-  NumberInput: z.number(),
-  BooleanInput: z.boolean(),
-  ElementInput: z.instanceof(HTMLElement),
-  SelectorInput: z.string().regex(/^[.#]?[\w-]+$/, 'Invalid CSS selector'),
-  ComparisonInput: z.object({
-    left: z.unknown(),
+  NoInput: v.undefined(),
+  StringInput: v.string(),
+  NumberInput: v.number(),
+  BooleanInput: v.boolean(),
+  ElementInput: v.custom((value) => value instanceof HTMLElement),
+  SelectorInput: v.string().regex(/^[.#]?[\w-]+$/, 'Invalid CSS selector'),
+  ComparisonInput: v.object({
+    left: v.unknown(),
     operator: z.enum(['==', '!=', '>', '<', '>=', '<=']),
-    right: z.unknown()
+    right: v.unknown()
   }),
-  LogicalInput: z.object({
-    left: z.boolean(),
+  LogicalInput: v.object({
+    left: v.boolean(),
     operator: z.enum(['and', 'or']),
-    right: z.boolean()
+    right: v.boolean()
   })
 } as const;
 

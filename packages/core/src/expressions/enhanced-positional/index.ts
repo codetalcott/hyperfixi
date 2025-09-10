@@ -1,9 +1,13 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Positional Expressions for HyperScript
  * Provides deep TypeScript integration for positional navigation expressions
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   BaseTypedExpression,
   TypedExpressionContext,
@@ -21,23 +25,23 @@ import type { ExpressionCategory } from '../../types/enhanced-expressions';
 // Input Schemas
 // ============================================================================
 
-const CollectionInputSchema = z.object({
-  collection: z.unknown().describe('Collection to operate on (array, NodeList, or string)')
+const CollectionInputSchema = v.object({
+  collection: v.unknown().describe('Collection to operate on (array, NodeList, or string)')
 }).strict();
 
-const IndexInputSchema = z.object({
-  collection: z.unknown().describe('Collection to access'),
-  index: z.number().describe('Index position to access')
+const IndexInputSchema = v.object({
+  collection: v.unknown().describe('Collection to access'),
+  index: v.number().describe('Index position to access')
 }).strict();
 
-const SliceInputSchema = z.object({
-  collection: z.unknown().describe('Collection to slice'),
-  start: z.number().optional().describe('Start index (inclusive)'),
-  end: z.number().optional().describe('End index (exclusive)')
+const SliceInputSchema = v.object({
+  collection: v.unknown().describe('Collection to slice'),
+  start: v.number().optional().describe('Start index (inclusive)'),
+  end: v.number().optional().describe('End index (exclusive)')
 }).strict();
 
-const RandomInputSchema = z.object({
-  collection: z.unknown().describe('Collection to select random item from')
+const RandomInputSchema = v.object({
+  collection: v.unknown().describe('Collection to select random item from')
 }).strict();
 
 type CollectionInput = z.infer<typeof CollectionInputSchema>;

@@ -1,9 +1,13 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Def Feature Implementation
  * Type-safe function definition feature with enhanced validation and LLM integration
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { 
   ValidationResult,
   LLMDocumentation, 
@@ -17,46 +21,46 @@ import type { EvaluationResult } from '../types/enhanced-core';
 // Enhanced Def Feature Input/Output Schemas
 // ============================================================================
 
-export const EnhancedDefInputSchema = z.object({
+export const EnhancedDefInputSchema = v.object({
   /** Function definition */
   definition: z.object({
-    name: z.string().min(1),
-    namespace: z.string().optional(),
-    parameters: z.array(z.string()).default([]),
-    body: z.array(z.any()), // Parsed command nodes
+    name: v.string().min(1),
+    namespace: v.string().optional(),
+    parameters: v.array(v.string()).default([]),
+    body: v.array(v.any()), // Parsed command nodes
     catchBlock: z.object({
-      parameter: z.string(),
-      body: z.array(z.any()),
+      parameter: v.string(),
+      body: v.array(v.any()),
     }).optional(),
-    finallyBlock: z.array(z.any()).optional(),
-    isAsync: z.boolean().default(false),
-    returnType: z.string().optional(),
+    finallyBlock: v.array(v.any()).optional(),
+    isAsync: v.boolean().default(false),
+    returnType: v.string().optional(),
   }),
   /** Execution context */
-  context: z.object({
-    variables: z.record(z.any()).default({}),
-    me: z.any().optional(),
-    it: z.any().optional(),
-    target: z.any().optional(),
+  context: v.object({
+    variables: z.record(v.any()).default({}),
+    me: v.any().optional(),
+    it: v.any().optional(),
+    target: v.any().optional(),
   }).default({}),
   /** Feature options */
-  options: z.object({
-    enableClosures: z.boolean().default(true),
-    enableTypeChecking: z.boolean().default(true),
-    maxParameterCount: z.number().default(20),
-    allowDynamicParameters: z.boolean().default(false),
+  options: v.object({
+    enableClosures: v.boolean().default(true),
+    enableTypeChecking: v.boolean().default(true),
+    maxParameterCount: v.number().default(20),
+    allowDynamicParameters: v.boolean().default(false),
   }).default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('universal'),
-  debug: z.boolean().default(false),
+  debug: v.boolean().default(false),
 });
 
-export const EnhancedDefOutputSchema = z.object({
+export const EnhancedDefOutputSchema = v.object({
   /** Context identifier */
-  contextId: z.string(),
-  timestamp: z.number(),
-  category: z.literal('Universal'),
-  capabilities: z.array(z.string()),
+  contextId: v.string(),
+  timestamp: v.number(),
+  category: v.literal('Universal'),
+  capabilities: v.array(v.string()),
   state: z.enum(['ready', 'defining', 'executing', 'error']),
   
   /** Function management */
@@ -70,14 +74,14 @@ export const EnhancedDefOutputSchema = z.object({
   }),
   
   /** Parameter management */
-  parameters: z.object({
+  parameters: v.object({
     validate: z.function(),
     bind: z.function(),
     getSignature: z.function(),
   }),
   
   /** Execution management */
-  execution: z.object({
+  execution: v.object({
     invoke: z.function(),
     invokeAsync: z.function(),
     createClosure: z.function(),
@@ -85,7 +89,7 @@ export const EnhancedDefOutputSchema = z.object({
   }),
   
   /** Type management */
-  types: z.object({
+  types: v.object({
     check: z.function(),
     infer: z.function(),
     validate: z.function(),
@@ -93,7 +97,7 @@ export const EnhancedDefOutputSchema = z.object({
   }),
   
   /** Error handling */
-  errors: z.object({
+  errors: v.object({
     handle: z.function(),
     getCatchBlock: z.function(),
     getFinallyBlock: z.function(),

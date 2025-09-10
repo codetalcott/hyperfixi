@@ -4,7 +4,7 @@
  * Follows the enhanced typing pattern established for expressions and commands
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { 
   BaseTypedExpression,
   TypedExpressionContext,
@@ -111,9 +111,9 @@ export interface EnhancedTemplateDirective<TInput = unknown, TOutput = string>
 /**
  * Input schema for @if directive
  */
-export const IfDirectiveInputSchema = z.object({
-  condition: z.any(), // Any value that can be evaluated for truthiness
-  templateContent: z.string()
+export const IfDirectiveInputSchema = v.object({
+  condition: v.any(), // Any value that can be evaluated for truthiness
+  templateContent: v.string()
 });
 
 export type IfDirectiveInput = z.infer<typeof IfDirectiveInputSchema>;
@@ -121,8 +121,8 @@ export type IfDirectiveInput = z.infer<typeof IfDirectiveInputSchema>;
 /**
  * Input schema for @else directive
  */
-export const ElseDirectiveInputSchema = z.object({
-  templateContent: z.string()
+export const ElseDirectiveInputSchema = v.object({
+  templateContent: v.string()
 });
 
 export type ElseDirectiveInput = z.infer<typeof ElseDirectiveInputSchema>;
@@ -130,10 +130,10 @@ export type ElseDirectiveInput = z.infer<typeof ElseDirectiveInputSchema>;
 /**
  * Input schema for @repeat directive
  */
-export const RepeatDirectiveInputSchema = z.object({
-  collection: z.any(), // Collection to iterate over
-  iteratorVariable: z.string().optional(), // Variable name for current item (defaults to 'it')
-  templateContent: z.string()
+export const RepeatDirectiveInputSchema = v.object({
+  collection: v.any(), // Collection to iterate over
+  iteratorVariable: v.string().optional(), // Variable name for current item (defaults to 'it')
+  templateContent: v.string()
 });
 
 export type RepeatDirectiveInput = z.infer<typeof RepeatDirectiveInputSchema>;

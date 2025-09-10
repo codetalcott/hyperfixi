@@ -1,9 +1,13 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced On Feature Implementation
  * Type-safe event handling feature with enhanced validation and LLM integration
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { 
   ValidationResult,
   LLMDocumentation, 
@@ -17,48 +21,48 @@ import type { EvaluationResult } from '../types/enhanced-core';
 // Enhanced On Feature Input/Output Schemas
 // ============================================================================
 
-export const EnhancedOnInputSchema = z.object({
+export const EnhancedOnInputSchema = v.object({
   /** Event configuration */
   event: z.object({
-    type: z.string().min(1),
-    target: z.string().optional(), // CSS selector or 'me'
-    delegated: z.boolean().default(false),
-    once: z.boolean().default(false),
-    passive: z.boolean().default(false),
-    capture: z.boolean().default(false),
-    preventDefault: z.boolean().default(false),
-    stopPropagation: z.boolean().default(false),
-    filter: z.string().optional(), // Event filter expression
-    throttle: z.number().optional(), // Throttle delay in ms
-    debounce: z.number().optional(), // Debounce delay in ms
+    type: v.string().min(1),
+    target: v.string().optional(), // CSS selector or 'me'
+    delegated: v.boolean().default(false),
+    once: v.boolean().default(false),
+    passive: v.boolean().default(false),
+    capture: v.boolean().default(false),
+    preventDefault: v.boolean().default(false),
+    stopPropagation: v.boolean().default(false),
+    filter: v.string().optional(), // Event filter expression
+    throttle: v.number().optional(), // Throttle delay in ms
+    debounce: v.number().optional(), // Debounce delay in ms
   }),
   /** Command sequence to execute */
-  commands: z.array(z.any()), // Parsed command nodes
+  commands: v.array(v.any()), // Parsed command nodes
   /** Execution context */
-  context: z.object({
-    variables: z.record(z.any()).default({}),
-    me: z.any().optional(),
-    it: z.any().optional(),
-    target: z.any().optional(),
+  context: v.object({
+    variables: z.record(v.any()).default({}),
+    me: v.any().optional(),
+    it: v.any().optional(),
+    target: v.any().optional(),
   }).default({}),
   /** Feature options */
-  options: z.object({
-    enableErrorHandling: z.boolean().default(true),
-    enableEventCapture: z.boolean().default(true),
-    enableAsyncExecution: z.boolean().default(true),
-    maxCommandCount: z.number().default(100),
+  options: v.object({
+    enableErrorHandling: v.boolean().default(true),
+    enableEventCapture: v.boolean().default(true),
+    enableAsyncExecution: v.boolean().default(true),
+    maxCommandCount: v.number().default(100),
   }).default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
-  debug: z.boolean().default(false),
+  debug: v.boolean().default(false),
 });
 
-export const EnhancedOnOutputSchema = z.object({
+export const EnhancedOnOutputSchema = v.object({
   /** Context identifier */
-  contextId: z.string(),
-  timestamp: z.number(),
-  category: z.literal('Frontend'),
-  capabilities: z.array(z.string()),
+  contextId: v.string(),
+  timestamp: v.number(),
+  category: v.literal('Frontend'),
+  capabilities: v.array(v.string()),
   state: z.enum(['ready', 'listening', 'executing', 'error']),
   
   /** Event management */
@@ -72,7 +76,7 @@ export const EnhancedOnOutputSchema = z.object({
   }),
   
   /** Command execution */
-  execution: z.object({
+  execution: v.object({
     execute: z.function(),
     executeAsync: z.function(),
     getExecutionHistory: z.function(),
@@ -80,7 +84,7 @@ export const EnhancedOnOutputSchema = z.object({
   }),
   
   /** Event filtering */
-  filtering: z.object({
+  filtering: v.object({
     addFilter: z.function(),
     removeFilter: z.function(),
     testFilter: z.function(),
@@ -88,7 +92,7 @@ export const EnhancedOnOutputSchema = z.object({
   }),
   
   /** Performance control */
-  performance: z.object({
+  performance: v.object({
     throttle: z.function(),
     debounce: z.function(),
     setThrottleDelay: z.function(),
@@ -96,7 +100,7 @@ export const EnhancedOnOutputSchema = z.object({
   }),
   
   /** Error handling */
-  errors: z.object({
+  errors: v.object({
     handle: z.function(),
     getErrorHistory: z.function(),
     clearErrors: z.function(),

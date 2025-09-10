@@ -4,7 +4,7 @@
  * Enhanced for LLM code agents with full type safety and context awareness
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   ValidationResult,
   TypedExecutionContext as TypedExpressionContext,
@@ -33,18 +33,18 @@ interface BaseTypedExpression<T> {
 // Input Schemas
 // ============================================================================
 
-const PropertyAccessInputSchema = z.object({
-  property: z.string().describe('Property name to access')
+const PropertyAccessInputSchema = v.object({
+  property: v.string().describe('Property name to access')
 }).strict();
 
-const PossessiveAccessInputSchema = z.object({
-  target: z.unknown().describe('Target object to access property from'),
-  property: z.string().describe('Property name to access')
+const PossessiveAccessInputSchema = v.object({
+  target: v.unknown().describe('Target object to access property from'),
+  property: v.string().describe('Property name to access')
 }).strict();
 
-const AttributeAccessInputSchema = z.object({
-  element: z.unknown().describe('DOM element to access attribute from'),
-  attribute: z.string().describe('Attribute name to access')
+const AttributeAccessInputSchema = v.object({
+  element: v.unknown().describe('DOM element to access attribute from'),
+  attribute: v.string().describe('Attribute name to access')
 }).strict();
 
 type PropertyAccessInput = z.infer<typeof PropertyAccessInputSchema>;

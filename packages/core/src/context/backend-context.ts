@@ -1,9 +1,13 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Backend Context Implementation  
  * Type-safe server-side hyperscript context following enhanced pattern
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import {
   EnhancedContextBase,
   BaseContextInputSchema,
@@ -18,59 +22,59 @@ import type { LLMDocumentation, EvaluationType } from '../types/enhanced-core';
 // Backend Context Input/Output Schemas
 // ============================================================================
 
-export const BackendContextInputSchema = z.object({
+export const BackendContextInputSchema = v.object({
   /** Server request data */
   request: z.object({
-    method: z.string().optional(),
-    url: z.string().optional(), 
-    headers: z.record(z.string(), z.string()).optional(),
-    body: z.unknown().optional(),
-    params: z.record(z.string(), z.string()).optional(),
-    query: z.record(z.string(), z.string()).optional(),
+    method: v.string().optional(),
+    url: v.string().optional(), 
+    headers: z.record(v.string(), v.string()).optional(),
+    body: v.unknown().optional(),
+    params: z.record(v.string(), v.string()).optional(),
+    query: z.record(v.string(), v.string()).optional(),
   }).optional(),
   /** Server response builder */
-  response: z.object({
-    status: z.number().optional(),
-    headers: z.record(z.string(), z.string()).optional(),
+  response: v.object({
+    status: v.number().optional(),
+    headers: z.record(v.string(), v.string()).optional(),
   }).optional(),
   /** Database and service access */
-  services: z.object({
-    database: z.any().optional(),
-    cache: z.any().optional(),
-    logger: z.any().optional(),
-    queue: z.any().optional(),
+  services: v.object({
+    database: v.any().optional(),
+    cache: v.any().optional(),
+    logger: v.any().optional(),
+    queue: v.any().optional(),
   }).optional(),
   /** Framework-specific data */
-  framework: z.object({
+  framework: v.object({
     name: z.enum(['django', 'flask', 'express', 'fastapi', 'gin']).optional(),
-    version: z.string().optional(),
-    context: z.any().optional(), // Framework-specific request/response objects
+    version: v.string().optional(),
+    context: v.any().optional(), // Framework-specific request/response objects
   }).optional(),
 }).merge(BaseContextInputSchema);
 
-export const BackendContextOutputSchema = z.object({
+export const BackendContextOutputSchema = v.object({
   /** Backend-specific capabilities */
   request: z.object({
     get: z.function(),      // Get request data
     validate: z.function(), // Validate request
   }),
-  response: z.object({
+  response: v.object({
     json: z.function(),     // Send JSON response
     html: z.function(),     // Send HTML response
     redirect: z.function(), // Redirect response
     status: z.function(),   // Set status code
   }),
-  services: z.object({
+  services: v.object({
     db: z.object({
       query: z.function(),
       transaction: z.function(),
     }),
-    cache: z.object({
+    cache: v.object({
       get: z.function(),
       set: z.function(),
       invalidate: z.function(),
     }),
-    logger: z.object({
+    logger: v.object({
       info: z.function(),
       error: z.function(),
       debug: z.function(),

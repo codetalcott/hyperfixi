@@ -1,10 +1,14 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Context Types for HyperFixi
  * Extends TypedExpressionImplementation pattern to context management
  * Building on proven enhanced expression architecture
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { 
   TypedExpressionContext,
   EvaluationType,
@@ -199,30 +203,30 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
 // ============================================================================
 
 // Base schemas that can be extended
-export const BaseContextInputSchema = z.object({
+export const BaseContextInputSchema = v.object({
   /** Environment type */
   environment: z.enum(['frontend', 'backend', 'universal', 'testing']).optional(),
   /** Context variables */
-  variables: z.record(z.string(), z.unknown()).optional(),
+  variables: z.record(v.string(), v.unknown()).optional(),
   /** Debug mode */
-  debug: z.boolean().optional().default(false),
+  debug: v.boolean().optional().default(false),
   /** Performance tracking enabled */
-  trackPerformance: z.boolean().optional().default(true)
+  trackPerformance: v.boolean().optional().default(true)
 }).strict();
 
-export const BaseContextOutputSchema = z.object({
+export const BaseContextOutputSchema = v.object({
   /** Context identifier */
-  contextId: z.string(),
+  contextId: v.string(),
   /** Initialization timestamp */
-  timestamp: z.number(),
+  timestamp: v.number(),
   /** Context category */
   category: z.enum(['Frontend', 'Backend', 'Universal', 'SSR', 'Testing']),
   /** Available methods and properties */
-  capabilities: z.array(z.string()),
+  capabilities: v.array(v.string()),
   /** Context state */
   state: z.enum(['initializing', 'ready', 'error']),
   /** Error information if state is error */
-  error: z.string().optional()
+  error: v.string().optional()
 }).strict();
 
 export type BaseContextInput = z.infer<typeof BaseContextInputSchema>;

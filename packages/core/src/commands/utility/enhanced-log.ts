@@ -7,7 +7,7 @@
  * Modernized with TypedCommandImplementation interface and Zod validation
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { TypedCommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 import type { UnifiedValidationResult } from '../../types/unified-types';
@@ -15,8 +15,8 @@ import type { UnifiedValidationResult } from '../../types/unified-types';
 /**
  * Zod schema for LOG command input validation
  */
-export const LogCommandInputSchema = z.object({
-  values: z.array(z.unknown()).describe('Values to log to console')
+export const LogCommandInputSchema = v.object({
+  values: v.array(v.unknown()).describe('Values to log to console')
 }).describe('LOG command input parameters');
 
 // Input type definition

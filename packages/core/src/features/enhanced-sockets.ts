@@ -1,9 +1,13 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Sockets Feature Implementation
  * Type-safe WebSocket management feature with enhanced validation and LLM integration
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { 
   TypedContextImplementation,
   ContextMetadata,
@@ -18,122 +22,122 @@ import type { ExecutionContext } from '../types/core';
 // Enhanced Sockets Feature Input/Output Schemas
 // ============================================================================
 
-export const EnhancedSocketsInputSchema = z.object({
+export const EnhancedSocketsInputSchema = v.object({
   /** Socket configuration */
   socket: z.object({
-    url: z.string().url(),
-    protocols: z.array(z.string()).default([]),
+    url: v.string().url(),
+    protocols: v.array(v.string()).default([]),
     reconnect: z.object({
-      enabled: z.boolean().default(true),
-      maxAttempts: z.number().default(5),
-      delay: z.number().default(1000),
+      enabled: v.boolean().default(true),
+      maxAttempts: v.number().default(5),
+      delay: v.number().default(1000),
       backoff: z.enum(['linear', 'exponential']).default('exponential'),
-      maxDelay: z.number().default(30000),
+      maxDelay: v.number().default(30000),
     }).default({}),
-    heartbeat: z.object({
-      enabled: z.boolean().default(false),
-      interval: z.number().default(30000),
-      message: z.string().default('ping'),
-      timeout: z.number().default(5000),
+    heartbeat: v.object({
+      enabled: v.boolean().default(false),
+      interval: v.number().default(30000),
+      message: v.string().default('ping'),
+      timeout: v.number().default(5000),
     }).default({}),
-    compression: z.boolean().default(false),
+    compression: v.boolean().default(false),
     binaryType: z.enum(['blob', 'arraybuffer']).default('blob'),
   }),
   /** Event handlers */
-  eventHandlers: z.array(z.object({
+  eventHandlers: v.array(v.object({
     event: z.enum(['open', 'close', 'error', 'message']),
-    filter: z.string().optional(), // Message filter expression
-    commands: z.array(z.any()),
+    filter: v.string().optional(), // Message filter expression
+    commands: v.array(v.any()),
     options: z.object({
-      once: z.boolean().default(false),
-      debounce: z.number().optional(),
-      throttle: z.number().optional(),
+      once: v.boolean().default(false),
+      debounce: v.number().optional(),
+      throttle: v.number().optional(),
     }).default({}),
   })).default([]),
   /** Message handling */
-  messageHandling: z.object({
+  messageHandling: v.object({
     format: z.enum(['json', 'text', 'binary']).default('json'),
     validation: z.object({
-      enabled: z.boolean().default(true),
-      schema: z.any().optional(), // JSON schema for message validation
+      enabled: v.boolean().default(true),
+      schema: v.any().optional(), // JSON schema for message validation
     }).default({}),
-    queue: z.object({
-      enabled: z.boolean().default(true),
-      maxSize: z.number().default(100),
-      persistence: z.boolean().default(false),
+    queue: v.object({
+      enabled: v.boolean().default(true),
+      maxSize: v.number().default(100),
+      persistence: v.boolean().default(false),
     }).default({}),
   }).default({}),
   /** Execution context */
-  context: z.object({
-    variables: z.record(z.any()).default({}),
-    me: z.any().optional(),
-    it: z.any().optional(),
-    target: z.any().optional(),
+  context: v.object({
+    variables: z.record(v.any()).default({}),
+    me: v.any().optional(),
+    it: v.any().optional(),
+    target: v.any().optional(),
   }).default({}),
   /** Feature options */
-  options: z.object({
-    enableAutoConnect: z.boolean().default(true),
-    enableMessageQueue: z.boolean().default(true),
-    enableErrorHandling: z.boolean().default(true),
-    maxConnections: z.number().default(5),
-    connectionTimeout: z.number().default(10000),
+  options: v.object({
+    enableAutoConnect: v.boolean().default(true),
+    enableMessageQueue: v.boolean().default(true),
+    enableErrorHandling: v.boolean().default(true),
+    maxConnections: v.number().default(5),
+    connectionTimeout: v.number().default(10000),
   }).default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
-  debug: z.boolean().default(false),
+  debug: v.boolean().default(false),
 });
 
-export const EnhancedSocketsOutputSchema = z.object({
+export const EnhancedSocketsOutputSchema = v.object({
   /** Context identifier */
-  contextId: z.string(),
-  timestamp: z.number(),
-  category: z.literal('Frontend'),
-  capabilities: z.array(z.string()),
+  contextId: v.string(),
+  timestamp: v.number(),
+  category: v.literal('Frontend'),
+  capabilities: v.array(v.string()),
   state: z.enum(['ready', 'connecting', 'connected', 'disconnecting', 'disconnected', 'error']),
   
   /** Connection management */
   connection: z.object({
-    connect: z.any(),
-    disconnect: z.any(),
-    reconnect: z.any(),
-    isConnected: z.any(),
-    getState: z.any(),
-    getConnectionInfo: z.any(),
+    connect: v.any(),
+    disconnect: v.any(),
+    reconnect: v.any(),
+    isConnected: v.any(),
+    getState: v.any(),
+    getConnectionInfo: v.any(),
   }),
   
   /** Message handling */
-  messaging: z.object({
-    send: z.any(),
-    sendJSON: z.any(),
-    sendBinary: z.any(),
-    subscribe: z.any(),
-    unsubscribe: z.any(),
-    getMessageHistory: z.any(),
+  messaging: v.object({
+    send: v.any(),
+    sendJSON: v.any(),
+    sendBinary: v.any(),
+    subscribe: v.any(),
+    unsubscribe: v.any(),
+    getMessageHistory: v.any(),
   }),
   
   /** Event management */
-  events: z.object({
-    addHandler: z.any(),
-    removeHandler: z.any(),
-    emit: z.any(),
-    getHandlers: z.any(),
+  events: v.object({
+    addHandler: v.any(),
+    removeHandler: v.any(),
+    emit: v.any(),
+    getHandlers: v.any(),
   }),
   
   /** Queue management */
-  queue: z.object({
-    add: z.any(),
-    process: z.any(),
-    clear: z.any(),
-    getSize: z.any(),
-    getPending: z.any(),
+  queue: v.object({
+    add: v.any(),
+    process: v.any(),
+    clear: v.any(),
+    getSize: v.any(),
+    getPending: v.any(),
   }),
   
   /** Error handling */
-  errors: z.object({
-    handle: z.any(),
-    getErrorHistory: z.any(),
-    clearErrors: z.any(),
-    setErrorHandler: z.any(),
+  errors: v.object({
+    handle: v.any(),
+    getErrorHistory: v.any(),
+    clearErrors: v.any(),
+    setErrorHandler: v.any(),
   }),
 });
 

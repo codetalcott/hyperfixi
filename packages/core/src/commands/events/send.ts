@@ -6,7 +6,7 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -19,21 +19,21 @@ import type { UnifiedValidationResult } from '../../types/unified-types';
 /**
  * Input validation schema for LLM understanding
  */
-const SendCommandInputSchema = z.tuple([
-  z.string().min(1), // Event name (required)
-  z.any().optional(), // Event detail/arguments (optional)
-  z.union([
-    z.literal('to'),
-    z.literal('on')
+const SendCommandInputSchema = v.tuple([
+  v.string().min(1), // Event name (required)
+  v.any().optional(), // Event detail/arguments (optional)
+  v.union([
+    v.literal('to'),
+    v.literal('on')
   ]).optional(), // Target keyword
-  z.union([
-    z.instanceof(HTMLElement),
-    z.array(z.instanceof(HTMLElement)),
-    z.string(), // CSS selector or context reference
-    z.null(),
-    z.undefined()
+  v.union([
+    v.custom((value) => value instanceof HTMLElement),
+    v.array(v.custom((value) => value instanceof HTMLElement)),
+    v.string(), // CSS selector or context reference
+    v.null(),
+    v.undefined()
   ]).optional() // Target element(s)
-]).rest(z.any()); // Allow additional arguments
+]).rest(v.any()); // Allow additional arguments
 
 type SendCommandInput = z.infer<typeof SendCommandInputSchema>;
 

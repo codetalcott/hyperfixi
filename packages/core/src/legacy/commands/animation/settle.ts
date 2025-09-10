@@ -1,10 +1,14 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Settle Command - Deep TypeScript Integration
  * Waits for CSS transitions and animations to complete with comprehensive validation
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../../validation/lightweight-validators';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -25,37 +29,37 @@ export interface SettleCommandOptions {
 /**
  * Input validation schema for LLM understanding
  */
-const SettleCommandInputSchema = z.union([
+const SettleCommandInputSchema = v.union([
   // No arguments - settle current element with default timeout
-  z.tuple([]),
+  v.tuple([]),
   
   // Target element only
-  z.tuple([
-    z.union([
-      z.instanceof(HTMLElement),
-      z.string(), // CSS selector
+  v.tuple([
+    v.union([
+      v.custom((value) => value instanceof HTMLElement),
+      v.string(), // CSS selector
     ]).describe('Target element to wait for')
   ]),
   
   // Timeout only
-  z.tuple([
-    z.literal('for').describe('Keyword: for'),
-    z.union([
-      z.number(),
-      z.string()
+  v.tuple([
+    v.literal('for').describe('Keyword: for'),
+    v.union([
+      v.number(),
+      v.string()
     ]).describe('Timeout duration in milliseconds or with unit')
   ]),
   
   // Target and timeout
-  z.tuple([
-    z.union([
-      z.instanceof(HTMLElement),
-      z.string(), // CSS selector
+  v.tuple([
+    v.union([
+      v.custom((value) => value instanceof HTMLElement),
+      v.string(), // CSS selector
     ]).describe('Target element to wait for'),
-    z.literal('for').describe('Keyword: for'),
-    z.union([
-      z.number(),
-      z.string()
+    v.literal('for').describe('Keyword: for'),
+    v.union([
+      v.number(),
+      v.string()
     ]).describe('Timeout duration in milliseconds or with unit')
   ])
 ]);

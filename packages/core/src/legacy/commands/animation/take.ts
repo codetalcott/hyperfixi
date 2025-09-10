@@ -4,7 +4,7 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../../validation/lightweight-validators';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -24,22 +24,22 @@ export interface TakeCommandOptions {
 /**
  * Input validation schema for LLM understanding
  */
-const TakeCommandInputSchema = z.tuple([
-  z.string().describe('Property or attribute name to take'),
-  z.literal('from').describe('Keyword: from'),
-  z.union([
-    z.instanceof(HTMLElement),
-    z.string(), // CSS selector
+const TakeCommandInputSchema = v.tuple([
+  v.string().describe('Property or attribute name to take'),
+  v.literal('from').describe('Keyword: from'),
+  v.union([
+    v.custom((value) => value instanceof HTMLElement),
+    v.string(), // CSS selector
   ]).describe('Source element'),
-  z.literal('and').optional().describe('Optional: and'),
-  z.literal('put').optional().describe('Optional: put'),
-  z.literal('it').optional().describe('Optional: it'),
-  z.literal('on').optional().describe('Optional: on'),
-  z.union([
-    z.instanceof(HTMLElement),
-    z.string(), // CSS selector
-    z.null(),   // Use implicit target (me)
-    z.undefined()
+  v.literal('and').optional().describe('Optional: and'),
+  v.literal('put').optional().describe('Optional: put'),
+  v.literal('it').optional().describe('Optional: it'),
+  v.literal('on').optional().describe('Optional: on'),
+  v.union([
+    v.custom((value) => value instanceof HTMLElement),
+    v.string(), // CSS selector
+    v.null(),   // Use implicit target (me)
+    v.undefined()
   ]).optional().describe('Target element')
 ]);
 

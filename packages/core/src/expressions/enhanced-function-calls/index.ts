@@ -4,7 +4,7 @@
  * Handles global functions, method calls, async operations, and proper context binding
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -25,30 +25,30 @@ import type {
  */
 export const FunctionCallExpressionInputSchema = z.union([
   // Standard function call: functionName, [args]
-  z.tuple([
-    z.union([
-      z.string().describe('Function name or object.method path'),
+  v.tuple([
+    v.union([
+      v.string().describe('Function name or object.method path'),
       z.function().describe('Direct function reference')
     ]).describe('Function to call'),
-    z.array(z.unknown()).describe('Function arguments')
+    v.array(v.unknown()).describe('Function arguments')
   ]),
   // Function call without arguments: functionName
-  z.tuple([
-    z.union([
-      z.string().describe('Function name or object.method path'),
+  v.tuple([
+    v.union([
+      v.string().describe('Function name or object.method path'),
       z.function().describe('Direct function reference')
     ]).describe('Function to call')
   ]),
   // Constructor call: 'new', constructorName, [args]
-  z.tuple([
-    z.literal('new').describe('Constructor keyword'),
-    z.string().describe('Constructor name'),
-    z.array(z.unknown()).describe('Constructor arguments')
+  v.tuple([
+    v.literal('new').describe('Constructor keyword'),
+    v.string().describe('Constructor name'),
+    v.array(v.unknown()).describe('Constructor arguments')
   ]),
   // Constructor call without arguments: 'new', constructorName
-  z.tuple([
-    z.literal('new').describe('Constructor keyword'),
-    z.string().describe('Constructor name')
+  v.tuple([
+    v.literal('new').describe('Constructor keyword'),
+    v.string().describe('Constructor name')
   ])
 ]);
 

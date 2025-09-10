@@ -3,7 +3,7 @@
  * Type-safe browser-based hyperscript context following enhanced pattern
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import {
   EnhancedContextBase,
   BaseContextInputSchema,
@@ -20,28 +20,28 @@ import type { LLMDocumentation, EvaluationType } from '../types/enhanced-core';
 // Frontend Context Input/Output Schemas
 // ============================================================================
 
-export const FrontendContextInputSchema = z.object({
+export const FrontendContextInputSchema = v.object({
   /** DOM environment */
   dom: z.object({
-    document: z.any().optional(), // Browser Document
-    window: z.any().optional(),   // Browser Window
+    document: v.any().optional(), // Browser Document
+    window: v.any().optional(),   // Browser Window
   }).optional(),
   /** Browser APIs */
-  apis: z.object({
+  apis: v.object({
     fetch: z.function().optional(),
-    localStorage: z.any().optional(),
-    sessionStorage: z.any().optional(),
-    location: z.any().optional(),
+    localStorage: v.any().optional(),
+    sessionStorage: v.any().optional(),
+    location: v.any().optional(),
   }).optional(),
   /** User interaction state */
-  userState: z.object({
-    isAuthenticated: z.boolean().optional(),
-    permissions: z.array(z.string()).optional(),
-    preferences: z.record(z.string(), z.unknown()).optional(),
+  userState: v.object({
+    isAuthenticated: v.boolean().optional(),
+    permissions: v.array(v.string()).optional(),
+    preferences: z.record(v.string(), v.unknown()).optional(),
   }).optional(),
 }).merge(BaseContextInputSchema);
 
-export const FrontendContextOutputSchema = z.object({
+export const FrontendContextOutputSchema = v.object({
   /** Frontend-specific capabilities */
   query: z.function(), // DOM query function
   on: z.function(),    // Event handler function
@@ -52,7 +52,7 @@ export const FrontendContextOutputSchema = z.object({
       set: z.function(),
       remove: z.function(),
     }),
-    navigation: z.object({
+    navigation: v.object({
       navigate: z.function(),
       back: z.function(),
       forward: z.function(),

@@ -1,9 +1,13 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Behaviors Feature Implementation
  * Type-safe behavior definition and installation feature with enhanced validation and LLM integration
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { 
   TypedContextImplementation,
   ContextMetadata,
@@ -18,112 +22,112 @@ import type { ExecutionContext } from '../types/core';
 // Enhanced Behaviors Feature Input/Output Schemas
 // ============================================================================
 
-export const EnhancedBehaviorsInputSchema = z.object({
+export const EnhancedBehaviorsInputSchema = v.object({
   /** Behavior definition */
   behavior: z.object({
-    name: z.string().min(1),
-    namespace: z.string().optional(),
-    parameters: z.array(z.string()).default([]),
+    name: v.string().min(1),
+    namespace: v.string().optional(),
+    parameters: v.array(v.string()).default([]),
     initBlock: z.object({
-      commands: z.array(z.any()),
+      commands: v.array(v.any()),
     }).optional(),
-    eventHandlers: z.array(z.object({
-      event: z.string(),
-      eventSource: z.string().optional(), // For "from" syntax
-      filter: z.string().optional(), // Event filter expression
-      commands: z.array(z.any()),
+    eventHandlers: v.array(v.object({
+      event: v.string(),
+      eventSource: v.string().optional(), // For "from" syntax
+      filter: v.string().optional(), // Event filter expression
+      commands: v.array(v.any()),
       options: z.object({
-        once: z.boolean().default(false),
-        passive: z.boolean().default(false),
-        capture: z.boolean().default(false),
-        throttle: z.number().optional(),
-        debounce: z.number().optional(),
+        once: v.boolean().default(false),
+        passive: v.boolean().default(false),
+        capture: v.boolean().default(false),
+        throttle: v.number().optional(),
+        debounce: v.number().optional(),
       }).default({}),
     })).default([]),
-    lifecycle: z.object({
-      onCreate: z.array(z.any()).optional(),
-      onMount: z.array(z.any()).optional(),
-      onUnmount: z.array(z.any()).optional(),
-      onDestroy: z.array(z.any()).optional(),
+    lifecycle: v.object({
+      onCreate: v.array(v.any()).optional(),
+      onMount: v.array(v.any()).optional(),
+      onUnmount: v.array(v.any()).optional(),
+      onDestroy: v.array(v.any()).optional(),
     }).optional(),
   }),
   /** Installation configuration */
-  installation: z.object({
-    target: z.string().optional(), // CSS selector or 'me'
-    parameters: z.record(z.any()).default({}),
-    autoInstall: z.boolean().default(false),
+  installation: v.object({
+    target: v.string().optional(), // CSS selector or 'me'
+    parameters: z.record(v.any()).default({}),
+    autoInstall: v.boolean().default(false),
     scope: z.enum(['element', 'document', 'global']).default('element'),
   }).default({}),
   /** Execution context */
-  context: z.object({
-    variables: z.record(z.any()).default({}),
-    me: z.any().optional(),
-    it: z.any().optional(),
-    target: z.any().optional(),
+  context: v.object({
+    variables: z.record(v.any()).default({}),
+    me: v.any().optional(),
+    it: v.any().optional(),
+    target: v.any().optional(),
   }).default({}),
   /** Feature options */
-  options: z.object({
-    enableLifecycleEvents: z.boolean().default(true),
-    enableEventDelegation: z.boolean().default(true),
-    enableParameterValidation: z.boolean().default(true),
-    maxEventHandlers: z.number().default(50),
-    enableInheritance: z.boolean().default(false),
+  options: v.object({
+    enableLifecycleEvents: v.boolean().default(true),
+    enableEventDelegation: v.boolean().default(true),
+    enableParameterValidation: v.boolean().default(true),
+    maxEventHandlers: v.number().default(50),
+    enableInheritance: v.boolean().default(false),
   }).default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
-  debug: z.boolean().default(false),
+  debug: v.boolean().default(false),
 });
 
-export const EnhancedBehaviorsOutputSchema = z.object({
+export const EnhancedBehaviorsOutputSchema = v.object({
   /** Context identifier */
-  contextId: z.string(),
-  timestamp: z.number(),
-  category: z.literal('Frontend'),
-  capabilities: z.array(z.string()),
+  contextId: v.string(),
+  timestamp: v.number(),
+  category: v.literal('Frontend'),
+  capabilities: v.array(v.string()),
   state: z.enum(['ready', 'defining', 'installing', 'installed', 'error']),
   
   /** Behavior management */
   behaviors: z.object({
-    define: z.any(),
-    install: z.any(),
-    uninstall: z.any(),
-    exists: z.any(),
-    list: z.any(),
-    getDefinition: z.any(),
+    define: v.any(),
+    install: v.any(),
+    uninstall: v.any(),
+    exists: v.any(),
+    list: v.any(),
+    getDefinition: v.any(),
   }),
   
   /** Instance management */
-  instances: z.object({
-    create: z.any(),
-    destroy: z.any(),
-    getInstances: z.any(),
-    getInstancesForElement: z.any(),
-    updateParameters: z.any(),
+  instances: v.object({
+    create: v.any(),
+    destroy: v.any(),
+    getInstances: v.any(),
+    getInstancesForElement: v.any(),
+    updateParameters: v.any(),
   }),
   
   /** Event handling */
-  events: z.object({
-    addHandler: z.any(),
-    removeHandler: z.any(),
-    triggerLifecycle: z.any(),
-    getHandlers: z.any(),
+  events: v.object({
+    addHandler: v.any(),
+    removeHandler: v.any(),
+    triggerLifecycle: v.any(),
+    getHandlers: v.any(),
   }),
   
   /** Parameter management */
-  parameters: z.object({
-    validate: z.any(),
-    bind: z.any(),
-    getDefaults: z.any(),
-    setDefaults: z.any(),
+  parameters: v.object({
+    validate: v.any(),
+    bind: v.any(),
+    getDefaults: v.any(),
+    setDefaults: v.any(),
   }),
   
   /** Lifecycle management */
-  lifecycle: z.object({
-    onCreate: z.any(),
-    onMount: z.any(),
-    onUnmount: z.any(),
-    onDestroy: z.any(),
-    trigger: z.any(),
+  lifecycle: v.object({
+    onCreate: v.any(),
+    onMount: v.any(),
+    onUnmount: v.any(),
+    onDestroy: v.any(),
+    trigger: v.any(),
   }),
 });
 

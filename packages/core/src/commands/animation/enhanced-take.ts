@@ -4,7 +4,6 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-// import { z } from 'zod';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -14,6 +13,12 @@ import type {
 } from '../../types/enhanced-core';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 import { dispatchCustomEvent } from '../../core/events';
+import { 
+  createTupleValidator, 
+  createStringValidator, 
+  createUnionValidator,
+  type RuntimeValidator 
+} from '../../validation/lightweight-validators';
 
 export interface TakeCommandOptions {
   validateProperties?: boolean;
@@ -23,26 +28,16 @@ export interface TakeCommandOptions {
 /**
  * Input validation schema for LLM understanding
  */
-// const TakeCommandInputSchema = z.tuple([
-//   z.string().describe('Property or attribute name to take'),
-//   z.literal('from').describe('Keyword: from'),
-//   z.union([
-//     z.instanceof(HTMLElement),
-//     z.string(), // CSS selector
-//   ]).describe('Source element'),
-//   z.literal('and').optional().describe('Optional: and'),
-//   z.literal('put').optional().describe('Optional: put'),
-//   z.literal('it').optional().describe('Optional: it'),
-//   z.literal('on').optional().describe('Optional: on'),
-//   z.union([
-//     z.instanceof(HTMLElement),
-//     z.string(), // CSS selector
-//     z.null(),   // Use implicit target (me)
-//     z.undefined()
-//   ]).optional().describe('Target element')
-// ]);
+const TakeCommandInputSchema = createTupleValidator([
+  createStringValidator({ description: 'Property or attribute name to take' }),
+  createStringValidator({ pattern: /^from$/, description: 'Keyword: from' }),
+  createUnionValidator([
+    createStringValidator({ description: 'CSS selector' }),
+    // Note: HTMLElement validation handled at runtime
+  ])
+]);
 
-type TakeCommandInput = any; // z.infer<typeof TakeCommandInputSchema>;
+type TakeCommandInput = [string, 'from', string | HTMLElement, ...unknown[]];
 
 /**
  * Enhanced Take Command with full type safety for LLM agents
@@ -55,7 +50,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
   public readonly name = 'take' as const;
   public readonly syntax = 'take <property> from <source> [and put it on <target>]';
   public readonly description = 'Moves classes, attributes, and properties from one element to another with validation';
-  // public readonly inputSchema = TakeCommandInputSchema;
+  public readonly inputSchema = TakeCommandInputSchema;
   public readonly outputType = 'element' as const;
 
   public readonly metadata: CommandMetadata = {
@@ -232,7 +227,22 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
 
   validate(args: unknown[]): UnifiedValidationResult {
     try {
-      // Basic argument count validation
+      // Use lightweight validator for basic validation
+      const validationResult = this.inputSchema.validate(args);
+      
+      if (!validationResult.success) {
+        return {
+          isValid: false,
+          errors: [{
+            type: 'validation-error' as const,
+            message: validationResult.error!.message,
+            suggestions: ["Use: take <property> from <source> [and put it on <target>]"]
+          }],
+          suggestions: ['Use: take class from <element>', 'Use: take @attr from <element> and put it on <target>']
+        };
+      }
+
+      // Additional validation for complex cases (kept for comprehensive validation)
       if (args.length < 3) {
         return {
           isValid: false,
@@ -242,33 +252,6 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
             suggestions: ["Use: take <property> from <source> [and put it on <target>]"]
           }],
           suggestions: ['Use: take class from <element>', 'Use: take @attr from <element> and put it on <target>']
-        };
-      }
-
-      // Validate property name
-      const property = args[0];
-      if (typeof property !== 'string' || property.trim().length === 0) {
-        return {
-          isValid: false,
-          errors: [{
-            type: 'syntax-error' as const,
-            message: 'Property name must be a non-empty string',
-            suggestions: ['Use valid property names like "class", "@data-attr", or "title"']
-          }],
-          suggestions: ['Use: class, title, id, @data-*', 'Use: CSS property names', 'Use: .className for specific classes']
-        };
-      }
-
-      // Validate "from" keyword
-      if (args[1] !== 'from') {
-        return {
-          isValid: false,
-          errors: [{
-            type: 'syntax-error' as const,
-            message: 'Expected "from" keyword after property name',
-            suggestions: ['Use syntax: take <property> from <source>']
-          }],
-          suggestions: ['Use: take class from <element>', 'Include "from" keyword between property and source']
         };
       }
 

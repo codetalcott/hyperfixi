@@ -4,7 +4,7 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -24,13 +24,13 @@ export interface ShowCommandOptions {
 /**
  * Input validation schema for LLM understanding
  */
-const ShowCommandInputSchema = z.tuple([
-  z.union([
-    z.instanceof(HTMLElement),
-    z.array(z.instanceof(HTMLElement)), 
-    z.string(), // CSS selector
-    z.null(),   // Use implicit target (me)
-    z.undefined()
+const ShowCommandInputSchema = v.tuple([
+  v.union([
+    v.custom((value) => value instanceof HTMLElement),
+    v.array(v.custom((value) => value instanceof HTMLElement)), 
+    v.string(), // CSS selector
+    v.null(),   // Use implicit target (me)
+    v.undefined()
   ]).optional()
 ]);
 

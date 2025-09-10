@@ -1,10 +1,14 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Go Command - Deep TypeScript Integration
  * Handles URL navigation, element scrolling, and browser history management with validation
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -26,23 +30,23 @@ export interface GoCommandOptions {
  */
 const GoCommandInputSchema = z.union([
   // URL navigation: go [to] url <url> [in new window]
-  z.tuple([
-    z.literal('url'),
-    z.string().describe('URL to navigate to'),
+  v.tuple([
+    v.literal('url'),
+    v.string().describe('URL to navigate to'),
     z.enum(['in', 'new', 'window']).optional()
   ]).rest(z.enum(['in', 'new', 'window'])),
   
   // History navigation: go back
-  z.tuple([z.literal('back')]),
+  v.tuple([v.literal('back')]),
   
   // Element scrolling: complex pattern
-  z.array(z.union([
-    z.string(),
-    z.number(),
-    z.boolean(),
-    z.instanceof(HTMLElement),
-    z.null(),
-    z.undefined()
+  v.array(v.union([
+    v.string(),
+    v.number(),
+    v.boolean(),
+    v.custom((value) => value instanceof HTMLElement),
+    v.null(),
+    v.undefined()
   ])).min(1).max(10)
 ]);
 

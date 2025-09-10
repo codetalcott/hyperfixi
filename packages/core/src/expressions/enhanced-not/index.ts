@@ -4,7 +4,7 @@
  * Handles boolean negation, truthiness evaluation, and type coercion
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   EvaluationResult,
@@ -21,8 +21,8 @@ import type {
 /**
  * Schema for 'not' expression input validation
  */
-export const NotExpressionInputSchema = z.tuple([
-  z.unknown().describe('Value to negate')
+export const NotExpressionInputSchema = v.tuple([
+  v.unknown().describe('Value to negate')
 ]);
 
 export type NotExpressionInput = z.infer<typeof NotExpressionInputSchema>;

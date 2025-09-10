@@ -4,7 +4,7 @@
  * Handles 'my property', 'element's attribute', style access, and attribute bracket notation
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -23,9 +23,9 @@ import type {
 /**
  * Schema for possessive expression input validation
  */
-export const PossessiveExpressionInputSchema = z.tuple([
-  z.unknown().describe('Object/element to access property from'),
-  z.string().describe('Property/attribute name to access')
+export const PossessiveExpressionInputSchema = v.tuple([
+  v.unknown().describe('Object/element to access property from'),
+  v.string().describe('Property/attribute name to access')
 ]);
 
 export type PossessiveExpressionInput = z.infer<typeof PossessiveExpressionInputSchema>;

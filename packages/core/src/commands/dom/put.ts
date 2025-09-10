@@ -1,10 +1,14 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Put Command - Deep TypeScript Integration
  * Inserts content into DOM elements or properties with comprehensive validation
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -23,23 +27,23 @@ export interface PutCommandOptions {
 /**
  * Input validation schema for LLM understanding
  */
-const PutCommandInputSchema = z.tuple([
-  z.union([
-    z.string(),
-    z.number(),
-    z.boolean(),
-    z.instanceof(HTMLElement),
-    z.array(z.unknown()),
-    z.record(z.unknown()),
-    z.null(),
-    z.undefined()
+const PutCommandInputSchema = v.tuple([
+  v.union([
+    v.string(),
+    v.number(),
+    v.boolean(),
+    v.custom((value) => value instanceof HTMLElement),
+    v.array(v.unknown()),
+    z.record(v.unknown()),
+    v.null(),
+    v.undefined()
   ]).describe('Content to insert'),
   z.enum(['into', 'before', 'after', 'at start of', 'at end of']).describe('Insertion position'),
-  z.union([
-    z.instanceof(HTMLElement),
-    z.string(), // CSS selector or property access
-    z.null(),   // Use implicit target (me)
-    z.undefined()
+  v.union([
+    v.custom((value) => value instanceof HTMLElement),
+    v.string(), // CSS selector or property access
+    v.null(),   // Use implicit target (me)
+    v.undefined()
   ]).describe('Target element or property')
 ]);
 

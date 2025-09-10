@@ -5,7 +5,7 @@
  */
 
 // Advanced expressions implementation
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   ValidationResult,
   TypedExecutionContext,
@@ -41,9 +41,9 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = '\\(params) -> expression';
   public readonly outputType: EvaluationType = 'Any';
-  public readonly inputSchema = z.object({
-    parameters: z.array(z.string()).describe('Function parameter names'),
-    body: z.string().describe('Function body expression')
+  public readonly inputSchema = v.object({
+    parameters: v.array(v.string()).describe('Function parameter names'),
+    body: v.string().describe('Function body expression')
   });
   
   public readonly metadata: ExpressionMetadata = {
@@ -245,8 +245,8 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
   public readonly name = 'promise';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'promise(executor)';
-  public readonly inputSchema = z.object({
-    executor: z.string().describe('Executor expression')
+  public readonly inputSchema = v.object({
+    executor: v.string().describe('Executor expression')
   });
   public readonly outputType: EvaluationType = 'Any';
 
@@ -412,8 +412,8 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'await';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'await promise';
-  public readonly inputSchema = z.object({
-    promise: z.unknown().describe('Promise to await')
+  public readonly inputSchema = v.object({
+    promise: v.unknown().describe('Promise to await')
   });
   public readonly outputType: EvaluationType = 'Any';
 
@@ -533,10 +533,10 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
   public readonly name = 'error';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'error(message, name?, code?)';
-  public readonly inputSchema = z.object({
-    message: z.string().describe('Error message'),
-    name: z.string().optional().describe('Error name'),
-    code: z.string().optional().describe('Error code')
+  public readonly inputSchema = v.object({
+    message: v.string().describe('Error message'),
+    name: v.string().optional().describe('Error name'),
+    code: v.string().optional().describe('Error code')
   });
   public readonly outputType: EvaluationType = 'Any';
 
@@ -670,8 +670,8 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
   public readonly name = 'typeof';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'typeof value';
-  public readonly inputSchema = z.object({
-    value: z.unknown().describe('Value to check type of')
+  public readonly inputSchema = v.object({
+    value: v.unknown().describe('Value to check type of')
   });
   public readonly outputType: EvaluationType = 'String';
 

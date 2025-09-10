@@ -4,7 +4,7 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   TypedExpressionImplementation,
   TypedExpressionContext,
@@ -30,7 +30,7 @@ export class EnhancedMeExpression implements TypedExpressionImplementation<
   public readonly category = 'Reference' as const;
   public readonly syntax = 'me';
   public readonly description = 'References the current element in the execution context';
-  public readonly inputSchema = z.undefined();
+  public readonly inputSchema = v.undefined();
   public readonly outputType = 'Element' as const;
 
   public readonly metadata: ExpressionMetadata = {
@@ -175,7 +175,7 @@ export class EnhancedYouExpression implements TypedExpressionImplementation<
   public readonly category = 'Reference' as const;
   public readonly syntax = 'you';
   public readonly description = 'References the target element (usually event target or command target)';
-  public readonly inputSchema = z.undefined();
+  public readonly inputSchema = v.undefined();
   public readonly outputType = 'Element' as const;
 
   public readonly metadata: ExpressionMetadata = {
@@ -311,7 +311,7 @@ export class EnhancedItExpression implements TypedExpressionImplementation<
   public readonly category = 'Reference' as const;
   public readonly syntax = 'it';
   public readonly description = 'References the current context variable (result of previous operation or loop item)';
-  public readonly inputSchema = z.undefined();
+  public readonly inputSchema = v.undefined();
   public readonly outputType = 'Any' as const;
 
   public readonly metadata: ExpressionMetadata = {
@@ -452,9 +452,9 @@ export class EnhancedItExpression implements TypedExpressionImplementation<
 /**
  * CSS Selector input validation schema
  */
-const CSSelectorInputSchema = z.object({
-  selector: z.string().min(1, 'CSS selector cannot be empty'),
-  single: z.boolean().optional().default(false) // true for querySelector, false for querySelectorAll
+const CSSelectorInputSchema = v.object({
+  selector: v.string().min(1, 'CSS selector cannot be empty'),
+  single: v.boolean().optional().default(false) // true for querySelector, false for querySelectorAll
 });
 
 type CSSSelectorInput = z.infer<typeof CSSelectorInputSchema>;

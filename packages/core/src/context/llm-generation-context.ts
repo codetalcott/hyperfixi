@@ -1,9 +1,13 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * LLM Code Generation Context
  * Type-safe LLM code generation with enhanced validation patterns
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import {
   EnhancedContextBase,
   BaseContextInputSchema,
@@ -20,67 +24,67 @@ import type { LLMDocumentation, EvaluationType } from '../types/enhanced-core';
 // LLM Generation Input/Output Schemas
 // ============================================================================
 
-export const LLMGenerationInputSchema = z.object({
+export const LLMGenerationInputSchema = v.object({
   /** Code generation prompt */
-  prompt: z.string().min(1, 'Prompt cannot be empty'),
+  prompt: v.string().min(1, 'Prompt cannot be empty'),
   /** Target environment for generated code */
   targetEnvironment: z.enum(['frontend', 'backend', 'universal']),
   /** Framework context if applicable */
   framework: z.object({
     name: z.enum(['django', 'flask', 'express', 'fastapi', 'gin', 'vanilla']).optional(),
-    version: z.string().optional(),
+    version: v.string().optional(),
   }).optional(),
   /** Type safety requirements */
   typeSafety: z.enum(['strict', 'moderate', 'loose']).default('strict'),
   /** Output format preferences */
   outputFormat: z.enum(['hyperscript', 'html-with-hyperscript', 'template', 'component']).default('hyperscript'),
   /** Available context variables and their types */
-  availableVariables: z.record(z.string(), z.object({
+  availableVariables: z.record(v.string(), v.object({
     type: z.enum(['string', 'number', 'boolean', 'array', 'object', 'element']),
-    nullable: z.boolean().default(false),
-    optional: z.boolean().default(false),
-    description: z.string().optional(),
+    nullable: v.boolean().default(false),
+    optional: v.boolean().default(false),
+    description: v.string().optional(),
   })).optional(),
   /** Available enhanced implementations */
-  enhancedImplementations: z.object({
-    expressions: z.array(z.string()).optional(),
-    contexts: z.array(z.string()).optional(),
-    commands: z.array(z.string()).optional(),
+  enhancedImplementations: v.object({
+    expressions: v.array(v.string()).optional(),
+    contexts: v.array(v.string()).optional(),
+    commands: v.array(v.string()).optional(),
   }).optional(),
 }).merge(BaseContextInputSchema);
 
-export const LLMGenerationOutputSchema = z.object({
+export const LLMGenerationOutputSchema = v.object({
   /** Generated hyperscript code */
-  code: z.string(),
+  code: v.string(),
   /** Type validation results */
   validation: z.object({
-    isValid: z.boolean(),
-    errors: z.array(z.object({
-      type: z.string(),
-      message: z.string(),
-      line: z.number().optional(),
-      suggestion: z.string().optional(),
+    isValid: v.boolean(),
+    errors: v.array(z.object({
+      type: v.string(),
+      message: v.string(),
+      line: v.number().optional(),
+      suggestion: v.string().optional(),
     })),
-    warnings: z.array(z.object({
-      type: z.string(),
-      message: z.string(),
-      suggestion: z.string().optional(),
+    warnings: v.array(v.object({
+      type: v.string(),
+      message: v.string(),
+      suggestion: v.string().optional(),
     })),
   }),
   /** Inferred types from generated code */
-  inferredTypes: z.record(z.string(), z.object({
-    type: z.string(),
-    confidence: z.number().min(0).max(1),
-    usage: z.array(z.string()),
+  inferredTypes: z.record(v.string(), v.object({
+    type: v.string(),
+    confidence: v.number().min(0).max(1),
+    usage: v.array(v.string()),
   })),
   /** Performance analysis */
-  performance: z.object({
-    estimatedExecutionTime: z.number(),
+  performance: v.object({
+    estimatedExecutionTime: v.number(),
     complexity: z.enum(['O(1)', 'O(n)', 'O(n^2)', 'O(log n)']),
-    recommendations: z.array(z.string()),
+    recommendations: v.array(v.string()),
   }),
   /** Framework-specific annotations */
-  frameworkNotes: z.array(z.string()).optional(),
+  frameworkNotes: v.array(v.string()).optional(),
 }).merge(BaseContextOutputSchema);
 
 export type LLMGenerationInput = z.infer<typeof LLMGenerationInputSchema>;

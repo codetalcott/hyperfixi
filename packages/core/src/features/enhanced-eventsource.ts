@@ -1,9 +1,13 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced EventSource Feature Implementation
  * Type-safe Server-Sent Events management feature with enhanced validation and LLM integration
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { 
   TypedContextImplementation,
   ContextMetadata,
@@ -18,109 +22,109 @@ import type { ExecutionContext } from '../types/core';
 // Enhanced EventSource Feature Input/Output Schemas
 // ============================================================================
 
-export const EnhancedEventSourceInputSchema = z.object({
+export const EnhancedEventSourceInputSchema = v.object({
   /** EventSource configuration */
   source: z.object({
-    url: z.string().min(1),
-    withCredentials: z.boolean().default(false),
-    headers: z.record(z.string()).default({}),
-    retry: z.object({
-      enabled: z.boolean().default(true),
-      maxAttempts: z.number().default(5),
-      delay: z.number().default(3000), // 3 seconds
+    url: v.string().min(1),
+    withCredentials: v.boolean().default(false),
+    headers: z.record(v.string()).default({}),
+    retry: v.object({
+      enabled: v.boolean().default(true),
+      maxAttempts: v.number().default(5),
+      delay: v.number().default(3000), // 3 seconds
       backoff: z.enum(['linear', 'exponential']).default('exponential'),
-      maxDelay: z.number().default(30000), // 30 seconds
+      maxDelay: v.number().default(30000), // 30 seconds
     }).default({}),
-    timeout: z.object({
-      enabled: z.boolean().default(true),
-      duration: z.number().default(60000), // 60 seconds
+    timeout: v.object({
+      enabled: v.boolean().default(true),
+      duration: v.number().default(60000), // 60 seconds
     }).default({}),
   }),
   /** Event handling configuration */
-  eventHandlers: z.array(z.object({
-    event: z.string().min(1), // Event type (message, open, error, or custom)
-    commands: z.array(z.any()).min(1),
-    filter: z.string().optional(), // Event filter expression
+  eventHandlers: v.array(v.object({
+    event: v.string().min(1), // Event type (message, open, error, or custom)
+    commands: v.array(v.any()).min(1),
+    filter: v.string().optional(), // Event filter expression
     options: z.object({
-      throttle: z.number().optional(),
-      debounce: z.number().optional(),
+      throttle: v.number().optional(),
+      debounce: v.number().optional(),
     }).optional(),
   })).default([]),
   /** Message processing */
-  messageProcessing: z.object({
+  messageProcessing: v.object({
     format: z.enum(['text', 'json', 'raw']).default('text'),
     validation: z.object({
-      enabled: z.boolean().default(true),
-      schema: z.any().optional(), // JSON schema for message validation
+      enabled: v.boolean().default(true),
+      schema: v.any().optional(), // JSON schema for message validation
     }).default({}),
-    buffer: z.object({
-      enabled: z.boolean().default(true),
-      maxSize: z.number().min(0).default(100), // 0 = unlimited
-      flushInterval: z.number().default(1000), // 1 second
+    buffer: v.object({
+      enabled: v.boolean().default(true),
+      maxSize: v.number().min(0).default(100), // 0 = unlimited
+      flushInterval: v.number().default(1000), // 1 second
     }).default({}),
   }).default({}),
   /** Execution context */
-  context: z.object({
-    variables: z.record(z.any()).default({}),
-    me: z.any().optional(),
-    it: z.any().optional(),
-    target: z.any().optional(),
+  context: v.object({
+    variables: z.record(v.any()).default({}),
+    me: v.any().optional(),
+    it: v.any().optional(),
+    target: v.any().optional(),
   }).default({}),
   /** Feature options */
-  options: z.object({
-    enableAutoConnect: z.boolean().default(true),
-    enableMessageBuffer: z.boolean().default(true),
-    enableErrorHandling: z.boolean().default(true),
-    maxConnections: z.number().default(1),
-    connectionTimeout: z.number().default(30000), // 30 seconds
+  options: v.object({
+    enableAutoConnect: v.boolean().default(true),
+    enableMessageBuffer: v.boolean().default(true),
+    enableErrorHandling: v.boolean().default(true),
+    maxConnections: v.number().default(1),
+    connectionTimeout: v.number().default(30000), // 30 seconds
   }).default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
-  debug: z.boolean().default(false),
+  debug: v.boolean().default(false),
 });
 
-export const EnhancedEventSourceOutputSchema = z.object({
+export const EnhancedEventSourceOutputSchema = v.object({
   /** Context identifier */
-  contextId: z.string(),
-  timestamp: z.number(),
-  category: z.literal('Frontend'),
-  capabilities: z.array(z.string()),
+  contextId: v.string(),
+  timestamp: v.number(),
+  category: v.literal('Frontend'),
+  capabilities: v.array(v.string()),
   state: z.enum(['ready', 'connecting', 'connected', 'disconnecting', 'disconnected', 'error']),
   
   /** Connection management */
   connection: z.object({
-    connect: z.any(),
-    disconnect: z.any(),
-    reconnect: z.any(),
-    getState: z.any(),
-    getConnectionInfo: z.any(),
-    isConnected: z.any(),
+    connect: v.any(),
+    disconnect: v.any(),
+    reconnect: v.any(),
+    getState: v.any(),
+    getConnectionInfo: v.any(),
+    isConnected: v.any(),
   }),
   
   /** Event management */
-  events: z.object({
-    addHandler: z.any(),
-    removeHandler: z.any(),
-    getHandlers: z.any(),
-    emit: z.any(),
+  events: v.object({
+    addHandler: v.any(),
+    removeHandler: v.any(),
+    getHandlers: v.any(),
+    emit: v.any(),
   }),
   
   /** Message handling */
-  messages: z.object({
-    getHistory: z.any(),
-    getBuffer: z.any(),
-    flushBuffer: z.any(),
-    clearHistory: z.any(),
-    subscribe: z.any(),
-    unsubscribe: z.any(),
+  messages: v.object({
+    getHistory: v.any(),
+    getBuffer: v.any(),
+    flushBuffer: v.any(),
+    clearHistory: v.any(),
+    subscribe: v.any(),
+    unsubscribe: v.any(),
   }),
   
   /** Error handling */
-  errors: z.object({
-    handle: z.any(),
-    getErrorHistory: z.any(),
-    clearErrors: z.any(),
-    setErrorHandler: z.any(),
+  errors: v.object({
+    handle: v.any(),
+    getErrorHistory: v.any(),
+    clearErrors: v.any(),
+    setErrorHandler: v.any(),
   }),
 });
 

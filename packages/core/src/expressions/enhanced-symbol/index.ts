@@ -4,7 +4,7 @@
  * Handles local, element, and global variable resolution with enhanced error handling
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -23,8 +23,8 @@ import type {
 /**
  * Schema for symbol expression input validation
  */
-export const SymbolExpressionInputSchema = z.tuple([
-  z.string()
+export const SymbolExpressionInputSchema = v.tuple([
+  v.string()
     .min(1, 'Symbol name cannot be empty')
     .describe('Variable name to resolve from context')
 ]);

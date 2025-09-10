@@ -3,7 +3,7 @@
  * Provides deep TypeScript integration for property access, possessive syntax, and attributes
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   BaseTypedExpression,
   TypedExpressionContext,
@@ -21,24 +21,24 @@ import type { ExpressionCategory } from '../../types/enhanced-expressions';
 // Input Schemas
 // ============================================================================
 
-const PropertyAccessInputSchema = z.object({
-  element: z.unknown().describe('Element or object to access property from'),
-  property: z.string().describe('Property name to access')
+const PropertyAccessInputSchema = v.object({
+  element: v.unknown().describe('Element or object to access property from'),
+  property: v.string().describe('Property name to access')
 }).strict();
 
-const AttributeAccessInputSchema = z.object({
-  element: z.unknown().describe('Element to access attribute from'),
-  attribute: z.string().describe('Attribute name to access')
+const AttributeAccessInputSchema = v.object({
+  element: v.unknown().describe('Element to access attribute from'),
+  attribute: v.string().describe('Attribute name to access')
 }).strict();
 
-const ContextPropertyInputSchema = z.object({
-  property: z.string().describe('Property name to access from context')
+const ContextPropertyInputSchema = v.object({
+  property: v.string().describe('Property name to access from context')
 }).strict();
 
-const AttributeWithValueInputSchema = z.object({
-  element: z.unknown().describe('Element to check attribute value'),
-  attribute: z.string().describe('Attribute name to check'),
-  value: z.string().describe('Expected attribute value')
+const AttributeWithValueInputSchema = v.object({
+  element: v.unknown().describe('Element to check attribute value'),
+  attribute: v.string().describe('Attribute name to check'),
+  value: v.string().describe('Expected attribute value')
 }).strict();
 
 type PropertyAccessInput = z.infer<typeof PropertyAccessInputSchema>;

@@ -1,3 +1,7 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Core Types - Deep TypeScript Integration
  * Designed for LLM code agents with maximum type safety
@@ -6,7 +10,7 @@
  * This file now focuses on enhanced features while using unified base types
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 // ============================================================================
 // Import Unified Types
 // ============================================================================
@@ -56,16 +60,16 @@ export type { EvaluationResult } from './base-types';
 /**
  * Runtime type validation schema
  */
-export const HyperScriptValueSchema = z.union([
-  z.string(),
-  z.number(),
-  z.boolean(),
-  z.null(),
-  z.undefined(),
-  z.instanceof(HTMLElement),
-  z.array(z.instanceof(HTMLElement)),
-  z.record(z.unknown()), // Will be refined recursively
-  z.array(z.unknown())
+export const HyperScriptValueSchema = v.union([
+  v.string(),
+  v.number(),
+  v.boolean(),
+  v.null(),
+  v.undefined(),
+  v.custom((value) => value instanceof HTMLElement),
+  v.array(v.custom((value) => value instanceof HTMLElement)),
+  z.record(v.unknown()), // Will be refined recursively
+  v.array(v.unknown())
 ]);
 
 // TypedExecutionContext and TypedExpressionContext now imported from base-types.ts above
@@ -739,52 +743,52 @@ export interface AnalysisWarning {
 /**
  * Zod schema for runtime validation of HyperScript programs
  */
-export const HyperScriptProgramSchema = z.object({
-  source: z.string(),
-  features: z.array(z.object({
+export const HyperScriptProgramSchema = v.object({
+  source: v.string(),
+  features: v.array(z.object({
     type: z.enum(['event', 'behavior', 'definition', 'init', 'worker', 'socket', 'eventsource', 'set', 'js', 'custom']),
-    id: z.string(),
+    id: v.string(),
     trigger: z.object({
-      event: z.string(),
-      target: z.union([z.string(), z.instanceof(HTMLElement)]).optional(),
+      event: v.string(),
+      target: v.union([v.string(), v.custom((value) => value instanceof HTMLElement)]).optional(),
       options: z.object({
-        once: z.boolean().optional(),
-        debounce: z.number().optional(),
-        throttle: z.number().optional(),
+        once: v.boolean().optional(),
+        debounce: v.number().optional(),
+        throttle: v.number().optional(),
       }),
-      filter: z.object({
-        selector: z.string().optional(),
-        keys: z.array(z.string()).optional(),
-        condition: z.string().optional(),
+      filter: v.object({
+        selector: v.string().optional(),
+        keys: v.array(v.string()).optional(),
+        condition: v.string().optional(),
       }).optional(),
     }).optional(),
-    commands: z.array(z.object({
+    commands: v.array(v.object({
       type: z.enum(['dom-manipulation', 'content', 'navigation', 'event', 'async', 'control-flow', 'data', 'expression', 'custom']),
-      name: z.string(),
-      args: z.array(z.object({
+      name: v.string(),
+      args: v.array(z.object({
         value: HyperScriptValueSchema,
-        type: z.string(),
+        type: v.string(),
         kind: z.enum(['literal', 'expression', 'reference']),
       })),
     })),
-    config: z.object({
-      enabled: z.boolean(),
-      priority: z.number(),
-      options: z.record(z.string(), HyperScriptValueSchema),
-      dependencies: z.array(z.string()),
+    config: v.object({
+      enabled: v.boolean(),
+      priority: v.number(),
+      options: z.record(v.string(), HyperScriptValueSchema),
+      dependencies: v.array(v.string()),
     }),
   })),
-  metadata: z.object({
+  metadata: v.object({
     compilation: z.object({
-      compiled: z.boolean(),
+      compiled: v.boolean(),
       compiledAt: z.date().optional(),
-      compiler: z.string(),
-      version: z.string(),
+      compiler: v.string(),
+      version: v.string(),
     }),
   }),
-  state: z.object({
+  state: v.object({
     status: z.enum(['ready', 'running', 'completed', 'error', 'suspended']),
-    currentFeature: z.string().optional(),
+    currentFeature: v.string().optional(),
   }),
 });
 

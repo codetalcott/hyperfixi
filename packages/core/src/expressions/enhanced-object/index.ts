@@ -4,7 +4,7 @@
  * Handles object creation, dynamic field names, and type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -22,13 +22,13 @@ import type { TypedExpressionContext } from '../../test-utilities.ts';
 /**
  * Schema for object field definition
  */
-export const ObjectFieldSchema = z.object({
-  key: z.union([
-    z.string().describe('Static field name'),
-    z.unknown().describe('Dynamic expression for field name')
+export const ObjectFieldSchema = v.object({
+  key: v.union([
+    v.string().describe('Static field name'),
+    v.unknown().describe('Dynamic expression for field name')
   ]).describe('Field key (string or expression)'),
-  value: z.unknown().describe('Field value'),
-  isDynamic: z.boolean().default(false).describe('Whether the key is computed from an expression')
+  value: v.unknown().describe('Field value'),
+  isDynamic: v.boolean().default(false).describe('Whether the key is computed from an expression')
 });
 
 export type ObjectField = z.infer<typeof ObjectFieldSchema>;
@@ -36,7 +36,7 @@ export type ObjectField = z.infer<typeof ObjectFieldSchema>;
 /**
  * Schema for object literal expression input validation
  */
-export const ObjectLiteralInputSchema = z.array(ObjectFieldSchema).describe('Object field definitions');
+export const ObjectLiteralInputSchema = v.array(ObjectFieldSchema).describe('Object field definitions');
 
 export type ObjectLiteralInput = z.infer<typeof ObjectLiteralInputSchema>;
 

@@ -3,7 +3,7 @@
  * Provides deep TypeScript integration for type conversion expressions with comprehensive validation
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   TypedExpressionContext, 
   TypedResult,
@@ -305,9 +305,9 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
 /**
  * Input schema for the 'as' conversion expression
  */
-const AsExpressionInputSchema = z.object({
-  value: z.any(),
-  type: z.string().min(1, 'Conversion type cannot be empty')
+const AsExpressionInputSchema = v.object({
+  value: v.any(),
+  type: v.string().min(1, 'Conversion type cannot be empty')
 });
 
 /**
@@ -570,9 +570,9 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
 /**
  * Input schema for the 'is' type checking expression
  */
-const IsExpressionInputSchema = z.object({
-  value: z.any(),
-  type: z.string().min(1, 'Type name cannot be empty')
+const IsExpressionInputSchema = v.object({
+  value: v.any(),
+  type: v.string().min(1, 'Type name cannot be empty')
 });
 
 /**

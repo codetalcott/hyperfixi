@@ -4,7 +4,7 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   ValidationResult,
   TypedExecutionContext as TypedExpressionContext,
@@ -32,9 +32,9 @@ interface BaseTypedExpression<T> {
 // Input Schemas
 // ============================================================================
 
-const BinaryOperationInputSchema = z.object({
-  left: z.unknown().describe('Left operand value'),
-  right: z.unknown().describe('Right operand value')
+const BinaryOperationInputSchema = v.object({
+  left: v.unknown().describe('Left operand value'),
+  right: v.unknown().describe('Right operand value')
 });
 
 type BinaryOperationInput = z.infer<typeof BinaryOperationInputSchema>;

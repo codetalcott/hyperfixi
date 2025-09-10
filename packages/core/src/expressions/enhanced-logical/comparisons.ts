@@ -3,7 +3,7 @@
  * Implements comparison operators (==, !=, >, <, >=, <=) with type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   ValidationResult,
   TypedExecutionContext as TypedExpressionContext,
@@ -31,10 +31,10 @@ interface BaseTypedExpression<T> {
 // Input Schemas
 // ============================================================================
 
-const ComparisonInputSchema = z.object({
-  left: z.unknown().describe('Left operand value'),
+const ComparisonInputSchema = v.object({
+  left: v.unknown().describe('Left operand value'),
   operator: z.enum(['==', '!=', '>', '<', '>=', '<=']).describe('Comparison operator'),
-  right: z.unknown().describe('Right operand value')
+  right: v.unknown().describe('Right operand value')
 }).strict();
 
 type ComparisonInput = z.infer<typeof ComparisonInputSchema>;

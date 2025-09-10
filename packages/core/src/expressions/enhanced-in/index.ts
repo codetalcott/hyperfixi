@@ -4,7 +4,7 @@
  * Handles array membership, DOM element queries, and advanced filtering
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -22,9 +22,9 @@ import type { TypedExpressionContext } from '../../test-utilities.ts';
 /**
  * Schema for 'in' expression input validation
  */
-export const InExpressionInputSchema = z.tuple([
-  z.unknown().describe('Value(s) to search for (can be single value or array)'),
-  z.unknown().describe('Container to search in (array, NodeList, or DOM element)')
+export const InExpressionInputSchema = v.tuple([
+  v.unknown().describe('Value(s) to search for (can be single value or array)'),
+  v.unknown().describe('Container to search in (array, NodeList, or DOM element)')
 ]);
 
 export type InExpressionInput = z.infer<typeof InExpressionInputSchema>;

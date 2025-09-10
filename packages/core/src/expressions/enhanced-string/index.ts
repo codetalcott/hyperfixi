@@ -4,7 +4,7 @@
  * Enhanced for LLM code agents with maximum type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   TypedExpressionImplementation,
   TypedExecutionContext,
@@ -20,9 +20,9 @@ import type {
 /**
  * String interpolation input schema
  */
-const StringInterpolationInputSchema = z.object({
-  template: z.string(),
-  variables: z.record(z.string(), z.unknown()).optional()
+const StringInterpolationInputSchema = v.object({
+  template: v.string(),
+  variables: z.record(v.string(), v.unknown()).optional()
 });
 
 type StringInterpolationInput = z.infer<typeof StringInterpolationInputSchema>;

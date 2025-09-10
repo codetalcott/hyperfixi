@@ -1,9 +1,13 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Special Expressions for HyperScript
  * Provides deep TypeScript integration for literals and mathematical operations
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   BaseTypedExpression,
   TypedExpressionContext,
@@ -19,33 +23,33 @@ import type { ExpressionCategory } from '../../types/enhanced-expressions';
 // Input Schemas
 // ============================================================================
 
-const StringLiteralInputSchema = z.object({
-  value: z.string().describe('String literal value')
+const StringLiteralInputSchema = v.object({
+  value: v.string().describe('String literal value')
 }).strict();
 
-const NumberLiteralInputSchema = z.object({
-  value: z.number().describe('Number literal value')
+const NumberLiteralInputSchema = v.object({
+  value: v.number().describe('Number literal value')
 }).strict();
 
-const BooleanLiteralInputSchema = z.object({
-  value: z.boolean().describe('Boolean literal value')
+const BooleanLiteralInputSchema = v.object({
+  value: v.boolean().describe('Boolean literal value')
 }).strict();
 
-const ArrayLiteralInputSchema = z.object({
-  elements: z.array(z.unknown()).describe('Array elements')
+const ArrayLiteralInputSchema = v.object({
+  elements: v.array(v.unknown()).describe('Array elements')
 }).strict();
 
-const ObjectLiteralInputSchema = z.object({
-  properties: z.record(z.string(), z.unknown()).describe('Object properties')
+const ObjectLiteralInputSchema = v.object({
+  properties: z.record(v.string(), v.unknown()).describe('Object properties')
 }).strict();
 
-const BinaryOperationInputSchema = z.object({
-  left: z.unknown().describe('Left operand'),
-  right: z.unknown().describe('Right operand')
+const BinaryOperationInputSchema = v.object({
+  left: v.unknown().describe('Left operand'),
+  right: v.unknown().describe('Right operand')
 }).strict();
 
-const UnaryOperationInputSchema = z.object({
-  operand: z.unknown().describe('Operand for unary operation')
+const UnaryOperationInputSchema = v.object({
+  operand: v.unknown().describe('Operand for unary operation')
 }).strict();
 
 type StringLiteralInput = z.infer<typeof StringLiteralInputSchema>;

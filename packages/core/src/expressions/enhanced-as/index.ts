@@ -4,7 +4,7 @@
  * Handles type conversions like 'value as String', 'data as JSON', 'form as Values'
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -23,9 +23,9 @@ import type {
 /**
  * Schema for 'as' expression input validation
  */
-export const AsExpressionInputSchema = z.tuple([
-  z.unknown().describe('Value to convert'),
-  z.string().describe('Target type for conversion')
+export const AsExpressionInputSchema = v.tuple([
+  v.unknown().describe('Value to convert'),
+  v.string().describe('Target type for conversion')
 ]);
 
 export type AsExpressionInput = z.infer<typeof AsExpressionInputSchema>;

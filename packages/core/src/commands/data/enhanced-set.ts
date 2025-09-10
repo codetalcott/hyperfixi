@@ -7,7 +7,7 @@
  * Modernized with TypedCommandImplementation interface and Zod validation
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { TypedCommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 import type { UnifiedValidationResult } from '../../types/unified-types';
@@ -15,15 +15,15 @@ import type { UnifiedValidationResult } from '../../types/unified-types';
 /**
  * Zod schema for SET command input validation
  */
-export const SetCommandInputSchema = z.object({
-  target: z.union([
-    z.string().min(1, 'Target must be a non-empty string'),
-    z.instanceof(HTMLElement),
+export const SetCommandInputSchema = v.object({
+  target: v.union([
+    v.string().min(1, 'Target must be a non-empty string'),
+    v.custom((value) => value instanceof HTMLElement),
   ]).describe('Target variable, element property, or attribute'),
   
-  value: z.unknown().describe('Value to set'),
+  value: v.unknown().describe('Value to set'),
   
-  toKeyword: z.literal('to').optional().describe('Syntax keyword "to"'),
+  toKeyword: v.literal('to').optional().describe('Syntax keyword "to"'),
   
   scope: z.enum(['global', 'local']).optional().describe('Variable scope')
 }).describe('SET command input parameters');

@@ -3,7 +3,7 @@
  * Extends enhanced command patterns to hyperscript features like "on", "init", etc.
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { ValidationResult, EvaluationResult, CommandMetadata, LLMDocumentation } from './enhanced-core';
 
 /**

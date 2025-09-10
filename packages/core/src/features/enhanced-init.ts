@@ -1,9 +1,13 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Init Feature Implementation
  * Type-safe element initialization feature with enhanced validation and LLM integration
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { 
   TypedContextImplementation,
   ContextMetadata,
@@ -17,101 +21,101 @@ import type { ExecutionContext } from '../types/core';
 // Enhanced Init Feature Input/Output Schemas
 // ============================================================================
 
-export const EnhancedInitInputSchema = z.object({
+export const EnhancedInitInputSchema = v.object({
   /** Element initialization configuration */
   initialization: z.object({
-    target: z.union([z.instanceof(HTMLElement), z.string()]), // Element or selector
-    commands: z.array(z.any()).min(1), // Commands to execute
+    target: v.union([v.custom((value) => value instanceof HTMLElement), v.string()]), // Element or selector
+    commands: v.array(v.any()).min(1), // Commands to execute
     timing: z.object({
-      immediate: z.boolean().default(false), // Execute before other features
-      delay: z.number().default(0), // Delay in milliseconds
-      defer: z.boolean().default(false), // Defer until DOM ready
+      immediate: v.boolean().default(false), // Execute before other features
+      delay: v.number().default(0), // Delay in milliseconds
+      defer: v.boolean().default(false), // Defer until DOM ready
     }).default({}),
-    lifecycle: z.object({
-      runOnce: z.boolean().default(true), // Only run once per element
-      resetOnRemoval: z.boolean().default(false), // Reset state when element removed
-      propagateToChildren: z.boolean().default(false), // Apply to child elements
+    lifecycle: v.object({
+      runOnce: v.boolean().default(true), // Only run once per element
+      resetOnRemoval: v.boolean().default(false), // Reset state when element removed
+      propagateToChildren: v.boolean().default(false), // Apply to child elements
     }).default({}),
   }),
   /** Command execution options */
-  execution: z.object({
-    parallel: z.boolean().default(false), // Execute commands in parallel
-    stopOnError: z.boolean().default(true), // Stop execution on first error
-    timeout: z.number().default(10000), // Execution timeout in ms
+  execution: v.object({
+    parallel: v.boolean().default(false), // Execute commands in parallel
+    stopOnError: v.boolean().default(true), // Stop execution on first error
+    timeout: v.number().default(10000), // Execution timeout in ms
     retries: z.object({
-      enabled: z.boolean().default(false),
-      maxAttempts: z.number().default(3),
-      delay: z.number().default(1000),
+      enabled: v.boolean().default(false),
+      maxAttempts: v.number().default(3),
+      delay: v.number().default(1000),
     }).default({}),
   }).default({}),
   /** Error handling configuration */
-  errorHandling: z.object({
+  errorHandling: v.object({
     strategy: z.enum(['throw', 'log', 'ignore', 'emit']).default('log'),
-    fallbackCommands: z.array(z.any()).default([]),
-    setAttribute: z.boolean().default(true), // Set error attribute on element
+    fallbackCommands: v.array(v.any()).default([]),
+    setAttribute: v.boolean().default(true), // Set error attribute on element
   }).default({}),
   /** Execution context */
-  context: z.object({
-    variables: z.record(z.any()).default({}),
-    me: z.any().optional(),
-    it: z.any().optional(),
-    target: z.any().optional(),
+  context: v.object({
+    variables: z.record(v.any()).default({}),
+    me: v.any().optional(),
+    it: v.any().optional(),
+    target: v.any().optional(),
   }).default({}),
   /** Feature options */
-  options: z.object({
-    enableDOMObserver: z.boolean().default(true), // Watch for DOM changes
-    enablePerformanceTracking: z.boolean().default(true),
-    enableEventEmission: z.boolean().default(true),
-    maxConcurrentInits: z.number().default(10),
+  options: v.object({
+    enableDOMObserver: v.boolean().default(true), // Watch for DOM changes
+    enablePerformanceTracking: v.boolean().default(true),
+    enableEventEmission: v.boolean().default(true),
+    maxConcurrentInits: v.number().default(10),
   }).default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
-  debug: z.boolean().default(false),
+  debug: v.boolean().default(false),
 });
 
-export const EnhancedInitOutputSchema = z.object({
+export const EnhancedInitOutputSchema = v.object({
   /** Context identifier */
-  contextId: z.string(),
-  timestamp: z.number(),
-  category: z.literal('Frontend'),
-  capabilities: z.array(z.string()),
+  contextId: v.string(),
+  timestamp: v.number(),
+  category: v.literal('Frontend'),
+  capabilities: v.array(v.string()),
   state: z.enum(['ready', 'initializing', 'completed', 'error']),
   
   /** Element management */
   elements: z.object({
-    register: z.any(),
-    unregister: z.any(),
-    process: z.any(),
-    processAll: z.any(),
-    isRegistered: z.any(),
-    isProcessed: z.any(),
-    getRegistration: z.any(),
-    listRegistered: z.any(),
+    register: v.any(),
+    unregister: v.any(),
+    process: v.any(),
+    processAll: v.any(),
+    isRegistered: v.any(),
+    isProcessed: v.any(),
+    getRegistration: v.any(),
+    listRegistered: v.any(),
   }),
   
   /** Command execution */
-  execution: z.object({
-    execute: z.any(),
-    executeParallel: z.any(),
-    executeWithRetry: z.any(),
-    getExecutionHistory: z.any(),
-    clearHistory: z.any(),
+  execution: v.object({
+    execute: v.any(),
+    executeParallel: v.any(),
+    executeWithRetry: v.any(),
+    getExecutionHistory: v.any(),
+    clearHistory: v.any(),
   }),
   
   /** Lifecycle management */
-  lifecycle: z.object({
-    onElementAdded: z.any(),
-    onElementRemoved: z.any(),
-    onDOMReady: z.any(),
-    reset: z.any(),
+  lifecycle: v.object({
+    onElementAdded: v.any(),
+    onElementRemoved: v.any(),
+    onDOMReady: v.any(),
+    reset: v.any(),
   }),
   
   /** Error handling */
-  errors: z.object({
-    handle: z.any(),
-    getErrorHistory: z.any(),
-    clearErrors: z.any(),
-    setErrorHandler: z.any(),
+  errors: v.object({
+    handle: v.any(),
+    getErrorHistory: v.any(),
+    clearErrors: v.any(),
+    setErrorHandler: v.any(),
   }),
 });
 

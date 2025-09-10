@@ -4,7 +4,7 @@
  * Follows same architecture as enhanced expression registry
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { 
   TypedContextImplementation,
   ContextRegistry,

@@ -1,10 +1,14 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Time Expressions - Deep TypeScript Integration
  * Comprehensive time and duration handling with full type safety and validation
  * Enhanced for LLM code agents with maximum type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   TypedExpressionImplementation,
   TypedExecutionContext,
@@ -20,8 +24,8 @@ import type {
 /**
  * Time parsing input schema
  */
-const TimeParsingInputSchema = z.object({
-  timeString: z.string().min(1, 'Time string cannot be empty'),
+const TimeParsingInputSchema = v.object({
+  timeString: v.string().min(1, 'Time string cannot be empty'),
   defaultUnit: z.enum(['ms', 's', 'm', 'h', 'd', 'w']).optional().default('ms')
 });
 
@@ -211,10 +215,10 @@ export class EnhancedTimeParsingExpression implements TypedExpressionImplementat
 /**
  * Duration formatting options
  */
-const DurationFormatSchema = z.object({
-  milliseconds: z.number().min(0, 'Duration must be non-negative'),
+const DurationFormatSchema = v.object({
+  milliseconds: v.number().min(0, 'Duration must be non-negative'),
   format: z.enum(['default', 'long', 'short', 'precise']).optional().default('default'),
-  maxUnits: z.number().min(1).max(6).optional().default(6)
+  maxUnits: v.number().min(1).max(6).optional().default(6)
 });
 
 type DurationFormatInput = z.infer<typeof DurationFormatSchema>;

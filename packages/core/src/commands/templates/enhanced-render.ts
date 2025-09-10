@@ -7,7 +7,7 @@
  * Integrates with the enhanced template directive system
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { TypedCommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 import type { UnifiedValidationResult } from '../../types/unified-types';
@@ -18,15 +18,15 @@ import { EnhancedRepeatDirective } from './directives/enhanced-repeat';
 /**
  * Zod schema for RENDER command input validation
  */
-export const RenderCommandInputSchema = z.object({
-  template: z.union([
+export const RenderCommandInputSchema = v.object({
+  template: v.union([
     z.instanceof(HTMLTemplateElement),
-    z.string().min(1, 'Template must be a non-empty string'),
+    v.string().min(1, 'Template must be a non-empty string'),
   ]).describe('Template element or template string to render'),
   
-  variables: z.record(z.unknown()).optional().describe('Variables to pass to template context'),
+  variables: z.record(v.unknown()).optional().describe('Variables to pass to template context'),
   
-  withKeyword: z.literal('with').optional().describe('Syntax keyword "with"'),
+  withKeyword: v.literal('with').optional().describe('Syntax keyword "with"'),
 }).describe('RENDER command input parameters');
 
 // Input type definition

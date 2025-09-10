@@ -1,3 +1,7 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Wait Command - Deep TypeScript Integration
  * Provides timing and event-based waiting functionality with full type safety
@@ -10,7 +14,7 @@
  * Enhanced for LLM code agents with comprehensive validation
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../../validation/lightweight-validators';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -23,19 +27,19 @@ import type {
 /**
  * Input validation schema for LLM understanding
  */
-const WaitCommandInputSchema = z.union([
+const WaitCommandInputSchema = v.union([
   // Time-based wait: wait 1000, wait "2s"
-  z.tuple([z.union([z.number(), z.string()])]),
+  v.tuple([z.union([v.number(), v.string()])]),
   // Event-based wait: wait for "click" from "#button"
-  z.tuple([z.literal('for'), z.string()]).rest(z.any()),
+  v.tuple([v.literal('for'), v.string()]).rest(v.any()),
   // Complex object format for structured waiting
-  z.tuple([z.object({
+  v.tuple([v.object({
     type: z.enum(['timeout', 'event', 'mixed']),
-    value: z.unknown().optional(),
-    eventName: z.string().optional(),
-    source: z.unknown().optional(),
-    timeout: z.unknown().optional(),
-    events: z.array(z.unknown()).optional()
+    value: v.unknown().optional(),
+    eventName: v.string().optional(),
+    source: v.unknown().optional(),
+    timeout: v.unknown().optional(),
+    events: v.array(v.unknown()).optional()
   })])
 ]);
 

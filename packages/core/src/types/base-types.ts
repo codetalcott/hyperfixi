@@ -4,7 +4,7 @@
  * from multiple type definitions across the codebase
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 
 // ============================================================================
 // Core Validation Types (Single Source of Truth)

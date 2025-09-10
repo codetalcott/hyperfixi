@@ -1,10 +1,14 @@
+
+// Missing number validator - add to lightweight-validators.ts if needed
+const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
+
 /**
  * Enhanced Fetch Command - Deep TypeScript Integration
  * HTTP request command with full event integration and type safety
  * Enhanced for LLM code agents with comprehensive validation
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../../validation/lightweight-validators';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -33,23 +37,23 @@ export interface FetchCommandOptions {
 /**
  * Input validation schema for LLM understanding
  */
-const FetchCommandInputSchema = z.tuple([
-  z.union([
-    z.string().url(), // URL string
+const FetchCommandInputSchema = v.tuple([
+  v.union([
+    v.string().url(), // URL string
     z.function(),      // URL function
-    z.string()         // Allow non-URL strings for relative paths
+    v.string()         // Allow non-URL strings for relative paths
   ]),
-  z.object({
-    method: z.string().optional(),
-    headers: z.record(z.string()).optional(),
-    body: z.unknown().optional(),
-    target: z.union([
-      z.instanceof(HTMLElement),
-      z.string() // CSS selector
+  v.object({
+    method: v.string().optional(),
+    headers: z.record(v.string()).optional(),
+    body: v.unknown().optional(),
+    target: v.union([
+      v.custom((value) => value instanceof HTMLElement),
+      v.string() // CSS selector
     ]).optional(),
     format: z.enum(['json', 'text', 'html', 'blob', 'arrayBuffer']).optional(),
     placement: z.enum(['innerHTML', 'outerHTML', 'textContent', 'append', 'prepend', 'before', 'after']).optional(),
-    timeout: z.number().positive().optional()
+    timeout: v.number().positive().optional()
   }).optional()
 ]);
 

@@ -3,7 +3,7 @@
  * Implements pattern matching (matches, contains, in) with type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   TypedExpressionImplementation,
   TypedExpressionContext,
@@ -21,19 +21,19 @@ import type {
 // Input Schemas
 // ============================================================================
 
-const PatternMatchInputSchema = z.object({
-  value: z.unknown().describe('Value to test against pattern'),
-  pattern: z.union([z.string(), z.instanceof(RegExp)]).describe('Pattern to match (string or regex)')
+const PatternMatchInputSchema = v.object({
+  value: v.unknown().describe('Value to test against pattern'),
+  pattern: v.union([v.string(), z.instanceof(RegExp)]).describe('Pattern to match (string or regex)')
 }).strict();
 
-const ContainsInputSchema = z.object({
-  container: z.unknown().describe('Container to search in (array, string, or object)'),
-  item: z.unknown().describe('Item to search for')
+const ContainsInputSchema = v.object({
+  container: v.unknown().describe('Container to search in (array, string, or object)'),
+  item: v.unknown().describe('Item to search for')
 }).strict();
 
-const InInputSchema = z.object({
-  item: z.unknown().describe('Item to search for'),
-  container: z.unknown().describe('Container to search in (array, string, or object)')
+const InInputSchema = v.object({
+  item: v.unknown().describe('Item to search for'),
+  container: v.unknown().describe('Container to search in (array, string, or object)')
 }).strict();
 
 type PatternMatchInput = z.infer<typeof PatternMatchInputSchema>;

@@ -5,7 +5,7 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -18,20 +18,20 @@ import type { UnifiedValidationResult } from '../../types/unified-types';
 /**
  * Input validation schema for LLM understanding
  */
-const TriggerCommandInputSchema = z.tuple([
-  z.string().min(1), // Event name (required)
-  z.union([
-    z.literal('on'),
-    z.any() // Event data or 'on' keyword
+const TriggerCommandInputSchema = v.tuple([
+  v.string().min(1), // Event name (required)
+  v.union([
+    v.literal('on'),
+    v.any() // Event data or 'on' keyword
   ]).optional(),
-  z.union([
-    z.instanceof(HTMLElement),
-    z.array(z.instanceof(HTMLElement)),
-    z.string(), // CSS selector or context reference
-    z.null(),
-    z.undefined()
+  v.union([
+    v.custom((value) => value instanceof HTMLElement),
+    v.array(v.custom((value) => value instanceof HTMLElement)),
+    v.string(), // CSS selector or context reference
+    v.null(),
+    v.undefined()
   ]).optional() // Target element(s)
-]).rest(z.any()); // Allow additional arguments
+]).rest(v.any()); // Allow additional arguments
 
 type TriggerCommandInput = z.infer<typeof TriggerCommandInputSchema>;
 

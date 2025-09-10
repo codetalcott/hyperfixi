@@ -4,7 +4,7 @@
  * Enhanced with TypeScript patterns, comprehensive validation, and LLM documentation
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { ExecutionContext, ExpressionImplementation, EvaluationType } from '../../types/core';
 import type { 
   TypedExpressionContext, 
@@ -58,9 +58,9 @@ function trackEvaluation<T>(
 // Enhanced Input Schemas
 // ============================================================================
 
-const ComparisonInputSchema = z.tuple([z.unknown(), z.unknown()]);
-const UnaryInputSchema = z.tuple([z.unknown()]);
-const PatternMatchingInputSchema = z.tuple([z.unknown(), z.string()]);
+const ComparisonInputSchema = v.tuple([v.unknown(), v.unknown()]);
+const UnaryInputSchema = v.tuple([v.unknown()]);
+const PatternMatchingInputSchema = v.tuple([v.unknown(), v.string()]);
 
 // ============================================================================
 // Comparison Operators

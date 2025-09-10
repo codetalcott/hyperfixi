@@ -4,7 +4,7 @@
  * Handles existence checking for values, arrays, and DOM query results
  */
 
-import { z } from 'zod';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   EvaluationResult,
@@ -21,8 +21,8 @@ import type {
 /**
  * Schema for 'some' expression input validation
  */
-export const SomeExpressionInputSchema = z.tuple([
-  z.unknown().describe('Value to check for existence/non-emptiness')
+export const SomeExpressionInputSchema = v.tuple([
+  v.unknown().describe('Value to check for existence/non-emptiness')
 ]);
 
 export type SomeExpressionInput = z.infer<typeof SomeExpressionInputSchema>;
