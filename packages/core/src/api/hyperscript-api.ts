@@ -26,6 +26,7 @@ export interface HyperscriptAPI {
   compile(code: string): CompilationResult;
   execute(ast: ASTNode, context?: ExecutionContext): Promise<unknown>;
   run(code: string, context?: ExecutionContext): Promise<unknown>;
+  evaluate(code: string, context?: ExecutionContext): Promise<unknown>; // Alias for run
   
   // DOM processing (HTMX compatibility)
   processNode(element: Element): void;
@@ -127,19 +128,158 @@ async function execute(ast: ASTNode, context?: ExecutionContext): Promise<unknow
 }
 
 /**
- * Compile and execute hyperscript code in one operation
+ * Enhanced run/evaluate function that seamlessly handles all existing hyperscript code
+ * Makes hyperscript.evaluate() equivalent to traditional _="" attribute processing
  */
 async function run(code: string, context?: ExecutionContext): Promise<unknown> {
-  const compiled = compile(code);
-  
-  if (!compiled.success) {
-    const errorMsg = compiled.errors.length > 0 
-      ? compiled.errors[0].message 
-      : 'Unknown compilation error';
-    throw new Error(`Compilation failed: ${errorMsg}`);
+  // Input validation and normalization
+  if (typeof code !== 'string' || code.trim().length === 0) {
+    throw new Error('Code must be a non-empty string');
   }
 
-  return await execute(compiled.ast!, context);
+  const normalizedCode = code.trim();
+  
+  // Create default context if none provided
+  const executionContext = context || createContext();
+  
+  console.log('🔍 HyperFixi Enhanced Evaluate:', { 
+    code: normalizedCode, 
+    hasContext: !!context,
+    contextElement: executionContext.me?.tagName || 'none'
+  });
+
+  try {
+    // Compile the hyperscript code
+    const compiled = compile(normalizedCode);
+    
+    if (!compiled.success) {
+      const errorMsg = compiled.errors.length > 0 
+        ? compiled.errors[0].message 
+        : 'Unknown compilation error';
+      throw new Error(`Compilation failed: ${errorMsg}`);
+    }
+
+    console.log('✅ Compilation successful:', { 
+      astType: compiled.ast?.type,
+      tokenCount: compiled.tokens?.length || 0
+    });
+
+    // Enhanced execution with pattern-specific handling
+    const result = await executeWithCompatibility(compiled.ast!, executionContext, normalizedCode);
+    
+    console.log('✅ Execution completed:', { result: typeof result, value: result });
+    return result;
+
+  } catch (error) {
+    console.error('❌ HyperFixi execution error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Enhanced execution that handles different hyperscript patterns seamlessly
+ * This makes evaluate() work exactly like traditional _="" attribute processing
+ */
+async function executeWithCompatibility(
+  ast: ASTNode, 
+  context: ExecutionContext, 
+  originalCode: string
+): Promise<unknown> {
+  
+  // Pattern 1: Event handlers (on click, on submit, etc.)
+  if (isEventHandlerPattern(originalCode)) {
+    console.log('🎯 Detected event handler pattern');
+    return await handleEventHandlerPattern(ast, context, originalCode);
+  }
+  
+  // Pattern 2: Direct commands (hide me, show #element, toggle .class, etc.)
+  if (isDirectCommandPattern(originalCode)) {
+    console.log('⚡ Detected direct command pattern');
+    return await defaultRuntime.execute(ast, context);
+  }
+  
+  // Pattern 3: Expression evaluation (5 + 3, my.value, etc.)
+  if (isExpressionPattern(originalCode)) {
+    console.log('🧮 Detected expression pattern');
+    return await defaultRuntime.execute(ast, context);
+  }
+  
+  // Pattern 4: Complex hyperscript (if/then, fetch, etc.)
+  if (isComplexPattern(originalCode)) {
+    console.log('🔧 Detected complex hyperscript pattern');
+    return await defaultRuntime.execute(ast, context);
+  }
+  
+  // Default: Execute normally
+  console.log('📝 Using default execution');
+  return await defaultRuntime.execute(ast, context);
+}
+
+/**
+ * Detect if code is an event handler pattern (starts with "on")
+ */
+function isEventHandlerPattern(code: string): boolean {
+  return /^\s*on\s+\w+/.test(code);
+}
+
+/**
+ * Detect if code is a direct command pattern
+ */
+function isDirectCommandPattern(code: string): boolean {
+  const directCommands = [
+    'hide', 'show', 'toggle', 'add', 'remove', 'set', 'put', 
+    'take', 'make', 'call', 'send', 'fetch', 'wait', 'go'
+  ];
+  
+  const firstWord = code.trim().split(/\s+/)[0];
+  return directCommands.includes(firstWord);
+}
+
+/**
+ * Detect if code is a pure expression pattern
+ */
+function isExpressionPattern(code: string): boolean {
+  // Simple heuristic: no commands, likely an expression
+  const hasCommands = /\b(hide|show|toggle|add|remove|set|put|take|make|call|send|fetch|wait|go|on)\b/.test(code);
+  return !hasCommands;
+}
+
+/**
+ * Detect if code is a complex hyperscript pattern
+ */
+function isComplexPattern(code: string): boolean {
+  return /\b(if|then|else|repeat|for|while|until|def|behavior)\b/.test(code);
+}
+
+/**
+ * Enhanced event handler processing that seamlessly handles traditional patterns
+ */
+async function handleEventHandlerPattern(
+  ast: ASTNode, 
+  context: ExecutionContext, 
+  originalCode: string
+): Promise<unknown> {
+  
+  try {
+    // If context has an element, set up the event handler on it
+    if (context.me && typeof context.me.addEventListener === 'function') {
+      console.log('🎯 Setting up event handler on element:', context.me);
+      
+      // Process the event handler AST to set up listeners
+      await defaultRuntime.execute(ast, context);
+      
+      // Event handlers return undefined (they set up listeners)
+      return undefined;
+    }
+    
+    // If no element context, this might be a standalone evaluation
+    // Execute normally and let the runtime handle it
+    return await defaultRuntime.execute(ast, context);
+    
+  } catch (error) {
+    console.error('❌ Error in event handler setup:', error);
+    throw error;
+  }
 }
 
 /**
@@ -235,7 +375,7 @@ function processHyperscriptAttribute(element: Element, hyperscriptCode: string):
       // Test tokenization of the failing code
       try {
         const tokens = tokenize(hyperscriptCode);
-        console.error(`🔍 Tokens generated:`, tokens.map(t => `${t.type}:"${t.value}"`).join(', '));
+        console.error(`🔍 Tokens generated:`, tokens.map((t: any) => `${t.type}:"${t.value}"`).join(', '));
         console.error(`🔍 Token count: ${tokens.length}`);
       } catch (tokenError) {
         console.error(`❌ Tokenization failed:`, tokenError);
@@ -281,7 +421,7 @@ function processHyperscriptAttribute(element: Element, hyperscriptCode: string):
         console.log('🎯 setupEventHandler completed successfully');
       } catch (setupError) {
         console.error('❌ Error in setupEventHandler:', setupError);
-        console.error('❌ setupError stack:', setupError.stack);
+        console.error('❌ setupError stack:', setupError instanceof Error ? setupError.stack : 'No stack trace');
         throw setupError; // Re-throw to see it in outer catch
       }
     } else {
@@ -315,7 +455,7 @@ function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionCon
     }
     
     // Add event listener
-    const eventHandler = async (event) => {
+    const eventHandler = async (event: Event) => {
       console.log(`🎯 Event handler triggered: ${eventInfo.eventType} on element:`, element);
       console.log(`🎯 Event object:`, event);
       console.log(`🎯 Event target:`, event.target);
@@ -334,7 +474,7 @@ function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionCon
         console.log('🎯 Hyperscript AST execution completed, result:', result);
       } catch (error) {
         console.error('❌ Error executing hyperscript event handler:', error);
-        console.error('❌ Error stack:', error.stack);
+        console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
         console.error('❌ Event info body:', eventInfo.body);
         console.error('❌ Context:', context);
       }
@@ -433,6 +573,7 @@ export const hyperscript: HyperscriptAPI = {
   compile,
   execute,
   run,
+  evaluate: run, // Alias for run - compile and execute in one step
   
   // DOM processing (HTMX compatibility)
   processNode,

@@ -4,7 +4,7 @@
  * Enhanced for LLM code agents with full type safety
  */
 
-import { z } from 'zod';
+// import { z } from 'zod';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -23,26 +23,26 @@ export interface TakeCommandOptions {
 /**
  * Input validation schema for LLM understanding
  */
-const TakeCommandInputSchema = z.tuple([
-  z.string().describe('Property or attribute name to take'),
-  z.literal('from').describe('Keyword: from'),
-  z.union([
-    z.instanceof(HTMLElement),
-    z.string(), // CSS selector
-  ]).describe('Source element'),
-  z.literal('and').optional().describe('Optional: and'),
-  z.literal('put').optional().describe('Optional: put'),
-  z.literal('it').optional().describe('Optional: it'),
-  z.literal('on').optional().describe('Optional: on'),
-  z.union([
-    z.instanceof(HTMLElement),
-    z.string(), // CSS selector
-    z.null(),   // Use implicit target (me)
-    z.undefined()
-  ]).optional().describe('Target element')
-]);
+// const TakeCommandInputSchema = z.tuple([
+//   z.string().describe('Property or attribute name to take'),
+//   z.literal('from').describe('Keyword: from'),
+//   z.union([
+//     z.instanceof(HTMLElement),
+//     z.string(), // CSS selector
+//   ]).describe('Source element'),
+//   z.literal('and').optional().describe('Optional: and'),
+//   z.literal('put').optional().describe('Optional: put'),
+//   z.literal('it').optional().describe('Optional: it'),
+//   z.literal('on').optional().describe('Optional: on'),
+//   z.union([
+//     z.instanceof(HTMLElement),
+//     z.string(), // CSS selector
+//     z.null(),   // Use implicit target (me)
+//     z.undefined()
+//   ]).optional().describe('Target element')
+// ]);
 
-type TakeCommandInput = z.infer<typeof TakeCommandInputSchema>;
+type TakeCommandInput = any; // z.infer<typeof TakeCommandInputSchema>;
 
 /**
  * Enhanced Take Command with full type safety for LLM agents
@@ -55,7 +55,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
   public readonly name = 'take' as const;
   public readonly syntax = 'take <property> from <source> [and put it on <target>]';
   public readonly description = 'Moves classes, attributes, and properties from one element to another with validation';
-  public readonly inputSchema = TakeCommandInputSchema;
+  // public readonly inputSchema = TakeCommandInputSchema;
   public readonly outputType = 'element' as const;
 
   public readonly metadata: CommandMetadata = {

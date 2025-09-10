@@ -21,6 +21,7 @@ describe('Hyperscript Public API', () => {
       expect(typeof hyperscript.compile).toBe('function');
       expect(typeof hyperscript.execute).toBe('function');
       expect(typeof hyperscript.run).toBe('function');
+      expect(typeof hyperscript.evaluate).toBe('function');
       expect(typeof hyperscript.createContext).toBe('function');
       expect(typeof hyperscript.createChildContext).toBe('function');
       expect(typeof hyperscript.isValidHyperscript).toBe('function');
@@ -108,6 +109,33 @@ describe('Hyperscript Public API', () => {
 
     it('should handle both compilation and execution errors', async () => {
       await expect(hyperscript.run('invalid @@ syntax'))
+        .rejects.toThrow('Compilation failed');
+    });
+  });
+
+  describe('evaluate() method - alias for run()', () => {
+    it('should work identically to run() method', async () => {
+      const runResult = await hyperscript.run('7 * 6');
+      const evaluateResult = await hyperscript.evaluate('7 * 6');
+      expect(evaluateResult).toBe(runResult);
+      expect(evaluateResult).toBe(42);
+    });
+
+    it('should compile and execute hyperscript expressions', async () => {
+      const result = await hyperscript.evaluate('15 + 27');
+      expect(result).toBe(42);
+    });
+
+    it('should handle complex hyperscript syntax', async () => {
+      const context = hyperscript.createContext(mockElement);
+      context.variables = new Map([['value', 10]]);
+      
+      const result = await hyperscript.evaluate('value * 2 + 2', context);
+      expect(result).toBe(22);
+    });
+
+    it('should handle errors the same as run()', async () => {
+      await expect(hyperscript.evaluate('invalid @@ syntax'))
         .rejects.toThrow('Compilation failed');
     });
   });
