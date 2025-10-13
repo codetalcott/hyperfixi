@@ -9,7 +9,7 @@ const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
  * IMPORTANT: Core types now imported from base-types.ts for consistency
  */
 
-import { v, type RuntimeValidator } from '../validation/lightweight-validators';
+import { v, z, type RuntimeValidator } from '../validation/lightweight-validators';
 // Import unified types from base-types system for local use and re-export
 import type { 
   ValidationResult, 

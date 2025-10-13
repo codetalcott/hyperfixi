@@ -8,7 +8,7 @@ const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
  * Enhanced for LLM code agents with full type safety
  */
 
-import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
+import { v, z, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,

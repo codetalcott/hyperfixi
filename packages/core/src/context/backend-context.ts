@@ -7,7 +7,7 @@ const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
  * Type-safe server-side hyperscript context following enhanced pattern
  */
 
-import { v, type RuntimeValidator } from '../validation/lightweight-validators';
+import { v, z, type RuntimeValidator } from '../validation/lightweight-validators';
 import {
   EnhancedContextBase,
   BaseContextInputSchema,

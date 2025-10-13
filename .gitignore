@@ -102,6 +102,16 @@ debug*.html
 # Test outputs
 test-results/
 
+# Playwright reports and test artifacts
+playwright-report/
+packages/*/playwright-report/
+packages/*/html/
+
+# Manual test files (temporary debugging)
+**/manual-test.html
+**/test-global-functions.html
+**/test-parse-debug.js
+
 # MCP server files
 mcp-server-hyperscript/dist/
 mcp-server-hyperscript/node_modules/

@@ -7,7 +7,7 @@
  * Integrates with the enhanced template directive system
  */
 
-import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
+import { v, z, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { TypedCommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 import type { UnifiedValidationResult } from '../../types/unified-types';

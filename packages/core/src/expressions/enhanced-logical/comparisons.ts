@@ -3,7 +3,7 @@
  * Implements comparison operators (==, !=, >, <, >=, <=) with type safety
  */
 
-import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
+import { v, z, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   ValidationResult,
   TypedExecutionContext as TypedExpressionContext,

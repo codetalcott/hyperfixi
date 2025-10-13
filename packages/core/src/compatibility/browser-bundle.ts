@@ -17,6 +17,10 @@ declare global {
       evalHyperScriptSmart: typeof evalHyperScriptSmart;
       tailwindExtension: typeof tailwindExtension;
     };
+    // Also expose as direct globals for test compatibility
+    evalHyperScript: typeof evalHyperScript;
+    evalHyperScriptAsync: typeof evalHyperScriptAsync;
+    evalHyperScriptSmart: typeof evalHyperScriptSmart;
   }
 }
 
@@ -62,7 +66,13 @@ const hyperfixi = {
 // Export to global for browser testing
 if (typeof window !== 'undefined') {
   window.hyperfixi = hyperfixi;
-  
+
+  // Also expose functions as direct globals for test compatibility
+  // This allows tests to use `evalHyperScript()` directly instead of `hyperfixi.evalHyperScript()`
+  window.evalHyperScript = evalHyperScript;
+  window.evalHyperScriptAsync = evalHyperScriptAsync;
+  window.evalHyperScriptSmart = evalHyperScriptSmart;
+
   // Auto-initialize attribute processing for full _hyperscript compatibility
   // This allows _="on click put ..." syntax to work automatically
   if (document.readyState === 'loading') {

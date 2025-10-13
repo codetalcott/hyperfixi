@@ -8,7 +8,7 @@ const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
  * Building on proven enhanced expression architecture
  */
 
-import { v, type RuntimeValidator } from '../validation/lightweight-validators';
+import { v, z, type RuntimeValidator } from '../validation/lightweight-validators';
 import type { 
   TypedExpressionContext,
   EvaluationType,

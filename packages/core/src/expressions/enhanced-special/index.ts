@@ -7,7 +7,7 @@ const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
  * Provides deep TypeScript integration for literals and mathematical operations
  */
 
-import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
+import { v, z, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type { 
   BaseTypedExpression,
   TypedExpressionContext,

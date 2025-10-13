@@ -10,7 +10,7 @@ const createNumberValidator = () => v.string({ pattern: /^\d+$/ });
  * This file now focuses on enhanced features while using unified base types
  */
 
-import { v, type RuntimeValidator } from '../validation/lightweight-validators';
+import { v, z, type RuntimeValidator } from '../validation/lightweight-validators';
 // ============================================================================
 // Import Unified Types
 // ============================================================================
