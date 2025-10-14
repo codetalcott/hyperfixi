@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Show/Hide Test</title>
+</head>
+<body>
+    <div id="test6" style="display: none;">Test 6</div>
+    <div id="test7">Test 7</div>
+    
+    <script src="dist/hyperfixi-browser.js"></script>
+    <script>
+        async function testCommand(command) {
+            console.log('\n=== Testing:', command, '===');
+            try {
+                const result = await window.hyperscriptFixi.evalHyperScript(command, {});
+                console.log('Result:', result);
+                console.log('test6 display:', document.getElementById('test6').style.display);
+                console.log('test7 display:', document.getElementById('test7').style.display);
+                return result;
+            } catch (error) {
+                console.error('Error:', error.message);
+                return { success: false, error: error.message };
+            }
+        }
+        
+        // Run tests
+        (async () => {
+            await testCommand('show #test6');
+            await testCommand('hide #test7');
+        })();
+    </script>
+</body>
+</html>

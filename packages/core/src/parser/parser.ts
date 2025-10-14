@@ -91,16 +91,16 @@ export class Parser {
   }
 
   parse(): ParseResult {
-    console.log('🚀 PARSER: Parser.parse() method called', {
-      tokenCount: this.tokens.length,
-      firstToken: this.tokens[0]?.value,
-      firstTokenType: this.tokens[0]?.type
-    });
+    // console.log('🚀 PARSER: Parser.parse() method called', {
+      // tokenCount: this.tokens.length,
+      // firstToken: this.tokens[0]?.value,
+      // firstTokenType: this.tokens[0]?.type
+    // });
     
     try {
       // Handle empty input
       if (this.tokens.length === 0) {
-        console.log('❌ PARSER: empty input detected');
+        // console.log('❌ PARSER: empty input detected');
         this.addError('Cannot parse empty input');
         return {
           success: false,
@@ -111,15 +111,15 @@ export class Parser {
       }
 
       // Check if this looks like a command sequence (starts with command)
-      console.log('🔍 PARSER: checking if command sequence', {
-        isCommandToken: this.checkTokenType(TokenType.COMMAND),
-        isCommandValue: this.isCommand(this.peek().value),
-        isKeyword: this.isKeyword(this.peek().value),
-        firstTokenValue: this.peek().value
-      });
+      // console.log('🔍 PARSER: checking if command sequence', {
+        // isCommandToken: this.checkTokenType(TokenType.COMMAND),
+        // isCommandValue: this.isCommand(this.peek().value),
+        // isKeyword: this.isKeyword(this.peek().value),
+        // firstTokenValue: this.peek().value
+      // });
       
       if (this.checkTokenType(TokenType.COMMAND) || (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))) {
-        console.log('✅ PARSER: confirmed command sequence, calling parseCommandSequence');
+        // console.log('✅ PARSER: confirmed command sequence, calling parseCommandSequence');
       
         const commandSequence = this.parseCommandSequence();
         if (commandSequence) {
@@ -426,13 +426,13 @@ export class Parser {
     const commandName = identifierNode.name.toLowerCase();
     
     // Handle compound command patterns
-    console.log('🔍 PARSER: checking if compound command', { 
-      commandName,
-      isCompound: this.isCompoundCommand(commandName)
-    });
+    // console.log('🔍 PARSER: checking if compound command', { 
+      // commandName,
+      // isCompound: this.isCompoundCommand(commandName)
+    // });
     
     if (this.isCompoundCommand(commandName)) {
-      console.log('✅ PARSER: confirmed compound command, calling parseCompoundCommand');
+      // console.log('✅ PARSER: confirmed compound command, calling parseCompoundCommand');
       return this.parseCompoundCommand(identifierNode);
     }
     
@@ -474,17 +474,18 @@ export class Parser {
 
   private isCompoundCommand(commandName: string): boolean {
     // Added 'set' back to use the sophisticated parseSetCommand method for "the X of Y" syntax
-    const compoundCommands = ['put', 'trigger', 'remove', 'take', 'toggle', 'set'];
+    // Added 'show' and 'hide' to ensure they parse as commands with selector arguments
+    const compoundCommands = ['put', 'trigger', 'remove', 'take', 'toggle', 'set', 'show', 'hide', 'add'];
     return compoundCommands.includes(commandName);
   }
 
   private parseCompoundCommand(identifierNode: IdentifierNode): CommandNode | null {
     const commandName = identifierNode.name.toLowerCase();
-    console.log('🎯 PARSER: parseCompoundCommand called', { 
-      commandName,
-      originalName: identifierNode.name,
-      isSetCommand: commandName === 'set'
-    });
+    // console.log('🎯 PARSER: parseCompoundCommand called', { 
+      // commandName,
+      // originalName: identifierNode.name,
+      // isSetCommand: commandName === 'set'
+    // });
     const args: ASTNode[] = [];
     
     switch (commandName) {
@@ -505,11 +506,11 @@ export class Parser {
   }
 
   private parsePutCommand(identifierNode: IdentifierNode): CommandNode | null {
-    console.log('🔍 PARSER: parsePutCommand started', { 
-      commandName: identifierNode.name,
-      currentToken: this.peek(),
-      remainingTokens: this.tokens.slice(this.current).map(t => t.value)
-    });
+    // console.log('🔍 PARSER: parsePutCommand started', { 
+      // commandName: identifierNode.name,
+      // currentToken: this.peek(),
+      // remainingTokens: this.tokens.slice(this.current).map(t => t.value)
+    // });
     
     const args: ASTNode[] = [];
     
@@ -526,9 +527,9 @@ export class Parser {
       allArgs.push(this.parsePrimary());
     }
     
-    console.log('🔍 PARSER: collected all arguments', { 
-      allArgs: allArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
-    });
+    // console.log('🔍 PARSER: collected all arguments', { 
+      // allArgs: allArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
+    // });
     
     // Now find the operation keyword and restructure
     let operationIndex = -1;
@@ -541,13 +542,13 @@ export class Parser {
           ['into', 'before', 'after', 'at'].includes((arg as any).name || (arg as any).value)) {
         operationIndex = i;
         operationKeyword = (arg as any).name || (arg as any).value;
-        console.log('🔍 PARSER: found operation keyword', { arg, operationKeyword, type: arg.type });
+        // console.log('🔍 PARSER: found operation keyword', { arg, operationKeyword, type: arg.type });
         break;
       }
     }
     
     if (operationIndex === -1) {
-      console.log('⚠️ PARSER: no operation keyword found');
+      // console.log('⚠️ PARSER: no operation keyword found');
       // Return all args as-is (fallback)
       return {
         type: 'command',
@@ -561,7 +562,7 @@ export class Parser {
       };
     }
     
-    console.log('🔍 PARSER: found operation keyword', { operationKeyword, operationIndex });
+    // console.log('🔍 PARSER: found operation keyword', { operationKeyword, operationIndex });
     
     // Restructure: [content_args...] + [operation] + [target_args...]
     const contentArgs = allArgs.slice(0, operationIndex);
@@ -600,23 +601,23 @@ export class Parser {
       column: identifierNode.column || 1
     };
     
-    console.log('✅ PARSER: parsePutCommand completed', { 
-      result, 
-      argCount: finalArgs.length,
-      finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
-    });
+    // console.log('✅ PARSER: parsePutCommand completed', { 
+      // result, 
+      // argCount: finalArgs.length,
+      // finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
+    // });
     
     return result;
   }
 
   private parseSetCommand(identifierNode: IdentifierNode): CommandNode | null {
-    console.log('🚨 PARSER: parseSetCommand started', { 
-      commandName: identifierNode.name,
-      currentToken: this.peek()?.value,
-      remainingTokens: this.tokens.slice(this.current).map(t => t.value).join(' '),
-      totalTokens: this.tokens.length,
-      currentPosition: this.current
-    });
+    // console.log('🚨 PARSER: parseSetCommand started', { 
+      // commandName: identifierNode.name,
+      // currentToken: this.peek()?.value,
+      // remainingTokens: this.tokens.slice(this.current).map(t => t.value).join(' '),
+      // totalTokens: this.tokens.length,
+      // currentPosition: this.current
+    // });
     
     // SIMPLIFIED APPROACH: Try to parse target as a single expression first
     const startPosition = this.current;
@@ -624,29 +625,29 @@ export class Parser {
     
     try {
       // Check for "the X of Y" pattern directly
-      console.log('🔍 PARSER: checking if next token is "the"', { 
-        nextToken: this.peek()?.value,
-        isAtEnd: this.isAtEnd()
-      });
+      // console.log('🔍 PARSER: checking if next token is "the"', { 
+        // nextToken: this.peek()?.value,
+        // isAtEnd: this.isAtEnd()
+      // });
       
       if (this.check('the')) {
-        console.log('🎯 PARSER: detected "the" keyword! Proceeding with "X of Y" pattern recognition');
+        // console.log('🎯 PARSER: detected "the" keyword! Proceeding with "X of Y" pattern recognition');
         
         this.advance(); // consume 'the'
         
         // Get the property name (X)
         const propertyToken = this.advance();
-        console.log('🔍 PARSER: property token:', propertyToken?.value, 'type:', propertyToken?.type);
+        // console.log('🔍 PARSER: property token:', propertyToken?.value, 'type:', propertyToken?.type);
         
         // Check for 'of' keyword
-        console.log('🔍 PARSER: checking for "of" keyword, next token:', this.peek()?.value);
+        // console.log('🔍 PARSER: checking for "of" keyword, next token:', this.peek()?.value);
         if (this.check('of')) {
-          console.log('✅ PARSER: found "of" keyword, advancing');
+          // console.log('✅ PARSER: found "of" keyword, advancing');
           this.advance(); // consume 'of'
           
           // Get the target element (Y)
           const targetToken = this.advance();
-          console.log('🔍 PARSER: target token:', targetToken?.value, 'type:', targetToken?.type);
+          // console.log('🔍 PARSER: target token:', targetToken?.value, 'type:', targetToken?.type);
           
           // Create a propertyOfExpression AST node
           targetExpression = {
@@ -667,32 +668,32 @@ export class Parser {
             end: this.current
           };
           
-          console.log('🔍 PARSER: created propertyOfExpression AST node', {
-            property: propertyToken.value,
-            target: targetToken.value,
-            type: targetExpression.type
-          });
+          // console.log('🔍 PARSER: created propertyOfExpression AST node', {
+            // property: propertyToken.value,
+            // target: targetToken.value,
+            // type: targetExpression.type
+          // });
         } else {
-          console.log('⚠️ PARSER: "the" not followed by "X of Y" pattern, reverting', {
-            expectedOf: this.peek()?.value,
-            position: this.current,
-            startPosition
-          });
+          // console.log('⚠️ PARSER: "the" not followed by "X of Y" pattern, reverting', {
+            // expectedOf: this.peek()?.value,
+            // position: this.current,
+            // startPosition
+          // });
           this.current = startPosition;
           targetExpression = null;
         }
       } else {
         // Not a "the X of Y" pattern, try regular expression parsing
         targetExpression = this.parseExpression();
-        console.log('🔍 PARSER: regular expression parsing success', {
-          type: targetExpression.type,
-          value: (targetExpression as any).value || (targetExpression as any).name
-        });
+        // console.log('🔍 PARSER: regular expression parsing success', {
+          // type: targetExpression.type,
+          // value: (targetExpression as any).value || (targetExpression as any).name
+        // });
       }
     } catch (error) {
-      console.error('⚠️ PARSER: direct "the X of Y" parsing failed, falling back to token-by-token', { 
-        error: (error as Error).message
-      });
+      // console.error('⚠️ PARSER: direct "the X of Y" parsing failed, falling back to token-by-token', { 
+        // error: (error as Error).message
+      // });
       // Reset position and fall back to token-by-token parsing
       this.current = startPosition;
       targetExpression = null;
@@ -706,9 +707,9 @@ export class Parser {
         targetTokens.push(this.parsePrimary());
       }
       
-      console.log('🔍 PARSER: collected target tokens via fallback', { 
-        targetTokens: targetTokens.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
-      });
+      // console.log('🔍 PARSER: collected target tokens via fallback', { 
+        // targetTokens: targetTokens.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
+      // });
       
       // Reconstruct complex expressions from collected tokens
       if (targetTokens.length > 0) {
@@ -735,11 +736,11 @@ export class Parser {
             end: (targetTokens[3] as any).end
           };
           
-          console.log('🔧 PARSER: reconstructed propertyOfExpression from tokens', {
-            property: (targetTokens[1] as any).value,
-            target: (targetTokens[3] as any).value,
-            type: targetExpression.type
-          });
+          // console.log('🔧 PARSER: reconstructed propertyOfExpression from tokens', {
+            // property: (targetTokens[1] as any).value,
+            // target: (targetTokens[3] as any).value,
+            // type: targetExpression.type
+          // });
         } else {
           // Use the first token as target (simple cases like "my property")
           targetExpression = targetTokens[0];
@@ -754,18 +755,18 @@ export class Parser {
     }
     
     this.advance(); // consume 'to'
-    console.log('🔍 PARSER: consumed "to" keyword');
+    // console.log('🔍 PARSER: consumed "to" keyword');
     
     // Parse value expression (everything after 'to')
     let valueExpression: ASTNode | null = null;
     try {
       valueExpression = this.parseExpression();
-      console.log('🔍 PARSER: parsed value expression', { 
-        type: valueExpression.type, 
-        value: (valueExpression as any).value || (valueExpression as any).name 
-      });
+      // console.log('🔍 PARSER: parsed value expression', { 
+        // type: valueExpression.type, 
+        // value: (valueExpression as any).value || (valueExpression as any).name 
+      // });
     } catch (error) {
-      console.log('⚠️ PARSER: value expression parsing failed', { error: error.message });
+      // console.log('⚠️ PARSER: value expression parsing failed', { error: error.message });
       // For values, we can create a simple literal fallback
       const currentToken = this.peek();
       if (currentToken) {
@@ -806,21 +807,21 @@ export class Parser {
       column: identifierNode.column || 1
     };
     
-    console.log('✅ PARSER: parseSetCommand completed', { 
-      result, 
-      argCount: finalArgs.length,
-      finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
-    });
+    // console.log('✅ PARSER: parseSetCommand completed', { 
+      // result, 
+      // argCount: finalArgs.length,
+      // finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
+    // });
     
     return result;
   }
 
   private parseTriggerCommand(identifierNode: IdentifierNode): CommandNode | null {
-    console.log('🔍 PARSER: parseTriggerCommand started', { 
-      commandName: identifierNode.name,
-      currentToken: this.peek(),
-      remainingTokens: this.tokens.slice(this.current).map(t => t.value)
-    });
+    // console.log('🔍 PARSER: parseTriggerCommand started', { 
+      // commandName: identifierNode.name,
+      // currentToken: this.peek(),
+      // remainingTokens: this.tokens.slice(this.current).map(t => t.value)
+    // });
     
     // Use the same flexible approach as put/set commands
     const allArgs: ASTNode[] = [];
@@ -833,9 +834,9 @@ export class Parser {
       allArgs.push(this.parsePrimary());
     }
     
-    console.log('🔍 PARSER: collected all arguments for trigger', { 
-      allArgs: allArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
-    });
+    // console.log('🔍 PARSER: collected all arguments for trigger', { 
+      // allArgs: allArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
+    // });
     
     // Find the 'on' keyword
     let operationIndex = -1;
@@ -844,7 +845,7 @@ export class Parser {
       if ((arg.type === 'identifier' || arg.type === 'literal' || arg.type === 'keyword') && 
           ((arg as any).name === 'on' || (arg as any).value === 'on')) {
         operationIndex = i;
-        console.log('🔍 PARSER: found "on" keyword', { arg, type: arg.type });
+        // console.log('🔍 PARSER: found "on" keyword', { arg, type: arg.type });
         break;
       }
     }
@@ -852,7 +853,7 @@ export class Parser {
     const finalArgs: ASTNode[] = [];
     
     if (operationIndex === -1) {
-      console.log('⚠️ PARSER: no "on" keyword found in trigger command');
+      // console.log('⚠️ PARSER: no "on" keyword found in trigger command');
       finalArgs.push(...allArgs);
     } else {
       // Restructure: event + 'on' + target
@@ -875,11 +876,11 @@ export class Parser {
       column: identifierNode.column || 1
     };
     
-    console.log('✅ PARSER: parseTriggerCommand completed', { 
-      result, 
-      argCount: finalArgs.length,
-      finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
-    });
+    // console.log('✅ PARSER: parseTriggerCommand completed', { 
+      // result, 
+      // argCount: finalArgs.length,
+      // finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
+    // });
     
     return result;
   }
@@ -2173,25 +2174,25 @@ export class Parser {
 
 // Main parse function
 export function parse(input: string): ParseResult {
-  console.log('🎯 PARSER: parse() function called', { 
-    input, 
-    inputLength: input.length 
-  });
+  // console.log('🎯 PARSER: parse() function called', { 
+    // input, 
+    // inputLength: input.length 
+  // });
   
   const tokens = tokenize(input);
-  console.log('🔍 PARSER: tokenization completed', { 
-    tokenCount: tokens.length,
-    tokens: tokens.map(t => `${t.type}:${t.value}`).join(' ')
-  });
+  // console.log('🔍 PARSER: tokenization completed', { 
+    // tokenCount: tokens.length,
+    // tokens: tokens.map(t => `${t.type}:${t.value}`).join(' ')
+  // });
   
   const parser = new Parser(tokens);
   const result = parser.parse();
   
-  console.log('🏁 PARSER: parsing completed', { 
-    success: result.success,
-    hasNode: !!result.node,
-    errorCount: result.error ? 1 : 0
-  });
+  // console.log('🏁 PARSER: parsing completed', { 
+    // success: result.success,
+    // hasNode: !!result.node,
+    // errorCount: result.error ? 1 : 0
+  // });
   
   return result;
 }

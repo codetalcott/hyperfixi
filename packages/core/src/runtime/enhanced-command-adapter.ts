@@ -103,13 +103,13 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
     try {
       // Debug logging for SET command
       if (this.impl.name === 'set') {
-        console.log('🚨🚨🚨 ENHANCED COMMAND ADAPTER EXECUTE CALLED FOR SET 🚨🚨🚨');
-        console.log('🔧 EnhancedCommandAdapter.execute() called with:', { 
-          commandName: this.impl.name, 
-          args, 
-          argsLength: args.length,
-          argsType: Array.isArray(args) ? 'array' : typeof args
-        });
+        // console.log('🚨🚨🚨 ENHANCED COMMAND ADAPTER EXECUTE CALLED FOR SET 🚨🚨🚨');
+        // console.log('🔧 EnhancedCommandAdapter.execute() called with:', { 
+          // commandName: this.impl.name, 
+          // args, 
+          // argsLength: args.length,
+          // argsType: Array.isArray(args) ? 'array' : typeof args
+        // });
       }
       
       // Convert to typed context
@@ -123,48 +123,48 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
       const hasExecute = !!this.impl.execute;
       const isEnhancedSignature = this.impl.execute && this.impl.execute.length === 2;
       
-      console.log('🔧 Command signature analysis:', {
-        commandName: this.impl.name,
-        hasExecute,
-        executeLength,
-        isEnhancedSignature,
-        executeMethod: this.impl.execute?.toString().substring(0, 200) + '...'
-      });
+      // console.log('🔧 Command signature analysis:', {
+        // commandName: this.impl.name,
+        // hasExecute,
+        // executeLength,
+        // isEnhancedSignature,
+        // executeMethod: this.impl.execute?.toString().substring(0, 200) + '...'
+      // });
       
       if (this.impl.execute && this.impl.execute.length === 2) {
-        console.log('🔧 Detected enhanced command with proper signature - using enhanced path');
+        // console.log('🔧 Detected enhanced command with proper signature - using enhanced path');
         // Enhanced command expects (input, context) signature
         let input: unknown;
         
         // SET command argument processing - handle context confusion
         if (this.impl.name === 'set') {
-          console.log('🔧 SET: Received arguments from runtime:', { 
-            args, 
-            isArray: Array.isArray(args), 
-            length: Array.isArray(args) ? args.length : 'not array',
-            argsContent: args
-          });
+          // console.log('🔧 SET: Received arguments from runtime:', { 
+            // args, 
+            // isArray: Array.isArray(args), 
+            // length: Array.isArray(args) ? args.length : 'not array',
+            // argsContent: args
+          // });
           
           // Detailed debugging of the first argument
           if (args.length > 0) {
             const firstArg = args[0];
-            console.log('🔧 SET: First argument detailed analysis:', {
-              type: typeof firstArg,
-              isObject: typeof firstArg === 'object' && firstArg !== null,
-              hasMe: firstArg && 'me' in firstArg,
-              hasLocals: firstArg && 'locals' in firstArg,
-              hasGlobals: firstArg && 'globals' in firstArg,
-              hasResult: firstArg && 'result' in firstArg,
-              hasTarget: firstArg && 'target' in firstArg,
-              keys: firstArg && typeof firstArg === 'object' ? Object.keys(firstArg) : 'not object'
-            });
+            // console.log('🔧 SET: First argument detailed analysis:', {
+              // type: typeof firstArg,
+              // isObject: typeof firstArg === 'object' && firstArg !== null,
+              // hasMe: firstArg && 'me' in firstArg,
+              // hasLocals: firstArg && 'locals' in firstArg,
+              // hasGlobals: firstArg && 'globals' in firstArg,
+              // hasResult: firstArg && 'result' in firstArg,
+              // hasTarget: firstArg && 'target' in firstArg,
+              // keys: firstArg && typeof firstArg === 'object' ? Object.keys(firstArg) : 'not object'
+            // });
           }
           
           // Check if we received the context object by mistake (has all context properties)
           if (args.length === 1 && args[0] && typeof args[0] === 'object' && 
               'me' in args[0] && 'locals' in args[0] && 'globals' in args[0] && 'result' in args[0]) {
-            console.log('🚨 SET: ERROR - Received context object instead of arguments!');
-            console.log('🚨 SET: This indicates a problem in the runtime command routing');
+            // console.log('🚨 SET: ERROR - Received context object instead of arguments!');
+            // console.log('🚨 SET: This indicates a problem in the runtime command routing');
             throw new Error('SET command received context object instead of parsed arguments. Check runtime command adapter routing.');
           }
           
@@ -199,25 +199,25 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
               toKeyword: 'to' as const,
               scope: undefined
             };
-            console.log('🔧 SET: Created simple input object from AST nodes:', { 
-              input, 
-              originalTargetNode: targetNode, 
-              originalValueNode: valueNode 
-            });
+            // console.log('🔧 SET: Created simple input object from AST nodes:', { 
+              // input, 
+              // originalTargetNode: targetNode, 
+              // originalValueNode: valueNode 
+            // });
           } else if (args.length === 1 && args[0] && typeof args[0] === 'object' && 'target' in args[0]) {
             // Pre-processed input object from runtime
             input = args[0];
-            console.log('🔧 SET: Using pre-processed input object from runtime:', input);
+            // console.log('🔧 SET: Using pre-processed input object from runtime:', input);
           } else if (args.length === 1) {
             // Single argument - could be just the target, treat as fallback case
-            console.log('🔧 SET: Single argument fallback case');
+            // console.log('🔧 SET: Single argument fallback case');
             input = {
               target: args[0],
               value: undefined,
               toKeyword: 'to' as const,
               scope: undefined
             };
-            console.log('🔧 SET: Created single-arg fallback input object:', input);
+            // console.log('🔧 SET: Created single-arg fallback input object:', input);
           } else {
             // Multiple arguments fallback: create input from first two arguments
             input = {
@@ -226,7 +226,7 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
               toKeyword: 'to' as const,
               scope: undefined
             };
-            console.log('🔧 SET: Created multi-arg fallback input object:', input);
+            // console.log('🔧 SET: Created multi-arg fallback input object:', input);
           }
         } else if (this.impl.name === 'render' && Array.isArray(args) && args.length >= 3 && args[1] === 'with') {
           // Convert ['template', 'with', 'data'] to structured input  
@@ -247,7 +247,7 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
         
         result = await this.impl.execute(input, typedContext);
       } else {
-        console.log('🔧 Using legacy command path - calling with (context, ...args)');
+        // console.log('🔧 Using legacy command path - calling with (context, ...args)');
         // Legacy command adapter expects (context, ...args) signature
         result = await this.impl.execute(typedContext, ...args);
       }
