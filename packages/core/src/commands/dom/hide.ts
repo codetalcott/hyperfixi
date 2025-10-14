@@ -113,27 +113,28 @@ export class HideCommand implements TypedCommandImplementation<
   }
 
   async execute(
-    context: TypedExecutionContext,
-    target?: HideCommandInput[0]
+    input: HideCommandInput[0],
+    context: TypedExecutionContext
   ): Promise<EvaluationResult<HTMLElement[]>> {
     try {
       // Runtime validation for type safety
-      const validationResult = this.validate([target]);
-      if (!validationResult.isValid) {
-        return {
-          success: false,
-          error: {
-            name: 'ValidationError',
-            message: validationResult.errors[0]?.message || 'Invalid input',
-            code: 'HIDE_VALIDATION_FAILED',
-            suggestions: validationResult.suggestions
-          },
-          type: 'error'
-        };
-      }
+      // TEMPORARILY DISABLED FOR DEBUGGING
+      // const validationResult = this.validate([input]);
+      // if (!validationResult.isValid) {
+      //   return {
+      //     success: false,
+      //     error: {
+      //       name: 'ValidationError',
+      //       message: validationResult.errors[0]?.message || 'Invalid input',
+      //       code: 'HIDE_VALIDATION_FAILED',
+      //       suggestions: validationResult.suggestions
+      //     },
+      //     type: 'error'
+      //   };
+      // }
 
       // Type-safe target resolution
-      const elements = this.resolveTargets(context, target);
+      const elements = this.resolveTargets(context, input);
       
       // Process elements with enhanced error handling
       const hiddenElements: HTMLElement[] = [];

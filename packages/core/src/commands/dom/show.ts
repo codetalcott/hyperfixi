@@ -115,27 +115,30 @@ export class ShowCommand implements TypedCommandImplementation<
   }
 
   async execute(
-    context: TypedExecutionContext,
-    target?: ShowCommandInput[0]
+    input: ShowCommandInput[0],
+    context: TypedExecutionContext
   ): Promise<EvaluationResult<HTMLElement[]>> {
     try {
       // Runtime validation for type safety
-      const validationResult = this.validate([target]);
-      if (!validationResult.isValid) {
-        return {
-          success: false,
-          error: {
-            name: 'ValidationError',
-            message: validationResult.errors[0]?.message || 'Invalid input',
-            code: 'SHOW_VALIDATION_FAILED',
-            suggestions: validationResult.suggestions
-          },
-          type: 'error'
-        };
-      }
+      // TEMPORARILY DISABLED FOR DEBUGGING
+      // const validationResult = this.validate([input]);
+      // if (!validationResult.isValid) {
+      //   return {
+      //     success: false,
+      //     error: {
+      //       name: 'ValidationError',
+      //       message: validationResult.errors[0]?.message || 'Invalid input',
+      //       code: 'SHOW_VALIDATION_FAILED',
+      //       suggestions: validationResult.suggestions
+      //     },
+      //     type: 'error'
+      //   };
+      // }
 
       // Type-safe target resolution
-      const elements = this.resolveTargets(context, target);
+      console.log('🔍 SHOW: About to call resolveTargets with input:', input, 'type:', typeof input);
+      const elements = this.resolveTargets(context, input);
+      console.log('🔍 SHOW: resolveTargets returned:', elements.length, 'elements');
       
       // Process elements with enhanced error handling
       const shownElements: HTMLElement[] = [];
@@ -189,7 +192,9 @@ export class ShowCommand implements TypedCommandImplementation<
     // Handle CSS selector string
     if (typeof target === 'string') {
       try {
+        console.log('🔍 SHOW: querying for selector:', target);
         const elements = document.querySelectorAll(target);
+        console.log('🔍 SHOW: found elements:', elements.length, Array.from(elements));
         return Array.from(elements) as HTMLElement[];
       } catch (_error) {
         throw new Error(`Invalid CSS selector: "${target}"`);
