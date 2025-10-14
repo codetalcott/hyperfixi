@@ -117,22 +117,6 @@ export class HideCommand implements TypedCommandImplementation<
     context: TypedExecutionContext
   ): Promise<EvaluationResult<HTMLElement[]>> {
     try {
-      // Runtime validation for type safety
-      // TEMPORARILY DISABLED FOR DEBUGGING
-      // const validationResult = this.validate([input]);
-      // if (!validationResult.isValid) {
-      //   return {
-      //     success: false,
-      //     error: {
-      //       name: 'ValidationError',
-      //       message: validationResult.errors[0]?.message || 'Invalid input',
-      //       code: 'HIDE_VALIDATION_FAILED',
-      //       suggestions: validationResult.suggestions
-      //     },
-      //     type: 'error'
-      //   };
-      // }
-
       // Type-safe target resolution
       const elements = this.resolveTargets(context, input);
       

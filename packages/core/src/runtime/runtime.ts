@@ -722,19 +722,12 @@ export class Runtime {
       // For show/hide, the argument should be treated as a selector string, not evaluated as a query
       let target = args[0];
 
-      console.log(`🔍 ${name.toUpperCase()} arg node:`, {
-        type: target?.type,
-        value: (target as any)?.value,
-        name: (target as any)?.name
-      });
-
       // Extract target selector/element
       if (target?.type === 'identifier' && (target as any).name === 'me') {
         target = context.me;
       } else if (target?.type === 'selector' || target?.type === 'id_selector' || target?.type === 'class_selector') {
         // Keep as selector string
         target = (target as any).value;
-        console.log(`🔍 ${name.toUpperCase()} extracted selector string:`, target);
       } else if (target?.type === 'identifier') {
         target = (target as any).name;
       } else if (target?.type === 'literal') {
@@ -742,19 +735,14 @@ export class Runtime {
       } else {
         const evaluated = await this.execute(target, context);
         target = evaluated;
-        console.log(`🔍 ${name.toUpperCase()} evaluated target:`, target, 'type:', typeof target);
       }
 
       evaluatedArgs = [target];
-      console.log(`🔍 ${name.toUpperCase()} final evaluatedArgs:`, evaluatedArgs);
     } else {
       // For other commands, evaluate all arguments normally
       evaluatedArgs = await Promise.all(
         args.map(arg => this.execute(arg, context))
       );
-      if (name === 'show' || name === 'hide') {
-        console.log(`🔍 ${name.toUpperCase()} evaluatedArgs:`, evaluatedArgs, 'types:', evaluatedArgs.map(arg => typeof arg));
-      }
     }
 
     // Execute through enhanced adapter
@@ -877,13 +865,6 @@ export class Runtime {
    */
   private async executeCommand(node: CommandNode, context: ExecutionContext): Promise<unknown> {
     const { name, args } = node;
-
-    if (name === 'show' || name === 'hide') {
-      console.log(`🔍 ${name.toUpperCase()} COMMAND ENTRY:`, { name, args, argsLength: args?.length });
-    }
-
-    // Debug logging for all commands
-    // console.log('🎯 Executing command:', name, 'with args:', args, 'at', new Date().toLocaleTimeString());
     
     // Special debug for SET commands
     if (name.toLowerCase() === 'set') {

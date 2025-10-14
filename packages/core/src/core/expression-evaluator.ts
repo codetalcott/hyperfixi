@@ -98,18 +98,28 @@ export class ExpressionEvaluator {
    */
   private async evaluateIdentifier(node: { name: string }, context: ExecutionContext): Promise<any> {
     const { name } = node;
-    
+
     // Check if it's a built-in reference expression
     const expression = this.expressionRegistry.get(name);
     if (expression) {
       return expression.evaluate(context);
     }
-    
-    // Check custom variables
+
+    // Check locals first (for command arguments and locally scoped variables)
+    if (context.locals?.has(name)) {
+      return context.locals.get(name);
+    }
+
+    // Check globals (for globally scoped variables)
+    if (context.globals?.has(name)) {
+      return context.globals.get(name);
+    }
+
+    // Check custom variables (legacy support)
     if (context.variables?.has(name)) {
       return context.variables.get(name);
     }
-    
+
     // Default to returning the name itself for unknown identifiers
     return name;
   }

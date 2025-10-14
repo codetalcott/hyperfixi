@@ -1140,6 +1140,11 @@ export class Parser {
       return this.parseObjectLiteral();
     }
 
+    // Handle attribute literals: [@attr="value"] or array literals: [1, 2, 3]
+    if (this.match('[')) {
+      return this.parseAttributeOrArrayLiteral();
+    }
+
     // Handle operators as literal tokens
     if (this.matchTokenType(TokenType.OPERATOR)) {
       const token = this.previous();
@@ -2158,6 +2163,62 @@ export class Parser {
       position: Math.max(0, position),
       line: Math.max(1, line),
       column: Math.max(1, column)
+    };
+  }
+
+  private parseAttributeOrArrayLiteral(): ASTNode {
+    // We've already consumed the '['
+    const startPos = this.previous().start;
+    const startLine = this.previous().line;
+    const startColumn = this.previous().column;
+
+    // Check if this is an attribute literal: [@attr="value"]
+    // The next token should start with '@'
+    if (!this.isAtEnd() && this.peek().value.startsWith('@')) {
+      // Attribute literal syntax - collect all tokens until ']'
+      const tokens: string[] = [];
+
+      while (!this.check(']') && !this.isAtEnd()) {
+        const token = this.advance();
+        tokens.push(token.value);
+      }
+
+      this.consume(']', "Expected ']' after attribute literal");
+
+      // Reconstruct the full attribute literal string: [@attr="value"]
+      const attributeString = '[' + tokens.join('') + ']';
+
+      // Return as a string literal that the ADD command can parse
+      return {
+        type: 'literal',
+        value: attributeString,
+        raw: attributeString,
+        start: startPos,
+        end: this.previous().end,
+        line: startLine,
+        column: startColumn
+      };
+    }
+
+    // Otherwise, parse as array literal: [1, 2, 3]
+    const elements: ASTNode[] = [];
+
+    if (!this.check(']')) {
+      do {
+        if (this.check(']')) break; // Allow trailing comma
+        elements.push(this.parseExpression());
+      } while (this.match(','));
+    }
+
+    this.consume(']', "Expected ']' after array elements");
+
+    return {
+      type: 'arrayLiteral',
+      elements,
+      start: startPos,
+      end: this.previous().end,
+      line: startLine,
+      column: startColumn
     };
   }
 

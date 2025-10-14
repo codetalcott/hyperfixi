@@ -107,21 +107,12 @@ export async function evalHyperScript(
     throw new Error('Cannot evaluate empty script');
   }
 
-  if (script.includes('show') || script.includes('hide')) {
-    console.log('🔍 EVAL: Processing show/hide script:', script);
-  }
-
   try {
     // Convert context
     const executionContext = convertContext(context);
 
     // Determine if this is a command or expression
-    const isCmd = isCommand(script);
-    if (script.includes('show') || script.includes('hide')) {
-      console.log('🔍 EVAL: isCommand result:', isCmd);
-    }
-
-    if (isCmd) {
+    if (isCommand(script)) {
       // Use the new runtime system for commands (not the old command executor)
       return await executeAsCommand(script, executionContext);
     } else {
@@ -181,29 +172,12 @@ function isCommand(script: string): boolean {
  * Execute script as a command using full parser + runtime
  */
 async function executeAsCommand(script: string, context: ExecutionContext): Promise<any> {
-  if (script.includes('show') || script.includes('hide')) {
-    console.log('🔍 EXEC_CMD: Starting command execution for:', script);
-  }
-
   // Tokenize
   const tokens = tokenize(script);
-
-  if (script.includes('show') || script.includes('hide')) {
-    console.log('🔍 EXEC_CMD: Tokens:', tokens.map(t => `${t.type}:${t.value}`).join(' '));
-  }
 
   // Parse with full parser
   const parser = new Parser(tokens);
   const parseResult = parser.parse();
-
-  if (script.includes('show') || script.includes('hide')) {
-    console.log('🔍 EXEC_CMD: Parse result:', {
-      success: parseResult.success,
-      nodeType: parseResult.node?.type,
-      nodeName: (parseResult.node as any)?.name,
-      error: parseResult.error
-    });
-  }
 
   if (!parseResult.success || !parseResult.node) {
     throw new Error(`Parse error: ${parseResult.error?.message || 'Unknown parse error'}`);
@@ -212,10 +186,6 @@ async function executeAsCommand(script: string, context: ExecutionContext): Prom
   // Execute with runtime
   const runtime = new Runtime();
   const result = await runtime.execute(parseResult.node, context);
-
-  if (script.includes('show') || script.includes('hide')) {
-    console.log('🔍 EXEC_CMD: Runtime result:', result);
-  }
 
   return result;
 }
