@@ -22,8 +22,22 @@ export interface RuntimeValidator<T = unknown> {
   safeParse(value: unknown): { success: boolean; data?: T; error?: { errors: ValidationError[] } }; // zod-compatible API
   description?: string;
   describe(description: string): RuntimeValidator<T>;
-  strict?(): RuntimeValidator<T>; // For object validators - reject extra properties
-  optional?(): RuntimeValidator<T | undefined>; // Make validator optional (allows undefined/null)
+  strict(): RuntimeValidator<T>; // For object validators - reject extra properties
+  optional(): RuntimeValidator<T | undefined>; // Make validator optional (allows undefined/null)
+
+  // Chainable validator methods (via Proxy) - Phase 3.1 fix for TS2722 errors
+  default(value: T): RuntimeValidator<T>;
+  min(value: number): RuntimeValidator<T>;
+  max(value: number): RuntimeValidator<T>;
+  url(): RuntimeValidator<T>;
+  email(): RuntimeValidator<T>;
+  uuid(): RuntimeValidator<T>;
+  regex(pattern: RegExp): RuntimeValidator<T>;
+  date(): RuntimeValidator<T>;
+  rest(): RuntimeValidator<T>;
+  parse(value: unknown): T;
+  merge(other: RuntimeValidator<any>): RuntimeValidator<T>;
+  refine(refineFn: (value: T) => boolean, errorMessage?: string): RuntimeValidator<T>;
 }
 
 // Environment-based validation control
