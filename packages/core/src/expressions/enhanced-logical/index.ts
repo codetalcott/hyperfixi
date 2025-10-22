@@ -203,11 +203,11 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid AND operation input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide both left and right operands',
             'Ensure operands are valid values'
@@ -612,11 +612,11 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid NOT operation input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide a single operand',
             'Ensure operand is a valid value'

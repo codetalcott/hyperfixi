@@ -263,7 +263,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
 
         // Resolve the function to call
         const resolvedFunction = await this.resolveFunction(functionReference, context);
-        if (!resolvedFunction.success) {
+        if (!resolvedFunction.success || !resolvedFunction.value) {
           return resolvedFunction;
         }
 
@@ -527,7 +527,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
     try {
       // Resolve constructor from context
       const constructor = await this.resolveConstructor(constructorName, context);
-      if (!constructor.success) {
+      if (!constructor.success || !constructor.value) {
         return constructor;
       }
 

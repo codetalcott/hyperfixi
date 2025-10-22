@@ -190,11 +190,11 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid comparison input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide both left and right operands',
             'Ensure operands are comparable values'

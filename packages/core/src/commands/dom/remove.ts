@@ -362,11 +362,11 @@ export class RemoveCommand implements TypedCommandImplementation<
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
             suggestions: [this.getValidationSuggestion(err.code, err.path)]
-          })),
+          })) ?? [],
           suggestions: ['Use string or string array for classes, and valid target selector']
         };
       }

@@ -272,11 +272,11 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid @if directive: ${err.message}`,
             suggestions: [`Expected { condition: any, templateContent: string }, got: ${typeof input}`]
-          })),
+          })) ?? [],
           suggestions: [
             'Provide both condition and templateContent',
             'Ensure templateContent is a string',

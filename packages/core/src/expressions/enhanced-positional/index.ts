@@ -183,11 +183,11 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid first input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide a collection parameter',
             'Ensure collection is array, NodeList, or string'
@@ -388,11 +388,11 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid last input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide a collection parameter',
             'Ensure collection is array, NodeList, or string'
@@ -608,11 +608,11 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid at input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide collection and index parameters',
             'Ensure index is a number'
@@ -837,11 +837,11 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid random input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide a collection parameter',
             'Ensure collection is array, NodeList, or string'

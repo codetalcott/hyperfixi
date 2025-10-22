@@ -114,11 +114,11 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid lambda input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: ['Provide valid parameters and body']
         };
       }
@@ -307,11 +307,11 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid promise input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: ['Provide valid executor string']
         };
       }
@@ -475,11 +475,11 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid await input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: ['Provide valid promise']
         };
       }
@@ -613,11 +613,11 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid error input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: ['Provide valid error message']
         };
       }
@@ -735,11 +735,11 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid typeof input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: ['Provide valid value']
         };
       }

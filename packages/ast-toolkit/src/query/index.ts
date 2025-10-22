@@ -103,11 +103,13 @@ function parseSingleSelector(selector: string): ParsedSelector {
   const combinatorMatch = selector.match(/^(.+?)\s*([>+~]|\s)\s*(.+)$/);
   if (combinatorMatch) {
     const [, left, combinator, right] = combinatorMatch;
-    result.combinator = {
-      type: combinator.trim() || ' ' as any,
-      right: parseSingleSelector(right)
-    };
-    selector = left.trim();
+    if (combinator && left && right) {
+      result.combinator = {
+        type: combinator.trim() || ' ' as any,
+        right: parseSingleSelector(right)
+      };
+      selector = left.trim();
+    }
   }
   
   // Extract type (everything before first [ or :)
@@ -122,11 +124,13 @@ function parseSingleSelector(selector: string): ParsedSelector {
   let attributeMatch;
   while ((attributeMatch = attributeRegex.exec(selector)) !== null) {
     const [, name, operator = 'exists', value] = attributeMatch;
-    result.attributes.push({
-      name: name.trim(),
-      operator: operator === '=' ? '=' : operator as any,
-      value: value ? parseAttributeValue(value.trim()) : null
-    });
+    if (name) {
+      result.attributes.push({
+        name: name.trim(),
+        operator: operator === '=' ? '=' : operator as any,
+        value: value ? parseAttributeValue(value.trim()) : null
+      });
+    }
   }
   
   // Extract pseudo selectors :name or :name(arg)

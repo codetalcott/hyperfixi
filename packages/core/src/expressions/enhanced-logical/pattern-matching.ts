@@ -209,11 +209,11 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid matches input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide value and pattern',
             'Use string or RegExp for pattern'
@@ -477,11 +477,11 @@ export class EnhancedContainsExpression implements TypedExpressionImplementation
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid contains input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide container and item',
             'Ensure container is array, string, or object'
@@ -658,11 +658,11 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid in input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide item and container',
             'Ensure container is array, string, or object'

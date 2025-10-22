@@ -249,9 +249,10 @@ function matchTokensToAst(
   
   for (const value of astValues) {
     if (tokenIndex >= tokens.length) break;
-    
+
     const token = tokens[tokenIndex];
-    
+    if (!token) break;
+
     switch (token.type) {
       case 'keyword':
         if (value === token.value) {

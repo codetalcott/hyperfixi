@@ -212,11 +212,11 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid addition input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide both left and right operands',
             'Ensure operands are numbers or convertible to numbers'

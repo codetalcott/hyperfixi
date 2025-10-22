@@ -543,6 +543,7 @@ export class UsageAnalyzer {
     const replaceableDeps = dependencyUsages.filter(d => d.replaceable && d.alternatives.length > 0);
     for (const dep of replaceableDeps) {
       const bestAlternative = dep.alternatives[0]; // Assume sorted by best first
+      if (!bestAlternative) continue;
       if (bestAlternative.size < dep.size * 0.8) {
         recommendations.push({
           type: 'replace',

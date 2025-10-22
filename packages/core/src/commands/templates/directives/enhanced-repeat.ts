@@ -319,11 +319,11 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid @repeat directive: ${err.message}`,
             suggestions: [`Expected { collection: any, templateContent: string }, got: ${typeof input}`]
-          })),
+          })) ?? [],
           suggestions: [
             'Provide collection and templateContent',
             'Ensure collection is an array or iterable',

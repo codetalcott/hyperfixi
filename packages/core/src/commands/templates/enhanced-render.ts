@@ -109,11 +109,11 @@ export class EnhancedRenderCommand implements TypedCommandImplementation<
         };
       } else {
         // Convert Zod errors to our format
-        const errors = result.error.errors.map(err => ({
+        const errors = result.error?.errors.map(err => ({
           type: 'validation-error' as const,
-          message: `${err.path.join('.')}: ${err.message}`,
-          suggestions: this.generateSuggestions(err.code, err.path)
-        }));
+          message: `${(err.path ?? []).join('.')}: ${err.message}`,
+          suggestions: this.generateSuggestions(err.code, err.path ?? [])
+        })) ?? [];
 
         const suggestions = errors.flatMap(err => err.suggestions);
 

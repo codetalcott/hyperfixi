@@ -180,11 +180,11 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid string literal input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide a value parameter',
             'Ensure value is a string'
@@ -432,11 +432,11 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid number literal input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide a value parameter',
             'Ensure value is a number'
@@ -617,11 +617,11 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid boolean literal input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide a value parameter',
             'Ensure value is a boolean'
@@ -807,11 +807,11 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid addition input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide left and right operands'
           ]
@@ -1027,11 +1027,11 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
     if (!parsed.success) {
       return {
         isValid: false,
-        errors: parsed.error.errors.map(err => ({
+        errors: parsed.error?.errors.map(err => ({
           type: 'type-mismatch',
           message: `Invalid string concatenation input: ${err.message}`,
           suggestions: []
-        })),
+        })) ?? [],
         suggestions: [
           'Provide left and right operands for concatenation'
         ]
@@ -1220,11 +1220,11 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid multiplication input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide left and right operands'
           ]

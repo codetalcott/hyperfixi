@@ -536,11 +536,11 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: err.message,
             suggestions: `Expected valid input structure, got: ${err.code}`
-          })),
+          })) ?? [],
           suggestions: [
             'Provide both value and type parameters',
             'Ensure type is a non-empty string',
@@ -772,11 +772,11 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: err.message,
             suggestions: `Expected valid input structure, got: ${err.code}`
-          })),
+          })) ?? [],
           suggestions: [
             'Provide both value and type parameters',
             'Ensure type is a non-empty string',

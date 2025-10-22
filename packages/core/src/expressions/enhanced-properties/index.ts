@@ -190,11 +190,11 @@ export class EnhancedPossessiveExpression implements BaseTypedExpression<Propert
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid possessive input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide element and property parameters',
             'Ensure property is a string'
@@ -454,11 +454,11 @@ export class EnhancedMyExpression implements BaseTypedExpression<ContextProperty
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid my input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide property parameter',
             'Ensure property is a string'
@@ -626,11 +626,11 @@ export class EnhancedItsExpression implements BaseTypedExpression<ContextPropert
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid its input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide property parameter',
             'Ensure property is a string'
@@ -798,11 +798,11 @@ export class EnhancedYourExpression implements BaseTypedExpression<ContextProper
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid your input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide property parameter',
             'Ensure property is a string'
@@ -987,11 +987,11 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<Attribut
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid attribute input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide element and attribute parameters',
             'Ensure attribute is a string'
@@ -1173,11 +1173,11 @@ export class EnhancedAttributeWithValueExpression implements BaseTypedExpression
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid attribute with value input: ${err.message}`,
             suggestions: []
-          })),
+          })) ?? [],
           suggestions: [
             'Provide element, attribute, and value parameters',
             'Ensure attribute and value are strings'

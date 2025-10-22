@@ -271,11 +271,11 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid @else directive: ${err.message}`,
             suggestions: [`Expected { templateContent: string }, got: ${typeof input}`]
-          })),
+          })) ?? [],
           suggestions: [
             'Provide templateContent as a string',
             'Check @else directive syntax: @else',

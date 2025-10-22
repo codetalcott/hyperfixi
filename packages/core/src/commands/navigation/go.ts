@@ -223,11 +223,11 @@ export class GoCommand implements TypedCommandImplementation<
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
             suggestions: [this.getValidationSuggestion(err.code, err.path)]
-          })),
+          })) ?? [],
           suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>']
         };
       }
