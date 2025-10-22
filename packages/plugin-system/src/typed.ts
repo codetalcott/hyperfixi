@@ -40,32 +40,35 @@ export interface CommandModifiers {
 
 /**
  * Type-safe Command Plugin
+ * Uses intersection types instead of extends to avoid exactOptionalPropertyTypes conflicts
  */
-export interface TypedCommandPlugin<K extends keyof CommandArgs> extends CommandPlugin {
+export type TypedCommandPlugin<K extends keyof CommandArgs> = Omit<CommandPlugin, 'name' | 'execute'> & {
   name: K;
   execute: (ctx: TypedRuntimeContext<K>) => Promise<void> | void;
-}
+};
 
 /**
  * Type-safe Runtime Context
+ * Uses intersection types instead of extends to avoid exactOptionalPropertyTypes conflicts
  */
-export interface TypedRuntimeContext<K extends keyof CommandArgs> extends RuntimeContext {
+export type TypedRuntimeContext<K extends keyof CommandArgs> = Omit<RuntimeContext, 'args' | 'modifiers'> & {
   args: CommandArgs[K];
   modifiers: Map<CommandModifiers[K], Set<string>>;
-}
+};
 
 /**
  * Feature plugin with strong typing
+ * Uses intersection types instead of extends to avoid exactOptionalPropertyTypes conflicts
  */
-export interface TypedFeaturePlugin<TConfig = any> extends FeaturePlugin {
+export type TypedFeaturePlugin<TConfig = any> = Omit<FeaturePlugin, 'onElementInit'> & {
   defaultConfig?: TConfig;
   parseConfig?: (element: Element) => TConfig;
   onElementInit?: (ctx: TypedElementContext<TConfig>) => void | (() => void);
-}
+};
 
-export interface TypedElementContext<TConfig> extends ElementContext {
+export type TypedElementContext<TConfig> = ElementContext & {
   config: TConfig;
-}
+};
 
 /**
  * Plugin builder functions for better DX
@@ -115,18 +118,18 @@ export function isFeaturePlugin(plugin: Plugin): plugin is FeaturePlugin {
 export function isTypedCommandPlugin<K extends keyof CommandArgs>(
   plugin: Plugin,
   name: K
-): plugin is TypedCommandPlugin<K> {
+): plugin is CommandPlugin & { name: K } {
   return plugin.type === 'command' && plugin.name === name;
 }
 
 /**
  * Performance optimization types
  */
-export interface OptimizedPlugin extends Plugin {
+export type OptimizedPlugin = Plugin & {
   compiledPattern?: RegExp;
   priority?: number;
   cacheable?: boolean;
-}
+};
 
 export interface PluginMetrics {
   executionTime: number[];
