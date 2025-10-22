@@ -40,7 +40,7 @@ interface ParsedSelector {
  */
 export function query(ast: ASTNode | null, selector: string): QueryMatch | null {
   const matches = queryAll(ast, selector);
-  return matches.length > 0 ? matches[0] : null;
+  return matches.length > 0 ? matches[0]! : null;
 }
 
 /**
@@ -115,7 +115,7 @@ function parseSingleSelector(selector: string): ParsedSelector {
   // Extract type (everything before first [ or :)
   const typeMatch = selector.match(/^([a-zA-Z_][a-zA-Z0-9_-]*)/);
   if (typeMatch) {
-    result.type = typeMatch[1];
+    result.type = typeMatch[1] ?? null;
     selector = selector.substring(typeMatch[0].length);
   }
   
@@ -139,7 +139,7 @@ function parseSingleSelector(selector: string): ParsedSelector {
   while ((pseudoMatch = pseudoRegex.exec(selector)) !== null) {
     const [, name, argument] = pseudoMatch;
     result.pseudos.push({
-      name,
+      name: name ?? '',
       argument: argument || null
     });
   }

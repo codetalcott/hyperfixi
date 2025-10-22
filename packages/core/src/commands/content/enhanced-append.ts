@@ -242,9 +242,9 @@ export class EnhancedAppendCommand implements TypedCommandImplementation<
   }
 
   private variableExists(name: string, context: TypedExecutionContext): boolean {
-    return (context.locals && context.locals.has(name)) ||
-           (context.globals && context.globals.has(name)) ||
-           (context.variables && context.variables.has(name));
+    return !!(context.locals && context.locals.has(name)) ||
+           !!(context.globals && context.globals.has(name)) ||
+           !!(context.variables && context.variables.has(name));
   }
 
   private getVariableValue(name: string, context: TypedExecutionContext): any {

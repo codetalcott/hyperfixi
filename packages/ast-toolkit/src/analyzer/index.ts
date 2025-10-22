@@ -537,10 +537,10 @@ function suggestBatchOperations(ast: ASTNode): CodeSuggestion[] {
         for (const group of sameCmdGroups) {
           if (group.length >= 3 && group[0].name === 'add' && sameTarget(group)) {
             suggestions.push({
-              type: 'batch-operations',
+              type: 'optimization',
               description: 'Group class operations',
               suggestion: `Combine multiple add operations: add ${group.map(c => c.args[0].value).join(' ')} to ${group[0].target?.name || 'target'}`,
-              impact: 'high',
+              impact: 'performance',
               confidence: 0.9
             });
           }
