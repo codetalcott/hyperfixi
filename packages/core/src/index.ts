@@ -86,6 +86,7 @@ export type {
   EvaluationResult,
   EnhancedContextBase
 } from './types/enhanced-context';
+import type { ValidationResult } from './types/base-types';
 
 export type {
   LLMDocumentation,
