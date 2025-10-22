@@ -11,10 +11,9 @@ import type {
   EvaluationResult,
   TypedExpressionImplementation,
   LLMDocumentation,
-  ValidationResult,
-  ValidationError,
   TypedExecutionContext
 } from '../../types/enhanced-core.ts';
+import type { ValidationResult, ValidationError } from '../../types/base-types';
 
 // ============================================================================
 // Input Validation Schemas

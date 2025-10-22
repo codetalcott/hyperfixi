@@ -10,8 +10,8 @@ import type {
   ContextMetadata,
   EvaluationResult
 } from '../types/enhanced-context';
-import type { ValidationResult } from '../types/base-types';
-import type { LLMDocumentation, EvaluationType } from '../types/enhanced-core';
+import type { ValidationResult, EvaluationType } from '../types/base-types';
+import type { LLMDocumentation } from '../types/enhanced-core';
 
 // ============================================================================
 // Enhanced Sockets Feature Input/Output Schemas

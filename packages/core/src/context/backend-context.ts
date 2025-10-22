@@ -12,8 +12,8 @@ import {
   type ContextMetadata,
   type EvaluationResult
 } from '../types/enhanced-context';
-import type { ValidationResult } from '../types/base-types';
-import type { LLMDocumentation, EvaluationType } from '../types/enhanced-core';
+import type { ValidationResult, EvaluationType } from '../types/base-types';
+import type { LLMDocumentation } from '../types/enhanced-core';
 
 // ============================================================================
 // Backend Context Input/Output Schemas

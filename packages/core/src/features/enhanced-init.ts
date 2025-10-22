@@ -10,7 +10,8 @@ import type {
   ContextMetadata,
   EvaluationResult
 } from '../types/enhanced-context';
-import type { LLMDocumentation, EvaluationType, ValidationResult } from '../types/enhanced-core';
+import type { ValidationResult, EvaluationType } from '../types/base-types';
+import type { LLMDocumentation } from '../types/enhanced-core';
 import type { ExecutionContext } from '../types/core';
 
 // ============================================================================

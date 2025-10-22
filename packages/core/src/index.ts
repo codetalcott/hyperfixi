@@ -86,11 +86,10 @@ export type {
   EnhancedContextBase
 } from './types/enhanced-context';
 
-export type { ValidationResult } from './types/base-types';
+export type { ValidationResult, EvaluationType } from './types/base-types';
 
 export type {
-  LLMDocumentation,
-  EvaluationType
+  LLMDocumentation
 } from './types/enhanced-core';
 
 // Export the main API as default

@@ -10,8 +10,8 @@ import type {
   EvaluationResult,
   EnhancedContextBase
 } from '../../core/src/types/enhanced-context.js';
-import type { ValidationResult, ValidationError } from '../../core/src/types/base-types.js';
-import type { LLMDocumentation, EvaluationType } from '../../core/src/types/enhanced-core.js';
+import type { ValidationResult, ValidationError, EvaluationType } from '../../core/src/types/base-types.js';
+import type { LLMDocumentation } from '../../core/src/types/enhanced-core.js';
 import type { 
   AnalyticsEvent, 
   AnalyticsConfig, 

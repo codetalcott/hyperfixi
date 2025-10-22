@@ -10,8 +10,8 @@ import type {
   EvaluationResult,
   EnhancedContextBase
 } from '../../core/src/types/enhanced-context.js';
-import type { ValidationResult } from '../../core/src/types/base-types.js';
-import type { LLMDocumentation, EvaluationType } from '../../core/src/types/enhanced-core.js';
+import type { ValidationResult, EvaluationType } from '../../core/src/types/base-types.js';
+import type { LLMDocumentation } from '../../core/src/types/enhanced-core.js';
 import type { 
   TenantInfo, 
   TenantContext, 
