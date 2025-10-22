@@ -364,7 +364,7 @@ export class TypedDefFeatureImplementation {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{ type: 'invalid-input', message: 'Input must be an object' }],
+          errors: [{ type: 'invalid-input', message: 'Input must be an object', suggestions: [] }],
           suggestions: ['Provide a valid function definition configuration object']
         };
       }
@@ -471,7 +471,8 @@ export class TypedDefFeatureImplementation {
         isValid: false,
         errors: [{
           type: 'schema-validation',
-          message: error instanceof Error ? error.message : 'Invalid input format'
+          message: error instanceof Error ? error.message : 'Invalid input format',
+          suggestions: []
         }],
         suggestions: [
           'Ensure input matches EnhancedDefInput schema',

@@ -164,7 +164,8 @@ export class EnhancedEqualsExpression implements BaseTypedExpression<boolean> {
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Equality comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Equality comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure operands are valid values',
@@ -199,7 +200,8 @@ export class EnhancedEqualsExpression implements BaseTypedExpression<boolean> {
           isValid: false,
           errors: [{
             type: 'missing-argument',
-            message: `Equals expression expects == operator, got ${parsed.data.operator}`
+            message: `Equals expression expects == operator, got ${parsed.data.operator}`,
+            suggestions: []
           }],
           suggestions: [
             'Use == for equality comparison',
@@ -219,7 +221,8 @@ export class EnhancedEqualsExpression implements BaseTypedExpression<boolean> {
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -347,7 +350,8 @@ export class EnhancedNotEqualsExpression implements BaseTypedExpression<boolean>
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Inequality comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Inequality comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure operands are valid values',
@@ -381,7 +385,8 @@ export class EnhancedNotEqualsExpression implements BaseTypedExpression<boolean>
           isValid: false,
           errors: [{
             type: 'missing-argument',
-            message: `Not equals expression expects != operator, got ${parsed.data.operator}`
+            message: `Not equals expression expects != operator, got ${parsed.data.operator}`,
+            suggestions: []
           }],
           suggestions: [
             'Use != for inequality comparison'
@@ -400,7 +405,8 @@ export class EnhancedNotEqualsExpression implements BaseTypedExpression<boolean>
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -539,7 +545,8 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Greater than comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Greater than comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure operands can be compared',
@@ -573,7 +580,8 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
           isValid: false,
           errors: [{
             type: 'missing-argument',
-            message: `Greater than expression expects > operator, got ${parsed.data.operator}`
+            message: `Greater than expression expects > operator, got ${parsed.data.operator}`,
+            suggestions: []
           }],
           suggestions: [
             'Use > for greater than comparison'
@@ -592,7 +600,8 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -720,7 +729,8 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Less than comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Less than comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure operands can be compared',
@@ -753,7 +763,8 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
           isValid: false,
           errors: [{
             type: 'missing-argument',
-            message: `Less than expression expects < operator, got ${parsed.data.operator}`
+            message: `Less than expression expects < operator, got ${parsed.data.operator}`,
+            suggestions: []
           }],
           suggestions: [
             'Use < for less than comparison'
@@ -772,7 +783,8 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -900,7 +912,8 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Greater than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Greater than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure operands can be compared',
@@ -933,7 +946,8 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
           isValid: false,
           errors: [{
             type: 'missing-argument',
-            message: `Greater than or equal expression expects >= operator, got ${parsed.data.operator}`
+            message: `Greater than or equal expression expects >= operator, got ${parsed.data.operator}`,
+            suggestions: []
           }],
           suggestions: [
             'Use >= for greater than or equal comparison'
@@ -952,7 +966,8 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -1080,7 +1095,8 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Less than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Less than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure operands can be compared',
@@ -1113,7 +1129,8 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
           isValid: false,
           errors: [{
             type: 'missing-argument',
-            message: `Less than or equal expression expects <= operator, got ${parsed.data.operator}`
+            message: `Less than or equal expression expects <= operator, got ${parsed.data.operator}`,
+            suggestions: []
           }],
           suggestions: [
             'Use <= for less than or equal comparison'
@@ -1132,7 +1149,8 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };

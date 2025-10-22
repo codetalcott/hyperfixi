@@ -229,7 +229,8 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -637,7 +638,8 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };

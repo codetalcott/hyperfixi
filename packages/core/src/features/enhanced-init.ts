@@ -392,7 +392,7 @@ export class TypedInitFeatureImplementation {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{ type: 'type-mismatch', message: 'Input must be an object' }],
+          errors: [{ type: 'type-mismatch', message: 'Input must be an object', suggestions: [] }],
           suggestions: ['Provide a valid init configuration object']
         };
       }
@@ -523,7 +523,8 @@ export class TypedInitFeatureImplementation {
         isValid: false,
         errors: [{
           type: 'type-mismatch',
-          message: error instanceof Error ? error.message : 'Invalid input format'
+          message: error instanceof Error ? error.message : 'Invalid input format',
+          suggestions: []
         }],
         suggestions: [
           'Ensure input matches EnhancedInitInput schema',

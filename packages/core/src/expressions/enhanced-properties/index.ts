@@ -215,7 +215,8 @@ export class EnhancedPossessiveExpression implements BaseTypedExpression<Propert
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -478,7 +479,8 @@ export class EnhancedMyExpression implements BaseTypedExpression<ContextProperty
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -649,7 +651,8 @@ export class EnhancedItsExpression implements BaseTypedExpression<ContextPropert
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -820,7 +823,8 @@ export class EnhancedYourExpression implements BaseTypedExpression<ContextProper
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -1008,7 +1012,8 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<Attribut
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -1193,7 +1198,8 @@ export class EnhancedAttributeWithValueExpression implements BaseTypedExpression
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };

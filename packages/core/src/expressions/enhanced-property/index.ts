@@ -168,7 +168,8 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
           success: false,
           errors: [{
             type: 'context-error',
-            message: 'No current element (me) available in context for property access'
+            message: 'No current element (me) available in context for property access',
+            suggestions: []
           }],
           suggestions: [
             'Ensure this expression is used within an element context',
@@ -197,7 +198,8 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Check that the property name is valid',
@@ -235,7 +237,8 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
           isValid: false,
           errors: [{
             type: 'validation-error',
-            message: 'Property name cannot be empty'
+            message: 'Property name cannot be empty',
+            suggestions: []
           }],
           suggestions: ['Provide a non-empty property name']
         };
@@ -252,7 +255,8 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -445,7 +449,8 @@ export class EnhancedItsExpression implements BaseTypedExpression<HyperScriptVal
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Check that the target object is not null or undefined',
@@ -483,7 +488,8 @@ export class EnhancedItsExpression implements BaseTypedExpression<HyperScriptVal
           isValid: false,
           errors: [{
             type: 'validation-error',
-            message: 'Property name cannot be empty'
+            message: 'Property name cannot be empty',
+            suggestions: []
           }],
           suggestions: ['Provide a non-empty property name']
         };
@@ -500,7 +506,8 @@ export class EnhancedItsExpression implements BaseTypedExpression<HyperScriptVal
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -647,7 +654,8 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<string |
           success: false,
           errors: [{
             type: 'type-mismatch',
-            message: 'Target must be a DOM element for attribute access'
+            message: 'Target must be a DOM element for attribute access',
+            suggestions: []
           }],
           suggestions: [
             'Ensure the target is a valid DOM element',
@@ -676,7 +684,8 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<string |
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Attribute access failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Attribute access failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Check that the element supports getAttribute',
@@ -714,7 +723,8 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<string |
           isValid: false,
           errors: [{
             type: 'validation-error',
-            message: 'Attribute name cannot be empty'
+            message: 'Attribute name cannot be empty',
+            suggestions: []
           }],
           suggestions: ['Provide a non-empty attribute name']
         };
@@ -731,7 +741,8 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<string |
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };

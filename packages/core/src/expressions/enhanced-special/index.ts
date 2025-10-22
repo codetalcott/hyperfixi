@@ -162,7 +162,8 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `String literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `String literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Check template syntax for interpolation',
@@ -202,7 +203,8 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -387,7 +389,8 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
           success: false,
           errors: [{
             type: 'invalid-argument',
-            message: 'Number literal must be finite'
+            message: 'Number literal must be finite',
+            suggestions: []
           }],
           suggestions: [
             'Use finite numbers only',
@@ -411,7 +414,8 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Number literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Number literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure value is a valid number',
@@ -445,7 +449,8 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
           isValid: false,
           errors: [{
             type: 'invalid-argument',
-            message: 'Number literal value must be finite'
+            message: 'Number literal value must be finite',
+            suggestions: []
           }],
           suggestions: [
             'Use finite numbers only',
@@ -465,7 +470,8 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -594,7 +600,8 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Boolean literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Boolean literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure value is a valid boolean'
@@ -633,7 +640,8 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -781,7 +789,8 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Addition failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Addition failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure operands can be converted to numbers',
@@ -820,7 +829,8 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -1192,7 +1202,8 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure operands can be converted to numbers',
@@ -1231,7 +1242,8 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };

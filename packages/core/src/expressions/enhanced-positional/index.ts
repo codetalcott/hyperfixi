@@ -209,7 +209,8 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -413,7 +414,8 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -632,7 +634,8 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -860,7 +863,8 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };

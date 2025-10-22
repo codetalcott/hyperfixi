@@ -231,7 +231,8 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
             isValid: false,
             errors: [{
               type: 'syntax-error',
-              message: `Invalid CSS selector: ${pattern}`
+              message: `Invalid CSS selector: ${pattern}`,
+              suggestions: []
             }],
             suggestions: [
               'Check CSS selector syntax',
@@ -252,7 +253,8 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -498,7 +500,8 @@ export class EnhancedContainsExpression implements TypedExpressionImplementation
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -678,7 +681,8 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };

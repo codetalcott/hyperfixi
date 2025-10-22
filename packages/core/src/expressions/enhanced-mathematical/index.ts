@@ -165,7 +165,8 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
           success: false,
           errors: [{
             type: 'runtime-error',
-            message: `Addition resulted in non-finite value: ${leftNum} + ${rightNum} = ${result}`
+            message: `Addition resulted in non-finite value: ${leftNum} + ${rightNum} = ${result}`,
+            suggestions: []
           }],
           suggestions: [
             'Check for numeric overflow',
@@ -192,7 +193,8 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Addition failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Addition failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure both operands are numeric or convertible to numbers',
@@ -230,7 +232,8 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
           isValid: false,
           errors: [{
             type: 'type-mismatch',
-            message: `Left operand cannot be converted to number: ${String(left)}`
+            message: `Left operand cannot be converted to number: ${String(left)}`,
+            suggestions: []
           }],
           suggestions: ['Provide a numeric value or string for left operand']
         };
@@ -240,8 +243,9 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         return {
           isValid: false,
           errors: [{
-            type: 'type-mismatch', 
-            message: `Right operand cannot be converted to number: ${String(right)}`
+            type: 'type-mismatch',
+            message: `Right operand cannot be converted to number: ${String(right)}`,
+            suggestions: []
           }],
           suggestions: ['Provide a numeric value or string for right operand']
         };
@@ -258,7 +262,8 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         isValid: false,
         errors: [{
           type: 'runtime-error',
-          message: 'Validation failed with exception'
+          message: 'Validation failed with exception',
+          suggestions: []
         }],
         suggestions: ['Check input structure and types']
       };
@@ -449,7 +454,8 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<number
           success: false,
           errors: [{
             type: 'runtime-error',
-            message: `Subtraction resulted in non-finite value: ${leftNum} - ${rightNum} = ${result}`
+            message: `Subtraction resulted in non-finite value: ${leftNum} - ${rightNum} = ${result}`,
+            suggestions: []
           }],
           suggestions: ['Check for numeric overflow/underflow', 'Verify input ranges']
         };
@@ -466,7 +472,8 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<number
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Subtraction failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Subtraction failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: [
           'Ensure both operands are numeric',
@@ -593,7 +600,8 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
           success: false,
           errors: [{
             type: 'runtime-error',
-            message: `Multiplication resulted in non-finite value: ${leftNum} * ${rightNum} = ${result}`
+            message: `Multiplication resulted in non-finite value: ${leftNum} * ${rightNum} = ${result}`,
+            suggestions: []
           }],
           suggestions: ['Check for numeric overflow', 'Verify input ranges']
         };
@@ -610,7 +618,8 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: ['Ensure both operands are numeric']
       };
@@ -733,7 +742,8 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
           success: false,
           errors: [{
             type: 'runtime-error',
-            message: 'Division by zero is not allowed'
+            message: 'Division by zero is not allowed',
+            suggestions: []
           }],
           suggestions: [
             'Ensure the divisor (right operand) is not zero',
@@ -750,7 +760,8 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
           success: false,
           errors: [{
             type: 'runtime-error',
-            message: `Division resulted in non-finite value: ${leftNum} / ${rightNum} = ${result}`
+            message: `Division resulted in non-finite value: ${leftNum} / ${rightNum} = ${result}`,
+            suggestions: []
           }],
           suggestions: ['Check for numeric overflow/underflow']
         };
@@ -767,7 +778,8 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Division failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Division failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: ['Ensure both operands are numeric and divisor is not zero']
       };
@@ -890,7 +902,8 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
           success: false,
           errors: [{
             type: 'runtime-error',
-            message: 'Modulo by zero is not allowed'
+            message: 'Modulo by zero is not allowed',
+            suggestions: []
           }],
           suggestions: [
             'Ensure the divisor (right operand) is not zero',
@@ -906,7 +919,8 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
           success: false,
           errors: [{
             type: 'runtime-error',
-            message: `Modulo resulted in non-finite value: ${leftNum} % ${rightNum} = ${result}`
+            message: `Modulo resulted in non-finite value: ${leftNum} % ${rightNum} = ${result}`,
+            suggestions: []
           }],
           suggestions: ['Check for numeric overflow issues']
         };
@@ -923,7 +937,8 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
         success: false,
         errors: [{
           type: 'runtime-error',
-          message: `Modulo failed: ${error instanceof Error ? error.message : String(error)}`
+          message: `Modulo failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: []
         }],
         suggestions: ['Ensure both operands are numeric and divisor is not zero']
       };

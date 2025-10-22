@@ -376,7 +376,7 @@ export class TypedOnFeatureImplementation {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{ type: 'invalid-input', message: 'Input must be an object' }],
+          errors: [{ type: 'invalid-input', message: 'Input must be an object', suggestions: [] }],
           suggestions: ['Provide a valid event handling configuration object']
         };
       }
@@ -509,7 +509,8 @@ export class TypedOnFeatureImplementation {
         isValid: false,
         errors: [{
           type: 'schema-validation',
-          message: error instanceof Error ? error.message : 'Invalid input format'
+          message: error instanceof Error ? error.message : 'Invalid input format',
+          suggestions: []
         }],
         suggestions: [
           'Ensure input matches EnhancedOnInput schema',

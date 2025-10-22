@@ -336,7 +336,7 @@ export class TypedAnalyticsContextImplementation {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{ type: 'invalid-input', message: 'Input must be an object' }],
+          errors: [{ type: 'invalid-input', message: 'Input must be an object', suggestions: [] }],
           suggestions: ['Provide a valid analytics configuration object']
         };
       }
@@ -346,7 +346,7 @@ export class TypedAnalyticsContextImplementation {
       if (inputObj.config && typeof inputObj.config === 'object' && Object.keys(inputObj.config).length === 0) {
         return {
           isValid: false,
-          errors: [{ type: 'empty-config', message: 'Configuration object cannot be empty' }],
+          errors: [{ type: 'empty-config', message: 'Configuration object cannot be empty', suggestions: [] }],
           suggestions: ['Provide at least basic analytics configuration with enabled: true']
         };
       }
@@ -427,7 +427,8 @@ export class TypedAnalyticsContextImplementation {
         isValid: false,
         errors: [{
           type: 'schema-validation',
-          message: error instanceof Error ? error.message : 'Invalid input format'
+          message: error instanceof Error ? error.message : 'Invalid input format',
+          suggestions: []
         }],
         suggestions: [
           'Ensure input matches EnhancedAnalyticsInput schema',
