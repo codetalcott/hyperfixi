@@ -21,7 +21,8 @@ import type {
   TypedResult,
   HyperScriptValueType,
   EvaluationType,
-  EvaluationResult
+  EvaluationResult,
+  TypedExecutionContext
 } from './base-types';
 
 // ============================================================================
