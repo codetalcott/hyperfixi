@@ -114,7 +114,7 @@ export class EnhancedArrayLiteralExpression implements TypedExpressionImplementa
         errors.push({
           type: 'runtime-error',
           message: `Array literal with ${(validatedArgs as any[]).length} elements may impact performance`,
-          suggestion: 'Consider breaking large arrays into smaller chunks'
+          suggestions: ['Consider breaking large arrays into smaller chunks']
         });
       }
 
@@ -132,7 +132,7 @@ export class EnhancedArrayLiteralExpression implements TypedExpressionImplementa
         errors: [{
           type: 'syntax-error',
           message: error instanceof Error ? error.message : 'Invalid array literal arguments',
-          suggestion: 'Provide elements as an array'
+          suggestions: ['Provide elements as an array']
         }],
         suggestions: [
           'Provide elements as an array',
@@ -305,10 +305,10 @@ export class EnhancedArrayIndexExpression implements TypedExpressionImplementati
         errors.push({
           type: 'type-mismatch',
           message: 'Cannot index null or undefined value',
-          suggestion: 'Provide an array or array-like object'
+          suggestions: ['Provide an array or array-like object']
         });
       }
-      
+
       // Validate index type
       if (typeof index === 'object' && index !== null) {
         const rangeObj = index as { start?: number; end?: number };
@@ -316,7 +316,7 @@ export class EnhancedArrayIndexExpression implements TypedExpressionImplementati
           errors.push({
             type: 'syntax-error',
             message: 'Range start index cannot be greater than end index',
-            suggestion: 'Ensure start <= end in range objects'
+            suggestions: ['Ensure start <= end in range objects']
           });
         }
       }
@@ -336,7 +336,7 @@ export class EnhancedArrayIndexExpression implements TypedExpressionImplementati
         errors: [{
           type: 'syntax-error',
           message: error instanceof Error ? error.message : 'Invalid array index arguments',
-          suggestion: 'Provide valid arguments for array indexing'
+          suggestions: ['Provide valid arguments for array indexing']
         }],
         suggestions: [
           'Provide an array-like target as the first argument',

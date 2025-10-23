@@ -4,7 +4,7 @@
  * Handles global functions, method calls, async operations, and proper context binding
  */
 
-import { v } from '../../validation/lightweight-validators';
+import { v, z } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -14,6 +14,7 @@ import type {
   LLMDocumentation,
   ValidationResult
 } from '../../types/enhanced-core';
+import type { ValidationError } from '../../types/base-types';
 
 // ============================================================================
 // Input Validation Schema
@@ -140,7 +141,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
   async validate(args: unknown[]): Promise<ValidationResult> {
     try {
       const validatedArgs = this.inputSchema.parse(args);
-      const issues: string[] = [];
+      const issues: ValidationError[] = [];
       
       // Check if this is a constructor call
       const isConstructorCall = validatedArgs[0] === 'new';
@@ -151,18 +152,18 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         const constructorArgs = validatedArgs.length > 2 ? validatedArgs[2] : [];
         
         if (!constructorName || constructorName.trim().length === 0) {
-          issues.push('Constructor name cannot be empty');
+          issues.push({ type: 'validation-error', message: 'Constructor name cannot be empty', suggestions: [] });
         }
-        
+
         // Check for potentially dangerous constructors
         const dangerousConstructors = ['Function', 'eval'];
         if (dangerousConstructors.includes(constructorName)) {
-          issues.push(`Constructor "${constructorName}" may pose security risks - use with caution`);
+          issues.push({ type: 'validation-error', message: `Constructor "${constructorName}" may pose security risks - use with caution`, suggestions: [] });
         }
-        
+
         // Validate arguments array for constructor
         if (constructorArgs && !Array.isArray(constructorArgs)) {
-          issues.push('Constructor arguments must be provided as an array');
+          issues.push({ type: 'validation-error', message: 'Constructor arguments must be provided as an array', suggestions: [] });
         }
       } else {
         // Regular function call validation
@@ -172,28 +173,28 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         // Validate function reference
         if (typeof functionReference === 'string') {
           if (functionReference.trim().length === 0) {
-            issues.push('Function name cannot be empty');
+            issues.push({ type: 'validation-error', message: 'Function name cannot be empty', suggestions: [] });
           }
-          
+
           if (functionReference.includes('..')) {
-            issues.push('Invalid function path - contains consecutive dots');
+            issues.push({ type: 'validation-error', message: 'Invalid function path - contains consecutive dots', suggestions: [] });
           }
-          
+
           if (functionReference.startsWith('.') || functionReference.endsWith('.')) {
-            issues.push('Function path cannot start or end with a dot');
+            issues.push({ type: 'validation-error', message: 'Function path cannot start or end with a dot', suggestions: [] });
           }
-          
+
           // Check for potentially dangerous function names
           const dangerousFunctions = ['eval', 'Function', 'setTimeout', 'setInterval'];
           const functionName = functionReference.split('.').pop() || '';
           if (dangerousFunctions.includes(functionName)) {
-            issues.push(`Function "${functionName}" may pose security risks - use with caution`);
+            issues.push({ type: 'validation-error', message: `Function "${functionName}" may pose security risks - use with caution`, suggestions: [] });
           }
         }
 
         // Validate arguments array
         if (functionArgs && !Array.isArray(functionArgs)) {
-          issues.push('Function arguments must be provided as an array');
+          issues.push({ type: 'validation-error', message: 'Function arguments must be provided as an array', suggestions: [] });
         }
       }
 
@@ -210,7 +211,11 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
     } catch (error) {
       return {
         isValid: false,
-        errors: [error instanceof Error ? error.message : 'Invalid function call arguments'],
+        errors: [{
+          type: 'syntax-error',
+          message: error instanceof Error ? error.message : 'Invalid function call arguments',
+          suggestions: []
+        }],
         suggestions: [
           'Provide a function name or reference as the first argument',
           'Provide arguments as an array (optional)',
