@@ -12,7 +12,7 @@ import {
   type ContextMetadata,
   type EvaluationResult
 } from '../types/enhanced-context';
-import type { ValidationResult, EvaluationType } from '../types/base-types';
+import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/enhanced-core';
 
 // ============================================================================
@@ -330,7 +330,7 @@ export class TypedLLMGenerationContextImplementation extends EnhancedContextBase
   private async validateGeneratedCode(code: string, _input: LLMGenerationInput) {
     const errors: Array<{ type: string; message: string; line?: number; suggestion?: string }> = [];
     const warnings: Array<{ type: string; message: string; suggestion?: string }> = [];
-    
+
     // Basic syntax validation
     if (!code.trim()) {
       errors.push({
@@ -338,28 +338,25 @@ export class TypedLLMGenerationContextImplementation extends EnhancedContextBase
         message: 'Generated code is empty',
         suggestion: 'Try a more specific prompt'
       });
-    suggestions: []
     }
-    
+
     // Environment-specific validation
-    if (input.targetEnvironment === 'frontend' && !code.includes('on ')) {
+    if (_input.targetEnvironment === 'frontend' && !code.includes('on ')) {
       warnings.push({
         type: 'missing-event',
         message: 'Frontend code typically includes event handlers',
         suggestion: 'Consider adding event triggers like "on click" or "on input"'
       });
-    suggestions: []
     }
-    
+
     // Type safety validation
-    if (input.typeSafety === 'strict') {
+    if (_input.typeSafety === 'strict') {
       if (code.includes('undefined') || code.includes('null')) {
         warnings.push({
           type: 'type-safety',
           message: 'Potential null/undefined values detected',
           suggestion: 'Add null checks or use optional chaining'
         });
-      suggestions: []
       }
     }
     
@@ -443,19 +440,18 @@ export class TypedLLMGenerationContextImplementation extends EnhancedContextBase
     return notes;
   }
 
-  protected validateContextSpecific(data: LLMGenerationInput): ValidationResult {
-    const errors: Array<{ type: string; message: string; path?: string }> = [];
+  protected override validateContextSpecific(data: LLMGenerationInput): ValidationResult {
+    const errors: ValidationError[] = [];
     const suggestions: string[] = [];
 
     // Validate prompt quality
     if (data.prompt.length < 5) {
       errors.push({
-        type: 'insufficient-prompt',
+        type: 'validation-error',
         message: 'Prompt is too short for effective code generation',
-        path: 'prompt'
+        path: 'prompt',
+        suggestions: ['Provide more detailed description of desired functionality']
       });
-      suggestions.push('Provide more detailed description of desired functionality');
-    suggestions: []
     }
 
     // Validate framework compatibility
@@ -463,11 +459,11 @@ export class TypedLLMGenerationContextImplementation extends EnhancedContextBase
       const frontendFrameworks = ['vanilla'];
       if (!frontendFrameworks.includes(data.framework.name)) {
         errors.push({
-          type: 'framework-mismatch',
+          type: 'validation-error',
           message: `Framework ${data.framework.name} is not supported for frontend environment`,
-          path: 'framework.name'
+          path: 'framework.name',
+          suggestions: ['Use vanilla framework for frontend or change target environment']
         });
-      suggestions: []
       }
     }
 
@@ -476,11 +472,11 @@ export class TypedLLMGenerationContextImplementation extends EnhancedContextBase
       Object.entries(data.availableVariables).forEach(([name, def]) => {
         if (!(def as any).type) {
           errors.push({
-            type: 'missing-type',
+            type: 'validation-error',
             message: `Variable ${name} is missing type definition`,
-            path: `availableVariables.${name}.type`
+            path: `availableVariables.${name}.type`,
+            suggestions: ['Add type property to variable definition']
           });
-        suggestions: []
         }
       });
     }

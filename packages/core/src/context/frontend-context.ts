@@ -11,7 +11,7 @@ import {
   type ContextMetadata,
   type EvaluationResult
 } from '../types/enhanced-context';
-import type { ValidationResult, EvaluationType } from '../types/base-types';
+import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/enhanced-core';
 
 // ============================================================================
@@ -275,30 +275,29 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<Fron
     };
   }
 
-  protected validateContextSpecific(data: FrontendContextInput): ValidationResult {
-    const errors: Array<{ type: string; message: string; path?: string }> = [];
+  protected override validateContextSpecific(data: FrontendContextInput): ValidationResult {
+    const errors: ValidationError[] = [];
     const suggestions: string[] = [];
 
     // Validate browser environment availability
     if (data.dom && !data.dom.document) {
       errors.push({
-        type: 'missing-dependency',
+        type: 'validation-error',
         message: 'DOM document is required for frontend context',
-        path: 'dom.document'
+        path: 'dom.document',
+        suggestions: ['Ensure context is initialized in browser environment']
       });
-      suggestions.push('Ensure context is initialized in browser environment');
-    suggestions: []
     }
 
     // Validate user state structure
     if (data.userState && data.userState.permissions) {
       if (!Array.isArray(data.userState.permissions)) {
         errors.push({
-          type: 'invalid-type',
+          type: 'type-mismatch',
           message: 'User permissions must be an array of strings',
-          path: 'userState.permissions'
+          path: 'userState.permissions',
+          suggestions: ['Ensure permissions is an array of permission strings']
         });
-      suggestions: []
       }
     }
 

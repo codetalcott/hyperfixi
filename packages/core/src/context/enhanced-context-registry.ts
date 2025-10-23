@@ -4,14 +4,13 @@
  * Follows same architecture as enhanced expression registry
  */
 
-import { v, type RuntimeValidator } from '../validation/lightweight-validators';
 import type {
   TypedContextImplementation,
   ContextRegistry,
   ContextFilter,
   ContextCategory
 } from '../types/enhanced-context';
-import type { ValidationResult } from '../types/base-types';
+import type { ValidationResult, ValidationError } from '../types/base-types';
 
 // ============================================================================
 // Context Registry Implementation
@@ -121,86 +120,82 @@ export class EnhancedContextRegistry implements ContextRegistry {
    * Validate context implementation follows enhanced pattern
    */
   validate<T extends TypedContextImplementation<any, any>>(context: T): ValidationResult {
-    const errors: Array<{ type: string; message: string; path?: string }> = [];
+    const errors: ValidationError[] = [];
     const suggestions: string[] = [];
 
     // Validate required properties exist
     if (!context.name || typeof context.name !== 'string') {
-      errors.push({ type: 'missing-property', message: 'Context must have a string name property' });
+      errors.push({ type: 'validation-error', message: 'Context must have a string name property', suggestions: [] });
     }
 
     if (!context.category) {
-      errors.push({ type: 'missing-property', message: 'Context must have a category property' });
+      errors.push({ type: 'validation-error', message: 'Context must have a category property', suggestions: [] });
     }
 
     if (!context.description || typeof context.description !== 'string') {
-      errors.push({ type: 'missing-property', message: 'Context must have a string description property' });
+      errors.push({ type: 'validation-error', message: 'Context must have a string description property', suggestions: [] });
     }
 
     if (!context.inputSchema) {
-      errors.push({ type: 'missing-property', message: 'Context must have an inputSchema (Zod schema)' });
+      errors.push({ type: 'validation-error', message: 'Context must have an inputSchema (Zod schema)', suggestions: [] });
     }
 
     if (!context.outputType) {
-      errors.push({ type: 'missing-property', message: 'Context must have an outputType property' });
+      errors.push({ type: 'validation-error', message: 'Context must have an outputType property', suggestions: [] });
     }
 
     if (!context.metadata) {
-      errors.push({ type: 'missing-property', message: 'Context must have metadata property' });
+      errors.push({ type: 'validation-error', message: 'Context must have metadata property', suggestions: [] });
     } else {
       // Validate metadata structure
       if (!context.metadata.category) {
-        errors.push({ type: 'invalid-metadata', message: 'Context metadata must include category' });
+        errors.push({ type: 'validation-error', message: 'Context metadata must include category', suggestions: [] });
       }
       if (!context.metadata.complexity) {
-        errors.push({ type: 'invalid-metadata', message: 'Context metadata must include complexity level' });
+        errors.push({ type: 'validation-error', message: 'Context metadata must include complexity level', suggestions: [] });
       }
       if (!Array.isArray(context.metadata.examples) || context.metadata.examples.length === 0) {
-        errors.push({ type: 'invalid-metadata', message: 'Context metadata must include examples array' });
-        suggestions.push('Add at least one usage example to metadata.examples');
+        errors.push({ type: 'validation-error', message: 'Context metadata must include examples array', suggestions: ['Add at least one usage example to metadata.examples'] });
       }
     }
 
     if (!context.documentation) {
-      errors.push({ type: 'missing-property', message: 'Context must have documentation property' });
+      errors.push({ type: 'validation-error', message: 'Context must have documentation property', suggestions: [] });
     } else {
       // Validate LLM documentation structure
       if (!context.documentation.summary || typeof context.documentation.summary !== 'string') {
-        errors.push({ type: 'invalid-documentation', message: 'Context documentation must include summary' });
+        errors.push({ type: 'validation-error', message: 'Context documentation must include summary', suggestions: [] });
       }
       if (!Array.isArray(context.documentation.parameters)) {
-        errors.push({ type: 'invalid-documentation', message: 'Context documentation must include parameters array' });
+        errors.push({ type: 'validation-error', message: 'Context documentation must include parameters array', suggestions: [] });
       }
       if (!context.documentation.returns) {
-        errors.push({ type: 'invalid-documentation', message: 'Context documentation must include returns specification' });
+        errors.push({ type: 'validation-error', message: 'Context documentation must include returns specification', suggestions: [] });
       }
       if (!Array.isArray(context.documentation.examples) || context.documentation.examples.length === 0) {
-        errors.push({ type: 'invalid-documentation', message: 'Context documentation must include examples' });
-        suggestions.push('Add comprehensive examples to documentation for LLM training');
+        errors.push({ type: 'validation-error', message: 'Context documentation must include examples', suggestions: ['Add comprehensive examples to documentation for LLM training'] });
       }
       if (!Array.isArray(context.documentation.tags) || context.documentation.tags.length === 0) {
-        errors.push({ type: 'invalid-documentation', message: 'Context documentation must include tags for discoverability' });
-        suggestions.push('Add relevant tags like ["context", "frontend", "backend", etc.]');
+        errors.push({ type: 'validation-error', message: 'Context documentation must include tags for discoverability', suggestions: ['Add relevant tags like ["context", "frontend", "backend", etc.]'] });
       }
     }
 
     // Validate required methods exist
     if (typeof context.initialize !== 'function') {
-      errors.push({ type: 'missing-method', message: 'Context must implement initialize method' });
+      errors.push({ type: 'validation-error', message: 'Context must implement initialize method', suggestions: [] });
     }
 
     if (typeof context.validate !== 'function') {
-      errors.push({ type: 'missing-method', message: 'Context must implement validate method' });
+      errors.push({ type: 'validation-error', message: 'Context must implement validate method', suggestions: [] });
     }
 
     // Check for naming conflicts
     if (this.contexts.has(context.name)) {
-      errors.push({ 
-        type: 'naming-conflict', 
-        message: `Context with name "${context.name}" is already registered` 
+      errors.push({
+        type: 'validation-error',
+        message: `Context with name "${context.name}" is already registered`,
+        suggestions: ['Use a unique name or unregister the existing context first']
       });
-      suggestions.push('Use a unique name or unregister the existing context first');
-    suggestions: []
     }
 
     // Validate Zod schema functionality
@@ -210,11 +205,10 @@ export class EnhancedContextRegistry implements ContextRegistry {
         context.inputSchema.safeParse({});
       } catch (error) {
         errors.push({
-          type: 'invalid-schema',
-          message: `Input schema validation failed: ${error instanceof Error ? error.message : String(error)}`
+          type: 'validation-error',
+          message: `Input schema validation failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: ['Ensure inputSchema is a valid Zod schema']
         });
-        suggestions.push('Ensure inputSchema is a valid Zod schema');
-      suggestions: []
       }
     }
 
@@ -344,7 +338,7 @@ export function registerContexts(
   registry: EnhancedContextRegistry,
   contexts: TypedContextImplementation<any, any>[]
 ): ValidationResult {
-  const errors: Array<{ type: string; message: string; path?: string }> = [];
+  const errors: ValidationError[] = [];
   const suggestions: string[] = [];
 
   for (const context of contexts) {
@@ -352,11 +346,11 @@ export function registerContexts(
       registry.register(context);
     } catch (error) {
       errors.push({
-        type: 'registration-error',
+        type: 'validation-error',
         message: `Failed to register context "${context.name}": ${error instanceof Error ? error.message : String(error)}`,
-        path: context.name
+        path: context.name,
+        suggestions: []
       });
-    suggestions: []
     }
   }
 

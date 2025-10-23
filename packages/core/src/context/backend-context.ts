@@ -12,7 +12,7 @@ import {
   type ContextMetadata,
   type EvaluationResult
 } from '../types/enhanced-context';
-import type { ValidationResult, EvaluationType } from '../types/base-types';
+import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/enhanced-core';
 
 // ============================================================================
@@ -112,6 +112,7 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<Backe
       }
     ],
     relatedContexts: ['frontendContext', 'universalContext'],
+    relatedExpressions: ['request', 'response', 'database', 'cache', 'service'],
     frameworkDependencies: ['nodejs', 'python', 'go'],
     environmentRequirements: {
       server: true,
@@ -411,8 +412,8 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<Backe
     };
   }
 
-  protected validateContextSpecific(data: BackendContextInput): ValidationResult {
-    const errors: Array<{ type: string; message: string; path?: string }> = [];
+  protected override validateContextSpecific(data: BackendContextInput): ValidationResult {
+    const errors: ValidationError[] = [];
     const suggestions: string[] = [];
 
     // Validate framework configuration
@@ -420,12 +421,11 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<Backe
       const supportedFrameworks = ['django', 'flask', 'express', 'fastapi', 'gin'];
       if (!supportedFrameworks.includes(data.framework.name)) {
         errors.push({
-          type: 'unsupported-framework',
+          type: 'validation-error',
           message: `Framework ${data.framework.name} is not supported`,
-          path: 'framework.name'
+          path: 'framework.name',
+          suggestions: [`Use one of: ${supportedFrameworks.join(', ')}`]
         });
-        suggestions.push(`Use one of: ${supportedFrameworks.join(', ')}`);
-      suggestions: []
       }
     }
 
@@ -433,11 +433,11 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<Backe
     if (data.services) {
       if (data.services.database && typeof data.services.database !== 'object') {
         errors.push({
-          type: 'invalid-service',
+          type: 'type-mismatch',
           message: 'Database service must be an object with query capabilities',
-          path: 'services.database'
+          path: 'services.database',
+          suggestions: ['Provide a database service object with query methods']
         });
-      suggestions: []
       }
     }
 
