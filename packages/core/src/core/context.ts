@@ -16,7 +16,6 @@ export function createContext(element?: HTMLElement | null): ExecutionContext {
     result: null,
     locals: new Map<string, any>(),
     globals: new Map<string, any>(),
-    parent: undefined,
     flags: {
       halted: false,
       breaking: false,

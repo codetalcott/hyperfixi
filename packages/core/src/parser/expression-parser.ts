@@ -163,8 +163,8 @@ function parseLogicalExpressionWithPrecedence(state: ParseState, minPrecedence: 
         operator,
         left,
         right,
-        start: left.start,
-        end: right.end
+        ...(left.start !== undefined && { start: left.start }),
+        ...(right.end !== undefined && { end: right.end })
       };
     } else {
       break;
@@ -215,7 +215,7 @@ function parseComparisonExpression(state: ParseState): ASTNode {
           type: 'unaryExpression',
           operator,
           operand: left,
-          start: left.start,
+          ...(left.start !== undefined && { start: left.start }),
           end: token.end
         };
       }
@@ -292,8 +292,8 @@ function parseArithmeticExpressionWithPrecedence(state: ParseState, minPrecedenc
         operator,
         left,
         right,
-        start: left.start,
-        end: right.end
+        ...(left.start !== undefined && { start: left.start }),
+        ...(right.end !== undefined && { end: right.end })
       };
     } else {
       break;

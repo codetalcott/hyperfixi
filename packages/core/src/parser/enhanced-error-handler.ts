@@ -44,8 +44,8 @@ export class EnhancedErrorHandler {
       line: currentToken.line,
       column: currentToken.column,
       context,
-      suggestion,
-      recovery
+      ...(suggestion && { suggestion }),
+      ...(recovery && { recovery })
     };
 
     this.errors.push(error);

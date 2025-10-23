@@ -78,7 +78,6 @@ export class HyperscriptParser {
       return {
         success: true,
         node: program,
-        error: undefined,
         tokens: this.tokens.list
       };
     } catch (error) {
@@ -92,7 +91,6 @@ export class HyperscriptParser {
 
       return {
         success: false,
-        node: undefined,
         error: parseError,
         tokens: this.tokens.list
       };
