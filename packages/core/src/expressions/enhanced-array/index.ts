@@ -34,11 +34,11 @@ export type ArrayLiteralInput = any; // Inferred from RuntimeValidator
 export const ArrayIndexInputSchema = v.tuple([
   v.unknown().describe('Array or array-like object to index'),
   v.union([
-    v.number().int().describe('Numeric index'),
+    v.number().describe('Numeric index'),
     v.string().describe('String index for object access'),
     v.object({
-      start: v.number().int().optional(),
-      end: v.number().int().optional()
+      start: v.number().optional(),
+      end: v.number().optional()
     }).strict().describe('Range object for slice operations')
   ]).describe('Index or range specification')
 ]);

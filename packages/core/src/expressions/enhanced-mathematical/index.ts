@@ -224,7 +224,7 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         };
       }
 
-      const { left, right } = parsed.data;
+      const { left, right } = parsed.data as { left: unknown; right: unknown };
 
       // Check if operands can be converted to numbers
       if (!this.isNumericValue(left)) {

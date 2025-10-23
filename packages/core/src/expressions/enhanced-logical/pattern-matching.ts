@@ -222,7 +222,7 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
       }
 
       // Additional validation for pattern
-      const { pattern } = parsed.data;
+      const { pattern } = parsed.data as { value: unknown; pattern: string | RegExp };
       
       if (typeof pattern === 'string') {
         // Validate CSS selector syntax if it looks like a selector

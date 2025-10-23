@@ -643,7 +643,7 @@ export class EnhancedCSSSelectorExpression implements TypedExpressionImplementat
       }
 
       // Additional validation
-      const { selector } = parsed.data;
+      const { selector } = parsed.data as { selector: string };
       
       if (!this.isValidCSSSelector(selector)) {
         return {

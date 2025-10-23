@@ -229,7 +229,7 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
         };
       }
 
-      const { property } = parsed.data;
+      const { property } = parsed.data as { property: string };
 
       // Validate property name
       if (property.trim() === '') {
@@ -480,7 +480,7 @@ export class EnhancedItsExpression implements BaseTypedExpression<HyperScriptVal
         };
       }
 
-      const { property } = parsed.data;
+      const { property } = parsed.data as { property: string };
 
       // Validate property name
       if (property.trim() === '') {
@@ -715,7 +715,7 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<string |
         };
       }
 
-      const { attribute } = parsed.data;
+      const { attribute } = parsed.data as { attribute: string };
 
       // Validate attribute name
       if (attribute.trim() === '') {
