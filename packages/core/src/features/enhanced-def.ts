@@ -5,9 +5,10 @@
  */
 
 import { v, z } from '../validation/lightweight-validators';
-import type { 
+import type {
   ValidationResult,
-  LLMDocumentation, 
+  ValidationError,
+  LLMDocumentation,
   EvaluationType,
   ExecutionContext
 } from '../types/base-types';
@@ -371,7 +372,7 @@ export class TypedDefFeatureImplementation {
       }
 
       const parsed = this.inputSchema.parse(input);
-      const errors: Array<{ type: string; message: string; path?: string }> = [];
+      const errors: ValidationError[] = [];
       const suggestions: string[] = [];
 
       // Enhanced validation logic
@@ -380,12 +381,12 @@ export class TypedDefFeatureImplementation {
       // Validate function name
       if (data.definition && !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(data.definition.name)) {
         errors.push({
-          type: 'invalid-function-name',
+          type: 'validation-error',
           message: 'Function name must be a valid JavaScript identifier',
-          path: 'definition.name'
+          path: 'definition.name',
+          suggestions: []
         });
         suggestions.push('Use valid JavaScript identifier for function name');
-      suggestions: []
       }
 
       // Validate parameters
@@ -393,12 +394,12 @@ export class TypedDefFeatureImplementation {
         data.definition.parameters.forEach((param: string, index: number) => {
           if (!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(param)) {
             errors.push({
-              type: 'invalid-parameter-name',
+              type: 'validation-error',
               message: `Parameter "${param}" must be a valid JavaScript identifier`,
-              path: `definition.parameters[${index}]`
+              path: `definition.parameters[${index}]`,
+              suggestions: []
             });
             suggestions.push('Use valid JavaScript identifiers for parameter names');
-          suggestions: []
           }
         });
 
@@ -406,59 +407,59 @@ export class TypedDefFeatureImplementation {
         const paramSet = new Set(data.definition.parameters);
         if (paramSet.size !== data.definition.parameters.length) {
           errors.push({
-            type: 'duplicate-parameters',
+            type: 'validation-error',
             message: 'Function parameters must be unique',
-            path: 'definition.parameters'
+            path: 'definition.parameters',
+            suggestions: []
           });
           suggestions.push('Remove duplicate parameter names');
-        suggestions: []
         }
 
         // Check parameter count limits
         if (data.definition.parameters.length > (data.options?.maxParameterCount || 20)) {
           errors.push({
-            type: 'too-many-parameters',
+            type: 'validation-error',
             message: `Function has too many parameters (max: ${data.options?.maxParameterCount || 20})`,
-            path: 'definition.parameters'
+            path: 'definition.parameters',
+            suggestions: []
           });
           suggestions.push('Reduce number of parameters or increase maxParameterCount limit');
-        suggestions: []
         }
       }
 
       // Validate function body
       if (data.definition?.body && data.definition.body.length === 0) {
         errors.push({
-          type: 'empty-function-body',
+          type: 'validation-error',
           message: 'Function body cannot be empty',
-          path: 'definition.body'
+          path: 'definition.body',
+          suggestions: []
         });
         suggestions.push('Add at least one command to the function body');
-      suggestions: []
       }
 
       // Validate catch block parameter
-      if (data.definition?.catchBlock && 
+      if (data.definition?.catchBlock &&
           !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(data.definition.catchBlock.parameter)) {
         errors.push({
-          type: 'invalid-catch-parameter',
+          type: 'validation-error',
           message: 'Catch block parameter must be a valid JavaScript identifier',
-          path: 'definition.catchBlock.parameter'
+          path: 'definition.catchBlock.parameter',
+          suggestions: []
         });
         suggestions.push('Use valid JavaScript identifier for catch parameter');
-      suggestions: []
       }
 
       // Validate namespace if provided
-      if (data.definition?.namespace && 
+      if (data.definition?.namespace &&
           !/^[a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(data.definition.namespace)) {
         errors.push({
-          type: 'invalid-namespace',
+          type: 'validation-error',
           message: 'Namespace must be a valid JavaScript identifier or dot-separated path',
-          path: 'definition.namespace'
+          path: 'definition.namespace',
+          suggestions: []
         });
         suggestions.push('Use valid namespace format (e.g., "myNamespace" or "my.nested.namespace")');
-      suggestions: []
       }
 
       return {
