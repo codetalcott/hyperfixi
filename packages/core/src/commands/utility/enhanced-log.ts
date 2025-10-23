@@ -69,12 +69,12 @@ export class EnhancedLogCommand implements TypedCommandImplementation<LogCommand
         data: validInput
       };
     } catch (error) {
-      if (error instanceof z.ZodError) {
+      if (error instanceof Error && error.name === 'ValidationError') {
         return {
           isValid: false,
           errors: [{
             code: 'VALIDATION_ERROR',
-            message: `Invalid LOG command input: ${error instanceof Error ? error.message : String(error)}`,
+            message: `Invalid LOG command input: ${error.message}`,
             path: '',
             severity: 'error' as const
           }],

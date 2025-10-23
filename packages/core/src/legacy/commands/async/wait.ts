@@ -12,7 +12,8 @@
  * Enhanced for LLM code agents with comprehensive validation
  */
 
-import { v, z } from '../../../validation/lightweight-validators';
+import { v } from '../../../validation/lightweight-validators';
+import type { ExecutionContext } from '../../../types/base-types';
 import type { 
   TypedCommandImplementation,
   TypedExecutionContext,

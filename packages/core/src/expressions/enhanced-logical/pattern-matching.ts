@@ -23,7 +23,7 @@ import type {
 
 const PatternMatchInputSchema = v.object({
   value: v.unknown().describe('Value to test against pattern'),
-  pattern: v.union([v.string(), z.instanceof(RegExp)]).describe('Pattern to match (string or regex)')
+  pattern: v.union([v.string(), v.instanceof(RegExp)]).describe('Pattern to match (string or regex)')
 }).strict();
 
 const ContainsInputSchema = v.object({
