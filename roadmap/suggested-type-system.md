@@ -1,5 +1,22 @@
 # Implementation Plan: Discriminated Union Type System
 
+**Status**: Strategic Long-Term Plan (Not Currently In Progress)
+**Created**: 2025-01-22
+**Last Updated**: 2025-01-23
+**Current Error Count**: 491 TypeScript errors (down from 650 baseline)
+
+## Overview
+
+This document outlines a **strategic long-term approach** to fundamentally improve HyperFixi's type system using discriminated unions. This addresses the root cause of many TypeScript errors related to the loose `ASTNode` interface.
+
+### Relationship to Current Work
+
+We are currently pursuing **tactical error reduction** (fixing errors incrementally) while preserving this discriminated union approach as the long-term architectural goal. See [TYPESCRIPT_STAGED_FIX_PLAN.md](TYPESCRIPT_STAGED_FIX_PLAN.md) for the staged tactical approach.
+
+**When to implement this plan**: After tactical fixes reduce errors to <100, or if we encounter architectural bottlenecks that require fundamental restructuring.
+
+---
+
 Phase 1: Type System Design (Foundation)
 1.1 Create Base Node Types Hierarchy
 // packages/core/src/types/ast-nodes.ts (NEW FILE)
