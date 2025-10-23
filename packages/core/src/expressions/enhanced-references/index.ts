@@ -690,14 +690,14 @@ export class EnhancedCSSSelectorExpression implements TypedExpressionImplementat
     }
   }
 
-  private getValidationSuggestion(errorCode: string, _path: (string | number)[]): string {
+  private getValidationSuggestion(errorCode: string, _path: (string | number)[]): string[] {
     const suggestions: Record<string, string> = {
       'too_small': 'CSS selector cannot be empty',
       'invalid_type': 'Selector must be a string',
       'required': 'CSS selector is required'
     };
-    
-    return suggestions[errorCode] || 'Check input format and types';
+
+    return [suggestions[errorCode] || 'Check input format and types'];
   }
 }
 
