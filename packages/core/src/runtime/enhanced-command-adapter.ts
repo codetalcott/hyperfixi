@@ -296,6 +296,7 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
       success: result.isValid,
       data: input,
       error: result.errors?.[0] ? {
+        type: result.errors[0].type || 'validation-error',
         message: result.errors[0].message,
         suggestions: result.suggestions
       } : undefined
