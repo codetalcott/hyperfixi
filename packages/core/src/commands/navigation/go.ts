@@ -226,7 +226,7 @@ export class GoCommand implements TypedCommandImplementation<
           errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestions: [this.getValidationSuggestion(err.code ?? 'unknown', err.path)]
+            suggestions: [this.getValidationSuggestion(err.code ?? 'unknown')]
           })) ?? [],
           suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>']
         };
@@ -307,7 +307,7 @@ export class GoCommand implements TypedCommandImplementation<
     }
   }
 
-  private getValidationSuggestion(errorCode: string, _path: (string | number)[]): string {
+  private getValidationSuggestion(errorCode: string): string {
     const suggestions: Record<string, string> = {
       'invalid_type': 'Use valid argument types for go command',
       'invalid_union': 'Use supported go command patterns',

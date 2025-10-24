@@ -636,7 +636,7 @@ export class EnhancedCSSSelectorExpression implements TypedExpressionImplementat
           errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid input: ${err.message}`,
-            suggestions: this.getValidationSuggestion(err.code ?? 'unknown', err.path)
+            suggestions: this.getValidationSuggestion(err.code ?? 'unknown')
           })) ?? [],
           suggestions: ['Provide valid CSS selector string', 'Check selector syntax']
         };
@@ -690,7 +690,7 @@ export class EnhancedCSSSelectorExpression implements TypedExpressionImplementat
     }
   }
 
-  private getValidationSuggestion(errorCode: string, _path: (string | number)[]): string[] {
+  private getValidationSuggestion(errorCode: string): string[] {
     const suggestions: Record<string, string> = {
       'too_small': 'CSS selector cannot be empty',
       'invalid_type': 'Selector must be a string',
