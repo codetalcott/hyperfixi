@@ -117,13 +117,13 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map((err: any) => ({
+          errors: parsed.error?.errors.map((err: any) => ({
             type: 'type-mismatch' as const,
             message: `Invalid ${this.category.toLowerCase()} context input: ${err.message}`,
             path: err.path?.join('.') || 'root',
             suggestions: []
-          })),
-          suggestions: this.generateValidationSuggestions(parsed.error)
+          })) || [],
+          suggestions: this.generateValidationSuggestions(parsed.error!)
         };
       }
 

@@ -126,8 +126,8 @@ export function wrapExpressionForPerformance(
       
       return evaluateExpressionWithCache(
         cacheKey,
-        () => expression.evaluate(context, ...args),
-        context
+        () => expression.evaluate(_context, ...args),
+        _context
       );
     }
   };

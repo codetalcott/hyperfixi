@@ -305,7 +305,7 @@ export class UnifiedValidator {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error.errors.map(err => ({
+          errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid input: ${err.message}`,
             suggestions: [
