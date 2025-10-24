@@ -301,7 +301,7 @@ export class HideCommand implements TypedCommandImplementation<
     }
   }
 
-  private getValidationSuggestion(errorCode: string, _path: (string | number)[]): string {
+  private getValidationSuggestion(errorCode: string): string {
     const suggestions: Record<string, string> = {
       'invalid_type': 'Use HTMLElement, string (CSS selector), or omit argument',
       'invalid_union': 'Target must be an element, CSS selector, or null',

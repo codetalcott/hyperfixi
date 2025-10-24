@@ -609,7 +609,7 @@ export class PutCommand implements TypedCommandImplementation<
     return content;
   }
 
-  private getValidationSuggestion(errorCode: string, _path: (string | number)[]): string {
+  private getValidationSuggestion(errorCode: string): string {
     const suggestions: Record<string, string> = {
       'invalid_type': 'Provide content, position keyword, and target element',
       'invalid_enum_value': 'Use valid position: into, before, after, at start of, at end of',

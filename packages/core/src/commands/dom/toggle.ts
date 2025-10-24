@@ -414,7 +414,7 @@ export class ToggleCommand implements TypedCommandImplementation<
     }
   }
 
-  private getValidationSuggestion(errorCode: string, _path: (string | number)[]): string {
+  private getValidationSuggestion(errorCode: string): string {
     const suggestions: Record<string, string> = {
       'invalid_type': 'Use string or string array for classes, HTMLElement or selector for target',
       'invalid_union': 'Classes must be string or string array, target must be element or selector',
