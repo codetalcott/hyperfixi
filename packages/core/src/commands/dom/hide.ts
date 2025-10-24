@@ -261,7 +261,7 @@ export class HideCommand implements TypedCommandImplementation<
           errors: parsed.error?.errors.map(err => ({
             type: 'type-mismatch' as const,
             message: `Invalid argument: ${err.message}`,
-            suggestions: [this.getValidationSuggestion(err.code ?? "unknown", err.path)]
+            suggestions: [this.getValidationSuggestion(err.code ?? "unknown")]
           })) ?? [],
           suggestions: ['Use HTMLElement, CSS selector string, or omit for implicit target']
         };

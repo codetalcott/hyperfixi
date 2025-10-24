@@ -115,7 +115,7 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
         const errors = result.error?.errors.map(err => ({
           type: 'validation-error' as const,
           message: `${Array.isArray(err.path) ? err.path.join('.') : ''}: ${err.message}`,
-          suggestions: this.generateSuggestions(err.code ?? 'unknown', err.path ?? [])
+          suggestions: this.generateSuggestions(err.code ?? 'unknown', (Array.isArray(err.path) ? err.path : []) as (string | number)[])
         })) ?? [];
 
         const suggestions = errors.flatMap(err => err.suggestions);
