@@ -15,7 +15,7 @@ export const meExpression: ExpressionImplementation = {
   evaluatesTo: 'Element',
   
   async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
-    return context.me;
+    return context.me instanceof HTMLElement ? context.me : null;
   },
   
   validate() {
@@ -27,9 +27,9 @@ export const youExpression: ExpressionImplementation = {
   name: 'you',
   category: 'Reference',
   evaluatesTo: 'Element',
-  
+
   async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
-    return context.you;
+    return context.you instanceof HTMLElement ? context.you : null;
   },
   
   validate() {
@@ -89,11 +89,12 @@ export const querySelectorExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Element',
   
-  async evaluate(_context: ExecutionContext, selector: string): Promise<HTMLElement | null> {
+  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
+    const [selector] = args;
     if (typeof selector !== 'string') {
       throw new Error('querySelector requires a string selector');
     }
-    
+
     // Always search from document to find any element
     // This matches hyperscript's behavior where selectors are global by default
     return document.querySelector(selector) as HTMLElement | null;

@@ -304,7 +304,8 @@ export const asExpression: ExpressionImplementation = {
   associativity: 'Left',
   operators: ['as'],
   
-  async evaluate(context: ExecutionContext, value: unknown, type: string): Promise<unknown> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
+    const [value, type] = args;
     if (typeof type !== 'string') {
       throw new Error('Conversion type must be a string');
     }
@@ -380,7 +381,8 @@ export const isExpression: ExpressionImplementation = {
   associativity: 'Left',
   operators: ['is a', 'is an'],
   
-  async evaluate(_context: ExecutionContext, value: unknown, type: string): Promise<boolean> {
+  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<boolean> {
+    const [value, type] = args;
     if (typeof type !== 'string') {
       throw new Error('Type check requires a string type');
     }

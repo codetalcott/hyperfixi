@@ -116,11 +116,12 @@ export const atExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['at'],
   
-  async evaluate(context: ExecutionContext, index: number, collection?: any): Promise<any> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<any> {
+    const [index, collection] = args;
     if (typeof index !== 'number') {
       throw new Error('Index must be a number');
     }
-    
+
     // If no collection provided, use context.it
     const target = collection !== undefined ? collection : context.it;
     
@@ -184,20 +185,21 @@ export const nextExpression: ExpressionImplementation = {
   evaluatesTo: 'Element',
   operators: ['next'],
   
-  async evaluate(context: ExecutionContext, selector?: string, fromElement?: HTMLElement): Promise<HTMLElement | null> {
-    const startElement = fromElement || context.me;
-    
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
+    const [selector, fromElement] = args;
+    const startElement = (fromElement as HTMLElement | undefined) || context.me;
+
     if (!startElement || !(startElement instanceof Element)) {
       return null;
     }
-    
+
     // If no selector provided, just get the next sibling element
     if (!selector) {
       return startElement.nextElementSibling as HTMLElement | null;
     }
-    
+
     // Find next element matching selector in DOM tree
-    return findNextElementInDOM(startElement, selector);
+    return findNextElementInDOM(startElement, selector as string);
   },
   
   validate(args: any[]): string | null {
@@ -219,21 +221,22 @@ export const previousExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Element',
   operators: ['previous', 'prev'],
-  
-  async evaluate(context: ExecutionContext, selector?: string, fromElement?: HTMLElement): Promise<HTMLElement | null> {
-    const startElement = fromElement || context.me;
-    
+
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
+    const [selector, fromElement] = args;
+    const startElement = (fromElement as HTMLElement | undefined) || context.me;
+
     if (!startElement || !(startElement instanceof Element)) {
       return null;
     }
-    
+
     // If no selector provided, just get the previous sibling element
     if (!selector) {
       return startElement.previousElementSibling as HTMLElement | null;
     }
-    
+
     // Find previous element matching selector in DOM tree
-    return findPreviousElementInDOM(startElement, selector);
+    return findPreviousElementInDOM(startElement, selector as string);
   },
   
   validate(args: any[]): string | null {
@@ -319,26 +322,22 @@ export const nextWithinExpression: ExpressionImplementation = {
   evaluatesTo: 'Element',
   operators: ['next within'],
   
-  async evaluate(
-    context: ExecutionContext, 
-    selector: string, 
-    withinSelector: string, 
-    fromElement?: HTMLElement
-  ): Promise<HTMLElement | null> {
-    const startElement = fromElement || context.me;
-    
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
+    const [selector, withinSelector, fromElement] = args;
+    const startElement = (fromElement as HTMLElement | undefined) || context.me;
+
     if (!startElement || !(startElement instanceof Element)) {
       return null;
     }
-    
+
     // Find the container element
-    const container = startElement.closest(withinSelector);
+    const container = startElement.closest(withinSelector as string);
     if (!container) {
       return null;
     }
-    
+
     // Find next element within the container
-    return findNextElementWithinContainer(startElement, selector, container);
+    return findNextElementWithinContainer(startElement, selector as string, container);
   },
   
   validate(args: any[]): string | null {
@@ -363,27 +362,23 @@ export const previousWithinExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Element',
   operators: ['previous within'],
-  
-  async evaluate(
-    context: ExecutionContext, 
-    selector: string, 
-    withinSelector: string, 
-    fromElement?: HTMLElement
-  ): Promise<HTMLElement | null> {
-    const startElement = fromElement || context.me;
-    
+
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
+    const [selector, withinSelector, fromElement] = args;
+    const startElement = (fromElement as HTMLElement | undefined) || context.me;
+
     if (!startElement || !(startElement instanceof Element)) {
       return null;
     }
-    
+
     // Find the container element
-    const container = startElement.closest(withinSelector);
+    const container = startElement.closest(withinSelector as string);
     if (!container) {
       return null;
     }
-    
+
     // Find previous element within the container
-    return findPreviousElementWithinContainer(startElement, selector, container);
+    return findPreviousElementWithinContainer(startElement, selector as string, container);
   },
   
   validate(args: any[]): string | null {

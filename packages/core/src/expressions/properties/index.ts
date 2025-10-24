@@ -15,7 +15,8 @@ export const possessiveExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ["'s", 's'],
   
-  async evaluate(_context: ExecutionContext, element: any, property: string): Promise<any> {
+  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<any> {
+    const [element, property] = args;
     if (element == null) {
       return undefined;
     }
@@ -55,7 +56,8 @@ export const myExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['my'],
   
-  async evaluate(context: ExecutionContext, property: string): Promise<any> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<any> {
+    const [property] = args;
     if (!context.me) {
       return undefined;
     }
@@ -95,7 +97,8 @@ export const itsExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['its'],
   
-  async evaluate(context: ExecutionContext, property: string): Promise<any> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<any> {
+    const [property] = args;
     if (context.it == null) {
       return undefined;
     }
@@ -137,7 +140,8 @@ export const yourExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['your'],
   
-  async evaluate(context: ExecutionContext, property: string): Promise<any> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<any> {
+    const [property] = args;
     if (!context.you) {
       return undefined;
     }
@@ -181,7 +185,8 @@ export const ofExpression: ExpressionImplementation = {
   evaluatesTo: 'Any',
   operators: ['of'],
   
-  async evaluate(_context: ExecutionContext, property: string, object: any): Promise<any> {
+  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<any> {
+    const [property, object] = args;
     if (object == null) {
       return undefined;
     }
@@ -225,7 +230,8 @@ export const attributeExpression: ExpressionImplementation = {
   evaluatesTo: 'String',
   operators: ['@'],
   
-  async evaluate(context: ExecutionContext, attributeName: string, element?: HTMLElement): Promise<string | null> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<string | null> {
+    const [attributeName, element] = args;
     if (typeof attributeName !== 'string') {
       throw new Error('Attribute name must be a string');
     }
@@ -258,7 +264,8 @@ export const attributeWithValueExpression: ExpressionImplementation = {
   evaluatesTo: 'Boolean',
   operators: ['@='],
   
-  async evaluate(context: ExecutionContext, attributeName: string, expectedValue: string, element?: HTMLElement): Promise<boolean> {
+  async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<boolean> {
+    const [attributeName, expectedValue, element] = args;
     if (typeof attributeName !== 'string') {
       throw new Error('Attribute name must be a string');
     }
@@ -303,7 +310,8 @@ export const classReferenceExpression: ExpressionImplementation = {
   evaluatesTo: 'Array',
   operators: ['.'],
   
-  async evaluate(_context: ExecutionContext, className: string): Promise<HTMLElement[]> {
+  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement[]> {
+    const [className] = args;
     if (typeof className !== 'string') {
       throw new Error('Class name must be a string');
     }
@@ -337,7 +345,8 @@ export const idReferenceExpression: ExpressionImplementation = {
   evaluatesTo: 'Element',
   operators: ['#'],
   
-  async evaluate(_context: ExecutionContext, idValue: string): Promise<HTMLElement | null> {
+  async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
+    const [idValue] = args;
     if (typeof idValue !== 'string') {
       throw new Error('ID value must be a string');
     }
