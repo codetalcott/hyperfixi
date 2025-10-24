@@ -108,7 +108,7 @@ export class EnhancedSetCommand implements TypedCommandImplementation<
           isValid: true,
           errors: [],
           suggestions: [],
-          data: result.data
+          data: result.data as SetCommandInput
         };
       } else {
         // Convert Zod errors to our format

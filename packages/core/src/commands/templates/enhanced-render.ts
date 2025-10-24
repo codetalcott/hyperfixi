@@ -105,7 +105,7 @@ export class EnhancedRenderCommand implements TypedCommandImplementation<
           isValid: true,
           errors: [],
           suggestions: [],
-          data: result.data
+          data: result.data as RenderCommandInput
         };
       } else {
         // Convert Zod errors to our format
@@ -209,7 +209,7 @@ export class EnhancedRenderCommand implements TypedCommandImplementation<
     if (typeof template === 'string' && !template.includes('<') && !template.startsWith('#') && !template.startsWith('.')) {
       // This might be a variable name, try to resolve it from context
       const resolvedTemplate = this.resolveVariable(template, context);
-      if (resolvedTemplate) {
+      if (resolvedTemplate && (typeof resolvedTemplate === 'string' || resolvedTemplate instanceof HTMLTemplateElement)) {
         template = resolvedTemplate;
       }
     }

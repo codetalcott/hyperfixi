@@ -156,7 +156,7 @@ export class AsyncCommandExecutor {
       
       return {
         success: true,
-        value: result,
+        value: result as T,
         executionTime,
         retryCount: options.retryCount || 0,
         context: {

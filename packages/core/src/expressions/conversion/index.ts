@@ -147,7 +147,7 @@ export const defaultConversions: Record<string, ConversionFunction> = {
   },
 
   // Form value conversions
-  Values: (value: unknown, _context: ExecutionContext) => {
+  Values: (value: unknown, _context?: ExecutionContext) => {
     if (value instanceof HTMLFormElement) {
       return getFormValuesProcessed(value);
     }
@@ -166,12 +166,12 @@ export const defaultConversions: Record<string, ConversionFunction> = {
     return {};
   },
 
-  'Values:Form': (value: unknown, context: ExecutionContext) => {
+  'Values:Form': (value: unknown, context?: ExecutionContext) => {
     const values = defaultConversions.Values(value, context);
     return new URLSearchParams(values as Record<string, string>).toString();
   },
 
-  'Values:JSON': (value: unknown, context: ExecutionContext) => {
+  'Values:JSON': (value: unknown, context?: ExecutionContext) => {
     const values = defaultConversions.Values(value, context);
     return JSON.stringify(values);
   },

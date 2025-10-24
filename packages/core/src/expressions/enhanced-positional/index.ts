@@ -15,6 +15,7 @@ import type {
   TypedExpressionImplementation,
   EvaluationResult
 } from '../../types/base-types';
+import { evaluationToHyperScriptType } from '../../types/base-types';
 import type { ExpressionCategory } from '../../types/enhanced-expressions';
 
 // ============================================================================
@@ -150,7 +151,7 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
       return {
         success: true,
         value: result,
-        type: this.inferResultType(result)
+        type: evaluationToHyperScriptType[this.inferResultType(result)]
       };
 
     } catch (error) {
@@ -355,7 +356,7 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
       return {
         success: true,
         value: result,
-        type: this.inferResultType(result)
+        type: evaluationToHyperScriptType[this.inferResultType(result)]
       };
 
     } catch (error) {
@@ -574,7 +575,7 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
       return {
         success: true,
         value: result,
-        type: this.inferResultType(result)
+        type: evaluationToHyperScriptType[this.inferResultType(result)]
       };
 
     } catch (error) {
@@ -804,7 +805,7 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
       return {
         success: true,
         value: result,
-        type: this.inferResultType(result)
+        type: evaluationToHyperScriptType[this.inferResultType(result)]
       };
 
     } catch (error) {

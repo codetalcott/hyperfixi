@@ -61,12 +61,12 @@ export class EnhancedExpressionAdapter {
   static async evaluateMe(context: ExecutionContext): Promise<HTMLElement | null> {
     const typedContext = createTypedExpressionContext(context);
     const result = await enhancedReferenceExpressions.me.evaluate(typedContext, undefined);
-    
+
     if (result.success) {
-      return result.value;
+      return (result.value as HTMLElement) || null;
     } else {
       console.warn('Enhanced me expression failed:', result.error);
-      return context.me; // Fallback to legacy behavior
+      return context.me || null; // Fallback to legacy behavior
     }
   }
 
@@ -76,12 +76,12 @@ export class EnhancedExpressionAdapter {
   static async evaluateYou(context: ExecutionContext): Promise<HTMLElement | null> {
     const typedContext = createTypedExpressionContext(context);
     const result = await enhancedReferenceExpressions.you.evaluate(typedContext, undefined);
-    
-    if (result.success) {
+
+    if (result.success && result.value instanceof HTMLElement) {
       return result.value;
     } else {
       console.warn('Enhanced you expression failed:', result.error);
-      return context.you; // Fallback to legacy behavior
+      return (context.you instanceof HTMLElement ? context.you : null); // Fallback to legacy behavior
     }
   }
 

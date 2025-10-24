@@ -13,6 +13,7 @@ import type {
   LLMDocumentation,
   EvaluationResult
 } from '../../types/base-types';
+import { evaluationToHyperScriptType } from '../../types/base-types';
 import type { ExpressionCategory } from '../../types/enhanced-expressions';
 
 // ============================================================================
@@ -162,7 +163,7 @@ export class EnhancedPossessiveExpression implements BaseTypedExpression<Propert
       return {
         success: true,
         value: result,
-        type: this.inferResultType(result)
+        type: evaluationToHyperScriptType[this.inferResultType(result)]
       };
 
     } catch (error) {
@@ -960,7 +961,7 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<Attribut
       return {
         success: true,
         value: result,
-        type: result === null ? 'Null' : 'String'
+        type: result === null ? 'null' : 'string'
       };
 
     } catch (error) {

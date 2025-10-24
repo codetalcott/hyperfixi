@@ -33,7 +33,7 @@ export interface MinimalHyperscriptAPI {
    * Compile hyperscript code to AST
    * @param code - The hyperscript code to compile
    */
-  compile(code: string): MinimalCompilationResult;
+  compile(code: string): Promise<MinimalCompilationResult>;
 
   /**
    * Execute pre-compiled AST
@@ -44,11 +44,9 @@ export interface MinimalHyperscriptAPI {
 
   /**
    * Create an execution context
-   * @param element - The DOM element for 'me' context
-   * @param you - Optional 'you' element
-   * @param it - Optional 'it' value
+   * @param element - The DOM element for 'me' context (optional)
    */
-  createContext(element: Element, you?: Element, it?: unknown): ExecutionContext;
+  createContext(element?: HTMLElement | null): ExecutionContext;
 
   /**
    * Process hyperscript attributes on DOM elements

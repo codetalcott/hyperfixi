@@ -140,16 +140,16 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
    */
   async validate(args: unknown[]): Promise<ValidationResult> {
     try {
-      const validatedArgs = this.inputSchema.parse(args);
+      const validatedArgs = this.inputSchema.parse(args) as unknown[];
       const issues: ValidationError[] = [];
-      
+
       // Check if this is a constructor call
       const isConstructorCall = validatedArgs[0] === 'new';
-      
+
       if (isConstructorCall) {
         // Constructor call validation
         const constructorName = validatedArgs[1] as string;
-        const constructorArgs = validatedArgs.length > 2 ? validatedArgs[2] : [];
+        const constructorArgs = validatedArgs.length > 2 ? (validatedArgs[2] as unknown[]) : [];
         
         if (!constructorName || constructorName.trim().length === 0) {
           issues.push({ type: 'validation-error', message: 'Constructor name cannot be empty', suggestions: [] });
@@ -168,7 +168,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
       } else {
         // Regular function call validation
         const functionReference = validatedArgs[0];
-        const functionArgs = validatedArgs.length > 1 ? validatedArgs[1] : [];
+        const functionArgs = validatedArgs.length > 1 ? (validatedArgs[1] as unknown[]) : [];
         
         // Validate function reference
         if (typeof functionReference === 'string') {
@@ -250,21 +250,21 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         };
       }
 
-      const parsedArgs = this.inputSchema.parse(args);
-      
+      const parsedArgs = this.inputSchema.parse(args) as unknown[];
+
       // Check if this is a constructor call
       const isConstructorCall = parsedArgs[0] === 'new';
-      
+
       if (isConstructorCall) {
         // Handle constructor call: ['new', constructorName, args?]
         const constructorName = parsedArgs[1] as string;
-        const constructorArgs = parsedArgs.length > 2 ? parsedArgs[2] : [];
-        
+        const constructorArgs = parsedArgs.length > 2 ? (parsedArgs[2] as unknown[]) : [];
+
         return await this.executeConstructor(constructorName, constructorArgs, context);
       } else {
         // Handle regular function call: [functionReference, args?]
         const functionReference = parsedArgs[0];
-        const functionArgs = parsedArgs.length > 1 ? parsedArgs[1] : [];
+        const functionArgs = parsedArgs.length > 1 ? (parsedArgs[1] as unknown[]) : [];
 
         // Resolve the function to call
         const resolvedFunction = await this.resolveFunction(functionReference, context);
