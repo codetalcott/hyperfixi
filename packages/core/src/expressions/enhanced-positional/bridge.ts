@@ -66,7 +66,7 @@ export class EnhancedPositionalAdapter {
     if (result.success) {
       return result.value;
     } else {
-      console.warn('Enhanced first expression failed:', result.errors);
+      console.warn('Enhanced first expression failed:', result.error);
       // Return null when enhanced expression fails
       return null;
     }
@@ -284,7 +284,7 @@ export class PositionalUtilities {
         return {
           success: false,
           value: fallback !== undefined ? fallback : null,
-          error: result.errors
+          error: result.error
         };
       }
     } catch (error) {
@@ -319,7 +319,7 @@ export class PositionalUtilities {
         return {
           success: false,
           value: fallback !== undefined ? fallback : null,
-          error: result.errors
+          error: result.error
         };
       }
     } catch (error) {
@@ -355,7 +355,7 @@ export class PositionalUtilities {
         return {
           success: false,
           value: fallback !== undefined ? fallback : null,
-          error: result.errors
+          error: result.error
         };
       }
     } catch (error) {

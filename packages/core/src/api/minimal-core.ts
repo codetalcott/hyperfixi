@@ -77,7 +77,7 @@ async function compile(code: string): Promise<MinimalCompilationResult> {
     } else {
       return {
         success: false,
-        errors: parseResult.errors || []
+        errors: parseResult.error ? [parseResult.error] : []
       };
     }
   } catch (error) {

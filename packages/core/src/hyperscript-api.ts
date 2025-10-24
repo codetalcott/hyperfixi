@@ -109,7 +109,7 @@ export function createHyperscriptAPI(): HyperscriptAPI {
       if (result.success) {
         return result.result;
       } else {
-        throw new Error(`Parse error: ${result.errors.map((e: { message: string }) => e.message).join('; ')}`);
+        throw new Error(`Parse error: ${result.error?.message || 'Unknown parse error'}`);
       }
     },
 
