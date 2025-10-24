@@ -458,10 +458,10 @@ export class Parser {
       name: identifierNode.name,
       args: args as ExpressionNode[],
       isBlocking: false,
-      start: identifierNode.start,
+      ...(identifierNode.start !== undefined && { start: identifierNode.start }),
       end: this.getPosition().end,
-      line: identifierNode.line,
-      column: identifierNode.column
+      ...(identifierNode.line !== undefined && { line: identifierNode.line }),
+      ...(identifierNode.column !== undefined && { column: identifierNode.column })
     };
   }
 
@@ -1196,10 +1196,10 @@ export class Parser {
       name: identifierNode.name,
       args: args as ExpressionNode[],
       isBlocking: false,
-      start: identifierNode.start,
+      ...(identifierNode.start !== undefined && { start: identifierNode.start }),
       end: this.getPosition().end,
-      line: identifierNode.line,
-      column: identifierNode.column
+      ...(identifierNode.line !== undefined && { line: identifierNode.line }),
+      ...(identifierNode.column !== undefined && { column: identifierNode.column })
     };
   }
 
@@ -1228,10 +1228,10 @@ export class Parser {
       name: identifierNode.name,
       args: args as ExpressionNode[],
       isBlocking: false,
-      start: identifierNode.start,
+      ...(identifierNode.start !== undefined && { start: identifierNode.start }),
       end: this.getPosition().end,
-      line: identifierNode.line,
-      column: identifierNode.column
+      ...(identifierNode.line !== undefined && { line: identifierNode.line }),
+      ...(identifierNode.column !== undefined && { column: identifierNode.column })
     };
   }
 
@@ -1260,10 +1260,10 @@ export class Parser {
       name: identifierNode.name,
       args: args as ExpressionNode[],
       isBlocking: false,
-      start: identifierNode.start,
+      ...(identifierNode.start !== undefined && { start: identifierNode.start }),
       end: this.getPosition().end,
-      line: identifierNode.line,
-      column: identifierNode.column
+      ...(identifierNode.line !== undefined && { line: identifierNode.line }),
+      ...(identifierNode.column !== undefined && { column: identifierNode.column })
     };
   }
 
@@ -1298,10 +1298,10 @@ export class Parser {
       name: identifierNode.name,
       args: args as ExpressionNode[],
       isBlocking: false,
-      start: identifierNode.start,
+      ...(identifierNode.start !== undefined && { start: identifierNode.start }),
       end: this.getPosition().end,
-      line: identifierNode.line,
-      column: identifierNode.column
+      ...(identifierNode.line !== undefined && { line: identifierNode.line }),
+      ...(identifierNode.column !== undefined && { column: identifierNode.column })
     };
   }
 
