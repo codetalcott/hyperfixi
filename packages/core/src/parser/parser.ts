@@ -1765,10 +1765,10 @@ export class Parser {
           } else if (expr && expr.type === 'binaryExpression' && (expr as BinaryExpressionNode).operator === ' ') {
             // Handle "command target" patterns
             const binExpr = expr as BinaryExpressionNode;
-            if (binExpr.left && binExpr.left.type === 'identifier' && this.isCommand(binExpr.left.name)) {
+            if (binExpr.left && binExpr.left.type === 'identifier' && this.isCommand((binExpr.left as any).name)) {
               const commandNode: CommandNode = {
                 type: 'command',
-                name: binExpr.left.name,
+                name: (binExpr.left as any).name,
                 args: [binExpr.right],
                 isBlocking: false,
                 start: expr.start,

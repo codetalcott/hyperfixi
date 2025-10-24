@@ -1009,11 +1009,11 @@ export class Runtime {
    * Execute an event handler node (on click, on change, etc.)
    */
   private async executeEventHandler(node: EventHandlerNode, context: ExecutionContext): Promise<void> {
-    const { event, commands, selector } = node;
-    
+    const { event, commands, target } = node;
+
     // Determine target element(s)
-    const targets = selector 
-      ? this.queryElements(selector, context)
+    const targets = target
+      ? this.queryElements(target, context)
       : context.me ? [context.me] : [];
     
     if (targets.length === 0) {

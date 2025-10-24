@@ -66,8 +66,7 @@ const runtime = new MinimalRuntime({ debug: false });
  */
 async function compile(code: string): Promise<MinimalCompilationResult> {
   try {
-    const tokens = tokenize(code);
-    const parseResult = parse(tokens);
+    const parseResult = parse(code);
     
     if (parseResult.success && parseResult.ast) {
       return {
