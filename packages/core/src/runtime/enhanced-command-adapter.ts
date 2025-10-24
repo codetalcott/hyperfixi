@@ -341,7 +341,7 @@ export class EnhancedCommandRegistry {
   /**
    * Register an enhanced command
    */
-  register<TInput, TOutput, TContext extends TypedExecutionContext>(
+  register(
     impl: any
   ): void {
     const adapter = new EnhancedCommandAdapter(impl);

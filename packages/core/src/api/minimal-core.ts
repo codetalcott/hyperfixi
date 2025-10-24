@@ -6,7 +6,6 @@
  */
 
 import { parse } from '../parser/parser';
-import { tokenize } from '../parser/tokenizer';
 import { MinimalRuntime } from '../runtime/minimal-runtime';
 import { createContext } from '../core/context';
 import type { ASTNode, ExecutionContext, ParseError } from '../types/base-types';

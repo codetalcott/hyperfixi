@@ -20,7 +20,6 @@ import type {
   ValidationError,
   TypedResult,
   HyperScriptValueType,
-  EvaluationType,
   EvaluationResult,
   TypedExecutionContext
 } from './base-types';

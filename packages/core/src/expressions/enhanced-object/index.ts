@@ -202,8 +202,10 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
         if (!resolvedValue.success) {
           return resolvedValue as EvaluationResult<Record<string, HyperScriptValue>>;
         }
-        
-        resultObject[keyResult.value] = resolvedValue.value;
+
+        if (keyResult.value !== undefined) {
+          resultObject[keyResult.value] = resolvedValue.value;
+        }
       }
 
       return {

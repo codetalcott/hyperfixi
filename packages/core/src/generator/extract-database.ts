@@ -3,6 +3,7 @@
  * This generates TypeScript code and test cases from the comprehensive language database
  */
 
+// @ts-ignore - better-sqlite3 types not available
 import Database from 'better-sqlite3';
 import { writeFileSync, existsSync, copyFileSync } from 'fs';
 import { join, dirname } from 'path';
