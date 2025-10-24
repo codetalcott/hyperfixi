@@ -267,7 +267,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         const functionArgs = parsedArgs.length > 1 ? (parsedArgs[1] as unknown[]) : [];
 
         // Resolve the function to call
-        const resolvedFunction = await this.resolveFunction(functionReference, context);
+        const resolvedFunction = await this.resolveFunction(functionReference as string | Function, context);
         if (!resolvedFunction.success || !resolvedFunction.value) {
           return resolvedFunction;
         }
