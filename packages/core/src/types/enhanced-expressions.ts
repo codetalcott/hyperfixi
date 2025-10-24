@@ -174,7 +174,7 @@ export interface ExpressionValidationError {
 /**
  * Enhanced validation result for expressions
  */
-export interface ExpressionValidationResult extends ValidationResult {
+export interface ExpressionValidationResult extends ValidationResult<unknown> {
   errors: ExpressionValidationError[];
   warnings?: ExpressionValidationError[];
   suggestions: string[];
