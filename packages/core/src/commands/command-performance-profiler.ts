@@ -591,10 +591,5 @@ ${stat.commandName}:
 // Export singleton instance
 export const performanceProfiler = new CommandPerformanceProfiler();
 
-// Export for testing
-export {
-  CommandPerformanceMetrics,
-  CommandPerformanceStats,
-  PerformanceBottleneck,
-  OptimizationSuggestion
-};
+// Note: CommandPerformanceMetrics, CommandPerformanceStats, PerformanceBottleneck, and
+// OptimizationSuggestion are already exported via 'export interface' declarations above

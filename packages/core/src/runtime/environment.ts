@@ -3,12 +3,13 @@
  * Provides unified APIs across Node.js, Deno, and browsers
  */
 
-// Ambient type declaration for Deno global (when available)
+// Ambient type declaration for Deno global (when available at runtime)
+// Note: Not marked as optional because typeof checks ensure it exists before access
 declare const Deno: {
   version: { deno: string };
   build: { os: string };
   readTextFile: (path: string) => Promise<string>;
-} | undefined;
+};
 
 // ============================================================================
 // Environment Detection
