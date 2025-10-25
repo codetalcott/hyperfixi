@@ -293,13 +293,11 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
     // Use the command's validate method - pass input directly since commands expect tuple format
     const result = this.impl.validate(input);
     return {
-      success: result.isValid,
+      isValid: result.isValid,
+      errors: result.errors || [],
+      suggestions: result.suggestions || [],
       data: input,
-      error: result.errors?.[0] ? {
-        type: result.errors[0].type || 'validation-error',
-        message: result.errors[0].message,
-        suggestions: result.suggestions
-      } : undefined
+      error: result.errors?.[0]
     };
   }
 
@@ -392,12 +390,13 @@ export class EnhancedCommandRegistry {
     const adapter = this.getAdapter(name);
     if (!adapter) {
       return {
-        success: false,
-        error: {
+        isValid: false,
+        errors: [{
           type: 'runtime-error',
           message: `Unknown command: ${name}`,
           suggestions: [`Available commands: ${this.getCommandNames().join(', ')}`]
-        }
+        }],
+        suggestions: [`Available commands: ${this.getCommandNames().join(', ')}`]
       };
     }
 

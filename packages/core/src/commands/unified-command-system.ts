@@ -120,6 +120,9 @@ export class CommandContextManager {
       broke: false,
       continued: false,
       async: false,
+      expressionStack: [],
+      evaluationDepth: 0,
+      validationMode: 'strict',
       evaluationHistory: []
     };
   }

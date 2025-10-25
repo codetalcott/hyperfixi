@@ -198,10 +198,16 @@ export function createTypedExecutionContext(options: {
     locals: options.locals || new Map(),
     globals: options.globals || new Map(),
     variables: options.variables || new Map(),
-    
+
     // Result handling
     result: null,
-    
+
+    // TypedExecutionContext properties
+    expressionStack: [],
+    evaluationDepth: 0,
+    validationMode: 'strict',
+    evaluationHistory: [],
+
     // Execution metadata
     meta: {
       startTime: Date.now(),
