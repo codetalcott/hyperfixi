@@ -48,7 +48,7 @@ function trackEvaluation<T>(
       timestamp: startTime,
       duration: Date.now() - startTime,
       success,
-      error
+      ...(error !== undefined && { error })
     });
   }
   return result;

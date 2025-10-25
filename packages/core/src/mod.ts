@@ -3,6 +3,9 @@
  * Works in Node.js, Deno, and browsers
  */
 
+// Ambient type declaration for Deno global (when available)
+declare const Deno: unknown;
+
 // ============================================================================
 // Core Types and Interfaces
 // ============================================================================

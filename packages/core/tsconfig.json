@@ -57,7 +57,9 @@
     "dist",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "src/legacy/**/*"
+    "src/legacy/**/*",
+    "src/deno-mod.ts",
+    "src/examples/deno-*.ts"
   ],
   
   "ts-node": {
