@@ -185,8 +185,10 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
           success: false,
           error: {
             name: 'InvalidContainerError',
+            type: 'type-mismatch',
             message: `Unsupported container type: ${typeof container}`,
-            code: 'INVALID_CONTAINER_TYPE'
+            code: 'INVALID_CONTAINER_TYPE',
+            suggestions: ['Use an array, object, or DOM element as container']
           },
           type: 'error'
         };
