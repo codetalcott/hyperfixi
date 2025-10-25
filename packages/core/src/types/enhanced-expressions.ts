@@ -178,10 +178,7 @@ export interface ExpressionValidationResult extends ValidationResult<unknown> {
   errors: ExpressionValidationError[];
   warnings?: ExpressionValidationError[];
   suggestions: string[];
-  performance?: {
-    estimatedTime: number;
-    complexity: string;
-  };
+  // performance inherited from ValidationResult<unknown> (PerformanceCharacteristics type)
 }
 
 /**

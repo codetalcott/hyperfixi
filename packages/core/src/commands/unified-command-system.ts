@@ -9,7 +9,10 @@ import type {
 } from '../types/core';
 
 // Import all enhanced commands
-import { enhancedCommandRegistry } from './enhanced-command-registry';
+import { createAllEnhancedCommands } from './enhanced-command-registry';
+
+// Create the command registry
+const enhancedCommandRegistry = createAllEnhancedCommands();
 
 // Import performance profiler
 import { performanceProfiler } from './command-performance-profiler';

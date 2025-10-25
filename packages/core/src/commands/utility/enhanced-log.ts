@@ -38,7 +38,20 @@ export interface LogCommandOutput {
 export class EnhancedLogCommand implements TypedCommandImplementation<LogCommandInputType, LogCommandOutput, TypedExecutionContext> {
   name = 'log' as const;
   inputSchema = LogCommandInputSchema;
-  
+
+  metadata = {
+    name: 'log',
+    description: 'Log values to the console',
+    examples: ['log "message"', 'log variable', 'log value1 value2 value3'],
+    syntax: 'log <values...>',
+    category: 'utility',
+    version: '1.0.0'
+  };
+
+  validation = {
+    validate: (input: unknown) => this.validate(input)
+  };
+
   async execute(
     input: LogCommandInputType,
     _context: TypedExecutionContext
