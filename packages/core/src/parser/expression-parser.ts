@@ -1920,9 +1920,9 @@ async function evaluatePositionalExpression(node: any, context: ExecutionContext
   
   // Get the appropriate positional expression implementation
   if (operator === 'first') {
-    return positionalExpressions.first.evaluate(context, collection);
+    return positionalExpressions.first.evaluate(context as any, collection);
   } else if (operator === 'last') {
-    return positionalExpressions.last.evaluate(context, collection);
+    return positionalExpressions.last.evaluate(context as any, collection);
   } else {
     throw new ExpressionParseError(`Unknown positional operator: ${operator}`);
   }

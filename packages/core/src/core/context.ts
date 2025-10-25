@@ -213,7 +213,7 @@ export function restoreContext(
     });
   }
 
-  if (snapshot.flags) {
+  if (snapshot.flags && context.flags) {
     Object.assign(context.flags, snapshot.flags);
   }
 }
@@ -236,9 +236,11 @@ export function cloneContext(context: ExecutionContext): ExecutionContext {
   // Share globals reference (globals should be shared)
   Object.assign(cloned, { globals: context.globals });
   Object.assign(cloned, { parent: context.parent });
-  
-  // Copy flags
-  Object.assign(cloned.flags, context.flags);
+
+  // Copy flags if both exist
+  if (cloned.flags && context.flags) {
+    Object.assign(cloned.flags, context.flags);
+  }
   
   return cloned;
 }

@@ -141,16 +141,16 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
   // Delegate to Phase 3 expression system based on operator
   switch (operator) {
     case '+':
-      return specialExpressions.addition.evaluate(context, { left, right });
+      return specialExpressions.addition.evaluate(context as any, { left, right });
     case '-':
-      return specialExpressions.subtraction.evaluate(context, { left, right });
+      return specialExpressions.subtraction.evaluate(context as any, { left, right });
     case '*':
-      return specialExpressions.multiplication.evaluate(context, { left, right });
+      return specialExpressions.multiplication.evaluate(context as any, { left, right });
     case '/':
-      return specialExpressions.division.evaluate(context, { left, right });
+      return specialExpressions.division.evaluate(context as any, { left, right });
     case '%':
     case 'mod':
-      return specialExpressions.modulo.evaluate(context, { left, right });
+      return specialExpressions.modulo.evaluate(context as any, { left, right });
       
     case '>':
       return logicalExpressions.greaterThan.evaluate(context, left, right);

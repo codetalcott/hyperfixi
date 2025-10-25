@@ -357,7 +357,7 @@ export const andExpression: EnhancedExpressionImplementation = {
         input: 'name and age',
         description: 'Both name and age must be truthy',
         expectedOutput: true,
-        context: { variables: new Map([['name', 'John'], ['age', 25]]) }
+        context: { variables: new Map<string, unknown>([['name', 'John'], ['age', 25]]) }
       }
     ],
     relatedExpressions: ['or', 'not'],

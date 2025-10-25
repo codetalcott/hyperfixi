@@ -91,8 +91,9 @@ export const defaultConversions: Record<string, ConversionFunction> = {
       const [year, month, day] = value.split('-').map(Number);
       return new Date(year, month - 1, day); // Month is 0-indexed
     }
-    
-    const date = new Date(value);
+
+    // Date constructor accepts string | number | Date
+    const date = new Date(value as string | number | Date);
     return date; // Return the date even if invalid - let the caller handle validation
   },
 

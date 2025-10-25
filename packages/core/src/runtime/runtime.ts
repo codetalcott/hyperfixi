@@ -10,6 +10,7 @@ import type {
   ExpressionNode,
   EventHandlerNode
 } from '../types/base-types';
+import type { TypedExecutionContext } from '../types/enhanced-core';
 
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { PutCommand } from '../commands/dom/put';
@@ -1268,14 +1269,14 @@ export class Runtime {
           // console.log('🔍 RUNTIME: evaluated complex target', { target });
         }
       }
-      
+
       // console.log('✅ RUNTIME: calling putCommand.execute', { content, preposition, target });
-      return this.putCommand.execute(context, content, preposition, target);
+      return this.putCommand.execute(context as TypedExecutionContext, content, preposition, target);
     }
-    
+
     // console.log('⚠️ RUNTIME: fallback to raw args', { rawArgs });
     // Fallback: use raw args
-    return this.putCommand.execute(context, ...rawArgs);
+    return this.putCommand.execute(context as TypedExecutionContext, ...rawArgs);
   }
 
 

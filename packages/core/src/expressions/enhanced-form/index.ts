@@ -458,7 +458,7 @@ export class EnhancedFormSerializationExpression implements TypedExpressionImple
         return valuesResult as EvaluationResult<string>;
       }
 
-      const values = valuesResult.value;
+      const values = valuesResult.value as Record<string, unknown>;
 
       // Serialize based on format
       if (format === 'json') {
