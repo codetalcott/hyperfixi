@@ -32,11 +32,11 @@ export const possessiveExpression: ExpressionImplementation = {
     
     // Handle regular object property access
     if (typeof element === 'object') {
-      return element[property];
+      return (element as Record<string, unknown>)[property];
     }
-    
+
     // Handle primitive values
-    return element[property];
+    return (element as any)[property];
   },
   
   validate(args: any[]): string | null {
@@ -116,11 +116,11 @@ export const itsExpression: ExpressionImplementation = {
     
     // Handle regular object property access
     if (typeof target === 'object') {
-      return target[property];
+      return (target as Record<string, unknown>)[property];
     }
-    
+
     // Handle primitive values
-    return target[property];
+    return (target as any)[property];
   },
   
   validate(args: any[]): string | null {
@@ -202,11 +202,11 @@ export const ofExpression: ExpressionImplementation = {
     
     // Handle regular object property access
     if (typeof object === 'object') {
-      return object[property];
+      return (object as Record<string, unknown>)[property];
     }
-    
+
     // Handle primitive values
-    return object[property];
+    return (object as any)[property];
   },
   
   validate(args: any[]): string | null {

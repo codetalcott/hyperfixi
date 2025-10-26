@@ -355,7 +355,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           if (resolutionContext.obj instanceof Map) {
             targetObj = resolutionContext.obj.get(objectName);
           } else if (resolutionContext.obj && typeof resolutionContext.obj === 'object' && objectName in resolutionContext.obj) {
-            targetObj = resolutionContext.obj[objectName];
+            targetObj = (resolutionContext.obj as Record<string, unknown>)[objectName];
           }
           
           if (targetObj && typeof targetObj === 'object') {
@@ -601,7 +601,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         if (resolutionContext.obj instanceof Map) {
           constructor = resolutionContext.obj.get(constructorName);
         } else if (resolutionContext.obj && typeof resolutionContext.obj === 'object' && constructorName in resolutionContext.obj) {
-          constructor = resolutionContext.obj[constructorName];
+          constructor = (resolutionContext.obj as Record<string, unknown>)[constructorName];
         }
         
         if (typeof constructor === 'function') {

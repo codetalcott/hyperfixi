@@ -158,7 +158,7 @@ export const atExpression: ExpressionImplementation = {
     // Handle object with length property and numeric indexing
     if (typeof target === 'object' && 'length' in target && typeof target.length === 'number') {
       const actualIndex = index < 0 ? target.length + index : index;
-      return actualIndex >= 0 && actualIndex < target.length ? target[actualIndex] : null;
+      return actualIndex >= 0 && actualIndex < target.length ? (target as any)[actualIndex] : null;
     }
     
     return null;
