@@ -63,7 +63,6 @@ export type FunctionCallExpressionInput = any; // Inferred from RuntimeValidator
  * Provides comprehensive function invocation with async support
  */
 export class EnhancedFunctionCallExpression implements TypedExpressionImplementation<
-  FunctionCallExpressionInput,
   HyperScriptValue,
   TypedExpressionContext
 > {

@@ -40,7 +40,6 @@ export type SymbolExpressionInput = any; // Inferred from RuntimeValidator
  * Provides comprehensive context-aware variable lookup
  */
 export class EnhancedSymbolExpression implements TypedExpressionImplementation<
-  SymbolExpressionInput,
   HyperScriptValue,
   TypedExpressionContext
 > {

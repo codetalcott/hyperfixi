@@ -49,7 +49,7 @@ type AttributeWithValueInput = any; // Inferred from RuntimeValidator
 // Enhanced Possessive Expression (element's property)
 // ============================================================================
 
-export class EnhancedPossessiveExpression implements BaseTypedExpression<PropertyAccessInput, unknown> {
+export class EnhancedPossessiveExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'possessive';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = "element's property";
@@ -322,7 +322,7 @@ export class EnhancedPossessiveExpression implements BaseTypedExpression<Propert
 // Enhanced My Expression (my property)
 // ============================================================================
 
-export class EnhancedMyExpression implements BaseTypedExpression<ContextPropertyInput, unknown> {
+export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'my';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'my property';
@@ -505,7 +505,7 @@ export class EnhancedMyExpression implements BaseTypedExpression<ContextProperty
 // Enhanced Its Expression (its property)
 // ============================================================================
 
-export class EnhancedItsExpression implements BaseTypedExpression<ContextPropertyInput, unknown> {
+export class EnhancedItsExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'its';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'its property';
@@ -677,7 +677,7 @@ export class EnhancedItsExpression implements BaseTypedExpression<ContextPropert
 // Enhanced Your Expression (your property)
 // ============================================================================
 
-export class EnhancedYourExpression implements BaseTypedExpression<ContextPropertyInput, unknown> {
+export class EnhancedYourExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'your';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'your property';
@@ -849,7 +849,7 @@ export class EnhancedYourExpression implements BaseTypedExpression<ContextProper
 // Enhanced Attribute Expression (@attribute)
 // ============================================================================
 
-export class EnhancedAttributeExpression implements BaseTypedExpression<AttributeAccessInput, string | null> {
+export class EnhancedAttributeExpression implements BaseTypedExpression<string | null> {
   public readonly name = 'attribute';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = '@attribute or @attribute of element';
@@ -1038,7 +1038,7 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<Attribut
 // Enhanced Attribute With Value Expression (@attribute=value)
 // ============================================================================
 
-export class EnhancedAttributeWithValueExpression implements BaseTypedExpression<AttributeWithValueInput, boolean> {
+export class EnhancedAttributeWithValueExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'attributeWithValue';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = '@attribute=value';
