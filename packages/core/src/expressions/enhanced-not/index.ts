@@ -146,7 +146,7 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<
         });
       }
 
-      const [value] = this.inputSchema.parse(args);
+      const [value] = this.inputSchema.parse(args) as [unknown];
       
       // Evaluate truthiness and negate
       const truthiness = this.evaluateTruthiness(value);

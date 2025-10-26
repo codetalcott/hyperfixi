@@ -189,7 +189,7 @@ export class EnhancedPossessiveExpression implements TypedExpressionImplementati
         };
       }
 
-      const [object, property] = this.inputSchema.parse(args);
+      const [object, property] = this.inputSchema.parse(args) as [unknown, string];
       
       // Access property from object
       const value = await this.accessProperty(object, property, context);

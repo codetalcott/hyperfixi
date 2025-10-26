@@ -497,7 +497,7 @@ export class AddCommand implements TypedCommandImplementation<
       }
 
       // Additional semantic validation
-      const [classExpression, target] = parsed.data;
+      const [classExpression, target] = parsed.data as [string | string[], unknown];
       
       // Validate class expression is not empty
       if (!classExpression || (typeof classExpression === 'string' && classExpression.trim().length === 0)) {

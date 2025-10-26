@@ -268,7 +268,7 @@ export class HideCommand implements TypedCommandImplementation<
       }
 
       // Additional semantic validation
-      const [target] = parsed.data;
+      const [target] = parsed.data as [unknown];
       
       if (typeof target === 'string' && !this.isValidCSSSelector(target)) {
         return {

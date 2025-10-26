@@ -105,7 +105,7 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
    */
   async validate(args: unknown[]): Promise<ValidationResult> {
     try {
-      const validatedArgs = this.inputSchema.parse(args);
+      const validatedArgs = this.inputSchema.parse(args) as [string];
       const [symbolName] = validatedArgs;
 
       // Additional semantic validation
@@ -189,7 +189,7 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
         };
       }
 
-      const [symbolName] = this.inputSchema.parse(args);
+      const [symbolName] = this.inputSchema.parse(args) as [string];
 
       // Enhanced context resolution with comprehensive scope chain
       const resolvedValue = await this.resolveSymbol(symbolName, context);

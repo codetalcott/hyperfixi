@@ -295,7 +295,7 @@ export class EnhancedArrayIndexExpression implements TypedExpressionImplementati
    */
   validate(args: unknown[]): ValidationResult {
     try {
-      const validatedArgs = this.inputSchema.parse(args);
+      const validatedArgs = this.inputSchema.parse(args) as [unknown, unknown];
       const [target, index] = validatedArgs;
       
       const errors: ValidationError[] = [];
@@ -370,7 +370,7 @@ export class EnhancedArrayIndexExpression implements TypedExpressionImplementati
         };
       }
 
-      const [target, index] = this.inputSchema.parse(args);
+      const [target, index] = this.inputSchema.parse(args) as [unknown, unknown];
       
       // Convert target to array-like if needed
       const arrayTarget = this.normalizeArrayTarget(target);

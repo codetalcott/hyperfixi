@@ -95,7 +95,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
    */
   async validate(args: unknown[]): Promise<ValidationResult> {
     try {
-      const validatedArgs = this.inputSchema.parse(args);
+      const validatedArgs = this.inputSchema.parse(args) as [unknown, unknown];
       const [searchValue, container] = validatedArgs;
 
       const issues: ValidationError[] = [];
@@ -173,7 +173,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
         };
       }
 
-      const [searchValue, container] = this.inputSchema.parse(args);
+      const [searchValue, container] = this.inputSchema.parse(args) as [unknown, unknown];
       
       // Handle different container types
       if (this.isArrayLike(container)) {

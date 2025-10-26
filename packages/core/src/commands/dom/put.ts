@@ -258,7 +258,7 @@ export class PutCommand implements TypedCommandImplementation<
       }
 
       // Additional semantic validation
-      const [_content, position, target] = parsed.data;
+      const [_content, position, target] = parsed.data as [unknown, unknown, unknown];
       
       // Validate position is supported
       const validPositions = ['into', 'before', 'after', 'at start of', 'at end of'];

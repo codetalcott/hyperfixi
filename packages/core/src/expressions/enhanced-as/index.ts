@@ -222,7 +222,7 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<
         });
       }
 
-      const [value, targetType] = this.inputSchema.parse(args);
+      const [value, targetType] = this.inputSchema.parse(args) as [unknown, string];
       
       // Perform type conversion
       const convertedValue = this.convertValue(value, targetType, context);
