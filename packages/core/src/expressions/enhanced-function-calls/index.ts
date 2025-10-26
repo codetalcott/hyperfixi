@@ -12,7 +12,9 @@ import type {
   TypedExpressionContext,
   TypedExpressionImplementation,
   LLMDocumentation,
-  ValidationResult
+  ValidationResult,
+  ExpressionCategory,
+  ExpressionAnalysisInfo
 } from '../../types/enhanced-core';
 import type { ValidationError } from '../../types/base-types';
 
@@ -132,6 +134,19 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
     ],
     seeAlso: ['call command', 'method chaining', 'async operations'],
     tags: ['function', 'interoperability', 'javascript', 'async', 'method']
+  };
+
+  // Required TypedExpressionImplementation properties
+  public readonly name = 'functionCall';
+  public readonly category: ExpressionCategory = 'Special';
+  public readonly precedence = 17; // High precedence for function calls
+  public readonly associativity: 'left' | 'right' | 'none' = 'left';
+  public readonly outputType = 'any';
+  public readonly analysisInfo: ExpressionAnalysisInfo = {
+    isPure: false,
+    canThrow: true,
+    complexity: 'O(1)',
+    dependencies: []
   };
 
   /**

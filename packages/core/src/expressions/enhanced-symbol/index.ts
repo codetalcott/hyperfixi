@@ -12,7 +12,9 @@ import type {
   TypedExpressionContext,
   TypedExpressionImplementation,
   LLMDocumentation,
-  ValidationResult
+  ValidationResult,
+  ExpressionCategory,
+  ExpressionAnalysisInfo
 } from '../../types/enhanced-core';
 import type { ValidationError } from '../../types/base-types';
 
@@ -83,6 +85,19 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
     ],
     seeAlso: ['my expression', 'property access', 'context variables'],
     tags: ['variable', 'context', 'resolution', 'scope']
+  };
+
+  // Required TypedExpressionImplementation properties
+  public readonly name = 'symbol';
+  public readonly category: ExpressionCategory = 'Reference';
+  public readonly precedence = 18; // Highest precedence for variable references
+  public readonly associativity: 'left' | 'right' | 'none' = 'none';
+  public readonly outputType = 'any';
+  public readonly analysisInfo: ExpressionAnalysisInfo = {
+    isPure: true,
+    canThrow: false,
+    complexity: 'O(1)',
+    dependencies: []
   };
 
   /**
