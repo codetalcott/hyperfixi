@@ -1160,6 +1160,79 @@ export class DefFeature {
           throw new Error(String(errorMessage));
         }
 
+        // Handle if command for conditional execution
+        if (cmd.type === 'command' && cmd.name === 'if') {
+          const args = cmd.args || [];
+
+          // Expected format: ['condition', 'then', 'commandName', ...commandArgs]
+          // Example: ['n <= 1', 'then', 'return', '1']
+          if (args.length < 3) {
+            // Invalid if command, skip
+            continue;
+          }
+
+          const conditionExpr = args[0];
+          const thenKeyword = args[1];
+
+          // Verify 'then' keyword is present
+          if (thenKeyword !== 'then') {
+            // Invalid format, skip
+            continue;
+          }
+
+          // Evaluate the condition
+          let conditionResult = false;
+          try {
+            const evaluated = await this.evaluateExpression(conditionExpr, executionContext);
+            conditionResult = Boolean(evaluated);
+          } catch (error) {
+            // If condition evaluation fails, treat as false
+            conditionResult = false;
+          }
+
+          // If condition is true, execute the command
+          if (conditionResult) {
+            const commandName = args[2];
+            const commandArgs = args.slice(3);
+
+            // Create a command object for the conditional command
+            const conditionalCmd = {
+              type: 'command' as const,
+              name: commandName,
+              args: commandArgs
+            };
+
+            // Execute the conditional command by recursively processing it
+            // Check if it's a return command
+            if (commandName === 'return') {
+              const returnValue = commandArgs[0];
+
+              if (returnValue !== undefined && returnValue !== null) {
+                try {
+                  const evaluated = await this.evaluateExpression(returnValue, executionContext);
+                  result = evaluated;
+                  return result;
+                } catch (error) {
+                  result = returnValue;
+                  return result;
+                }
+              }
+
+              result = returnValue;
+              return result;
+            }
+
+            // Handle other commands (throw, set, etc.) if needed
+            if (commandName === 'throw') {
+              const errorMessage = commandArgs[0] || 'Error';
+              throw new Error(String(errorMessage));
+            }
+          }
+
+          // If condition is false, continue to next command
+          continue;
+        }
+
         // Handle set command for side effects
         if (cmd.type === 'command' && cmd.name === 'set') {
           const args = cmd.args || [];

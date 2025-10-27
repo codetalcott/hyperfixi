@@ -232,17 +232,17 @@ describe('Def Feature', () => {
   describe('Parameter Binding and Scope', () => {
     it('should create isolated local scope for function execution', async () => {
       context.locals!.set('existingVar', 'original');
-      
+
       const commands = [
         { type: 'command', name: 'set', args: ['local', 'existingVar', 'modified'] },
         { type: 'command', name: 'return', args: ['existingVar'] }
       ];
       defFeature.defineFunction('scopeTest', ['existingVar'], commands, context);
-      
+
       const result = await defFeature.executeFunction('scopeTest', ['newValue'], context);
-      
-      expect(result).toBe('newValue');
-      expect(context.locals!.get('existingVar')).toBe('original'); // Unchanged
+
+      expect(result).toBe('modified'); // set local overwrites the parameter
+      expect(context.locals!.get('existingVar')).toBe('original'); // Outer context unchanged
     });
 
     it('should handle parameter shadowing correctly', async () => {
