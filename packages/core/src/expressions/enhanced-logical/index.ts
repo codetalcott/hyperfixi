@@ -147,8 +147,7 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -385,8 +384,7 @@ export class EnhancedOrExpression implements TypedExpressionImplementation<Binar
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -569,8 +567,7 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 

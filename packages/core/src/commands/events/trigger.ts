@@ -9,7 +9,6 @@ import { v } from '../../validation/lightweight-validators';
 import type {
   TypedCommandImplementation,
   TypedExecutionContext,
-  EvaluationResult,
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core';

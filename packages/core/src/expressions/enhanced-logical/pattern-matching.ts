@@ -152,8 +152,7 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -422,8 +421,7 @@ export class EnhancedContainsExpression implements TypedExpressionImplementation
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -618,8 +616,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 

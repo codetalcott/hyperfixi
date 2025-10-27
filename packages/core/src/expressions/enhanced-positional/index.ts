@@ -138,8 +138,7 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -343,8 +342,7 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -560,8 +558,7 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -781,8 +778,7 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 

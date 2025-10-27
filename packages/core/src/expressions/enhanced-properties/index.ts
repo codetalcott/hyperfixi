@@ -151,8 +151,7 @@ export class EnhancedPossessiveExpression implements BaseTypedExpression<unknown
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -406,8 +405,7 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -578,8 +576,7 @@ export class EnhancedItsExpression implements BaseTypedExpression<unknown> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -750,8 +747,7 @@ export class EnhancedYourExpression implements BaseTypedExpression<unknown> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -940,8 +936,7 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<string |
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
@@ -1125,8 +1120,7 @@ export class EnhancedAttributeWithValueExpression implements BaseTypedExpression
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0],
-          suggestions: validation.suggestions
+          error: validation.errors[0]
         };
       }
 
