@@ -633,6 +633,8 @@ function tokenizeOperator(tokenizer: Tokenizer): void {
   let type = TokenType.OPERATOR;
   if (COMPARISON_OPERATORS.has(value)) {
     type = TokenType.COMPARISON_OPERATOR;
+  } else if (['&&', '||'].includes(value)) {
+    type = TokenType.LOGICAL_OPERATOR;
   } else if (MATHEMATICAL_OPERATORS.has(value)) {
     type = TokenType.OPERATOR;
   }

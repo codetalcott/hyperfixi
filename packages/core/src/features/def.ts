@@ -1096,13 +1096,35 @@ export class DefFeature {
     // Create execution context with bound parameters
     const executionContext = {
       ...context,
-      locals: new Map(context.locals || [])
+      locals: new Map(context.locals || []),
+      // Preserve the injected flag if it exists
+      __functionsInjected: (context as any).__functionsInjected
     };
 
     // Bind parameters
     func.parameters.forEach((param, i) => {
       executionContext.locals?.set(param, args[i]);
     });
+
+    // Inject all DefFeature functions into locals ONLY if not already injected
+    // This enables recursive calls without infinite re-injection
+    const functionsInjected = (executionContext as any).__functionsInjected;
+    if (!functionsInjected) {
+      // Mark that we're injecting functions to prevent re-injection in recursive calls
+      (executionContext as any).__functionsInjected = true;
+
+      for (const [funcName, _funcDef] of this.functions.entries()) {
+        // Only inject if not already present (don't override parameters)
+        if (!executionContext.locals?.has(funcName)) {
+          // Create wrapper that calls DefFeature.executeFunction
+          // Pass executionContext so nested calls can access the same function wrappers
+          const wrapper = async (...funcArgs: any[]) => {
+            return await this.executeFunction(funcName, funcArgs, executionContext);
+          };
+          executionContext.locals?.set(funcName, wrapper);
+        }
+      }
+    }
 
     let result: any = undefined;
     let thrownError: any = null;
@@ -1301,7 +1323,7 @@ export class DefFeature {
 
     // Check if it looks like an expression (contains operators or function calls)
     // If it's a simple string literal without operators, don't try to evaluate
-    const hasOperators = /[+\-*/%<>=!&|()]/.test(value);
+    const hasOperators = /[+\-*/%<>=!&|().]/.test(value);
     const isQuotedString = /^["'].*["']$/.test(value);
 
     // If no operators and not a quoted string, it's likely a literal value
@@ -1311,7 +1333,8 @@ export class DefFeature {
 
     // Try to parse and evaluate as an expression (handles 'i + j', 'value * 2', etc.)
     try {
-      return await parseAndEvaluateExpression(value, context);
+      const result = await parseAndEvaluateExpression(value, context);
+      return result;
     } catch (error) {
       // If parsing/evaluation fails, return the literal string
       return value;

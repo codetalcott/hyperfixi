@@ -177,7 +177,7 @@ function parseLogicalExpressionWithPrecedence(state: ParseState, minPrecedence: 
  * Check if operator is a binary logical operator
  */
 function isLogicalBinaryOperator(operator: string): boolean {
-  return ['and', 'or'].includes(operator);
+  return ['and', 'or', '&&', '||'].includes(operator);
 }
 
 /**
@@ -186,8 +186,10 @@ function isLogicalBinaryOperator(operator: string): boolean {
 function getLogicalOperatorPrecedence(operator: string): number {
   switch (operator) {
     case 'or':
+    case '||':
       return 3;
     case 'and':
+    case '&&':
       return 4;
     default:
       return 0;
@@ -1247,8 +1249,10 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
   // Map operators to our expression implementations
   switch (operator) {
     case 'and':
+    case '&&':
       return left && right;
     case 'or':
+    case '||':
       return left || right;
     case 'is':
     case 'equals':
