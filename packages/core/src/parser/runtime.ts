@@ -11,13 +11,13 @@ import { logicalExpressions } from '../expressions/logical/index';
 import { conversionExpressions } from '../expressions/conversion/index';
 import { positionalExpressions } from '../expressions/positional/index';
 import { propertyExpressions } from '../expressions/properties/index';
-import { enhancedSpecialExpressions } from '../expressions/enhanced-special/index';
-import { enhancedMathematicalExpressions } from '../expressions/enhanced-mathematical/index';
+import { specialExpressions as importedSpecialExpressions } from '../expressions/special/index';
+import { mathematicalExpressions } from '../expressions/mathematical/index';
 
 // Create alias for backward compatibility - combine special and mathematical expressions
 const specialExpressions = {
-  ...enhancedSpecialExpressions,
-  ...enhancedMathematicalExpressions
+  ...importedSpecialExpressions,
+  ...mathematicalExpressions
 };
 
 /**

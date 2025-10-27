@@ -12,21 +12,20 @@ import { tokenize } from './tokenizer';
 import { TokenType, type Token } from './tokenizer';
 
 // Import enhanced expression implementations
-import { enhancedComparisonExpressions } from '../expressions/enhanced-comparison/index';
-import { enhancedMathematicalExpressions } from '../expressions/enhanced-mathematical/index';
-import { enhancedPropertyExpressions } from '../expressions/enhanced-property/index';
-import { enhancedPositionalExpressions } from '../expressions/enhanced-positional/index';
+import { comparisonExpressions } from '../expressions/comparison/index';
+import { mathematicalExpressions } from '../expressions/mathematical/index';
+import { propertyExpressions } from '../expressions/property/index';
+import { positionalExpressions } from '../expressions/positional/index';
 
 // Import legacy conversion system for Date conversion compatibility
 import { conversionExpressions as legacyConversionExpressions } from '../expressions/conversion/index';
 
 // Create aliases for backward compatibility
-const logicalExpressions = enhancedComparisonExpressions;
-const specialExpressions = enhancedMathematicalExpressions;
-const propertyExpressions = enhancedPropertyExpressions;
+const logicalExpressions = comparisonExpressions;
+const specialExpressions = mathematicalExpressions;
+// propertyExpressions already imported with correct name
 const conversionExpressions = legacyConversionExpressions; // Use legacy system for Date conversion
-// const referenceExpressions = enhancedReferenceExpressions; // Unused for now
-const positionalExpressions = enhancedPositionalExpressions;
+// positionalExpressions already imported with correct name
 
 // Helper function to convert ExecutionContext to TypedExecutionContext
 function toTypedContext(context: ExecutionContext): TypedExecutionContext {

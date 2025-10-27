@@ -8,13 +8,13 @@ import { EnhancedBenchmark } from './enhanced-benchmarks';
 import { createTypedExpressionContext } from '../test-utilities';
 
 // Import enhanced expressions
-import { EnhancedMeExpression } from '../expressions/enhanced-references/index';
-import { EnhancedEqualityExpression } from '../expressions/enhanced-comparison/index';
-import { EnhancedAndExpression } from '../expressions/enhanced-logical/index';
-import { EnhancedAsExpression } from '../expressions/enhanced-conversion/index';
-import { EnhancedFirstExpression } from '../expressions/enhanced-positional/index';
-import { EnhancedMyExpression } from '../expressions/enhanced-property/index';
-import { EnhancedAdditionExpression } from '../expressions/enhanced-mathematical/index';
+import { EnhancedMeExpression } from '../expressions/references/index';
+import { EnhancedEqualityExpression } from '../expressions/comparison/index';
+import { EnhancedAndExpression } from '../expressions/logical/index';
+import { EnhancedAsExpression } from '../expressions/conversion/index';
+import { EnhancedFirstExpression } from '../expressions/positional/index';
+import { EnhancedMyExpression } from '../expressions/property/index';
+import { EnhancedAdditionExpression } from '../expressions/mathematical/index';
 
 describe('Enhanced Expression Performance Benchmarks', () => {
   let benchmark: EnhancedBenchmark;

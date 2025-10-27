@@ -8,10 +8,10 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import type { TypedExpressionContext } from '../types/enhanced-expressions.ts';
 
 // Import all enhanced expression systems
-import { enhancedMathematicalExpressions } from './enhanced-mathematical/index.ts';
-import { enhancedComparisonExpressions } from './enhanced-comparison/index.ts';
-import { enhancedLogicalExpressions } from './enhanced-logical/index.ts';
-import { enhancedPropertyExpressions } from './enhanced-property/index.ts';
+import { mathematicalExpressions } from './mathematical/index.ts';
+import { comparisonExpressions } from './comparison/index.ts';
+import { logicalExpressions } from './logical/index.ts';
+import { propertyExpressions } from './property/index.ts';
 
 // ============================================================================
 // Test Helpers
@@ -84,7 +84,7 @@ describe('Enhanced Expression Integration - Form Validation', () => {
     context.me = emailField;
 
     // Get field value
-    const valueResult = await enhancedPropertyExpressions.my.evaluate(context, { 
+    const valueResult = await propertyExpressions.my.evaluate(context, { 
       property: 'value' 
     });
     expect(valueResult.success).toBe(true);
@@ -93,48 +93,48 @@ describe('Enhanced Expression Integration - Form Validation', () => {
       const email = valueResult.value;
       
       // Check email is not empty (length > 0)
-      const lengthResult = await enhancedPropertyExpressions.its.evaluate(context, { 
+      const lengthResult = await propertyExpressions.its.evaluate(context, { 
         target: email, 
         property: 'length' 
       });
       
-      const notEmptyResult = await enhancedComparisonExpressions.greaterThan.evaluate(context, { 
+      const notEmptyResult = await comparisonExpressions.greaterThan.evaluate(context, { 
         left: lengthResult.success ? lengthResult.value : 0, 
         right: 0 
       });
       
       // Check email length is between 5 and 50
-      const minLengthResult = await enhancedComparisonExpressions.greaterThanOrEqual.evaluate(context, { 
+      const minLengthResult = await comparisonExpressions.greaterThanOrEqual.evaluate(context, { 
         left: lengthResult.success ? lengthResult.value : 0, 
         right: 5 
       });
       
-      const maxLengthResult = await enhancedComparisonExpressions.lessThanOrEqual.evaluate(context, { 
+      const maxLengthResult = await comparisonExpressions.lessThanOrEqual.evaluate(context, { 
         left: lengthResult.success ? lengthResult.value : 0, 
         right: 50 
       });
       
-      const lengthValidResult = await enhancedLogicalExpressions.and.evaluate(context, { 
+      const lengthValidResult = await logicalExpressions.and.evaluate(context, { 
         left: minLengthResult.success ? minLengthResult.value : false, 
         right: maxLengthResult.success ? maxLengthResult.value : false 
       });
       
       // Check field is not disabled
-      const disabledResult = await enhancedPropertyExpressions.my.evaluate(context, { 
+      const disabledResult = await propertyExpressions.my.evaluate(context, { 
         property: 'disabled' 
       });
       
-      const notDisabledResult = await enhancedLogicalExpressions.not.evaluate(context, { 
+      const notDisabledResult = await logicalExpressions.not.evaluate(context, { 
         operand: disabledResult.success ? disabledResult.value : false 
       });
       
       // Combine all conditions
-      const basicValidResult = await enhancedLogicalExpressions.and.evaluate(context, { 
+      const basicValidResult = await logicalExpressions.and.evaluate(context, { 
         left: notEmptyResult.success ? notEmptyResult.value : false, 
         right: lengthValidResult.success ? lengthValidResult.value : false 
       });
       
-      const finalValidResult = await enhancedLogicalExpressions.and.evaluate(context, { 
+      const finalValidResult = await logicalExpressions.and.evaluate(context, { 
         left: basicValidResult.success ? basicValidResult.value : false, 
         right: notDisabledResult.success ? notDisabledResult.value : false 
       });
@@ -163,18 +163,18 @@ describe('Enhanced Expression Integration - Form Validation', () => {
     
     // Count filled fields
     for (const field of requiredFields) {
-      const fieldValueResult = await enhancedPropertyExpressions.its.evaluate(context, { 
+      const fieldValueResult = await propertyExpressions.its.evaluate(context, { 
         target: formData, 
         property: field 
       });
       
       if (fieldValueResult.success) {
-        const lengthResult = await enhancedPropertyExpressions.its.evaluate(context, { 
+        const lengthResult = await propertyExpressions.its.evaluate(context, { 
           target: fieldValueResult.value || '', 
           property: 'length' 
         });
         
-        const isFilledResult = await enhancedComparisonExpressions.greaterThan.evaluate(context, { 
+        const isFilledResult = await comparisonExpressions.greaterThan.evaluate(context, { 
           left: lengthResult.success ? lengthResult.value : 0, 
           right: 0 
         });
@@ -186,12 +186,12 @@ describe('Enhanced Expression Integration - Form Validation', () => {
     }
     
     // Calculate percentage
-    const percentageResult = await enhancedMathematicalExpressions.division.evaluate(context, { 
+    const percentageResult = await mathematicalExpressions.division.evaluate(context, { 
       left: filledCount, 
       right: totalFields 
     });
     
-    const scaledPercentageResult = await enhancedMathematicalExpressions.multiplication.evaluate(context, { 
+    const scaledPercentageResult = await mathematicalExpressions.multiplication.evaluate(context, { 
       left: percentageResult.success ? percentageResult.value : 0, 
       right: 100 
     });
@@ -227,35 +227,35 @@ describe('Enhanced Expression Integration - User Permissions', () => {
     };
     
     // Check if user is admin
-    const isAdminResult = await enhancedPropertyExpressions.its.evaluate(context, { 
+    const isAdminResult = await propertyExpressions.its.evaluate(context, { 
       target: user, 
       property: 'isAdmin' 
     });
     
     // Check if user is owner
-    const isOwnerResult = await enhancedPropertyExpressions.its.evaluate(context, { 
+    const isOwnerResult = await propertyExpressions.its.evaluate(context, { 
       target: user, 
       property: 'isOwner' 
     });
     
     // Check if user is not suspended
-    const isSuspendedResult = await enhancedPropertyExpressions.its.evaluate(context, { 
+    const isSuspendedResult = await propertyExpressions.its.evaluate(context, { 
       target: user, 
       property: 'isSuspended' 
     });
     
-    const notSuspendedResult = await enhancedLogicalExpressions.not.evaluate(context, { 
+    const notSuspendedResult = await logicalExpressions.not.evaluate(context, { 
       operand: isSuspendedResult.success ? isSuspendedResult.value : true 
     });
     
     // Combine owner AND not suspended
-    const ownerAndNotSuspendedResult = await enhancedLogicalExpressions.and.evaluate(context, { 
+    const ownerAndNotSuspendedResult = await logicalExpressions.and.evaluate(context, { 
       left: isOwnerResult.success ? isOwnerResult.value : false, 
       right: notSuspendedResult.success ? notSuspendedResult.value : false 
     });
     
     // Final permission: admin OR (owner AND not suspended)
-    const canEditResult = await enhancedLogicalExpressions.or.evaluate(context, { 
+    const canEditResult = await logicalExpressions.or.evaluate(context, { 
       left: isAdminResult.success ? isAdminResult.value : false, 
       right: ownerAndNotSuspendedResult.success ? ownerAndNotSuspendedResult.value : false 
     });
@@ -274,29 +274,29 @@ describe('Enhanced Expression Integration - User Permissions', () => {
     };
     
     // Calculate age
-    const birthYearResult = await enhancedPropertyExpressions.its.evaluate(context, { 
+    const birthYearResult = await propertyExpressions.its.evaluate(context, { 
       target: user, 
       property: 'birthYear' 
     });
     
-    const currentYearResult = await enhancedPropertyExpressions.its.evaluate(context, { 
+    const currentYearResult = await propertyExpressions.its.evaluate(context, { 
       target: user, 
       property: 'currentYear' 
     });
     
-    const ageResult = await enhancedMathematicalExpressions.subtraction.evaluate(context, { 
+    const ageResult = await mathematicalExpressions.subtraction.evaluate(context, { 
       left: currentYearResult.success ? currentYearResult.value : 0, 
       right: birthYearResult.success ? birthYearResult.value : 0 
     });
     
     // Check basic access (18+)
-    const basicAccessResult = await enhancedComparisonExpressions.greaterThanOrEqual.evaluate(context, { 
+    const basicAccessResult = await comparisonExpressions.greaterThanOrEqual.evaluate(context, { 
       left: ageResult.success ? ageResult.value : 0, 
       right: 18 
     });
     
     // Check premium access (21+)
-    const premiumAccessResult = await enhancedComparisonExpressions.greaterThanOrEqual.evaluate(context, { 
+    const premiumAccessResult = await comparisonExpressions.greaterThanOrEqual.evaluate(context, { 
       left: ageResult.success ? ageResult.value : 0, 
       right: 21 
     });
@@ -338,13 +338,13 @@ describe('Enhanced Expression Integration - E-commerce', () => {
     
     // Calculate subtotal
     for (const item of cartItems) {
-      const itemTotalResult = await enhancedMathematicalExpressions.multiplication.evaluate(context, { 
+      const itemTotalResult = await mathematicalExpressions.multiplication.evaluate(context, { 
         left: item.price, 
         right: item.quantity 
       });
       
       if (itemTotalResult.success) {
-        const newSubtotalResult = await enhancedMathematicalExpressions.addition.evaluate(context, { 
+        const newSubtotalResult = await mathematicalExpressions.addition.evaluate(context, { 
           left: subtotal, 
           right: itemTotalResult.value 
         });
@@ -356,19 +356,19 @@ describe('Enhanced Expression Integration - E-commerce', () => {
     }
     
     // Apply 10% discount if subtotal > $50
-    const discountThresholdResult = await enhancedComparisonExpressions.greaterThan.evaluate(context, { 
+    const discountThresholdResult = await comparisonExpressions.greaterThan.evaluate(context, { 
       left: subtotal, 
       right: 50 
     });
     
     let finalSubtotal = subtotal;
     if (discountThresholdResult.success && discountThresholdResult.value) {
-      const discountAmountResult = await enhancedMathematicalExpressions.multiplication.evaluate(context, { 
+      const discountAmountResult = await mathematicalExpressions.multiplication.evaluate(context, { 
         left: subtotal, 
         right: 0.10 
       });
       
-      const discountedSubtotalResult = await enhancedMathematicalExpressions.subtraction.evaluate(context, { 
+      const discountedSubtotalResult = await mathematicalExpressions.subtraction.evaluate(context, { 
         left: subtotal, 
         right: discountAmountResult.success ? discountAmountResult.value : 0 
       });
@@ -379,13 +379,13 @@ describe('Enhanced Expression Integration - E-commerce', () => {
     }
     
     // Calculate tax (8.5%)
-    const taxResult = await enhancedMathematicalExpressions.multiplication.evaluate(context, { 
+    const taxResult = await mathematicalExpressions.multiplication.evaluate(context, { 
       left: finalSubtotal, 
       right: 0.085 
     });
     
     // Calculate final total
-    const finalTotalResult = await enhancedMathematicalExpressions.addition.evaluate(context, { 
+    const finalTotalResult = await mathematicalExpressions.addition.evaluate(context, { 
       left: finalSubtotal, 
       right: taxResult.success ? taxResult.value : 0 
     });
@@ -414,45 +414,45 @@ describe('Enhanced Expression Integration - E-commerce', () => {
     };
     
     // Check stock availability
-    const stockAvailableResult = await enhancedComparisonExpressions.greaterThanOrEqual.evaluate(context, { 
+    const stockAvailableResult = await comparisonExpressions.greaterThanOrEqual.evaluate(context, { 
       left: product.stock, 
       right: order.quantity 
     });
     
     // Check quantity within limits
-    const aboveMinResult = await enhancedComparisonExpressions.greaterThanOrEqual.evaluate(context, { 
+    const aboveMinResult = await comparisonExpressions.greaterThanOrEqual.evaluate(context, { 
       left: order.quantity, 
       right: product.minOrder 
     });
     
-    const belowMaxResult = await enhancedComparisonExpressions.lessThanOrEqual.evaluate(context, { 
+    const belowMaxResult = await comparisonExpressions.lessThanOrEqual.evaluate(context, { 
       left: order.quantity, 
       right: product.maxOrder 
     });
     
-    const quantityValidResult = await enhancedLogicalExpressions.and.evaluate(context, { 
+    const quantityValidResult = await logicalExpressions.and.evaluate(context, { 
       left: aboveMinResult.success ? aboveMinResult.value : false, 
       right: belowMaxResult.success ? belowMaxResult.value : false 
     });
     
     // Check region availability (simplified - check if region is in first position)
-    const regionAvailableResult = await enhancedPropertyExpressions.its.evaluate(context, { 
+    const regionAvailableResult = await propertyExpressions.its.evaluate(context, { 
       target: product.availableRegions, 
       property: '0' 
     });
     
-    const regionMatchResult = await enhancedComparisonExpressions.equals.evaluate(context, { 
+    const regionMatchResult = await comparisonExpressions.equals.evaluate(context, { 
       left: regionAvailableResult.success ? regionAvailableResult.value : '', 
       right: order.userRegion 
     });
     
     // Combine all conditions
-    const stockAndQuantityResult = await enhancedLogicalExpressions.and.evaluate(context, { 
+    const stockAndQuantityResult = await logicalExpressions.and.evaluate(context, { 
       left: stockAvailableResult.success ? stockAvailableResult.value : false, 
       right: quantityValidResult.success ? quantityValidResult.value : false 
     });
     
-    const canPurchaseResult = await enhancedLogicalExpressions.and.evaluate(context, { 
+    const canPurchaseResult = await logicalExpressions.and.evaluate(context, { 
       left: stockAndQuantityResult.success ? stockAndQuantityResult.value : false, 
       right: regionMatchResult.success ? regionMatchResult.value : false 
     });
@@ -493,39 +493,39 @@ describe('Enhanced Expression Integration - UI State Management', () => {
     context.me = submitButton;
     
     // Check if all required fields are filled
-    const allFieldsFilledResult = await enhancedComparisonExpressions.equals.evaluate(context, { 
+    const allFieldsFilledResult = await comparisonExpressions.equals.evaluate(context, { 
       left: uiState.fieldsFilled, 
       right: uiState.requiredFields 
     });
     
     // Check if not submitting
-    const notSubmittingResult = await enhancedLogicalExpressions.not.evaluate(context, { 
+    const notSubmittingResult = await logicalExpressions.not.evaluate(context, { 
       operand: uiState.isSubmitting 
     });
     
     // Check if no errors
-    const noErrorsResult = await enhancedLogicalExpressions.not.evaluate(context, { 
+    const noErrorsResult = await logicalExpressions.not.evaluate(context, { 
       operand: uiState.hasErrors 
     });
     
     // Check if online
-    const isOnlineResult = await enhancedComparisonExpressions.equals.evaluate(context, { 
+    const isOnlineResult = await comparisonExpressions.equals.evaluate(context, { 
       left: uiState.connectionStatus, 
       right: 'online' 
     });
     
     // Combine conditions: all fields filled AND not submitting AND no errors AND online
-    const step1Result = await enhancedLogicalExpressions.and.evaluate(context, { 
+    const step1Result = await logicalExpressions.and.evaluate(context, { 
       left: allFieldsFilledResult.success ? allFieldsFilledResult.value : false, 
       right: notSubmittingResult.success ? notSubmittingResult.value : false 
     });
     
-    const step2Result = await enhancedLogicalExpressions.and.evaluate(context, { 
+    const step2Result = await logicalExpressions.and.evaluate(context, { 
       left: step1Result.success ? step1Result.value : false, 
       right: noErrorsResult.success ? noErrorsResult.value : false 
     });
     
-    const shouldEnableResult = await enhancedLogicalExpressions.and.evaluate(context, { 
+    const shouldEnableResult = await logicalExpressions.and.evaluate(context, { 
       left: step2Result.success ? step2Result.value : false, 
       right: isOnlineResult.success ? isOnlineResult.value : false 
     });
@@ -545,12 +545,12 @@ describe('Enhanced Expression Integration - UI State Management', () => {
     };
     
     // Calculate basic progress percentage
-    const basicProgressResult = await enhancedMathematicalExpressions.division.evaluate(context, { 
+    const basicProgressResult = await mathematicalExpressions.division.evaluate(context, { 
       left: formProgress.currentStep, 
       right: formProgress.totalSteps 
     });
     
-    const basicPercentageResult = await enhancedMathematicalExpressions.multiplication.evaluate(context, { 
+    const basicPercentageResult = await mathematicalExpressions.multiplication.evaluate(context, { 
       left: basicProgressResult.success ? basicProgressResult.value : 0, 
       right: 100 
     });
@@ -559,7 +559,7 @@ describe('Enhanced Expression Integration - UI State Management', () => {
     let validStepsCount = 0;
     for (let i = 0; i < Math.min(formProgress.currentStep, formProgress.stepsValid.length); i++) {
       if (formProgress.stepsValid[i]) {
-        const incrementResult = await enhancedMathematicalExpressions.addition.evaluate(context, { 
+        const incrementResult = await mathematicalExpressions.addition.evaluate(context, { 
           left: validStepsCount, 
           right: 1 
         });
@@ -570,18 +570,18 @@ describe('Enhanced Expression Integration - UI State Management', () => {
     }
     
     // Calculate valid progress percentage
-    const validProgressResult = await enhancedMathematicalExpressions.division.evaluate(context, { 
+    const validProgressResult = await mathematicalExpressions.division.evaluate(context, { 
       left: validStepsCount, 
       right: formProgress.totalSteps 
     });
     
-    const validPercentageResult = await enhancedMathematicalExpressions.multiplication.evaluate(context, { 
+    const validPercentageResult = await mathematicalExpressions.multiplication.evaluate(context, { 
       left: validProgressResult.success ? validProgressResult.value : 0, 
       right: 100 
     });
     
     // Check if current step is valid
-    const currentStepValidResult = await enhancedPropertyExpressions.its.evaluate(context, { 
+    const currentStepValidResult = await propertyExpressions.its.evaluate(context, { 
       target: formProgress.stepsValid, 
       property: (formProgress.currentStep - 1).toString() 
     });
@@ -617,31 +617,31 @@ describe('Enhanced Expression Integration - Performance Tracking', () => {
     
     // Calculate: (a + b) * c - (a - b) / c
     // Step 1: a + b
-    const addResult = await enhancedMathematicalExpressions.addition.evaluate(context, { 
+    const addResult = await mathematicalExpressions.addition.evaluate(context, { 
       left: data.a, 
       right: data.b 
     });
     
     // Step 2: (a + b) * c
-    const mulResult = await enhancedMathematicalExpressions.multiplication.evaluate(context, { 
+    const mulResult = await mathematicalExpressions.multiplication.evaluate(context, { 
       left: addResult.success ? addResult.value : 0, 
       right: data.c 
     });
     
     // Step 3: a - b
-    const subResult = await enhancedMathematicalExpressions.subtraction.evaluate(context, { 
+    const subResult = await mathematicalExpressions.subtraction.evaluate(context, { 
       left: data.a, 
       right: data.b 
     });
     
     // Step 4: (a - b) / c
-    const divResult = await enhancedMathematicalExpressions.division.evaluate(context, { 
+    const divResult = await mathematicalExpressions.division.evaluate(context, { 
       left: subResult.success ? subResult.value : 0, 
       right: data.c 
     });
     
     // Step 5: final subtraction
-    const finalResult = await enhancedMathematicalExpressions.subtraction.evaluate(context, { 
+    const finalResult = await mathematicalExpressions.subtraction.evaluate(context, { 
       left: mulResult.success ? mulResult.value : 0, 
       right: divResult.success ? divResult.value : 0 
     });
@@ -669,7 +669,7 @@ describe('Enhanced Expression Integration - Performance Tracking', () => {
     const data = { a: 10, b: 0 }; // Division by zero scenario
     
     // Try to calculate: a / b + 5
-    const divResult = await enhancedMathematicalExpressions.division.evaluate(context, { 
+    const divResult = await mathematicalExpressions.division.evaluate(context, { 
       left: data.a, 
       right: data.b 
     });
@@ -679,7 +679,7 @@ describe('Enhanced Expression Integration - Performance Tracking', () => {
     
     // Continue with safe fallback
     const safeValue = divResult.success ? divResult.value : 0;
-    const addResult = await enhancedMathematicalExpressions.addition.evaluate(context, { 
+    const addResult = await mathematicalExpressions.addition.evaluate(context, { 
       left: safeValue, 
       right: 5 
     });

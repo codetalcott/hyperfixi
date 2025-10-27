@@ -12,7 +12,7 @@ import {
   EnhancedInitOutput,
   InitRegistration,
   InitExecution
-} from './enhanced-init';
+} from './init';
 import { createMockHyperscriptContext, createTestElement } from '../test-setup';
 import type { TypedExpressionContext } from '../types/enhanced-expressions';
 

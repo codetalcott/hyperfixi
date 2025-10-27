@@ -105,7 +105,7 @@ export {
 export {
   // Special expressions (literals, math)
   specialExpressions,
-} from './expressions/enhanced-special/index';
+} from './expressions/special/index';
 
 // ============================================================================
 // Features - Top-level hyperscript features

@@ -11,7 +11,7 @@ import { logicalExpressions } from '../expressions/logical/index';
 import { conversionExpressions } from '../expressions/conversion/index';
 import { positionalExpressions } from '../expressions/positional/index';
 import { propertyExpressions } from '../expressions/properties/index';
-import { specialExpressions } from '../expressions/enhanced-special/index';
+import { specialExpressions } from '../expressions/special/index';
 
 export class ExpressionEvaluator {
   private expressionRegistry: Map<string, any>;
