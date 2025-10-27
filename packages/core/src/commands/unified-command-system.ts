@@ -220,12 +220,12 @@ export class AsyncCommandExecutor {
 
         // Execute the command
         const result = await command.execute(args, context);
-        
+
         if (options.onProgress) {
           options.onProgress(100);
         }
 
-        return result;
+        return result as T;
       } catch (error) {
         lastError = error as Error;
         
