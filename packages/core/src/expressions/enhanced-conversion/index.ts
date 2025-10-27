@@ -29,14 +29,14 @@ export type SupportedConversionType =
  * Enhanced type converter function with structured results
  */
 export interface EnhancedTypeConverter<T = unknown> {
-  (value: unknown, context: TypedExpressionContext): TypedResult<T>;
+  (value: unknown, context: TypedExpressionContext): EvaluationResult<T>;
 }
 
 /**
  * Enhanced conversion registry with type safety
  */
 export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
-  Array: (value: unknown, _context: TypedExpressionContext): TypedResult<unknown[]> => {
+  Array: (value: unknown, _context: TypedExpressionContext): EvaluationResult<unknown[]> => {
     try {
       if (Array.isArray(value)) {
         return { success: true, value, type: 'array' };
@@ -62,7 +62,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  String: (value: unknown, _context: TypedExpressionContext): TypedResult<string> => {
+  String: (value: unknown, _context: TypedExpressionContext): EvaluationResult<string> => {
     try {
       if (value == null) {
         return { success: true, value: '', type: 'string' };
@@ -89,7 +89,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Boolean: (value: unknown, _context: TypedExpressionContext): TypedResult<boolean> => {
+  Boolean: (value: unknown, _context: TypedExpressionContext): EvaluationResult<boolean> => {
     try {
       if (typeof value === 'boolean') {
         return { success: true, value, type: 'boolean' };
@@ -122,7 +122,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Number: (value: unknown, _context: TypedExpressionContext): TypedResult<number> => {
+  Number: (value: unknown, _context: TypedExpressionContext): EvaluationResult<number> => {
     try {
       if (typeof value === 'number') {
         return { success: true, value, type: 'number' };
@@ -158,7 +158,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Int: (value: unknown, context: TypedExpressionContext): TypedResult<number> => {
+  Int: (value: unknown, context: TypedExpressionContext): EvaluationResult<number> => {
     const numberResult = enhancedConverters.Number(value, context);
     if (!numberResult.success) {
       return numberResult;
@@ -166,7 +166,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     return { success: true, value: Math.trunc(numberResult.value as number), type: 'number' };
   },
 
-  Float: (value: unknown, context: TypedExpressionContext): TypedResult<number> => {
+  Float: (value: unknown, context: TypedExpressionContext): EvaluationResult<number> => {
     const numberResult = enhancedConverters.Number(value, context);
     if (!numberResult.success) {
       return numberResult;
@@ -174,7 +174,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     return { success: true, value: parseFloat((numberResult.value as number).toString()), type: 'number' };
   },
 
-  Date: (value: unknown, _context: TypedExpressionContext): TypedResult<Date> => {
+  Date: (value: unknown, _context: TypedExpressionContext): EvaluationResult<Date> => {
     try {
       if (value instanceof Date) {
         return { success: true, value, type: 'object' };
@@ -218,7 +218,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  JSON: (value: unknown, _context: TypedExpressionContext): TypedResult<string> => {
+  JSON: (value: unknown, _context: TypedExpressionContext): EvaluationResult<string> => {
     try {
       const jsonString = JSON.stringify(value);
       return { success: true, value: jsonString, type: 'string' };
@@ -236,7 +236,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Object: (value: unknown, _context: TypedExpressionContext): TypedResult<Record<string, unknown>> => {
+  Object: (value: unknown, _context: TypedExpressionContext): EvaluationResult<Record<string, unknown>> => {
     try {
       if (typeof value === 'object' && value !== null) {
         return { success: true, value: value as Record<string, unknown>, type: 'object' };
@@ -273,7 +273,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
     }
   },
 
-  Values: (value: unknown, _context: TypedExpressionContext): TypedResult<Record<string, unknown>> => {
+  Values: (value: unknown, _context: TypedExpressionContext): EvaluationResult<Record<string, unknown>> => {
     try {
       if (value instanceof HTMLFormElement) {
         const formValues = extractFormValues(value);
@@ -561,7 +561,7 @@ export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
   private trackEvaluation(
     context: TypedExpressionContext,
     input: unknown,
-    result: TypedResult<unknown>,
+    result: EvaluationResult<unknown>,
     startTime: number
   ): void {
     context.evaluationHistory.push({
@@ -797,7 +797,7 @@ export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
   private trackEvaluation(
     context: TypedExpressionContext,
     input: unknown,
-    result: TypedResult<boolean>,
+    result: EvaluationResult<boolean>,
     startTime: number
   ): void {
     context.evaluationHistory.push({
