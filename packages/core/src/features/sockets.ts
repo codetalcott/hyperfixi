@@ -453,7 +453,7 @@ export class TypedSocketsFeatureImplementation {
           const url = new URL(data.socket.url);
           if (!['ws:', 'wss:'].includes(url.protocol)) {
             errors.push({
-              type: 'validation-error',
+              type: 'invalid-websocket-protocol',
               message: 'WebSocket URL must use ws:// or wss:// protocol',
               path: 'socket.url',
               suggestions: []
@@ -462,7 +462,7 @@ export class TypedSocketsFeatureImplementation {
           }
         } catch (urlError) {
           errors.push({
-            type: 'validation-error',
+            type: 'invalid-websocket-url',
             message: `Invalid WebSocket URL: ${data.socket.url}`,
             path: 'socket.url',
             suggestions: []
@@ -475,7 +475,7 @@ export class TypedSocketsFeatureImplementation {
       if (data.socket?.reconnect) {
         if (data.socket.reconnect.maxAttempts < 0) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-reconnect-attempts',
             message: 'Max reconnection attempts must be non-negative',
             path: 'socket.reconnect.maxAttempts',
             suggestions: []
@@ -485,7 +485,7 @@ export class TypedSocketsFeatureImplementation {
 
         if (data.socket.reconnect.delay < 0) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-reconnect-delay',
             message: 'Reconnection delay must be non-negative',
             path: 'socket.reconnect.delay',
             suggestions: []
@@ -508,7 +508,7 @@ export class TypedSocketsFeatureImplementation {
       if (data.socket?.heartbeat?.enabled) {
         if (data.socket.heartbeat.interval <= 0) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-heartbeat-interval',
             message: 'Heartbeat interval must be positive',
             path: 'socket.heartbeat.interval',
             suggestions: []
@@ -518,7 +518,7 @@ export class TypedSocketsFeatureImplementation {
 
         if (data.socket.heartbeat.timeout <= 0) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-heartbeat-timeout',
             message: 'Heartbeat timeout must be positive',
             path: 'socket.heartbeat.timeout',
             suggestions: []
@@ -546,7 +546,7 @@ export class TypedSocketsFeatureImplementation {
               new Function('message', 'event', `return ${handler.filter}`);
             } catch (filterError) {
               errors.push({
-                type: 'syntax-error',
+                type: 'invalid-filter-expression',
                 message: `Invalid filter expression: ${handler.filter}`,
                 path: `eventHandlers[${index}].filter`,
                 suggestions: []
@@ -558,7 +558,7 @@ export class TypedSocketsFeatureImplementation {
           // Validate performance settings
           if (handler.options?.throttle && handler.options?.debounce) {
             errors.push({
-              type: 'validation-error',
+              type: 'conflicting-performance-options',
               message: 'Cannot use both throttle and debounce on the same event handler',
               path: `eventHandlers[${index}].options`,
               suggestions: []
@@ -569,7 +569,7 @@ export class TypedSocketsFeatureImplementation {
           // Validate commands array
           if (!handler.commands || handler.commands.length === 0) {
             errors.push({
-              type: 'empty-config',
+              type: 'empty-commands-array',
               message: 'Event handler must have at least one command',
               path: `eventHandlers[${index}].commands`,
               suggestions: []
@@ -583,7 +583,7 @@ export class TypedSocketsFeatureImplementation {
       if (data.messageHandling?.queue) {
         if (data.messageHandling.queue.maxSize < 0) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-queue-size',
             message: 'Queue max size must be non-negative (0 = unlimited)',
             path: 'messageHandling.queue.maxSize',
             suggestions: []
@@ -595,7 +595,7 @@ export class TypedSocketsFeatureImplementation {
       // Validate connection limits
       if (data.options?.maxConnections <= 0) {
         errors.push({
-          type: 'invalid-input',
+          type: 'invalid-max-connections',
           message: 'Max connections must be positive',
           path: 'options.maxConnections',
           suggestions: []
@@ -605,7 +605,7 @@ export class TypedSocketsFeatureImplementation {
 
       if (data.options?.connectionTimeout <= 0) {
         errors.push({
-          type: 'invalid-input',
+          type: 'invalid-connection-timeout',
           message: 'Connection timeout must be positive',
           path: 'options.connectionTimeout',
           suggestions: []

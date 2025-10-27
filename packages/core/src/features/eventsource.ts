@@ -408,7 +408,7 @@ export class TypedEventSourceFeatureImplementation {
       // Check for negative buffer size before Zod validation
       if (inputData.messageProcessing?.buffer?.maxSize !== undefined && inputData.messageProcessing.buffer.maxSize < 0) {
         errors.push({
-          type: 'invalid-input',
+          type: 'invalid-buffer-size',
           message: 'Buffer size must be non-negative (0 = unlimited)',
           path: 'messageProcessing.buffer.maxSize',
           suggestions: []
@@ -421,7 +421,7 @@ export class TypedEventSourceFeatureImplementation {
         for (const handler of inputData.eventHandlers) {
           if (handler.commands && Array.isArray(handler.commands) && handler.commands.length === 0) {
             errors.push({
-              type: 'empty-config',
+              type: 'empty-commands-array',
               message: 'Event handler commands array cannot be empty',
               path: 'eventHandlers.commands',
               suggestions: []
@@ -449,7 +449,7 @@ export class TypedEventSourceFeatureImplementation {
       if (data.source) {
         if (!this.isValidEventSourceURL(data.source.url)) {
           errors.push({
-            type: 'validation-error',
+            type: 'invalid-eventsource-url',
             message: `Invalid EventSource URL: "${data.source.url}"`,
             path: 'source.url',
             suggestions: []
@@ -461,7 +461,7 @@ export class TypedEventSourceFeatureImplementation {
         if (data.source.retry) {
           if (data.source.retry.maxAttempts < 0) {
             errors.push({
-              type: 'invalid-input',
+              type: 'invalid-retry-attempts',
               message: 'Retry max attempts must be non-negative',
               path: 'source.retry.maxAttempts',
               suggestions: []
@@ -471,7 +471,7 @@ export class TypedEventSourceFeatureImplementation {
 
           if (data.source.retry.delay < 0) {
             errors.push({
-              type: 'invalid-input',
+              type: 'invalid-retry-delay',
               message: 'Retry delay must be non-negative',
               path: 'source.retry.delay',
               suggestions: []
@@ -493,7 +493,7 @@ export class TypedEventSourceFeatureImplementation {
         // Validate timeout settings
         if (data.source.timeout && data.source.timeout.duration < 1000) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-timeout-duration',
             message: 'Timeout duration must be at least 1000ms',
             path: 'source.timeout.duration',
             suggestions: []
@@ -506,7 +506,7 @@ export class TypedEventSourceFeatureImplementation {
       if (data.options) {
         if (data.options.maxConnections < 1) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-max-connections',
             message: 'maxConnections must be at least 1',
             path: 'options.maxConnections',
             suggestions: []
@@ -516,7 +516,7 @@ export class TypedEventSourceFeatureImplementation {
 
         if (data.options.connectionTimeout < 1000) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-connection-timeout',
             message: 'Connection timeout must be at least 1000ms',
             path: 'options.connectionTimeout',
             suggestions: []
@@ -531,7 +531,7 @@ export class TypedEventSourceFeatureImplementation {
           // Validate performance settings
           if (handler.options?.throttle && handler.options?.debounce) {
             errors.push({
-              type: 'validation-error',
+              type: 'conflicting-performance-options',
               message: 'Cannot use both throttle and debounce simultaneously',
               path: 'eventHandlers.options',
               suggestions: []
@@ -545,7 +545,7 @@ export class TypedEventSourceFeatureImplementation {
               new Function('event', `return ${handler.filter}`);
             } catch (filterError) {
               errors.push({
-                type: 'syntax-error',
+                type: 'invalid-filter-expression',
                 message: `Invalid filter expression: ${handler.filter}`,
                 path: 'eventHandlers.filter',
                 suggestions: []
