@@ -62,15 +62,17 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
   public readonly outputType = 'Object' as const;
   public readonly metadata = {
     category: 'Special' as const,
-    complexity: 'O(n)' as const,
-    purity: 'pure' as const,
+    complexity: 'simple' as const,
     sideEffects: [],
     dependencies: [],
-    returnTypes: ['Object'],
-    examples: ['{}', '{x: 1}', '{name: "Alice", age: 30}'],
+    returnTypes: ['Object' as const],
+    examples: [
+      { input: '{}', description: 'Empty object', expectedOutput: {} },
+      { input: '{x: 1}', description: 'Single property', expectedOutput: { x: 1 } },
+      { input: '{name: "Alice", age: 30}', description: 'Multiple properties', expectedOutput: { name: 'Alice', age: 30 } }
+    ],
     relatedExpressions: ['Property', 'Possessive'],
-    performance: { complexity: 'O(n)' as const, notes: 'Linear time based on number of fields' },
-    semantics: { deterministic: true, sideEffects: false }
+    performance: { averageTime: 0.2, complexity: 'O(n)' as const }
   };
 
   public readonly documentation: LLMDocumentation = {

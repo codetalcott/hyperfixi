@@ -67,15 +67,17 @@ export class EnhancedArrayLiteralExpression implements TypedExpressionImplementa
   public readonly outputType = 'Array' as const;
   public readonly metadata = {
     category: 'Special' as const,
-    complexity: 'O(n)' as const,
-    purity: 'pure' as const,
+    complexity: 'simple' as const,
     sideEffects: [],
     dependencies: [],
-    returnTypes: ['Array'],
-    examples: ['[]', '[1, 2, 3]', '["a", "b"]'],
+    returnTypes: ['Array' as const],
+    examples: [
+      { input: '[]', description: 'Empty array', expectedOutput: [] },
+      { input: '[1, 2, 3]', description: 'Numeric array', expectedOutput: [1, 2, 3] },
+      { input: '["a", "b"]', description: 'String array', expectedOutput: ['a', 'b'] }
+    ],
     relatedExpressions: ['ArrayIndex'],
-    performance: { complexity: 'O(n)' as const, notes: 'Linear time based on number of elements' },
-    semantics: { deterministic: true, sideEffects: false }
+    performance: { averageTime: 0.1, complexity: 'O(n)' as const }
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -266,18 +268,20 @@ export class EnhancedArrayIndexExpression implements TypedExpressionImplementati
   public readonly syntax = 'array[index]';
   public readonly description = 'Accesses an array element by index or extracts a slice';
   public readonly inputSchema = ArrayIndexInputSchema;
-  public readonly outputType = 'Unknown' as const;
+  public readonly outputType = 'Any' as const;
   public readonly metadata = {
     category: 'Special' as const,
-    complexity: 'O(1)' as const,
-    purity: 'pure' as const,
+    complexity: 'simple' as const,
     sideEffects: [],
     dependencies: [],
-    returnTypes: ['Unknown'],
-    examples: ['arr[0]', 'arr[1]', 'arr[-1]'],
+    returnTypes: ['Any' as const],
+    examples: [
+      { input: 'arr[0]', description: 'First element', expectedOutput: undefined },
+      { input: 'arr[1]', description: 'Second element', expectedOutput: undefined },
+      { input: 'arr[-1]', description: 'Last element', expectedOutput: undefined }
+    ],
     relatedExpressions: ['ArrayLiteral'],
-    performance: { complexity: 'O(1)' as const, notes: 'Constant time array access' },
-    semantics: { deterministic: true, sideEffects: false }
+    performance: { averageTime: 0.05, complexity: 'O(1)' as const }
   };
 
   public readonly documentation: LLMDocumentation = {

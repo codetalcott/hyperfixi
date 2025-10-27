@@ -51,15 +51,17 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
   public readonly outputType = 'Array' as const;
   public readonly metadata = {
     category: 'Logical' as const,
-    complexity: 'O(n)' as const,
-    purity: 'pure' as const,
+    complexity: 'medium' as const,
     sideEffects: [],
     dependencies: [],
-    returnTypes: ['Array'],
-    examples: ['x in [1,2,3]', '"foo" in obj', '<div/> in body'],
+    returnTypes: ['Array' as const],
+    examples: [
+      { input: 'x in [1,2,3]', description: 'Check value in array', expectedOutput: [] },
+      { input: '"foo" in obj', description: 'Check property in object', expectedOutput: [] },
+      { input: '<div/> in body', description: 'Query elements in DOM', expectedOutput: [] }
+    ],
     relatedExpressions: ['Matches', 'Contains'],
-    performance: { complexity: 'O(n)' as const, notes: 'Linear search through collection' },
-    semantics: { deterministic: true, sideEffects: false }
+    performance: { averageTime: 0.5, complexity: 'O(n)' as const }
   };
 
   public readonly documentation: LLMDocumentation = {
