@@ -126,16 +126,16 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
       const issues: ValidationError[] = [];
 
       // Check for extremely large objects
-      if ((validatedArgs as any[]).length > 1000) {
+      if ((validatedArgs as unknown as any[]).length > 1000) {
         issues.push({
           type: 'validation-error',
-          message: `Object literal with ${(validatedArgs as any[]).length} fields may impact performance`,
+          message: `Object literal with ${(validatedArgs as unknown as any[]).length} fields may impact performance`,
           suggestions: []
         });
       }
 
       // Check for duplicate static keys
-      const staticKeys = (validatedArgs as any[])
+      const staticKeys = (validatedArgs as unknown as any[])
         .filter((field: any) => !field.isDynamic && typeof field.key === 'string')
         .map((field: any) => field.key as string);
 
@@ -149,7 +149,7 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
       }
 
       // Validate field key types
-      for (const field of (validatedArgs as any[])) {
+      for (const field of (validatedArgs as unknown as any[])) {
         if (!field.isDynamic && typeof field.key !== 'string') {
           issues.push({
             type: 'validation-error',
@@ -211,9 +211,9 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
 
       const fields = this.inputSchema.parse(args);
       const resultObject: Record<string, HyperScriptValue> = {};
-      
+
       // Process each field
-      for (const field of (fields as any[])) {
+      for (const field of (fields as unknown as any[])) {
         const keyResult = await this.resolveFieldKey(field, context);
         if (!keyResult.success) {
           return keyResult as unknown as EvaluationResult<Record<string, HyperScriptValue>>;
