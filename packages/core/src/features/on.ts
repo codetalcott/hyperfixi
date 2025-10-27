@@ -6,9 +6,10 @@
  */
 
 import { v, z } from '../validation/lightweight-validators';
-import type { 
+import type {
   ValidationResult,
-  LLMDocumentation, 
+  ValidationError,
+  LLMDocumentation,
   EvaluationType,
   ExecutionContext
 } from '../types/base-types';
@@ -381,7 +382,7 @@ export class TypedOnFeatureImplementation {
       }
 
       const parsed = this.inputSchema.parse(input);
-      const errors: Array<{ type: string; message: string; path?: string }> = [];
+      const errors: ValidationError[] = [];
       const suggestions: string[] = [];
 
       // Enhanced validation logic
@@ -392,10 +393,10 @@ export class TypedOnFeatureImplementation {
         errors.push({
           type: 'invalid-event-type',
           message: `"${data.event.type}" is not a valid DOM event type`,
-          path: 'event.type'
+          path: 'event.type',
+          suggestions: []
         });
         suggestions.push('Use standard DOM event types like "click", "input", "submit", "keydown", etc.');
-      suggestions: []
       }
 
       // Validate target selector - skip validation in test environment
@@ -409,10 +410,10 @@ export class TypedOnFeatureImplementation {
           errors.push({
             type: 'invalid-target-selector',
             message: `Invalid CSS selector: "${data.event.target}"`,
-            path: 'event.target'
+            path: 'event.target',
+            suggestions: []
           });
           suggestions.push('Use valid CSS selector syntax for target element');
-        suggestions: []
         }
       }
       
@@ -421,10 +422,10 @@ export class TypedOnFeatureImplementation {
         errors.push({
           type: 'invalid-target-selector',
           message: `Invalid CSS selector: "${data.event.target}"`,
-          path: 'event.target'
+          path: 'event.target',
+          suggestions: []
         });
         suggestions.push('Use valid CSS selector syntax for target element');
-      suggestions: []
       }
 
       // Validate performance settings
@@ -432,10 +433,10 @@ export class TypedOnFeatureImplementation {
         errors.push({
           type: 'conflicting-performance-options',
           message: 'Cannot use both throttle and debounce simultaneously',
-          path: 'event'
+          path: 'event',
+          suggestions: []
         });
         suggestions.push('Choose either throttle OR debounce, not both');
-      suggestions: []
       }
 
       // Validate timing values
@@ -443,20 +444,20 @@ export class TypedOnFeatureImplementation {
         errors.push({
           type: 'invalid-throttle-delay',
           message: 'Throttle delay must be a positive number',
-          path: 'event.throttle'
+          path: 'event.throttle',
+          suggestions: []
         });
         suggestions.push('Set throttle delay to a positive number in milliseconds');
-      suggestions: []
       }
 
       if (data.event?.debounce && data.event.debounce < 0) {
         errors.push({
           type: 'invalid-debounce-delay',
           message: 'Debounce delay must be a positive number',
-          path: 'event.debounce'
+          path: 'event.debounce',
+          suggestions: []
         });
         suggestions.push('Set debounce delay to a positive number in milliseconds');
-      suggestions: []
       }
 
       // Validate commands array
@@ -464,10 +465,10 @@ export class TypedOnFeatureImplementation {
         errors.push({
           type: 'empty-commands-array',
           message: 'Commands array cannot be empty',
-          path: 'commands'
+          path: 'commands',
+          suggestions: []
         });
         suggestions.push('Add at least one command to execute when event occurs');
-      suggestions: []
       }
 
       // Validate command count limits
@@ -475,10 +476,10 @@ export class TypedOnFeatureImplementation {
         errors.push({
           type: 'too-many-commands',
           message: `Too many commands (max: ${data.options?.maxCommandCount || 100})`,
-          path: 'commands'
+          path: 'commands',
+          suggestions: []
         });
         suggestions.push('Reduce number of commands or increase maxCommandCount limit');
-      suggestions: []
       }
 
       // Validate filter expression if provided
@@ -490,10 +491,10 @@ export class TypedOnFeatureImplementation {
           errors.push({
             type: 'invalid-filter-expression',
             message: `Invalid filter expression: ${data.event.filter}`,
-            path: 'event.filter'
+            path: 'event.filter',
+            suggestions: []
           });
           suggestions.push('Use valid JavaScript expression for event filtering');
-        suggestions: []
         }
       }
 
