@@ -18,7 +18,6 @@ export type {
   ContextMetadata,
   EvaluationResult,
   TypedContextImplementation,
-  ContextRegistry,
   ContextFilter,
   BaseContextInput,
   BaseContextOutput,
@@ -38,11 +37,11 @@ export {
 // ============================================================================
 
 export {
-  EnhancedContextRegistry,
+  ContextRegistry,
   defaultContextRegistry,
   createContextRegistry,
   registerContexts
-} from './enhanced-context-registry';
+} from './context-registry';
 
 // ============================================================================
 // Frontend Context Implementation
@@ -103,7 +102,7 @@ export {
 // Complete Context System Setup
 // ============================================================================
 
-import { defaultContextRegistry } from './enhanced-context-registry';
+import { defaultContextRegistry } from './context-registry';
 import { frontendContextImplementation, TypedFrontendContextImplementation, type FrontendContextInput } from './frontend-context';
 import { backendContextImplementation, TypedBackendContextImplementation, type BackendContextInput } from './backend-context';
 import { llmGenerationContextImplementation, TypedLLMGenerationContextImplementation, type LLMGenerationInput } from './llm-generation-context';

@@ -12,20 +12,20 @@ import type {
   TemplateDirectiveType,
   TemplateRenderStrategy,
   TemplateLLMDocumentation
-} from '../../../types/enhanced-templates.ts';
+} from '../../../types/template-types.ts';
 import { RepeatDirectiveInputSchema } from '../../../types/template-types';
 import type {
   EvaluationResult,
   ExpressionMetadata
 } from '../../../types/base-types';
 import type { UnifiedValidationResult, UnifiedValidationError } from '../../../types/unified-types.ts';
-import type { HyperScriptValue } from '../../../types/enhanced-core.ts';
-import { TemplateContextUtils } from '../enhanced-template-context';
+import type { HyperScriptValue } from '../../../types/command-types.ts';
+import { TemplateContextUtils } from '../template-context';
 
 /**
  * Enhanced @repeat directive with full type safety for LLM agents
  */
-export class EnhancedRepeatDirective implements EnhancedTemplateDirective<RepeatDirectiveInput, string> {
+export class RepeatDirective implements EnhancedTemplateDirective<RepeatDirectiveInput, string> {
   public readonly name = '@repeat' as const;
   public readonly category = 'Template';
   public readonly syntax = '@repeat in <collection>';
@@ -621,8 +621,8 @@ export class EnhancedRepeatDirective implements EnhancedTemplateDirective<Repeat
 /**
  * Create enhanced @repeat directive instance
  */
-export function createEnhancedRepeatDirective(): EnhancedRepeatDirective {
-  return new EnhancedRepeatDirective();
+export function createRepeatDirective(): RepeatDirective {
+  return new RepeatDirective();
 }
 
-export default EnhancedRepeatDirective;
+export default RepeatDirective;

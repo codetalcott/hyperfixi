@@ -19,7 +19,7 @@ export interface EnhancedParseError extends ParseError {
   recovery?: string;
 }
 
-export class EnhancedErrorHandler {
+export class ErrorHandler {
   private errors: EnhancedParseError[] = [];
   private tokens: Token[];
   private position: number;
@@ -343,6 +343,6 @@ export class EnhancedErrorHandler {
 /**
  * Helper function to create enhanced error handler
  */
-export function createEnhancedErrorHandler(tokens: Token[], position: number = 0): EnhancedErrorHandler {
-  return new EnhancedErrorHandler(tokens, position);
+export function createErrorHandler(tokens: Token[], position: number = 0): ErrorHandler {
+  return new ErrorHandler(tokens, position);
 }

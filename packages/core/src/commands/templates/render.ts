@@ -11,9 +11,9 @@ import { v, z } from '../../validation/lightweight-validators';
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
 import type { UnifiedValidationResult } from '../../types/unified-types';
-import { EnhancedIfDirective } from './directives/enhanced-if';
-import { EnhancedElseDirective } from './directives/enhanced-else';
-import { EnhancedRepeatDirective } from './directives/enhanced-repeat';
+import { IfDirective } from './directives/if-directive';
+import { ElseDirective } from './directives/else-directive';
+import { RepeatDirective } from './directives/repeat-directive';
 
 /**
  * Zod schema for RENDER command input validation
@@ -73,9 +73,9 @@ export class RenderCommand implements CommandImplementation<
   };
 
   // Template directive instances
-  private readonly ifDirective = new EnhancedIfDirective();
-  private readonly elseDirective = new EnhancedElseDirective();
-  private readonly repeatDirective = new EnhancedRepeatDirective();
+  private readonly ifDirective = new IfDirective();
+  private readonly elseDirective = new ElseDirective();
+  private readonly repeatDirective = new RepeatDirective();
 
   public readonly validation = {
     validate: (input: unknown): UnifiedValidationResult<RenderCommandInput> => this.validateInput(input)

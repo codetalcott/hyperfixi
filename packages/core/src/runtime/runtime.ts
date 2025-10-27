@@ -22,7 +22,7 @@ function nodeType(node: ASTNode): string {
 }
 
 // Enhanced command imports
-import { EnhancedCommandRegistry } from './enhanced-command-adapter';
+import { EnhancedCommandRegistry } from './command-adapter';
 import { asHTMLElement } from '../utils/dom-utils';
 import { createHideCommand } from '../commands/dom/hide';
 import { createShowCommand } from '../commands/dom/show';

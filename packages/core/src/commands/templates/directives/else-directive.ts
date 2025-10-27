@@ -18,12 +18,12 @@ import type {
   ExpressionMetadata
 } from '../../../types/base-types';
 import type { UnifiedValidationResult, UnifiedValidationError } from '../../../types/unified-types';
-import { TemplateContextUtils } from '../enhanced-template-context';
+import { TemplateContextUtils } from '../template-context';
 
 /**
  * Enhanced @else directive with full type safety for LLM agents
  */
-export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDirectiveInput, string> {
+export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInput, string> {
   public readonly name = '@else' as const;
   public readonly category = 'Template';
   public readonly syntax = '@else';
@@ -486,8 +486,8 @@ export class EnhancedElseDirective implements EnhancedTemplateDirective<ElseDire
 /**
  * Create enhanced @else directive instance
  */
-export function createEnhancedElseDirective(): EnhancedElseDirective {
-  return new EnhancedElseDirective();
+export function createElseDirective(): ElseDirective {
+  return new ElseDirective();
 }
 
-export default EnhancedElseDirective;
+export default ElseDirective;

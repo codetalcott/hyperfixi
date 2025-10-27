@@ -4,20 +4,20 @@
  */
 
 import type { ExecutionContext } from '../../types/core.ts';
-import type { 
+import type {
   TemplateExecutionContext,
-  TemplateContextBridge,
+  TemplateContextBridge as ITemplateContextBridge,
   TemplateDirectiveType,
   EnhancedTemplateConfig
-} from '../../types/enhanced-templates.ts';
-import type { TypedExpressionContext } from '../../types/enhanced-expressions.ts';
+} from '../../types/template-types.ts';
+import type { TypedExpressionContext } from '../../types/expression-types.ts';
 import type { HyperScriptValue } from '../../types/command-types';
 
 // ============================================================================
 // Template Context Bridge Implementation
 // ============================================================================
 
-export class EnhancedTemplateContextBridge implements TemplateContextBridge {
+export class TemplateContextBridge implements ITemplateContextBridge {
   private readonly config: EnhancedTemplateConfig;
   
   constructor(config: Partial<EnhancedTemplateConfig> = {}) {
@@ -386,6 +386,6 @@ export const defaultEnhancedTemplateConfig: EnhancedTemplateConfig = {
  */
 export function createTemplateContextBridge(
   config?: Partial<EnhancedTemplateConfig>
-): EnhancedTemplateContextBridge {
-  return new EnhancedTemplateContextBridge(config);
+): TemplateContextBridge {
+  return new TemplateContextBridge(config);
 }

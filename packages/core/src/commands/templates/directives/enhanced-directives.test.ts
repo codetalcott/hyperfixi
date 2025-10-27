@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { TemplateExecutionContext } from '../../../types/enhanced-templates.ts';
+import type { TemplateExecutionContext } from '../../../types/template-types.ts';
 import type { HyperScriptValue } from '../../../types/enhanced-expressions.ts';
 import { EnhancedIfDirective } from './enhanced-if.ts';
 import { EnhancedElseDirective } from './enhanced-else.ts';

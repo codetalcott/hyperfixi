@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { EnhancedBenchmark } from './enhanced-benchmarks';
+import { EnhancedBenchmark } from './benchmarks';
 import { createTypedExpressionContext } from '../test-utilities';
 
 // Import enhanced expressions

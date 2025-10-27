@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ContextBridge } from './enhanced-command-adapter';
+import { ContextBridge } from './command-adapter';
 import type { ExecutionContext } from '../types/core';
 
 describe('ContextBridge', () => {

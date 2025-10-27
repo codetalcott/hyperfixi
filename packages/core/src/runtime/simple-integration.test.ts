@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { Runtime } from './runtime';
-import { ContextBridge, EnhancedCommandRegistry } from './enhanced-command-adapter';
+import { ContextBridge, EnhancedCommandRegistry } from './command-adapter';
 
 describe('Simple Integration Test', () => {
   it('should create runtime with enhanced commands enabled', () => {

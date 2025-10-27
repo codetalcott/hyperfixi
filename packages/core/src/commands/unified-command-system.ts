@@ -9,7 +9,7 @@ import type {
 } from '../types/core';
 
 // Import all enhanced commands
-import { createAllEnhancedCommands } from './enhanced-command-registry';
+import { createAllEnhancedCommands } from './command-registry';
 
 // Create the command registry
 const enhancedCommandRegistry = createAllEnhancedCommands();

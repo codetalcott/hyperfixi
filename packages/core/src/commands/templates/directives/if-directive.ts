@@ -11,19 +11,19 @@ import type {
   TemplateDirectiveType,
   TemplateRenderStrategy,
   TemplateLLMDocumentation
-} from '../../../types/enhanced-templates.ts';
+} from '../../../types/template-types.ts';
 import { IfDirectiveInputSchema } from '../../../types/template-types';
 import type {
   EvaluationResult,
   ExpressionMetadata
 } from '../../../types/base-types';
 import type { UnifiedValidationResult } from '../../../types/unified-types.ts';
-import { TemplateContextUtils } from '../enhanced-template-context';
+import { TemplateContextUtils } from '../template-context';
 
 /**
  * Enhanced @if directive with full type safety for LLM agents
  */
-export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiveInput, string> {
+export class IfDirective implements EnhancedTemplateDirective<IfDirectiveInput, string> {
   public readonly name = '@if' as const;
   public readonly category = 'Template';
   public readonly syntax = '@if <condition>';
@@ -499,8 +499,8 @@ export class EnhancedIfDirective implements EnhancedTemplateDirective<IfDirectiv
 /**
  * Create enhanced @if directive instance
  */
-export function createEnhancedIfDirective(): EnhancedIfDirective {
-  return new EnhancedIfDirective();
+export function createIfDirective(): IfDirective {
+  return new IfDirective();
 }
 
-export default EnhancedIfDirective;
+export default IfDirective;

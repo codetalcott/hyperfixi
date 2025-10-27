@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { EnhancedBenchmark, BenchmarkResult } from './enhanced-benchmarks';
+import { EnhancedBenchmark, BenchmarkResult } from './benchmarks';
 import { HideCommand } from '../commands/dom/hide';
 import { ShowCommand } from '../commands/dom/show';
 import { AddCommand } from '../commands/dom/add';

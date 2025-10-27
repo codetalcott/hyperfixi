@@ -6,7 +6,7 @@
 
 import type {
   TypedContextImplementation,
-  ContextRegistry,
+  ContextRegistry as IContextRegistry,
   ContextFilter,
   ContextCategory
 } from '../types/context-types';
@@ -16,7 +16,7 @@ import type { ValidationResult, ValidationError } from '../types/base-types';
 // Context Registry Implementation
 // ============================================================================
 
-export class EnhancedContextRegistry implements ContextRegistry {
+export class ContextRegistry implements IContextRegistry {
   private contexts = new Map<string, TypedContextImplementation<any, any>>();
   private categoryIndex = new Map<ContextCategory, Set<string>>();
   private frameworkIndex = new Map<string, Set<string>>();
@@ -317,14 +317,14 @@ export class EnhancedContextRegistry implements ContextRegistry {
 // Default Registry Instance
 // ============================================================================
 
-export const defaultContextRegistry = new EnhancedContextRegistry();
+export const defaultContextRegistry = new ContextRegistry();
 
 // ============================================================================
 // Registry Factory Function
 // ============================================================================
 
-export function createContextRegistry(): EnhancedContextRegistry {
-  return new EnhancedContextRegistry();
+export function createContextRegistry(): ContextRegistry {
+  return new ContextRegistry();
 }
 
 // ============================================================================
@@ -335,7 +335,7 @@ export function createContextRegistry(): EnhancedContextRegistry {
  * Register multiple contexts at once
  */
 export function registerContexts(
-  registry: EnhancedContextRegistry,
+  registry: ContextRegistry,
   contexts: TypedContextImplementation<any, any>[]
 ): ValidationResult {
   const errors: ValidationError[] = [];

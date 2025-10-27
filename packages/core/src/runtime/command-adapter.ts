@@ -9,7 +9,7 @@ import type {
   TypedExecutionContext,
   ValidationResult
 } from '../types/core';
-import { createAllEnhancedCommands } from '../commands/enhanced-command-registry';
+import { createAllEnhancedCommands } from '../commands/command-registry';
 
 
 /**
@@ -83,7 +83,7 @@ export class ContextBridge {
  * Enhanced Command Adapter
  * Wraps TypedCommandImplementation for runtime compatibility
  */
-export class EnhancedCommandAdapter implements RuntimeCommand {
+export class CommandAdapter implements RuntimeCommand {
   constructor(private impl: any) {}
 
   get name(): string {
@@ -106,7 +106,7 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
       // Debug logging for SET command
       if (this.impl.name === 'set') {
         // console.log('🚨🚨🚨 ENHANCED COMMAND ADAPTER EXECUTE CALLED FOR SET 🚨🚨🚨');
-        // console.log('🔧 EnhancedCommandAdapter.execute() called with:', { 
+        // console.log('🔧 CommandAdapter.execute() called with:', { 
           // commandName: this.impl.name, 
           // args, 
           // argsLength: args.length,
@@ -334,7 +334,7 @@ export class EnhancedCommandAdapter implements RuntimeCommand {
  * Manages enhanced commands and their runtime adapters
  */
 export class EnhancedCommandRegistry {
-  private adapters = new Map<string, EnhancedCommandAdapter>();
+  private adapters = new Map<string, CommandAdapter>();
   private implementations = new Map<string, any>();
 
   /**
@@ -343,7 +343,7 @@ export class EnhancedCommandRegistry {
   register(
     impl: any
   ): void {
-    const adapter = new EnhancedCommandAdapter(impl);
+    const adapter = new CommandAdapter(impl);
     this.adapters.set(impl.name, adapter);
     this.implementations.set(impl.name, impl);
   }
@@ -351,7 +351,7 @@ export class EnhancedCommandRegistry {
   /**
    * Get runtime-compatible command adapter
    */
-  getAdapter(name: string): EnhancedCommandAdapter | undefined {
+  getAdapter(name: string): CommandAdapter | undefined {
     return this.adapters.get(name);
   }
 
@@ -379,7 +379,7 @@ export class EnhancedCommandRegistry {
   /**
    * Get all runtime adapters
    */
-  getAdapters(): Map<string, EnhancedCommandAdapter> {
+  getAdapters(): Map<string, CommandAdapter> {
     return new Map(this.adapters);
   }
 
@@ -428,6 +428,6 @@ export class EnhancedCommandRegistry {
 /**
  * Factory function to create enhanced command adapters
  */
-export function createEnhancedAdapter(impl: any): EnhancedCommandAdapter {
-  return new EnhancedCommandAdapter(impl);
+export function createEnhancedAdapter(impl: any): CommandAdapter {
+  return new CommandAdapter(impl);
 }
