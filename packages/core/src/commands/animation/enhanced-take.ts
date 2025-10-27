@@ -12,6 +12,7 @@ import type {
   LLMDocumentation,
   TypedResult
 } from '../../types/enhanced-core';
+import type { RuntimeValidator } from '../../validation/lightweight-validators';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 import { dispatchCustomEvent } from '../../core/events';
 import {
@@ -51,7 +52,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
   public readonly name = 'take' as const;
   public readonly syntax = 'take <property> from <source> [and put it on <target>]';
   public readonly description = 'Moves classes, attributes, and properties from one element to another with validation';
-  public readonly inputSchema = TakeCommandInputSchema;
+  public readonly inputSchema: RuntimeValidator<TakeCommandInput> = TakeCommandInputSchema as RuntimeValidator<TakeCommandInput>;
   public readonly outputType = 'element' as const;
 
   public readonly metadata: CommandMetadata = {

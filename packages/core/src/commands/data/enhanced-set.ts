@@ -62,37 +62,17 @@ export class EnhancedSetCommand implements LegacyCommandImplementation<
   public readonly outputType = 'object' as const;
   
   public readonly metadata = {
-    category: 'data' as const,
-    complexity: 'medium' as const,
-    sideEffects: ['variable-mutation', 'dom-mutation'] as const,
+    name: 'set',
+    description: 'The set command assigns values to variables, element properties, or attributes. It supports both local and global scope assignment.',
+    syntax: 'set <target> to <value>',
+    category: 'data',
     examples: [
-      {
-        code: 'set myVar to "value"',
-        description: 'Set a local variable',
-        expectedOutput: 'SetCommandOutput'
-      },
-      {
-        code: 'set @data-theme to "dark"',
-        description: 'Set an element attribute',
-        expectedOutput: 'SetCommandOutput'
-      },
-      {
-        code: 'set my innerHTML to "content"',
-        description: 'Set element property using possessive syntax',
-        expectedOutput: 'SetCommandOutput'
-      },
-      {
-        code: 'set the textContent of #element to "text"',
-        description: 'Set element property using "the X of Y" syntax',
-        expectedOutput: 'SetCommandOutput'
-      },
-      {
-        code: 'set global count to 10',
-        description: 'Set a global variable',
-        expectedOutput: 'SetCommandOutput'
-      }
+      'set myVar to "value"',
+      'set @data-theme to "dark"',
+      'set my innerHTML to "content"',
+      'set the textContent of #element to "text"',
+      'set global count to 10'
     ],
-    relatedCommands: ['put', 'get', 'increment', 'decrement'],
     version: '2.0.0'
   };
 

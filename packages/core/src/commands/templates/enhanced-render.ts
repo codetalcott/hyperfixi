@@ -59,32 +59,16 @@ export class EnhancedRenderCommand implements LegacyCommandImplementation<
   public readonly outputType = 'object' as const;
   
   public readonly metadata = {
-    category: 'template' as const,
-    complexity: 'high' as const,
-    sideEffects: ['template-rendering', 'context-modification'] as const,
+    name: 'render',
+    description: 'The render command processes templates with @if, @else, and @repeat directives, supporting variable interpolation and HTML escaping.',
+    syntax: 'render <template> [with (<variables>)]',
+    category: 'template',
     examples: [
-      {
-        code: 'render myTemplate',
-        description: 'Render a template with current context',
-        expectedOutput: 'RenderCommandOutput'
-      },
-      {
-        code: 'render myTemplate with (name: "Alice", items: [1,2,3])',
-        description: 'Render template with specific variables',
-        expectedOutput: 'RenderCommandOutput'
-      },
-      {
-        code: 'render "<template>Hello ${name}!</template>" with (name: "World")',
-        description: 'Render inline template string',
-        expectedOutput: 'RenderCommandOutput'
-      },
-      {
-        code: 'render template with (items: data) then put result into #output',
-        description: 'Render template and place result in element',
-        expectedOutput: 'RenderCommandOutput'
-      }
+      'render myTemplate',
+      'render myTemplate with (name: "Alice", items: [1,2,3])',
+      'render "<template>Hello ${name}!</template>" with (name: "World")',
+      'render template with (items: data) then put result into #output'
     ],
-    relatedCommands: ['put', 'set', 'get'],
     version: '2.0.0'
   };
 
@@ -170,8 +154,8 @@ export class EnhancedRenderCommand implements LegacyCommandImplementation<
   }
 
   async execute(
-    context: TypedExecutionContext,
-    input: RenderCommandInput | string | string[]
+    input: RenderCommandInput | string | string[],
+    context: TypedExecutionContext
   ): Promise<Element | null> {
     console.log('🎨 Enhanced RENDER command executing with:', { input, contextMe: context.me?.id });
     
