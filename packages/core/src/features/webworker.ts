@@ -412,7 +412,7 @@ export class TypedWebWorkerFeatureImplementation {
       // Check for negative queue size before Zod validation
       if (inputData.messaging?.queue?.maxSize !== undefined && inputData.messaging.queue.maxSize < 0) {
         errors.push({
-          type: 'invalid-input',
+          type: 'invalid-queue-size',
           message: 'Queue size must be non-negative (0 = unlimited)',
           path: 'messaging.queue.maxSize',
           suggestions: []
@@ -425,7 +425,7 @@ export class TypedWebWorkerFeatureImplementation {
         for (const handler of inputData.eventHandlers) {
           if (handler.commands && Array.isArray(handler.commands) && handler.commands.length === 0) {
             errors.push({
-              type: 'empty-config',
+              type: 'empty-commands-array',
               message: 'Event handler commands array cannot be empty',
               path: 'eventHandlers.commands',
               suggestions: []
@@ -453,7 +453,7 @@ export class TypedWebWorkerFeatureImplementation {
       if (data.worker) {
         if (!data.worker.inline && !this.isValidWorkerScript(data.worker.script)) {
           errors.push({
-            type: 'validation-error',
+            type: 'invalid-worker-script',
             message: `Invalid worker script: "${data.worker.script}"`,
             path: 'worker.script',
             suggestions: []
@@ -473,7 +473,7 @@ export class TypedWebWorkerFeatureImplementation {
             }
           } catch (syntaxError) {
             errors.push({
-              type: 'syntax-error',
+              type: 'invalid-inline-script',
               message: `Invalid inline script syntax: ${data.worker.script}`,
               path: 'worker.script',
               suggestions: []
@@ -489,7 +489,7 @@ export class TypedWebWorkerFeatureImplementation {
       if (data.options) {
         if (data.options.maxWorkers < 1) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-max-workers',
             message: 'maxWorkers must be at least 1',
             path: 'options.maxWorkers',
             suggestions: []
@@ -499,7 +499,7 @@ export class TypedWebWorkerFeatureImplementation {
 
         if (data.options.workerTimeout < 1000) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-worker-timeout',
             message: 'Worker timeout must be at least 1000ms',
             path: 'options.workerTimeout',
             suggestions: []
@@ -509,7 +509,7 @@ export class TypedWebWorkerFeatureImplementation {
 
         if (data.options.terminationTimeout < 1000) {
           errors.push({
-            type: 'invalid-input',
+            type: 'invalid-termination-timeout',
             message: 'Termination timeout must be at least 1000ms',
             path: 'options.terminationTimeout',
             suggestions: []
@@ -526,7 +526,7 @@ export class TypedWebWorkerFeatureImplementation {
           // Validate performance settings
           if (handler.options?.throttle && handler.options?.debounce) {
             errors.push({
-              type: 'validation-error',
+              type: 'conflicting-performance-options',
               message: 'Cannot use both throttle and debounce simultaneously',
               path: 'eventHandlers.options',
               suggestions: []
@@ -540,7 +540,7 @@ export class TypedWebWorkerFeatureImplementation {
               new Function('message', `return ${handler.filter}`);
             } catch (filterError) {
               errors.push({
-                type: 'syntax-error',
+                type: 'invalid-filter-expression',
                 message: `Invalid filter expression: ${handler.filter}`,
                 path: 'eventHandlers.filter',
                 suggestions: []
