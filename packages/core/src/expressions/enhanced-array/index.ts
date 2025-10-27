@@ -6,7 +6,7 @@
  * Handles array creation, indexing, range operations, and type safety
  */
 
-import { v } from '../../validation/lightweight-validators';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -59,7 +59,7 @@ export type ArrayIndexInput = any; // Inferred from RuntimeValidator
 export class EnhancedArrayLiteralExpression implements TypedExpressionImplementation<
   HyperScriptValue[]
 > {
-  public readonly inputSchema = ArrayLiteralInputSchema;
+  public readonly inputSchema: RuntimeValidator<HyperScriptValue[]> = ArrayLiteralInputSchema as RuntimeValidator<HyperScriptValue[]>;
   
   public readonly documentation: LLMDocumentation = {
     summary: 'Creates array literals with comprehensive element handling and type safety',

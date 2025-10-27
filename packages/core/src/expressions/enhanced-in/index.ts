@@ -4,7 +4,7 @@
  * Handles array membership, DOM element queries, and advanced filtering
  */
 
-import { v } from '../../validation/lightweight-validators';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -43,7 +43,7 @@ export type InExpressionInput = any; // Inferred from RuntimeValidator
 export class EnhancedInExpression implements TypedExpressionImplementation<
   HyperScriptValue[]
 > {
-  public readonly inputSchema = InExpressionInputSchema;
+  public readonly inputSchema: RuntimeValidator<HyperScriptValue[]> = InExpressionInputSchema as RuntimeValidator<HyperScriptValue[]>;
   
   public readonly documentation: LLMDocumentation = {
     summary: 'Tests membership in collections and performs DOM queries with comprehensive filtering',
@@ -95,7 +95,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
   /**
    * Validate 'in' expression arguments
    */
-  async validate(args: unknown[]): Promise<ValidationResult> {
+  validate(args: unknown): ValidationResult {
     try {
       const validatedArgs = this.inputSchema.parse(args) as [unknown, unknown];
       const [searchValue, container] = validatedArgs;

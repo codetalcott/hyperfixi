@@ -4,7 +4,7 @@
  * Handles object creation, dynamic field names, and type safety
  */
 
-import { v } from '../../validation/lightweight-validators';
+import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
 import type {
   HyperScriptValue,
   HyperScriptValueType,
@@ -54,7 +54,7 @@ export type ObjectLiteralInput = any; // Inferred from RuntimeValidator
 export class EnhancedObjectLiteralExpression implements TypedExpressionImplementation<
   Record<string, HyperScriptValue>
 > {
-  public readonly inputSchema = ObjectLiteralInputSchema;
+  public readonly inputSchema: RuntimeValidator<Record<string, HyperScriptValue>> = ObjectLiteralInputSchema as RuntimeValidator<Record<string, HyperScriptValue>>;
   
   public readonly documentation: LLMDocumentation = {
     summary: 'Creates object literals with comprehensive field handling, dynamic keys, and type safety',
@@ -100,7 +100,7 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
   /**
    * Validate object literal expression arguments
    */
-  async validate(args: unknown[]): Promise<ValidationResult> {
+  validate(args: unknown): ValidationResult {
     try {
       const validatedArgs = this.inputSchema.parse(args);
       
