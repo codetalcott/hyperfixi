@@ -2093,7 +2093,7 @@ export class Parser {
       return {
         type: 'command',
         name: commandName,
-        args,
+        args: args as ExpressionNode[],
         isBlocking: false,
         start: commandToken.start,
         end: this.previous().end,
@@ -2144,7 +2144,7 @@ export class Parser {
       return {
         type: 'command',
         name: commandName,
-        args,
+        args: args as ExpressionNode[],
         isBlocking: false,
         start: commandToken.start,
         end: this.previous().end,
