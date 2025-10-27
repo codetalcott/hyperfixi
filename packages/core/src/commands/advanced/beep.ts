@@ -1,5 +1,5 @@
 /**
- * Enhanced Beep Command Implementation
+ * Beep Command Implementation
  * Provides debugging output for expressions with type information
  * 
  * Syntax: beep! <expression> [, <expression> ...]
@@ -42,9 +42,9 @@ export interface BeepCommandOutput {
 }
 
 /**
- * Enhanced Beep Command with full type safety and validation
+ * Beep Command with full type safety and validation
  */
-export class EnhancedBeepCommand implements TypedCommandImplementation<
+export class BeepCommand implements TypedCommandImplementation<
   BeepCommandInput,
   BeepCommandOutput,
   TypedExecutionContext
@@ -221,8 +221,8 @@ export class EnhancedBeepCommand implements TypedCommandImplementation<
 /**
  * Factory function to create the enhanced beep command
  */
-export function createEnhancedBeepCommand(): EnhancedBeepCommand {
-  return new EnhancedBeepCommand();
+export function createBeepCommand(): BeepCommand {
+  return new BeepCommand();
 }
 
-export default EnhancedBeepCommand;
+export default BeepCommand;

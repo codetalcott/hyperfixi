@@ -5,12 +5,12 @@
 
 import { EnhancedTellCommand as TellCommand } from './enhanced-tell';
 import { EnhancedAsyncCommand as AsyncCommand } from './enhanced-async';
-import { EnhancedBeepCommand as BeepCommand } from './enhanced-beep';
+import { BeepCommand } from './beep';
 import { EnhancedJSCommand as JSCommand } from './enhanced-js';
 
 export { EnhancedTellCommand as TellCommand } from './enhanced-tell';
 export { EnhancedAsyncCommand as AsyncCommand } from './enhanced-async';
-export { EnhancedBeepCommand as BeepCommand } from './enhanced-beep';
+export { BeepCommand } from './beep';
 export { EnhancedJSCommand as JSCommand } from './enhanced-js';
 
 // Create instances with default options for easy access

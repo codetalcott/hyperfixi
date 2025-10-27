@@ -36,7 +36,7 @@ import { createEnhancedLogCommand, EnhancedLogCommand } from './utility/enhanced
 // Advanced Commands
 import { createEnhancedTellCommand, EnhancedTellCommand } from './advanced/enhanced-tell';
 import { createEnhancedJSCommand, EnhancedJSCommand } from './advanced/enhanced-js';
-import { createEnhancedBeepCommand, EnhancedBeepCommand } from './advanced/enhanced-beep';
+import { createBeepCommand, BeepCommand } from './advanced/beep';
 import { createEnhancedAsyncCommand, EnhancedAsyncCommand } from './advanced/enhanced-async';
 
 // Animation Commands
@@ -102,7 +102,7 @@ export {
   // Advanced Commands
   createEnhancedTellCommand, EnhancedTellCommand,
   createEnhancedJSCommand, EnhancedJSCommand,
-  createEnhancedBeepCommand, EnhancedBeepCommand,
+  createBeepCommand, BeepCommand,
   createEnhancedAsyncCommand, EnhancedAsyncCommand,
   
   // Animation Commands
@@ -174,7 +174,7 @@ export const ENHANCED_COMMAND_FACTORIES = {
   // Advanced Commands
   tell: createEnhancedTellCommand,
   js: createEnhancedJSCommand,
-  beep: createEnhancedBeepCommand,
+  beep: createBeepCommand,
   async: createEnhancedAsyncCommand,
 
   // Animation Commands
