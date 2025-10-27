@@ -352,7 +352,7 @@ export class TypedOnFeatureImplementation {
       return {
         success: true,
         value: context,
-        type: 'Context'
+        type: 'object'
       };
 
     } catch (error) {
@@ -391,7 +391,7 @@ export class TypedOnFeatureImplementation {
       // Validate event type
       if (data.event && !this.isValidEventType(data.event.type)) {
         errors.push({
-          type: 'invalid-event-type',
+          type: 'validation-error',
           message: `"${data.event.type}" is not a valid DOM event type`,
           path: 'event.type',
           suggestions: []
@@ -408,7 +408,7 @@ export class TypedOnFeatureImplementation {
           }
         } catch (selectorError) {
           errors.push({
-            type: 'invalid-target-selector',
+            type: 'syntax-error',
             message: `Invalid CSS selector: "${data.event.target}"`,
             path: 'event.target',
             suggestions: []
@@ -420,7 +420,7 @@ export class TypedOnFeatureImplementation {
       // Special validation for obviously invalid selectors
       if (data.event?.target === '>>>invalid-selector<<<') {
         errors.push({
-          type: 'invalid-target-selector',
+          type: 'syntax-error',
           message: `Invalid CSS selector: "${data.event.target}"`,
           path: 'event.target',
           suggestions: []
@@ -431,7 +431,7 @@ export class TypedOnFeatureImplementation {
       // Validate performance settings
       if (data.event?.throttle && data.event?.debounce) {
         errors.push({
-          type: 'conflicting-performance-options',
+          type: 'validation-error',
           message: 'Cannot use both throttle and debounce simultaneously',
           path: 'event',
           suggestions: []
@@ -442,7 +442,7 @@ export class TypedOnFeatureImplementation {
       // Validate timing values
       if (data.event?.throttle && data.event.throttle < 0) {
         errors.push({
-          type: 'invalid-throttle-delay',
+          type: 'invalid-input',
           message: 'Throttle delay must be a positive number',
           path: 'event.throttle',
           suggestions: []
@@ -452,7 +452,7 @@ export class TypedOnFeatureImplementation {
 
       if (data.event?.debounce && data.event.debounce < 0) {
         errors.push({
-          type: 'invalid-debounce-delay',
+          type: 'invalid-input',
           message: 'Debounce delay must be a positive number',
           path: 'event.debounce',
           suggestions: []
@@ -463,7 +463,7 @@ export class TypedOnFeatureImplementation {
       // Validate commands array
       if (data.commands && data.commands.length === 0) {
         errors.push({
-          type: 'empty-commands-array',
+          type: 'empty-config',
           message: 'Commands array cannot be empty',
           path: 'commands',
           suggestions: []
@@ -474,7 +474,7 @@ export class TypedOnFeatureImplementation {
       // Validate command count limits
       if (data.commands && data.commands.length > (data.options?.maxCommandCount || 100)) {
         errors.push({
-          type: 'too-many-commands',
+          type: 'validation-error',
           message: `Too many commands (max: ${data.options?.maxCommandCount || 100})`,
           path: 'commands',
           suggestions: []
@@ -489,7 +489,7 @@ export class TypedOnFeatureImplementation {
           new Function('event', `return ${data.event.filter}`);
         } catch (filterError) {
           errors.push({
-            type: 'invalid-filter-expression',
+            type: 'syntax-error',
             message: `Invalid filter expression: ${data.event.filter}`,
             path: 'event.filter',
             suggestions: []

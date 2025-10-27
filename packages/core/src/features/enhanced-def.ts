@@ -338,7 +338,7 @@ export class TypedDefFeatureImplementation {
       return {
         success: true,
         value: context,
-        type: 'Context'
+        type: 'object'
       };
 
     } catch (error) {
