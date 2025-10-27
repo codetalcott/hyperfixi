@@ -10,7 +10,7 @@ import type {
   ContextMetadata,
   EvaluationResult
 } from '../types/enhanced-context';
-import type { ValidationResult, EvaluationType } from '../types/base-types';
+import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/enhanced-core';
 import type { ExecutionContext } from '../types/core';
 
@@ -398,7 +398,7 @@ export class TypedInitFeatureImplementation {
 
       // Pre-validation checks for specific error cases
       const inputData = input as any;
-      const errors: Array<{ type: 'type-mismatch' | 'missing-argument' | 'invalid-syntax' | 'runtime-error' | 'security-warning'; message: string; path?: string }> = [];
+      const errors: ValidationError[] = [];
       const suggestions: string[] = [];
 
       // Check for empty commands arrays before Zod validation
@@ -406,10 +406,10 @@ export class TypedInitFeatureImplementation {
         errors.push({
           type: 'missing-argument',
           message: 'Initialization commands array cannot be empty',
-          path: 'initialization.commands'
+          path: 'initialization.commands',
+          suggestions: []
         });
         suggestions.push('Add at least one command to execute during initialization');
-      suggestions: []
       }
 
       // Check for invalid delay values
@@ -417,10 +417,10 @@ export class TypedInitFeatureImplementation {
         errors.push({
           type: 'syntax-error',
           message: 'Initialization delay must be non-negative',
-          path: 'initialization.timing.delay'
+          path: 'initialization.timing.delay',
+          suggestions: []
         });
         suggestions.push('Set delay to 0 or positive number in milliseconds');
-      suggestions: []
       }
 
       // If we found specific validation errors, return them without Zod parsing
@@ -443,10 +443,10 @@ export class TypedInitFeatureImplementation {
           errors.push({
             type: 'syntax-error',
             message: `Invalid CSS selector: "${data.initialization.target}"`,
-            path: 'initialization.target'
+            path: 'initialization.target',
+            suggestions: []
           });
           suggestions.push('Use valid CSS selector syntax for target element');
-        suggestions: []
         }
       }
 
@@ -455,10 +455,10 @@ export class TypedInitFeatureImplementation {
         errors.push({
           type: 'syntax-error',
           message: 'Execution timeout must be at least 1000ms',
-          path: 'execution.timeout'
+          path: 'execution.timeout',
+          suggestions: []
         });
         suggestions.push('Set execution timeout to at least 1000ms for proper operation');
-      suggestions: []
       }
 
       // Validate retry configuration
@@ -467,20 +467,20 @@ export class TypedInitFeatureImplementation {
           errors.push({
             type: 'syntax-error',
             message: 'Max retry attempts must be at least 1',
-            path: 'execution.retries.maxAttempts'
+            path: 'execution.retries.maxAttempts',
+            suggestions: []
           });
           suggestions.push('Set maxAttempts to at least 1 for retry functionality');
-        suggestions: []
         }
 
         if (data.execution.retries.delay < 0) {
           errors.push({
             type: 'syntax-error',
             message: 'Retry delay must be non-negative',
-            path: 'execution.retries.delay'
+            path: 'execution.retries.delay',
+            suggestions: []
           });
           suggestions.push('Set retry delay to 0 or positive number in milliseconds');
-        suggestions: []
         }
       }
 
@@ -489,10 +489,10 @@ export class TypedInitFeatureImplementation {
         errors.push({
           type: 'syntax-error',
           message: 'Max concurrent initializations must be at least 1',
-          path: 'options.maxConcurrentInits'
+          path: 'options.maxConcurrentInits',
+          suggestions: []
         });
         suggestions.push('Set maxConcurrentInits to at least 1');
-      suggestions: []
       }
 
       // Validate commands structure
@@ -503,10 +503,10 @@ export class TypedInitFeatureImplementation {
             errors.push({
               type: 'type-mismatch',
               message: `Command at index ${index} must be an object`,
-              path: `initialization.commands[${index}]`
+              path: `initialization.commands[${index}]`,
+              suggestions: []
             });
             suggestions.push('Ensure all commands are valid objects with name and args properties');
-          suggestions: []
           }
         }
       }
