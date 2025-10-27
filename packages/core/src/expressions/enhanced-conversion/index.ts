@@ -161,7 +161,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
   Int: (value: unknown, context: TypedExpressionContext): EvaluationResult<number> => {
     const numberResult = enhancedConverters.Number(value, context);
     if (!numberResult.success) {
-      return numberResult;
+      return numberResult as unknown as EvaluationResult<number>;
     }
     return { success: true, value: Math.trunc(numberResult.value as number), type: 'number' };
   },
@@ -169,7 +169,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
   Float: (value: unknown, context: TypedExpressionContext): EvaluationResult<number> => {
     const numberResult = enhancedConverters.Number(value, context);
     if (!numberResult.success) {
-      return numberResult;
+      return numberResult as unknown as EvaluationResult<number>;
     }
     return { success: true, value: parseFloat((numberResult.value as number).toString()), type: 'number' };
   },

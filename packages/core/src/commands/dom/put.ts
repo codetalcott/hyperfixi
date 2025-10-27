@@ -148,7 +148,7 @@ export class PutCommand implements TypedCommandImplementation<
   async execute(
     context: TypedExecutionContext,
     ...args: PutCommandInput
-  ): Promise<TypedResult<HTMLElement>> {
+  ): Promise<EvaluationResult<HTMLElement>> {
     const [content, position, target] = args;
     try {
       // Runtime validation for type safety
