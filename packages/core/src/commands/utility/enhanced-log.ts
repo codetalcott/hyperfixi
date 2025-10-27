@@ -4,11 +4,11 @@
  * 
  * Syntax: log <value1> <value2> ...
  * 
- * Modernized with LegacyCommandImplementation interface and Zod validation
+ * Modernized with CommandImplementation interface and Zod validation
  */
 
 import { v } from '../../validation/lightweight-validators';
-import type { LegacyCommandImplementation } from '../../types/core';
+import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 
@@ -35,7 +35,7 @@ export interface LogCommandOutput {
 /**
  * Enhanced Log Command with full type safety and validation
  */
-export class EnhancedLogCommand implements LegacyCommandImplementation<LogCommandInputType, LogCommandOutput, TypedExecutionContext> {
+export class EnhancedLogCommand implements CommandImplementation<LogCommandInputType, LogCommandOutput, TypedExecutionContext> {
   name = 'log' as const;
   inputSchema = LogCommandInputSchema;
 

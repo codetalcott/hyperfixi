@@ -1,6 +1,6 @@
 /**
  * Enhanced Command Registry
- * Central registry for all LegacyCommandImplementation commands
+ * Central registry for all CommandImplementation commands
  * Provides factory functions and type-safe command registration
  */
 
@@ -133,7 +133,7 @@ export {
   // createFetchCommand,
 };
 
-import type { LegacyCommandImplementation } from '../types/core';
+import type { CommandImplementation } from '../types/core';
 import type { TypedExecutionContext } from '../types/enhanced-core';
 
 /**
@@ -215,15 +215,15 @@ export function getEnhancedCommandNames(): string[] {
 /**
  * Create an enhanced command by name
  */
-export function createEnhancedCommand(name: string): LegacyCommandImplementation<unknown, unknown, TypedExecutionContext> | null {
+export function createEnhancedCommand(name: string): CommandImplementation<unknown, unknown, TypedExecutionContext> | null {
   const factory = ENHANCED_COMMAND_FACTORIES[name as keyof typeof ENHANCED_COMMAND_FACTORIES];
-  return factory ? factory() as LegacyCommandImplementation<unknown, unknown, TypedExecutionContext> : null;
+  return factory ? factory() as CommandImplementation<unknown, unknown, TypedExecutionContext> : null;
 }
 
 /**
  * Create all enhanced commands and return as a Map
  */
-export function createAllEnhancedCommands(): Map<string, LegacyCommandImplementation<unknown, unknown, TypedExecutionContext>> {
+export function createAllEnhancedCommands(): Map<string, CommandImplementation<unknown, unknown, TypedExecutionContext>> {
   const commands = new Map();
   
   for (const [name, factory] of Object.entries(ENHANCED_COMMAND_FACTORIES)) {

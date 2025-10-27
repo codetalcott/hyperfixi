@@ -131,7 +131,7 @@ export interface Runtime {
   createContext(parent?: ExecutionContext): ExecutionContext;
   
   /** Register a command implementation */
-  registerCommand(name: string, implementation: CommandImplementation): void;
+  registerCommand(name: string, implementation: BaseCommandImplementation): void;
   
   /** Register an expression implementation */
   registerExpression(name: string, implementation: ExpressionImplementation): void;
@@ -144,7 +144,11 @@ export interface Runtime {
 // Implementation Types
 // ============================================================================
 
-export interface CommandImplementation {
+/**
+ * Base command implementation interface (non-generic)
+ * Used for runtime command registry and code generation
+ */
+export interface BaseCommandImplementation {
   name: string;
   syntax: string;
   execute: (context: ExecutionContext, ...args: unknown[]) => Promise<unknown>;
@@ -179,7 +183,7 @@ export interface LegacyValidationResult<T = unknown> {
  * - Legacy: metadata is plain object
  * - Modern: metadata is CommandMetadata type with additional fields
  */
-export interface LegacyCommandImplementation<TInput = unknown, TOutput = unknown, TContext = import('./base-types').ExecutionContext> {
+export interface CommandImplementation<TInput = unknown, TOutput = unknown, TContext = import('./base-types').ExecutionContext> {
   metadata: {
     name: string;
     description: string;
@@ -335,7 +339,7 @@ export interface HyperscriptConfig {
   debug?: boolean;
   
   /** Custom command implementations */
-  commands?: Record<string, CommandImplementation>;
+  commands?: Record<string, BaseCommandImplementation>;
   
   /** Custom expression implementations */
   expressions?: Record<string, ExpressionImplementation>;

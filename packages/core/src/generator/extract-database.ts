@@ -186,7 +186,7 @@ export class LSPDatabaseExtractor {
       const isBlockingType = cmd.is_blocking ? 'true' : 'false';
       
       return `
-export interface ${cmd.name.charAt(0).toUpperCase() + cmd.name.slice(1)}Command extends CommandImplementation {
+export interface ${cmd.name.charAt(0).toUpperCase() + cmd.name.slice(1)}Command extends BaseCommandImplementation {
   name: '${cmd.name}';
   syntax: '${cmd.syntax_canonical}';
   purpose: '${cmd.purpose}';
@@ -203,7 +203,7 @@ export interface ${cmd.name.charAt(0).toUpperCase() + cmd.name.slice(1)}Command 
  * Source: hyperscript-lsp database
  */
 
-import type { CommandImplementation } from '@types/core';
+import type { BaseCommandImplementation } from '@types/core';
 
 ${interfaces.join('\n')}
 
@@ -283,17 +283,17 @@ ${testSuites}
  * Generated command registry from hyperscript-lsp database
  */
 
-import type { CommandImplementation } from '@types/core';
+import type { BaseCommandImplementation } from '@types/core';
 ${commands.map(cmd => {
   const className = cmd.name.charAt(0).toUpperCase() + cmd.name.slice(1) + 'Command';
   return `import { ${className} } from '@commands/${this.getCategoryForCommand(cmd.name)}/${cmd.name}';`;
 }).join('\n')}
 
-export const COMMAND_REGISTRY: Record<string, CommandImplementation> = {
+export const COMMAND_REGISTRY: Record<string, BaseCommandImplementation> = {
 ${registrations}
 };
 
-export const getCommand = (name: string): CommandImplementation | undefined => {
+export const getCommand = (name: string): BaseCommandImplementation | undefined => {
   return COMMAND_REGISTRY[name];
 };
 `;

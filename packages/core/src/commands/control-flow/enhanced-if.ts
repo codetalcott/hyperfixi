@@ -4,10 +4,10 @@
  * 
  * Syntax: if <condition> then <commands> [else <commands>]
  * 
- * Modernized with LegacyCommandImplementation interface
+ * Modernized with CommandImplementation interface
  */
 
-import type { LegacyCommandImplementation, ValidationResult } from '../../types/core';
+import type { CommandImplementation, ValidationResult } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 
 // Input type definition
@@ -27,7 +27,7 @@ export interface IfCommandOutput {
 /**
  * Enhanced If Command with full type safety and validation
  */
-export class EnhancedIfCommand implements LegacyCommandImplementation<
+export class EnhancedIfCommand implements CommandImplementation<
   IfCommandInput,
   IfCommandOutput,
   TypedExecutionContext

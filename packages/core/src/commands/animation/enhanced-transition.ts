@@ -4,10 +4,10 @@
  * 
  * Syntax: transition [<target>] <property> to <value> [over <duration>] [with <timing-function>]
  * 
- * Modernized with LegacyCommandImplementation interface
+ * Modernized with CommandImplementation interface
  */
 
-import type { LegacyCommandImplementation, ValidationResult } from '../../types/core';
+import type { CommandImplementation, ValidationResult } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 import { asHTMLElement } from '../../utils/dom-utils';
 
@@ -36,7 +36,7 @@ export interface TransitionCommandOutput {
 /**
  * Enhanced Transition Command with full type safety and validation
  */
-export class EnhancedTransitionCommand implements LegacyCommandImplementation<
+export class EnhancedTransitionCommand implements CommandImplementation<
   TransitionCommandInput,
   TransitionCommandOutput,
   TypedExecutionContext

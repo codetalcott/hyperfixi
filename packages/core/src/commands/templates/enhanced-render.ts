@@ -8,7 +8,7 @@
  */
 
 import { v, z } from '../../validation/lightweight-validators';
-import type { LegacyCommandImplementation } from '../../types/core';
+import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 import { EnhancedIfDirective } from './directives/enhanced-if';
@@ -47,7 +47,7 @@ export interface RenderCommandOutput {
 /**
  * Enhanced Render Command with full type safety and validation
  */
-export class EnhancedRenderCommand implements LegacyCommandImplementation<
+export class EnhancedRenderCommand implements CommandImplementation<
   RenderCommandInput,
   Element | null,
   TypedExecutionContext

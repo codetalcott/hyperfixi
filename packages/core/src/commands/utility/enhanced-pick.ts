@@ -4,10 +4,10 @@
  * 
  * Syntax: pick <item1>, <item2>, ... | pick from <array>
  * 
- * Modernized with LegacyCommandImplementation interface
+ * Modernized with CommandImplementation interface
  */
 
-import type { LegacyCommandImplementation } from '../../types/core';
+import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 
@@ -29,7 +29,7 @@ export interface PickCommandOutput {
 /**
  * Enhanced Pick Command with full type safety and validation
  */
-export class EnhancedPickCommand implements LegacyCommandImplementation<
+export class EnhancedPickCommand implements CommandImplementation<
   PickCommandInput,
   PickCommandOutput,
   TypedExecutionContext

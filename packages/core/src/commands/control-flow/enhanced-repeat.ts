@@ -4,10 +4,10 @@
  * 
  * Syntax: repeat for <identifier> in <expression> [index <identifier>] { <command> } end
  * 
- * Modernized with LegacyCommandImplementation interface
+ * Modernized with CommandImplementation interface
  */
 
-import type { LegacyCommandImplementation, ValidationResult } from '../../types/core';
+import type { CommandImplementation, ValidationResult } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 
 // Input type definition
@@ -37,7 +37,7 @@ export interface RepeatCommandOutput {
 /**
  * Enhanced Repeat Command with full type safety and validation
  */
-export class EnhancedRepeatCommand implements LegacyCommandImplementation<
+export class EnhancedRepeatCommand implements CommandImplementation<
   RepeatCommandInput,
   RepeatCommandOutput,
   TypedExecutionContext

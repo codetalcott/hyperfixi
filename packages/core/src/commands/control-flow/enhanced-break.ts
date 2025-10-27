@@ -4,10 +4,10 @@
  * 
  * Syntax: break
  * 
- * Modernized with LegacyCommandImplementation interface
+ * Modernized with CommandImplementation interface
  */
 
-import type { LegacyCommandImplementation, ValidationResult } from '../../types/core';
+import type { CommandImplementation, ValidationResult } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 
 // Input type definition (break takes no arguments)
@@ -24,7 +24,7 @@ export interface BreakCommandOutput {
 /**
  * Enhanced Break Command with full type safety and validation
  */
-export class EnhancedBreakCommand implements LegacyCommandImplementation<
+export class EnhancedBreakCommand implements CommandImplementation<
   BreakCommandInput,
   BreakCommandOutput,
   TypedExecutionContext

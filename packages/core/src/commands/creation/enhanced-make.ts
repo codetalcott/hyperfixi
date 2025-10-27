@@ -4,10 +4,10 @@
  * 
  * Syntax: make (a|an) <expression> [from <arg-list>] [called <identifier>]
  * 
- * Modernized with LegacyCommandImplementation interface
+ * Modernized with CommandImplementation interface
  */
 
-import type { LegacyCommandImplementation, ValidationResult } from '../../types/core';
+import type { CommandImplementation, ValidationResult } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 
 // Input type definition
@@ -28,7 +28,7 @@ export interface MakeCommandOutput {
 /**
  * Enhanced Make Command with full type safety and validation
  */
-export class EnhancedMakeCommand implements LegacyCommandImplementation<
+export class EnhancedMakeCommand implements CommandImplementation<
   MakeCommandInput,
   MakeCommandOutput,
   TypedExecutionContext

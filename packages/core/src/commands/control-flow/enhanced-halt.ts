@@ -4,10 +4,10 @@
  * 
  * Syntax: halt
  * 
- * Modernized with LegacyCommandImplementation interface
+ * Modernized with CommandImplementation interface
  */
 
-import type { LegacyCommandImplementation, ValidationResult } from '../../types/core';
+import type { CommandImplementation, ValidationResult } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 
 // Input type definition (halt takes no arguments)
@@ -24,7 +24,7 @@ export interface HaltCommandOutput {
 /**
  * Enhanced Halt Command with full type safety and validation
  */
-export class EnhancedHaltCommand implements LegacyCommandImplementation<
+export class EnhancedHaltCommand implements CommandImplementation<
   HaltCommandInput,
   HaltCommandOutput,
   TypedExecutionContext

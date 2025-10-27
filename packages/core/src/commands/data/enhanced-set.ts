@@ -4,11 +4,11 @@
  * 
  * Syntax: set <target> to <value>
  * 
- * Modernized with LegacyCommandImplementation interface and Zod validation
+ * Modernized with CommandImplementation interface and Zod validation
  */
 
 import { v, z } from '../../validation/lightweight-validators';
-import type { LegacyCommandImplementation } from '../../types/core';
+import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 import { asHTMLElement } from '../../utils/dom-utils';
@@ -50,7 +50,7 @@ export interface SetCommandOutput {
 /**
  * Enhanced Set Command with full type safety and validation
  */
-export class EnhancedSetCommand implements LegacyCommandImplementation<
+export class EnhancedSetCommand implements CommandImplementation<
   SetCommandInput,
   SetCommandOutput,
   TypedExecutionContext

@@ -4,10 +4,10 @@
  * 
  * Syntax: default <expression> to <expression>
  * 
- * Modernized with LegacyCommandImplementation interface
+ * Modernized with CommandImplementation interface
  */
 
-import type { LegacyCommandImplementation } from '../../types/core';
+import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/enhanced-core';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 import { asHTMLElement } from '../../utils/dom-utils';
@@ -31,7 +31,7 @@ export interface DefaultCommandOutput {
 /**
  * Enhanced Default Command with full type safety and validation
  */
-export class EnhancedDefaultCommand implements LegacyCommandImplementation<
+export class EnhancedDefaultCommand implements CommandImplementation<
   DefaultCommandInput,
   DefaultCommandOutput,
   TypedExecutionContext
