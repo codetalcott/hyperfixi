@@ -76,10 +76,14 @@ export class EnhancedSetCommand implements LegacyCommandImplementation<
     version: '2.0.0'
   };
 
+  public readonly validation = {
+    validate: (input: unknown): UnifiedValidationResult<SetCommandInput> => this.validateInput(input)
+  };
+
   /**
    * Validate input using Zod schema
    */
-  validate(input: unknown): UnifiedValidationResult<SetCommandInput> {
+  validateInput(input: unknown): UnifiedValidationResult<SetCommandInput> {
     try {
       const result = SetCommandInputSchema.safeParse(input);
       

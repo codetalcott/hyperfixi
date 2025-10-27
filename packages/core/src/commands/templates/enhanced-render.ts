@@ -77,10 +77,14 @@ export class EnhancedRenderCommand implements LegacyCommandImplementation<
   private readonly elseDirective = new EnhancedElseDirective();
   private readonly repeatDirective = new EnhancedRepeatDirective();
 
+  public readonly validation = {
+    validate: (input: unknown): UnifiedValidationResult<RenderCommandInput> => this.validateInput(input)
+  };
+
   /**
    * Validate input using Zod schema
    */
-  validate(input: unknown): UnifiedValidationResult<RenderCommandInput> {
+  validateInput(input: unknown): UnifiedValidationResult<RenderCommandInput> {
     try {
       const result = RenderCommandInputSchema.safeParse(input);
       

@@ -54,8 +54,20 @@ export type ObjectLiteralInput = any; // Inferred from RuntimeValidator
 export class EnhancedObjectLiteralExpression implements TypedExpressionImplementation<
   Record<string, HyperScriptValue>
 > {
+  public readonly name = 'ObjectLiteral';
+  public readonly category = 'Special' as const;
+  public readonly syntax = '{ key1: value1, key2: value2, ... }';
+  public readonly description = 'Creates an object literal with specified key-value pairs';
   public readonly inputSchema: RuntimeValidator<Record<string, HyperScriptValue>> = ObjectLiteralInputSchema as RuntimeValidator<Record<string, HyperScriptValue>>;
-  
+  public readonly outputType = 'object' as const;
+  public readonly metadata = {
+    category: 'Special' as const,
+    complexity: 'O(n)' as const,
+    purity: 'pure' as const,
+    performance: { complexity: 'O(n)' as const, notes: 'Linear time based on number of fields' },
+    semantics: { deterministic: true, sideEffects: false }
+  };
+
   public readonly documentation: LLMDocumentation = {
     summary: 'Creates object literals with comprehensive field handling, dynamic keys, and type safety',
     parameters: [

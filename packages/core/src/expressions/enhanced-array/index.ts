@@ -59,8 +59,20 @@ export type ArrayIndexInput = any; // Inferred from RuntimeValidator
 export class EnhancedArrayLiteralExpression implements TypedExpressionImplementation<
   HyperScriptValue[]
 > {
+  public readonly name = 'ArrayLiteral';
+  public readonly category = 'Special' as const;
+  public readonly syntax = '[element1, element2, ...]';
+  public readonly description = 'Creates an array literal with specified elements';
   public readonly inputSchema: RuntimeValidator<HyperScriptValue[]> = ArrayLiteralInputSchema as RuntimeValidator<HyperScriptValue[]>;
-  
+  public readonly outputType = 'array' as const;
+  public readonly metadata = {
+    category: 'Special' as const,
+    complexity: 'O(n)' as const,
+    purity: 'pure' as const,
+    performance: { complexity: 'O(n)' as const, notes: 'Linear time based on number of elements' },
+    semantics: { deterministic: true, sideEffects: false }
+  };
+
   public readonly documentation: LLMDocumentation = {
     summary: 'Creates array literals with comprehensive element handling and type safety',
     parameters: [
@@ -244,8 +256,20 @@ export class EnhancedArrayLiteralExpression implements TypedExpressionImplementa
 export class EnhancedArrayIndexExpression implements TypedExpressionImplementation<
   HyperScriptValue
 > {
+  public readonly name = 'ArrayIndex';
+  public readonly category = 'Special' as const;
+  public readonly syntax = 'array[index]';
+  public readonly description = 'Accesses an array element by index or extracts a slice';
   public readonly inputSchema = ArrayIndexInputSchema;
-  
+  public readonly outputType = 'unknown' as const;
+  public readonly metadata = {
+    category: 'Special' as const,
+    complexity: 'O(1)' as const,
+    purity: 'pure' as const,
+    performance: { complexity: 'O(1)' as const, notes: 'Constant time array access' },
+    semantics: { deterministic: true, sideEffects: false }
+  };
+
   public readonly documentation: LLMDocumentation = {
     summary: 'Accesses array elements with comprehensive indexing including ranges and bounds checking',
     parameters: [

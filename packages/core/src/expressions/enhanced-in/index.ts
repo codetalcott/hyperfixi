@@ -43,8 +43,20 @@ export type InExpressionInput = any; // Inferred from RuntimeValidator
 export class EnhancedInExpression implements TypedExpressionImplementation<
   HyperScriptValue[]
 > {
+  public readonly name = 'InExpression';
+  public readonly category = 'Logical' as const;
+  public readonly syntax = '<value> in <collection>';
+  public readonly description = 'Tests membership in collections and performs DOM queries';
   public readonly inputSchema: RuntimeValidator<HyperScriptValue[]> = InExpressionInputSchema as RuntimeValidator<HyperScriptValue[]>;
-  
+  public readonly outputType = 'array' as const;
+  public readonly metadata = {
+    category: 'Logical' as const,
+    complexity: 'O(n)' as const,
+    purity: 'pure' as const,
+    performance: { complexity: 'O(n)' as const, notes: 'Linear search through collection' },
+    semantics: { deterministic: true, sideEffects: false }
+  };
+
   public readonly documentation: LLMDocumentation = {
     summary: 'Tests membership in collections and performs DOM queries with comprehensive filtering',
     parameters: [
