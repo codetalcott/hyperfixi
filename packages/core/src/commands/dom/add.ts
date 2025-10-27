@@ -12,6 +12,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
+import type { TypedResult } from '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { asHTMLElement } from '../../utils/dom-utils';
 import { dispatchCustomEvent } from '../../core/events';
@@ -139,9 +140,9 @@ export class AddCommand implements TypedCommandImplementation<
 
   async execute(
     context: TypedExecutionContext,
-    classExpression: AddCommandInput[0],
-    target?: AddCommandInput[1]
-  ): Promise<EvaluationResult<HTMLElement[]>> {
+    ...args: AddCommandInput
+  ): Promise<TypedResult<HTMLElement[]>> {
+    const [classExpression, target] = args;
     try {
       // Runtime validation for type safety
       const validationResult = this.validate([classExpression, target]);

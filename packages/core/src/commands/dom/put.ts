@@ -13,6 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
+import type { TypedResult } from '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { asHTMLElement } from '../../utils/dom-utils';
@@ -146,9 +147,9 @@ export class PutCommand implements TypedCommandImplementation<
 
   async execute(
     context: TypedExecutionContext,
-    ...args: unknown[]
-  ): Promise<EvaluationResult<HTMLElement>> {
-    const [content, position, target] = args as [PutCommandInput[0], PutCommandInput[1], PutCommandInput[2]];
+    ...args: PutCommandInput
+  ): Promise<TypedResult<HTMLElement>> {
+    const [content, position, target] = args;
     try {
       // Runtime validation for type safety
       const validationResult = this.validate(args);
