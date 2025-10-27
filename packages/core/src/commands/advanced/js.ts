@@ -61,6 +61,12 @@ export class JSCommand implements TypedCommandImplementation<
     version: '2.0.0'
   };
 
+  // Compatibility properties for legacy tests
+  get name() { return this.metadata.name; }
+  get description() { return this.metadata.description; }
+  get syntax() { return this.metadata.syntax; }
+  get isBlocking() { return false; }
+
   validation = {
     validate(input: unknown): ValidationResult<JSCommandInput> {
       if (!input || typeof input !== 'object') {
@@ -114,10 +120,89 @@ export class JSCommand implements TypedCommandImplementation<
     }
   };
 
+  // Compatibility method for legacy tests
+  validate(args: any[]): string | null {
+    if (!Array.isArray(args) || args.length === 0) {
+      return 'JS command requires JavaScript code';
+    }
+
+    const [firstArg, secondArg] = args;
+
+    // Check if first arg is parameters array (when used with parameters)
+    if (Array.isArray(firstArg)) {
+      if (!secondArg || typeof secondArg !== 'string') {
+        return 'JS command requires code as string';
+      }
+      return null;
+    }
+
+    // Check if first arg is the code
+    if (typeof firstArg !== 'string') {
+      if (firstArg === null) {
+        return 'Code must be a string';
+      }
+      if (typeof firstArg === 'number') {
+        return 'Code must be a string';
+      }
+      // If it's an object, it means they're trying to pass parameters as object instead of array
+      if (typeof firstArg === 'object') {
+        return 'Parameters must be an array';
+      }
+      return 'JS command requires code as string';
+    }
+
+    // If there's a second arg when first is code, second should be parameters array
+    if (secondArg !== undefined) {
+      if (typeof secondArg === 'object' && !Array.isArray(secondArg)) {
+        return 'Parameters must be an array';
+      }
+      if (typeof secondArg === 'string') {
+        return 'Parameters must be an array';
+      }
+    }
+
+    return null;
+  }
+
+  // Overloaded execute method for compatibility
   async execute(
+    contextOrInput: TypedExecutionContext | JSCommandInput,
+    codeOrContext?: string | TypedExecutionContext,
+    ...additionalArgs: any[]
+  ): Promise<any> {
+    // Legacy API: execute(context, code) or execute(context, params, code)
+    if ('me' in contextOrInput || 'locals' in contextOrInput) {
+      const context = contextOrInput as TypedExecutionContext;
+
+      // Case 1: execute(context, code)
+      if (typeof codeOrContext === 'string') {
+        const code = codeOrContext;
+        const output = await this.executeTyped({ code }, context);
+        return output.result; // Return just the result for legacy API
+      }
+
+      // Case 2: execute(context, params, code)
+      if (Array.isArray(codeOrContext) && additionalArgs.length > 0) {
+        const parameters = codeOrContext;
+        const code = additionalArgs[0] as string;
+        const output = await this.executeTyped({ code, parameters }, context);
+        return output.result; // Return just the result for legacy API
+      }
+
+      // If we get here, code is missing
+      throw new Error('JS command requires JavaScript code to execute');
+    }
+
+    // Enhanced API: execute(input, context)
+    const input = contextOrInput as JSCommandInput;
+    const context = codeOrContext as TypedExecutionContext;
+    return await this.executeTyped(input, context);
+  }
+
+  private async executeTyped(
     input: JSCommandInput,
     context: TypedExecutionContext
-  ): Promise<JSCommandOutput> {
+  ): Promise<JSCommandOutput | any> {
     const { code, parameters = [] } = input;
 
     // Skip execution if code is empty or only whitespace
@@ -173,9 +258,9 @@ export class JSCommand implements TypedCommandImplementation<
       document: typeof document !== 'undefined' ? document : undefined,
       window: typeof window !== 'undefined' ? window : undefined,
       
-      // Parameter placeholders (will be overridden if parameters are provided)
+      // Parameter values from context
       ...parameters.reduce((acc, param) => {
-        acc[param] = undefined;
+        acc[param] = context.locals?.get(param);
         return acc;
       }, {} as Record<string, any>)
     };
