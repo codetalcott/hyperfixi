@@ -12,6 +12,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
+import type { TypedResult } from '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { asHTMLElement } from '../../utils/dom-utils';
@@ -128,9 +129,9 @@ export class ToggleCommand implements TypedCommandImplementation<
 
   async execute(
     context: TypedExecutionContext,
-    classExpression: ToggleCommandInput[0],
-    target?: ToggleCommandInput[1]
-  ): Promise<EvaluationResult<HTMLElement[]>> {
+    ...args: ToggleCommandInput
+  ): Promise<TypedResult<HTMLElement[]>> {
+    const [classExpression, target] = args;
     try {
       // Runtime validation for type safety
       const validationResult = this.validate([classExpression, target]);

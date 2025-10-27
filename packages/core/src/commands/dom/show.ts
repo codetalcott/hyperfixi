@@ -12,6 +12,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
+import type { TypedResult } from '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { asHTMLElement } from '../../utils/dom-utils';
@@ -116,9 +117,10 @@ export class ShowCommand implements TypedCommandImplementation<
   }
 
   async execute(
-    input: ShowCommandInput[0],
-    context: TypedExecutionContext
-  ): Promise<EvaluationResult<HTMLElement[]>> {
+    context: TypedExecutionContext,
+    ...args: ShowCommandInput
+  ): Promise<TypedResult<HTMLElement[]>> {
+    const [input] = args;
     try {
       // Type-safe target resolution
       const elements = this.resolveTargets(context, input);

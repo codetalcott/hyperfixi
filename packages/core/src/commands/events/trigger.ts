@@ -13,6 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core';
+import type { TypedResult } from '../../types/base-types';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 import { asHTMLElement } from '../../utils/dom-utils';
 
@@ -137,8 +138,8 @@ export class TriggerCommand implements TypedCommandImplementation<
 
   async execute(
     context: TypedExecutionContext,
-    ...args: any[]
-  ): Promise<EvaluationResult<CustomEvent>> {
+    ...args: TriggerCommandInput
+  ): Promise<TypedResult<CustomEvent>> {
     try {
       // Runtime validation for type safety
       const validationResult = this.validate(args);

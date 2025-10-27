@@ -13,6 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
+import type { TypedResult } from '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { asHTMLElement } from '../../utils/dom-utils';
@@ -154,8 +155,8 @@ export class GoCommand implements TypedCommandImplementation<
 
   async execute(
     context: TypedExecutionContext,
-    ...args: unknown[]
-  ): Promise<EvaluationResult<string | HTMLElement>> {
+    ...args: GoCommandInput
+  ): Promise<TypedResult<string | HTMLElement>> {
     try {
       // Runtime validation for type safety
       const validationResult = this.validate(args);
