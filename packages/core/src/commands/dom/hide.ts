@@ -12,7 +12,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
-import type { TypedResult } from '../../types/base-types.ts';
+// Removed TypedResult import '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { asHTMLElement } from '../../utils/dom-utils';
 import { dispatchCustomEvent } from '../../core/events';
@@ -117,7 +117,7 @@ export class HideCommand implements TypedCommandImplementation<
   async execute(
     context: TypedExecutionContext,
     ...args: HideCommandInput
-  ): Promise<TypedResult<HTMLElement[]>> {
+  ): Promise<EvaluationResult<HTMLElement[]>> {
     const [input] = args;
     try {
       // Type-safe target resolution

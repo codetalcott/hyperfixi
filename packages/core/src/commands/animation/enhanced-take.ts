@@ -9,8 +9,7 @@ import type {
   TypedExecutionContext,
   EvaluationResult,
   CommandMetadata,
-  LLMDocumentation,
-  TypedResult
+  LLMDocumentation
 } from '../../types/enhanced-core';
 import type { RuntimeValidator } from '../../validation/lightweight-validators';
 import type { UnifiedValidationResult } from '../../types/unified-types';
@@ -152,7 +151,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
   async execute(
     context: TypedExecutionContext,
     ...args: unknown[]
-  ): Promise<TypedResult<HTMLElement>> {
+  ): Promise<EvaluationResult<HTMLElement>> {
     try {
       // Runtime validation for type safety
       const validationResult = this.validate(args);
@@ -176,7 +175,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
           success: false,
           ...(parseResult.error && { error: parseResult.error }),
           type: 'error'
-        } as TypedResult<HTMLElement>;
+        } as EvaluationResult<HTMLElement>;
       }
 
       const { property, source, target } = parseResult.value!;
@@ -184,7 +183,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
       // Take the property from source
       const takeResult = await this.takeProperty(source, property, context);
       if (!takeResult.success) {
-        return takeResult as TypedResult<HTMLElement>;
+        return takeResult as EvaluationResult<HTMLElement>;
       }
 
       const takenValue = takeResult.value;
@@ -192,7 +191,7 @@ export class EnhancedTakeCommand implements TypedCommandImplementation<
       // Put it on target
       const putResult = await this.putProperty(target, property, takenValue, context);
       if (!putResult.success) {
-        return putResult as TypedResult<HTMLElement>;
+        return putResult as EvaluationResult<HTMLElement>;
       }
 
       // Dispatch enhanced take event with rich metadata

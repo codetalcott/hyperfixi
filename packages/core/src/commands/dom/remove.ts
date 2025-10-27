@@ -12,7 +12,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/enhanced-core.ts';
-import type { TypedResult } from '../../types/base-types.ts';
+// Removed TypedResult import '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { asHTMLElement } from '../../utils/dom-utils';
@@ -130,7 +130,7 @@ export class RemoveCommand implements TypedCommandImplementation<
   async execute(
     context: TypedExecutionContext,
     ...args: RemoveCommandInput
-  ): Promise<TypedResult<HTMLElement[]>> {
+  ): Promise<EvaluationResult<HTMLElement[]>> {
     const [classExpression, target] = args;
     try {
       // Runtime validation for type safety

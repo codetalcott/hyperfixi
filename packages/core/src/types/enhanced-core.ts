@@ -18,7 +18,6 @@ import { v, z } from '../validation/lightweight-validators';
 import type {
   ValidationResult,
   ValidationError,
-  TypedResult,
   HyperScriptValueType,
   EvaluationResult,
   TypedExecutionContext
@@ -119,7 +118,7 @@ export interface TypedCommandImplementation<
   readonly outputType: HyperScriptValueType;
   
   /** Type-safe execution with validated inputs */
-  execute(context: TContext, ...args: TInput): Promise<TypedResult<TOutput>>;
+  execute(context: TContext, ...args: TInput): Promise<EvaluationResult<TOutput>>;
   
   /** Compile-time validation for static analysis */
   validate(args: unknown[]): ValidationResult;
