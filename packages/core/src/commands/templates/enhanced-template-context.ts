@@ -11,7 +11,7 @@ import type {
   EnhancedTemplateConfig
 } from '../../types/enhanced-templates.ts';
 import type { TypedExpressionContext } from '../../types/enhanced-expressions.ts';
-import type { HyperScriptValue } from '../../types/enhanced-core.ts';
+import type { HyperScriptValue } from '../../types/command-types';
 
 // ============================================================================
 // Template Context Bridge Implementation

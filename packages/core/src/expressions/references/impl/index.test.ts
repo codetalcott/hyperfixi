@@ -12,7 +12,7 @@ import {
   EnhancedCSSSelectorExpression,
   referenceExpressions
 } from './index';
-import type { TypedExpressionContext } from '../../../types/enhanced-expressions';
+import type { TypedExpressionContext } from '../../../types/expression-types';
 
 // Mock DOM environment
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');

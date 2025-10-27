@@ -11,8 +11,8 @@ import type {
   TemplateDirectiveType,
   TemplateRenderStrategy,
   TemplateLLMDocumentation
-} from '../../../types/enhanced-templates';
-import { ElseDirectiveInputSchema } from '../../../types/enhanced-templates';
+} from '../../../types/template-types';
+import { ElseDirectiveInputSchema } from '../../../types/template-types';
 import type {
   EvaluationResult,
   ExpressionMetadata

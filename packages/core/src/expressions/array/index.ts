@@ -12,13 +12,13 @@ import type {
   HyperScriptValueType,
   EvaluationResult,
   LLMDocumentation
-} from '../../types/enhanced-core';
+} from '../../types/command-types';
 import type {
   ValidationResult,
   ValidationError,
   TypedExpressionContext
 } from '../../types/base-types';
-import type { TypedExpressionImplementation } from '../../types/enhanced-expressions';
+import type { TypedExpressionImplementation } from '../../types/expression-types';
 
 // ============================================================================
 // Input Validation Schemas

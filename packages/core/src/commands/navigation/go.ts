@@ -12,7 +12,7 @@ import type {
   EvaluationResult,
   CommandMetadata,
   LLMDocumentation,
-} from '../../types/enhanced-core.ts';
+} from '../../types/command-types';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { asHTMLElement } from '../../utils/dom-utils';

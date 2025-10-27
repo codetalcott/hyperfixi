@@ -12,7 +12,7 @@ import type {
   EvaluationResult,
   CommandMetadata,
   LLMDocumentation,
-} from '../../types/enhanced-core';
+} from '../../types/command-types';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 import { asHTMLElement } from '../../utils/dom-utils';
 

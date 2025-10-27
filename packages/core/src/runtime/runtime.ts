@@ -10,7 +10,7 @@ import type {
   ExpressionNode,
   EventHandlerNode
 } from '../types/base-types';
-import type { TypedExecutionContext } from '../types/enhanced-core';
+import type { TypedExecutionContext } from '../types/command-types';
 
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { PutCommand } from '../commands/dom/put';

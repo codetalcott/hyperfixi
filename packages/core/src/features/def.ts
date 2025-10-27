@@ -12,8 +12,8 @@ import type {
   EvaluationType,
   ExecutionContext
 } from '../types/base-types';
-import type { ContextMetadata } from '../types/enhanced-context';
-import type { EvaluationResult } from '../types/enhanced-core';
+import type { ContextMetadata } from '../types/context-types';
+import type { EvaluationResult } from '../types/command-types';
 
 // ============================================================================
 // Enhanced Def Feature Input/Output Schemas

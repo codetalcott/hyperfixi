@@ -11,7 +11,7 @@ import type {
   EvaluationResult,
   CommandMetadata,
   LLMDocumentation,
-} from '../../types/enhanced-core.ts';
+} from '../../types/command-types';
 // Removed TypedResult import '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { asHTMLElement } from '../../utils/dom-utils';

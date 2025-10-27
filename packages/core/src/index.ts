@@ -88,13 +88,13 @@ export type {
   ContextMetadata,
   EvaluationResult,
   EnhancedContextBase
-} from './types/enhanced-context';
+} from './types/context-types';
 
 export type { ValidationResult, EvaluationType } from './types/base-types';
 
 export type {
   LLMDocumentation
-} from './types/enhanced-core';
+} from './types/command-types';
 
 // Export the main API as default
 export { default } from './api/hyperscript-api';

@@ -134,7 +134,7 @@ export {
 };
 
 import type { CommandImplementation } from '../types/core';
-import type { TypedExecutionContext } from '../types/enhanced-core';
+import type { TypedExecutionContext } from '../types/command-types';
 
 /**
  * Enhanced Command Factory Registry

@@ -11,12 +11,12 @@ import type {
   EvaluationResult,
   LLMDocumentation,
   ValidationResult
-} from '../../types/enhanced-core.ts';
+} from '../../types/command-types';
 import type {
   ValidationError,
   TypedExpressionContext
 } from '../../types/base-types';
-import type { TypedExpressionImplementation } from '../../types/enhanced-expressions';
+import type { TypedExpressionImplementation } from '../../types/expression-types';
 
 // ============================================================================
 // Input Validation Schemas

@@ -10,8 +10,8 @@ import type {
   ParsedCommand,
   HyperScriptFeatureType,
   ParsedCommandType
-} from './enhanced-core';
-import { HyperScriptProgramSchema } from './enhanced-core';
+} from './command-types';
+import { HyperScriptProgramSchema } from './command-types';
 
 describe('HyperScriptProgram Type System', () => {
   test('HyperScriptProgram type structure is complete', () => {

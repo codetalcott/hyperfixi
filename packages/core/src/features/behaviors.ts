@@ -9,9 +9,9 @@ import { v, z } from '../validation/lightweight-validators';
 import type {
   ContextMetadata,
   EvaluationResult
-} from '../types/enhanced-context';
+} from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
-import type { LLMDocumentation } from '../types/enhanced-core';
+import type { LLMDocumentation } from '../types/command-types';
 
 // ============================================================================
 // Enhanced Behaviors Feature Input/Output Schemas

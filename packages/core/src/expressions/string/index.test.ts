@@ -13,7 +13,7 @@ import {
   concatenateStrings,
   getStringLength
 } from './index';
-import type { TypedExecutionContext } from '../../types/enhanced-core';
+import type { TypedExecutionContext } from '../../types/command-types';
 
 // Mock context for testing
 function createMockContext(): TypedExecutionContext {

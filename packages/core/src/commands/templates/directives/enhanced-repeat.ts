@@ -13,7 +13,7 @@ import type {
   TemplateRenderStrategy,
   TemplateLLMDocumentation
 } from '../../../types/enhanced-templates.ts';
-import { RepeatDirectiveInputSchema } from '../../../types/enhanced-templates';
+import { RepeatDirectiveInputSchema } from '../../../types/template-types';
 import type {
   EvaluationResult,
   ExpressionMetadata

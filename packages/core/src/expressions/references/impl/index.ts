@@ -10,8 +10,8 @@ import type {
   TypedExpressionImplementation,
   TypedExpressionContext,
   ExpressionMetadata
-} from '../../../types/enhanced-expressions';
-import type { EvaluationResult, ValidationResult, LLMDocumentation, HyperScriptValueType } from '../../../types/enhanced-core';
+} from '../../../types/expression-types';
+import type { EvaluationResult, ValidationResult, LLMDocumentation, HyperScriptValueType } from '../../../types/command-types';
 
 // ============================================================================
 // Enhanced Me Expression

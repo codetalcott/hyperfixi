@@ -12,7 +12,7 @@ import type {
   HyperScriptValue,
   EvaluationResult,
   LLMDocumentation
-} from '../../types/enhanced-core';
+} from '../../types/command-types';
 
 // ============================================================================
 // Enhanced Time Parsing Expression

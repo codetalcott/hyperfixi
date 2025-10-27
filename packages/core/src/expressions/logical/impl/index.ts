@@ -16,7 +16,7 @@ import type {
   TypedExpressionImplementation,
   ExpressionMetadata,
   ExpressionCategory
-} from '../../../types/enhanced-expressions';
+} from '../../../types/expression-types';
 
 // ============================================================================
 // Input Schemas

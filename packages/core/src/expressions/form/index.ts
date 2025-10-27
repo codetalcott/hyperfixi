@@ -9,7 +9,7 @@ import type {
   TypedExecutionContext,
   EvaluationResult,
   LLMDocumentation
-} from '../../types/enhanced-core';
+} from '../../types/command-types';
 
 // ============================================================================
 // Enhanced Form Values Expression

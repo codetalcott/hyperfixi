@@ -3,7 +3,7 @@
  * Common utilities for testing enhanced implementations
  */
 
-import type { TypedExecutionContext } from './types/enhanced-core';
+import type { TypedExecutionContext } from './types/command-types';
 
 // Define TypedExpressionContext for expression testing
 export interface TypedExpressionContext {

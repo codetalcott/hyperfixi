@@ -13,8 +13,8 @@ import type {
   EvaluationType,
   ExpressionMetadata,
   ValidationResult
-} from './enhanced-expressions';
-import type { LLMDocumentation } from './enhanced-core';
+} from './expression-types';
+import type { LLMDocumentation } from './command-types';
 
 // ============================================================================
 // Enhanced Context Result Types

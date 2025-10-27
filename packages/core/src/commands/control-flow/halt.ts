@@ -8,7 +8,7 @@
  */
 
 import type { CommandImplementation, ValidationResult } from '../../types/core';
-import type { TypedExecutionContext } from '../../types/enhanced-core';
+import type { TypedExecutionContext } from '../../types/command-types';
 
 // Input type definition (halt takes no arguments)
 export interface HaltCommandInput {

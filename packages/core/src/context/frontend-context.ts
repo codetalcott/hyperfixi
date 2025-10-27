@@ -10,9 +10,9 @@ import {
   BaseContextOutputSchema,
   type ContextMetadata,
   type EvaluationResult
-} from '../types/enhanced-context';
+} from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
-import type { LLMDocumentation } from '../types/enhanced-core';
+import type { LLMDocumentation } from '../types/command-types';
 
 // ============================================================================
 // Frontend Context Input/Output Schemas

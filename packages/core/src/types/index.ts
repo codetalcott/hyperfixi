@@ -43,18 +43,9 @@ export {
 } from './unified-types';
 
 // ============================================================================
-// Migration Support
+// Migration Support (removed - migration-adapters.ts deleted)
 // ============================================================================
-
-export {
-  TypeMigrationAdapter,
-  migrateValidationResult,
-  migrateExecutionContext,
-  createUnifiedResult,
-  normalizeValidationResult,
-  assertUnifiedValidationResult,
-  assertUnifiedExecutionContext
-} from './migration-adapters';
+// Migration adapters removed as they were unused (0 imports)
 
 // ============================================================================
 // Legacy Compatibility (temporary)
@@ -124,4 +115,3 @@ export type AsyncValidationFunction<T> = (input: unknown) => Promise<ValidationR
 // ============================================================================
 
 export { default as UnifiedTypes } from './unified-types';
-export { default as MigrationAdapters } from './migration-adapters';

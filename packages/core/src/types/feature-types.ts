@@ -4,7 +4,7 @@
  */
 
 import type { RuntimeValidator } from '../validation/lightweight-validators';
-import type { ValidationResult, EvaluationResult, CommandMetadata, LLMDocumentation } from './enhanced-core';
+import type { ValidationResult, EvaluationResult, CommandMetadata, LLMDocumentation } from './command-types';
 
 /**
  * Enhanced execution context for features with additional feature-specific properties

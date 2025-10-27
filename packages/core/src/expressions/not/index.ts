@@ -12,7 +12,7 @@ import type {
   LLMDocumentation,
   ValidationResult,
   TypedExecutionContext
-} from '../../types/enhanced-core.ts';
+} from '../../types/command-types';
 
 // ============================================================================
 // Input Validation Schemas

@@ -6,7 +6,7 @@
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { EnhancedFunctionCallExpression, createFunctionCallExpression, callFunction } from './index';
 import { createTypedExpressionContext } from '../../test-utilities';
-import type { TypedExpressionContext } from '../../types/enhanced-core';
+import type { TypedExpressionContext } from '../../types/command-types';
 
 describe('Enhanced Function Call Expression', () => {
   let functionCallExpression: EnhancedFunctionCallExpression;

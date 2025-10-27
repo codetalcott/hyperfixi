@@ -12,7 +12,7 @@ import type {
   ValidationResult,
   LLMDocumentation
 } from './base-types';
-import type { HyperScriptValue } from './enhanced-core.ts';
+import type { HyperScriptValue } from './command-types';
 import type { ExecutionContext } from './core.ts';
 
 // ============================================================================
@@ -380,4 +380,4 @@ export type {
   ExpressionMetadata,
   ValidationResult,
   LLMDocumentation
-} from './enhanced-expressions.ts';
+} from './expression-types';

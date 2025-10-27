@@ -9,7 +9,7 @@
 
 import type {
   TypedContextImplementation
-} from '../types/enhanced-context';
+} from '../types/context-types';
 
 import type { ValidationResult } from '../types/base-types';
 
@@ -23,7 +23,7 @@ export type {
   BaseContextInput,
   BaseContextOutput,
   EnhancedTypedExpressionContext
-} from '../types/enhanced-context';
+} from '../types/context-types';
 
 export type { ValidationResult } from '../types/base-types';
 
@@ -31,7 +31,7 @@ export {
   EnhancedContextBase,
   BaseContextInputSchema,
   BaseContextOutputSchema
-} from '../types/enhanced-context';
+} from '../types/context-types';
 
 // ============================================================================
 // Context Registry

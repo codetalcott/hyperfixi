@@ -15,7 +15,7 @@ import type {
   ValidationResult,
   ExpressionCategory,
   ExpressionAnalysisInfo
-} from '../../types/enhanced-core';
+} from '../../types/command-types';
 import type { ValidationError } from '../../types/base-types';
 
 // ============================================================================

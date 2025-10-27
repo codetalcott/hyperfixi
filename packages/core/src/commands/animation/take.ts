@@ -10,7 +10,7 @@ import type {
   EvaluationResult,
   CommandMetadata,
   LLMDocumentation
-} from '../../types/enhanced-core';
+} from '../../types/command-types';
 import type { RuntimeValidator } from '../../validation/lightweight-validators';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 import { dispatchCustomEvent } from '../../core/events';

@@ -11,11 +11,11 @@ import type {
   EvaluationType,
   ExpressionMetadata,
   ValidationResult
-} from '../../../types/enhanced-expressions';
+} from '../../../types/expression-types';
 import type { 
   EvaluationResult,
   LLMDocumentation
-} from '../../../types/enhanced-core';
+} from '../../../types/command-types';
 
 // ============================================================================
 // Input Schemas

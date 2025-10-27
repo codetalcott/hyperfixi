@@ -15,7 +15,7 @@ import type {
   EvaluationResult,
   LLMDocumentation
 } from '../../types/base-types';
-import type { ExpressionCategory } from '../../types/enhanced-expressions';
+import type { ExpressionCategory } from '../../types/expression-types';
 
 // ============================================================================
 // Input Schemas

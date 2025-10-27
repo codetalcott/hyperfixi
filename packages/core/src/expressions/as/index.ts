@@ -12,7 +12,7 @@ import type {
   TypedExpressionImplementation,
   LLMDocumentation,
   TypedExecutionContext
-} from '../../types/enhanced-core.ts';
+} from '../../types/command-types';
 import type { ValidationResult, ValidationError } from '../../types/base-types';
 
 // ============================================================================

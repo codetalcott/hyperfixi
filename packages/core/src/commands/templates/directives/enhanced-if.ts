@@ -12,7 +12,7 @@ import type {
   TemplateRenderStrategy,
   TemplateLLMDocumentation
 } from '../../../types/enhanced-templates.ts';
-import { IfDirectiveInputSchema } from '../../../types/enhanced-templates';
+import { IfDirectiveInputSchema } from '../../../types/template-types';
 import type {
   EvaluationResult,
   ExpressionMetadata

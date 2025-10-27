@@ -9,7 +9,7 @@
 
 import { v, z } from '../../validation/lightweight-validators';
 import type { CommandImplementation } from '../../types/core';
-import type { TypedExecutionContext } from '../../types/enhanced-core';
+import type { TypedExecutionContext } from '../../types/command-types';
 import type { UnifiedValidationResult } from '../../types/unified-types';
 import { asHTMLElement } from '../../utils/dom-utils';
 

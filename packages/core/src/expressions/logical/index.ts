@@ -10,7 +10,7 @@ import type { ExecutionContext, ExpressionImplementation } from '../../types/cor
 import type {
   ExpressionMetadata,
   LLMDocumentation
-} from '../../types/enhanced-expressions';
+} from '../../types/expression-types';
 import { matchesWithCache } from '../../performance/integration';
 
 // ============================================================================

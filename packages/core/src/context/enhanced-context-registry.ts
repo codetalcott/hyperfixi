@@ -9,7 +9,7 @@ import type {
   ContextRegistry,
   ContextFilter,
   ContextCategory
-} from '../types/enhanced-context';
+} from '../types/context-types';
 import type { ValidationResult, ValidationError } from '../types/base-types';
 
 // ============================================================================
