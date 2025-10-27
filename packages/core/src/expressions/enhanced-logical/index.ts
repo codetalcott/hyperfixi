@@ -7,14 +7,16 @@
 import { v } from '../../validation/lightweight-validators';
 import type {
   TypedExpressionContext,
-  ExpressionCategory,
   EvaluationType,
-  ExpressionMetadata,
   ValidationResult,
   LLMDocumentation,
   EvaluationResult
 } from '../../types/base-types';
-import type { TypedExpressionImplementation } from '../../types/enhanced-expressions';
+import type {
+  TypedExpressionImplementation,
+  ExpressionMetadata,
+  ExpressionCategory
+} from '../../types/enhanced-expressions';
 
 // ============================================================================
 // Input Schemas

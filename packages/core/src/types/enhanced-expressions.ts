@@ -74,7 +74,7 @@ export interface BaseTypedExpression<T> {
   readonly metadata: ExpressionMetadata;
   readonly documentation: LLMDocumentation;
 
-  evaluate(context: TypedExpressionContext, input: unknown): Promise<TypedResult<T>>;
+  evaluate(context: TypedExpressionContext, input: unknown): Promise<EvaluationResult<T>>;
   validate(input: unknown): ValidationResult;
 }
 

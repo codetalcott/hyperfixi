@@ -9,12 +9,14 @@ import type {
   HyperScriptValue,
   HyperScriptValueType,
   EvaluationResult,
-  TypedExpressionImplementation,
   LLMDocumentation,
   ValidationResult
 } from '../../types/enhanced-core.ts';
-import type { TypedExpressionContext } from '../../test-utilities.ts';
-import type { ValidationError } from '../../types/base-types';
+import type {
+  ValidationError,
+  TypedExpressionContext
+} from '../../types/base-types';
+import type { TypedExpressionImplementation } from '../../types/enhanced-expressions';
 
 // ============================================================================
 // Input Validation Schemas

@@ -314,7 +314,7 @@ export interface BaseTypedExpression<T = unknown> {
   readonly metadata: ExpressionMetadata;
   readonly documentation: LLMDocumentation;
 
-  evaluate(context: TypedExecutionContext, input: unknown): Promise<TypedResult<T>>;
+  evaluate(context: TypedExecutionContext, input: unknown): Promise<EvaluationResult<T>>;
   validate(input: unknown): ValidationResult;
 }
 
