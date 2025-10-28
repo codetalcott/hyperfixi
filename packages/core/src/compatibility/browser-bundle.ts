@@ -7,6 +7,9 @@ import { evalHyperScript, evalHyperScriptAsync, evalHyperScriptSmart } from './e
 import { hyperscript } from '../api/hyperscript-api';
 import { defaultAttributeProcessor } from '../dom/attribute-processor';
 import { tailwindExtension } from '../extensions/tailwind';
+import { Parser } from '../parser/parser';
+import { Runtime } from '../runtime/runtime';
+import { tokenize } from '../parser/tokenizer';
 
 // Export to global scope for browser testing
 declare global {
@@ -16,6 +19,17 @@ declare global {
       evalHyperScriptAsync: typeof evalHyperScriptAsync;
       evalHyperScriptSmart: typeof evalHyperScriptSmart;
       tailwindExtension: typeof tailwindExtension;
+      compile: typeof hyperscript.compile;
+      execute: typeof hyperscript.execute;
+      run: typeof hyperscript.run;
+      createContext: typeof hyperscript.createContext;
+      createRuntime: typeof hyperscript.createRuntime;
+      processNode: (element: Element | Document) => Promise<void>;
+      process: (element: Element | Document) => Promise<void>;
+      Parser: typeof Parser;
+      Runtime: typeof Runtime;
+      tokenize: typeof tokenize;
+      attributeProcessor: typeof defaultAttributeProcessor;
     };
     // Also expose as direct globals for test compatibility
     evalHyperScript: typeof evalHyperScript;
@@ -26,13 +40,14 @@ declare global {
 
 // Main browser API - matches _hyperscript signature
 const hyperfixi = {
+  // Core evaluation functions
   evalHyperScript,
   evalHyperScriptAsync,
   evalHyperScriptSmart,
-  
+
   // Convenience method that matches _hyperscript() function signature exactly
   evaluate: evalHyperScript,
-  
+
   // Full hyperscript API for advanced usage
   compile: (code: string) => {
     console.log('🎯 BROWSER-BUNDLE: hyperfixi.compile() called', { code });
@@ -44,7 +59,12 @@ const hyperfixi = {
   run: hyperscript.run,
   createContext: hyperscript.createContext,
   createRuntime: hyperscript.createRuntime,
-  
+
+  // Parser and runtime classes for advanced usage
+  Parser,
+  Runtime,
+  tokenize,
+
   // DOM processing for HTMX/manual compatibility
   processNode: async (element: Element | Document): Promise<void> => {
     if (element === document) {
@@ -55,11 +75,14 @@ const hyperfixi = {
     return Promise.resolve();
   },
   process: (element: Element | Document) => hyperfixi.processNode(element), // Alias
-  
+
+  // Attribute processor for manual control
+  attributeProcessor: defaultAttributeProcessor,
+
   // Extensions
   tailwindExtension,
-  
-  // Version info  
+
+  // Version info
   version: '1.0.0-compatibility'
 };
 
