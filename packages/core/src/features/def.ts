@@ -979,7 +979,7 @@ export class DefFeature {
     // Parse namespace from function name (e.g., 'utils.math.add' -> namespace: 'utils.math', name: 'add')
     const parts = name.split('.');
     const functionName = parts[parts.length - 1];
-    const namespace = parts.length > 1 ? parts.slice(0, -1).join('.') : null;
+    const namespace = parts.length > 1 ? parts.slice(0, -1).join('.') : undefined;
 
     // Validate function name format (must start with letter or underscore)
     if (!/^[a-zA-Z_]/.test(functionName)) {
@@ -1023,16 +1023,16 @@ export class DefFeature {
 
     const funcDef: FunctionDefinition = {
       name: functionName,
-      namespace,
+      ...(namespace !== undefined && { namespace }),
       parameters,
       body,
-      catchBlock,
-      finallyBlock,
+      ...(catchBlock !== undefined && { catchBlock }),
+      ...(finallyBlock !== undefined && { finallyBlock }),
       isAsync,
       context,
       metadata: {
         name: functionName,
-        namespace,
+        ...(namespace !== undefined && { namespace }),
         parameters,
         isAsync,
         complexity: body.length,
@@ -1194,13 +1194,6 @@ export class DefFeature {
           if (conditionResult) {
             const commandName = args[2];
             const commandArgs = args.slice(3);
-
-            // Create a command object for the conditional command
-            const conditionalCmd = {
-              type: 'command' as const,
-              name: commandName,
-              args: commandArgs
-            };
 
             // Execute the conditional command by recursively processing it
             // Check if it's a return command

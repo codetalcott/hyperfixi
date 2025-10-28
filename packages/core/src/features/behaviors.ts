@@ -447,7 +447,7 @@ export class TypedBehaviorsFeatureImplementation {
       // Validate behavior name
       if (data.behavior && !/^[a-zA-Z_$][a-zA-Z0-9_$-]*$/.test(data.behavior.name)) {
         errors.push({
-          type: 'invalid-behavior-name',
+          type: 'validation-error', code: 'invalid-behavior-name',
           message: 'Behavior name must be a valid identifier (letters, numbers, underscore, hyphen)',
           path: 'behavior.name',
           suggestions: []
@@ -460,7 +460,7 @@ export class TypedBehaviorsFeatureImplementation {
         data.behavior.parameters.forEach((param: string, index: number) => {
           if (!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(param)) {
             errors.push({
-          type: 'invalid-parameter-name',
+          type: 'validation-error', code: 'invalid-parameter-name',
           message: `Parameter "${param}" must be a valid JavaScript identifier`,
           path: `behavior.parameters[${index}]`,
           suggestions: []
@@ -473,7 +473,7 @@ export class TypedBehaviorsFeatureImplementation {
         const paramSet = new Set(data.behavior.parameters);
         if (paramSet.size !== data.behavior.parameters.length) {
           errors.push({
-          type: 'duplicate-parameters',
+          type: 'schema-validation', code: 'duplicate-parameters',
           message: 'Behavior parameters must be unique',
           path: 'behavior.parameters',
           suggestions: []
@@ -488,7 +488,7 @@ export class TypedBehaviorsFeatureImplementation {
           // Validate event type
           if (!this.isValidEventType(handler.event)) {
             errors.push({
-          type: 'invalid-event-type',
+          type: 'validation-error', code: 'invalid-event-type',
           message: `"${handler.event}" is not a valid DOM event type`,
           path: `behavior.eventHandlers[${index}].event`,
           suggestions: []
@@ -509,7 +509,7 @@ export class TypedBehaviorsFeatureImplementation {
               }
             } catch (selectorError) {
               errors.push({
-          type: 'invalid-event-source-selector',
+          type: 'validation-error', code: 'invalid-event-source-selector',
           message: `Invalid CSS selector: "${handler.eventSource}"`,
           path: `behavior.eventHandlers[${index}].eventSource`,
           suggestions: []
@@ -521,7 +521,7 @@ export class TypedBehaviorsFeatureImplementation {
           // Special validation for obviously invalid selectors
           if (handler.eventSource === '>>>invalid-selector<<<') {
             errors.push({
-          type: 'invalid-event-source-selector',
+          type: 'validation-error', code: 'invalid-event-source-selector',
           message: `Invalid CSS selector: "${handler.eventSource}"`,
           path: `behavior.eventHandlers[${index}].eventSource`,
           suggestions: []
@@ -535,7 +535,7 @@ export class TypedBehaviorsFeatureImplementation {
               new Function('event', `return ${handler.filter}`);
             } catch (filterError) {
               errors.push({
-          type: 'invalid-filter-expression',
+          type: 'invalid-input', code: 'invalid-filter-expression',
           message: `Invalid filter expression: ${handler.filter}`,
           path: `behavior.eventHandlers[${index}].filter`,
           suggestions: []
@@ -547,7 +547,7 @@ export class TypedBehaviorsFeatureImplementation {
           // Validate performance settings
           if (handler.options?.throttle && handler.options?.debounce) {
             errors.push({
-          type: 'conflicting-performance-options',
+          type: 'schema-validation', code: 'conflicting-performance-options',
           message: 'Cannot use both throttle and debounce on the same event handler',
           path: `behavior.eventHandlers[${index}].options`,
           suggestions: []
@@ -558,7 +558,7 @@ export class TypedBehaviorsFeatureImplementation {
           // Validate commands array
           if (!handler.commands || handler.commands.length === 0) {
             errors.push({
-          type: 'empty-commands-array',
+          type: 'empty-config', code: 'empty-commands-array',
           message: 'Event handler must have at least one command',
           path: `behavior.eventHandlers[${index}].commands`,
           suggestions: []
@@ -570,7 +570,7 @@ export class TypedBehaviorsFeatureImplementation {
         // Check event handler count limits
         if (data.behavior.eventHandlers.length > (data.options?.maxEventHandlers || 50)) {
           errors.push({
-          type: 'too-many-event-handlers',
+          type: 'security-warning', code: 'too-many-event-handlers',
           message: `Too many event handlers (max: ${data.options?.maxEventHandlers || 50})`,
           path: 'behavior.eventHandlers',
           suggestions: []
@@ -583,7 +583,7 @@ export class TypedBehaviorsFeatureImplementation {
       if (data.behavior?.namespace &&
           !/^[a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(data.behavior.namespace)) {
         errors.push({
-          type: 'invalid-namespace',
+          type: 'validation-error', code: 'invalid-namespace',
           message: 'Namespace must be a valid JavaScript identifier or dot-separated path',
           path: 'behavior.namespace',
           suggestions: []

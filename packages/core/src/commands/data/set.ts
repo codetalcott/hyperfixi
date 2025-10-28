@@ -226,7 +226,8 @@ export class SetCommand implements CommandImplementation<
     // Format 4: set { props } on element → args: [object, 'on', element]
     // Format 5: set { props } on element 'style' → args: [object, 'on', element, 'style']
 
-    let target, value, scope;
+    let target, value;
+    let scope: 'global' | 'local' | undefined;
 
     // Check for object literal format (Format 4 & 5)
     const onIndex = args.indexOf('on');
