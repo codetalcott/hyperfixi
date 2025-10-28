@@ -560,9 +560,12 @@ export function getEnhancementsForLevel(level: CapabilityLevel): Enhancement[] {
   // Include all enhancements up to and including the current level
   const levels: CapabilityLevel[] = ['basic', 'enhanced', 'modern', 'cutting-edge'];
   const levelIndex = levels.indexOf(level);
-  
+
   for (let i = 0; i <= levelIndex; i++) {
-    enhancements.push(...ENHANCEMENT_LEVELS[levels[i]]);
+    const currentLevel = levels[i];
+    if (currentLevel) {
+      enhancements.push(...ENHANCEMENT_LEVELS[currentLevel]);
+    }
   }
   
   return enhancements.sort((a, b) => a.priority - b.priority);

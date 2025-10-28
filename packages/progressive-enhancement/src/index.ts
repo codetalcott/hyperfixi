@@ -1,9 +1,12 @@
 /**
  * Progressive Enhancement for HyperFixi Applications
- * 
+ *
  * Provides capability detection and progressive enhancement system
  * that adapts behavior based on browser capabilities and user preferences.
  */
+
+// Import for internal use
+import { enhance as enhanceInternal } from './enhancer';
 
 // Core exports
 export { ProgressiveEnhancer, getEnhancer, initProgressiveEnhancement, enhance, enhanceElement } from './enhancer';
@@ -76,7 +79,7 @@ export async function quickStart(options: {
   };
   
   try {
-    await enhance(selector, templateVars, config);
+    await enhanceInternal(selector, templateVars, config);
     console.log(`Progressive enhancement applied to elements matching "${selector}"`);
   } catch (error) {
     console.warn('Progressive enhancement failed:', error);

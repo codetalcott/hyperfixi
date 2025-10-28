@@ -254,12 +254,12 @@ export class ProgressiveEnhancer {
    * Get missing capabilities for given enhancements
    */
   private getMissingCapabilities(
-    enhancements: Enhancement[], 
+    enhancements: Enhancement[],
     capabilities: CapabilityReport
   ): string[] {
     const missing: string[] = [];
     const available = Object.keys(capabilities.capabilities).filter(
-      key => capabilities.capabilities[key].supported
+      key => capabilities.capabilities[key]?.supported
     );
 
     for (const enhancement of enhancements) {

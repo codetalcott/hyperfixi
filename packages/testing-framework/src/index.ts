@@ -22,6 +22,9 @@ import type {
   BrowserType,
 } from './types';
 
+// Import functions for internal use
+import { createTestRunner as createTestRunnerInternal } from './runner';
+
 // Core exports
 export { CoreTestRunner, ParallelTestRunner, createTestRunner, measurePerformance } from './runner';
 export { createExpectAPI, createAssertAPI, AssertionError } from './assertions';
@@ -123,17 +126,17 @@ export function describe(name: string, optionsOrFn: Partial<TestSuite> | (() => 
 
   const suite: TestSuite = {
     name,
-    description: actualOptions.description,
-    setup: actualOptions.setup,
-    teardown: actualOptions.teardown,
-    beforeEach: actualOptions.beforeEach,
-    afterEach: actualOptions.afterEach,
+    ...(actualOptions.description !== undefined ? { description: actualOptions.description } : {}),
+    ...(actualOptions.setup !== undefined ? { setup: actualOptions.setup } : {}),
+    ...(actualOptions.teardown !== undefined ? { teardown: actualOptions.teardown } : {}),
+    ...(actualOptions.beforeEach !== undefined ? { beforeEach: actualOptions.beforeEach } : {}),
+    ...(actualOptions.afterEach !== undefined ? { afterEach: actualOptions.afterEach } : {}),
     tests: [],
     suites: [],
-    timeout: actualOptions.timeout,
-    retries: actualOptions.retries,
-    skip: actualOptions.skip,
-    only: actualOptions.only,
+    ...(actualOptions.timeout !== undefined ? { timeout: actualOptions.timeout } : {}),
+    ...(actualOptions.retries !== undefined ? { retries: actualOptions.retries } : {}),
+    ...(actualOptions.skip !== undefined ? { skip: actualOptions.skip } : {}),
+    ...(actualOptions.only !== undefined ? { only: actualOptions.only } : {}),
   };
 
   const parentSuite = currentSuite;
@@ -163,12 +166,12 @@ export function it(name: string, optionsOrFn: Partial<TestCase> | TestFunction, 
 
   const test: TestCase = {
     name,
-    description: actualOptions.description,
+    ...(actualOptions.description !== undefined ? { description: actualOptions.description } : {}),
     fn: actualFn,
-    timeout: actualOptions.timeout,
-    retries: actualOptions.retries,
-    skip: actualOptions.skip,
-    only: actualOptions.only,
+    ...(actualOptions.timeout !== undefined ? { timeout: actualOptions.timeout } : {}),
+    ...(actualOptions.retries !== undefined ? { retries: actualOptions.retries } : {}),
+    ...(actualOptions.skip !== undefined ? { skip: actualOptions.skip } : {}),
+    ...(actualOptions.only !== undefined ? { only: actualOptions.only } : {}),
     tags: actualOptions.tags || [],
     fixtures: actualOptions.fixtures || {},
   };
@@ -254,7 +257,7 @@ export function afterEach(fn: () => Promise<void> | void): void {
  */
 export async function runTests(config: Partial<TestConfig> = {}): Promise<TestResult[]> {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
-  const runner = createTestRunner(finalConfig);
+  const runner = createTestRunnerInternal(finalConfig);
   
   // Filter suites based on 'only' flag
   let suitesToRun = testSuites;
@@ -547,7 +550,7 @@ export async function quickStartTesting(options: {
     environment: options.environment || 'jsdom',
     browser: options.browser || 'chromium',
     headless: options.headless !== false,
-    baseURL: options.baseURL,
+    ...(options.baseURL !== undefined ? { baseURL: options.baseURL } : {}),
   };
 
   // Load test files if specified

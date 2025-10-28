@@ -271,8 +271,10 @@ export class UsageAnalyzer {
     // Find _ attributes
     while ((match = hyperscriptRegex.exec(content)) !== null) {
       const script = match[1];
+      if (!script) continue;
+
       const element = this.findElementForScript(content, match.index);
-      
+
       usage.push({
         element,
         script,
@@ -286,8 +288,10 @@ export class UsageAnalyzer {
     // Find data-script attributes
     while ((match = dataScriptRegex.exec(content)) !== null) {
       const script = match[1];
+      if (!script) continue;
+
       const element = this.findElementForScript(content, match.index);
-      
+
       usage.push({
         element,
         script,

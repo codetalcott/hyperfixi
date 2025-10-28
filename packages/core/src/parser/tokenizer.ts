@@ -73,7 +73,7 @@ const KEYWORDS = new Set([
 
 const COMMANDS = new Set([
   'add', 'append', 'async', 'beep', 'break', 'call', 'continue', 'decrement',
-  'default', 'fetch', 'get', 'go', 'halt', 'hide', 'increment', 'js', 'log',
+  'default', 'fetch', 'get', 'go', 'halt', 'hide', 'increment', 'install', 'js', 'log',
   'make', 'measure', 'pick', 'put', 'remove', 'render', 'repeat', 'return',
   'send', 'set', 'settle', 'show', 'take', 'tell', 'throw', 'toggle',
   'transition', 'trigger', 'wait'

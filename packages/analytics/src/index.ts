@@ -103,8 +103,8 @@ export function createAnalyticsSystem(options: {
     ...(options.collector.batchSize !== undefined && { batchSize: options.collector.batchSize }),
     ...(options.collector.flushInterval !== undefined && { flushInterval: options.collector.flushInterval }),
     ...(options.collector.maxBufferSize !== undefined && { maxBufferSize: options.collector.maxBufferSize }),
-    ...(options.collector.alerting && { alerting: options.collector.alerting }),
-    ...(options.collector.realtime && { realtime: options.collector.realtime }),
+    ...(options.collector.alerting && options.collector.alerting.enabled !== undefined && options.collector.alerting.checkInterval !== undefined ? { alerting: options.collector.alerting as { enabled: boolean; checkInterval: number } } : {}),
+    ...(options.collector.realtime && options.collector.realtime.enabled !== undefined && options.collector.realtime.maxSubscriptions !== undefined ? { realtime: options.collector.realtime as { enabled: boolean; maxSubscriptions: number } } : {}),
   } : undefined);
 
   return {

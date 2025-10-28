@@ -7,11 +7,15 @@ import { z } from 'zod';
 import type {
   TypedContextImplementation,
   ContextMetadata,
-  EvaluationResult,
   EnhancedContextBase
-} from '../../core/src/types/enhanced-context.js';
-import type { ValidationResult, ValidationError, EvaluationType } from '../../core/src/types/base-types.js';
-import type { LLMDocumentation } from '../../core/src/types/enhanced-core.js';
+} from '../../core/src/types/context-types.js';
+import type {
+  ValidationResult,
+  ValidationError,
+  EvaluationType,
+  EvaluationResult,
+  LLMDocumentation
+} from '../../core/src/types/base-types.js';
 import type { 
   AnalyticsEvent, 
   AnalyticsConfig, 
@@ -238,10 +242,13 @@ export class TypedAnalyticsContextImplementation {
       // Validate input using enhanced pattern
       const validation = this.validate(input);
       if (!validation.isValid) {
+        const firstError = validation.errors[0];
         return {
           success: false,
-          errors: validation.errors,
-          suggestions: validation.suggestions
+          error: {
+            ...firstError,
+            suggestions: validation.suggestions
+          }
         };
       }
 
@@ -309,24 +316,24 @@ export class TypedAnalyticsContextImplementation {
       return {
         success: true,
         value: context,
-        type: 'Context'
+        type: 'object'
       };
 
     } catch (error) {
       this.trackPerformance(startTime, false);
-      
+
       return {
         success: false,
-        errors: [{
+        error: {
           type: 'runtime-error',
-          message: `Analytics context initialization failed: ${error instanceof Error ? error.message : String(error)}`
-        }],
-        suggestions: [
-          'Verify analytics configuration is valid',
-          'Check tracking ID format and permissions',
-          'Ensure required browser APIs are available',
-          'Validate privacy settings compliance'
-        ]
+          message: `Analytics context initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: [
+            'Verify analytics configuration is valid',
+            'Check tracking ID format and permissions',
+            'Ensure required browser APIs are available',
+            'Validate privacy settings compliance'
+          ]
+        }
       };
     }
   }
@@ -741,7 +748,7 @@ export class TypedAnalyticsContextImplementation {
     const duration = Date.now() - startTime;
     this.evaluationHistory.push({
       input: {} as EnhancedAnalyticsInput, // Would store actual input in real implementation
-      output,
+      ...(output !== undefined ? { output } : {}),
       success,
       duration,
       timestamp: startTime
@@ -775,6 +782,8 @@ export async function createEnhancedAnalytics(
 ): Promise<EvaluationResult<EnhancedAnalyticsOutput>> {
   const analytics = new TypedAnalyticsContextImplementation();
   return analytics.initialize({
+    environment: 'universal' as const,
+    debug: false,
     config: {
       enabled: true,
       batchSize: 50,
@@ -784,7 +793,7 @@ export async function createEnhancedAnalytics(
       events: { compilation: true, execution: true, interactions: true, performance: true, errors: true, customEvents: true },
       ...config
     },
-    ...options
+    ...(options ? options : {})
   });
 }
 
