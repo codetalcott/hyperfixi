@@ -39,8 +39,9 @@
   "dependencies": {
     "@hyperfixi/component-schema": "file:../component-schema",
     "@hyperfixi/template-integration": "file:../template-integration",
+    "esbuild": "0.25.11",
     "jsdom": "^23.0.1",
-    "vite": "7.1.10"
+    "vite": "^7.1.12"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^25.0.7",

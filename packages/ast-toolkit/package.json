@@ -63,7 +63,8 @@
   "license": "MIT",
   "dependencies": {
     "@hyperfixi/core": "file:../core",
-    "vite": "7.1.10"
+    "esbuild": "0.25.11",
+    "vite": "^7.1.12"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

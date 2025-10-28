@@ -44,7 +44,8 @@
   "dependencies": {
     "@hyperfixi/core": "^1.0.0",
     "@hyperfixi/fixi": "^1.0.0",
-    "vite": "7.1.10"
+    "esbuild": "0.25.11",
+    "vite": "^7.1.12"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^16.0.1",

@@ -107,8 +107,9 @@
     "access": "public"
   },
   "dependencies": {
+    "esbuild": "0.25.11",
     "jsdom": "^26.1.0",
-    "vite": "7.1.10"
+    "vite": "^7.1.12"
   },
   "directories": {
     "doc": "docs"
