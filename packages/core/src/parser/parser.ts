@@ -439,10 +439,10 @@ export class Parser {
     // Check if the name is in the COMMANDS set from tokenizer
     const COMMANDS = new Set([
       'add', 'append', 'async', 'beep', 'break', 'call', 'continue', 'decrement',
-      'default', 'fetch', 'get', 'go', 'halt', 'hide', 'increment', 'js', 'log',
+      'default', 'fetch', 'get', 'go', 'halt', 'hide', 'if', 'increment', 'js', 'log',
       'make', 'measure', 'pick', 'put', 'remove', 'render', 'repeat', 'return',
       'send', 'set', 'settle', 'show', 'take', 'tell', 'throw', 'toggle',
-      'transition', 'trigger', 'wait'
+      'transition', 'trigger', 'unless', 'wait'
     ]);
     return COMMANDS.has(name.toLowerCase());
   }
@@ -1204,6 +1204,163 @@ export class Parser {
       isBlocking: false,
       start: commandToken.start || 0,
       end: commandToken.end || 0,
+      line: commandToken.line || 1,
+      column: commandToken.column || 1
+    };
+  }
+
+  /**
+   * Parse if/unless command with support for single-line and multi-line forms
+   *
+   * Syntax:
+   *   if <condition> <command>              (single-line, no 'then', no 'end')
+   *   if <condition> then ... end           (multi-line with 'then' and 'end')
+   *   if <condition> then ... else ... end  (with else clause)
+   *   unless <condition> <command>          (single-line, equivalent to if not condition)
+   *   unless <condition> then ... end       (multi-line)
+   */
+  private parseIfCommand(commandToken: Token): CommandNode {
+    const commandName = commandToken.value.toLowerCase(); // Preserve 'if' or 'unless'
+    const args: ASTNode[] = [];
+
+    // Check if this is multi-line (has 'then') or single-line first
+    // by peeking ahead to see if 'then' appears before any command
+    const isMultiLine = this.check('then');
+
+    let condition: ASTNode;
+    if (isMultiLine) {
+      // Multi-line form: parse condition normally until 'then'
+      condition = this.parseExpression();
+    } else {
+      // Single-line form: parse condition carefully, stopping at COMMAND tokens
+      // Parse tokens until we hit a command token (which will be the action)
+      const conditionTokens: ASTNode[] = [];
+      const maxIterations = 20; // Safety limit to prevent infinite loops
+      let iterations = 0;
+
+      while (!this.isAtEnd() &&
+             !this.checkTokenType(TokenType.COMMAND) &&
+             !this.isCommand(this.peek().value) &&
+             !this.check('then') &&
+             iterations < maxIterations) {
+        const beforePos = this.current;
+        conditionTokens.push(this.parsePrimary());
+
+        // Safety check: ensure we're making progress
+        if (this.current === beforePos) {
+          // parsePrimary didn't advance - manually advance to prevent infinite loop
+          this.advance();
+        }
+        iterations++;
+      }
+
+      // Combine condition tokens into a single expression
+      if (conditionTokens.length === 0) {
+        throw new Error('Expected condition after if/unless');
+      } else if (conditionTokens.length === 1) {
+        condition = conditionTokens[0];
+      } else {
+        // Multiple tokens - create a compound expression
+        condition = {
+          type: 'expression',
+          tokens: conditionTokens,
+          start: conditionTokens[0].start,
+          end: conditionTokens[conditionTokens.length - 1].end,
+          line: commandToken.line,
+          column: commandToken.column
+        } as any;
+      }
+    }
+
+    args.push(condition);
+
+    if (isMultiLine) {
+      // Multi-line form: if condition then ... end
+      this.advance(); // consume 'then'
+
+      // Parse command block until 'else' or 'end'
+      const thenCommands: ASTNode[] = [];
+      while (!this.isAtEnd() && !this.check('else') && !this.check('end')) {
+        if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(this.peek().value)) {
+          this.advance(); // consume command token
+          const cmd = this.parseCommand();
+          if (cmd) {
+            thenCommands.push(cmd);
+          }
+        } else {
+          break;
+        }
+      }
+
+      // Add then block
+      args.push({
+        type: 'block',
+        commands: thenCommands,
+        start: commandToken.start,
+        end: this.getPosition().end,
+        line: commandToken.line,
+        column: commandToken.column
+      } as any);
+
+      // Check for optional 'else' clause
+      if (this.check('else')) {
+        this.advance(); // consume 'else'
+
+        const elseCommands: ASTNode[] = [];
+        while (!this.isAtEnd() && !this.check('end')) {
+          if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(this.peek().value)) {
+            this.advance(); // consume command token
+            const cmd = this.parseCommand();
+            if (cmd) {
+              elseCommands.push(cmd);
+            }
+          } else {
+            break;
+          }
+        }
+
+        // Add else block
+        args.push({
+          type: 'block',
+          commands: elseCommands,
+          start: commandToken.start,
+          end: this.getPosition().end,
+          line: commandToken.line,
+          column: commandToken.column
+        } as any);
+      }
+
+      // Consume 'end' for multi-line form
+      this.consume('end', "Expected 'end' after if block");
+
+    } else {
+      // Single-line form: if condition command
+      // Parse exactly one command (no 'end' expected)
+      if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(this.peek().value)) {
+        this.advance(); // consume command token
+        const singleCommand = this.parseCommand();
+
+        // Wrap single command in a block for consistency
+        args.push({
+          type: 'block',
+          commands: [singleCommand],
+          start: commandToken.start,
+          end: this.getPosition().end,
+          line: commandToken.line,
+          column: commandToken.column
+        } as any);
+      } else {
+        throw new Error('Expected command after if condition in single-line form');
+      }
+    }
+
+    return {
+      type: 'command',
+      name: commandName, // Use actual command name ('if' or 'unless')
+      args: args as ExpressionNode[],
+      isBlocking: false,
+      start: commandToken.start || 0,
+      end: this.getPosition().end,
       line: commandToken.line || 1,
       column: commandToken.column || 1
     };
@@ -2162,6 +2319,34 @@ export class Parser {
         const eventName = eventToken.value;
         this.advance(); // Now advance past the event name
 
+        // Skip parameter list if present: (clientX, clientY)
+        if (this.check('(')) {
+          this.advance(); // consume '('
+          // Skip all tokens until we find the closing ')'
+          let parenDepth = 1;
+          while (!this.isAtEnd() && parenDepth > 0) {
+            if (this.check('(')) {
+              parenDepth++;
+            } else if (this.check(')')) {
+              parenDepth--;
+            }
+            this.advance();
+          }
+        }
+
+        // Skip event source if present: from <target>
+        if (this.check('from')) {
+          this.advance(); // consume 'from'
+          // Skip target expression (could be 'the document', 'document', '#element', etc.)
+          if (this.check('the')) {
+            this.advance(); // consume 'the'
+          }
+          // Consume the target identifier/selector
+          if (!this.isAtEnd() && !this.checkTokenType(TokenType.COMMAND)) {
+            this.advance();
+          }
+        }
+
         // Parse commands until we hit 'end'
         const handlerCommands: CommandNode[] = [];
         while (!this.isAtEnd() && !this.check('end')) {
@@ -2411,6 +2596,9 @@ export class Parser {
     const lowerName = commandName.toLowerCase();
     if (lowerName === 'repeat') {
       return this.parseRepeatCommand(commandToken);
+    }
+    if (lowerName === 'if' || lowerName === 'unless') {
+      return this.parseIfCommand(commandToken);
     }
 
     // Delegate compound commands (put, trigger, remove, etc.) to their specialized parsers

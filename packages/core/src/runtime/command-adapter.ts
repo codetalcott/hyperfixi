@@ -87,7 +87,7 @@ export class CommandAdapter implements RuntimeCommand {
   constructor(private impl: any) {}
 
   get name(): string {
-    return this.impl.name;
+    return this.impl.name || this.impl.metadata?.name;
   }
 
   get metadata() {
@@ -106,11 +106,14 @@ export class CommandAdapter implements RuntimeCommand {
       // Debug logging for SET command
       if (this.impl.name === 'set') {
         // console.log('🚨🚨🚨 ENHANCED COMMAND ADAPTER EXECUTE CALLED FOR SET 🚨🚨🚨');
-        // console.log('🔧 CommandAdapter.execute() called with:', { 
-          // commandName: this.impl.name, 
-          // args, 
+        // console.log('🔧 CommandAdapter.execute() called with:', {
+          // commandName: this.impl.name,
+          // args,
           // argsLength: args.length,
-          // argsType: Array.isArray(args) ? 'array' : typeof args
+          // argsType: Array.isArray(args) ? 'array' : typeof args,
+          // firstArg: args[0],
+          // firstArgType: typeof args[0],
+          // firstArgKeys: args[0] && typeof args[0] === 'object' ? Object.keys(args[0]) : 'not object'
         // });
       }
       
@@ -344,8 +347,21 @@ export class EnhancedCommandRegistry {
     impl: any
   ): void {
     const adapter = new CommandAdapter(impl);
-    this.adapters.set(impl.name, adapter);
-    this.implementations.set(impl.name, impl);
+    const name = adapter.name; // Use adapter.name which handles both impl.name and impl.metadata.name
+
+    // Debug logging for undefined names
+    if (!name || name === 'undefined') {
+      console.warn('⚠️  Attempting to register command with undefined name:', {
+        impl,
+        implName: impl?.name,
+        implMetadata: impl?.metadata,
+        implMetadataName: impl?.metadata?.name,
+        adapterName: adapter.name
+      });
+    }
+
+    this.adapters.set(name, adapter);
+    this.implementations.set(name, impl);
   }
 
   /**

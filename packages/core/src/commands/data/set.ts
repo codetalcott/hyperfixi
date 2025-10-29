@@ -173,21 +173,11 @@ export class SetCommand implements CommandImplementation<
     return null;
   }
 
-  // Overloaded execute method for compatibility
+  // Enhanced API: execute(input, context) - exactly 2 params for proper detection
   async execute(
-    contextOrInput: TypedExecutionContext | SetCommandInput,
-    ...args: any[]
+    input: SetCommandInput,
+    context: TypedExecutionContext
   ): Promise<SetCommandOutput> {
-    // Legacy API: execute(context, ...args)
-    // Detect by checking if first arg looks like a context (has 'me' or 'locals')
-    if ('me' in contextOrInput || 'locals' in contextOrInput || 'globals' in contextOrInput) {
-      const context = contextOrInput as TypedExecutionContext;
-      return await this.executeTyped(context, ...args);
-    }
-
-    // Enhanced API: execute(input, context)
-    const input = contextOrInput as SetCommandInput;
-    const context = args[0] as TypedExecutionContext;
     return await this.executeEnhanced(input, context);
   }
 
@@ -214,8 +204,9 @@ export class SetCommand implements CommandImplementation<
     return await this.executeCore(context, target, value, scope);
   }
 
-  // Legacy API execution
-  private async executeTyped(
+  // Legacy API execution (reserved for future use)
+  // @ts-expect-error - Reserved for future typed execution implementation
+  private async _executeTyped(
     context: TypedExecutionContext,
     ...args: any[]
   ): Promise<SetCommandOutput> {
