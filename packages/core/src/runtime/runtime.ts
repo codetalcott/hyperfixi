@@ -43,42 +43,32 @@ import { createLogCommand } from '../commands/utility/log';
 
 // Additional command imports
 // IncrementCommand and DecrementCommand now imported from data/index.js above
-import { MakeCommand } from '../commands/creation/index';
-import { AppendCommand } from '../commands/content/index';
-import { CallCommand } from '../commands/execution/index';
-// JSCommand and TellCommand now imported from advanced/index.js above
-import { PickCommand } from '../commands/utility/index';
+// MakeCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 8)
+// AppendCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 8)
+// CallCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 6)
+// JSCommand and TellCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 6)
+// PickCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 3)
 import { GoCommand } from '../commands/navigation/go';
 
 // Control flow commands
-import { 
-  IfCommand, 
-  HaltCommand, 
-  BreakCommand, 
-  ContinueCommand, 
-  ReturnCommand, 
-  ThrowCommand, 
-  UnlessCommand, 
-  RepeatCommand 
-} from '../commands/control-flow/index';
+// All control flow commands now registered via ENHANCED_COMMAND_FACTORIES (Phase 5)
 
 // Animation commands
 import {
-  MeasureCommand,
-  SettleCommand,
-  TakeCommand,
-  TransitionCommand,
   createTransitionCommand
 } from '../commands/animation/index';
+// MeasureCommand, SettleCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 7)
+// TakeCommand, TransitionCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 9)
 
 // Data commands
-import { DefaultCommand } from '../commands/data/index';
+// DefaultCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 3)
 
 // Advanced commands
-import { BeepCommand, AsyncCommand, TellCommand, JSCommand } from '../commands/advanced/index';
+import { BeepCommand } from '../commands/advanced/index';
+// AsyncCommand, TellCommand, JSCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 6)
 
 // Template commands
-import { RenderCommand } from '../commands/templates/index';
+// RenderCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 9)
 
 export interface RuntimeOptions {
   enableAsyncCommands?: boolean;
@@ -123,45 +113,10 @@ export class Runtime {
   }
 
   /**
-   * Register legacy command by adapting it to the enhanced registry
+   * Phase 9: Legacy registration infrastructure removed
+   * All commands now use enhanced pattern exclusively
+   * registerLegacyCommand() and checkDuplicateRegistration() methods removed
    */
-  private registerLegacyCommand(command: { name?: string; metadata?: { name: string }; execute: (context: ExecutionContext, ...args: unknown[]) => Promise<unknown>; validate?: (args: unknown[]) => { isValid: boolean; errors: unknown[]; suggestions: string[] } }): void {
-    // Get command name from either top-level name or metadata.name
-    const commandAny = command as any;
-    const commandName = command.name || commandAny.metadata?.name || 'unnamed';
-
-    // console.log('🔧 Registering legacy command:', commandName);
-    // Create an adapter for legacy commands to work with enhanced registry
-    const adapter = {
-      name: commandName,
-      syntax: commandAny.syntax || commandAny.metadata?.syntax || `${commandName} [args...]`,
-      description: commandAny.description || commandAny.metadata?.description || `${commandName} command`,
-      inputSchema: null, // Legacy commands don't have schemas
-      outputType: 'unknown' as const,
-      
-      async execute(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
-        return await command.execute(context, ...args);
-      },
-      
-      validate(args: unknown[]): { isValid: boolean; errors: unknown[]; suggestions: string[] } {
-        try {
-          const validationResult = command.validate ? command.validate(args) : null;
-          if (validationResult) {
-            return {
-              isValid: false,
-              errors: [{ message: validationResult }],
-              suggestions: []
-            };
-          }
-          return { isValid: true, errors: [], suggestions: [] };
-        } catch {
-          return { isValid: true, errors: [], suggestions: [] };
-        }
-      }
-    };
-    
-    this.enhancedRegistry.register(adapter);
-  }
 
   /**
    * Initialize enhanced commands in the registry
@@ -229,36 +184,33 @@ export class Runtime {
       }
       
       // Register content/creation commands
-      this.registerLegacyCommand(new MakeCommand() as any);
-      this.registerLegacyCommand(new AppendCommand() as any);
+      // MakeCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 8)
+      // AppendCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 8)
 
       // Register execution commands
-      this.registerLegacyCommand(new CallCommand() as any);
+      // CallCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 6)
 
       // Register advanced commands
-      this.registerLegacyCommand(new JSCommand() as any);
-      this.registerLegacyCommand(new TellCommand() as any);
+      // JSCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 6)
+      // TellCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 6)
 
       // Register utility commands
-      this.registerLegacyCommand(new PickCommand() as any);
-      
+      // PickCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 3)
+
       // Register navigation commands (has TypedCommandImplementation)
       this.enhancedRegistry.register(new GoCommand());
       
       // Register control flow commands
-      this.registerLegacyCommand(new IfCommand() as any);
-      this.registerLegacyCommand(new HaltCommand() as any);
-      this.registerLegacyCommand(new BreakCommand() as any);
-      this.registerLegacyCommand(new ContinueCommand() as any);
-      this.registerLegacyCommand(new ReturnCommand() as any);
-      this.registerLegacyCommand(new ThrowCommand() as any);
-      this.registerLegacyCommand(new UnlessCommand() as any);
+      // Note: halt, break, continue migrated to enhanced pattern (Phase 2)
+      // Note: return, throw migrated to enhanced pattern (Phase 4)
+      // Note: if, unless migrated to enhanced pattern (Phase 5)
+      // All control flow commands now registered via ENHANCED_COMMAND_FACTORIES
       // RepeatCommand is now registered as enhanced command via EnhancedCommandRegistry
       
       // Register animation commands
-      this.registerLegacyCommand(new MeasureCommand() as any);
-      this.registerLegacyCommand(new SettleCommand() as any);
-      this.registerLegacyCommand(new TakeCommand() as any);
+      // MeasureCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 7)
+      // SettleCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 7)
+      // TakeCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 9)
 
       // Register transition as enhanced command
       try {
@@ -280,16 +232,16 @@ export class Runtime {
           stack: (e as any).stack,
           error: e
         });
-        // Fallback to legacy if enhanced fails
-        this.registerLegacyCommand(new TransitionCommand() as any);
+        // Phase 9: Legacy fallback removed - all commands use enhanced pattern
+        throw new Error(`Failed to register enhanced TransitionCommand: ${(e as any).message}`);
       }
 
       // Register additional data commands
-      this.registerLegacyCommand(new DefaultCommand() as any);
+      // DefaultCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 3)
 
       // Register advanced commands
       this.enhancedRegistry.register(new BeepCommand());
-      this.registerLegacyCommand(new AsyncCommand() as any);
+      // AsyncCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 6)
       
       // Register template commands (enhanced)
       try {
@@ -299,8 +251,8 @@ export class Runtime {
         // console.log('✅ Enhanced RENDER command registered successfully');
       } catch (e) {
         // console.error('❌ Failed to register Enhanced RENDER command:', e);
-        // Fallback to legacy command
-        this.registerLegacyCommand(new RenderCommand() as any);
+        // Phase 9: Legacy fallback removed - all commands use enhanced pattern
+        throw new Error(`Failed to register enhanced RenderCommand: ${(e as any).message}`);
       }
       
       if (this.options.enableErrorReporting) {

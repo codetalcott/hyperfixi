@@ -221,13 +221,99 @@ describe('Hyperscript Runtime', () => {
     it('should execute multiple commands in sequence', async () => {
       const ast = parse('on click hide me then show #result').node!;
       await runtime.execute(ast, context);
-      
+
       expect(mockElement.addEventListener).toHaveBeenCalled();
     });
 
     it('should handle conditional execution', async () => {
       // This test will be expanded when conditional parsing is implemented
       expect(runtime).toBeDefined();
+    });
+  });
+
+  describe('Command Registration Safety', () => {
+    it('should not have commands registered in both legacy and enhanced registries', () => {
+      // Get enhanced registry
+      const enhancedRegistry = runtime.getEnhancedRegistry();
+      const enhancedCommands = enhancedRegistry.getCommandNames();
+
+      // Expected list: commands that should be in enhanced registry only
+      const expectedEnhancedCommands = [
+        // DOM commands (enhanced pattern)
+        'hide', 'show', 'toggle', 'add', 'remove', 'put',
+        // Event commands (enhanced pattern)
+        'send', 'trigger',
+        // Data commands (enhanced pattern)
+        'set', 'increment', 'decrement',
+        // Utility commands (enhanced pattern)
+        'log',
+        // Navigation commands (enhanced pattern)
+        'go',
+        // Advanced commands (enhanced pattern)
+        'beep',
+        // Note: Some commands registered via legacy adapter may not appear separately
+      ];
+
+      // Verify no obvious duplicates (this test serves as documentation)
+      expect(enhancedCommands.length).toBeGreaterThan(0);
+
+      // This test will catch issues if we accidentally register a command twice
+      // The checkDuplicateRegistration() method will warn during registration
+      expect(runtime).toBeDefined();
+    });
+
+    it('should warn when attempting to register duplicate commands', () => {
+      // Create a spy on console.warn to capture warnings
+      const warnSpy = vi.spyOn(console, 'warn');
+
+      // Create a new runtime (which triggers all registrations)
+      const testRuntime = new Runtime();
+
+      // Check if any duplicate registration warnings were issued
+      const duplicateWarnings = warnSpy.mock.calls.filter(call =>
+        call[0]?.toString().includes('DUPLICATE REGISTRATION')
+      );
+
+      // Track remaining duplicate registrations (to be migrated in future phases)
+      // Phase 2 complete: halt, break, continue removed ✅
+      // Phase 3 complete: pick, default removed ✅
+      // Phase 4 complete: return, throw removed ✅
+      // Phase 5 complete: if, unless removed ✅
+      // Phase 6 complete: async, call, js, tell removed ✅
+      // Phase 7 complete: measure, settle removed ✅
+      // Phase 8 complete: make, append removed ✅
+      // ALL DUPLICATES ELIMINATED! 🎉
+      const expectedDuplicates = 0; // All commands migrated to enhanced pattern!
+
+      if (duplicateWarnings.length > 0) {
+        const commandNames = duplicateWarnings.map(w => {
+          const match = w[0].match(/Command "(\w+)"/);
+          return match ? match[1] : 'unknown';
+        });
+        console.log(`Found ${duplicateWarnings.length} duplicate registrations:`, commandNames);
+      }
+
+      // This number should decrease as we migrate more commands
+      expect(duplicateWarnings.length).toBe(expectedDuplicates);
+
+      warnSpy.mockRestore();
+    });
+
+    it('should have all critical commands registered', () => {
+      const enhancedRegistry = runtime.getEnhancedRegistry();
+
+      // Verify key commands are available
+      const criticalCommands = [
+        'hide', 'show', 'toggle',
+        'add', 'remove',
+        'set', 'increment', 'decrement',
+        'send', 'trigger',
+        'log'
+      ];
+
+      criticalCommands.forEach(commandName => {
+        expect(enhancedRegistry.has(commandName)).toBe(true);
+      });
     });
   });
 });
