@@ -143,9 +143,7 @@ export class Runtime {
       // Register data commands (enhanced)
       try {
         const setCommand = createSetCommand();
-        // console.log('🔧 Registering Enhanced SET command:', setCommand.name);
         this.enhancedRegistry.register(setCommand);
-        // console.log('✅ Enhanced SET command registered successfully');
       } catch (e) {
         // console.error('❌ Failed to register Enhanced SET command:', e);
       }
@@ -158,18 +156,14 @@ export class Runtime {
       // Register data commands (enhanced)
       try {
         const incrementCommand = createIncrementCommand();
-        // console.log('🔧 Registering Enhanced INCREMENT command:', incrementCommand.name);
         this.enhancedRegistry.register(incrementCommand);
-        // console.log('✅ Enhanced INCREMENT command registered successfully');
       } catch (e) {
         // console.error('❌ Failed to register Enhanced INCREMENT command:', e);
       }
       
       try {
         const decrementCommand = createDecrementCommand();
-        // console.log('🔧 Registering Enhanced DECREMENT command:', decrementCommand.name);
         this.enhancedRegistry.register(decrementCommand);
-        // console.log('✅ Enhanced DECREMENT command registered successfully');
       } catch (e) {
         // console.error('❌ Failed to register Enhanced DECREMENT command:', e);
       }
@@ -177,9 +171,7 @@ export class Runtime {
       // Register utility commands (enhanced)
       try {
         const logCommand = createLogCommand();
-        // console.log('🔧 Registering Enhanced LOG command:', logCommand.name);
         this.enhancedRegistry.register(logCommand);
-        // console.log('✅ Enhanced LOG command registered successfully');
       } catch (e) {
         // console.error('❌ Failed to register Enhanced LOG command:', e);
       }
@@ -247,9 +239,7 @@ export class Runtime {
       // Register template commands (enhanced)
       try {
         const renderCommand = createRenderCommand();
-        // console.log('🔧 Registering Enhanced RENDER command:', renderCommand.name);
         this.enhancedRegistry.register(renderCommand);
-        // console.log('✅ Enhanced RENDER command registered successfully');
       } catch (e) {
         // console.error('❌ Failed to register Enhanced RENDER command:', e);
         // Phase 9: Legacy fallback removed - all commands use enhanced pattern
@@ -257,7 +247,6 @@ export class Runtime {
       }
       
       if (this.options.enableErrorReporting) {
-        // console.log(`Enhanced commands initialized: ${this.enhancedRegistry.getCommandNames().join(', ')}`);
       }
     } catch (error) {
       if (this.options.enableErrorReporting) {
@@ -321,7 +310,6 @@ export class Runtime {
               // Check for halt execution - stop program gracefully
               if (error instanceof Error && (error as any).isHalt) {
                 if (this.options.enableErrorReporting) {
-                  // console.log('Halt command encountered in program, stopping execution');
                 }
                 break; // Stop executing remaining statements
               }
@@ -404,7 +392,6 @@ export class Runtime {
         // Check for halt execution - stop sequence gracefully
         if (error instanceof Error && (error as any).isHalt) {
           if (this.options.enableErrorReporting) {
-            // console.log('Halt command encountered, stopping sequence execution');
           }
           break; // Stop executing remaining commands
         }
@@ -515,7 +502,6 @@ export class Runtime {
       evaluatedArgs = [content, position, target];
     } else if ((name === 'add' || name === 'remove') && args.length === 3) {
       // Handle "add .class to #target" and "remove .class from #target" patterns
-      // console.log(`🔧 ${name.toUpperCase()} Command Debug:`, {
         // name,
         // argsLength: args.length,
         // args: args.map(arg => ({ type: arg.type, value: (arg as any).value || (arg as any).name }))
@@ -534,7 +520,6 @@ export class Runtime {
       await this.execute(args[1], context); // 'to' or 'from' (evaluated for side effects)
       let target: any = args[2];
 
-      // console.log(`🔧 ${name.toUpperCase()} Evaluated:`, {
         // classArg,
         // keywordArg,
         // targetNode: { type: target?.type, value: (target as any)?.value || (target as any)?.name }
@@ -554,12 +539,10 @@ export class Runtime {
         target = evaluated;
       }
       
-      // console.log(`🔧 ${name.toUpperCase()} Final Args:`, { classArg, target });
       
       // Debug target resolution
       if (typeof target === 'string' && target.startsWith('#')) {
         document.querySelectorAll(target); // Query for validation
-        // console.log(`🔍 Target resolution debug for "${target}":`, {
           // selector: target,
           // foundElements: elements.length,
           // elements: Array.from(elements)
@@ -584,7 +567,6 @@ export class Runtime {
       evaluatedArgs = [classArg, context.me];
     } else if (name === 'set' && args.length >= 3) {
       // Handle "set X to Y" and "set the property of element to value" patterns
-      // console.log(`🔧 SET Command Debug:`, {
         // name,
         // argsLength: args.length,
         // args: args.map(arg => ({ type: arg.type, value: (arg as any).value || (arg as any).name }))
@@ -600,11 +582,9 @@ export class Runtime {
         }
       }
       
-      // console.log(`🔧 SET: Found 'to' at index:`, toIndex);
       
       if (toIndex === -1) {
         // No "to" found, fall back to normal evaluation
-        // console.log(`🔧 SET: No 'to' keyword found, falling back to normal evaluation`);
         evaluatedArgs = await Promise.all(
           args.map(arg => this.execute(arg, context))
         );
@@ -613,9 +593,7 @@ export class Runtime {
         const targetArgs = args.slice(0, toIndex);
         const valueArgs = args.slice(toIndex + 1);
         
-        // console.log('🔧 SET: Target args debug - length:', targetArgs.length);
         targetArgs.forEach((_arg) => {
-          // console.log(`🔧 SET: Target arg ${i}:`, {
             // type: arg.type,
             // name: (arg as any).name,
             // value: (arg as any).value,
@@ -630,7 +608,6 @@ export class Runtime {
         if (targetArgs.length === 1) {
           // Simple case: "set count to X"
           const targetArg = targetArgs[0];
-          // console.log('🔧 SET: Processing single target arg:', {
             // type: targetArg.type,
             // name: (targetArg as any).name,
             // value: (targetArg as any).value,
@@ -639,35 +616,27 @@ export class Runtime {
           
           if (nodeType(targetArg) === 'identifier') {
             target = (targetArg as any).name;
-            // console.log('🔧 SET: Set target from identifier:', target);
           } else if (nodeType(targetArg) === 'literal') {
             target = (targetArg as any).value;
-            // console.log('🔧 SET: Set target from literal:', target);
           } else if (nodeType(targetArg) === 'memberExpression') {
             // Handle memberExpression like "my textContent"
-            // console.log('🚨 SET: MEMBEREXPRESSION DETECTED - PROCESSING NOW!');
             const memberExpr = targetArg as any;
             const objectName = memberExpr.object?.name || memberExpr.object?.value;
             const propertyName = memberExpr.property?.name || memberExpr.property?.value;
             
-            // console.log('🔧 SET: MemberExpression details:', { objectName, propertyName, fullObject: memberExpr });
             
             if (['my', 'me', 'its', 'it', 'your', 'you'].includes(objectName)) {
               target = `${objectName} ${propertyName}`;
-              // console.log('🔧 SET: Converted memberExpression to possessive:', { objectName, propertyName, target });
             } else {
               // Not a possessive, evaluate normally
-              // console.log('🔧 SET: Not a possessive memberExpression, evaluating normally');
               target = await this.execute(targetArg, context);
             }
           } else if (nodeType(targetArg) === 'propertyOfExpression') {
             // Handle "the X of Y" pattern
-            // console.log('🚨 SET: PROPERTYOFEXPRESSION DETECTED - THE X OF Y PATTERN!');
             const propOfExpr = targetArg as any;
             const property = propOfExpr.property?.name || propOfExpr.property?.value;
             const selector = propOfExpr.target?.value || propOfExpr.target?.name;
             
-            // console.log('🔧 SET: PropertyOfExpression details:', { 
               // property, 
               // selector, 
               // fullObject: propOfExpr 
@@ -675,12 +644,9 @@ export class Runtime {
             
             // Create the string format expected by Enhanced SET command
             target = `the ${property} of ${selector}`;
-            // console.log('🔧 SET: Converted propertyOfExpression to string:', { target });
           } else {
             // Fallback: try to evaluate the target arg
-            // console.log('🔧 SET: Fallback - evaluating target arg:', targetArg);
             target = await this.execute(targetArg, context);
-            // console.log('🔧 SET: Fallback result:', target);
           }
           
           // Safety check - ensure target is not undefined
@@ -700,7 +666,6 @@ export class Runtime {
           const possessive = (targetArgs[0] as any).name;
           const property = (targetArgs[1] as any).name || (targetArgs[1] as any).value;
           target = `${possessive} ${property}`;
-          // console.log('🔧 SET: Detected possessive syntax:', { possessive, property, target });
         } else if (targetArgs.length === 3 &&
                    nodeType(targetArgs[0]) === 'selector' &&
                    nodeType(targetArgs[1]) === 'identifier' && (targetArgs[1] as any).name === "'s" &&
@@ -709,7 +674,6 @@ export class Runtime {
           const selector = (targetArgs[0] as any).value;
           const property = (targetArgs[2] as any).name;
           target = { element: selector, property: property };
-          // console.log('🔧 SET: Detected selector possessive syntax:', { selector, property, target });
         } else {
           // Complex case: "set the textContent of #element to X"
           // Parse: ["the", "textContent", "of", "#element"] -> { element: "#element", property: "textContent" }
@@ -752,21 +716,18 @@ export class Runtime {
         let value;
         // Debug: Check if this is a function call
         const isFunctionCall = this.isSimpleFunctionCall(valueArgs);
-        // console.log('🔧 SET: Function call check:', { 
           // count: valueArgs.length, 
           // isFunctionCall,
           // firstThreeTypes: valueArgs.slice(0, 3).map(arg => arg.type),
           // firstThreeValues: valueArgs.slice(0, 3).map(arg => (arg as any).name || (arg as any).value)
         // });
         if (isFunctionCall) {
-          // console.log('🔧 SET: Function call detected for evaluation');
         }
         
         if (valueArgs.length === 1) {
           value = await this.execute(valueArgs[0], context);
         } else if (this.isSimpleFunctionCall(valueArgs)) {
           // Handle function calls like Date(), Math.max(1, 2, 3), etc.
-          // console.log('🔧 SET: Detected function call pattern, evaluating as function');
           value = await this.evaluateFunctionCall(valueArgs, context);
         } else if (valueArgs.length === 3 && nodeType(valueArgs[1]) === 'identifier') {
           // Check if this is a binary expression pattern: value + operator + value
@@ -778,7 +739,6 @@ export class Runtime {
             const leftValue = await this.execute(valueArgs[0], context);
             const rightValue = await this.execute(valueArgs[2], context);
             
-            // console.log('🔧 SET: Evaluating binary expression:', { leftValue, operator, rightValue });
             
             // Perform the operation
             switch (operator) {
@@ -819,7 +779,6 @@ export class Runtime {
           value = valueResults.join(' ');
         }
         
-        // console.log(`🔧 SET Final Args:`, { target, value, targetType: typeof target });
         evaluatedArgs = [target, value];
       }
     } else if ((name === 'show' || name === 'hide') && args.length >= 1) {
@@ -856,11 +815,9 @@ export class Runtime {
     }
 
     // Execute through enhanced adapter
-    // console.log(`🚀 Executing enhanced ${name} command with:`, evaluatedArgs);
     
     // Debug for SET command to see what args we actually have
     if (name === 'set') {
-      // console.log(`🔍 SET COMMAND DEBUG:`, { 
         // evaluatedArgsLength: evaluatedArgs.length,
         // evaluatedArgs: evaluatedArgs,
         // conditionCheck: evaluatedArgs.length >= 2,
@@ -870,14 +827,12 @@ export class Runtime {
     
     // Debug for add/remove commands to see class parsing
     if ((name === 'add' || name === 'remove') && evaluatedArgs.length >= 1) {
-      // console.log(`🔍 ${name.toUpperCase()} class argument type:`, typeof evaluatedArgs[0], evaluatedArgs[0]);
     }
     
     let result;
     if (name === 'set' && evaluatedArgs.length >= 2) {
       // SET command expects input object format
       const [target, value] = evaluatedArgs;
-      // console.log('🔧 SET: Converting args to input object:', { target, value });
       
       // Handle complex target object (for "the X of Y" syntax)
       let inputTarget;
@@ -889,7 +844,6 @@ export class Runtime {
       }
       
       const input = { target: inputTarget, value, toKeyword: 'to' as const };
-      // console.log('🔧 SET: Final input object:', input);
       result = await adapter.execute(context, input);
     } else if (name === 'measure' && evaluatedArgs.length >= 1) {
       // MEASURE command expects input object format: { target?, property?, variable? }
@@ -917,7 +871,6 @@ export class Runtime {
     } else if ((name === 'increment' || name === 'decrement') && evaluatedArgs.length >= 1) {
       // INCREMENT/DECREMENT commands expect input object format
       const [target, ...rest] = evaluatedArgs;
-      // console.log(`🔧 ${name.toUpperCase()}: Converting args to input object:`, { target, rest });
       
       // Build input object for increment/decrement
       let input: any = { target };
@@ -936,13 +889,11 @@ export class Runtime {
         input.scope = 'global';
       }
       
-      // console.log(`🔧 ${name.toUpperCase()}: Final input object:`, input);
       result = await adapter.execute(context, input);
     } else {
       result = await adapter.execute(context, ...evaluatedArgs);
     }
     
-    // console.log(`✅ Enhanced ${name} command completed with result:`, result);
     return result;
   }
 
@@ -1009,7 +960,6 @@ export class Runtime {
 
     // Special debug for SET commands
     if (name.toLowerCase() === 'set') {
-      // console.log('🔧 SET Command Detailed Debug:', {
         // name,
         // argsLength: args.length,
         // args: args.map(arg => ({ 
@@ -1025,7 +975,6 @@ export class Runtime {
     
     // Debug logging for put command
     if (name === 'put') {
-      // console.log('🔧 PUT Command Debug:', {
         // name,
         // useEnhancedCommands: this.options.useEnhancedCommands,
         // hasEnhancedPut: this.enhancedRegistry.has('put'),
@@ -1045,12 +994,8 @@ export class Runtime {
 
     // Try enhanced commands first if enabled
     if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
-      // console.log(`🚀 Using enhanced command path for: ${name}`);
-      // console.log(`🚀 Enhanced registry commands:`, this.enhancedRegistry.getCommandNames());
       return await this.executeEnhancedCommand(name.toLowerCase(), (args || []) as ExpressionNode[], context);
     } else {
-      // console.log(`🔄 Using legacy command path for: ${name} (enhanced available: ${this.enhancedRegistry.has(name.toLowerCase())})`);
-      // console.log(`🔄 Enhanced registry commands:`, this.enhancedRegistry.getCommandNames());
     }
     
     // For now, let commands handle their own argument evaluation
@@ -1059,14 +1004,12 @@ export class Runtime {
 
     switch (name.toLowerCase()) {
       case 'hide': {
-        // console.log('🔄 EXECUTING HIDE COMMAND CASE');
         // These commands expect evaluated args
         const hideArgs = await Promise.all((rawArgs as ASTNode[]).map((arg: ASTNode) => this.execute(arg, context)));
         return this.executeHideCommand(hideArgs, context);
       }
       
       case 'show': {
-        // console.log('🔄 EXECUTING SHOW COMMAND CASE');
         const showArgs = await Promise.all((rawArgs as ASTNode[]).map((arg: ASTNode) => this.execute(arg, context)));
         return this.executeShowCommand(showArgs, context);
       }
@@ -1104,17 +1047,11 @@ export class Runtime {
       }
       
       case 'set': {
-        // console.log('🔄 EXECUTING SET COMMAND CASE IN RUNTIME SWITCH');
-        // console.log('🚨 SET command case reached in runtime switch - should not happen with enhanced commands!');
-        // console.log('🚨 Enhanced commands enabled:', this.options.useEnhancedCommands);
-        // console.log('🚨 Enhanced registry has SET:', this.enhancedRegistry.has('set'));
-        // console.log('🚨 Available enhanced commands:', this.enhancedRegistry.getCommandNames());
         // This should not be reached since SET command should go through enhanced registry
         throw new Error('SET command should be handled by enhanced registry');
       }
       
       case 'log': {
-        // console.log('🚨 LOG command case reached in runtime switch - should not happen with enhanced commands!');
         // This should not be reached since LOG command should go through enhanced registry
         throw new Error('LOG command should be handled by enhanced registry');
       }
@@ -1326,7 +1263,6 @@ export class Runtime {
         // Check for halt execution - stop init block gracefully
         if (error instanceof Error && (error as any).isHalt) {
           if (this.options.enableErrorReporting) {
-            // console.log('Halt command encountered in init block, stopping execution');
           }
           // Continue with event handler attachment even if init was halted
         } else {
@@ -1507,7 +1443,6 @@ export class Runtime {
     }
     
     if (prepositionIndex === -1) {
-      // console.log('⚠️ RUNTIME: no preposition found in put command args');
       // Fallback to old logic
       if (rawArgs.length >= 3) {
         contentArg = rawArgs[0];
@@ -1526,13 +1461,10 @@ export class Runtime {
     
     if (contentArg && prepositionArg && targetArg) {
       const content = await this.execute(contentArg, context);
-      // console.log('🔍 RUNTIME: evaluated content', { content, type: typeof content });
       
       const preposition = prepositionArg;
-      // console.log('🔍 RUNTIME: using preposition', { preposition, type: typeof preposition });
       
       let target = targetArg;
-      // console.log('🔍 RUNTIME: target before processing', { 
         // target, 
         // type: target?.type,
         // name: (target as any)?.name,
@@ -1542,22 +1474,17 @@ export class Runtime {
       // Handle target resolution - fix the [object Object] issue
       if (nodeType(target) === 'identifier' && (target as any).name === 'me') {
         target = context.me as any;
-        // console.log('🔍 RUNTIME: resolved "me" to context.me', { target });
       } else if (nodeType(target) === 'identifier') {
         // For other identifiers, keep as string for CSS selector or context lookup
         target = (target as any).name;
-        // console.log('🔍 RUNTIME: resolved identifier to name', { target });
       } else if (nodeType(target) === 'literal') {
         target = (target as any).value;
-        // console.log('🔍 RUNTIME: resolved literal to value', { target });
       } else if (nodeType(target) === 'selector') {
         target = (target as any).value;
-        // console.log('🔍 RUNTIME: resolved selector to value', { target });
       } else {
         // Only evaluate if it's not already a target we can handle
         if (typeof target === 'object' && target?.type) {
           target = (await this.execute(target, context)) as any;
-          // console.log('🔍 RUNTIME: evaluated complex target', { target });
         }
       }
 
@@ -1566,7 +1493,6 @@ export class Runtime {
       return;
     }
 
-    // console.log('⚠️ RUNTIME: fallback to raw args', { rawArgs });
     // Fallback: use raw args
     void this.putCommand.execute(context as TypedExecutionContext, ...rawArgs);
   }
@@ -1579,12 +1505,10 @@ export class Runtime {
   private _executeLogCommand(args: unknown[], _context: ExecutionContext): void {
     // If no arguments, just log empty
     if (args.length === 0) {
-      // console.log();
       return;
     }
     
     // Log all arguments
-    // console.log(...args);
   }
 
   /**
@@ -1594,12 +1518,6 @@ export class Runtime {
     // If no arguments, beep with context info
     if (args.length === 0) {
       debugGroup.start('Beep! Hyperscript Context Debug');
-      // console.log('me:', context.me);
-      // console.log('it:', context.it);
-      // console.log('you:', context.you);
-      // console.log('locals:', context.locals);
-      // console.log('globals:', context.globals);
-      // console.log('variables:', context.variables);
       debugGroup.end();
       return;
     }
@@ -1607,9 +1525,6 @@ export class Runtime {
     // Debug each argument with enhanced formatting
     args.forEach((_value, index) => {
       console.group(`🔔 Beep! Argument ${index + 1}`);
-      // console.log('Value:', value);
-      // console.log('Type:', this.getDetailedType(value));
-      // console.log('Representation:', this.getSourceRepresentation(value));
       debugGroup.end();
     });
   }
@@ -1828,7 +1743,6 @@ export class Runtime {
     if (valueArgs.length === 2 &&
         valueArgs[0].type === 'identifier' &&
         ((valueArgs[1] as any).value === ')' || (valueArgs[1] as any).name === ')')) {
-      // console.log('🔧 SET: Found 2-token function pattern:', {
         // functionName: (valueArgs[0] as any).name,
         // secondToken: (valueArgs[1] as any).value || (valueArgs[1] as any).name
       // });
@@ -1837,13 +1751,11 @@ export class Runtime {
     
     // Pattern 3: Constructor call with 'new' keyword (e.g., new Date())
     if (this.isConstructorCall(valueArgs)) {
-      // console.log('🔧 SET: Found constructor call pattern');
       return true;
     }
     
     // Pattern 4: Method call with arguments (e.g., Math.max(1, 5, 3))
     if (this.isMathMethodCall(valueArgs)) {
-      // console.log('🔧 SET: Found Math method call pattern');
       return true;
     }
     
@@ -1857,7 +1769,6 @@ export class Runtime {
     if (valueArgs.length < 3) return false;
     
     // Debug the first few tokens
-    // console.log('🔧 SET: Checking constructor pattern:', {
       // token0: { type: valueArgs[0].type, name: (valueArgs[0] as any).name, value: (valueArgs[0] as any).value },
       // token1: { type: valueArgs[1].type, name: (valueArgs[1] as any).name, value: (valueArgs[1] as any).value },
       // token2: { type: valueArgs[2].type, name: (valueArgs[2] as any).name, value: (valueArgs[2] as any).value }
@@ -1874,7 +1785,6 @@ export class Runtime {
         isNewKeyword &&
         valueArgs[1].type === 'identifier' &&
         ((valueArgs[2] as any).value === ')' || (valueArgs[2] as any).name === ')')) {
-      // console.log('🔧 SET: Constructor pattern matched!');
       return true;
     }
     
@@ -1888,7 +1798,6 @@ export class Runtime {
     if (valueArgs.length < 4) return false;
     
     // Debug the first few tokens
-    // console.log('🔧 SET: Checking Math method pattern:', {
       // token0: { type: valueArgs[0].type, name: (valueArgs[0] as any).name, value: (valueArgs[0] as any).value },
       // token1: { type: valueArgs[1].type, name: (valueArgs[1] as any).name, value: (valueArgs[1] as any).value },
       // token2: { type: valueArgs[2].type, name: (valueArgs[2] as any).name, value: (valueArgs[2] as any).value },
@@ -1901,7 +1810,6 @@ export class Runtime {
         ((valueArgs[1] as any).value === '.' || (valueArgs[1] as any).name === '.') &&
         valueArgs[2].type === 'identifier' &&
         ((valueArgs[valueArgs.length - 1] as any).value === ')' || (valueArgs[valueArgs.length - 1] as any).name === ')')) {
-      // console.log('🔧 SET: Math method pattern matched!');
       return true;
     }
     
@@ -1915,13 +1823,11 @@ export class Runtime {
     try {
       // Pattern: Math . methodName [args...] )
       const methodName = (valueArgs[2] as any).name;
-      // console.log('🔧 SET: Evaluating Math method call:', methodName);
       
       // Extract arguments (everything between methodName and closing parenthesis)
       const argTokens = valueArgs.slice(3, -1); // Skip Math, ., methodName, and closing )
       const args: number[] = [];
       
-      // console.log('🔧 SET: Raw arg tokens:', argTokens.map(token => ({
         // type: token.type,
         // name: (token as any).name,
         // value: (token as any).value
@@ -1930,23 +1836,19 @@ export class Runtime {
       // Parse numeric arguments from tokens
       for (const token of argTokens) {
         const tokenValue = (token as any).name || (token as any).value;
-        // console.log('🔧 SET: Processing token:', { type: token.type, tokenValue, isNumber: !isNaN(Number(tokenValue)) });
         
         if (token.type === 'number' || token.type === 'literal' || (token.type === 'identifier' && !isNaN(Number(tokenValue)))) {
           const value = (token.type === 'number' || token.type === 'literal') ? 
                         (token as any).value : Number(tokenValue);
           args.push(value);
-          // console.log('🔧 SET: Added arg:', value);
         }
       }
       
-      // console.log('🔧 SET: Math method args:', args);
       
       // Call the Math method
       const mathMethod = (Math as any)[methodName];
       if (typeof mathMethod === 'function') {
         const result = mathMethod(...args);
-        // console.log('🔧 SET: Math method result:', result);
         return result;
       } else {
         console.warn('🔧 SET: Math method not found:', methodName);
@@ -1965,7 +1867,6 @@ export class Runtime {
     try {
       // Pattern: new + constructorName + ) (e.g., new Date())
       const constructorName = (valueArgs[1] as any).name;
-      // console.log('🔧 SET: Evaluating constructor call:', constructorName);
       
       // Try to resolve the constructor from global context
       const globalObj = typeof globalThis !== 'undefined' ? globalThis : 
@@ -1974,7 +1875,6 @@ export class Runtime {
       const constructor = (globalObj as any)[constructorName];
       if (typeof constructor === 'function') {
         const result = new constructor();
-        // console.log('🔧 SET: Constructor call result:', result);
         return result;
       } else {
         console.warn('🔧 SET: Constructor not found:', constructorName);
@@ -2003,7 +1903,6 @@ export class Runtime {
     if (valueArgs.length === 3 || valueArgs.length === 2) {
       // Simple function call: functionName() (either 3 tokens or 2 tokens)
       const functionName = (valueArgs[0] as any).name;
-      // console.log('🔧 SET: Evaluating function call:', functionName);
       
       try {
         // Try to resolve the function from global context
@@ -2013,7 +1912,6 @@ export class Runtime {
         const func = (globalObj as any)[functionName];
         if (typeof func === 'function') {
           const result = func();
-          // console.log('🔧 SET: Function call result:', result);
           return result;
         } else {
           console.warn('🔧 SET: Function not found:', functionName);

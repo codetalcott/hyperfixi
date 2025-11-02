@@ -140,7 +140,6 @@ export function createTokenizer(): Tokenizer {
 }
 
 export function tokenize(input: string): Token[] {
-  // console.log('🔍 TOKENIZER: starting tokenization', { input });
   
   const tokenizer = createTokenizer();
   tokenizer.input = input;
@@ -325,7 +324,6 @@ export function tokenize(input: string): Token[] {
     advance(tokenizer);
   }
   
-  // console.log('✅ TOKENIZER: completed tokenization', { 
   //   tokenCount: tokenizer.tokens.length,
   //   tokens: tokenizer.tokens.map(t => ({ type: t.type, value: t.value }))
   // });
@@ -883,52 +881,42 @@ function classifyIdentifier(value: string): TokenType {
   
   // Special case for include/includes to ensure they're treated as comparison operators
   if (lowerValue === 'include' || lowerValue === 'includes') {
-    // console.log('🔍 TOKENIZER: classified as COMPARISON_OPERATOR', { value, lowerValue });
     return TokenType.COMPARISON_OPERATOR;
   }
 
   // Check more specific types first
   if (LOGICAL_OPERATORS.has(lowerValue)) {
-    // console.log('🔍 TOKENIZER: classified as LOGICAL_OPERATOR', { value, lowerValue });
     return TokenType.LOGICAL_OPERATOR;
   }
 
   if (MATHEMATICAL_OPERATORS.has(value) || MATHEMATICAL_OPERATORS.has(lowerValue)) {
-    // console.log('🔍 TOKENIZER: classified as OPERATOR (mathematical)', { value, lowerValue });
     return TokenType.OPERATOR;
   }
 
   if (COMPARISON_OPERATORS.has(lowerValue)) {
-    // console.log('🔍 TOKENIZER: classified as COMPARISON_OPERATOR', { value, lowerValue });
     return TokenType.COMPARISON_OPERATOR;
   }
 
   if (CONTEXT_VARS.has(lowerValue)) {
-    // console.log('🔍 TOKENIZER: classified as CONTEXT_VAR', { value, lowerValue });
     return TokenType.CONTEXT_VAR;
   }
 
   if (COMMANDS.has(lowerValue)) {
-    // console.log('🔍 TOKENIZER: classified as COMMAND', { value, lowerValue });
     return TokenType.COMMAND;
   }
 
   if (DOM_EVENTS.has(lowerValue)) {
-    // console.log('🔍 TOKENIZER: classified as EVENT', { value, lowerValue });
     return TokenType.EVENT;
   }
 
   if (['true', 'false', 'null', 'undefined'].includes(lowerValue)) {
-    // console.log('🔍 TOKENIZER: classified as BOOLEAN', { value, lowerValue });
     return TokenType.BOOLEAN; // Using BOOLEAN for all literal values including null/undefined
   }
 
   if (KEYWORDS.has(lowerValue)) {
-    // console.log('🔍 TOKENIZER: classified as KEYWORD', { value, lowerValue });
     return TokenType.KEYWORD;
   }
   
-  // console.log('🔍 TOKENIZER: classified as IDENTIFIER (fallback)', { value, lowerValue });
   return TokenType.IDENTIFIER;
 }
 
