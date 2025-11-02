@@ -5,6 +5,7 @@
 
 import { hyperscript } from '../api/hyperscript-api';
 import { createContext } from '../core/context';
+import { debug } from '../utils/debug';
 
 export interface AttributeProcessorOptions {
   attributeName?: string;
@@ -74,16 +75,16 @@ export class AttributeProcessor {
    * Process a <script type="text/hyperscript"> tag
    */
   private processHyperscriptTag(script: HTMLScriptElement): void {
-    console.log(`🔧 SCRIPT: Processing hyperscript script tag`);
+    debug.parse('SCRIPT: Processing hyperscript script tag');
 
     const hyperscriptCode = script.textContent || script.innerHTML;
     if (!hyperscriptCode || !hyperscriptCode.trim()) {
-      console.log(`🔧 SCRIPT: No hyperscript code found in script tag`);
+      debug.parse('SCRIPT: No hyperscript code found in script tag');
       return;
     }
 
     try {
-      console.log(`🔧 SCRIPT: Compiling hyperscript code from script tag:`, hyperscriptCode.substring(0, 100));
+      debug.parse('SCRIPT: Compiling hyperscript code from script tag:', hyperscriptCode.substring(0, 100));
 
       // Create execution context (no specific element for global behavior definitions)
       const context = createContext(null);
@@ -101,12 +102,12 @@ export class AttributeProcessor {
         return;
       }
 
-      console.log(`🔧 SCRIPT: Compilation succeeded, executing...`);
+      debug.parse('SCRIPT: Compilation succeeded, executing...');
 
       // Execute the compiled code (this will register behaviors)
       hyperscript.execute(compilationResult.ast!, context);
 
-      console.log(`🔧 SCRIPT: Script tag processing complete`);
+      debug.parse('SCRIPT: Script tag processing complete');
     } catch (error) {
       console.error(`Error processing hyperscript script tag:`, error);
     }
@@ -116,33 +117,33 @@ export class AttributeProcessor {
    * Process a single element's hyperscript attribute
    */
   processElement(element: HTMLElement): void {
-    console.log(`🔧 ATTR: Attempting to process element:`, element);
-    
+    debug.parse('ATTR: Attempting to process element:', element);
+
     // Skip if already processed and we only process new elements
     if (this.options.processOnlyNewElements && this.processedElements.has(element)) {
-      console.log(`🔧 ATTR: Skipping already processed element`);
+      debug.parse('ATTR: Skipping already processed element');
       return;
     }
 
     const hyperscriptCode = element.getAttribute(this.options.attributeName);
-    console.log(`🔧 ATTR: Found hyperscript code:`, hyperscriptCode);
+    debug.parse('ATTR: Found hyperscript code:', hyperscriptCode);
     
     if (!hyperscriptCode) {
-      console.log(`🔧 ATTR: No hyperscript code found on element`);
+      debug.parse('ATTR: No hyperscript code found on element');
       return;
     }
 
     try {
-      console.log(`🔧 ATTR: Processing element with code: "${hyperscriptCode}"`);
-      
+      debug.parse('ATTR: Processing element with code:', hyperscriptCode);
+
       // Create execution context with the element as 'me'
       const context = createContext(element);
-      console.log(`🔧 ATTR: Created context for element`);
-      
+      debug.parse('ATTR: Created context for element');
+
       // Parse and prepare the hyperscript code
-      console.log(`🔧 ATTR: About to compile hyperscript code`);
+      debug.parse('ATTR: About to compile hyperscript code');
       const compilationResult = hyperscript.compile(hyperscriptCode);
-      console.log(`🔧 ATTR: Compilation result:`, compilationResult);
+      debug.parse('ATTR: Compilation result:', compilationResult);
       
       if (!compilationResult.success) {
         console.error(`🔧 ATTR: Hyperscript compilation failed for element:`, element);
@@ -154,11 +155,11 @@ export class AttributeProcessor {
         return;
       }
 
-      console.log(`🔧 ATTR: Compilation succeeded, processing handler type`);
+      debug.parse('ATTR: Compilation succeeded, processing handler type');
 
       // Execute the compiled AST regardless of whether it's an event handler or immediate execution
       // The runtime will handle event handlers properly by registering them
-      console.log(`🔧 ATTR: Executing compiled AST`);
+      debug.parse('ATTR: Executing compiled AST');
       hyperscript.execute(compilationResult.ast!, context);
 
       // Mark as processed

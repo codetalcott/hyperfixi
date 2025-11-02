@@ -10,6 +10,7 @@ import { tailwindExtension } from '../extensions/tailwind';
 import { Parser } from '../parser/parser';
 import { Runtime } from '../runtime/runtime';
 import { tokenize } from '../parser/tokenizer';
+import { debug } from '../utils/debug';
 
 // Export to global scope for browser testing
 declare global {
@@ -50,9 +51,9 @@ const hyperfixi = {
 
   // Full hyperscript API for advanced usage
   compile: (code: string) => {
-    console.log('🎯 BROWSER-BUNDLE: hyperfixi.compile() called', { code });
+    debug.parse('BROWSER-BUNDLE: hyperfixi.compile() called', { code });
     const result = hyperscript.compile(code);
-    console.log('🏁 BROWSER-BUNDLE: hyperscript.compile() returned', { result });
+    debug.parse('BROWSER-BUNDLE: hyperscript.compile() returned', { result });
 
     // For compatibility with _hyperscript, throw an error if compilation fails
     if (!result.success) {
