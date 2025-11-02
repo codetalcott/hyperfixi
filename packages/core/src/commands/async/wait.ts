@@ -200,11 +200,10 @@ export class WaitCommand implements TypedCommandImplementation<
    * Execute the wait command
    */
   async execute(
-    context: TypedExecutionContext,
-    ...args: any[]
+    input: any,
+    context: TypedExecutionContext
   ): Promise<EvaluationResult<WaitCommandOutput>> {
     const startTime = Date.now();
-    const input = args[0] as WaitTimeInput | WaitEventInput;
 
     // DEBUG: Log wait command input
     console.log('⏳ WAIT: execute() called with input:', input);
