@@ -575,23 +575,26 @@ export const hyperscript: HyperscriptAPI = {
   execute,
   run,
   evaluate: run, // Alias for run - compile and execute in one step
-  
+
   // DOM processing (HTMX compatibility)
   processNode,
   process,
-  
+
   // Context management
   createContext,
   createChildContext,
-  
+
   // Utilities
   isValidHyperscript,
   version: getVersion(),
-  
+
   // Advanced
   createRuntime: createRuntimeInstance,
   parse
 };
+
+// Export as _hyperscript for official _hyperscript API compatibility
+export const _hyperscript = hyperscript;
 
 // ============================================================================
 // Default Export

@@ -174,7 +174,7 @@ describe('HyperscriptParser', () => {
 
   describe('_hyperscript API integration', () => {
     it('should work with the _hyperscript.parse() method', async () => {
-      const { _hyperscript } = await import('./hyperscript-api');
+      const { _hyperscript } = await import('./api/hyperscript-api');
       
       const ast = _hyperscript.parse('log "test"');
       
