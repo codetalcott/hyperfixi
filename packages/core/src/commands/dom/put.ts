@@ -16,6 +16,7 @@ import type {
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { asHTMLElement } from '../../utils/dom-utils';
+import { debug } from '../../utils/debug';
 
 export interface PutCommandOptions {
   sanitizeHTML?: boolean;
@@ -184,9 +185,9 @@ export class PutCommand implements TypedCommandImplementation<
       
       // Convert content to string, handling null/undefined
       const contentStr = content == null ? '' : String(content);
-      
+
       // Debug logging
-      console.log('🔧 PUT command execution:', {
+      debug.command('PUT command execution:', {
         content: contentStr,
         position,
         targetElement,
@@ -195,14 +196,14 @@ export class PutCommand implements TypedCommandImplementation<
 
       // Execute the put operation
       const putResult = this.performPutOperation(
-        contentStr, 
-        position, 
-        targetElement, 
+        contentStr,
+        position,
+        targetElement,
         property,
         context
       );
 
-      console.log('🔧 PUT command result:', putResult);
+      debug.command('PUT command result:', putResult);
 
       if (!putResult.success) {
         return putResult;

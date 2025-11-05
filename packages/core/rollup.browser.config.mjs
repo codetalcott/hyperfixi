@@ -23,7 +23,15 @@ export default {
       declaration: false,
       sourceMap: true
     }),
-    // Don't minify for easier debugging
-    // terser()
+    terser({
+      compress: {
+        pure_getters: true,
+        unsafe: true,
+        unsafe_comps: true
+      },
+      mangle: {
+        properties: false // Keep property names for compatibility
+      }
+    })
   ]
 };
