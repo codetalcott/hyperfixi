@@ -652,17 +652,25 @@ export class Runtime {
               // Not a possessive, evaluate normally
               target = await this.execute(targetArg, context);
             }
+          } else if (nodeType(targetArg) === 'possessiveExpression') {
+            // Handle possessive syntax: "#element's property"
+            const possExpr = targetArg as any;
+            const selector = possExpr.object?.value || possExpr.object?.name;
+            const property = possExpr.property?.name || possExpr.property?.value;
+
+            // Create structured target for property setting
+            target = { element: selector, property: property };
           } else if (nodeType(targetArg) === 'propertyOfExpression') {
             // Handle "the X of Y" pattern
             const propOfExpr = targetArg as any;
             const property = propOfExpr.property?.name || propOfExpr.property?.value;
             const selector = propOfExpr.target?.value || propOfExpr.target?.name;
-            
-              // property, 
-              // selector, 
-              // fullObject: propOfExpr 
+
+              // property,
+              // selector,
+              // fullObject: propOfExpr
             // });
-            
+
             // Create the string format expected by Enhanced SET command
             target = `the ${property} of ${selector}`;
           } else {
