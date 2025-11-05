@@ -17,6 +17,38 @@
             background: #f5f5f5;
         }
 
+        /* Debug Toggle Button */
+        #debug-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: #333;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+
+        #debug-toggle:hover {
+            background: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+
+        #debug-toggle:active {
+            transform: translateY(0);
+        }
+
+        #debug-toggle.enabled {
+            background: #28a745;
+        }
+
         .demo-section {
             background: white;
             margin: 20px 0;
@@ -178,12 +210,58 @@
     </style>
 </head>
 <body>
+    <!-- Debug Toggle Button -->
+    <button id="debug-toggle" onclick="toggleDebug()">
+        🐛 Debug: OFF
+    </button>
+
     <h1>🎯 HyperFixi - Compound Hyperscript Examples</h1>
 
     <div class="description">
         <strong>Pure Hyperscript Validation</strong> - These examples use ONLY hyperscript, with zero JavaScript.
         They demonstrate complex, real-world patterns including event loops, behavior definitions, and dynamic styling.
     </div>
+
+    <script>
+        // Initialize debug button state
+        function initDebugButton() {
+            const isEnabled = window.__HYPERFIXI_DEBUG__ === true;
+            const button = document.getElementById('debug-toggle');
+            if (isEnabled) {
+                button.textContent = '🐛 Debug: ON';
+                button.classList.add('enabled');
+            } else {
+                button.textContent = '🐛 Debug: OFF';
+                button.classList.remove('enabled');
+            }
+        }
+
+        // Toggle debug mode
+        function toggleDebug() {
+            const currentState = window.__HYPERFIXI_DEBUG__ === true;
+            const newState = !currentState;
+
+            // Store in localStorage to persist across reloads
+            if (newState) {
+                localStorage.setItem('__HYPERFIXI_DEBUG__', 'true');
+                window.__HYPERFIXI_DEBUG__ = true;
+            } else {
+                localStorage.removeItem('__HYPERFIXI_DEBUG__');
+                window.__HYPERFIXI_DEBUG__ = false;
+            }
+
+            // Reload page to apply debug settings
+            location.reload();
+        }
+
+        // Check localStorage on page load
+        if (localStorage.getItem('__HYPERFIXI_DEBUG__') === 'true') {
+            window.__HYPERFIXI_DEBUG__ = true;
+        }
+
+        // Initialize button state when page loads
+        window.addEventListener('DOMContentLoaded', initDebugButton);
+    </script>
 
     <!-- Example 1: HSL Color Cycling -->
     <div class="demo-section">

@@ -22,6 +22,7 @@ import type {
   LLMDocumentation
 } from '../../types/command-types';
 import { debug } from '../../utils/debug';
+import { eventQueue } from '../../utils/performance';
 
 // ============================================================================
 // Type Definitions
@@ -264,6 +265,7 @@ export class WaitCommand implements TypedCommandImplementation<
   /**
    * Wait for one or more events
    * Implements race condition - first event to fire wins
+   * Optimized with EventQueue to reuse persistent listeners
    */
   private waitForEvent(
     events: Array<{ name?: string; time?: number; args?: string[] }>,
@@ -272,17 +274,11 @@ export class WaitCommand implements TypedCommandImplementation<
   ): Promise<Event> {
     return new Promise((resolve) => {
       let resolved = false;
-      const listeners: Array<{ target: EventTarget; event: string; listener: EventListener }> = [];
 
-      // Helper to resolve once and cleanup all listeners
+      // Helper to resolve once
       const resolveOnce = (event: Event | number, eventInfo?: { args?: string[] }) => {
         if (resolved) return;
         resolved = true;
-
-        // Cleanup all listeners
-        for (const { target, event: eventName, listener } of listeners) {
-          target.removeEventListener(eventName, listener);
-        }
 
         // Resolve with result
         if (typeof event === 'number') {
@@ -306,21 +302,16 @@ export class WaitCommand implements TypedCommandImplementation<
       // Setup listeners for each event
       for (const eventInfo of events) {
         if (eventInfo.name) {
-          // Event listener
+          // Event listener - use EventQueue for reusable persistent listeners
           const eventTarget = target || context.me || undefined;
           if (!eventTarget) {
             throw new Error('No event target available (context.me is undefined)');
           }
 
-          const listener = ((event: Event) => {
+          // Use EventQueue instead of addEventListener
+          // This reuses persistent listeners instead of creating new ones each time
+          eventQueue.wait(eventInfo.name, eventTarget).then((event) => {
             resolveOnce(event, eventInfo);
-          }) as EventListener;
-
-          eventTarget.addEventListener(eventInfo.name, listener, { once: true });
-          listeners.push({
-            target: eventTarget,
-            event: eventInfo.name,
-            listener
           });
         } else if (eventInfo.time != null) {
           // Timeout
