@@ -6,6 +6,129 @@
  */
 
 // ============================================================================
+// ObjectPool - Reuse Objects to Reduce GC Pressure
+// ============================================================================
+
+export interface PoolMetrics {
+  allocations: number;
+  reuses: number;
+  peakPoolSize: number;
+  hitRate: number;
+}
+
+/**
+ * ObjectPool maintains a pool of reusable objects to reduce GC pressure
+ * during high-frequency operations.
+ *
+ * Instead of creating and destroying objects repeatedly:
+ * - Get object from pool (or create new if pool empty)
+ * - Use the object
+ * - Release back to pool for reuse
+ *
+ * Particularly useful for style objects, context Maps, and temporary data structures.
+ */
+export class ObjectPool<T extends object> {
+  private pool: T[] = [];
+  private index = 0;
+  private factory: () => T;
+  private reset: ((obj: T) => void) | undefined;
+
+  // Performance metrics
+  private metrics = {
+    allocations: 0,
+    reuses: 0,
+    peakPoolSize: 0,
+  };
+
+  /**
+   * Create a new ObjectPool
+   * @param factory Function to create new objects when pool is empty
+   * @param reset Optional function to reset objects before reuse
+   * @param initialSize Optional initial pool size
+   */
+  constructor(
+    factory: () => T,
+    reset?: (obj: T) => void,
+    initialSize = 0
+  ) {
+    this.factory = factory;
+    this.reset = reset;
+
+    // Pre-allocate initial pool
+    for (let i = 0; i < initialSize; i++) {
+      this.pool.push(factory());
+    }
+    this.metrics.allocations = initialSize;
+    this.metrics.peakPoolSize = initialSize;
+  }
+
+  /**
+   * Get an object from the pool (or create new if pool is empty)
+   */
+  get(): T {
+    let obj: T;
+
+    if (this.index < this.pool.length) {
+      // Reuse from pool
+      obj = this.pool[this.index++];
+      this.metrics.reuses++;
+
+      // Reset object if reset function provided
+      if (this.reset) {
+        this.reset(obj);
+      }
+    } else {
+      // Pool is empty, create new object
+      obj = this.factory();
+      this.pool.push(obj);
+      this.index++;
+      this.metrics.allocations++;
+
+      // Track peak pool size
+      if (this.pool.length > this.metrics.peakPoolSize) {
+        this.metrics.peakPoolSize = this.pool.length;
+      }
+    }
+
+    return obj;
+  }
+
+  /**
+   * Release all objects back to pool for reuse
+   * Call this after a batch of operations completes
+   */
+  releaseAll(): void {
+    this.index = 0;
+  }
+
+  /**
+   * Get performance metrics
+   */
+  getMetrics(): PoolMetrics {
+    const total = this.metrics.allocations + this.metrics.reuses;
+    const hitRate = total > 0 ? (this.metrics.reuses / total) * 100 : 0;
+
+    return {
+      ...this.metrics,
+      hitRate
+    };
+  }
+
+  /**
+   * Clear the entire pool (for testing or reset)
+   */
+  clear(): void {
+    this.pool = [];
+    this.index = 0;
+    this.metrics = {
+      allocations: 0,
+      reuses: 0,
+      peakPoolSize: 0,
+    };
+  }
+}
+
+// ============================================================================
 // StyleBatcher - Batch DOM Style Updates
 // ============================================================================
 
@@ -24,14 +147,32 @@ export class StyleBatcher {
   private pending = new Map<HTMLElement, Record<string, string>>();
   private rafId: number | null = null;
 
+  // Object pool for style objects - reduces GC pressure during animations
+  private stylePool = new ObjectPool<Record<string, string>>(
+    () => ({}),  // Factory: create empty object
+    (obj) => {    // Reset: clear all properties
+      for (const key of Object.keys(obj)) {
+        delete obj[key];
+      }
+    },
+    10  // Pre-allocate 10 objects
+  );
+
   /**
    * Queue style updates for an element
    * Styles will be applied on the next animation frame
+   * Uses object pooling to reduce GC pressure
    */
   add(element: HTMLElement, styles: Record<string, string>): void {
-    // Merge with existing pending styles for this element
-    const existing = this.pending.get(element) || {};
-    this.pending.set(element, { ...existing, ...styles });
+    // Get existing or pooled style object
+    let existing = this.pending.get(element);
+    if (!existing) {
+      existing = this.stylePool.get();
+      this.pending.set(element, existing);
+    }
+
+    // Merge styles into existing object
+    Object.assign(existing, styles);
 
     // Schedule flush if not already scheduled
     if (!this.rafId) {
@@ -59,8 +200,9 @@ export class StyleBatcher {
       }
     }
 
-    // Clear pending updates
+    // Clear pending updates and release style objects back to pool
     this.pending.clear();
+    this.stylePool.releaseAll();
     this.rafId = null;
   }
 
@@ -73,6 +215,7 @@ export class StyleBatcher {
       this.rafId = null;
     }
     this.pending.clear();
+    this.stylePool.releaseAll();
   }
 
   /**
@@ -81,6 +224,14 @@ export class StyleBatcher {
    */
   getPendingCount(): number {
     return this.pending.size;
+  }
+
+  /**
+   * Get object pool metrics
+   * Useful for monitoring pooling efficiency
+   */
+  getPoolMetrics(): PoolMetrics {
+    return this.stylePool.getMetrics();
   }
 }
 
