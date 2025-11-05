@@ -217,6 +217,14 @@
 
     <h1>🎯 HyperFixi - Compound Hyperscript Examples</h1>
 
+    <!-- Debug Toggle -->
+    <div style="position: fixed; top: 20px; right: 20px; z-index: 9999; background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+            <input type="checkbox" id="debug-toggle" style="cursor: pointer;">
+            <span style="font-weight: bold; color: #333;">🐛 Debug Mode</span>
+        </label>
+    </div>
+
     <div class="description">
         <strong>Pure Hyperscript Validation</strong> - These examples use ONLY hyperscript, with zero JavaScript.
         They demonstrate complex, real-world patterns including event loops, behavior definitions, and dynamic styling.
@@ -504,7 +512,85 @@ end
             } else {
                 console.error('❌ HyperFixi not loaded! Check /dist/hyperfixi-browser.js');
             }
+
+            // Wire up debug toggle
+            const debugToggle = document.getElementById('debug-toggle');
+            if (debugToggle) {
+                debugToggle.addEventListener('change', (e) => {
+                    if (hyperfixi && hyperfixi.debug) {
+                        hyperfixi.debug.enabled = e.target.checked;
+                        console.log(e.target.checked ? '🐛 Debug mode enabled' : '🔕 Debug mode disabled');
+                    }
+                });
+            }
         });
+
+        // ============================================================================
+        // Object Pool Metrics Display
+        // ============================================================================
+
+        // Add metrics display to page
+        const metricsPanel = document.createElement('div');
+        metricsPanel.id = 'pool-metrics';
+        metricsPanel.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #0f0;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #0f0;
+            box-shadow: 0 4px 12px rgba(0, 255, 0, 0.3);
+            min-width: 280px;
+            z-index: 10000;
+        `;
+        metricsPanel.innerHTML = `
+            <div style="font-weight: bold; margin-bottom: 10px; color: #fff; border-bottom: 1px solid #0f0; padding-bottom: 5px;">
+                📊 Object Pool Metrics
+            </div>
+            <div id="metrics-content" style="line-height: 1.6;">
+                <div>Allocations: <span id="metric-allocs">0</span></div>
+                <div>Reuses: <span id="metric-reuses">0</span></div>
+                <div>Hit Rate: <span id="metric-hit">0.0%</span></div>
+                <div>Peak Pool: <span id="metric-peak">0</span></div>
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #0f0; color: #aaa; font-size: 10px;">
+                    Updates every 500ms
+                </div>
+            </div>
+        `;
+        document.body.appendChild(metricsPanel);
+
+        // Update metrics display
+        function updatePoolMetrics() {
+            if (hyperfixi && hyperfixi.styleBatcher) {
+                const metrics = hyperfixi.styleBatcher.getPoolMetrics();
+                document.getElementById('metric-allocs').textContent = metrics.allocations;
+                document.getElementById('metric-reuses').textContent = metrics.reuses;
+                document.getElementById('metric-hit').textContent = metrics.hitRate.toFixed(1) + '%';
+                document.getElementById('metric-peak').textContent = metrics.peakPoolSize;
+            }
+        }
+
+        // Update metrics every 500ms
+        setInterval(updatePoolMetrics, 500);
+        updatePoolMetrics(); // Initial update
+
+        // Also expose to console for manual inspection
+        window.getPoolMetrics = () => {
+            if (hyperfixi && hyperfixi.styleBatcher) {
+                const metrics = hyperfixi.styleBatcher.getPoolMetrics();
+                console.table(metrics);
+                console.log('Pool efficiency:', metrics.hitRate.toFixed(1) + '% hit rate');
+                return metrics;
+            }
+            console.warn('StyleBatcher not available');
+            return null;
+        };
+
+        console.log('💡 Tip: Call getPoolMetrics() to see object pool statistics');
     </script>
 </body>
 </html>
