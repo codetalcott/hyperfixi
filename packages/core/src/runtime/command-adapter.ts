@@ -10,7 +10,11 @@ import type {
   ValidationResult
 } from '../types/core';
 import type { ASTNode } from '../types/base-types';
-import { createAllEnhancedCommands } from '../commands/command-registry';
+import {
+  createAllEnhancedCommands,
+  ENHANCED_COMMAND_FACTORIES,
+  getEnhancedCommandNames
+} from '../commands/command-registry';
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { debug } from '../utils/debug';
 
@@ -541,10 +545,8 @@ export class LazyCommandRegistry {
    * Load a command implementation on-demand
    */
   private loadCommand(name: string): any {
-    // Import command factory from registry
-    // This uses dynamic property access which still allows tree-shaking
-    // because the ENHANCED_COMMAND_FACTORIES object uses static imports
-    const { ENHANCED_COMMAND_FACTORIES } = require('../commands/command-registry');
+    // Access command factory from statically imported registry
+    // Note: Despite the "lazy" naming, factories are statically imported for browser compatibility
     const factory = ENHANCED_COMMAND_FACTORIES[name as keyof typeof ENHANCED_COMMAND_FACTORIES];
 
     if (!factory) {
@@ -573,8 +575,7 @@ export class LazyCommandRegistry {
       return true;
     }
 
-    // Check if it exists in the factory registry
-    const { ENHANCED_COMMAND_FACTORIES } = require('../commands/command-registry');
+    // Check if it exists in the statically imported factory registry
     return name in ENHANCED_COMMAND_FACTORIES;
   }
 
@@ -582,7 +583,7 @@ export class LazyCommandRegistry {
    * Get all available command names (from factory registry, not just loaded)
    */
   getCommandNames(): string[] {
-    const { getEnhancedCommandNames } = require('../commands/command-registry');
+    // Use statically imported function for browser compatibility
     const allNames = getEnhancedCommandNames();
 
     // Filter by allowed commands if specified
