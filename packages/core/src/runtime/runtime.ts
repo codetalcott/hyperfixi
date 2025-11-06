@@ -14,6 +14,7 @@ import type { TypedExecutionContext } from '../types/command-types';
 
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { PutCommand } from '../commands/dom/put';
+import { getSharedGlobals } from '../core/context';
 // SetCommand now imported from data/index.js above
 
 // Helper to check AST node types (workaround for type system limitations)
@@ -96,6 +97,7 @@ export class Runtime {
   private enhancedRegistry: EnhancedCommandRegistry;
   private behaviorRegistry: Map<string, any>;
   private behaviorAPI: any;
+  private globalVariables: Map<string, any>; // Shared globals across all executions
 
   constructor(options: RuntimeOptions = {}) {
     this.options = {
@@ -110,6 +112,7 @@ export class Runtime {
     this.expressionEvaluator = new ExpressionEvaluator();
     this.putCommand = new PutCommand();
     this.behaviorRegistry = new Map();
+    this.globalVariables = getSharedGlobals(); // Use shared globals from context module
 
     // Create behavior API with install method
     this.behaviorAPI = {
@@ -494,9 +497,11 @@ export class Runtime {
     
     // Special handling for commands with natural language syntax
     if (name === 'put' && args.length >= 3) {
-      // For put command: evaluate content and position, but handle target specially
+      // For put command: evaluate content, extract position keyword, handle target specially
       const content = await this.execute(args[0], context);
-      const position = await this.execute(args[1], context);
+      // Position is a keyword (identifier or literal) - extract the value, don't evaluate
+      const positionArg: any = args[1];
+      const position = positionArg?.type === 'literal' ? positionArg.value : positionArg?.name || positionArg;
       let target: any = args[2];
 
       // Handle target resolution for enhanced put command
@@ -588,11 +593,7 @@ export class Runtime {
       evaluatedArgs = [classArg, context.me];
     } else if (name === 'set' && args.length >= 3) {
       // Handle "set X to Y" and "set the property of element to value" patterns
-        // name,
-        // argsLength: args.length,
-        // args: args.map(arg => ({ type: arg.type, value: (arg as any).value || (arg as any).name }))
-      // });
-      
+
       // Find the "to" keyword that separates target from value
       let toIndex = -1;
       for (let i = 0; i < args.length; i++) {
@@ -602,8 +603,8 @@ export class Runtime {
           break;
         }
       }
-      
-      
+
+
       if (toIndex === -1) {
         // No "to" found, fall back to normal evaluation
         evaluatedArgs = await Promise.all(
@@ -613,30 +614,27 @@ export class Runtime {
         // Split into target (before "to") and value (after "to")
         const targetArgs = args.slice(0, toIndex);
         const valueArgs = args.slice(toIndex + 1);
-        
-        targetArgs.forEach((_arg) => {
-            // type: arg.type,
-            // name: (arg as any).name,
-            // value: (arg as any).value,
-            // object: (arg as any).object,
-            // property: (arg as any).property,
-            // computed: (arg as any).computed
-          // });
-        });
-        
+
         // Construct target path from multiple args
         let target;
         if (targetArgs.length === 1) {
-          // Simple case: "set count to X"
+          // Simple case: "set count to X" or "set global count to X"
           const targetArg = targetArgs[0];
-            // type: targetArg.type,
-            // name: (targetArg as any).name,
-            // value: (targetArg as any).value,
-            // fullNode: targetArg
-          // });
-          
+
           if (nodeType(targetArg) === 'identifier') {
-            target = (targetArg as any).name;
+            // Check if identifier has scope property (e.g., "set global count to X")
+            if ((targetArg as any).scope) {
+              const scopeValue = (targetArg as any).scope;
+              const nameValue = (targetArg as any).name;
+              // Create structured object with both name and scope for adapter
+              target = {
+                _isScoped: true,
+                name: nameValue,
+                scope: scopeValue
+              };
+            } else {
+              target = (targetArg as any).name;
+            }
           } else if (nodeType(targetArg) === 'literal') {
             target = (targetArg as any).value;
           } else if (nodeType(targetArg) === 'memberExpression') {
@@ -677,17 +675,22 @@ export class Runtime {
             // Fallback: try to evaluate the target arg
             target = await this.execute(targetArg, context);
           }
-          
+
           // Safety check - ensure target is not undefined
           if (target === undefined || target === null) {
-            // console.error('🚨 SET: Target is undefined/null after processing!', {
-              // targetArg,
-              // targetArgType: targetArg?.type,
-              // targetArgName: (targetArg as any)?.name,
-              // targetArgValue: (targetArg as any)?.value
-            // });
             throw new Error(`Invalid target type: ${typeof target}. Target arg: ${JSON.stringify(targetArg)}`);
           }
+        } else if (targetArgs.length === 2 &&
+                   (nodeType(targetArgs[0]) === 'identifier' || nodeType(targetArgs[0]) === 'literal') &&
+                   ((targetArgs[0] as any).name === 'global' || (targetArgs[0] as any).value === 'global' ||
+                    (targetArgs[0] as any).name === 'local' || (targetArgs[0] as any).value === 'local')) {
+          // Handle scoped variable syntax: "set global count to X" or "set local count to X"
+          const scope = (targetArgs[0] as any).name || (targetArgs[0] as any).value;
+          const variableName = (targetArgs[1] as any).name || (targetArgs[1] as any).value;
+          // Store scope for later use in input object (line 947-961)
+          target = variableName;
+          // Store scope in a way that will be accessible later
+          (context as any)._pendingSetScope = scope;
         } else if (targetArgs.length === 2 &&
                    (nodeType(targetArgs[0]) === 'identifier' || nodeType(targetArgs[0]) === 'context_var') &&
                    ['my', 'me', 'its', 'it', 'your', 'you'].includes((targetArgs[0] as any).name || (targetArgs[0] as any).value)) {
@@ -807,7 +810,7 @@ export class Runtime {
           );
           value = valueResults.join(' ');
         }
-        
+
         evaluatedArgs = [target, value];
       }
     } else if ((name === 'show' || name === 'hide') && args.length >= 1) {
@@ -836,6 +839,63 @@ export class Runtime {
       // REPEAT and TRANSITION commands need raw AST nodes for the adapter to extract metadata
       // Don't evaluate args - pass them as-is to the adapter
       evaluatedArgs = args;
+    } else if (name === 'increment' || name === 'decrement') {
+      // INCREMENT/DECREMENT: Extract variable name without evaluating, preserve amount if present
+      // Pattern: increment <var> [by <amount>]
+      const targetArg = args[0];
+
+      let target: string | number;
+
+      // Extract variable name from AST node without evaluating
+      if (targetArg?.type === 'identifier') {
+        target = (targetArg as any).name;
+      } else if (targetArg?.type === 'literal') {
+        target = (targetArg as any).value;
+      } else {
+        // Fallback: evaluate if it's a complex expression
+        target = await this.execute(targetArg, context);
+      }
+
+      // Check for "by <amount>" pattern and "global" scope marker
+      // Parser structure: [target, amount?, 'global'?]
+
+      let amount = 1;
+      let scope: 'global' | undefined;
+
+      // Check each arg to find amount and/or global scope
+      for (let i = 1; i < args.length; i++) {
+        const arg = args[i];
+        if (arg && (arg as any).type === 'literal') {
+          const literalValue = (arg as any).value;
+          if (literalValue === 'global') {
+            scope = 'global';
+          } else if (typeof literalValue === 'number') {
+            amount = literalValue;
+          }
+        } else if (arg && (arg as any).type !== 'literal') {
+          // Non-literal, evaluate it (could be expression for amount)
+          const evaluated = await this.execute(arg, context);
+          if (typeof evaluated === 'number') {
+            amount = evaluated;
+          }
+        }
+      }
+
+      // Pass structured input to adapter
+      evaluatedArgs = [{ target, amount, ...(scope && { scope }) }];
+    } else if (name === 'add' || name === 'remove') {
+      // ADD/REMOVE: Don't evaluate selector nodes - extract their string values
+
+      evaluatedArgs = await Promise.all(
+        args.map(async (arg) => {
+          if (arg && (arg as any).type === 'selector') {
+            // Extract selector string value instead of evaluating
+            return (arg as any).value;
+          }
+          // For non-selector args, evaluate normally
+          return await this.execute(arg, context);
+        })
+      );
     } else {
       // For other commands, evaluate all arguments normally
       evaluatedArgs = await Promise.all(
@@ -862,17 +922,34 @@ export class Runtime {
     if (name === 'set' && evaluatedArgs.length >= 2) {
       // SET command expects input object format
       const [target, value] = evaluatedArgs;
-      
-      // Handle complex target object (for "the X of Y" syntax)
+
+      // Handle scoped variable object from SET command processing
       let inputTarget;
-      if (target && typeof target === 'object' && 'element' in target && 'property' in target) {
+      let scope: 'global' | 'local' | undefined;
+
+      if (target && typeof target === 'object' && (target as any)._isScoped) {
+        // Extract name and scope from scoped variable object
+        inputTarget = (target as any).name;
+        scope = (target as any).scope;
+      } else if (target && typeof target === 'object' && 'element' in target && 'property' in target) {
         // Convert structured target to "the X of Y" string format
         inputTarget = `the ${target.property} of ${target.element}`;
       } else {
         inputTarget = target;
       }
-      
-      const input = { target: inputTarget, value, toKeyword: 'to' as const };
+
+      const input: any = { target: inputTarget, value, toKeyword: 'to' as const };
+
+      // Add scope if extracted from _isScoped object
+      if (scope) {
+        input.scope = scope;
+      }
+
+      // Add scope if it was detected during argument parsing (legacy path)
+      if ((context as any)._pendingSetScope) {
+        input.scope = (context as any)._pendingSetScope;
+        delete (context as any)._pendingSetScope; // Clean up after use
+      }
       result = await adapter.execute(context, input);
     } else if (name === 'measure' && evaluatedArgs.length >= 1) {
       // MEASURE command expects input object format: { target?, property?, variable? }
@@ -899,22 +976,29 @@ export class Runtime {
       result = await adapter.execute(context, input);
     } else if ((name === 'increment' || name === 'decrement') && evaluatedArgs.length >= 1) {
       // INCREMENT/DECREMENT commands expect input object format
-      const [target, ...rest] = evaluatedArgs;
-      
-      // Build input object for increment/decrement
-      let input: any = { target };
-      
-      // Handle "by" amount syntax
-      if (rest.length >= 2 && rest[0] === 'by' && typeof rest[1] === 'number') {
-        input.amount = rest[1];
-        input.byKeyword = 'by';
-      } else if (rest.length === 1 && typeof rest[0] === 'number') {
-        input.amount = rest[0];
+      const [firstArg, ...rest] = evaluatedArgs;
+
+      // Check if already structured by special INCREMENT/DECREMENT handling above
+      let input: any;
+      if (firstArg && typeof firstArg === 'object' && 'target' in firstArg && 'amount' in firstArg) {
+        // Already structured - pass through
+        input = firstArg;
+      } else {
+        // Not structured - build input object
+        input = { target: firstArg };
+
+        // Handle "by" amount syntax
+        if (rest.length >= 2 && rest[0] === 'by' && typeof rest[1] === 'number') {
+          input.amount = rest[1];
+          input.byKeyword = 'by';
+        } else if (rest.length === 1 && typeof rest[0] === 'number') {
+          input.amount = rest[0];
+        }
       }
-      
+
       // Handle global scope (detect from target string)
-      if (typeof target === 'string' && target.startsWith('global ')) {
-        input.target = target.replace('global ', '');
+      if (typeof input.target === 'string' && input.target.startsWith('global ')) {
+        input.target = input.target.replace('global ', '');
         input.scope = 'global';
       }
       
@@ -922,7 +1006,7 @@ export class Runtime {
     } else {
       result = await adapter.execute(context, ...evaluatedArgs);
     }
-    
+
     return result;
   }
 
@@ -987,30 +1071,6 @@ export class Runtime {
       hasEnhanced: this.enhancedRegistry.has(name.toLowerCase())
     });
 
-    // Special debug for SET commands
-    if (name.toLowerCase() === 'set') {
-        // name,
-        // argsLength: args.length,
-        // args: args.map(arg => ({ 
-          // type: arg.type, 
-          // value: (arg as any).value || (arg as any).name || (arg as any).operator,
-          // raw: arg
-        // })),
-        // useEnhancedCommands: this.options.useEnhancedCommands,
-        // hasEnhancedSet: this.enhancedRegistry.has('set'),
-        // enhancedCommands: this.enhancedRegistry.getCommandNames()
-      // });
-    }
-    
-    // Debug logging for put command
-    if (name === 'put') {
-        // name,
-        // useEnhancedCommands: this.options.useEnhancedCommands,
-        // hasEnhancedPut: this.enhancedRegistry.has('put'),
-        // availableCommands: this.enhancedRegistry.getCommandNames()
-      // });
-    }
-    
     // Debug logging for transition command
     if (name.toLowerCase() === 'transition') {
       debug.command('TRANSITION command check:', {
@@ -1024,9 +1084,8 @@ export class Runtime {
     // Try enhanced commands first if enabled
     if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
       return await this.executeEnhancedCommand(name.toLowerCase(), (args || []) as ExpressionNode[], context);
-    } else {
     }
-    
+
     // For now, let commands handle their own argument evaluation
     // This ensures compatibility with how the commands are designed
     const rawArgs = args || [];
@@ -1261,7 +1320,7 @@ export class Runtime {
       it: null,
       result: null,
       locals: new Map(),
-      globals: new Map(),
+      globals: this.globalVariables, // Use shared globals across all executions
       halted: false,
       returned: false,
       broke: false,
@@ -1443,34 +1502,37 @@ export class Runtime {
   /**
    * Execute put command (set content)
    */
-  private async executePutCommand(rawArgs: ExpressionNode[], context: ExecutionContext): Promise<void> {
-    // debug.runtime('RUNTIME: executePutCommand started', { 
-      // argCount: rawArgs.length,
-      // rawArgs: rawArgs.map(arg => ({ 
-        // type: arg?.type, 
-        // value: (arg as any)?.value || (arg as any)?.name,
-        // raw: arg
-      // })),
-      // contextMe: context.me?.tagName || context.me?.constructor?.name
-    // });
-    
+  private async executePutCommand(rawArgs: ExpressionNode[], context: ExecutionContext): Promise<unknown> {
+    debug.runtime('RUNTIME: executePutCommand started', {
+      argCount: rawArgs.length,
+      rawArgs: rawArgs.map(arg => ({
+        type: arg?.type,
+        value: (arg as any)?.value || (arg as any)?.name,
+        raw: arg
+      })),
+      contextMe: context.me?.tagName || context.me?.constructor?.name
+    });
+
     // Process arguments: find content, preposition, and target
     let contentArg = null;
     let prepositionArg = null;
     let targetArg = null;
-    
+
     // Find the preposition keyword to split the arguments
     let prepositionIndex = -1;
     for (let i = 0; i < rawArgs.length; i++) {
       const arg = rawArgs[i];
-      if (nodeType(arg) === 'literal' &&
-          ['into', 'before', 'after', 'at'].includes(arg.value as string)) {
+      const argType = nodeType(arg);
+      const argValue = (argType === 'literal' ? arg.value : (arg as any).name) as string;
+
+      if ((argType === 'literal' || argType === 'identifier') &&
+          ['into', 'before', 'after', 'at', 'at start of', 'at end of'].includes(argValue)) {
         prepositionIndex = i;
-        prepositionArg = arg.value;
+        prepositionArg = argValue;
         break;
       }
     }
-    
+
     if (prepositionIndex === -1) {
       // Fallback to old logic
       if (rawArgs.length >= 3) {
@@ -1482,24 +1544,25 @@ export class Runtime {
       // Split arguments around the preposition
       const contentArgs = rawArgs.slice(0, prepositionIndex);
       const targetArgs = rawArgs.slice(prepositionIndex + 1);
-      
+
       // Use first content arg (or combine if multiple)
       contentArg = contentArgs.length === 1 ? contentArgs[0] : contentArgs[0];
       targetArg = targetArgs.length === 1 ? targetArgs[0] : targetArgs[0];
     }
-    
+
     if (contentArg && prepositionArg && targetArg) {
       const content = await this.execute(contentArg, context);
-      
+
       const preposition = prepositionArg;
-      
+
       let target = targetArg;
-        // target, 
-        // type: target?.type,
-        // name: (target as any)?.name,
-        // value: (target as any)?.value
-      // });
-      
+      debug.runtime('RUNTIME: before target resolution', {
+        target,
+        type: target?.type,
+        name: (target as any)?.name,
+        value: (target as any)?.value
+      });
+
       // Handle target resolution - fix the [object Object] issue
       if (nodeType(target) === 'identifier' && (target as any).name === 'me') {
         target = context.me as any;
@@ -1517,13 +1580,15 @@ export class Runtime {
         }
       }
 
-      // debug.runtime('RUNTIME: calling putCommand.execute', { content, preposition, target });
-      void this.putCommand.execute(context as TypedExecutionContext, content, preposition, target);
-      return;
+      debug.runtime('RUNTIME: calling putCommand.execute', { content, preposition, target });
+      const result = await this.putCommand.execute(context as TypedExecutionContext, content, preposition, target);
+      debug.runtime('RUNTIME: putCommand.execute result', { result });
+      return result.success ? result.value : undefined;
     }
 
     // Fallback: use raw args
-    void this.putCommand.execute(context as TypedExecutionContext, ...rawArgs);
+    const result = await this.putCommand.execute(context as TypedExecutionContext, ...rawArgs);
+    return result.success ? result.value : undefined;
   }
 
 
