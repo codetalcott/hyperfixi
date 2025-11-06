@@ -847,13 +847,13 @@ export class Runtime {
       let target: string | number;
 
       // Extract variable name from AST node without evaluating
-      if (targetArg?.type === 'identifier') {
+      if (nodeType(targetArg) === 'identifier') {
         target = (targetArg as any).name;
-      } else if (targetArg?.type === 'literal') {
+      } else if (nodeType(targetArg) === 'literal') {
         target = (targetArg as any).value;
       } else {
         // Fallback: evaluate if it's a complex expression
-        target = await this.execute(targetArg, context);
+        target = (await this.execute(targetArg, context)) as string | number;
       }
 
       // Check for "by <amount>" pattern and "global" scope marker
