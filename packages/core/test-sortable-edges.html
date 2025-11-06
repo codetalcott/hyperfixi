@@ -200,47 +200,47 @@
             </p>
         </div>
 
-        <behavior>
-            behavior Sortable()
-              on pointerdown(clientX, clientY)
-                set draggedItem to event.target.closest('.sortable-item')
-                if no draggedItem exit
+        <script type="text/hyperscript">
+behavior Sortable()
+  on pointerdown(clientX, clientY)
+    set draggedItem to event.target.closest('.sortable-item')
+    if no draggedItem exit
 
-                halt the event
-                add .dragging to draggedItem
+    halt the event
+    add .dragging to draggedItem
 
-                repeat until event pointerup from document
-                  wait for pointermove(clientY) or pointerup from document
+    repeat until event pointerup from document
+      wait for pointermove(clientY) or pointerup from document
 
-                  set items to <.sortable-item/> in me
-                  set targetItem to null
+      set items to <.sortable-item/> in me
+      set targetItem to null
 
-                  repeat for item in items
-                    if item is not draggedItem
-                      measure item's top
-                      set itemTop to it
-                      measure item's height
-                      set itemHeight to it
-                      set itemMid to itemTop + (itemHeight / 2)
+      repeat for item in items
+        if item is not draggedItem
+          measure item's top
+          set itemTop to it
+          measure item's height
+          set itemHeight to it
+          set itemMid to itemTop + (itemHeight / 2)
 
-                      if clientY < itemMid
-                        set targetItem to item
-                        exit
-                      end
-                    end
-                  end
+          if clientY < itemMid
+            set targetItem to item
+            exit
+          end
+        end
+      end
 
-                  if targetItem
-                    call me.insertBefore(draggedItem, targetItem)
-                  else
-                    call me.appendChild(draggedItem)
-                  end
-                end
+      if targetItem
+        call me.insertBefore(draggedItem, targetItem)
+      else
+        call me.appendChild(draggedItem)
+      end
+    end
 
-                remove .dragging from draggedItem
-              end
-            end
-        </behavior>
+    remove .dragging from draggedItem
+  end
+end
+        </script>
 
         <div class="test-grid">
             <!-- Edge Case 1: Empty List -->

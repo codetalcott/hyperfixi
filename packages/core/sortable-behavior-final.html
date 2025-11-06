@@ -223,57 +223,57 @@
         </div>
 
         <!-- Complete Sortable Behavior Definition -->
-        <behavior>
-            behavior Sortable()
-              on pointerdown(clientX, clientY)
-                set draggedItem to event.target.closest('.sortable-item')
-                if no draggedItem exit
+        <script type="text/hyperscript">
+behavior Sortable()
+  on pointerdown(clientX, clientY)
+    set draggedItem to event.target.closest('.sortable-item')
+    if no draggedItem exit
 
-                halt the event
-                add .dragging to draggedItem
+    halt the event
+    add .dragging to draggedItem
 
-                set initialHTML to my innerHTML
-                trigger sortable:start
+    set initialHTML to my innerHTML
+    trigger sortable:start
 
-                repeat until event pointerup from document
-                  wait for pointermove(clientY) or pointerup from document
+    repeat until event pointerup from document
+      wait for pointermove(clientY) or pointerup from document
 
-                  set items to <.sortable-item/> in me
-                  set targetItem to null
+      set items to <.sortable-item/> in me
+      set targetItem to null
 
-                  repeat for item in items
-                    if item is not draggedItem
-                      measure item's top
-                      set itemTop to it
-                      measure item's height
-                      set itemHeight to it
-                      set itemMid to itemTop + (itemHeight / 2)
+      repeat for item in items
+        if item is not draggedItem
+          measure item's top
+          set itemTop to it
+          measure item's height
+          set itemHeight to it
+          set itemMid to itemTop + (itemHeight / 2)
 
-                      if clientY < itemMid
-                        set targetItem to item
-                        exit
-                      end
-                    end
-                  end
+          if clientY < itemMid
+            set targetItem to item
+            exit
+          end
+        end
+      end
 
-                  if targetItem
-                    call me.insertBefore(draggedItem, targetItem)
-                  else
-                    call me.appendChild(draggedItem)
-                  end
+      if targetItem
+        call me.insertBefore(draggedItem, targetItem)
+      else
+        call me.appendChild(draggedItem)
+      end
 
-                  trigger sortable:move
-                end
+      trigger sortable:move
+    end
 
-                remove .dragging from draggedItem
-                trigger sortable:end
+    remove .dragging from draggedItem
+    trigger sortable:end
 
-                if my innerHTML is not initialHTML
-                  trigger sortable:change
-                end
-              end
-            end
-        </behavior>
+    if my innerHTML is not initialHTML
+      trigger sortable:change
+    end
+  end
+end
+        </script>
 
         <div class="examples-grid">
             <!-- Example 1: Simple TODO List -->

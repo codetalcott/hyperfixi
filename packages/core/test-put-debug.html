@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug PUT Command</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-box {
+            border: 2px solid #333;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        .result {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>PUT Command Debug</h1>
+
+    <div class="test-box">
+        <h3>Test 1: PUT text into element</h3>
+        <div id="test1" style="border: 1px solid blue; padding: 10px;">[Original Content]</div>
+        <button onclick="runTest1()">Run Test 1</button>
+        <div id="result1" class="result"></div>
+    </div>
+
+    <div class="test-box">
+        <h3>Test 2: PUT HTML into element</h3>
+        <div id="test2" style="border: 1px solid green; padding: 10px;">[Original Content]</div>
+        <button onclick="runTest2()">Run Test 2</button>
+        <div id="result2" class="result"></div>
+    </div>
+
+    <div class="test-box">
+        <h3>Test 3: Direct PUT command test</h3>
+        <div id="test3" style="border: 1px solid red; padding: 10px;">[Original Content]</div>
+        <button onclick="runTest3()">Run Test 3 (Direct API)</button>
+        <div id="result3" class="result"></div>
+    </div>
+
+    <script src="dist/hyperfixi-browser.js"></script>
+    <script>
+        // Global hyperfixi should be available from the bundle
+        console.log('hyperfixi object:', hyperfixi);
+        console.log('Available methods:', Object.keys(hyperfixi));
+
+        async function runTest1() {
+            const result1 = document.getElementById('result1');
+            const test1 = document.getElementById('test1');
+
+            try {
+                result1.textContent = 'Running test...\n';
+
+                // Create context with test1 as "me"
+                const context = hyperfixi.createContext(test1);
+                console.log('Context created:', context);
+
+                // Execute the hyperscript
+                const code = 'put "hello world" into me';
+                result1.textContent += `Executing: ${code}\n`;
+
+                const execResult = await hyperfixi.evalHyperScript(code, context);
+                console.log('Execution result:', execResult);
+
+                result1.textContent += `Result: ${JSON.stringify(execResult, null, 2)}\n`;
+                result1.textContent += `Element textContent: ${test1.textContent}\n`;
+                result1.textContent += `Element innerHTML: ${test1.innerHTML}\n`;
+
+                if (test1.textContent === 'hello world') {
+                    result1.textContent += '\n✅ SUCCESS!';
+                    result1.classList.add('success');
+                } else {
+                    result1.textContent += '\n❌ FAILED - Element was not updated';
+                    result1.classList.add('error');
+                }
+            } catch (error) {
+                result1.textContent += `\n❌ ERROR: ${error.message}\n${error.stack}`;
+                result1.classList.add('error');
+                console.error('Test 1 error:', error);
+            }
+        }
+
+        async function runTest2() {
+            const result2 = document.getElementById('result2');
+            const test2 = document.getElementById('test2');
+
+            try {
+                result2.textContent = 'Running test...\n';
+
+                const context = hyperfixi.createContext(test2);
+                const code = 'put "<span>test</span>" into me';
+                result2.textContent += `Executing: ${code}\n`;
+
+                const execResult = await hyperfixi.evalHyperScript(code, context);
+                console.log('Execution result:', execResult);
+
+                result2.textContent += `Result: ${JSON.stringify(execResult, null, 2)}\n`;
+                result2.textContent += `Element innerHTML: ${test2.innerHTML}\n`;
+
+                if (test2.innerHTML.includes('test')) {
+                    result2.textContent += '\n✅ SUCCESS!';
+                    result2.classList.add('success');
+                } else {
+                    result2.textContent += '\n❌ FAILED - Element was not updated';
+                    result2.classList.add('error');
+                }
+            } catch (error) {
+                result2.textContent += `\n❌ ERROR: ${error.message}\n${error.stack}`;
+                result2.classList.add('error');
+                console.error('Test 2 error:', error);
+            }
+        }
+
+        async function runTest3() {
+            const result3 = document.getElementById('result3');
+            const test3 = document.getElementById('test3');
+
+            try {
+                result3.textContent = 'Running Parser/Runtime inspection test...\n';
+
+                // Test parsing
+                const parser = new hyperfixi.Parser();
+                const code = 'put "direct test" into me';
+                result3.textContent += `Parsing: ${code}\n`;
+
+                const parseResult = parser.parse(code);
+                console.log('Parse result:', parseResult);
+                result3.textContent += `Parse result: ${JSON.stringify(parseResult, null, 2)}\n\n`;
+
+                // Test runtime execution
+                const runtime = hyperfixi.createRuntime();
+                const context = hyperfixi.createContext(test3);
+
+                result3.textContent += `Executing with runtime...\n`;
+                const execResult = await runtime.execute(parseResult.ast, context);
+                console.log('Runtime execution result:', execResult);
+
+                result3.textContent += `Exec result: ${JSON.stringify(execResult, null, 2)}\n`;
+                result3.textContent += `Element textContent: ${test3.textContent}\n`;
+                result3.textContent += `Element innerHTML: ${test3.innerHTML}\n`;
+
+                if (test3.textContent === 'direct test') {
+                    result3.textContent += '\n✅ SUCCESS!';
+                    result3.classList.add('success');
+                } else {
+                    result3.textContent += '\n❌ FAILED - Element was not updated';
+                    result3.classList.add('error');
+                }
+            } catch (error) {
+                result3.textContent += `\n❌ ERROR: ${error.message}\n${error.stack}`;
+                result3.classList.add('error');
+                console.error('Test 3 error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

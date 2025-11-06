@@ -201,80 +201,80 @@
         <div class="test-container">
             <h2 style="margin-bottom: 1rem; color: #2d3748;">📝 Sortable TODO List</h2>
 
-            <behavior>
-                behavior Sortable()
-                  on pointerdown(clientX, clientY)
-                    log '🖱️ Pointer down at Y:', clientY
+            <script type="text/hyperscript">
+behavior Sortable()
+  on pointerdown(clientX, clientY)
+    log '🖱️ Pointer down at Y:', clientY
 
-                    -- Find the sortable item that was clicked
-                    set draggedItem to event.target.closest('.sortable-item')
+    -- Find the sortable item that was clicked
+    set draggedItem to event.target.closest('.sortable-item')
 
-                    if no draggedItem
-                      log '⚠️ Click was not on a sortable item, exiting'
-                      exit
-                    end
+    if no draggedItem
+      log '⚠️ Click was not on a sortable item, exiting'
+      exit
+    end
 
-                    log '✅ Dragging:', draggedItem.textContent.trim()
+    log '✅ Dragging:', draggedItem.textContent.trim()
 
-                    -- Prevent default and add dragging class
-                    halt the event
-                    add .dragging to draggedItem
+    -- Prevent default and add dragging class
+    halt the event
+    add .dragging to draggedItem
 
-                    -- Main drag loop
-                    log '🔄 Entering drag loop...'
-                    repeat until event pointerup from document
-                      wait for pointermove(clientY) or pointerup from document
+    -- Main drag loop
+    log '🔄 Entering drag loop...'
+    repeat until event pointerup from document
+      wait for pointermove(clientY) or pointerup from document
 
-                      log '📍 Pointer moved to Y:', clientY
+      log '📍 Pointer moved to Y:', clientY
 
-                      -- Get all sortable items
-                      set items to <.sortable-item/> in me
-                      log '📋 Found', items.length, 'items'
+      -- Get all sortable items
+      set items to <.sortable-item/> in me
+      log '📋 Found', items.length, 'items'
 
-                      -- Find target position
-                      set targetItem to null
+      -- Find target position
+      set targetItem to null
 
-                      repeat for item in items with index
-                        if item is not draggedItem
-                          -- Measure this item
-                          measure item's top
-                          set itemTop to it
+      repeat for item in items with index
+        if item is not draggedItem
+          -- Measure this item
+          measure item's top
+          set itemTop to it
 
-                          measure item's height
-                          set itemHeight to it
+          measure item's height
+          set itemHeight to it
 
-                          -- Calculate midpoint
-                          set itemMid to itemTop + (itemHeight / 2)
+          -- Calculate midpoint
+          set itemMid to itemTop + (itemHeight / 2)
 
-                          log '  Item', index, '- Top:', itemTop, 'Height:', itemHeight, 'Mid:', itemMid
+          log '  Item', index, '- Top:', itemTop, 'Height:', itemHeight, 'Mid:', itemMid
 
-                          -- If pointer is above midpoint, this is our target
-                          if clientY < itemMid
-                            set targetItem to item
-                            log '  🎯 Target found: item', index
-                            exit
-                          end
-                        end
-                      end
+          -- If pointer is above midpoint, this is our target
+          if clientY < itemMid
+            set targetItem to item
+            log '  🎯 Target found: item', index
+            exit
+          end
+        end
+      end
 
-                      -- Insert at target position
-                      if targetItem
-                        log '⬆️ Inserting before target'
-                        call me.insertBefore(draggedItem, targetItem)
-                      else
-                        log '⬇️ Appending to end'
-                        call me.appendChild(draggedItem)
-                      end
-                    end
+      -- Insert at target position
+      if targetItem
+        log '⬆️ Inserting before target'
+        call me.insertBefore(draggedItem, targetItem)
+      else
+        log '⬇️ Appending to end'
+        call me.appendChild(draggedItem)
+      end
+    end
 
-                    log '👆 Pointer released'
+    log '👆 Pointer released'
 
-                    -- Clean up
-                    remove .dragging from draggedItem
-                    log '✨ Drag complete'
-                  end
-                end
-            </behavior>
+    -- Clean up
+    remove .dragging from draggedItem
+    log '✨ Drag complete'
+  end
+end
+            </script>
 
             <ul id="todo-list" class="sortable-list"
                 _="install Sortable()">

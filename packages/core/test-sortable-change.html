@@ -239,64 +239,64 @@
         <div class="test-container">
             <h3>📝 Sortable TODO List with Change Detection</h3>
 
-            <behavior>
-                behavior Sortable()
-                  on pointerdown(clientX, clientY)
-                    set draggedItem to event.target.closest('.sortable-item')
-                    if no draggedItem exit
+            <script type="text/hyperscript">
+behavior Sortable()
+  on pointerdown(clientX, clientY)
+    set draggedItem to event.target.closest('.sortable-item')
+    if no draggedItem exit
 
-                    halt the event
-                    add .dragging to draggedItem
+    halt the event
+    add .dragging to draggedItem
 
-                    -- Capture initial state
-                    set initialHTML to my innerHTML
-                    log '📸 Captured initial HTML'
+    -- Capture initial state
+    set initialHTML to my innerHTML
+    log '📸 Captured initial HTML'
 
-                    trigger sortable:start
+    trigger sortable:start
 
-                    repeat until event pointerup from document
-                      wait for pointermove(clientY) or pointerup from document
+    repeat until event pointerup from document
+      wait for pointermove(clientY) or pointerup from document
 
-                      set items to <.sortable-item/> in me
-                      set targetItem to null
+      set items to <.sortable-item/> in me
+      set targetItem to null
 
-                      repeat for item in items
-                        if item is not draggedItem
-                          measure item's top
-                          set itemTop to it
-                          measure item's height
-                          set itemHeight to it
-                          set itemMid to itemTop + (itemHeight / 2)
+      repeat for item in items
+        if item is not draggedItem
+          measure item's top
+          set itemTop to it
+          measure item's height
+          set itemHeight to it
+          set itemMid to itemTop + (itemHeight / 2)
 
-                          if clientY < itemMid
-                            set targetItem to item
-                            exit
-                          end
-                        end
-                      end
+          if clientY < itemMid
+            set targetItem to item
+            exit
+          end
+        end
+      end
 
-                      if targetItem
-                        call me.insertBefore(draggedItem, targetItem)
-                      else
-                        call me.appendChild(draggedItem)
-                      end
+      if targetItem
+        call me.insertBefore(draggedItem, targetItem)
+      else
+        call me.appendChild(draggedItem)
+      end
 
-                      trigger sortable:move
-                    end
+      trigger sortable:move
+    end
 
-                    remove .dragging from draggedItem
-                    trigger sortable:end
+    remove .dragging from draggedItem
+    trigger sortable:end
 
-                    -- Check if order changed
-                    if my innerHTML is not initialHTML
-                      log '✅ Order CHANGED - triggering sortable:change'
-                      trigger sortable:change
-                    else
-                      log '⚠️ Order NOT changed - no sortable:change event'
-                    end
-                  end
-                end
-            </behavior>
+    -- Check if order changed
+    if my innerHTML is not initialHTML
+      log '✅ Order CHANGED - triggering sortable:change'
+      trigger sortable:change
+    else
+      log '⚠️ Order NOT changed - no sortable:change event'
+    end
+  end
+end
+            </script>
 
             <ul id="todo-list" class="sortable-list"
                 _="install Sortable()

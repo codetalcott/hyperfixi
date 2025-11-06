@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test SET Parser Fix</title>
+</head>
+<body>
+    <h1>Testing SET Command Parser Fix</h1>
+    
+    <div id="result">Initial</div>
+    
+    <button id="test-set-expression" _="on click
+        set count to 0 then
+        set count to count + 1 then
+        set count to count + 1 then
+        set #result's textContent to 'Count: ' + count">
+        Test SET with Expression (count + 1)
+    </button>
+    
+    <button id="test-increment" _="on click
+        set value to 10 then
+        increment value then
+        increment value by 5 then
+        set #result's textContent to 'Value: ' + value">
+        Test INCREMENT Command
+    </button>
+    
+    <script src="http://127.0.0.1:3000/dist/hyperfixi-browser.js"></script>
+    
+    <script>
+        window.addEventListener('load', () => {
+            console.log('✅ Page loaded, HyperFixi available:', typeof hyperfixi !== 'undefined');
+            if (typeof hyperfixi !== 'undefined' && hyperfixi.processNode) {
+                hyperfixi.processNode(document.body).then(() => {
+                    console.log('✅ HyperFixi initialized');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

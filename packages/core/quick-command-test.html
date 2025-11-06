@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Quick Command Test</title>
+    <style>
+        .highlight { background: yellow; padding: 5px; }
+        body { font-family: sans-serif; padding: 20px; }
+        .test-element { border: 2px solid #ccc; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Quick Command Test</h1>
+
+    <div id="test-element" class="test-element">Test Element</div>
+    <div id="counter-display" class="test-element">Counter: <span id="counter-value">0</span></div>
+
+    <h2>Tests:</h2>
+    <div id="results"></div>
+
+    <script src="/dist/hyperfixi-browser.llm.js"></script>
+    <script>
+        const results = document.getElementById('results');
+        const testElement = document.getElementById('test-element');
+        const counterValue = document.getElementById('counter-value');
+
+        function log(message, success = true) {
+            const div = document.createElement('div');
+            div.textContent = `${success ? '✅' : '❌'} ${message}`;
+            div.style.color = success ? 'green' : 'red';
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        async function runTests() {
+            try {
+                // Test 1: ADD command
+                console.log('Testing: add .highlight to #test-element');
+                await hyperfixi.run('add .highlight to #test-element');
+                const hasHighlight = testElement.classList.contains('highlight');
+                log(`ADD command: ${hasHighlight ? 'PASS' : 'FAIL - class not added'}`, hasHighlight);
+
+                // Test 2: REMOVE command
+                console.log('Testing: remove .highlight from #test-element');
+                await hyperfixi.run('remove .highlight from #test-element');
+                const noHighlight = !testElement.classList.contains('highlight');
+                log(`REMOVE command: ${noHighlight ? 'PASS' : 'FAIL - class not removed'}`, noHighlight);
+
+                // Test 3: INCREMENT command
+                console.log('Testing: increment #counter-value');
+                window.testCounter = 0;
+                counterValue.textContent = '0';
+
+                await hyperfixi.run('set testCounter to 0');
+                await hyperfixi.run('increment testCounter');
+                const counter1 = window.testCounter;
+                counterValue.textContent = counter1;
+                log(`INCREMENT command: ${counter1 === 1 ? 'PASS' : `FAIL - expected 1, got ${counter1}`}`, counter1 === 1);
+
+                // Test 4: DECREMENT command
+                console.log('Testing: decrement testCounter');
+                await hyperfixi.run('decrement testCounter');
+                const counter2 = window.testCounter;
+                counterValue.textContent = counter2;
+                log(`DECREMENT command: ${counter2 === 0 ? 'PASS' : `FAIL - expected 0, got ${counter2}`}`, counter2 === 0);
+
+                // Test 5: INCREMENT by amount (from 0 + 5 = 5)
+                console.log('Testing: increment testCounter by 5');
+                await hyperfixi.run('increment testCounter by 5');
+                const counter3 = window.testCounter;
+                counterValue.textContent = counter3;
+                log(`INCREMENT by amount: ${counter3 === 5 ? 'PASS' : `FAIL - expected 5, got ${counter3}`}`, counter3 === 5);
+
+            } catch (e) {
+                log(`ERROR: ${e.message}`, false);
+                console.error('Full error:', e);
+            }
+        }
+
+        // Auto-run tests when page loads
+        setTimeout(runTests, 100);
+    </script>
+</body>
+</html>

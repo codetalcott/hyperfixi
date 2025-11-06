@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Counter Test - Global Variables</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .counter-display {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f0f0f0;
+            border-radius: 4px;
+            color: #007bff;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        button {
+            flex: 1;
+            padding: 15px 25px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-increment {
+            background: #28a745;
+            color: white;
+        }
+        .btn-increment:hover {
+            background: #218838;
+        }
+        .btn-decrement {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-decrement:hover {
+            background: #c82333;
+        }
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-reset:hover {
+            background: #5a6268;
+        }
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .debug-info h3 {
+            margin-top: 0;
+            font-size: 14px;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧮 Clean Counter Test</h1>
+        <p>Testing <code>set global count to (count or 0) + 1</code></p>
+
+        <div class="counter-display" id="counter">0</div>
+
+        <div class="button-group">
+            <button class="btn-increment"
+                    _="on click
+                        set global count to (count or 0) + 1 then
+                        set the textContent of #counter to count">
+                ➕ Increment
+            </button>
+
+            <button class="btn-decrement"
+                    _="on click
+                        set global count to (count or 0) - 1 then
+                        set the textContent of #counter to count">
+                ➖ Decrement
+            </button>
+
+            <button class="btn-reset"
+                    _="on click
+                        set global count to 0 then
+                        set the textContent of #counter to '0'">
+                🔄 Reset
+            </button>
+        </div>
+
+        <div class="debug-info">
+            <h3>Debug Info (Open Console)</h3>
+            <p>Expected behavior:</p>
+            <ul>
+                <li>Click ➕: counter should go 0 → 1 → 2 → 3 → 4...</li>
+                <li>Click ➖: counter should go 4 → 3 → 2 → 1 → 0 → -1...</li>
+                <li>Click 🔄: counter resets to 0</li>
+            </ul>
+            <p>Console should show:</p>
+            <ul>
+                <li><code>📝 SET extracting from _isScoped object</code></li>
+                <li><code>🔧 SET GLOBAL: variableName="count"</code></li>
+                <li><code>Globals keys: Array [ "count" ]</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script src="/dist/hyperfixi-browser.llm.js?v=OR-AND-FIX"></script>
+
+    <script>
+        // Log initial state
+        console.log('🧪 Counter Test Page Loaded');
+        console.log('🔍 HyperFixi available?', typeof window.hyperfixi !== 'undefined');
+
+        // Check for global count variable after clicks
+        window.addEventListener('click', () => {
+            setTimeout(() => {
+                console.log('🔍 window.count =', window.count);
+            }, 100);
+        });
+    </script>
+</body>
+</html>

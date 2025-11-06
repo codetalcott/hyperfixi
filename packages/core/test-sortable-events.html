@@ -244,59 +244,59 @@
             <div class="test-container">
                 <h3>📝 Sortable TODO List</h3>
 
-                <behavior>
-                    behavior Sortable()
-                      on pointerdown(clientX, clientY)
-                        set draggedItem to event.target.closest('.sortable-item')
-                        if no draggedItem exit
+                <script type="text/hyperscript">
+behavior Sortable()
+  on pointerdown(clientX, clientY)
+    set draggedItem to event.target.closest('.sortable-item')
+    if no draggedItem exit
 
-                        halt the event
-                        add .dragging to draggedItem
+    halt the event
+    add .dragging to draggedItem
 
-                        -- Emit start event
-                        trigger sortable:start
+    -- Emit start event
+    trigger sortable:start
 
-                        repeat until event pointerup from document
-                          wait for pointermove(clientY) or pointerup from document
+    repeat until event pointerup from document
+      wait for pointermove(clientY) or pointerup from document
 
-                          set items to <.sortable-item/> in me
-                          set targetItem to null
+      set items to <.sortable-item/> in me
+      set targetItem to null
 
-                          repeat for item in items
-                            if item is not draggedItem
-                              measure item's top
-                              set itemTop to it
-                              measure item's height
-                              set itemHeight to it
-                              set itemMid to itemTop + (itemHeight / 2)
+      repeat for item in items
+        if item is not draggedItem
+          measure item's top
+          set itemTop to it
+          measure item's height
+          set itemHeight to it
+          set itemMid to itemTop + (itemHeight / 2)
 
-                              if clientY < itemMid
-                                set targetItem to item
-                                exit
-                              end
-                            end
-                          end
+          if clientY < itemMid
+            set targetItem to item
+            exit
+          end
+        end
+      end
 
-                          if targetItem
-                            call me.insertBefore(draggedItem, targetItem)
-                          else
-                            call me.appendChild(draggedItem)
-                          end
+      if targetItem
+        call me.insertBefore(draggedItem, targetItem)
+      else
+        call me.appendChild(draggedItem)
+      end
 
-                          -- Emit move event
-                          trigger sortable:move
-                        end
+      -- Emit move event
+      trigger sortable:move
+    end
 
-                        remove .dragging from draggedItem
+    remove .dragging from draggedItem
 
-                        -- Emit end event
-                        trigger sortable:end
+    -- Emit end event
+    trigger sortable:end
 
-                        -- Emit change event (always for now, will add change detection in next phase)
-                        trigger sortable:change
-                      end
-                    end
-                </behavior>
+    -- Emit change event (always for now, will add change detection in next phase)
+    trigger sortable:change
+  end
+end
+                </script>
 
                 <ul id="todo-list" class="sortable-list"
                     _="install Sortable()
