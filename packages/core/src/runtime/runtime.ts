@@ -397,6 +397,12 @@ export class Runtime {
           return await this.executeObjectLiteral(node as unknown as { properties: Array<{ key: ASTNode; value: ASTNode }> }, context);
         }
 
+        case 'templateLiteral': {
+          // Explicitly handle template literals through expression evaluator
+          // to ensure ${} expressions are evaluated
+          return await this.expressionEvaluator.evaluate(node, context);
+        }
+
         default: {
           // For all other node types, use the expression evaluator
           const result = await this.expressionEvaluator.evaluate(node, context);
@@ -438,6 +444,27 @@ export class Runtime {
           if (this.options.enableErrorReporting) {
           }
           break; // Stop executing remaining commands
+        }
+
+        // Check for exit - stop event handler execution
+        if (error instanceof Error && (error as any).isExit) {
+          break; // Exit from command sequence
+        }
+
+        // Check for return - stop function/handler execution and return value
+        if (error instanceof Error && (error as any).isReturn) {
+          const returnValue = (error as any).returnValue;
+          if (returnValue !== undefined) {
+            // Use Object.assign to set readonly properties
+            Object.assign(context, { it: returnValue, result: returnValue });
+            return returnValue;
+          }
+          break; // Stop executing remaining commands
+        }
+
+        // Check for break - should be handled by loop commands
+        if (error instanceof Error && (error as any).isBreak) {
+          throw error; // Re-throw to be caught by enclosing loop
         }
 
         if (this.options.enableErrorReporting) {
@@ -501,7 +528,7 @@ export class Runtime {
    * Execute enhanced command with adapter
    */
   private async executeEnhancedCommand(name: string, args: ExpressionNode[], context: ExecutionContext): Promise<unknown> {
-    const adapter = this.enhancedRegistry.getAdapter(name);
+    const adapter = await this.enhancedRegistry.getAdapter(name);
     if (!adapter) {
       throw new Error(`Enhanced command not found: ${name}`);
     }
@@ -577,7 +604,10 @@ export class Runtime {
       } else if (target?.type === 'selector') {
         target = target.value;
       } else if (target?.type === 'identifier') {
-        target = target.name;
+        // For identifiers, check if it's a variable reference that needs to be looked up
+        // Try to evaluate it as a variable reference
+        const evaluated = await this.execute(target, context);
+        target = evaluated;
       } else if (target?.type === 'literal') {
         target = target.value;
       } else {
@@ -855,6 +885,64 @@ export class Runtime {
       }
 
       evaluatedArgs = [target];
+    } else if (name === 'if' || name === 'unless') {
+      // IF/UNLESS commands need raw AST nodes for conditional evaluation
+      // The condition needs to be evaluated, but the then/else blocks should NOT be evaluated yet
+      // The if command will decide which block to execute based on the condition
+      const condition = await this.execute(args[0], context);
+      // Pass evaluated condition + raw block nodes
+      evaluatedArgs = [condition, ...args.slice(1)];
+    } else if (name === 'measure' && args.length >= 1) {
+      // MEASURE command needs special handling for possessive expressions
+      // Pattern: "measure item's top" -> { target: item, property: 'top' }
+      const firstArg = args[0];
+
+      if (nodeType(firstArg) === 'possessiveExpression') {
+        // Handle possessive syntax: "measure item's top"
+        const possExpr = firstArg as any;
+
+        // Evaluate the object part to get the actual element
+        const target = await this.execute(possExpr.object, context);
+
+        // Extract property name without evaluating
+        const property = possExpr.property?.name || possExpr.property?.value;
+
+        debug.command('MEASURE: Possessive expression detected:', {
+          target,
+          property,
+          targetType: typeof target,
+          targetTag: target instanceof HTMLElement ? target.tagName : 'not an element'
+        });
+
+        // Create structured input for measure command
+        evaluatedArgs = [{ target, property }];
+      } else if (nodeType(firstArg) === 'propertyOfExpression') {
+        // Handle "the X of Y" pattern: "measure the height of item"
+        const propOfExpr = firstArg as any;
+        const property = propOfExpr.property?.name || propOfExpr.property?.value;
+        const target = await this.execute(propOfExpr.target, context);
+
+        debug.command('MEASURE: PropertyOf expression detected:', {
+          target,
+          property
+        });
+
+        evaluatedArgs = [{ target, property }];
+      } else if (nodeType(firstArg) === 'identifier') {
+        // Handle simple identifier: "measure x" -> treat identifier name as property name
+        const propertyName = (firstArg as any).name;
+
+        debug.command('MEASURE: Simple identifier detected, treating as property name:', {
+          property: propertyName
+        });
+
+        evaluatedArgs = [propertyName];
+      } else {
+        // No special syntax, evaluate normally
+        evaluatedArgs = await Promise.all(
+          args.map(arg => this.execute(arg, context))
+        );
+      }
     } else if (name === 'repeat' || name === 'transition') {
       // REPEAT and TRANSITION commands need raw AST nodes for the adapter to extract metadata
       // Don't evaluate args - pass them as-is to the adapter
@@ -977,8 +1065,12 @@ export class Runtime {
 
       let input: any = {};
 
-      // If first arg is a string, treat it as property name
-      if (typeof firstArg === 'string') {
+      // Check if already structured from possessive expression handling above
+      if (firstArg && typeof firstArg === 'object' && 'target' in firstArg && 'property' in firstArg) {
+        // Already structured - pass through
+        input = firstArg;
+      } else if (typeof firstArg === 'string') {
+        // If first arg is a string, treat it as property name
         input.property = firstArg;
       } else if (firstArg instanceof HTMLElement) {
         // If first arg is an element, it's the target
@@ -1230,12 +1322,13 @@ export class Runtime {
       debug.event(`EVENT FIRED: ${event} on`, domEvent.target, 'with', commands.length, 'commands');
 
       // Create new context for event execution
-      // IMPORTANT: Preserve context.me (the element where the behavior is installed)
-      // Don't overwrite it with domEvent.target (the event source)
+      // IMPORTANT: Create a NEW locals Map that starts with the behavior's context
+      // but allows event-specific variables to be isolated
+      const eventLocals = new Map(context.locals);
+
       const eventContext: ExecutionContext = {
         ...context,
-        // me: domEvent.target as HTMLElement,  // ❌ BUG: This overwrites me with event target!
-        // Keep context.me as-is (the element where the behavior/script is installed)
+        locals: eventLocals,  // Use NEW Map to isolate event-specific variables
         it: domEvent,
         event: domEvent
       };
@@ -1262,13 +1355,27 @@ export class Runtime {
           await this.execute(command, eventContext);
           debug.command(`COMMAND COMPLETED`);
         } catch (error) {
-          console.error(`❌ COMMAND FAILED:`, error);
-          // Check for halt execution - stop event handler gracefully
-          if (error instanceof Error && (error as any).isHalt) {
-            debug.command('Halt command encountered, stopping event handler execution');
-            break; // Stop executing remaining commands in event handler
+          // Check for control flow commands - stop event handler gracefully
+          if (error instanceof Error) {
+            const errorAny = error as any;
+            if (errorAny.isHalt) {
+              debug.command('Halt command encountered, stopping event handler execution');
+              break; // Stop executing remaining commands in event handler
+            }
+            if (errorAny.isExit) {
+              debug.command('Exit command encountered, stopping event handler execution');
+              break; // Stop executing remaining commands in event handler
+            }
+            if (errorAny.isReturn) {
+              debug.command('Return command encountered, stopping event handler execution');
+              if (errorAny.returnValue !== undefined) {
+                Object.assign(eventContext, { it: errorAny.returnValue, result: errorAny.returnValue });
+              }
+              break; // Stop executing remaining commands in event handler
+            }
           }
-          // Rethrow other errors
+          // Not a control flow command - this is an actual error
+          console.error(`❌ COMMAND FAILED:`, error);
           throw error;
         }
       }
@@ -1349,16 +1456,19 @@ export class Runtime {
     };
 
     // Add behavior parameters to context
-    for (const [key, value] of Object.entries(parameters)) {
-      behaviorContext.locals.set(key, value);
-    }
-
-    // Add behavior parameters to the context as locals
+    // Initialize ALL declared parameters (even if undefined) so they can be set by init block
     if (behavior.parameters) {
       for (const param of behavior.parameters) {
-        if (param in parameters) {
-          behaviorContext.locals.set(param, parameters[param]);
-        }
+        // Set to provided value, or undefined if not provided
+        const value = param in parameters ? parameters[param] : undefined;
+        behaviorContext.locals.set(param, value);
+      }
+    }
+
+    // Add any extra parameters that weren't in the declared parameter list
+    for (const [key, value] of Object.entries(parameters)) {
+      if (!behavior.parameters || !behavior.parameters.includes(key)) {
+        behaviorContext.locals.set(key, value);
       }
     }
 

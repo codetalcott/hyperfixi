@@ -23,6 +23,7 @@ import { createPseudoCommand, PseudoCommand } from './execution/pseudo-command';
 // Control Flow Commands
 import { createIfCommand, IfCommand } from './control-flow/if';
 import { createHaltCommand, HaltCommand } from './control-flow/halt';
+import { createExitCommand, ExitCommand } from './control-flow/exit';
 import { createReturnCommand, ReturnCommand } from './control-flow/return';
 import { createThrowCommand, ThrowCommand } from './control-flow/throw';
 import { createRepeatCommand, RepeatCommand } from './control-flow/repeat';
@@ -92,6 +93,7 @@ export {
   // Control Flow Commands
   createIfCommand, IfCommand,
   createHaltCommand, HaltCommand,
+  createExitCommand, ExitCommand,
   createReturnCommand, ReturnCommand,
   createThrowCommand, ThrowCommand,
   createRepeatCommand, RepeatCommand,
@@ -168,6 +170,7 @@ export const ENHANCED_COMMAND_FACTORIES = {
   // Control Flow Commands
   if: createIfCommand,
   halt: createHaltCommand,
+  exit: createExitCommand,
   return: createReturnCommand,
   throw: createThrowCommand,
   repeat: createRepeatCommand,
@@ -252,7 +255,7 @@ export const ENHANCED_COMMAND_CATEGORIES = {
   creation: ['make'],
   content: ['append'],
   execution: ['call', 'get', 'pseudo-command'],
-  flow: ['if', 'halt', 'return', 'throw', 'repeat', 'unless', 'continue', 'break'],
+  flow: ['if', 'halt', 'exit', 'return', 'throw', 'repeat', 'unless', 'continue', 'break'],
   utility: ['pick'],
   advanced: ['tell', 'js', 'beep', 'async'],
   animation: ['settle', 'measure', 'transition'],

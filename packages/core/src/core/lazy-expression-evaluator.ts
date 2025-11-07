@@ -274,6 +274,7 @@ export class LazyExpressionEvaluator {
         return (node as any).value || (node as any).content || '';
 
       case 'memberExpression':
+      case 'propertyAccess':
         return this.evaluateMemberExpression(node as any, context);
 
       case 'binaryExpression':
@@ -313,6 +314,11 @@ export class LazyExpressionEvaluator {
    */
   private async evaluateIdentifier(node: { name: string }, context: ExecutionContext): Promise<any> {
     const { name } = node;
+
+    // Check for special context variables first
+    if (name === 'event' && 'event' in context) {
+      return (context as any).event;
+    }
 
     // Check if it's a built-in reference expression
     const expression = this.expressionRegistry.get(name);
@@ -377,6 +383,22 @@ export class LazyExpressionEvaluator {
   private async evaluateBinaryExpression(node: any, context: ExecutionContext): Promise<any> {
     const { operator, left, right } = node;
 
+    // Special handling for 'in' operator with selectors - don't evaluate left if it's a selector
+    if (operator === 'in' && left.type === 'selector') {
+      const selector = left.value;
+      const contextElement = await this.evaluate(right, context);
+
+      // Verify we have a valid DOM element as context
+      if (!contextElement || typeof contextElement.querySelectorAll !== 'function') {
+        throw new Error(`'in' operator requires a DOM element as the right operand (got: ${typeof contextElement})`);
+      }
+
+      // Query for ALL matching elements within the context element
+      // Convert NodeList to Array for easier manipulation in hyperscript
+      const nodeList = contextElement.querySelectorAll(selector);
+      return Array.from(nodeList);
+    }
+
     // Evaluate operands
     const leftValue = await this.evaluate(left, context);
     const rightValue = await this.evaluate(right, context);
@@ -402,11 +424,13 @@ export class LazyExpressionEvaluator {
       case '==':
       case '===':
       case 'equals':
+      case 'is':
         const equalsExpr = this.expressionRegistry.get('equals');
         return equalsExpr ? equalsExpr.evaluate(context, leftValue, rightValue) : leftValue === rightValue;
 
       case '!=':
       case '!==':
+      case 'is not':
         const notEqualsExpr = this.expressionRegistry.get('notEquals');
         return notEqualsExpr ? notEqualsExpr.evaluate(context, leftValue, rightValue) : leftValue !== rightValue;
 
@@ -436,6 +460,17 @@ export class LazyExpressionEvaluator {
         const orExpr = this.expressionRegistry.get('or');
         return orExpr ? orExpr.evaluate(context, leftValue, rightValue) : leftValue || rightValue;
 
+      case 'in':
+        // Check if leftValue is in rightValue (array, string, or object)
+        if (Array.isArray(rightValue)) {
+          return rightValue.includes(leftValue);
+        } else if (typeof rightValue === 'string') {
+          return rightValue.includes(String(leftValue));
+        } else if (rightValue && typeof rightValue === 'object') {
+          return leftValue in rightValue;
+        }
+        return false;
+
       default:
         throw new Error(`Unsupported binary operator: "${operator}"`);
     }
@@ -452,6 +487,7 @@ export class LazyExpressionEvaluator {
 
     switch (operator) {
       case 'not':
+      case 'no':
       case '!':
         const notExpr = this.expressionRegistry.get('not');
         return notExpr ? notExpr.evaluate(context, operandValue) : !operandValue;
@@ -473,30 +509,53 @@ export class LazyExpressionEvaluator {
   private async evaluateCallExpression(node: any, context: ExecutionContext): Promise<any> {
     const { callee, arguments: args } = node;
 
-    // Get function name
-    const functionName = callee.name || callee;
+    // Evaluate arguments first
+    const evaluatedArgs = await Promise.all(
+      args.map((arg: any) => this.evaluate(arg, context))
+    );
 
-    // Check if it's a registered expression function
-    const expression = this.expressionRegistry.get(functionName);
-    if (expression) {
-      // Evaluate arguments
-      const evaluatedArgs = await Promise.all(
-        args.map((arg: any) => this.evaluate(arg, context))
-      );
+    // Handle simple function names (identifiers)
+    if (callee.type === 'identifier') {
+      const functionName = callee.name;
 
-      return expression.evaluate(context, ...evaluatedArgs);
+      // Check if it's a registered expression function
+      const expression = this.expressionRegistry.get(functionName);
+      if (expression) {
+        return expression.evaluate(context, ...evaluatedArgs);
+      }
+
+      // Try to resolve from context or global scope
+      const func = context.globals?.get(functionName) || (window as any)[functionName];
+      if (typeof func === 'function') {
+        return func(...evaluatedArgs);
+      }
+
+      throw new Error(`Unknown function: ${functionName}`);
     }
 
-    // For unknown functions, try to resolve from context or global scope
-    const func = context.globals?.get(functionName) || (window as any)[functionName];
+    // Handle method calls (property access like obj.method(...))
+    if (callee.type === 'propertyAccess' || callee.type === 'memberExpression') {
+      // Evaluate the object (e.g., event.target)
+      const object = await this.evaluate(callee.object, context);
+      const propertyName = callee.property.name || callee.property;
+
+      // Get the method
+      const method = object[propertyName];
+      if (typeof method === 'function') {
+        // Call method with proper 'this' binding
+        return method.call(object, ...evaluatedArgs);
+      }
+
+      throw new Error(`Property ${propertyName} is not a function`);
+    }
+
+    // Fallback: evaluate callee as expression
+    const func = await this.evaluate(callee, context);
     if (typeof func === 'function') {
-      const evaluatedArgs = await Promise.all(
-        args.map((arg: any) => this.evaluate(arg, context))
-      );
       return func(...evaluatedArgs);
     }
 
-    throw new Error(`Unknown function: ${functionName}`);
+    throw new Error(`Unknown function: ${callee.name || callee}`);
   }
 
   /**
@@ -567,11 +626,150 @@ export class LazyExpressionEvaluator {
   /**
    * Evaluate template literal
    */
-  private async evaluateTemplateLiteral(node: any, _context: ExecutionContext): Promise<string> {
+  private async evaluateTemplateLiteral(node: any, context: ExecutionContext): Promise<string> {
     const template = node.value || '';
-    // Simplified template evaluation - just return the template for now
-    // Full implementation would parse ${} expressions
-    return template;
+
+    // DEBUG: Log template literal evaluation
+    debug.expressions('TEMPLATE LITERAL: Evaluating', { template, node });
+
+    // Parse and evaluate ${} expressions
+    let result = '';
+    let i = 0;
+
+    while (i < template.length) {
+      // Find next ${ expression
+      const exprStart = template.indexOf('${', i);
+
+      if (exprStart === -1) {
+        // No more expressions, append rest of string
+        result += template.slice(i);
+        break;
+      }
+
+      // Append static text before ${
+      result += template.slice(i, exprStart);
+
+      // Find matching }
+      const exprEnd = template.indexOf('}', exprStart);
+      if (exprEnd === -1) {
+        throw new Error(`Unterminated template expression in: ${template}`);
+      }
+
+      // Extract expression code (between ${ and })
+      const exprCode = template.slice(exprStart + 2, exprEnd);
+
+      debug.expressions('TEMPLATE: Evaluating expression:', exprCode);
+
+      // Evaluate expression - check context variables first
+      let value: any;
+      const trimmed = exprCode.trim();
+
+      if (context.locals.has(trimmed)) {
+        value = context.locals.get(trimmed);
+        debug.expressions(`TEMPLATE: Found in locals: ${trimmed} =`, value);
+      } else if (context.variables && context.variables.has(trimmed)) {
+        value = context.variables.get(trimmed);
+        debug.expressions(`TEMPLATE: Found in variables: ${trimmed} =`, value);
+      } else if (context.globals && context.globals.has(trimmed)) {
+        value = context.globals.get(trimmed);
+        debug.expressions(`TEMPLATE: Found in globals: ${trimmed} =`, value);
+      } else {
+        // Expression is more complex - try to evaluate it with context
+        value = await this.evaluateSimpleExpression(exprCode, context);
+        debug.expressions(`TEMPLATE: Evaluated expression "${exprCode}" =`, value);
+      }
+
+      // Append evaluated value
+      result += String(value);
+
+      // Move past the }
+      i = exprEnd + 1;
+    }
+
+    return result;
+  }
+
+  /**
+   * Evaluate simple expressions like "clientX - xoff" or "clientX-xoff" using context variables
+   * Handles basic arithmetic: +, -, *, /, %
+   */
+  private async evaluateSimpleExpression(exprCode: string, context: ExecutionContext): Promise<any> {
+    debug.expressions('EVAL: Evaluating arithmetic expression:', exprCode);
+
+    // Try to find an operator in the expression
+    // Match identifier/number, operator, identifier/number (with or without spaces)
+    const arithmeticMatch = exprCode.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*|\d+(?:\.\d+)?)\s*([\+\-\*\/\%])\s*([a-zA-Z_$][a-zA-Z0-9_$]*|\d+(?:\.\d+)?)$/);
+
+    if (arithmeticMatch) {
+      const [, left, operator, right] = arithmeticMatch;
+      debug.expressions('EVAL: Parsed arithmetic:', { left, operator, right });
+
+      // Evaluate left and right sides
+      const leftValue = await this.resolveValue(left.trim(), context);
+      const rightValue = await this.resolveValue(right.trim(), context);
+      debug.expressions('EVAL: Resolved values:', { leftValue, rightValue });
+
+      // Perform arithmetic
+      const leftNum = Number(leftValue);
+      const rightNum = Number(rightValue);
+
+      if (!isNaN(leftNum) && !isNaN(rightNum)) {
+        let result: number;
+        switch (operator) {
+          case '+': result = leftNum + rightNum; break;
+          case '-': result = leftNum - rightNum; break;
+          case '*': result = leftNum * rightNum; break;
+          case '/': result = leftNum / rightNum; break;
+          case '%': result = leftNum % rightNum; break;
+          default: result = leftNum;
+        }
+        debug.expressions('EVAL: Arithmetic result:', result);
+        return result;
+      }
+    }
+
+    // Fallback: try to resolve as a single value
+    const fallback = await this.resolveValue(exprCode.trim(), context);
+    debug.expressions('EVAL: Fallback result:', fallback);
+    return fallback;
+  }
+
+  /**
+   * Resolve a value from context or parse as literal
+   */
+  private async resolveValue(name: string, context: ExecutionContext): Promise<any> {
+    debug.expressions(`RESOLVE: Looking for '${name}' in context`);
+
+    // Check context
+    if (context.locals.has(name)) {
+      const value = context.locals.get(name);
+      debug.expressions(`RESOLVE: Found '${name}' in locals:`, value);
+      return value;
+    }
+    if (context.variables && context.variables.has(name)) {
+      const value = context.variables.get(name);
+      debug.expressions(`RESOLVE: Found '${name}' in variables:`, value);
+      return value;
+    }
+    if (context.globals && context.globals.has(name)) {
+      const value = context.globals.get(name);
+      debug.expressions(`RESOLVE: Found '${name}' in globals:`, value);
+      return value;
+    }
+
+    // Try parsing as number
+    const num = Number(name);
+    if (!isNaN(num)) {
+      return num;
+    }
+
+    // Try parsing as string literal
+    if ((name.startsWith('"') && name.endsWith('"')) || (name.startsWith("'") && name.endsWith("'"))) {
+      return name.slice(1, -1);
+    }
+
+    // Return as-is if nothing else works
+    return name;
   }
 
   /**

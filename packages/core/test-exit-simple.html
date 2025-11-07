@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Exit Test</title>
+</head>
+<body>
+    <h1>Simple Exit Command Test</h1>
+
+    <button id="test1" _="on click log 'Before exit' then exit then log 'After exit (should not appear)'">
+        Test 1: Simple exit in event handler
+    </button>
+
+    <br><br>
+
+    <button id="test2" _="on click if true then log 'Before exit' then exit end then log 'After if (should not appear)'">
+        Test 2: Exit inside if block
+    </button>
+
+    <br><br>
+
+    <button id="test3">
+        Test 3: Exit in behavior
+    </button>
+
+    <script type="text/hyperscript">
+behavior SimpleTest()
+  on click
+    log 'Click handler start'
+    exit
+    log 'After exit (should not appear)'
+  end
+end
+    </script>
+
+    <script>
+        document.getElementById('test3').setAttribute('_', 'install SimpleTest()');
+    </script>
+
+    <!-- Load HyperFixi -->
+    <script src="dist/hyperfixi-browser.js"></script>
+
+    <script>
+        console.log('Test page loaded - check console for exit command behavior');
+    </script>
+</body>
+</html>

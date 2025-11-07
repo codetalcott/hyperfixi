@@ -7,11 +7,11 @@ import type { ASTNode, ExecutionContext } from '../types/core';
 import { debug } from '../utils/debug';
 
 // Import all expression categories
-import { referenceExpressions } from '../expressions/references/index';
+import { referencesExpressions } from '../expressions/references/index';
 import { logicalExpressions } from '../expressions/logical/index';
 import { conversionExpressions } from '../expressions/conversion/index';
 import { positionalExpressions } from '../expressions/positional/index';
-import { propertyExpressions } from '../expressions/properties/index';
+import { propertiesExpressions } from '../expressions/properties/index';
 import { specialExpressions } from '../expressions/special/index';
 
 export class ExpressionEvaluator {
@@ -27,7 +27,7 @@ export class ExpressionEvaluator {
    */
   private registerExpressions(): void {
     // Register reference expressions
-    Object.entries(referenceExpressions).forEach(([name, impl]) => {
+    Object.entries(referencesExpressions).forEach(([name, impl]) => {
       this.expressionRegistry.set(name, impl);
     });
 
@@ -47,7 +47,7 @@ export class ExpressionEvaluator {
     });
 
     // Register property expressions
-    Object.entries(propertyExpressions).forEach(([name, impl]) => {
+    Object.entries(propertiesExpressions).forEach(([name, impl]) => {
       this.expressionRegistry.set(name, impl);
     });
 
@@ -437,8 +437,10 @@ export class ExpressionEvaluator {
         throw new Error(`'in' operator requires a DOM element as the right operand (got: ${typeof contextElement})`);
       }
 
-      // Query for the selector within the context element
-      return contextElement.querySelector(selector);
+      // Query for ALL matching elements within the context element
+      // Convert NodeList to Array for easier manipulation in hyperscript
+      const nodeList = contextElement.querySelectorAll(selector);
+      return Array.from(nodeList);
     }
 
     // Evaluate operands normally for other operators

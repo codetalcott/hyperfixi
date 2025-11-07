@@ -435,7 +435,7 @@ function isAriaAttribute(property: string): boolean {
 // Export all property expressions
 // ============================================================================
 
-export const propertyExpressions = {
+export const propertiesExpressions = {
   possessive: possessiveExpression,
   my: myExpression,
   its: itsExpression,
@@ -447,7 +447,7 @@ export const propertyExpressions = {
   idReference: idReferenceExpression,
 } as const;
 
-export type PropertyExpressionName = keyof typeof propertyExpressions;
+export type PropertyExpressionName = keyof typeof propertiesExpressions;
 
 // Export helper functions for testing
 export { getElementProperty, isDataAttribute, isAriaAttribute };

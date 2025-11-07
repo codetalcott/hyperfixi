@@ -66,7 +66,25 @@ export class HaltCommand implements CommandImplementation<
     context: TypedExecutionContext
   ): Promise<HaltCommandOutput> {
     // Check if we're halting an event (from "halt the event")
-    const targetToHalt = input?.target;
+    // Input can be:
+    // 1. The event object directly
+    // 2. { target: eventObject }
+    // 3. The string "the" (from "halt the event") - use context.event
+
+    debug.command('HALT: Received input:', {
+      input,
+      inputType: typeof input,
+      hasContextEvent: !!context.event
+    });
+
+    // If input is "the" (from "halt the event"), use context.event
+    let targetToHalt;
+    if ((input as any) === 'the' && context.event) {
+      targetToHalt = context.event;
+      debug.command('HALT: Using event from context');
+    } else {
+      targetToHalt = (input as any)?.target || input;
+    }
 
     // If target is an event object, prevent its default behavior
     if (targetToHalt && typeof targetToHalt === 'object' && 'preventDefault' in targetToHalt) {
@@ -84,22 +102,12 @@ export class HaltCommand implements CommandImplementation<
       };
     }
 
-    // Also check context.event in case "the event" resolved to context.event
-    if (!targetToHalt && context.event && 'preventDefault' in context.event) {
-      const event = context.event as Event;
-      event.preventDefault();
-      event.stopPropagation();
+    // Note: We do NOT automatically halt the event just because context.event exists.
+    // Only halt the event if explicitly specified via "halt the event" syntax,
+    // which will set input.target to the event object.
+    // Plain "halt" command should always stop execution, not prevent the event.
 
-      debug.command('HALT: Event from context prevented');
-
-      return {
-        halted: true,
-        timestamp: Date.now(),
-        eventHalted: true
-      };
-    }
-
-    // No event to halt - this is a regular "halt" command to stop execution
+    // This is a regular "halt" command to stop execution
     debug.command('HALT: Stopping command execution');
 
     // Set a halt flag in the context if it supports it

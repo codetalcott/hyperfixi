@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug closest in behavior</title>
+    <style>
+        .sortable-item {
+            padding: 20px;
+            margin: 10px;
+            background: purple;
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug closest() in behavior context</h1>
+
+    <script type="text/hyperscript">
+behavior TestClosest()
+  on pointerdown
+    log '1. event:', event
+    log '2. event.target:', event.target
+    log '3. typeof event.target:', typeof event.target
+    log '4. event.target.closest:', event.target.closest
+    log '5. typeof event.target.closest:', typeof event.target.closest
+    set result to event.target.closest('.sortable-item')
+    log '6. result:', result
+    if result
+      log '✅ Found item!'
+    else
+      log '❌ Not found'
+    end
+  end
+end
+    </script>
+
+    <div class="sortable-item" _="install TestClosest()">
+        Click me to test closest()
+    </div>
+
+    <script src="dist/hyperfixi-browser.js"></script>
+    <script>
+        console.log('Debug page loaded');
+    </script>
+</body>
+</html>

@@ -489,7 +489,7 @@ export class Parser {
     // Check if the name is in the COMMANDS set from tokenizer
     const COMMANDS = new Set([
       'add', 'append', 'async', 'beep', 'break', 'call', 'continue', 'decrement',
-      'default', 'fetch', 'get', 'go', 'halt', 'hide', 'if', 'increment', 'install', 'js', 'log',
+      'default', 'exit', 'fetch', 'get', 'go', 'halt', 'hide', 'if', 'increment', 'install', 'js', 'log',
       'make', 'measure', 'pick', 'put', 'remove', 'render', 'repeat', 'return',
       'send', 'set', 'settle', 'show', 'take', 'tell', 'throw', 'toggle',
       'transition', 'trigger', 'unless', 'wait'
@@ -1160,13 +1160,25 @@ export class Parser {
     }
 
     // Parse optional index variable
+    // Supports both "index" and "with index" syntax
     let indexVariable: string | null = null;
-    if (this.check('index')) {
+    if (this.check('with')) {
+      // Peek ahead to verify this is "with index" pattern
+      const nextToken = this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
+      if (nextToken && nextToken.value.toLowerCase() === 'index') {
+        this.advance(); // consume 'with'
+        this.advance(); // consume 'index'
+        indexVariable = 'index'; // default variable name
+      }
+      // Otherwise leave 'with' alone - might be for something else (like transition timing)
+    } else if (this.check('index')) {
       this.advance(); // consume 'index'
       const indexToken = this.peek();
       if (indexToken.type === TokenType.IDENTIFIER) {
         indexVariable = indexToken.value;
         this.advance();
+      } else {
+        indexVariable = 'index'; // default if no variable name provided
       }
     }
 
@@ -1658,13 +1670,59 @@ export class Parser {
     const commandName = commandToken.value.toLowerCase(); // Preserve 'if' or 'unless'
     const args: ASTNode[] = [];
 
-    // Check if this is multi-line (has 'then') or single-line first
-    // by peeking ahead to see if 'then' appears before any command
-    const isMultiLine = this.check('then');
+    // Check if this is multi-line:
+    // 1. Explicit 'then' keyword: if <condition> then ... end
+    // 2. Implicit multi-line (no 'then' but multiple commands on separate lines): if <condition>\n  <cmd>\n  <cmd>\n end
+    // 3. Single-line (no 'then', single command on same line): if <condition> <command>
+    const hasThen = this.check('then');
+
+    // Look ahead to check for multi-line form without 'then'
+    // We need to distinguish:
+    //   if no dragHandle set x to y    (single-line, command on SAME line as if)
+    //   if no dragHandle               (multi-line, command on DIFFERENT line)
+    //     log 'test'
+    //   end
+    // Key insight: Only check the FIRST command's line position
+    let hasImplicitMultiLineEnd = false;
+    if (!hasThen) {
+      const savedPosition = this.current;
+      const ifStatementLine = commandToken.line; // Line where 'if' keyword appears
+      const maxLookahead = 100;
+
+      // Scan forward to find the FIRST command after the condition
+      while (!this.isAtEnd() && this.current - savedPosition < maxLookahead) {
+        const token = this.peek();
+        const tokenValue = token.value?.toLowerCase();
+
+        // Stop at structural boundaries
+        if (tokenValue === 'behavior' || tokenValue === 'def' || tokenValue === 'on' || tokenValue === 'end') {
+          break;
+        }
+
+        // When we find the FIRST command, check its line position
+        if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(tokenValue)) {
+          // If first command is on a DIFFERENT line than if, it's multi-line
+          // If first command is on the SAME line as if, it's single-line
+          if (token.line !== undefined && token.line !== ifStatementLine) {
+            hasImplicitMultiLineEnd = true;
+          }
+          // Found first command, stop scanning
+          break;
+        }
+
+        this.advance();
+      }
+
+      this.current = savedPosition;
+    }
+
+    const isMultiLine = hasThen || hasImplicitMultiLineEnd;
 
     let condition: ASTNode;
     if (isMultiLine) {
-      // Multi-line form: parse condition normally until 'then'
+      // Multi-line form: parse condition using standard expression parser
+      // This works for both explicit (with 'then') and implicit (without 'then') forms
+      // because parseExpression naturally stops at command boundaries
       condition = this.parseExpression();
     } else {
       // Single-line form: parse condition carefully, stopping at COMMAND tokens
@@ -1711,8 +1769,10 @@ export class Parser {
     args.push(condition);
 
     if (isMultiLine) {
-      // Multi-line form: if condition then ... end
-      this.advance(); // consume 'then'
+      // Multi-line form: if condition then ... end (or if condition ... end)
+      if (hasThen) {
+        this.advance(); // consume 'then' if present
+      }
 
       // Parse command block until 'else' or 'end'
       const thenCommands: ASTNode[] = [];
@@ -2086,22 +2146,31 @@ export class Parser {
     }
 
     // Handle identifiers, keywords, and commands
-    if (this.matchTokenType(TokenType.IDENTIFIER) ||
-        this.matchTokenType(TokenType.KEYWORD) ||
-        this.matchTokenType(TokenType.CONTEXT_VAR) ||
-        this.matchTokenType(TokenType.COMMAND)) {
+    // BUT: Don't consume structural keywords like 'end', 'else', 'then' as identifiers
+    const currentToken = this.peek();
+    const isStructuralKeyword = currentToken && (
+      currentToken.value === 'end' ||
+      currentToken.value === 'else' ||
+      currentToken.value === 'then'
+    );
+
+    if (!isStructuralKeyword &&
+        (this.matchTokenType(TokenType.IDENTIFIER) ||
+         this.matchTokenType(TokenType.KEYWORD) ||
+         this.matchTokenType(TokenType.CONTEXT_VAR) ||
+         this.matchTokenType(TokenType.COMMAND))) {
       const token = this.previous();
-      
+
       // Handle constructor calls with 'new' keyword
       if (token.value === 'new') {
         return this.parseConstructorCall();
       }
-      
+
       // Handle special hyperscript constructs
       if (token.value === 'on') {
         return this.parseEventHandler();
       }
-      
+
       if (token.value === 'if') {
         return this.parseConditional();
       }

@@ -459,7 +459,7 @@ export const ofStyleRefExpression: ExpressionImplementation = {
 // Export all reference expressions
 // ============================================================================
 
-export const referenceExpressions = {
+export const referencesExpressions = {
   me: meExpression,
   you: youExpression,
   it: itExpression,
@@ -479,4 +479,4 @@ export const referenceExpressions = {
   ofStyleRef: ofStyleRefExpression,
 } as const;
 
-export type ReferenceExpressionName = keyof typeof referenceExpressions;
+export type ReferenceExpressionName = keyof typeof referencesExpressions;

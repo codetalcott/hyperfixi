@@ -8,11 +8,11 @@ import { createTestElement, createMockHyperscriptContext } from '../test-setup';
 import type { ExecutionContext } from '../types/core';
 
 // Import all expression categories
-import { referenceExpressions } from './references/index';
+import { referencesExpressions } from './references/index';
 import { logicalExpressions } from './logical/index';
 import { conversionExpressions } from './conversion/index';
 import { positionalExpressions } from './positional/index';
-import { propertyExpressions } from './properties/index';
+import { propertiesExpressions } from './properties/index';
 import { specialExpressions } from './special/index';
 
 describe('Expression Integration Tests', () => {
@@ -57,30 +57,30 @@ describe('Expression Integration Tests', () => {
 
   describe('Reference + Property Combinations', () => {
     it('should handle "my attribute data-value"', async () => {
-      const result = await propertyExpressions.my.evaluate(context, 'data-value');
+      const result = await propertiesExpressions.my.evaluate(context, 'data-value');
       expect(result).toBe('10');
     });
 
     it('should handle "the closest <section/>"', async () => {
-      const result = await referenceExpressions.closest.evaluate(context, 'section');
+      const result = await referencesExpressions.closest.evaluate(context, 'section');
       expect(result?.id).toBe('main-section');
     });
 
     it('should handle "my closest <section/>\'s className"', async () => {
       // Step 1: Get closest section to me
-      const section = await referenceExpressions.closest.evaluate(context, 'section');
+      const section = await referencesExpressions.closest.evaluate(context, 'section');
       
       // Step 2: Get its className property
-      const result = await propertyExpressions.possessive.evaluate(context, section, 'className');
+      const result = await propertiesExpressions.possessive.evaluate(context, section, 'className');
       expect(result).toBe('section active');
     });
 
     it('should handle "#container\'s children"', async () => {
       // Step 1: Get element by ID
-      const container = await propertyExpressions.idReference.evaluate(context, 'container');
+      const container = await propertiesExpressions.idReference.evaluate(context, 'container');
       
       // Step 2: Get its children property
-      const children = await propertyExpressions.possessive.evaluate(context, container, 'children');
+      const children = await propertiesExpressions.possessive.evaluate(context, container, 'children');
       expect(Array.isArray(children)).toBe(true);
       expect(children.length).toBe(3); // section, form, div#quotes
     });
@@ -89,7 +89,7 @@ describe('Expression Integration Tests', () => {
   describe('Positional + Reference Combinations', () => {
     it('should handle "first in <button/>"', async () => {
       // Step 1: Get all buttons
-      const buttons = await referenceExpressions.elementWithSelector.evaluate(context, 'button');
+      const buttons = await referencesExpressions.elementWithSelector.evaluate(context, 'button');
       
       // Step 2: Get first button
       const firstButton = await positionalExpressions.first.evaluate(context, buttons);
@@ -98,7 +98,7 @@ describe('Expression Integration Tests', () => {
 
     it('should handle "last of <p/> in #container"', async () => {
       // Step 1: Get container
-      const container = await propertyExpressions.idReference.evaluate(context, 'container');
+      const container = await propertiesExpressions.idReference.evaluate(context, 'container');
       
       // Step 2: Find paragraphs within container
       const paragraphs = Array.from(container!.querySelectorAll('p'));
@@ -114,7 +114,7 @@ describe('Expression Integration Tests', () => {
     });
 
     it('should handle "previous <button/> from #btn2"', async () => {
-      const btn2 = await propertyExpressions.idReference.evaluate(context, 'btn2');
+      const btn2 = await propertiesExpressions.idReference.evaluate(context, 'btn2');
       const result = await positionalExpressions.previous.evaluate(context, 'button', btn2 as HTMLElement);
       expect(result?.id).toBe('btn1');
     });
@@ -123,7 +123,7 @@ describe('Expression Integration Tests', () => {
   describe('Logical + Conversion Combinations', () => {
     it('should handle "my data-value as Int > 5"', async () => {
       // Step 1: Get my data-value
-      const dataValue = await propertyExpressions.my.evaluate(context, 'data-value');
+      const dataValue = await propertiesExpressions.my.evaluate(context, 'data-value');
       
       // Step 2: Convert to Int
       const intValue = await conversionExpressions.as.evaluate(context, dataValue, 'Int');
@@ -139,7 +139,7 @@ describe('Expression Integration Tests', () => {
       context.me = input;
       
       // Step 1: Get closest form
-      const form = await referenceExpressions.closest.evaluate(context, 'form');
+      const form = await referencesExpressions.closest.evaluate(context, 'form');
       
       // Step 2: Convert form to Values
       const formValues = await conversionExpressions.as.evaluate(context, form, 'Values');
@@ -157,7 +157,7 @@ describe('Expression Integration Tests', () => {
       const leftValue = await conversionExpressions.as.evaluate(context, '10', 'Int');
       
       // Step 2: Get my data-value and convert to Int
-      const myDataValue = await propertyExpressions.my.evaluate(context, 'data-value');
+      const myDataValue = await propertiesExpressions.my.evaluate(context, 'data-value');
       const rightValue = await conversionExpressions.as.evaluate(context, myDataValue, 'Int');
       
       // Step 3: Compare
@@ -169,29 +169,29 @@ describe('Expression Integration Tests', () => {
   describe('Complex Property Access Chains', () => {
     it('should handle "window\'s location\'s href"', async () => {
       // Step 1: Get window
-      const windowObj = await referenceExpressions.window.evaluate(context);
+      const windowObj = await referencesExpressions.window.evaluate(context);
       
       // Step 2: Get location property
-      const location = await propertyExpressions.possessive.evaluate(context, windowObj, 'location');
+      const location = await propertiesExpressions.possessive.evaluate(context, windowObj, 'location');
       
       // Step 3: Get href property
-      const href = await propertyExpressions.possessive.evaluate(context, location, 'href');
+      const href = await propertiesExpressions.possessive.evaluate(context, location, 'href');
       expect(typeof href).toBe('string');
       expect(href).toContain('://'); // Should be a valid URL
     });
 
     it('should handle "document\'s body\'s children\'s length"', async () => {
       // Step 1: Get document
-      const doc = await referenceExpressions.document.evaluate(context);
+      const doc = await referencesExpressions.document.evaluate(context);
       
       // Step 2: Get body
-      const body = await propertyExpressions.possessive.evaluate(context, doc, 'body');
+      const body = await propertiesExpressions.possessive.evaluate(context, doc, 'body');
       
       // Step 3: Get children
-      const children = await propertyExpressions.possessive.evaluate(context, body, 'children');
+      const children = await propertiesExpressions.possessive.evaluate(context, body, 'children');
       
       // Step 4: Get length
-      const length = await propertyExpressions.possessive.evaluate(context, children, 'length');
+      const length = await propertiesExpressions.possessive.evaluate(context, children, 'length');
       expect(typeof length).toBe('number');
       expect(length).toBeGreaterThan(0);
     });
@@ -200,7 +200,7 @@ describe('Expression Integration Tests', () => {
   describe('Array Operations with Conversions', () => {
     it('should handle "it\'s values\'s first as String"', async () => {
       // Step 1: Get it's values
-      const values = await propertyExpressions.its.evaluate(context, 'values');
+      const values = await propertiesExpressions.its.evaluate(context, 'values');
       
       // Step 2: Get first value
       const firstValue = await positionalExpressions.first.evaluate(context, values);
@@ -212,7 +212,7 @@ describe('Expression Integration Tests', () => {
 
     it('should handle "last of it\'s values > 3"', async () => {
       // Step 1: Get it's values
-      const values = await propertyExpressions.its.evaluate(context, 'values');
+      const values = await propertiesExpressions.its.evaluate(context, 'values');
       
       // Step 2: Get last value
       const lastValue = await positionalExpressions.last.evaluate(context, values);
@@ -224,7 +224,7 @@ describe('Expression Integration Tests', () => {
 
     it('should handle "it\'s values at -2 == 4"', async () => {
       // Step 1: Get it's values
-      const values = await propertyExpressions.its.evaluate(context, 'values');
+      const values = await propertiesExpressions.its.evaluate(context, 'values');
       
       // Step 2: Get element at index -2 (second from end)
       const value = await positionalExpressions.at.evaluate(context, -2, values);
@@ -238,11 +238,11 @@ describe('Expression Integration Tests', () => {
   describe('CSS Selector Complex Combinations', () => {
     it('should handle "<button:not(.secondary)/> contains \'Button 1\'"', async () => {
       // Step 1: Get buttons that are not secondary
-      const buttons = await referenceExpressions.elementWithSelector.evaluate(context, 'button:not(.secondary)');
+      const buttons = await referencesExpressions.elementWithSelector.evaluate(context, 'button:not(.secondary)');
       
       // Step 2: Get first button's text content
       const firstButton = await positionalExpressions.first.evaluate(context, buttons);
-      const textContent = await propertyExpressions.possessive.evaluate(context, firstButton, 'textContent');
+      const textContent = await propertiesExpressions.possessive.evaluate(context, firstButton, 'textContent');
       
       // Step 3: Check if it contains 'Button 1'
       const result = await logicalExpressions.contains.evaluate(context, textContent, 'Button 1');
@@ -251,7 +251,7 @@ describe('Expression Integration Tests', () => {
 
     it('should handle "<.content/> that match \'.hidden\'"', async () => {
       // Step 1: Get all content elements
-      const contentElements = await referenceExpressions.elementWithSelector.evaluate(context, '.content');
+      const contentElements = await referencesExpressions.elementWithSelector.evaluate(context, '.content');
       
       // Step 2: Check each one for .hidden class
       let hiddenCount = 0;
@@ -271,7 +271,7 @@ describe('Expression Integration Tests', () => {
       context.me = input;
       
       // Step 1: Get closest form
-      const form = await referenceExpressions.closest.evaluate(context, 'form');
+      const form = await referencesExpressions.closest.evaluate(context, 'form');
       
       // Step 2: Convert to Values:JSON
       const jsonValues = await conversionExpressions.as.evaluate(context, form, 'Values:JSON');
@@ -293,13 +293,13 @@ describe('Expression Integration Tests', () => {
       context.me = input;
       
       // Step 1: Get closest form
-      const form = await referenceExpressions.closest.evaluate(context, 'form');
+      const form = await referencesExpressions.closest.evaluate(context, 'form');
       
       // Step 2: Find age input within form
       const ageInput = form!.querySelector('input[name="age"]') as HTMLInputElement;
       
       // Step 3: Get its value and convert to Int
-      const value = await propertyExpressions.possessive.evaluate(context, ageInput, 'value');
+      const value = await propertiesExpressions.possessive.evaluate(context, ageInput, 'value');
       const intValue = await conversionExpressions.as.evaluate(context, value, 'Int');
       
       expect(intValue).toBe(25);
@@ -312,7 +312,7 @@ describe('Expression Integration Tests', () => {
   describe('Mathematical Expression Combinations', () => {
     it('should handle "(my data-value as Int + 5) * 2"', async () => {
       // Step 1: Get my data-value and convert to Int
-      const dataValue = await propertyExpressions.my.evaluate(context, 'data-value');
+      const dataValue = await propertiesExpressions.my.evaluate(context, 'data-value');
       const intValue = await conversionExpressions.as.evaluate(context, dataValue, 'Int');
       
       // Step 2: Add 5
@@ -326,10 +326,10 @@ describe('Expression Integration Tests', () => {
 
     it('should handle "it\'s values\'s length mod 3"', async () => {
       // Step 1: Get it's values
-      const values = await propertyExpressions.its.evaluate(context, 'values');
+      const values = await propertiesExpressions.its.evaluate(context, 'values');
       
       // Step 2: Get length
-      const length = await propertyExpressions.possessive.evaluate(context, values, 'length');
+      const length = await propertiesExpressions.possessive.evaluate(context, values, 'length');
       
       // Step 3: Modulo 3
       const result = await specialExpressions.modulo.evaluate(context, length, 3);
@@ -359,7 +359,7 @@ describe('Expression Integration Tests', () => {
       const matchesPrimary = await logicalExpressions.matches.evaluate(context, context.me, '.primary');
       
       // Step 2: Get my data-value and convert to Int
-      const dataValue = await propertyExpressions.my.evaluate(context, 'data-value');
+      const dataValue = await propertiesExpressions.my.evaluate(context, 'data-value');
       const intValue = await conversionExpressions.as.evaluate(context, dataValue, 'Int');
       
       // Step 3: Check if value > 5
@@ -373,11 +373,11 @@ describe('Expression Integration Tests', () => {
 
     it('should handle "if no <.missing/> or <.content/> exists"', async () => {
       // Step 1: Check if no .missing elements exist
-      const missingElements = await referenceExpressions.elementWithSelector.evaluate(context, '.missing');
+      const missingElements = await referencesExpressions.elementWithSelector.evaluate(context, '.missing');
       const noMissing = await logicalExpressions.not.evaluate(context, missingElements.length > 0);
       
       // Step 2: Check if .content elements exist
-      const contentElements = await referenceExpressions.elementWithSelector.evaluate(context, '.content');
+      const contentElements = await referencesExpressions.elementWithSelector.evaluate(context, '.content');
       const hasContent = contentElements.length > 0;
       
       // Step 3: Combine with OR
@@ -396,7 +396,7 @@ describe('Expression Integration Tests', () => {
       context.me = input;
       
       // Step 1: Get closest form and convert to Values
-      const form = await referenceExpressions.closest.evaluate(context, 'form');
+      const form = await referencesExpressions.closest.evaluate(context, 'form');
       const formValues = await conversionExpressions.as.evaluate(context, form, 'Values');
       
       // Step 2: Check if contains username
@@ -421,7 +421,7 @@ describe('Expression Integration Tests', () => {
       const searchTerm = 'Ein';
       
       // Step 1: Get quotes container
-      const quotes = await propertyExpressions.idReference.evaluate(context, 'quotes');
+      const quotes = await propertiesExpressions.idReference.evaluate(context, 'quotes');
       
       // Step 2: Get all blockquotes
       const blockquotes = Array.from(quotes!.querySelectorAll('blockquote'));
@@ -429,7 +429,7 @@ describe('Expression Integration Tests', () => {
       // Step 3: Filter by data-author containing search term
       const filteredQuotes = [];
       for (const quote of blockquotes) {
-        const author = await propertyExpressions.possessive.evaluate(context, quote, 'data-author');
+        const author = await propertiesExpressions.possessive.evaluate(context, quote, 'data-author');
         const matches = await logicalExpressions.contains.evaluate(context, author, searchTerm);
         if (matches) {
           filteredQuotes.push(quote);
@@ -444,7 +444,7 @@ describe('Expression Integration Tests', () => {
       // Pattern: "next <button/> in closest <section/> with class primary"
       
       // Step 1: Get closest section
-      const section = await referenceExpressions.closest.evaluate(context, 'section');
+      const section = await referencesExpressions.closest.evaluate(context, 'section');
       
       // Step 2: Find next button within that section
       const nextButton = await positionalExpressions.nextWithin.evaluate(context, 'button', 'section', context.me);
@@ -460,7 +460,7 @@ describe('Expression Integration Tests', () => {
   describe('Error Handling and Edge Cases', () => {
     it('should handle null/undefined gracefully in chains', async () => {
       // Test accessing property of null element
-      const result = await propertyExpressions.possessive.evaluate(context, null, 'nonexistent');
+      const result = await propertiesExpressions.possessive.evaluate(context, null, 'nonexistent');
       expect(result).toBeUndefined();
     });
 
@@ -480,7 +480,7 @@ describe('Expression Integration Tests', () => {
     });
 
     it('should handle missing elements in selectors', async () => {
-      const missing = await referenceExpressions.elementWithSelector.evaluate(context, '.nonexistent');
+      const missing = await referencesExpressions.elementWithSelector.evaluate(context, '.nonexistent');
       expect(missing).toEqual([]);
       
       const first = await positionalExpressions.first.evaluate(context, missing);
@@ -516,7 +516,7 @@ describe('Expression Integration Tests', () => {
       document.body.appendChild(container);
       
       // Test selector performance
-      const evenElements = await referenceExpressions.elementWithSelector.evaluate(context, '.even');
+      const evenElements = await referencesExpressions.elementWithSelector.evaluate(context, '.even');
       expect(evenElements.length).toBe(50);
       
       // Cleanup

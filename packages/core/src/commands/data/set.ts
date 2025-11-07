@@ -379,16 +379,10 @@ export class SetCommand implements CommandImplementation<
                          (typeof window !== 'undefined' && variableName in window ? (window as any)[variableName] : undefined) ||
                          (context as any)[variableName];
 
-    // Check if variable exists on window (browser global)
-    if (typeof window !== 'undefined' && variableName in window) {
-      // Update window property
-      (window as any)[variableName] = value;
-      // Also store in globals for consistency
-      context.globals.set(variableName, value);
-    } else {
-      // Regular variable handling - store in locals Map
-      context.locals.set(variableName, value);
-    }
+    // ALWAYS store in locals unless explicitly marked as global (via 'set global x to ...')
+    // This ensures variables like startX, xoff, yoff remain scoped to each element's context
+    // and don't leak into the shared globals Map
+    context.locals.set(variableName, value);
 
     // Also set special context properties for commonly used variables
     if (variableName === 'result' || variableName === 'it') {

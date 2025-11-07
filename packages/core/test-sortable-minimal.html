@@ -213,6 +213,7 @@ behavior Sortable()
     log '✅ Dragging:', draggedItem.textContent.trim()
     halt the event
     add .dragging to draggedItem
+    set lastTarget to null
     log '🔄 Entering drag loop...'
     repeat until event pointerup from document
       wait for pointermove(clientY) or pointerup from document
@@ -231,16 +232,19 @@ behavior Sortable()
           if clientY < itemMid
             set targetItem to item
             log '  🎯 Target found: item', index
-            exit
+            break
           end
         end
       end
-      if targetItem
-        log '⬆️ Inserting before target'
-        call me.insertBefore(draggedItem, targetItem)
-      else
-        log '⬇️ Appending to end'
-        call me.appendChild(draggedItem)
+      if targetItem is not lastTarget
+        if targetItem
+          log '⬆️ Inserting before target'
+          call me.insertBefore(draggedItem, targetItem)
+        else
+          log '⬇️ Appending to end'
+          call me.appendChild(draggedItem)
+        end
+        set lastTarget to targetItem
       end
     end
     log '👆 Pointer released'
@@ -300,6 +304,11 @@ end
     </div>
 
     <!-- Load HyperFixi -->
+    <script>
+        // Enable debug mode BEFORE loading HyperFixi
+        window.__HYPERFIXI_DEBUG__ = true;
+        console.log('🔧 DEBUG MODE ENABLED');
+    </script>
     <script src="dist/hyperfixi-browser.js"></script>
 
     <script>

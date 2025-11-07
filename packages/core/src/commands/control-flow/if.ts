@@ -1,14 +1,15 @@
 /**
  * Enhanced If Command Implementation
  * Conditional execution based on boolean expressions
- * 
+ *
  * Syntax: if <condition> then <commands> [else <commands>]
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
 import type { CommandImplementation, ValidationResult } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
+import { debug } from '../../utils/debug';
 
 // Input type definition
 export interface IfCommandInput {
@@ -132,21 +133,35 @@ export class IfCommand implements CommandImplementation<
   ): Promise<IfCommandOutput> {
     const { condition, thenCommands, elseCommands } = input;
 
-    // Evaluate the condition
+    debug.command('IF COMMAND received input:', {
+      condition,
+      conditionType: typeof condition,
+      thenCommands,
+      thenType: (thenCommands as any)?.type,
+      elseCommands,
+      elseType: (elseCommands as any)?.type
+    });
+
+    // Evaluate the condition (might already be evaluated by runtime)
     const conditionResult = this.evaluateCondition(condition, context);
+
+    debug.command('IF COMMAND: conditionResult =', conditionResult);
 
     let executedBranch: 'then' | 'else' | 'none';
     let result: any = undefined;
 
     if (conditionResult) {
       // Execute then branch
+      debug.command('IF COMMAND: Executing THEN branch');
       executedBranch = 'then';
-      result = await this.executeCommands(thenCommands, context);
-    } else if (elseCommands && elseCommands.length > 0) {
+      result = await this.executeCommandsOrBlock(thenCommands, context);
+    } else if (elseCommands && (Array.isArray(elseCommands) ? elseCommands.length > 0 : elseCommands)) {
       // Execute else branch
+      debug.command('IF COMMAND: Executing ELSE branch');
       executedBranch = 'else';
-      result = await this.executeCommands(elseCommands, context);
+      result = await this.executeCommandsOrBlock(elseCommands, context);
     } else {
+      debug.command('IF COMMAND: No branch executed (no else)');
       executedBranch = 'none';
     }
 
@@ -186,6 +201,40 @@ export class IfCommand implements CommandImplementation<
 
     // For numbers, objects, etc., use JavaScript truthiness
     return Boolean(condition);
+  }
+
+  private async executeCommandsOrBlock(commandsOrBlock: any, context: TypedExecutionContext): Promise<any> {
+    // Handle block nodes from parser (type: 'block', commands: [...])
+    if (commandsOrBlock && typeof commandsOrBlock === 'object' && commandsOrBlock.type === 'block') {
+      return this.executeBlock(commandsOrBlock, context);
+    }
+
+    // Handle array of commands
+    if (Array.isArray(commandsOrBlock)) {
+      return this.executeCommands(commandsOrBlock, context);
+    }
+
+    // Single command or value
+    return commandsOrBlock;
+  }
+
+  private async executeBlock(block: any, context: TypedExecutionContext): Promise<any> {
+    // Get the runtime execute function from context
+    const runtimeExecute = context.locals.get('_runtimeExecute') as any;
+    if (!runtimeExecute) {
+      throw new Error('Runtime execute function not available in context');
+    }
+
+    let lastResult: any = undefined;
+
+    // Execute each command in the block using runtime
+    if (block.commands && Array.isArray(block.commands)) {
+      for (const command of block.commands) {
+        lastResult = await runtimeExecute(command, context);
+      }
+    }
+
+    return lastResult;
   }
 
   private async executeCommands(commands: any[], context: TypedExecutionContext): Promise<any> {

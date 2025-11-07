@@ -6,11 +6,11 @@
 import type { ASTNode, ExecutionContext } from '../types/core';
 
 // Import Phase 3 expression system
-import { referenceExpressions } from '../expressions/references/index';
+import { referencesExpressions } from '../expressions/references/index';
 import { logicalExpressions } from '../expressions/logical/index';
 import { conversionExpressions } from '../expressions/conversion/index';
 import { positionalExpressions } from '../expressions/positional/index';
-import { propertyExpressions } from '../expressions/properties/index';
+import { propertiesExpressions } from '../expressions/properties/index';
 import { specialExpressions as importedSpecialExpressions } from '../expressions/special/index';
 import { mathematicalExpressions } from '../expressions/mathematical/index';
 
@@ -146,15 +146,15 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
 
   // Handle context variables using Phase 3 reference expressions
   if (name === 'me') {
-    value = referenceExpressions.me.evaluate(context);
+    value = referencesExpressions.me.evaluate(context);
   } else if (name === 'you') {
-    value = referenceExpressions.you.evaluate(context);
+    value = referencesExpressions.you.evaluate(context);
   } else if (name === 'it') {
-    value = referenceExpressions.it.evaluate(context);
+    value = referencesExpressions.it.evaluate(context);
   } else if (name === 'window') {
-    value = referenceExpressions.window.evaluate(context);
+    value = referencesExpressions.window.evaluate(context);
   } else if (name === 'document') {
-    value = referenceExpressions.document.evaluate(context);
+    value = referencesExpressions.document.evaluate(context);
   } else if (context.locals && context.locals.has(name)) {
     // Check if identifier exists in context scope
     value = context.locals.get(name);
@@ -315,7 +315,7 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
     
     switch (funcName) {
       case 'closest':
-        return referenceExpressions.closest.evaluate(context, ...args);
+        return referencesExpressions.closest.evaluate(context, ...args);
         
       case 'first':
         return positionalExpressions.first.evaluate(context, ...args);
@@ -351,7 +351,7 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
  */
 async function evaluateSelector(node: any, context: ExecutionContext): Promise<any> {
   const selector = node.value;
-  const result = await referenceExpressions.elementWithSelector.evaluate(context, selector);
+  const result = await referencesExpressions.elementWithSelector.evaluate(context, selector);
   
   // If result is array, return first element to match hyperscript behavior
   if (Array.isArray(result) && result.length > 0) {
@@ -367,9 +367,9 @@ async function evaluateSelector(node: any, context: ExecutionContext): Promise<a
 async function evaluatePossessiveExpression(node: any, context: ExecutionContext): Promise<any> {
   const object = await evaluateAST(node.object, context);
   const propertyName = node.property.name;
-  
+
   // Use Phase 3 property expression system
-  return propertyExpressions.possessive.evaluate(context, object, propertyName);
+  return propertiesExpressions.possessive.evaluate(context, object, propertyName);
 }
 
 /**

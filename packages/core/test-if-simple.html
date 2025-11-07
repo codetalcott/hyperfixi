@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test if command</title>
+</head>
+<body>
+    <h1>Test if command with simple condition</h1>
+
+    <button id="test1" _="on click
+        log '--- Test 1: if true ---'
+        set x to true
+        if x
+            log '✅ TRUE branch executed'
+        else
+            log '❌ FALSE branch executed'
+        end
+        log '--- End Test 1 ---'
+    ">Test 1: if true</button>
+
+    <button id="test2" _="on click
+        log '--- Test 2: if false ---'
+        set x to false
+        if x
+            log '✅ TRUE branch executed'
+        else
+            log '❌ FALSE branch executed'
+        end
+        log '--- End Test 2 ---'
+    ">Test 2: if false</button>
+
+    <button id="test3" _="on click
+        log '--- Test 3: if with no operator ---'
+        set result to document.querySelector('.test')
+        log 'result is:', result
+        if result
+            log '✅ TRUE branch executed'
+        else
+            log '❌ FALSE branch executed'
+        end
+        log '--- End Test 3 ---'
+    ">Test 3: if with object</button>
+
+    <div class="test">Test element</div>
+
+    <script>
+        // Enable debug mode BEFORE loading HyperFixi
+        window.__HYPERFIXI_DEBUG__ = true;
+        console.log('🔧 DEBUG MODE ENABLED');
+    </script>
+    <script src="dist/hyperfixi-browser.js"></script>
+    <script>
+        console.log('If command test loaded');
+    </script>
+</body>
+</html>

@@ -79,7 +79,7 @@ export { RepeatCommand } from './commands/control-flow/index';
 
 export {
   // Reference expressions (me, you, it, CSS selectors)
-  referenceExpressions,
+  referencesExpressions,
 } from './expressions/references/index';
 
 export {
@@ -99,7 +99,7 @@ export {
 
 export {
   // Property expressions (possessive syntax)
-  propertyExpressions,
+  propertiesExpressions,
 } from './expressions/properties/index';
 
 export {

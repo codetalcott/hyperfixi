@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test if-exit pattern</title>
+</head>
+<body>
+    <h1>Test if-exit pattern</h1>
+
+    <button id="test1" _="on click
+        log 'before if'
+        set x to 5
+        if x is 5
+            log 'x is 5'
+            exit
+        end
+        log 'after if (should not see this)'
+    ">Test 1: if-exit-end</button>
+
+    <script src="dist/hyperfixi-browser.js"></script>
+    <script>
+        console.log('Test page loaded');
+    </script>
+</body>
+</html>

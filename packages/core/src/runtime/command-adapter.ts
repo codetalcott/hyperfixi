@@ -110,6 +110,9 @@ export class CommandAdapter implements RuntimeCommand {
    */
   async execute(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     try {
+      // Get command name from either impl.name or metadata.name
+      const implName = this.impl.name || this.impl.metadata?.name;
+
       // Convert to typed context
       const typedContext = ContextBridge.toTyped(context);
 
@@ -197,8 +200,19 @@ export class CommandAdapter implements RuntimeCommand {
               scope: undefined
             };
           }
+        } else if ((implName === 'if' || implName === 'unless') && Array.isArray(args)) {
+          // IF/UNLESS command - convert [condition, thenBlock, elseBlock?] to structured input
+          // Args from runtime:
+          //   args[0]: evaluated condition (boolean/value)
+          //   args[1]: thenBlock (block AST node with { type: 'block', commands: [...] })
+          //   args[2]: elseBlock (block AST node, optional)
+          input = {
+            condition: args[0],
+            thenCommands: args[1],  // Block node, will be handled by IfCommand
+            elseCommands: args[2]   // Block node or undefined
+          };
         } else if (this.impl.name === 'render' && Array.isArray(args) && args.length >= 3 && args[1] === 'with') {
-          // Convert ['template', 'with', 'data'] to structured input  
+          // Convert ['template', 'with', 'data'] to structured input
           input = {
             template: args[0],
             variables: args[2],
@@ -315,6 +329,7 @@ export class CommandAdapter implements RuntimeCommand {
           let count: number | undefined;
           let eventName: string | undefined;
           let eventTarget: any;
+          let indexVariable: string | undefined;
           let commands: Function[] = [];
 
           // Create evaluator for AST node evaluation
@@ -324,6 +339,10 @@ export class CommandAdapter implements RuntimeCommand {
           if (loopType === 'for') {
             variable = args[1] ? (typeof args[1] === 'string' ? args[1] : (args[1] as any).value) : undefined;
             collection = args[2] && typeof args[2] === 'object' && 'type' in args[2] ? await evaluator.evaluate(args[2] as ASTNode, context) : args[2];
+            // Check for optional indexVariable in args[3] (from "with index" clause)
+            if (args[3] && typeof args[3] === 'object' && (args[3] as any).type === 'string') {
+              indexVariable = (args[3] as any).value;
+            }
           } else if (loopType === 'times') {
             const timesArg = args[1] && typeof args[1] === 'object' && 'type' in args[1] ? await evaluator.evaluate(args[1] as ASTNode, context) : args[1];
             count = typeof timesArg === 'number' ? timesArg : undefined;
@@ -363,6 +382,7 @@ export class CommandAdapter implements RuntimeCommand {
             count,
             eventName,
             eventTarget,
+            indexVariable,
             commandsLength: commands.length
           });
 
@@ -374,6 +394,7 @@ export class CommandAdapter implements RuntimeCommand {
             count,
             eventName,
             eventTarget,
+            indexVariable,
             commands
           };
 
@@ -423,9 +444,7 @@ export class CommandAdapter implements RuntimeCommand {
         } else if (this.impl.name === 'add' || this.impl.metadata?.name === 'add') {
           // ADD command: add <classExpression> to <target>
           // Expected input: [classExpression, target]
-          console.log('🔧 ADD command adapter - raw args:', args);
           input = args; // Pass as tuple
-          console.log('🔧 ADD command adapter - formatted input:', input);
         } else if (this.impl.name === 'increment' || this.impl.metadata?.name === 'increment') {
           // INCREMENT command: Runtime already provides structured input { target, amount }
           input = args[0]; // Pass through - already in correct format
@@ -454,9 +473,12 @@ export class CommandAdapter implements RuntimeCommand {
       return result;
       
     } catch (error) {
-      // Check for halt execution - don't wrap, just rethrow
-      if (error instanceof Error && (error as any).isHalt) {
-        throw error;
+      // Check for control flow errors - don't wrap, just rethrow
+      if (error instanceof Error) {
+        const errorAny = error as any;
+        if (errorAny.isHalt || errorAny.isExit || errorAny.isReturn || errorAny.isBreak || errorAny.isContinue) {
+          throw error;
+        }
       }
 
       // Enhanced error handling with suggestions

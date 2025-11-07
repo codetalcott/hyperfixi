@@ -22,7 +22,6 @@ import type {
   LLMDocumentation
 } from '../../types/command-types';
 import { debug } from '../../utils/debug';
-import { eventQueue } from '../../utils/performance';
 
 // ============================================================================
 // Type Definitions
@@ -308,11 +307,13 @@ export class WaitCommand implements TypedCommandImplementation<
             throw new Error('No event target available (context.me is undefined)');
           }
 
-          // Use EventQueue instead of addEventListener
-          // This reuses persistent listeners instead of creating new ones each time
-          eventQueue.wait(eventInfo.name, eventTarget).then((event) => {
+          // Use direct addEventListener (EventQueue has a bug where it shares queues between different elements)
+          // Create a one-time listener that removes itself after firing
+          const eventHandler = (event: Event) => {
+            eventTarget.removeEventListener(eventInfo.name!, eventHandler);
             resolveOnce(event, eventInfo);
-          });
+          };
+          eventTarget.addEventListener(eventInfo.name, eventHandler);
         } else if (eventInfo.time != null) {
           // Timeout
           setTimeout(() => {

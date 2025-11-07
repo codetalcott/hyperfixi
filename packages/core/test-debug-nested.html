@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug closest with nested elements</title>
+    <style>
+        .sortable-item {
+            padding: 20px;
+            margin: 10px;
+            background: purple;
+            color: white;
+            cursor: pointer;
+        }
+        .inner-span {
+            padding: 5px;
+            background: rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug closest() with nested elements (like sortable list)</h1>
+
+    <script type="text/hyperscript">
+behavior TestNestedClosest()
+  on pointerdown
+    log '1. event.target:', event.target
+    log '2. event.target.className:', event.target.className
+    set result to event.target.closest('.sortable-item')
+    log '3. closest result:', result
+    if result
+      log '✅ Found sortable-item!'
+    else
+      log '❌ Not found'
+    end
+  end
+end
+    </script>
+
+    <div class="sortable-item" _="install TestNestedClosest()">
+        <span class="inner-span">Click this nested span to test closest()</span>
+    </div>
+
+    <script src="dist/hyperfixi-browser.js"></script>
+    <script>
+        console.log('Debug nested test loaded');
+    </script>
+</body>
+</html>

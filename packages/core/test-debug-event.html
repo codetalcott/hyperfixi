@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Debug event.target</title>
+    <style>
+        .item { padding: 20px; margin: 10px; background: purple; color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Debug event.target.closest()</h1>
+
+    <div class="item" _="on click
+        log 'event:', event
+        log 'event.target:', event.target
+        set result to event.target.closest('.item')
+        log 'closest result:', result
+    ">
+        Click me
+    </div>
+
+    <script src="dist/hyperfixi-browser.js"></script>
+    <script>
+        console.log('Debug page loaded');
+    </script>
+</body>
+</html>
