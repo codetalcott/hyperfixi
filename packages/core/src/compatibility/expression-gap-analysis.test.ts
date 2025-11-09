@@ -15,21 +15,18 @@ const context: ExecutionContext = {
   locals: new Map([
     ['testVar', 'testValue'],
     ['items', [1, 2, 3, 4, 5]],
-    ['user', { name: 'John', age: 30 }]
+    ['user', { name: 'John', age: 30 }],
   ]),
-  globals: new Map([
-    ['globalVar', 'globalValue']
-  ]),
+  globals: new Map([['globalVar', 'globalValue']]),
   parent: null,
   halted: false,
   returned: false,
   broke: false,
   continued: false,
-  async: false
+  async: false,
 };
 
 describe('Expression Gap Analysis', () => {
-  
   describe('Array Literal Expressions', () => {
     it('should handle empty array literal: []', async () => {
       const result = await parseAndEvaluateExpression('[]', context);
@@ -80,7 +77,10 @@ describe('Expression Gap Analysis', () => {
 
   describe('Advanced Selector Expressions', () => {
     it('should handle complex CSS selector: <input[type="text"]:not(:disabled)/>', async () => {
-      const result = await parseAndEvaluateExpression('<input[type="text"]:not(:disabled)/>', context);
+      const result = await parseAndEvaluateExpression(
+        '<input[type="text"]:not(:disabled)/>',
+        context
+      );
       expect(result).toBeInstanceOf(NodeList);
     });
 
@@ -129,7 +129,7 @@ describe('Expression Gap Analysis', () => {
       // Would need Math object in global scope
       const mathContext = {
         ...context,
-        globals: new Map([...context.globals, ['Math', Math]])
+        globals: new Map([...context.globals, ['Math', Math]]),
       };
       const result = await parseAndEvaluateExpression('Math.max(1, 2, 3)', mathContext);
       expect(result).toBe(3);
@@ -138,8 +138,7 @@ describe('Expression Gap Analysis', () => {
 
   describe('Error Cases - Should Not Throw', () => {
     it('should handle null property access gracefully: null.property', async () => {
-      await expect(parseAndEvaluateExpression('null.property', context))
-        .rejects.toThrow();
+      await expect(parseAndEvaluateExpression('null.property', context)).rejects.toThrow();
     });
 
     it('should handle undefined variable gracefully: unknownVar', async () => {

@@ -1,5 +1,3 @@
-
-
 /**
  * Enhanced Positional Expressions for HyperScript
  * Provides deep TypeScript integration for positional navigation expressions
@@ -11,31 +9,37 @@ import type {
   EvaluationType,
   ValidationResult,
   LLMDocumentation,
-  EvaluationResult
+  EvaluationResult,
 } from '../../../types/base-types';
 import { evaluationToHyperScriptType } from '../../../types/base-types';
 import type {
   TypedExpressionImplementation,
   ExpressionMetadata,
-  ExpressionCategory
+  ExpressionCategory,
 } from '../../../types/expression-types';
 
 // ============================================================================
 // Input Schemas
 // ============================================================================
 
-const CollectionInputSchema = v.object({
-  collection: v.unknown().describe('Collection to operate on (array, NodeList, or string)')
-}).strict();
+const CollectionInputSchema = v
+  .object({
+    collection: v.unknown().describe('Collection to operate on (array, NodeList, or string)'),
+  })
+  .strict();
 
-const IndexInputSchema = v.object({
-  collection: v.unknown().describe('Collection to access'),
-  index: v.number().describe('Index position to access')
-}).strict();
+const IndexInputSchema = v
+  .object({
+    collection: v.unknown().describe('Collection to access'),
+    index: v.number().describe('Index position to access'),
+  })
+  .strict();
 
-const RandomInputSchema = v.object({
-  collection: v.unknown().describe('Collection to select random item from')
-}).strict();
+const RandomInputSchema = v
+  .object({
+    collection: v.unknown().describe('Collection to select random item from'),
+  })
+  .strict();
 
 type CollectionInput = any; // Inferred from RuntimeValidator
 type IndexInput = any; // Inferred from RuntimeValidator
@@ -45,7 +49,9 @@ type RandomInput = any; // Inferred from RuntimeValidator
 // Enhanced First Expression
 // ============================================================================
 
-export class EnhancedFirstExpression implements TypedExpressionImplementation<CollectionInput, unknown> {
+export class EnhancedFirstExpression
+  implements TypedExpressionImplementation<CollectionInput, unknown>
+{
   public readonly name = 'first';
   public readonly category: ExpressionCategory = 'Positional';
   public readonly syntax = 'first in collection';
@@ -63,24 +69,24 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
       {
         input: 'first in [1, 2, 3]',
         description: 'Get first element from array',
-        expectedOutput: 1
+        expectedOutput: 1,
       },
       {
         input: 'first in <div/>',
         description: 'Get first element from NodeList',
-        expectedOutput: 'HTMLElement'
+        expectedOutput: 'HTMLElement',
       },
       {
         input: 'first in "hello"',
         description: 'Get first character from string',
-        expectedOutput: 'h'
-      }
+        expectedOutput: 'h',
+      },
     ],
     relatedExpressions: ['last', 'at', 'slice'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -91,42 +97,42 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
         type: 'array | NodeList | string',
         description: 'Collection to get first element from',
         optional: false,
-        examples: ['[1, 2, 3]', 'document.querySelectorAll("div")', '"hello"', 'items']
-      }
+        examples: ['[1, 2, 3]', 'document.querySelectorAll("div")', '"hello"', 'items'],
+      },
     ],
     returns: {
       type: 'any',
       description: 'First element of collection, or undefined if empty',
-      examples: ['1', 'HTMLElement', '"h"', 'undefined']
+      examples: ['1', 'HTMLElement', '"h"', 'undefined'],
     },
     examples: [
       {
         title: 'Array first element',
         code: 'first in [1, 2, 3]',
         explanation: 'Get first number from array',
-        output: '1'
+        output: '1',
       },
       {
         title: 'DOM element selection',
         code: 'first in <.item/>',
         explanation: 'Get first element matching CSS selector',
-        output: 'HTMLElement'
+        output: 'HTMLElement',
       },
       {
         title: 'String first character',
         code: 'first in "hello world"',
         explanation: 'Get first character of string',
-        output: '"h"'
+        output: '"h"',
       },
       {
         title: 'Empty collection handling',
         code: 'first in []',
         explanation: 'Returns undefined for empty collections',
-        output: 'undefined'
-      }
+        output: 'undefined',
+      },
     ],
     seeAlso: ['last', 'at', 'slice', 'random'],
-    tags: ['positional', 'array', 'collection', 'navigation', 'first']
+    tags: ['positional', 'array', 'collection', 'navigation', 'first'],
   };
 
   async evaluate(
@@ -140,7 +146,7 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0]
+          error: validation.errors[0],
         };
       }
 
@@ -152,9 +158,8 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
       return {
         success: true,
         value: result,
-        type: evaluationToHyperScriptType[this.inferResultType(result)]
+        type: evaluationToHyperScriptType[this.inferResultType(result)],
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -163,8 +168,8 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
         error: {
           type: 'runtime-error',
           message: `First operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -172,38 +177,38 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid first input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid first input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
           suggestions: [
             'Provide a collection parameter',
-            'Ensure collection is array, NodeList, or string'
-          ]
+            'Ensure collection is array, NodeList, or string',
+          ],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: ['Check input structure and types'],
-        errors: []
+        errors: [],
       };
     }
   }
@@ -239,7 +244,12 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
     return 'Object';
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -248,7 +258,7 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -258,7 +268,9 @@ export class EnhancedFirstExpression implements TypedExpressionImplementation<Co
 // Enhanced Last Expression
 // ============================================================================
 
-export class EnhancedLastExpression implements TypedExpressionImplementation<CollectionInput, unknown> {
+export class EnhancedLastExpression
+  implements TypedExpressionImplementation<CollectionInput, unknown>
+{
   public readonly name = 'last';
   public readonly category: ExpressionCategory = 'Positional';
   public readonly syntax = 'last in collection';
@@ -276,19 +288,19 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
       {
         input: 'last in [1, 2, 3]',
         description: 'Get last element from array',
-        expectedOutput: 3
+        expectedOutput: 3,
       },
       {
         input: 'last in "hello"',
         description: 'Get last character from string',
-        expectedOutput: 'o'
-      }
+        expectedOutput: 'o',
+      },
     ],
     relatedExpressions: ['first', 'at', 'slice'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -299,36 +311,36 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
         type: 'array | NodeList | string',
         description: 'Collection to get last element from',
         optional: false,
-        examples: ['[1, 2, 3]', 'document.querySelectorAll("div")', '"hello"']
-      }
+        examples: ['[1, 2, 3]', 'document.querySelectorAll("div")', '"hello"'],
+      },
     ],
     returns: {
       type: 'any',
       description: 'Last element of collection, or undefined if empty',
-      examples: ['3', 'HTMLElement', '"o"', 'undefined']
+      examples: ['3', 'HTMLElement', '"o"', 'undefined'],
     },
     examples: [
       {
         title: 'Array last element',
         code: 'last in [1, 2, 3]',
         explanation: 'Get last number from array',
-        output: '3'
+        output: '3',
       },
       {
         title: 'String last character',
         code: 'last in "hello"',
         explanation: 'Get last character of string',
-        output: '"o"'
+        output: '"o"',
       },
       {
         title: 'DOM elements',
         code: 'last in <.item/>',
         explanation: 'Get last element matching selector',
-        output: 'HTMLElement'
-      }
+        output: 'HTMLElement',
+      },
     ],
     seeAlso: ['first', 'at', 'slice', 'random'],
-    tags: ['positional', 'array', 'collection', 'navigation', 'last']
+    tags: ['positional', 'array', 'collection', 'navigation', 'last'],
   };
 
   async evaluate(
@@ -342,7 +354,7 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0]
+          error: validation.errors[0],
         };
       }
 
@@ -354,9 +366,8 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
       return {
         success: true,
         value: result,
-        type: evaluationToHyperScriptType[this.inferResultType(result)]
+        type: evaluationToHyperScriptType[this.inferResultType(result)],
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -365,8 +376,8 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
         error: {
           type: 'runtime-error',
           message: `Last operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -374,38 +385,38 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid last input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid last input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
           suggestions: [
             'Provide a collection parameter',
-            'Ensure collection is array, NodeList, or string'
-          ]
+            'Ensure collection is array, NodeList, or string',
+          ],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: ['Check input structure and types'],
-        errors: []
+        errors: [],
       };
     }
   }
@@ -440,7 +451,12 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
     return 'Object';
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -449,7 +465,7 @@ export class EnhancedLastExpression implements TypedExpressionImplementation<Col
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -477,19 +493,19 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
       {
         input: '[1, 2, 3] at 1',
         description: 'Get element at index 1',
-        expectedOutput: 2
+        expectedOutput: 2,
       },
       {
         input: '"hello" at 0',
         description: 'Get character at index 0',
-        expectedOutput: 'h'
-      }
+        expectedOutput: 'h',
+      },
     ],
     relatedExpressions: ['first', 'last', 'slice'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -500,49 +516,49 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
         type: 'array | NodeList | string',
         description: 'Collection to access',
         optional: false,
-        examples: ['[1, 2, 3]', '"hello"', 'items']
+        examples: ['[1, 2, 3]', '"hello"', 'items'],
       },
       {
         name: 'index',
         type: 'number',
         description: 'Index position (supports negative indexing)',
         optional: false,
-        examples: ['0', '1', '-1', '-2']
-      }
+        examples: ['0', '1', '-1', '-2'],
+      },
     ],
     returns: {
       type: 'any',
       description: 'Element at specified index, or undefined if out of bounds',
-      examples: ['2', '"h"', 'HTMLElement', 'undefined']
+      examples: ['2', '"h"', 'HTMLElement', 'undefined'],
     },
     examples: [
       {
         title: 'Positive index',
         code: '[1, 2, 3] at 1',
         explanation: 'Get second element (index 1)',
-        output: '2'
+        output: '2',
       },
       {
         title: 'Negative index',
         code: '[1, 2, 3] at -1',
         explanation: 'Get last element using negative index',
-        output: '3'
+        output: '3',
       },
       {
         title: 'String character access',
         code: '"hello" at 0',
         explanation: 'Get first character of string',
-        output: '"h"'
+        output: '"h"',
       },
       {
         title: 'Out of bounds',
         code: '[1, 2] at 5',
         explanation: 'Returns undefined for invalid index',
-        output: 'undefined'
-      }
+        output: 'undefined',
+      },
     ],
     seeAlso: ['first', 'last', 'slice', 'length'],
-    tags: ['positional', 'array', 'index', 'access', 'negative-index']
+    tags: ['positional', 'array', 'index', 'access', 'negative-index'],
   };
 
   async evaluate(
@@ -556,23 +572,22 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0]
+          error: validation.errors[0],
         };
       }
 
       const collection = this.normalizeCollection(input.collection);
       const index = this.normalizeIndex(input.index, collection.length);
-      
-      const result = (index >= 0 && index < collection.length) ? collection[index] : undefined;
+
+      const result = index >= 0 && index < collection.length ? collection[index] : undefined;
 
       this.trackPerformance(context, startTime, true, result);
 
       return {
         success: true,
         value: result,
-        type: evaluationToHyperScriptType[this.inferResultType(result)]
+        type: evaluationToHyperScriptType[this.inferResultType(result)],
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -581,8 +596,8 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
         error: {
           type: 'runtime-error',
           message: `At operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -590,38 +605,35 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid at input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide collection and index parameters',
-            'Ensure index is a number'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid at input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide collection and index parameters', 'Ensure index is a number'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: ['Check input structure and types'],
-        errors: []
+        errors: [],
       };
     }
   }
@@ -664,7 +676,12 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
     return 'Object';
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -673,7 +690,7 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -683,7 +700,9 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
 // Enhanced Random Expression
 // ============================================================================
 
-export class EnhancedRandomExpression implements TypedExpressionImplementation<RandomInput, unknown> {
+export class EnhancedRandomExpression
+  implements TypedExpressionImplementation<RandomInput, unknown>
+{
   public readonly name = 'random';
   public readonly category: ExpressionCategory = 'Positional';
   public readonly syntax = 'random in collection';
@@ -701,65 +720,66 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
       {
         input: 'random in [1, 2, 3]',
         description: 'Get random element from array',
-        expectedOutput: 'random number 1-3'
+        expectedOutput: 'random number 1-3',
       },
       {
         input: 'random in "abc"',
         description: 'Get random character from string',
-        expectedOutput: 'random character a-c'
-      }
+        expectedOutput: 'random character a-c',
+      },
     ],
     relatedExpressions: ['first', 'last', 'at'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Selects a random element from a collection using cryptographically secure randomness when available',
+    summary:
+      'Selects a random element from a collection using cryptographically secure randomness when available',
     parameters: [
       {
         name: 'collection',
         type: 'array | NodeList | string',
         description: 'Collection to select random element from',
         optional: false,
-        examples: ['[1, 2, 3]', '"abc"', 'items', 'document.querySelectorAll("div")']
-      }
+        examples: ['[1, 2, 3]', '"abc"', 'items', 'document.querySelectorAll("div")'],
+      },
     ],
     returns: {
       type: 'any',
       description: 'Random element from collection, or undefined if empty',
-      examples: ['2', '"b"', 'HTMLElement', 'undefined']
+      examples: ['2', '"b"', 'HTMLElement', 'undefined'],
     },
     examples: [
       {
         title: 'Random array element',
         code: 'random in [1, 2, 3, 4, 5]',
         explanation: 'Get random number from array',
-        output: 'random number 1-5'
+        output: 'random number 1-5',
       },
       {
         title: 'Random character',
         code: 'random in "abcdef"',
         explanation: 'Get random character from string',
-        output: 'random character a-f'
+        output: 'random character a-f',
       },
       {
         title: 'Random DOM element',
         code: 'random in <.item/>',
         explanation: 'Get random element matching selector',
-        output: 'random HTMLElement'
+        output: 'random HTMLElement',
       },
       {
         title: 'Empty collection',
         code: 'random in []',
         explanation: 'Returns undefined for empty collections',
-        output: 'undefined'
-      }
+        output: 'undefined',
+      },
     ],
     seeAlso: ['first', 'last', 'at', 'shuffle'],
-    tags: ['positional', 'random', 'selection', 'array', 'collection']
+    tags: ['positional', 'random', 'selection', 'array', 'collection'],
   };
 
   async evaluate(
@@ -773,18 +793,18 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0]
+          error: validation.errors[0],
         };
       }
 
       const collection = this.normalizeCollection(input.collection);
-      
+
       if (collection.length === 0) {
         this.trackPerformance(context, startTime, true, undefined);
         return {
           success: true,
           value: undefined,
-          type: 'undefined'
+          type: 'undefined',
         };
       }
 
@@ -796,9 +816,8 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
       return {
         success: true,
         value: result,
-        type: evaluationToHyperScriptType[this.inferResultType(result)]
+        type: evaluationToHyperScriptType[this.inferResultType(result)],
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -807,8 +826,8 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
         error: {
           type: 'runtime-error',
           message: `Random operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -816,38 +835,38 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid random input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid random input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
           suggestions: [
             'Provide a collection parameter',
-            'Ensure collection is array, NodeList, or string'
-          ]
+            'Ensure collection is array, NodeList, or string',
+          ],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: ['Check input structure and types'],
-        errors: []
+        errors: [],
       };
     }
   }
@@ -878,7 +897,7 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
       crypto.getRandomValues(array);
       return array[0] % length;
     }
-    
+
     // Fallback to Math.random
     return Math.floor(Math.random() * length);
   }
@@ -894,7 +913,12 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
     return 'Object';
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -903,7 +927,7 @@ export class EnhancedRandomExpression implements TypedExpressionImplementation<R
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -937,7 +961,7 @@ export const positionalExpressions = {
   first: createEnhancedFirstExpression(),
   last: createEnhancedLastExpression(),
   at: createEnhancedAtExpression(),
-  random: createEnhancedRandomExpression()
+  random: createEnhancedRandomExpression(),
 } as const;
 
 export type PositionalExpressionName = keyof typeof positionalExpressions;

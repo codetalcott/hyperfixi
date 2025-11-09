@@ -19,7 +19,7 @@ export class TailwindExtension {
     this.strategies = {
       twDisplay: this.createDisplayStrategy(),
       twVisibility: this.createVisibilityStrategy(),
-      twOpacity: this.createOpacityStrategy()
+      twOpacity: this.createOpacityStrategy(),
     };
   }
 
@@ -58,8 +58,8 @@ export class TailwindExtension {
    * Execute a specific strategy
    */
   async executeStrategy(
-    strategy: TailwindStrategy, 
-    operation: TailwindOperation, 
+    strategy: TailwindStrategy,
+    operation: TailwindOperation,
     element: HTMLElement
   ): Promise<void> {
     if (!element) {
@@ -81,7 +81,7 @@ export class TailwindExtension {
    * Execute using the default strategy (if set)
    */
   async executeWithDefaultStrategy(
-    operation: TailwindOperation, 
+    operation: TailwindOperation,
     element: HTMLElement
   ): Promise<void> {
     if (!this.defaultStrategy) {
@@ -104,11 +104,11 @@ export class TailwindExtension {
             await this.executeStrategy('twDisplay', 'hide', element);
           }
           break;
-        
+
         case 'hide':
           element.classList.add('hidden');
           break;
-        
+
         case 'show':
           element.classList.remove('hidden');
           break;
@@ -129,11 +129,11 @@ export class TailwindExtension {
             await this.executeStrategy('twVisibility', 'hide', element);
           }
           break;
-        
+
         case 'hide':
           element.classList.add('invisible');
           break;
-        
+
         case 'show':
           element.classList.remove('invisible');
           break;
@@ -154,11 +154,11 @@ export class TailwindExtension {
             await this.executeStrategy('twOpacity', 'hide', element);
           }
           break;
-        
+
         case 'hide':
           element.classList.add('opacity-0');
           break;
-        
+
         case 'show':
           element.classList.remove('opacity-0');
           break;

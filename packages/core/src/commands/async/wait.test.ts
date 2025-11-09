@@ -31,7 +31,7 @@ describe('Wait Command', () => {
       expressionStack: [],
       evaluationDepth: 0,
       validationMode: 'permissive' as const,
-      evaluationHistory: []
+      evaluationHistory: [],
     } as TypedExecutionContext;
   });
 
@@ -100,7 +100,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'click' }],
-        source: testElement
+        source: testElement,
       };
 
       const promise = waitCommand.execute(context, input);
@@ -122,7 +122,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'custom' }],
-        source: testElement
+        source: testElement,
       };
 
       const promise = waitCommand.execute(context, input);
@@ -145,7 +145,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'click' }],
-        source: otherElement
+        source: otherElement,
       };
 
       const promise = waitCommand.execute(context, input);
@@ -168,7 +168,7 @@ describe('Wait Command', () => {
     it('should default to context.me when no source specified', async () => {
       const input = {
         type: 'event' as const,
-        events: [{ name: 'click' }]
+        events: [{ name: 'click' }],
       };
 
       const promise = waitCommand.execute(context, input);
@@ -186,12 +186,12 @@ describe('Wait Command', () => {
     it('should return error when no event target available', async () => {
       const contextWithoutMe = {
         locals: new Map(),
-        result: undefined
+        result: undefined,
       } as TypedExecutionContext;
 
       const input = {
         type: 'event' as const,
-        events: [{ name: 'click' }]
+        events: [{ name: 'click' }],
       };
 
       const result = await waitCommand.execute(contextWithoutMe, input);
@@ -206,7 +206,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'mousemove', args: ['clientX', 'clientY'] }],
-        source: testElement
+        source: testElement,
       };
 
       const promise = waitCommand.execute(context, input);
@@ -214,7 +214,7 @@ describe('Wait Command', () => {
       setTimeout(() => {
         const event = new MouseEvent('mousemove', {
           clientX: 100,
-          clientY: 200
+          clientY: 200,
         });
         testElement.dispatchEvent(event);
       }, 50);
@@ -229,14 +229,14 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'custom', args: ['data', 'value'] }],
-        source: testElement
+        source: testElement,
       };
 
       const promise = waitCommand.execute(context, input);
 
       setTimeout(() => {
         const event = new CustomEvent('custom', {
-          detail: { data: 'test', value: 42 }
+          detail: { data: 'test', value: 42 },
         });
         testElement.dispatchEvent(event);
       }, 50);
@@ -251,7 +251,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'click', args: ['nonexistent'] }],
-        source: testElement
+        source: testElement,
       };
 
       const promise = waitCommand.execute(context, input);
@@ -271,7 +271,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'click' }, { name: 'keydown' }],
-        source: testElement
+        source: testElement,
       };
 
       const promise = waitCommand.execute(context, input);
@@ -292,7 +292,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'neverfires' }, { time: 100 }],
-        source: testElement
+        source: testElement,
       };
 
       const startTime = Date.now();
@@ -307,7 +307,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'click' }, { time: 200 }],
-        source: testElement
+        source: testElement,
       };
 
       const promise = waitCommand.execute(context, input);
@@ -328,7 +328,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'click' }, { name: 'keydown' }],
-        source: testElement
+        source: testElement,
       };
 
       const promise = waitCommand.execute(context, input);
@@ -355,7 +355,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'event1' }, { name: 'event2' }, { name: 'event3' }],
-        source: testElement
+        source: testElement,
       };
 
       const promise = waitCommand.execute(context, input);
@@ -378,7 +378,7 @@ describe('Wait Command', () => {
     it('should handle immediate timeout (0ms)', async () => {
       const input = {
         type: 'event' as const,
-        events: [{ time: 0 }]
+        events: [{ time: 0 }],
       };
 
       const result = await waitCommand.execute(context, input);
@@ -404,7 +404,7 @@ describe('Wait Command', () => {
       const input = {
         type: 'event' as const,
         events: [{ name: 'transitionend' }],
-        source: testElement
+        source: testElement,
       };
 
       const promise = waitCommand.execute(context, input);

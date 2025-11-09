@@ -58,7 +58,7 @@ export interface ValidationResult<T = unknown> {
   readonly suggestions: string[];
   readonly warnings?: ValidationError[];
   readonly performance?: PerformanceCharacteristics;
-  
+
   // Legacy compatibility properties
   readonly success?: boolean;
   readonly data?: T;
@@ -87,33 +87,56 @@ export interface EvaluationResult<T = unknown> {
  * Consolidates EvaluationType definitions from multiple files
  */
 export type EvaluationType =
-  | 'String' | 'Number' | 'Boolean' | 'Element' | 'ElementList'
-  | 'Array' | 'Object' | 'Promise' | 'Context' | 'Null' | 'Undefined' | 'Any';
+  | 'String'
+  | 'Number'
+  | 'Boolean'
+  | 'Element'
+  | 'ElementList'
+  | 'Array'
+  | 'Object'
+  | 'Promise'
+  | 'Context'
+  | 'Null'
+  | 'Undefined'
+  | 'Any';
 
 /**
  * HyperScript value type system for runtime type checking
  * Matches the lowercase convention used in actual hyperscript
  */
 export type HyperScriptValueType =
-  | 'string' | 'number' | 'boolean' | 'element' | 'element-list'
-  | 'array' | 'object' | 'promise' | 'fragment' | 'null' | 'undefined' | 'function' | 'event' | 'error' | 'unknown';
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'element'
+  | 'element-list'
+  | 'array'
+  | 'object'
+  | 'promise'
+  | 'fragment'
+  | 'null'
+  | 'undefined'
+  | 'function'
+  | 'event'
+  | 'error'
+  | 'unknown';
 
 /**
  * Mapping between EvaluationType and HyperScriptValueType
  */
 export const evaluationToHyperScriptType: Record<EvaluationType, HyperScriptValueType> = {
-  'String': 'string',
-  'Number': 'number',
-  'Boolean': 'boolean',
-  'Element': 'element',
-  'ElementList': 'element-list',
-  'Array': 'array',
-  'Object': 'object',
-  'Promise': 'promise',
-  'Context': 'object',
-  'Null': 'null',
-  'Undefined': 'undefined',
-  'Any': 'object'
+  String: 'string',
+  Number: 'number',
+  Boolean: 'boolean',
+  Element: 'element',
+  ElementList: 'element-list',
+  Array: 'array',
+  Object: 'object',
+  Promise: 'promise',
+  Context: 'object',
+  Null: 'null',
+  Undefined: 'undefined',
+  Any: 'object',
 };
 
 /**
@@ -121,13 +144,13 @@ export const evaluationToHyperScriptType: Record<EvaluationType, HyperScriptValu
  * Used for organizing and documenting expression types
  */
 export type ExpressionCategory =
-  | 'Reference'      // me, you, it, CSS selectors
-  | 'Logical'        // comparisons, boolean logic, pattern matching
-  | 'Conversion'     // as keyword, type conversions
-  | 'Positional'     // first, last, array navigation
-  | 'Property'       // possessive syntax, attribute access
-  | 'Special'        // literals, math operations, string manipulation
-  | 'Template';      // template directives, conditional rendering, iteration
+  | 'Reference' // me, you, it, CSS selectors
+  | 'Logical' // comparisons, boolean logic, pattern matching
+  | 'Conversion' // as keyword, type conversions
+  | 'Positional' // first, last, array navigation
+  | 'Property' // possessive syntax, attribute access
+  | 'Special' // literals, math operations, string manipulation
+  | 'Template'; // template directives, conditional rendering, iteration
 
 // ============================================================================
 // Execution Context Types (Unified System)
@@ -150,7 +173,7 @@ export interface ExecutionContext {
   readonly broke?: boolean;
   readonly continued?: boolean;
   readonly async?: boolean;
-  
+
   // Legacy compatibility properties
   readonly variables?: Map<string, unknown>;
   readonly events?: Map<string, { target: HTMLElement; event: string; handler: Function }>;
@@ -342,8 +365,7 @@ export interface TypedExpressionContext extends TypedExecutionContext {
 /**
  * Feature category classification
  */
-export type FeatureCategory = 
-  | 'Frontend' | 'Backend' | 'Data' | 'Communication' | 'Advanced';
+export type FeatureCategory = 'Frontend' | 'Backend' | 'Data' | 'Communication' | 'Advanced';
 
 /**
  * Base interface for all enhanced features
@@ -494,7 +516,7 @@ export interface ExpressionNode extends ASTNode {
 }
 
 /**
- * Literal AST node  
+ * Literal AST node
  */
 export interface LiteralNode extends ASTNode {
   readonly type: 'literal';
@@ -551,7 +573,7 @@ export class TypeSystemBridge {
       expressionStack: [],
       evaluationDepth: 0,
       validationMode: 'permissive',
-      evaluationHistory: []
+      evaluationHistory: [],
     };
   }
 
@@ -566,7 +588,7 @@ export class TypeSystemBridge {
       result: context.result,
       locals: context.locals,
       globals: context.globals,
-      event: context.event
+      event: context.event,
     };
   }
 
@@ -580,7 +602,7 @@ export class TypeSystemBridge {
       errors: Array.isArray(res?.errors) ? res.errors : [],
       suggestions: Array.isArray(res?.suggestions) ? res.suggestions : [],
       warnings: Array.isArray(res?.warnings) ? res.warnings : undefined,
-      performance: res?.performance
+      performance: res?.performance,
     };
   }
 
@@ -604,23 +626,26 @@ export class TypeSystemBridge {
       return {
         success: true,
         value,
-        type: type || 'object'
+        type: type || 'object',
       };
     } else {
-      const errorObj = typeof error === 'string' ? {
-        name: 'GenericError',
-        message: error,
-        code: 'UNKNOWN_ERROR',
-        suggestions: []
-      } : error || {
-        name: 'UnknownError',
-        message: 'An unknown error occurred',
-        code: 'UNKNOWN_ERROR',
-        suggestions: []
-      };
+      const errorObj =
+        typeof error === 'string'
+          ? {
+              name: 'GenericError',
+              message: error,
+              code: 'UNKNOWN_ERROR',
+              suggestions: [],
+            }
+          : error || {
+              name: 'UnknownError',
+              message: 'An unknown error occurred',
+              code: 'UNKNOWN_ERROR',
+              suggestions: [],
+            };
       return {
         success: false,
-        error: errorObj
+        error: errorObj,
       };
     }
   }
@@ -645,7 +670,7 @@ export function createExecutionContext(
     locals: new Map(),
     globals: new Map(),
     event: null,
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -663,7 +688,7 @@ export function createTypedExecutionContext(
     evaluationDepth: 0,
     validationMode: 'strict',
     evaluationHistory: [],
-    ...overrides
+    ...overrides,
   };
 }
 
@@ -683,7 +708,7 @@ export function createSuccessValidation(): ValidationResult {
   return {
     isValid: true,
     errors: [],
-    suggestions: []
+    suggestions: [],
   };
 }
 
@@ -697,7 +722,7 @@ export function createFailureValidation(
   return {
     isValid: false,
     errors,
-    suggestions
+    suggestions,
   };
 }
 

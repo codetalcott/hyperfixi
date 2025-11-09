@@ -10,12 +10,12 @@ import {
   createBehaviors,
   enhancedBehaviorsImplementation,
   type BehaviorsInput,
-  type BehaviorsOutput
+  type BehaviorsOutput,
 } from './behaviors';
 
 describe('Enhanced Behaviors Feature Implementation', () => {
   let behaviorsFeature: TypedBehaviorsFeatureImplementation;
-  
+
   beforeEach(() => {
     behaviorsFeature = createBehaviorsFeature();
     vi.clearAllMocks();
@@ -27,7 +27,9 @@ describe('Enhanced Behaviors Feature Implementation', () => {
         behavior: {
           name: 'simple',
           parameters: [],
-          eventHandlers: [{ event: 'click', commands: [{ type: 'command', name: 'log', args: ['clicked'] }] }],
+          eventHandlers: [
+            { event: 'click', commands: [{ type: 'command', name: 'log', args: ['clicked'] }] },
+          ],
         },
         context: {
           variables: {},
@@ -38,10 +40,10 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       };
 
       const result = await behaviorsFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
       expect(result.value).toBeDefined();
-      
+
       if (result.success && result.value) {
         expect(result.value.category).toBe('Frontend');
         expect(result.value.capabilities).toContain('behavior-definition');
@@ -76,7 +78,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               eventSource: '.close-button',
               filter: 'event.target.matches(".close-button")',
               commands: [{ type: 'command', name: 'closeTooltip', args: [] }],
-            }
+            },
           ],
           lifecycle: {
             onCreate: [{ type: 'command', name: 'createTooltipElement', args: [] }],
@@ -110,9 +112,9 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       };
 
       const result = await behaviorsFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('behavior-definition');
         expect(result.value.capabilities).toContain('parameter-validation');
@@ -144,7 +146,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               eventSource: 'document',
               commands: [{ type: 'command', name: 'endDrag', args: [] }],
               options: { once: true },
-            }
+            },
           ],
         },
         options: {
@@ -153,9 +155,9 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       };
 
       const result = await behaviorsFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('event-handling');
         expect(result.value.state).toBe('ready');
@@ -179,13 +181,13 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               event: 'click',
               eventSource: '.decrement',
               commands: [{ type: 'command', name: 'decrement', args: [] }],
-            }
+            },
           ],
         },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test behavior existence check
         const exists = result.value.behaviors.exists('counter');
@@ -214,13 +216,13 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               event: 'click',
               eventSource: '.modal-close',
               commands: [{ type: 'command', name: 'closeModal', args: [] }],
-            }
+            },
           ],
         },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test namespaced behavior exists
         const exists = result.value.behaviors.exists('ui.components.modal');
@@ -257,16 +259,18 @@ describe('Enhanced Behaviors Feature Implementation', () => {
             {
               event: 'mouseleave',
               commands: [{ type: 'command', name: 'removeClass', args: ['highlight'] }],
-            }
+            },
           ],
         },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test behavior installation
-        const instance = await result.value.behaviors.install('highlight', mockElement, { color: 'yellow' });
+        const instance = await result.value.behaviors.install('highlight', mockElement, {
+          color: 'yellow',
+        });
         expect(instance).toBeDefined();
         expect(instance.behaviorName).toBe('highlight');
         expect(instance.element).toBe(mockElement);
@@ -287,13 +291,13 @@ describe('Enhanced Behaviors Feature Implementation', () => {
         behavior: {
           name: 'removable',
           eventHandlers: [
-            { event: 'click', commands: [{ type: 'command', name: 'log', args: ['clicked'] }] }
+            { event: 'click', commands: [{ type: 'command', name: 'log', args: ['clicked'] }] },
           ],
         },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Install then uninstall
         await result.value.behaviors.install('removable', mockElement, {});
@@ -315,16 +319,18 @@ describe('Enhanced Behaviors Feature Implementation', () => {
           name: 'accordion',
           parameters: ['expanded'],
           eventHandlers: [
-            { event: 'click', commands: [{ type: 'command', name: 'toggle', args: [] }] }
+            { event: 'click', commands: [{ type: 'command', name: 'toggle', args: [] }] },
           ],
         },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Create instance
-        const instance = await result.value.instances.create('accordion', mockElement, { expanded: false });
+        const instance = await result.value.instances.create('accordion', mockElement, {
+          expanded: false,
+        });
         expect(instance).toBeDefined();
         expect(instance.behaviorName).toBe('accordion');
 
@@ -355,12 +361,16 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
-        const instance = await result.value.instances.create('configurable', mockElement, { setting1: 'value1' });
-        
+        const instance = await result.value.instances.create('configurable', mockElement, {
+          setting1: 'value1',
+        });
+
         // Update parameters
-        const updated = result.value.instances.updateParameters(instance.id, { setting2: 'value2' });
+        const updated = result.value.instances.updateParameters(instance.id, {
+          setting2: 'value2',
+        });
         expect(updated).toBe(true);
       }
     });
@@ -374,16 +384,16 @@ describe('Enhanced Behaviors Feature Implementation', () => {
         behavior: {
           name: 'destroyable',
           eventHandlers: [
-            { event: 'click', commands: [{ type: 'command', name: 'log', args: [] }] }
+            { event: 'click', commands: [{ type: 'command', name: 'log', args: [] }] },
           ],
         },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const instance = await result.value.instances.create('destroyable', mockElement, {});
-        
+
         // Destroy instance
         const destroyed = result.value.instances.destroy(instance.id);
         expect(destroyed).toBe(true);
@@ -406,16 +416,16 @@ describe('Enhanced Behaviors Feature Implementation', () => {
         behavior: {
           name: 'eventful',
           eventHandlers: [
-            { event: 'click', commands: [{ type: 'command', name: 'handleClick', args: [] }] }
+            { event: 'click', commands: [{ type: 'command', name: 'handleClick', args: [] }] },
           ],
         },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const instance = await result.value.instances.create('eventful', mockElement, {});
-        
+
         // Get handlers
         const handlers = result.value.events.getHandlers(instance.id);
         expect(Array.isArray(handlers)).toBe(true);
@@ -427,7 +437,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
           commands: [{ type: 'command', name: 'handleDoubleClick', args: [] }],
           options: {},
         };
-        
+
         const added = result.value.events.addHandler(instance.id, newHandler);
         expect(added).toBe(true);
 
@@ -456,10 +466,10 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const instance = await result.value.instances.create('lifecycled', mockElement, {});
-        
+
         // Trigger lifecycle events
         const mountTriggered = await result.value.events.triggerLifecycle(instance.id, 'mount');
         expect(mountTriggered).toBe(true);
@@ -481,7 +491,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test valid parameters
         const validParams = { required1: 'value1', required2: 'value2' };
@@ -506,11 +516,11 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const params = { param1: 'value1', param3: 'value3', extra: 'ignored' };
         const bound = result.value.parameters.bind('bindable', params);
-        
+
         expect(bound.param1).toBe('value1');
         expect(bound.param2).toBeUndefined();
         expect(bound.param3).toBe('value3');
@@ -528,14 +538,16 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Get defaults
         const defaults = result.value.parameters.getDefaults('defaulted');
         expect(defaults).toEqual({ setting1: undefined, setting2: undefined });
 
         // Set defaults
-        const defaultsSet = result.value.parameters.setDefaults('defaulted', { setting1: 'default1' });
+        const defaultsSet = result.value.parameters.setDefaults('defaulted', {
+          setting1: 'default1',
+        });
         expect(defaultsSet).toBe(true);
       }
     });
@@ -561,10 +573,10 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const instance = await result.value.instances.create('lifecycle-test', mockElement, {});
-        
+
         // Test individual lifecycle methods
         const createResult = await result.value.lifecycle.onCreate(instance.id);
         expect(createResult).toBe(true);
@@ -596,12 +608,14 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const instance = await result.value.instances.create('data-lifecycle', mockElement, {});
-        
+
         // Trigger with data
-        const triggered = await result.value.lifecycle.trigger('mount', instance.id, { custom: 'data' });
+        const triggered = await result.value.lifecycle.trigger('mount', instance.id, {
+          custom: 'data',
+        });
         expect(triggered).toBe(true);
       }
     });
@@ -619,7 +633,9 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors).toHaveLength(1);
       expect(validationResult.errors[0].type).toBe('invalid-behavior-name');
-      expect(validationResult.suggestions).toContain('Use valid identifier for behavior name (e.g., "my-behavior", "tooltip", "draggable_item")');
+      expect(validationResult.suggestions).toContain(
+        'Use valid identifier for behavior name (e.g., "my-behavior", "tooltip", "draggable_item")'
+      );
     });
 
     it('should validate parameter names', () => {
@@ -652,9 +668,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       const validationResult = behaviorsFeature.validate({
         behavior: {
           name: 'test',
-          eventHandlers: [
-            { event: 'invalidEventType123', commands: [{ name: 'log', args: [] }] }
-          ],
+          eventHandlers: [{ event: 'invalidEventType123', commands: [{ name: 'log', args: [] }] }],
         },
       });
 
@@ -670,14 +684,16 @@ describe('Enhanced Behaviors Feature Implementation', () => {
             {
               event: 'click',
               eventSource: '>>>invalid-selector<<<',
-              commands: [{ name: 'log', args: [] }]
-            }
+              commands: [{ name: 'log', args: [] }],
+            },
           ],
         },
       });
 
       expect(validationResult.isValid).toBe(false);
-      expect(validationResult.errors.some(e => e.type === 'invalid-event-source-selector')).toBe(true);
+      expect(validationResult.errors.some(e => e.type === 'invalid-event-source-selector')).toBe(
+        true
+      );
     });
 
     it('should validate filter expressions', () => {
@@ -688,8 +704,8 @@ describe('Enhanced Behaviors Feature Implementation', () => {
             {
               event: 'click',
               filter: 'invalid javascript syntax [[[',
-              commands: [{ name: 'log', args: [] }]
-            }
+              commands: [{ name: 'log', args: [] }],
+            },
           ],
         },
       });
@@ -709,14 +725,16 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               options: {
                 throttle: 100,
                 debounce: 200, // Cannot have both
-              }
-            }
+              },
+            },
           ],
         },
       });
 
       expect(validationResult.isValid).toBe(false);
-      expect(validationResult.errors.some(e => e.type === 'conflicting-performance-options')).toBe(true);
+      expect(validationResult.errors.some(e => e.type === 'conflicting-performance-options')).toBe(
+        true
+      );
     });
 
     it('should validate empty commands arrays', () => {
@@ -724,7 +742,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
         behavior: {
           name: 'test',
           eventHandlers: [
-            { event: 'click', commands: [] } // Empty commands
+            { event: 'click', commands: [] }, // Empty commands
           ],
         },
       });
@@ -734,9 +752,9 @@ describe('Enhanced Behaviors Feature Implementation', () => {
     });
 
     it('should validate event handler count limits', () => {
-      const tooManyHandlers = Array.from({length: 60}, (_, i) => ({
+      const tooManyHandlers = Array.from({ length: 60 }, (_, i) => ({
         event: 'click',
-        commands: [{ name: `command${i}`, args: [] }]
+        commands: [{ name: `command${i}`, args: [] }],
       }));
 
       const validationResult = behaviorsFeature.validate({
@@ -785,14 +803,17 @@ describe('Enhanced Behaviors Feature Implementation', () => {
           behavior: {
             name: `testBehavior${i}`,
             eventHandlers: [
-              { event: 'click', commands: [{ type: 'command', name: 'log', args: [`Behavior ${i}`] }] }
+              {
+                event: 'click',
+                commands: [{ type: 'command', name: 'log', args: [`Behavior ${i}`] }],
+              },
             ],
           },
         });
       }
 
       const metrics = behaviorsFeature.getPerformanceMetrics();
-      
+
       expect(metrics.totalInitializations).toBeGreaterThanOrEqual(3);
       expect(typeof metrics.successRate).toBe('number');
       expect(typeof metrics.averageDuration).toBe('number');
@@ -816,9 +837,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       const result = await createBehaviors(
         {
           name: 'test-behavior',
-          eventHandlers: [
-            { event: 'click', commands: [{ name: 'log', args: ['Clicked!'] }] }
-          ],
+          eventHandlers: [{ event: 'click', commands: [{ name: 'log', args: ['Clicked!'] }] }],
         },
         {
           environment: 'frontend',
@@ -843,7 +862,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
 
     it('should have comprehensive metadata', () => {
       const { metadata } = behaviorsFeature;
-      
+
       expect(metadata.category).toBe('Frontend');
       expect(metadata.complexity).toBe('complex');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
@@ -856,7 +875,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
 
     it('should have LLM-compatible documentation', () => {
       const { documentation } = behaviorsFeature;
-      
+
       expect(documentation.summary).toBeDefined();
       expect(Array.isArray(documentation.parameters)).toBe(true);
       expect(documentation.returns).toBeDefined();
@@ -878,7 +897,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
           initBlock: {
             commands: [
               { type: 'command', name: 'createModalOverlay', args: [] },
-              { type: 'command', name: 'createModalContent', args: [] }
+              { type: 'command', name: 'createModalContent', args: [] },
             ],
           },
           eventHandlers: [
@@ -887,7 +906,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               eventSource: '.modal-trigger',
               commands: [
                 { type: 'command', name: 'showModal', args: [] },
-                { type: 'command', name: 'addClass', args: ['modal-open'] }
+                { type: 'command', name: 'addClass', args: ['modal-open'] },
               ],
             },
             {
@@ -895,7 +914,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               eventSource: '.modal-close',
               commands: [
                 { type: 'command', name: 'hideModal', args: [] },
-                { type: 'command', name: 'removeClass', args: ['modal-open'] }
+                { type: 'command', name: 'removeClass', args: ['modal-open'] },
               ],
             },
             {
@@ -908,24 +927,24 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               eventSource: '.modal-overlay',
               filter: 'event.target === event.currentTarget',
               commands: [{ type: 'command', name: 'closeModal', args: [] }],
-            }
+            },
           ],
           lifecycle: {
             onCreate: [
               { type: 'command', name: 'initializeModal', args: [] },
-              { type: 'command', name: 'setupAccessibility', args: [] }
+              { type: 'command', name: 'setupAccessibility', args: [] },
             ],
             onMount: [
               { type: 'command', name: 'focusModal', args: [] },
-              { type: 'command', name: 'trapFocus', args: [] }
+              { type: 'command', name: 'trapFocus', args: [] },
             ],
             onUnmount: [
               { type: 'command', name: 'restoreFocus', args: [] },
-              { type: 'command', name: 'removeFocusTrap', args: [] }
+              { type: 'command', name: 'removeFocusTrap', args: [] },
             ],
             onDestroy: [
               { type: 'command', name: 'cleanupModal', args: [] },
-              { type: 'command', name: 'removeModalElements', args: [] }
+              { type: 'command', name: 'removeModalElements', args: [] },
             ],
           },
         },
@@ -956,7 +975,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Verify behavior registration
         const exists = result.value.behaviors.exists('ui.modal');
@@ -1003,7 +1022,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               filter: 'event.button === 0', // Left mouse button only
               commands: [
                 { type: 'command', name: 'initDrag', args: [] },
-                { type: 'command', name: 'addClass', args: ['dragging'] }
+                { type: 'command', name: 'addClass', args: ['dragging'] },
               ],
               options: { capture: true },
             },
@@ -1013,7 +1032,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               filter: 'event.buttons === 1', // While dragging
               commands: [
                 { type: 'command', name: 'updatePosition', args: [] },
-                { type: 'command', name: 'checkDropZones', args: [] }
+                { type: 'command', name: 'checkDropZones', args: [] },
               ],
               options: { throttle: 16 }, // 60fps
             },
@@ -1022,7 +1041,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               eventSource: 'document',
               commands: [
                 { type: 'command', name: 'finalizeDrop', args: [] },
-                { type: 'command', name: 'removeClass', args: ['dragging'] }
+                { type: 'command', name: 'removeClass', args: ['dragging'] },
               ],
             },
             {
@@ -1039,16 +1058,16 @@ describe('Enhanced Behaviors Feature Implementation', () => {
             {
               event: 'touchend',
               commands: [{ type: 'command', name: 'finalizeTouchDrop', args: [] }],
-            }
+            },
           ],
           lifecycle: {
             onCreate: [
               { type: 'command', name: 'setupDragConstraints', args: [] },
-              { type: 'command', name: 'calculateBoundaries', args: [] }
+              { type: 'command', name: 'calculateBoundaries', args: [] },
             ],
             onDestroy: [
               { type: 'command', name: 'cleanupDragState', args: [] },
-              { type: 'command', name: 'restorePosition', args: [] }
+              { type: 'command', name: 'restorePosition', args: [] },
             ],
           },
         },
@@ -1059,13 +1078,13 @@ describe('Enhanced Behaviors Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const definition = result.value.behaviors.getDefinition('draggable-item');
         expect(definition).toBeDefined();
         expect(definition?.eventHandlers).toHaveLength(6);
         expect(definition?.parameters).toEqual(['constraint', 'grid', 'axis', 'revert']);
-        
+
         // Verify event handler configurations
         const mouseDownHandler = definition?.eventHandlers.find(h => h.event === 'mousedown');
         expect(mouseDownHandler?.filter).toBe('event.button === 0');
@@ -1090,7 +1109,7 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               filter: 'event.target.hasAttribute("data-validate")',
               commands: [
                 { type: 'command', name: 'validateField', args: [] },
-                { type: 'command', name: 'updateFieldStatus', args: [] }
+                { type: 'command', name: 'updateFieldStatus', args: [] },
               ],
               options: { debounce: 300 },
             },
@@ -1099,44 +1118,42 @@ describe('Enhanced Behaviors Feature Implementation', () => {
               eventSource: 'input, textarea, select',
               commands: [
                 { type: 'command', name: 'validateField', args: [] },
-                { type: 'command', name: 'showFieldErrors', args: [] }
+                { type: 'command', name: 'showFieldErrors', args: [] },
               ],
             },
             {
               event: 'submit',
               commands: [
                 { type: 'command', name: 'validateAllFields', args: [] },
-                { type: 'command', name: 'preventIfInvalid', args: [] }
+                { type: 'command', name: 'preventIfInvalid', args: [] },
               ],
             },
             {
               event: 'reset',
               commands: [
                 { type: 'command', name: 'clearValidation', args: [] },
-                { type: 'command', name: 'resetFieldStates', args: [] }
+                { type: 'command', name: 'resetFieldStates', args: [] },
               ],
-            }
+            },
           ],
           lifecycle: {
             onMount: [
               { type: 'command', name: 'scanValidationRules', args: [] },
-              { type: 'command', name: 'initializeValidators', args: [] }
+              { type: 'command', name: 'initializeValidators', args: [] },
             ],
-            onUnmount: [
-              { type: 'command', name: 'clearValidationState', args: [] }
-            ],
+            onUnmount: [{ type: 'command', name: 'clearValidationState', args: [] }],
           },
         },
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         const definition = result.value.behaviors.getDefinition('forms.form-validator');
         expect(definition).toBeDefined();
         expect(definition?.namespace).toBe('forms');
         expect(definition?.eventHandlers).toHaveLength(4);
-        
+
         // Verify input handler with debouncing
         const inputHandler = definition?.eventHandlers.find(h => h.event === 'input');
         expect(inputHandler?.options.debounce).toBe(300);

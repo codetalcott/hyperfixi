@@ -34,43 +34,43 @@ describe('Settle Command', () => {
   describe('Basic Settling', () => {
     it('should settle current element (me)', async () => {
       vi.useFakeTimers();
-      
+
       const promise = settleCommand.execute(context);
-      
+
       // Advance timers to allow for settling
       vi.advanceTimersByTime(100);
-      
+
       const result = await promise;
       expect(result).toBe(mockElement);
-      
+
       vi.useRealTimers();
     });
 
     it('should settle with timeout', async () => {
       vi.useFakeTimers();
-      
+
       const promise = settleCommand.execute(context, 'for', 200);
-      
+
       // Advance timers past the timeout
       vi.advanceTimersByTime(250);
-      
+
       const result = await promise;
       expect(result).toBe(mockElement);
-      
+
       vi.useRealTimers();
     });
 
     it('should settle specific element', async () => {
       const targetElement = document.createElement('button');
       vi.useFakeTimers();
-      
+
       const promise = settleCommand.execute(context, targetElement);
-      
+
       vi.advanceTimersByTime(100);
-      
+
       const result = await promise;
       expect(result).toBe(targetElement);
-      
+
       vi.useRealTimers();
     });
   });
@@ -82,15 +82,15 @@ describe('Settle Command', () => {
         transitionDuration: '0s',
         transitionDelay: '0s',
         animationDuration: '0s',
-        animationDelay: '0s'
+        animationDelay: '0s',
       });
       vi.stubGlobal('getComputedStyle', mockGetComputedStyle);
-      
+
       const result = await settleCommand.execute(context);
-      
+
       expect(result).toBe(mockElement);
       expect(mockGetComputedStyle).toHaveBeenCalledWith(mockElement);
-      
+
       vi.unstubAllGlobals();
     });
 
@@ -100,20 +100,20 @@ describe('Settle Command', () => {
         transitionDuration: '0.3s',
         transitionDelay: '0.1s',
         animationDuration: '0s',
-        animationDelay: '0s'
+        animationDelay: '0s',
       });
       vi.stubGlobal('getComputedStyle', mockGetComputedStyle);
-      
+
       vi.useFakeTimers();
-      
+
       const promise = settleCommand.execute(context);
-      
+
       // Should wait for transition duration + delay (300ms + 100ms = 400ms)
       vi.advanceTimersByTime(450);
-      
+
       const result = await promise;
       expect(result).toBe(mockElement);
-      
+
       vi.useRealTimers();
       vi.unstubAllGlobals();
     });
@@ -123,20 +123,20 @@ describe('Settle Command', () => {
         transitionDuration: '0s',
         transitionDelay: '0s',
         animationDuration: '0.5s',
-        animationDelay: '0.2s'
+        animationDelay: '0.2s',
       });
       vi.stubGlobal('getComputedStyle', mockGetComputedStyle);
-      
+
       vi.useFakeTimers();
-      
+
       const promise = settleCommand.execute(context);
-      
+
       // Should wait for animation duration + delay (500ms + 200ms = 700ms)
       vi.advanceTimersByTime(750);
-      
+
       const result = await promise;
       expect(result).toBe(mockElement);
-      
+
       vi.useRealTimers();
       vi.unstubAllGlobals();
     });
@@ -146,20 +146,20 @@ describe('Settle Command', () => {
         transitionDuration: '0.2s, 0.5s, 0.1s',
         transitionDelay: '0s, 0.1s, 0s',
         animationDuration: '0s',
-        animationDelay: '0s'
+        animationDelay: '0s',
       });
       vi.stubGlobal('getComputedStyle', mockGetComputedStyle);
-      
+
       vi.useFakeTimers();
-      
+
       const promise = settleCommand.execute(context);
-      
+
       // Should wait for longest transition (0.5s + 0.1s = 600ms)
       vi.advanceTimersByTime(650);
-      
+
       const result = await promise;
       expect(result).toBe(mockElement);
-      
+
       vi.useRealTimers();
       vi.unstubAllGlobals();
     });
@@ -171,20 +171,20 @@ describe('Settle Command', () => {
         transitionDuration: '0.3s',
         transitionDelay: '0s',
         animationDuration: '0s',
-        animationDelay: '0s'
+        animationDelay: '0s',
       });
       vi.stubGlobal('getComputedStyle', mockGetComputedStyle);
-      
+
       const promise = settleCommand.execute(context);
-      
+
       // Simulate transitionend event
       setTimeout(() => {
         mockElement.dispatchEvent(new Event('transitionend'));
       }, 50);
-      
+
       const result = await promise;
       expect(result).toBe(mockElement);
-      
+
       vi.unstubAllGlobals();
     });
 
@@ -193,20 +193,20 @@ describe('Settle Command', () => {
         transitionDuration: '0s',
         transitionDelay: '0s',
         animationDuration: '0.5s',
-        animationDelay: '0s'
+        animationDelay: '0s',
       });
       vi.stubGlobal('getComputedStyle', mockGetComputedStyle);
-      
+
       const promise = settleCommand.execute(context);
-      
+
       // Simulate animationend event
       setTimeout(() => {
         mockElement.dispatchEvent(new Event('animationend'));
       }, 50);
-      
+
       const result = await promise;
       expect(result).toBe(mockElement);
-      
+
       vi.unstubAllGlobals();
     });
   });
@@ -217,20 +217,20 @@ describe('Settle Command', () => {
         transitionDuration: '10s', // Very long duration
         transitionDelay: '0s',
         animationDuration: '0s',
-        animationDelay: '0s'
+        animationDelay: '0s',
       });
       vi.stubGlobal('getComputedStyle', mockGetComputedStyle);
-      
+
       vi.useFakeTimers();
-      
+
       const promise = settleCommand.execute(context);
-      
+
       // Should timeout after default timeout (e.g., 5000ms)
       vi.advanceTimersByTime(5100);
-      
+
       const result = await promise;
       expect(result).toBe(mockElement);
-      
+
       vi.useRealTimers();
       vi.unstubAllGlobals();
     });
@@ -240,20 +240,20 @@ describe('Settle Command', () => {
         transitionDuration: '10s', // Very long duration
         transitionDelay: '0s',
         animationDuration: '0s',
-        animationDelay: '0s'
+        animationDelay: '0s',
       });
       vi.stubGlobal('getComputedStyle', mockGetComputedStyle);
-      
+
       vi.useFakeTimers();
-      
+
       const promise = settleCommand.execute(context, 'for', 500);
-      
+
       // Should timeout after specified timeout (500ms)
       vi.advanceTimersByTime(550);
-      
+
       const result = await promise;
       expect(result).toBe(mockElement);
-      
+
       vi.useRealTimers();
       vi.unstubAllGlobals();
     });
@@ -264,22 +264,24 @@ describe('Settle Command', () => {
       const targetElement = document.createElement('div');
       targetElement.id = 'test-element';
       document.body.appendChild(targetElement);
-      
+
       vi.useFakeTimers();
-      
+
       const promise = settleCommand.execute(context, '#test-element');
-      
+
       vi.advanceTimersByTime(100);
-      
+
       const result = await promise;
       expect(result).toBe(targetElement);
-      
+
       document.body.removeChild(targetElement);
       vi.useRealTimers();
     });
 
     it('should handle element not found gracefully', async () => {
-      await expect(settleCommand.execute(context, '#non-existent')).rejects.toThrow('Settle target not found: #non-existent');
+      await expect(settleCommand.execute(context, '#non-existent')).rejects.toThrow(
+        'Settle target not found: #non-existent'
+      );
     });
   });
 

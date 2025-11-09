@@ -11,7 +11,7 @@ import type {
   TypedExpressionImplementation,
   LLMDocumentation,
   ValidationResult,
-  TypedExecutionContext
+  TypedExecutionContext,
 } from '../../types/command-types';
 
 // ============================================================================
@@ -22,7 +22,7 @@ import type {
  * Schema for 'some' expression input validation
  */
 export const SomeExpressionInputSchema = v.tuple([
-  v.unknown().describe('Value to check for existence/non-emptiness')
+  v.unknown().describe('Value to check for existence/non-emptiness'),
 ]);
 
 export type SomeExpressionInput = any; // Inferred from RuntimeValidator
@@ -35,24 +35,22 @@ export type SomeExpressionInput = any; // Inferred from RuntimeValidator
  * Enhanced 'some' expression for existence and non-emptiness checking
  * Provides comprehensive existence testing for values, arrays, and DOM elements
  */
-export class EnhancedSomeExpression implements TypedExpressionImplementation<
-  boolean
-> {
+export class EnhancedSomeExpression implements TypedExpressionImplementation<boolean> {
   public readonly name = 'some';
   public readonly category = 'logical' as const;
   public readonly precedence = 8; // Medium precedence for existence checks
   public readonly associativity = 'left' as const;
   public readonly outputType = 'boolean' as const;
-  
+
   public readonly analysisInfo = {
     isPure: false, // DOM queries are not pure
     canThrow: false,
     complexity: 'O(n)' as const, // May need to query DOM
-    dependencies: ['DOM']
+    dependencies: ['DOM'],
   };
 
   public readonly inputSchema = SomeExpressionInputSchema;
-  
+
   public readonly documentation: LLMDocumentation = {
     summary: 'Tests for existence and non-emptiness of values, arrays, and DOM query results',
     parameters: [
@@ -61,42 +59,42 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
         type: 'object',
         description: 'Value to check for existence (arrays, selectors, or any value)',
         optional: false,
-        examples: ['null', '"hello"', '[]', '[1, 2, 3]', '<div/>', '.myClass']
-      }
+        examples: ['null', '"hello"', '[]', '[1, 2, 3]', '<div/>', '.myClass'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if value exists and is non-empty, false otherwise',
-      examples: [true, false]
+      examples: [true, false],
     },
     examples: [
       {
         title: 'Null check',
         code: 'some null',
         explanation: 'Returns false (null does not exist)',
-        output: false
+        output: false,
       },
       {
         title: 'Non-null value',
         code: 'some "hello"',
         explanation: 'Returns true (string exists)',
-        output: true
+        output: true,
       },
       {
         title: 'Empty array check',
         code: 'some []',
         explanation: 'Returns false (array is empty)',
-        output: false
+        output: false,
       },
       {
         title: 'Non-empty array',
         code: 'some [1, 2, 3]',
         explanation: 'Returns true (array has elements)',
-        output: true
-      }
+        output: true,
+      },
     ],
     seeAlso: ['array methods', 'DOM queries', 'existence checks'],
-    tags: ['existence', 'check', 'array', 'dom', 'empty']
+    tags: ['existence', 'check', 'array', 'dom', 'empty'],
   };
 
   /**
@@ -105,25 +103,27 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
   validate(args: unknown[]): ValidationResult {
     try {
       this.inputSchema.parse(args);
-      
+
       // 'Some' expressions are always valid as any value can be tested
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'missing-argument',
-          message: error instanceof Error ? error.message : 'Invalid some expression arguments',
-          suggestions: ['Provide a value to test for existence']
-        }],
+        errors: [
+          {
+            type: 'missing-argument',
+            message: error instanceof Error ? error.message : 'Invalid some expression arguments',
+            suggestions: ['Provide a value to test for existence'],
+          },
+        ],
         suggestions: [
           'Provide a single value to test',
-          'Any value type is acceptable for existence testing'
-        ]
+          'Any value type is acceptable for existence testing',
+        ],
       };
     }
   }
@@ -146,21 +146,21 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
             type: 'validation-error',
             message: `Some expression validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`,
             code: 'SOME_EXPRESSION_VALIDATION_ERROR',
-            suggestions: validationResult.suggestions
+            suggestions: validationResult.suggestions,
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
       const [value] = this.inputSchema.parse(args) as [unknown];
-      
+
       // Evaluate existence/non-emptiness
       const exists = await this.evaluateExistence(value, context);
-      
+
       return {
         success: true,
         value: exists,
-        type: 'boolean'
+        type: 'boolean',
       };
     } catch (error) {
       return {
@@ -170,9 +170,9 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
           type: 'runtime-error',
           message: `Failed to evaluate some expression: ${error instanceof Error ? error.message : String(error)}`,
           code: 'SOME_EXPRESSION_EVALUATION_ERROR',
-          suggestions: ['Check the input value', 'Ensure the value is evaluable']
+          suggestions: ['Check the input value', 'Ensure the value is evaluable'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -180,33 +180,36 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
   /**
    * Evaluate existence/non-emptiness of a value
    */
-  private async evaluateExistence(value: unknown, context: TypedExecutionContext): Promise<boolean> {
+  private async evaluateExistence(
+    value: unknown,
+    context: TypedExecutionContext
+  ): Promise<boolean> {
     // Handle null and undefined - they don't exist
     if (value === null || value === undefined) {
       return false;
     }
-    
+
     // Handle arrays - check if non-empty
     if (Array.isArray(value)) {
       return value.length > 0;
     }
-    
+
     // Handle array-like objects (NodeList, etc.)
     if (this.isArrayLike(value)) {
       const length = (value as ArrayLike<unknown>).length;
       return length > 0;
     }
-    
+
     // Handle DOM selector strings
     if (typeof value === 'string' && this.isDOMSelector(value)) {
       return await this.evaluateDOMSelector(value, context);
     }
-    
+
     // Handle empty string - considered non-existent in hyperscript context
     if (value === '') {
       return false;
     }
-    
+
     // All other values exist
     return true;
   }
@@ -226,38 +229,126 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
   private isDOMSelector(value: string): boolean {
     // Check for CSS selectors: .class, #id
     if (value.startsWith('.') || value.startsWith('#')) return true;
-    
+
     // Check for hyperscript element selectors: <element/>
     if (value.startsWith('<') && value.endsWith('/>')) return true;
-    
+
     // Check for simple HTML element names (not arbitrary strings)
     // Only treat as selector if it's a known HTML element name
     const htmlElementNames = [
-      'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio',
-      'b', 'base', 'bdi', 'bdo', 'blockquote', 'body', 'br', 'button',
-      'canvas', 'caption', 'cite', 'code', 'col', 'colgroup',
-      'data', 'datalist', 'dd', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'dt',
-      'em', 'embed',
-      'fieldset', 'figcaption', 'figure', 'footer', 'form',
-      'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hr', 'html',
-      'i', 'iframe', 'img', 'input', 'ins',
+      'a',
+      'abbr',
+      'address',
+      'area',
+      'article',
+      'aside',
+      'audio',
+      'b',
+      'base',
+      'bdi',
+      'bdo',
+      'blockquote',
+      'body',
+      'br',
+      'button',
+      'canvas',
+      'caption',
+      'cite',
+      'code',
+      'col',
+      'colgroup',
+      'data',
+      'datalist',
+      'dd',
+      'del',
+      'details',
+      'dfn',
+      'dialog',
+      'div',
+      'dl',
+      'dt',
+      'em',
+      'embed',
+      'fieldset',
+      'figcaption',
+      'figure',
+      'footer',
+      'form',
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'head',
+      'header',
+      'hr',
+      'html',
+      'i',
+      'iframe',
+      'img',
+      'input',
+      'ins',
       'kbd',
-      'label', 'legend', 'li', 'link',
-      'main', 'map', 'mark', 'meta', 'meter',
-      'nav', 'noscript',
-      'object', 'ol', 'optgroup', 'option', 'output',
-      'p', 'param', 'picture', 'pre', 'progress',
+      'label',
+      'legend',
+      'li',
+      'link',
+      'main',
+      'map',
+      'mark',
+      'meta',
+      'meter',
+      'nav',
+      'noscript',
+      'object',
+      'ol',
+      'optgroup',
+      'option',
+      'output',
+      'p',
+      'param',
+      'picture',
+      'pre',
+      'progress',
       'q',
-      'rp', 'rt', 'ruby',
-      's', 'samp', 'script', 'section', 'select', 'small', 'source', 'span', 'strong', 'style', 'sub', 'summary', 'sup',
-      'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track',
-      'u', 'ul',
-      'var', 'video',
-      'wbr'
+      'rp',
+      'rt',
+      'ruby',
+      's',
+      'samp',
+      'script',
+      'section',
+      'select',
+      'small',
+      'source',
+      'span',
+      'strong',
+      'style',
+      'sub',
+      'summary',
+      'sup',
+      'table',
+      'tbody',
+      'td',
+      'template',
+      'textarea',
+      'tfoot',
+      'th',
+      'thead',
+      'time',
+      'title',
+      'tr',
+      'track',
+      'u',
+      'ul',
+      'var',
+      'video',
+      'wbr',
     ];
-    
+
     if (htmlElementNames.includes(value.toLowerCase())) return true;
-    
+
     return false;
   }
 
@@ -267,19 +358,18 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
   private evaluateDOMSelector(selector: string, context: TypedExecutionContext): Promise<boolean> {
     try {
       let cssSelector = selector;
-      
+
       // Convert hyperscript selector to CSS selector
       if (selector.startsWith('<') && selector.endsWith('/>')) {
         cssSelector = this.convertHyperscriptSelector(selector);
       }
-      
+
       // Use context.me as search root if available, otherwise search from document
       const searchRoot: Element | Document = context.me || document;
-      
+
       // Query for elements
       const elements = searchRoot.querySelectorAll(cssSelector);
       return Promise.resolve(elements.length > 0);
-      
     } catch (_error) {
       // If selector is invalid, treat as non-existent
       return Promise.resolve(false);
@@ -294,11 +384,11 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
     // For <div/> we want to remove the first < and the last />
     // selector.slice(1, -2) removes 1 char from start and 2 chars from end
     const cssSelector = selector.slice(1, selector.length - 2);
-    
+
     // Handle class selectors: p.foo -> p.foo
     // Handle ID selectors: div#myId -> div#myId
     // These are already valid CSS selectors
-    
+
     return cssSelector;
   }
 
@@ -310,7 +400,8 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
       name: 'SomeExpression',
       category: 'utility' as const,
       version: '1.0.0',
-      description: 'Enhanced existence and non-emptiness checking for values, arrays, and DOM elements',
+      description:
+        'Enhanced existence and non-emptiness checking for values, arrays, and DOM elements',
       inputSchema: this.inputSchema,
       supportedFeatures: [
         'null/undefined detection',
@@ -319,19 +410,19 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<
         'DOM selector evaluation',
         'hyperscript selector support',
         'context-aware DOM queries',
-        'empty string handling'
+        'empty string handling',
       ],
       performance: {
         complexity: 'low',
         averageExecutionTime: '< 2ms',
-        memoryUsage: 'minimal'
+        memoryUsage: 'minimal',
       },
       capabilities: {
         contextAware: true,
         supportsAsync: true,
         sideEffects: false,
-        cacheable: false // DOM queries shouldn't be cached
-      }
+        cacheable: false, // DOM queries shouldn't be cached
+      },
     };
   }
 }

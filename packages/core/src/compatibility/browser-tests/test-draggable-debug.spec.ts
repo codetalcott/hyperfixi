@@ -24,10 +24,8 @@ test('Debug draggable behavior compilation', async ({ page }) => {
   await page.waitForTimeout(1000);
 
   // Check for parser errors
-  const hasParserError = consoleMessages.some(msg =>
-    msg.includes('PARSE ERROR') ||
-    msg.includes('Expected') ||
-    msg.includes('SyntaxError')
+  const hasParserError = consoleMessages.some(
+    msg => msg.includes('PARSE ERROR') || msg.includes('Expected') || msg.includes('SyntaxError')
   );
 
   if (hasParserError) {
@@ -38,9 +36,10 @@ test('Debug draggable behavior compilation', async ({ page }) => {
   }
 
   // Check if behavior was registered
-  const hasBehaviorRegistered = consoleMessages.some(msg =>
-    msg.includes('Behavior registered: Draggable') ||
-    msg.includes('Installing behavior Draggable')
+  const hasBehaviorRegistered = consoleMessages.some(
+    msg =>
+      msg.includes('Behavior registered: Draggable') ||
+      msg.includes('Installing behavior Draggable')
   );
 
   console.log('\n=== SUMMARY ===');
@@ -63,14 +62,12 @@ test('Debug draggable behavior compilation', async ({ page }) => {
     // Simulate pointerdown
     await box.dispatchEvent('pointerdown', {
       clientX: boxBounds.x + 50,
-      clientY: boxBounds.y + 50
+      clientY: boxBounds.y + 50,
     });
 
     await page.waitForTimeout(200);
 
-    const hasPointerDownLog = consoleMessages.some(msg =>
-      msg.includes('POINTERDOWN FIRED')
-    );
+    const hasPointerDownLog = consoleMessages.some(msg => msg.includes('POINTERDOWN FIRED'));
 
     console.log('Pointerdown event fired:', hasPointerDownLog);
 

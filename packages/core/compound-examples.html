@@ -281,6 +281,7 @@
 
         <div class="code-block">
 <span class="keyword">on</span> pointerdown
+  <span class="keyword">set</span> originalColor <span class="keyword">to</span> <span class="keyword">my</span> *background-color
   <span class="keyword">repeat until</span> <span class="keyword">event</span> pointerup <span class="keyword">from</span> <span class="keyword">the</span> document
     <span class="keyword">set</span> rand <span class="keyword">to</span> Math.random() * 360
     <span class="keyword">transition</span>
@@ -288,7 +289,7 @@
       <span class="keyword">to</span> <span class="string">`hsl(${rand} 100% 90%)`</span>
       <span class="keyword">over</span> 250ms
   <span class="keyword">end</span>
-  <span class="keyword">transition</span> *background-color <span class="keyword">to</span> initial
+  <span class="keyword">transition</span> *background-color <span class="keyword">to</span> originalColor
 <span class="keyword">end</span>
         </div>
 
@@ -298,6 +299,7 @@
 
         <div id="color-box"
              _="on pointerdown
+                  set originalColor to my *background-color
                   repeat until event pointerup from the document
                     set rand to Math.random() * 360
                     transition
@@ -305,7 +307,7 @@
                       to `hsl(${rand} 100% 90%)`
                       over 250ms
                   end
-                  transition *background-color to initial
+                  transition *background-color to originalColor
                 end">
             Press & Hold Me!
         </div>

@@ -1,6 +1,6 @@
 /**
  * TDD Fix for Advanced CSS Selector Support
- * 
+ *
  * Current issues:
  * 1. Complex query references: <input[type="text"]:not(:disabled)/> not parsing
  * 2. Attribute selectors: [data-value="test"] being treated as array instead of selector
@@ -22,7 +22,7 @@ const context: ExecutionContext = {
   returned: false,
   broke: false,
   continued: false,
-  async: false
+  async: false,
 };
 
 describe('Advanced CSS Selectors - TDD Fix', () => {
@@ -39,7 +39,10 @@ describe('Advanced CSS Selectors - TDD Fix', () => {
     });
 
     it('should parse complex query: <input[type="text"]:not(:disabled)/>', async () => {
-      const result = await parseAndEvaluateExpression('<input[type="text"]:not(:disabled)/>', context);
+      const result = await parseAndEvaluateExpression(
+        '<input[type="text"]:not(:disabled)/>',
+        context
+      );
       expect(result).toBeDefined();
     });
   });

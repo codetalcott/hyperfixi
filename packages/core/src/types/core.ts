@@ -1,7 +1,7 @@
 /**
  * Core type definitions for the modular hyperscript implementation
  * Based on hyperscript-lsp database schema and language specification
- * 
+ *
  * IMPORTANT: Core types now imported from base-types.ts for consistency
  * This eliminates the 1,755 TypeScript errors from type conflicts
  */
@@ -26,7 +26,7 @@ export type {
   ExpressionNode,
   CommandNode as BaseCommandNode,
   EventHandlerNode,
-  BehaviorNode
+  BehaviorNode,
 } from './base-types';
 
 // Import types for use within this file
@@ -35,7 +35,7 @@ import type {
   ASTNode,
   ExpressionNode,
   EvaluationType,
-  ParseError
+  ParseError,
 } from './base-types';
 
 // ============================================================================
@@ -46,12 +46,12 @@ export type ElementType = 'command' | 'expression' | 'feature' | 'keyword' | 'sp
 
 export type ElementStatus = 'Draft' | 'Review' | 'Approved' | 'Deprecated';
 
-export type ExpressionCategory = 
-  | 'Arithmetic' 
-  | 'Logical' 
-  | 'Comparison' 
-  | 'Reference' 
-  | 'Conversion' 
+export type ExpressionCategory =
+  | 'Arithmetic'
+  | 'Logical'
+  | 'Comparison'
+  | 'Reference'
+  | 'Conversion'
   | 'Special';
 
 export type Associativity = 'Left' | 'Right' | 'None';
@@ -67,16 +67,16 @@ export type Associativity = 'Left' | 'Right' | 'None';
 export interface ExtendedExecutionContext extends ExecutionContext {
   /** General variables storage (for simple use cases) */
   variables?: Map<string, unknown>;
-  
+
   /** Event handlers storage for cleanup */
   events?: Map<string, { target: HTMLElement; event: string; handler: Function }>;
-  
+
   /** Parent context for scope chain */
   parent?: ExtendedExecutionContext;
-  
+
   /** Meta scope - template variables and internal hyperscript state */
   meta?: Record<string, unknown>;
-  
+
   /** Execution flags */
   flags?: {
     halted: boolean;
@@ -125,19 +125,19 @@ export interface StatementNode extends ASTNode {
 export interface Runtime {
   /** Execute a command in the given context */
   executeCommand(command: CommandNode, context: ExecutionContext): Promise<unknown>;
-  
+
   /** Evaluate an expression in the given context */
   evaluateExpression(expression: ExpressionNode, context: ExecutionContext): Promise<unknown>;
-  
+
   /** Create a new execution context */
   createContext(parent?: ExecutionContext): ExecutionContext;
-  
+
   /** Register a command implementation */
   registerCommand(name: string, implementation: BaseCommandImplementation): void;
-  
+
   /** Register an expression implementation */
   registerExpression(name: string, implementation: ExpressionImplementation): void;
-  
+
   /** Register a feature implementation */
   registerFeature(name: string, implementation: FeatureImplementation): void;
 }
@@ -185,7 +185,11 @@ export interface LegacyValidationResult<T = unknown> {
  * - Legacy: metadata is plain object
  * - Modern: metadata is CommandMetadata type with additional fields
  */
-export interface CommandImplementation<TInput = unknown, TOutput = unknown, TContext = import('./base-types').ExecutionContext> {
+export interface CommandImplementation<
+  TInput = unknown,
+  TOutput = unknown,
+  TContext = import('./base-types').ExecutionContext,
+> {
   metadata: {
     name: string;
     description: string;
@@ -260,13 +264,13 @@ export interface ParseResult<T = ASTNode> {
 export interface Parser {
   /** Parse a complete hyperscript program */
   parse(input: string): ParseResult<FeatureNode[]>;
-  
+
   /** Parse a single expression */
   parseExpression(input: string): ParseResult<ExpressionNode>;
-  
+
   /** Parse a single command */
   parseCommand(input: string): ParseResult<CommandNode>;
-  
+
   /** Tokenize input */
   tokenize(input: string): Token[];
 }
@@ -347,29 +351,29 @@ export interface HyperscriptEvent extends CustomEvent {
 export interface HyperscriptConfig {
   /** Enable strict mode with enhanced type checking */
   strict?: boolean;
-  
+
   /** Debug mode with detailed logging */
   debug?: boolean;
-  
+
   /** Custom command implementations */
   commands?: Record<string, BaseCommandImplementation>;
-  
+
   /** Custom expression implementations */
   expressions?: Record<string, ExpressionImplementation>;
-  
+
   /** Custom feature implementations */
   features?: Record<string, FeatureImplementation>;
-  
+
   /** Global variables */
   globals?: Record<string, unknown>;
-  
+
   /** Event handling configuration */
   events?: {
     bubbling?: boolean;
     delegation?: boolean;
     passive?: boolean;
   };
-  
+
   /** Performance options */
   performance?: {
     cacheParsing?: boolean;

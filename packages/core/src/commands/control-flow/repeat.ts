@@ -1,9 +1,9 @@
 /**
  * Enhanced Repeat Command Implementation
  * Provides iteration in the hyperscript language
- * 
+ *
  * Syntax: repeat for <identifier> in <expression> [index <identifier>] { <command> } end
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -38,24 +38,23 @@ export interface RepeatCommandOutput {
 /**
  * Enhanced Repeat Command with full type safety and validation
  */
-export class RepeatCommand implements CommandImplementation<
-  RepeatCommandInput,
-  RepeatCommandOutput,
-  TypedExecutionContext
-> {
+export class RepeatCommand
+  implements CommandImplementation<RepeatCommandInput, RepeatCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'repeat',
-    description: 'The repeat command provides iteration in the hyperscript language. It supports for-in loops, counted loops, conditional loops, and infinite loops.',
+    description:
+      'The repeat command provides iteration in the hyperscript language. It supports for-in loops, counted loops, conditional loops, and infinite loops.',
     examples: [
       'repeat for item in items { log item }',
       'repeat 5 times { log "hello" }',
       'repeat while count < 10 { increment count }',
       'repeat until done { checkStatus }',
-      'repeat forever { monitor }'
+      'repeat forever { monitor }',
     ],
     syntax: 'repeat for <identifier> in <expression> [index <identifier>] { <command> } end',
     category: 'flow' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -63,12 +62,14 @@ export class RepeatCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Repeat command requires loop configuration',
-            suggestions: ['Provide loop type and parameters']
-          }],
-          suggestions: ['Provide loop type and parameters']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Repeat command requires loop configuration',
+              suggestions: ['Provide loop type and parameters'],
+            },
+          ],
+          suggestions: ['Provide loop type and parameters'],
         };
       }
 
@@ -77,12 +78,14 @@ export class RepeatCommand implements CommandImplementation<
       if (!inputObj.type) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Repeat command requires a loop type',
-            suggestions: ['Use types: for, times, while, until, forever']
-          }],
-          suggestions: ['Use types: for, times, while, until, forever']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Repeat command requires a loop type',
+              suggestions: ['Use types: for, times, while, until, forever'],
+            },
+          ],
+          suggestions: ['Use types: for, times, while, until, forever'],
         };
       }
 
@@ -90,12 +93,14 @@ export class RepeatCommand implements CommandImplementation<
       if (!validTypes.includes(inputObj.type)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: `Invalid repeat type: ${inputObj.type}`,
-            suggestions: ['Use types: for, times, while, until, until-event, forever']
-          }],
-          suggestions: ['Use types: for, times, while, until, until-event, forever']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: `Invalid repeat type: ${inputObj.type}`,
+              suggestions: ['Use types: for, times, while, until, until-event, forever'],
+            },
+          ],
+          suggestions: ['Use types: for, times, while, until, until-event, forever'],
         };
       }
 
@@ -103,36 +108,42 @@ export class RepeatCommand implements CommandImplementation<
       if (inputObj.type === 'for' && (!inputObj.variable || !inputObj.collection)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'For loops require variable and collection',
-            suggestions: ['Use: repeat for item in items']
-          }],
-          suggestions: ['Use: repeat for item in items']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'For loops require variable and collection',
+              suggestions: ['Use: repeat for item in items'],
+            },
+          ],
+          suggestions: ['Use: repeat for item in items'],
         };
       }
 
       if (inputObj.type === 'times' && typeof inputObj.count !== 'number') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Times loops require a count number',
-            suggestions: ['Use: repeat 5 times']
-          }],
-          suggestions: ['Use: repeat 5 times']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Times loops require a count number',
+              suggestions: ['Use: repeat 5 times'],
+            },
+          ],
+          suggestions: ['Use: repeat 5 times'],
         };
       }
 
       if (['while', 'until'].includes(inputObj.type) && !inputObj.condition) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: `${inputObj.type} loops require a condition`,
-            suggestions: [`Use: repeat ${inputObj.type} condition`]
-          }],
-          suggestions: [`Use: repeat ${inputObj.type} condition`]
+          errors: [
+            {
+              type: 'missing-argument',
+              message: `${inputObj.type} loops require a condition`,
+              suggestions: [`Use: repeat ${inputObj.type} condition`],
+            },
+          ],
+          suggestions: [`Use: repeat ${inputObj.type} condition`],
         };
       }
 
@@ -147,10 +158,10 @@ export class RepeatCommand implements CommandImplementation<
           condition: inputObj.condition,
           count: inputObj.count,
           indexVariable: inputObj.indexVariable,
-          commands: inputObj.commands
-        }
+          commands: inputObj.commands,
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -169,7 +180,7 @@ export class RepeatCommand implements CommandImplementation<
       indexVariable,
       commandsLength: commands?.length,
       eventName: (input as any).eventName,
-      eventTarget: (input as any).eventTarget
+      eventTarget: (input as any).eventTarget,
     });
 
     let iterations = 0;
@@ -182,37 +193,56 @@ export class RepeatCommand implements CommandImplementation<
       switch (type) {
         case 'for':
           ({ iterations, lastResult, interrupted } = await this.handleForLoop(
-            context, variable!, collection, indexVariable, commands || []
+            context,
+            variable!,
+            collection,
+            indexVariable,
+            commands || []
           ));
           break;
 
         case 'times':
           ({ iterations, lastResult, interrupted } = await this.handleTimesLoop(
-            context, count!, indexVariable, commands || []
+            context,
+            count!,
+            indexVariable,
+            commands || []
           ));
           break;
 
         case 'while':
           ({ iterations, lastResult, interrupted } = await this.handleWhileLoop(
-            context, condition, indexVariable, commands || []
+            context,
+            condition,
+            indexVariable,
+            commands || []
           ));
           break;
 
         case 'until':
           ({ iterations, lastResult, interrupted } = await this.handleUntilLoop(
-            context, condition, indexVariable, commands || []
+            context,
+            condition,
+            indexVariable,
+            commands || []
           ));
           break;
 
         case 'until-event':
           ({ iterations, lastResult, interrupted } = await this.handleUntilEventLoop(
-            context, input.eventName!, input.eventTarget, indexVariable, commands || []
+            context,
+            input.eventName!,
+            input.eventTarget,
+            indexVariable,
+            commands || []
           ));
           break;
 
         case 'forever':
           ({ iterations, lastResult, interrupted } = await this.handleForeverLoop(
-            context, indexVariable, commands || []
+            context,
+            indexVariable,
+            commands || []
           ));
           break;
 
@@ -228,9 +258,8 @@ export class RepeatCommand implements CommandImplementation<
         iterations,
         completed,
         lastResult,
-        interrupted
+        interrupted,
       };
-
     } catch (error) {
       // Handle control flow errors (break, continue, return)
       if (error instanceof Error && error.message.includes('BREAK')) {
@@ -239,7 +268,7 @@ export class RepeatCommand implements CommandImplementation<
           iterations,
           completed: true,
           lastResult,
-          interrupted: true
+          interrupted: true,
         };
       }
 
@@ -438,7 +467,7 @@ export class RepeatCommand implements CommandImplementation<
       eventName,
       eventTarget,
       indexVariable,
-      commandsLength: commands.length
+      commandsLength: commands.length,
     });
 
     let iterations = 0;
@@ -567,9 +596,10 @@ export class RepeatCommand implements CommandImplementation<
 
     // Check variables
     if (typeof condition === 'string') {
-      const value = context.locals?.get(condition) || 
-                   context.globals?.get(condition) || 
-                   context.variables?.get(condition);
+      const value =
+        context.locals?.get(condition) ||
+        context.globals?.get(condition) ||
+        context.variables?.get(condition);
       return Boolean(value);
     }
 

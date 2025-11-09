@@ -32,26 +32,26 @@ const CHAR_BACKSLASH = '\\'.charCodeAt(0);
 class StringBuilder {
   private parts: string[] = [];
   private length = 0;
-  
+
   append(str: string): void {
     this.parts.push(str);
     this.length += str.length;
   }
-  
+
   appendChar(char: string): void {
     this.parts.push(char);
     this.length++;
   }
-  
+
   toString(): string {
     return this.parts.join('');
   }
-  
+
   clear(): void {
     this.parts.length = 0;
     this.length = 0;
   }
-  
+
   size(): number {
     return this.length;
   }
@@ -67,16 +67,16 @@ const TOKEN_TYPE_MAP = new Map<string, TokenType>([
   ['my', TokenType.CONTEXT_VAR],
   ['its', TokenType.CONTEXT_VAR],
   ['your', TokenType.CONTEXT_VAR],
-  
+
   // Logical operators (high priority)
   ['and', TokenType.LOGICAL_OPERATOR],
   ['or', TokenType.LOGICAL_OPERATOR],
   ['not', TokenType.LOGICAL_OPERATOR],
-  
+
   // Boolean values
   ['true', TokenType.BOOLEAN],
   ['false', TokenType.BOOLEAN],
-  
+
   // Common commands (alphabetical for better cache performance)
   ['add', TokenType.COMMAND],
   ['hide', TokenType.COMMAND],
@@ -101,7 +101,7 @@ const TOKEN_TYPE_MAP = new Map<string, TokenType>([
   ['continue', TokenType.COMMAND],
   ['fetch', TokenType.COMMAND],
   ['render', TokenType.COMMAND],
-  
+
   // DOM events (common ones)
   ['click', TokenType.EVENT],
   ['change', TokenType.EVENT],
@@ -118,7 +118,7 @@ const TOKEN_TYPE_MAP = new Map<string, TokenType>([
   ['mouseup', TokenType.EVENT],
   ['mouseover', TokenType.EVENT],
   ['mouseout', TokenType.EVENT],
-  
+
   // Keywords
   ['on', TokenType.KEYWORD],
   ['init', TokenType.KEYWORD],
@@ -146,7 +146,7 @@ const TOKEN_TYPE_MAP = new Map<string, TokenType>([
   ['before', TokenType.KEYWORD],
   ['by', TokenType.KEYWORD],
   ['at', TokenType.KEYWORD],
-  ['async', TokenType.KEYWORD]
+  ['async', TokenType.KEYWORD],
 ]);
 
 // Time units for fast lookup
@@ -154,8 +154,19 @@ const TIME_UNITS = new Set(['ms', 's', 'seconds', 'minutes', 'hours', 'days']);
 
 // Comparison operators for fast classification
 const COMPARISON_OPERATORS = new Set([
-  '==', '!=', '===', '!==', '<', '>', '<=', '>=', 'is', 'is not',
-  'contains', 'matches', 'exists'
+  '==',
+  '!=',
+  '===',
+  '!==',
+  '<',
+  '>',
+  '<=',
+  '>=',
+  'is',
+  'is not',
+  'contains',
+  'matches',
+  'exists',
 ]);
 
 export interface OptimizedTokenizer {
@@ -179,7 +190,7 @@ export function createOptimizedTokenizer(): OptimizedTokenizer {
     tokens: [],
     length: 0,
     stringBuilder: new StringBuilder(),
-    tempArray: []
+    tempArray: [],
   };
 }
 
@@ -187,41 +198,48 @@ export function tokenizeOptimized(input: string): Token[] {
   const tokenizer = createOptimizedTokenizer();
   tokenizer.input = input;
   tokenizer.length = input.length;
-  
+
   while (tokenizer.position < tokenizer.length) {
     skipWhitespaceOptimized(tokenizer);
-    
+
     if (tokenizer.position >= tokenizer.length) break;
-    
+
     const charCode = input.charCodeAt(tokenizer.position);
-    
+
     // Fast path for common characters using character codes
-    if (charCode >= CHAR_A && charCode <= CHAR_Z || 
-        charCode >= CHAR_A_UPPER && charCode <= CHAR_Z_UPPER || 
-        charCode === CHAR_UNDERSCORE) {
+    if (
+      (charCode >= CHAR_A && charCode <= CHAR_Z) ||
+      (charCode >= CHAR_A_UPPER && charCode <= CHAR_Z_UPPER) ||
+      charCode === CHAR_UNDERSCORE
+    ) {
       tokenizeIdentifierOptimized(tokenizer);
       continue;
     }
-    
+
     if (charCode >= CHAR_0 && charCode <= CHAR_9) {
       tokenizeNumberOrTimeOptimized(tokenizer);
       continue;
     }
-    
+
     // Handle strings with character code checks
     if (charCode === CHAR_QUOTE) {
       tokenizeStringOptimized(tokenizer);
       continue;
     }
-    
-    if (charCode === CHAR_SINGLE_QUOTE || charCode === 8217) { // ''' character code
+
+    if (charCode === CHAR_SINGLE_QUOTE || charCode === 8217) {
+      // ''' character code
       // Check if this is possessive syntax (apostrophe followed by 's')
-      const nextCharCode = tokenizer.position + 1 < tokenizer.length ? 
-        tokenizer.input.charCodeAt(tokenizer.position + 1) : 0;
+      const nextCharCode =
+        tokenizer.position + 1 < tokenizer.length
+          ? tokenizer.input.charCodeAt(tokenizer.position + 1)
+          : 0;
       const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
-      const isPossessive = nextCharCode === 115 && prevToken && // 's' character code
+      const isPossessive =
+        nextCharCode === 115 &&
+        prevToken && // 's' character code
         (prevToken.type === TokenType.IDENTIFIER || prevToken.type === TokenType.CONTEXT_VAR);
-      
+
       if (isPossessive) {
         // Tokenize as operator for possessive syntax
         tokenizeOperatorOptimized(tokenizer);
@@ -231,50 +249,52 @@ export function tokenizeOptimized(input: string): Token[] {
       }
       continue;
     }
-    
+
     // Handle symbols like @ with character code checks
     if (charCode === CHAR_AT) {
       addTokenOptimized(tokenizer, TokenType.SYMBOL, '@');
       advanceOptimized(tokenizer);
       continue;
     }
-    
+
     // Handle CSS selectors with character code checks
     if (charCode === CHAR_HASH || charCode === CHAR_DOT) {
       tokenizeCSSOrOperatorOptimized(tokenizer);
       continue;
     }
-    
+
     // Handle object/array literals first (before operators)
     if (charCode === CHAR_OPEN_BRACE) {
       tokenizeObjectLiteralOptimized(tokenizer);
       continue;
     }
-    
+
     if (charCode === CHAR_OPEN_BRACKET) {
       tokenizeArrayOrMemberAccessOptimized(tokenizer);
       continue;
     }
-    
+
     // Handle operators
     const char = input[tokenizer.position];
     if (isOperatorChar(char)) {
       tokenizeOperatorOptimized(tokenizer);
       continue;
     }
-    
+
     // Unknown character - consume it
     addTokenOptimized(tokenizer, TokenType.UNKNOWN, char);
     advanceOptimized(tokenizer);
   }
-  
+
   return tokenizer.tokens;
 }
 
 // Optimized helper functions using character codes
 function isAlphaOptimized(charCode: number): boolean {
-  return (charCode >= CHAR_A && charCode <= CHAR_Z) || 
-         (charCode >= CHAR_A_UPPER && charCode <= CHAR_Z_UPPER);
+  return (
+    (charCode >= CHAR_A && charCode <= CHAR_Z) ||
+    (charCode >= CHAR_A_UPPER && charCode <= CHAR_Z_UPPER)
+  );
 }
 
 function isDigitOptimized(charCode: number): boolean {
@@ -286,8 +306,12 @@ function isAlphaNumericOptimized(charCode: number): boolean {
 }
 
 function isWhitespaceOptimized(charCode: number): boolean {
-  return charCode === CHAR_SPACE || charCode === CHAR_TAB || 
-         charCode === CHAR_NEWLINE || charCode === CHAR_RETURN;
+  return (
+    charCode === CHAR_SPACE ||
+    charCode === CHAR_TAB ||
+    charCode === CHAR_NEWLINE ||
+    charCode === CHAR_RETURN
+  );
 }
 
 function skipWhitespaceOptimized(tokenizer: OptimizedTokenizer): void {
@@ -301,21 +325,21 @@ function skipWhitespaceOptimized(tokenizer: OptimizedTokenizer): void {
 function advanceOptimized(tokenizer: OptimizedTokenizer): string {
   const char = tokenizer.input[tokenizer.position];
   tokenizer.position++;
-  
+
   if (char === '\n') {
     tokenizer.line++;
     tokenizer.column = 1;
   } else {
     tokenizer.column++;
   }
-  
+
   return char;
 }
 
 function addTokenOptimized(
-  tokenizer: OptimizedTokenizer, 
-  type: TokenType, 
-  value: string, 
+  tokenizer: OptimizedTokenizer,
+  type: TokenType,
+  value: string,
   start?: number
 ): void {
   const startPos = start ?? tokenizer.position - value.length;
@@ -325,25 +349,27 @@ function addTokenOptimized(
     start: startPos,
     end: tokenizer.position,
     line: tokenizer.line,
-    column: tokenizer.column - value.length
+    column: tokenizer.column - value.length,
   });
 }
 
 function tokenizeIdentifierOptimized(tokenizer: OptimizedTokenizer): void {
   const start = tokenizer.position;
   tokenizer.stringBuilder.clear();
-  
+
   while (tokenizer.position < tokenizer.length) {
     const charCode = tokenizer.input.charCodeAt(tokenizer.position);
-    if (isAlphaNumericOptimized(charCode) || 
-        charCode === CHAR_UNDERSCORE || 
-        charCode === CHAR_DASH) {
+    if (
+      isAlphaNumericOptimized(charCode) ||
+      charCode === CHAR_UNDERSCORE ||
+      charCode === CHAR_DASH
+    ) {
       tokenizer.stringBuilder.appendChar(advanceOptimized(tokenizer));
     } else {
       break;
     }
   }
-  
+
   const value = tokenizer.stringBuilder.toString();
   const type = classifyIdentifierOptimized(value);
   addTokenOptimized(tokenizer, type, value, start);
@@ -353,7 +379,7 @@ function classifyIdentifierOptimized(value: string): TokenType {
   // Fast lookup using pre-computed map
   const lowerValue = value.toLowerCase();
   const type = TOKEN_TYPE_MAP.get(lowerValue);
-  
+
   // Return immediately if found, otherwise default to identifier
   return type ?? TokenType.IDENTIFIER;
 }
@@ -361,7 +387,7 @@ function classifyIdentifierOptimized(value: string): TokenType {
 function tokenizeNumberOrTimeOptimized(tokenizer: OptimizedTokenizer): void {
   const start = tokenizer.position;
   tokenizer.stringBuilder.clear();
-  
+
   // Read digits efficiently
   while (tokenizer.position < tokenizer.length) {
     const charCode = tokenizer.input.charCodeAt(tokenizer.position);
@@ -371,12 +397,14 @@ function tokenizeNumberOrTimeOptimized(tokenizer: OptimizedTokenizer): void {
       break;
     }
   }
-  
+
   // Handle decimal
-  if (tokenizer.position < tokenizer.length && 
-      tokenizer.input.charCodeAt(tokenizer.position) === CHAR_DOT) {
+  if (
+    tokenizer.position < tokenizer.length &&
+    tokenizer.input.charCodeAt(tokenizer.position) === CHAR_DOT
+  ) {
     tokenizer.stringBuilder.appendChar(advanceOptimized(tokenizer));
-    
+
     while (tokenizer.position < tokenizer.length) {
       const charCode = tokenizer.input.charCodeAt(tokenizer.position);
       if (isDigitOptimized(charCode)) {
@@ -386,13 +414,13 @@ function tokenizeNumberOrTimeOptimized(tokenizer: OptimizedTokenizer): void {
       }
     }
   }
-  
+
   const numberValue = tokenizer.stringBuilder.toString();
-  
+
   // Check for time unit efficiently
   const unitStart = tokenizer.position;
   tokenizer.tempArray.length = 0; // Reset temp array
-  
+
   while (tokenizer.position < tokenizer.length) {
     const charCode = tokenizer.input.charCodeAt(tokenizer.position);
     if (isAlphaOptimized(charCode)) {
@@ -401,7 +429,7 @@ function tokenizeNumberOrTimeOptimized(tokenizer: OptimizedTokenizer): void {
       break;
     }
   }
-  
+
   if (tokenizer.tempArray.length > 0) {
     const unit = tokenizer.tempArray.join('');
     if (TIME_UNITS.has(unit)) {
@@ -412,7 +440,7 @@ function tokenizeNumberOrTimeOptimized(tokenizer: OptimizedTokenizer): void {
       tokenizer.position = unitStart;
     }
   }
-  
+
   addTokenOptimized(tokenizer, TokenType.NUMBER, numberValue, start);
 }
 
@@ -421,15 +449,15 @@ function tokenizeStringOptimized(tokenizer: OptimizedTokenizer): void {
   const quote = advanceOptimized(tokenizer); // Skip opening quote
   tokenizer.stringBuilder.clear();
   tokenizer.stringBuilder.appendChar(quote); // Include opening quote in value
-  
+
   while (tokenizer.position < tokenizer.length) {
     const charCode = tokenizer.input.charCodeAt(tokenizer.position);
-    
+
     if (tokenizer.input[tokenizer.position] === quote) {
       tokenizer.stringBuilder.appendChar(advanceOptimized(tokenizer)); // Include closing quote
       break;
     }
-    
+
     if (charCode === CHAR_BACKSLASH && tokenizer.position + 1 < tokenizer.length) {
       tokenizer.stringBuilder.appendChar(advanceOptimized(tokenizer)); // Add backslash
       tokenizer.stringBuilder.appendChar(advanceOptimized(tokenizer)); // Add escaped character
@@ -437,26 +465,27 @@ function tokenizeStringOptimized(tokenizer: OptimizedTokenizer): void {
       tokenizer.stringBuilder.appendChar(advanceOptimized(tokenizer));
     }
   }
-  
+
   addTokenOptimized(tokenizer, TokenType.STRING, tokenizer.stringBuilder.toString(), start);
 }
 
 function tokenizeCSSOrOperatorOptimized(tokenizer: OptimizedTokenizer): void {
   const char = tokenizer.input[tokenizer.position];
-  
+
   if (char === '#') {
     tokenizeCSSSelector(tokenizer);
     return;
   }
-  
+
   // For '.', check context to determine if it's CSS selector or operator
   const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
-  const isCSSSelectorContext = !prevToken || 
-    prevToken.type === 'whitespace' || 
+  const isCSSSelectorContext =
+    !prevToken ||
+    prevToken.type === 'whitespace' ||
     prevToken.type === 'operator' ||
     prevToken.type === 'keyword' ||
     prevToken.type === 'command';
-    
+
   if (isCSSSelectorContext && tokenizer.position + 1 < tokenizer.length) {
     const nextCharCode = tokenizer.input.charCodeAt(tokenizer.position + 1);
     if (isAlphaOptimized(nextCharCode)) {
@@ -464,7 +493,7 @@ function tokenizeCSSOrOperatorOptimized(tokenizer: OptimizedTokenizer): void {
       return;
     }
   }
-  
+
   // Treat as operator
   addTokenOptimized(tokenizer, TokenType.OPERATOR, char);
   advanceOptimized(tokenizer);
@@ -475,56 +504,62 @@ function tokenizeCSSSelector(tokenizer: OptimizedTokenizer): void {
   const prefix = advanceOptimized(tokenizer); // '#' or '.'
   tokenizer.stringBuilder.clear();
   tokenizer.stringBuilder.appendChar(prefix);
-  
+
   while (tokenizer.position < tokenizer.length) {
     const charCode = tokenizer.input.charCodeAt(tokenizer.position);
-    if (isAlphaNumericOptimized(charCode) || 
-        charCode === CHAR_DASH || 
-        charCode === CHAR_UNDERSCORE) {
+    if (
+      isAlphaNumericOptimized(charCode) ||
+      charCode === CHAR_DASH ||
+      charCode === CHAR_UNDERSCORE
+    ) {
       tokenizer.stringBuilder.appendChar(advanceOptimized(tokenizer));
     } else {
       break;
     }
   }
-  
+
   const selectorType = prefix === '#' ? TokenType.ID_SELECTOR : TokenType.CLASS_SELECTOR;
   addTokenOptimized(tokenizer, selectorType, tokenizer.stringBuilder.toString(), start);
 }
 
 function tokenizeOperatorOptimized(tokenizer: OptimizedTokenizer): void {
   const start = tokenizer.position;
-  
+
   // Fast check for multi-character operators
   if (tokenizer.position + 2 < tokenizer.length) {
     const threeChar = tokenizer.input.substring(tokenizer.position, tokenizer.position + 3);
     if (threeChar === '===' || threeChar === '!==') {
       tokenizer.position += 3;
-      const type = COMPARISON_OPERATORS.has(threeChar) 
-        ? TokenType.COMPARISON_OPERATOR 
+      const type = COMPARISON_OPERATORS.has(threeChar)
+        ? TokenType.COMPARISON_OPERATOR
         : TokenType.OPERATOR;
       addTokenOptimized(tokenizer, type, threeChar, start);
       return;
     }
   }
-  
+
   if (tokenizer.position + 1 < tokenizer.length) {
     const twoChar = tokenizer.input.substring(tokenizer.position, tokenizer.position + 2);
-    if (twoChar === '==' || twoChar === '!=' || twoChar === '<=' || 
-        twoChar === '>=' || twoChar === '&&' || twoChar === '||') {
+    if (
+      twoChar === '==' ||
+      twoChar === '!=' ||
+      twoChar === '<=' ||
+      twoChar === '>=' ||
+      twoChar === '&&' ||
+      twoChar === '||'
+    ) {
       tokenizer.position += 2;
-      const type = COMPARISON_OPERATORS.has(twoChar) 
-        ? TokenType.COMPARISON_OPERATOR 
+      const type = COMPARISON_OPERATORS.has(twoChar)
+        ? TokenType.COMPARISON_OPERATOR
         : TokenType.OPERATOR;
       addTokenOptimized(tokenizer, type, twoChar, start);
       return;
     }
   }
-  
+
   // Single character operator
   const char = advanceOptimized(tokenizer);
-  const type = COMPARISON_OPERATORS.has(char) 
-    ? TokenType.COMPARISON_OPERATOR 
-    : TokenType.OPERATOR;
+  const type = COMPARISON_OPERATORS.has(char) ? TokenType.COMPARISON_OPERATOR : TokenType.OPERATOR;
   addTokenOptimized(tokenizer, type, char, start);
 }
 
@@ -532,7 +567,7 @@ function tokenizeObjectLiteralOptimized(tokenizer: OptimizedTokenizer): void {
   const start = tokenizer.position;
   tokenizer.stringBuilder.clear();
   let braceCount = 0;
-  
+
   do {
     const char = advanceOptimized(tokenizer);
     tokenizer.stringBuilder.appendChar(char);
@@ -540,18 +575,19 @@ function tokenizeObjectLiteralOptimized(tokenizer: OptimizedTokenizer): void {
     if (charCode === CHAR_OPEN_BRACE) braceCount++;
     if (charCode === 125) braceCount--; // '}' character code
   } while (braceCount > 0 && tokenizer.position < tokenizer.length);
-  
+
   addTokenOptimized(tokenizer, TokenType.OBJECT_LITERAL, tokenizer.stringBuilder.toString(), start);
 }
 
 function tokenizeArrayOrMemberAccessOptimized(tokenizer: OptimizedTokenizer): void {
   const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
-  const isMemberAccess = prevToken && 
-    (prevToken.type === TokenType.IDENTIFIER || 
-     prevToken.type === TokenType.CONTEXT_VAR ||
-     prevToken.value === ')' ||
-     prevToken.value === ']');
-  
+  const isMemberAccess =
+    prevToken &&
+    (prevToken.type === TokenType.IDENTIFIER ||
+      prevToken.type === TokenType.CONTEXT_VAR ||
+      prevToken.value === ')' ||
+      prevToken.value === ']');
+
   if (isMemberAccess) {
     addTokenOptimized(tokenizer, TokenType.OPERATOR, '[');
     advanceOptimized(tokenizer);
@@ -564,7 +600,7 @@ function tokenizeArrayLiteral(tokenizer: OptimizedTokenizer): void {
   const start = tokenizer.position;
   tokenizer.stringBuilder.clear();
   let bracketCount = 0;
-  
+
   do {
     const char = advanceOptimized(tokenizer);
     tokenizer.stringBuilder.appendChar(char);
@@ -572,7 +608,7 @@ function tokenizeArrayLiteral(tokenizer: OptimizedTokenizer): void {
     if (charCode === CHAR_OPEN_BRACKET) bracketCount++;
     if (charCode === 93) bracketCount--; // ']' character code
   } while (bracketCount > 0 && tokenizer.position < tokenizer.length);
-  
+
   addTokenOptimized(tokenizer, TokenType.ARRAY_LITERAL, tokenizer.stringBuilder.toString(), start);
 }
 
@@ -580,31 +616,33 @@ function tokenizeArrayLiteral(tokenizer: OptimizedTokenizer): void {
 function isOperatorChar(char: string): boolean {
   const charCode = char.charCodeAt(0);
   // Most common operators first for faster lookup
-  return charCode === 43 ||  // '+'
-         charCode === 45 ||  // '-'
-         charCode === 42 ||  // '*'
-         charCode === 47 ||  // '/'
-         charCode === 37 ||  // '%'
-         charCode === 61 ||  // '='
-         charCode === 33 ||  // '!'
-         charCode === 60 ||  // '<'
-         charCode === 62 ||  // '>'
-         charCode === 38 ||  // '&'
-         charCode === 124 || // '|'
-         charCode === 40 ||  // '('
-         charCode === 41 ||  // ')'
-         charCode === 123 || // '{'
-         charCode === 125 || // '}'
-         charCode === 91 ||  // '['
-         charCode === 93 ||  // ']'
-         charCode === 44 ||  // ','
-         charCode === 46 ||  // '.'
-         charCode === 59 ||  // ';'
-         charCode === 58 ||  // ':'
-         charCode === 63 ||  // '?'
-         charCode === 92 ||  // '\'
-         charCode === 39 ||  // "'"
-         charCode === 8217;  // '''
+  return (
+    charCode === 43 || // '+'
+    charCode === 45 || // '-'
+    charCode === 42 || // '*'
+    charCode === 47 || // '/'
+    charCode === 37 || // '%'
+    charCode === 61 || // '='
+    charCode === 33 || // '!'
+    charCode === 60 || // '<'
+    charCode === 62 || // '>'
+    charCode === 38 || // '&'
+    charCode === 124 || // '|'
+    charCode === 40 || // '('
+    charCode === 41 || // ')'
+    charCode === 123 || // '{'
+    charCode === 125 || // '}'
+    charCode === 91 || // '['
+    charCode === 93 || // ']'
+    charCode === 44 || // ','
+    charCode === 46 || // '.'
+    charCode === 59 || // ';'
+    charCode === 58 || // ':'
+    charCode === 63 || // '?'
+    charCode === 92 || // '\'
+    charCode === 39 || // "'"
+    charCode === 8217
+  ); // '''
 }
 
 // Export for compatibility

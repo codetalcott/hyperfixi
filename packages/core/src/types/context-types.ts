@@ -1,5 +1,3 @@
-
-
 /**
  * Enhanced Context Types for HyperFixi
  * Extends TypedExpressionImplementation pattern to context management
@@ -8,11 +6,11 @@
 
 import type { RuntimeValidator } from '../validation/lightweight-validators';
 import { v, z } from '../validation/lightweight-validators';
-import type { 
+import type {
   TypedExpressionContext,
   EvaluationType,
   ExpressionMetadata,
-  ValidationResult
+  ValidationResult,
 } from './expression-types';
 import type { LLMDocumentation } from './command-types';
 
@@ -88,7 +86,9 @@ export interface TypedContextImplementation<TInput, TOutput> {
 // Enhanced Context Base Class
 // ============================================================================
 
-export abstract class EnhancedContextBase<TInput, TOutput> implements TypedContextImplementation<TInput, TOutput> {
+export abstract class EnhancedContextBase<TInput, TOutput>
+  implements TypedContextImplementation<TInput, TOutput>
+{
   abstract readonly name: string;
   abstract readonly category: ContextCategory;
   abstract readonly description: string;
@@ -113,17 +113,18 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map((err: any) => ({
-            type: 'type-mismatch' as const,
-            message: `Invalid ${this.category.toLowerCase()} context input: ${err.message}`,
-            path: err.path?.join('.') || 'root',
-            suggestions: []
-          })) || [],
-          suggestions: this.generateValidationSuggestions(parsed.error!)
+          errors:
+            parsed.error?.errors.map((err: any) => ({
+              type: 'type-mismatch' as const,
+              message: `Invalid ${this.category.toLowerCase()} context input: ${err.message}`,
+              path: err.path?.join('.') || 'root',
+              suggestions: [],
+            })) || [],
+          suggestions: this.generateValidationSuggestions(parsed.error!),
         };
       }
 
@@ -136,18 +137,19 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Context validation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types', 'Verify context requirements']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Context validation failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types', 'Verify context requirements'],
       };
     }
   }
@@ -160,7 +162,7 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
   protected generateValidationSuggestions(error: any): string[] {
     const suggestions = [
       `Ensure all required ${this.category.toLowerCase()} context properties are provided`,
-      'Check property types match the expected schema'
+      'Check property types match the expected schema',
     ];
 
     // Add context-specific suggestions based on error
@@ -182,7 +184,7 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
       output: success ? (output ? 'context created' : 'success') : 'error',
       timestamp: startTime,
       duration: Date.now() - startTime,
-      success
+      success,
     });
   }
 
@@ -190,9 +192,12 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
   getPerformanceMetrics() {
     return {
       totalInitializations: this.evaluationHistory.length,
-      successRate: this.evaluationHistory.filter(h => h.success).length / this.evaluationHistory.length,
-      averageDuration: this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / this.evaluationHistory.length,
-      recentPerformance: this.evaluationHistory.slice(-10)
+      successRate:
+        this.evaluationHistory.filter(h => h.success).length / this.evaluationHistory.length,
+      averageDuration:
+        this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) /
+        this.evaluationHistory.length,
+      recentPerformance: this.evaluationHistory.slice(-10),
     };
   }
 }
@@ -202,31 +207,35 @@ export abstract class EnhancedContextBase<TInput, TOutput> implements TypedConte
 // ============================================================================
 
 // Base schemas that can be extended
-export const BaseContextInputSchema = v.object({
-  /** Environment type */
-  environment: z.enum(['frontend', 'backend', 'universal', 'testing']).optional(),
-  /** Context variables */
-  variables: z.record(v.string(), v.unknown()).optional(),
-  /** Debug mode */
-  debug: v.boolean().optional().default(false),
-  /** Performance tracking enabled */
-  trackPerformance: v.boolean().optional().default(true)
-}).strict();
+export const BaseContextInputSchema = v
+  .object({
+    /** Environment type */
+    environment: z.enum(['frontend', 'backend', 'universal', 'testing']).optional(),
+    /** Context variables */
+    variables: z.record(v.string(), v.unknown()).optional(),
+    /** Debug mode */
+    debug: v.boolean().optional().default(false),
+    /** Performance tracking enabled */
+    trackPerformance: v.boolean().optional().default(true),
+  })
+  .strict();
 
-export const BaseContextOutputSchema = v.object({
-  /** Context identifier */
-  contextId: v.string(),
-  /** Initialization timestamp */
-  timestamp: v.number(),
-  /** Context category */
-  category: z.enum(['Frontend', 'Backend', 'Universal', 'SSR', 'Testing']),
-  /** Available methods and properties */
-  capabilities: v.array(v.string()),
-  /** Context state */
-  state: z.enum(['initializing', 'ready', 'error']),
-  /** Error information if state is error */
-  error: v.string().optional()
-}).strict();
+export const BaseContextOutputSchema = v
+  .object({
+    /** Context identifier */
+    contextId: v.string(),
+    /** Initialization timestamp */
+    timestamp: v.number(),
+    /** Context category */
+    category: z.enum(['Frontend', 'Backend', 'Universal', 'SSR', 'Testing']),
+    /** Available methods and properties */
+    capabilities: v.array(v.string()),
+    /** Context state */
+    state: z.enum(['initializing', 'ready', 'error']),
+    /** Error information if state is error */
+    error: v.string().optional(),
+  })
+  .strict();
 
 export type BaseContextInput = any; // z.infer<typeof BaseContextInputSchema>;
 export type BaseContextOutput = any; // z.infer<typeof BaseContextOutputSchema>;
@@ -266,13 +275,13 @@ export interface EnhancedTypedExpressionContext extends TypedExpressionContext {
 export interface ContextRegistry {
   /** Register a context implementation */
   register<T extends TypedContextImplementation<any, any>>(context: T): void;
-  
+
   /** Get context by name */
   get<_T>(name: string): TypedContextImplementation<any, any> | null;
-  
+
   /** List all contexts by category */
   listByCategory(category: ContextCategory): TypedContextImplementation<any, any>[];
-  
+
   /** Validate context registration */
   validate<T extends TypedContextImplementation<any, any>>(context: T): ValidationResult;
 }

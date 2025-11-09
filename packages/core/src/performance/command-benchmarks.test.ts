@@ -28,7 +28,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
   describe('DOM Manipulation Commands', () => {
     test('HideCommand performance characteristics', async () => {
       const hideCommand = new HideCommand();
-      
+
       const result = await benchmark.benchmark(
         'HideCommand.execute',
         'command',
@@ -37,7 +37,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 1000,
           complexity: 'low',
           operationType: 'dom-manipulation',
-          inputSize: 1
+          inputSize: 1,
         }
       );
 
@@ -48,16 +48,16 @@ describe('Enhanced Command Performance Benchmarks', () => {
 
     test('ShowCommand performance characteristics', async () => {
       const showCommand = new ShowCommand();
-      
+
       const result = await benchmark.benchmark(
         'ShowCommand.execute',
         'command',
         () => showCommand.execute(context),
         {
           iterations: 1000,
-          complexity: 'low', 
+          complexity: 'low',
           operationType: 'dom-manipulation',
-          inputSize: 1
+          inputSize: 1,
         }
       );
 
@@ -67,7 +67,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
 
     test('AddCommand performance with class manipulation', async () => {
       const addCommand = new AddCommand();
-      
+
       const result = await benchmark.benchmark(
         'AddCommand.execute',
         'command',
@@ -76,7 +76,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 500,
           complexity: 'medium',
           operationType: 'class-manipulation',
-          inputSize: 1
+          inputSize: 1,
         }
       );
 
@@ -88,7 +88,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
   describe('Content Commands', () => {
     test('PutCommand performance with content insertion', async () => {
       const putCommand = new PutCommand();
-      
+
       const result = await benchmark.benchmark(
         'PutCommand.execute',
         'command',
@@ -97,7 +97,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 300,
           complexity: 'medium',
           operationType: 'content-insertion',
-          inputSize: 11 // Length of "Hello World"
+          inputSize: 11, // Length of "Hello World"
         }
       );
 
@@ -108,7 +108,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
     test('PutCommand performance with HTML content', async () => {
       const putCommand = new PutCommand();
       const htmlContent = '<div><span>Complex HTML</span></div>';
-      
+
       const result = await benchmark.benchmark(
         'PutCommand.execute.html',
         'command',
@@ -117,7 +117,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 200,
           complexity: 'high',
           operationType: 'html-insertion',
-          inputSize: htmlContent.length
+          inputSize: htmlContent.length,
         }
       );
 
@@ -131,7 +131,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
       const takeCommand = new TakeCommand();
       const sourceElement = createMockElement('div');
       sourceElement.classList.add('source-class');
-      
+
       const result = await benchmark.benchmark(
         'TakeCommand.execute',
         'command',
@@ -140,7 +140,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 200,
           complexity: 'high',
           operationType: 'property-transfer',
-          inputSize: 3 // Number of arguments
+          inputSize: 3, // Number of arguments
         }
       );
 
@@ -150,7 +150,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
 
     test('SettleCommand performance with timeout', async () => {
       const settleCommand = new SettleCommand();
-      
+
       const result = await benchmark.benchmark(
         'SettleCommand.execute',
         'command',
@@ -159,7 +159,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 50, // Fewer iterations for settle operations
           complexity: 'high',
           operationType: 'animation-wait',
-          inputSize: 2
+          inputSize: 2,
         }
       );
 
@@ -171,7 +171,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
   describe('Navigation Commands', () => {
     test('GoCommand performance with URL navigation', async () => {
       const goCommand = new GoCommand();
-      
+
       const result = await benchmark.benchmark(
         'GoCommand.execute.url',
         'command',
@@ -180,7 +180,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 100,
           complexity: 'high',
           operationType: 'url-navigation',
-          inputSize: 2
+          inputSize: 2,
         }
       );
 
@@ -190,7 +190,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
 
     test('GoCommand performance with history navigation', async () => {
       const goCommand = new GoCommand();
-      
+
       const result = await benchmark.benchmark(
         'GoCommand.execute.history',
         'command',
@@ -199,7 +199,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 200,
           complexity: 'medium',
           operationType: 'history-navigation',
-          inputSize: 1
+          inputSize: 1,
         }
       );
 
@@ -211,7 +211,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
   describe('Validation Performance', () => {
     test('Input validation overhead measurement', async () => {
       const hideCommand = new HideCommand();
-      
+
       const validationResult = await benchmark.benchmark(
         'HideCommand.validate',
         'validation',
@@ -220,7 +220,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 2000,
           complexity: 'low',
           operationType: 'input-validation',
-          inputSize: 0
+          inputSize: 0,
         }
       );
 
@@ -232,7 +232,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 2000,
           complexity: 'low',
           operationType: 'execution-only',
-          inputSize: 0
+          inputSize: 0,
         }
       );
 
@@ -244,7 +244,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
     test('Complex validation performance', async () => {
       const putCommand = new PutCommand();
       const complexArgs = ['<div>Complex HTML</div>', 'into', '#complex-selector'];
-      
+
       const result = await benchmark.benchmark(
         'PutCommand.validate.complex',
         'validation',
@@ -253,7 +253,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 1000,
           complexity: 'medium',
           operationType: 'complex-validation',
-          inputSize: complexArgs.length
+          inputSize: complexArgs.length,
         }
       );
 
@@ -271,10 +271,10 @@ describe('Enhanced Command Performance Benchmarks', () => {
           // Create multiple command instances to measure memory overhead
           const commands = [
             new HideCommand(),
-            new ShowCommand(), 
+            new ShowCommand(),
             new AddCommand(),
             new PutCommand(),
-            new TakeCommand()
+            new TakeCommand(),
           ];
           return commands.length;
         },
@@ -282,7 +282,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 100,
           complexity: 'medium',
           operationType: 'instantiation',
-          inputSize: 5
+          inputSize: 5,
         }
       );
 
@@ -293,7 +293,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
     test('Large dataset processing memory efficiency', async () => {
       const addCommand = new AddCommand();
       const largeClassList = Array.from({ length: 100 }, (_, i) => `class-${i}`);
-      
+
       const result = await benchmark.benchmark(
         'AddCommand.large-dataset',
         'command',
@@ -302,7 +302,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 50,
           complexity: 'high',
           operationType: 'large-dataset',
-          inputSize: largeClassList.length
+          inputSize: largeClassList.length,
         }
       );
 
@@ -316,7 +316,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
       const hideCommand = new HideCommand();
       const showCommand = new ShowCommand();
       const addCommand = new AddCommand();
-      
+
       const result = await benchmark.benchmark(
         'Command.chaining',
         'integration',
@@ -330,7 +330,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
           iterations: 200,
           complexity: 'high',
           operationType: 'command-chaining',
-          inputSize: 3
+          inputSize: 3,
         }
       );
 
@@ -340,7 +340,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
 
     test('Error handling performance impact', async () => {
       const putCommand = new PutCommand();
-      
+
       const successResult = await benchmark.benchmark(
         'PutCommand.success-path',
         'integration',
@@ -348,7 +348,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
         {
           iterations: 300,
           complexity: 'medium',
-          operationType: 'success-path'
+          operationType: 'success-path',
         }
       );
 
@@ -359,7 +359,7 @@ describe('Enhanced Command Performance Benchmarks', () => {
         {
           iterations: 300,
           complexity: 'medium',
-          operationType: 'error-path'
+          operationType: 'error-path',
         }
       );
 
@@ -372,20 +372,26 @@ describe('Enhanced Command Performance Benchmarks', () => {
     // Run a subset of benchmarks to generate a report
     const hideCommand = new HideCommand();
     const putCommand = new PutCommand();
-    
-    await benchmark.benchmark('HideCommand.quick', 'command', 
-      () => hideCommand.execute(context), { iterations: 100, operationType: 'dom' });
-    
-    await benchmark.benchmark('PutCommand.quick', 'command',
-      () => putCommand.execute(context, 'test', 'into'), { iterations: 100, operationType: 'content' });
+
+    await benchmark.benchmark('HideCommand.quick', 'command', () => hideCommand.execute(context), {
+      iterations: 100,
+      operationType: 'dom',
+    });
+
+    await benchmark.benchmark(
+      'PutCommand.quick',
+      'command',
+      () => putCommand.execute(context, 'test', 'into'),
+      { iterations: 100, operationType: 'content' }
+    );
 
     const suite = benchmark.generateSuite('Enhanced Commands Performance Suite');
-    
+
     expect(suite.results.length).toBeGreaterThan(0);
     expect(suite.summary.totalTests).toBeGreaterThan(0);
     expect(suite.summary.fastestTest).not.toBe('none');
     expect(suite.summary.slowestTest).not.toBe('none');
-    
+
     // Verify report formatting
     const report = benchmark.formatResults(suite);
     expect(report).toContain('Performance Benchmark');

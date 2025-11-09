@@ -13,17 +13,17 @@ export interface Command {
 
 export const logCommand: Command = {
   name: 'log',
-  
+
   async execute(args: string[], context: ExecutionContext): Promise<any> {
     // If no arguments, just log empty
     if (args.length === 0) {
       console.log();
       return;
     }
-    
+
     // Evaluate all arguments and log them
     const evaluatedArgs = [];
-    
+
     for (const arg of args) {
       try {
         const result = await parseAndEvaluateExpression(arg, context);
@@ -33,10 +33,10 @@ export const logCommand: Command = {
         evaluatedArgs.push(arg);
       }
     }
-    
+
     // Log all evaluated arguments
     console.log(...evaluatedArgs);
-    
+
     return evaluatedArgs.length === 1 ? evaluatedArgs[0] : evaluatedArgs;
-  }
+  },
 };

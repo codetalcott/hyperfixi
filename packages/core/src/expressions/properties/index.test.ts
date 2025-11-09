@@ -9,7 +9,7 @@ import {
   propertiesExpressions,
   getElementProperty,
   isDataAttribute,
-  isAriaAttribute
+  isAriaAttribute,
 } from './index';
 import type { ExecutionContext } from '../../types/core';
 
@@ -19,7 +19,7 @@ describe('Property Expressions', () => {
 
   beforeEach(() => {
     context = createMockHyperscriptContext();
-    
+
     // Create a test element with various properties and attributes
     testElement = createTestElement(`
       <div 
@@ -33,7 +33,7 @@ describe('Property Expressions', () => {
         Test Content
       </div>
     `);
-    
+
     context.me = testElement;
     context.it = { name: 'test', count: 42 };
     context.you = testElement;
@@ -53,14 +53,24 @@ describe('Property Expressions', () => {
       });
 
       it('should handle DOM element attributes', async () => {
-        const result = await propertiesExpressions.possessive.evaluate(context, testElement, 'data-value');
+        const result = await propertiesExpressions.possessive.evaluate(
+          context,
+          testElement,
+          'data-value'
+        );
         expect(result).toBe('test-data');
       });
 
       it('should handle special DOM properties', async () => {
-        expect(await propertiesExpressions.possessive.evaluate(context, testElement, 'className')).toBe('test-class another-class');
-        expect(await propertiesExpressions.possessive.evaluate(context, testElement, 'tagName')).toBe('div');
-        expect(await propertiesExpressions.possessive.evaluate(context, testElement, 'innerText')).toBe('Test Content');
+        expect(
+          await propertiesExpressions.possessive.evaluate(context, testElement, 'className')
+        ).toBe('test-class another-class');
+        expect(
+          await propertiesExpressions.possessive.evaluate(context, testElement, 'tagName')
+        ).toBe('div');
+        expect(
+          await propertiesExpressions.possessive.evaluate(context, testElement, 'innerText')
+        ).toBe('Test Content');
       });
 
       it('should handle null/undefined element', async () => {
@@ -69,15 +79,22 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string property', async () => {
-        await expect(propertiesExpressions.possessive.evaluate(context, testElement, 123 as any))
-          .rejects.toThrow('Property name must be a string');
+        await expect(
+          propertiesExpressions.possessive.evaluate(context, testElement, 123 as any)
+        ).rejects.toThrow('Property name must be a string');
       });
 
       it('should validate arguments', () => {
         expect(propertiesExpressions.possessive.validate!([testElement, 'property'])).toBeNull();
-        expect(propertiesExpressions.possessive.validate!([testElement])).toContain('exactly two arguments');
-        expect(propertiesExpressions.possessive.validate!([testElement, 'property', 'extra'])).toContain('exactly two arguments');
-        expect(propertiesExpressions.possessive.validate!([testElement, 123])).toContain('must be a string');
+        expect(propertiesExpressions.possessive.validate!([testElement])).toContain(
+          'exactly two arguments'
+        );
+        expect(
+          propertiesExpressions.possessive.validate!([testElement, 'property', 'extra'])
+        ).toContain('exactly two arguments');
+        expect(propertiesExpressions.possessive.validate!([testElement, 123])).toContain(
+          'must be a string'
+        );
       });
     });
 
@@ -99,14 +116,17 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string property', async () => {
-        await expect(propertiesExpressions.my.evaluate(context, 123 as any))
-          .rejects.toThrow('Property name must be a string');
+        await expect(propertiesExpressions.my.evaluate(context, 123 as any)).rejects.toThrow(
+          'Property name must be a string'
+        );
       });
 
       it('should validate arguments', () => {
         expect(propertiesExpressions.my.validate!(['property'])).toBeNull();
         expect(propertiesExpressions.my.validate!([])).toContain('exactly one argument');
-        expect(propertiesExpressions.my.validate!(['property', 'extra'])).toContain('exactly one argument');
+        expect(propertiesExpressions.my.validate!(['property', 'extra'])).toContain(
+          'exactly one argument'
+        );
         expect(propertiesExpressions.my.validate!([123])).toContain('must be a string');
       });
     });
@@ -136,14 +156,17 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string property', async () => {
-        await expect(propertiesExpressions.its.evaluate(context, 123 as any))
-          .rejects.toThrow('Property name must be a string');
+        await expect(propertiesExpressions.its.evaluate(context, 123 as any)).rejects.toThrow(
+          'Property name must be a string'
+        );
       });
 
       it('should validate arguments', () => {
         expect(propertiesExpressions.its.validate!(['property'])).toBeNull();
         expect(propertiesExpressions.its.validate!([])).toContain('exactly one argument');
-        expect(propertiesExpressions.its.validate!(['property', 'extra'])).toContain('exactly one argument');
+        expect(propertiesExpressions.its.validate!(['property', 'extra'])).toContain(
+          'exactly one argument'
+        );
         expect(propertiesExpressions.its.validate!([123])).toContain('must be a string');
       });
     });
@@ -161,14 +184,17 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string property', async () => {
-        await expect(propertiesExpressions.your.evaluate(context, 123 as any))
-          .rejects.toThrow('Property name must be a string');
+        await expect(propertiesExpressions.your.evaluate(context, 123 as any)).rejects.toThrow(
+          'Property name must be a string'
+        );
       });
 
       it('should validate arguments', () => {
         expect(propertiesExpressions.your.validate!(['property'])).toBeNull();
         expect(propertiesExpressions.your.validate!([])).toContain('exactly one argument');
-        expect(propertiesExpressions.your.validate!(['property', 'extra'])).toContain('exactly one argument');
+        expect(propertiesExpressions.your.validate!(['property', 'extra'])).toContain(
+          'exactly one argument'
+        );
         expect(propertiesExpressions.your.validate!([123])).toContain('must be a string');
       });
     });
@@ -192,14 +218,17 @@ describe('Property Expressions', () => {
     });
 
     it('should throw error for non-string property', async () => {
-      await expect(propertiesExpressions.of.evaluate(context, 123 as any, {}))
-        .rejects.toThrow('Property name must be a string');
+      await expect(propertiesExpressions.of.evaluate(context, 123 as any, {})).rejects.toThrow(
+        'Property name must be a string'
+      );
     });
 
     it('should validate arguments', () => {
       expect(propertiesExpressions.of.validate!(['property', {}])).toBeNull();
       expect(propertiesExpressions.of.validate!(['property'])).toContain('exactly two arguments');
-      expect(propertiesExpressions.of.validate!(['property', {}, 'extra'])).toContain('exactly two arguments');
+      expect(propertiesExpressions.of.validate!(['property', {}, 'extra'])).toContain(
+        'exactly two arguments'
+      );
       expect(propertiesExpressions.of.validate!([123, {}])).toContain('must be a string');
     });
   });
@@ -213,7 +242,11 @@ describe('Property Expressions', () => {
 
       it('should get attribute from specified element', async () => {
         const otherElement = createTestElement('<span custom-attr="custom-value">Test</span>');
-        const result = await propertiesExpressions.attribute.evaluate(context, 'custom-attr', otherElement);
+        const result = await propertiesExpressions.attribute.evaluate(
+          context,
+          'custom-attr',
+          otherElement
+        );
         expect(result).toBe('custom-value');
       });
 
@@ -229,58 +262,107 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string attribute name', async () => {
-        await expect(propertiesExpressions.attribute.evaluate(context, 123 as any))
-          .rejects.toThrow('Attribute name must be a string');
+        await expect(propertiesExpressions.attribute.evaluate(context, 123 as any)).rejects.toThrow(
+          'Attribute name must be a string'
+        );
       });
 
       it('should validate arguments', () => {
         expect(propertiesExpressions.attribute.validate!(['attr'])).toBeNull();
         expect(propertiesExpressions.attribute.validate!(['attr', testElement])).toBeNull();
         expect(propertiesExpressions.attribute.validate!([])).toContain('1-2 arguments');
-        expect(propertiesExpressions.attribute.validate!(['attr', testElement, 'extra'])).toContain('1-2 arguments');
+        expect(propertiesExpressions.attribute.validate!(['attr', testElement, 'extra'])).toContain(
+          '1-2 arguments'
+        );
         expect(propertiesExpressions.attribute.validate!([123])).toContain('must be a string');
-        expect(propertiesExpressions.attribute.validate!(['attr', 'not-element'])).toContain('must be an Element');
+        expect(propertiesExpressions.attribute.validate!(['attr', 'not-element'])).toContain(
+          'must be an Element'
+        );
       });
     });
 
     describe('attributeWithValue expression', () => {
       it('should check if attribute has expected value', async () => {
-        expect(await propertiesExpressions.attributeWithValue.evaluate(context, 'data-value', 'test-data')).toBe(true);
-        expect(await propertiesExpressions.attributeWithValue.evaluate(context, 'data-value', 'wrong-value')).toBe(false);
+        expect(
+          await propertiesExpressions.attributeWithValue.evaluate(
+            context,
+            'data-value',
+            'test-data'
+          )
+        ).toBe(true);
+        expect(
+          await propertiesExpressions.attributeWithValue.evaluate(
+            context,
+            'data-value',
+            'wrong-value'
+          )
+        ).toBe(false);
       });
 
       it('should work with specified element', async () => {
         const otherElement = createTestElement('<span test-attr="expected">Test</span>');
-        const result = await propertiesExpressions.attributeWithValue.evaluate(context, 'test-attr', 'expected', otherElement);
+        const result = await propertiesExpressions.attributeWithValue.evaluate(
+          context,
+          'test-attr',
+          'expected',
+          otherElement
+        );
         expect(result).toBe(true);
       });
 
       it('should return false for non-existent attribute', async () => {
-        const result = await propertiesExpressions.attributeWithValue.evaluate(context, 'non-existent', 'value');
+        const result = await propertiesExpressions.attributeWithValue.evaluate(
+          context,
+          'non-existent',
+          'value'
+        );
         expect(result).toBe(false);
       });
 
       it('should return false when element is null', async () => {
         context.me = null;
-        const result = await propertiesExpressions.attributeWithValue.evaluate(context, 'data-value', 'test-data');
+        const result = await propertiesExpressions.attributeWithValue.evaluate(
+          context,
+          'data-value',
+          'test-data'
+        );
         expect(result).toBe(false);
       });
 
       it('should throw error for non-string parameters', async () => {
-        await expect(propertiesExpressions.attributeWithValue.evaluate(context, 123 as any, 'value'))
-          .rejects.toThrow('Attribute name must be a string');
-        await expect(propertiesExpressions.attributeWithValue.evaluate(context, 'attr', 123 as any))
-          .rejects.toThrow('Expected value must be a string');
+        await expect(
+          propertiesExpressions.attributeWithValue.evaluate(context, 123 as any, 'value')
+        ).rejects.toThrow('Attribute name must be a string');
+        await expect(
+          propertiesExpressions.attributeWithValue.evaluate(context, 'attr', 123 as any)
+        ).rejects.toThrow('Expected value must be a string');
       });
 
       it('should validate arguments', () => {
         expect(propertiesExpressions.attributeWithValue.validate!(['attr', 'value'])).toBeNull();
-        expect(propertiesExpressions.attributeWithValue.validate!(['attr', 'value', testElement])).toBeNull();
-        expect(propertiesExpressions.attributeWithValue.validate!(['attr'])).toContain('2-3 arguments');
-        expect(propertiesExpressions.attributeWithValue.validate!(['attr', 'value', testElement, 'extra'])).toContain('2-3 arguments');
-        expect(propertiesExpressions.attributeWithValue.validate!([123, 'value'])).toContain('attribute name must be a string');
-        expect(propertiesExpressions.attributeWithValue.validate!(['attr', 123])).toContain('expected value must be a string');
-        expect(propertiesExpressions.attributeWithValue.validate!(['attr', 'value', 'not-element'])).toContain('must be an Element');
+        expect(
+          propertiesExpressions.attributeWithValue.validate!(['attr', 'value', testElement])
+        ).toBeNull();
+        expect(propertiesExpressions.attributeWithValue.validate!(['attr'])).toContain(
+          '2-3 arguments'
+        );
+        expect(
+          propertiesExpressions.attributeWithValue.validate!([
+            'attr',
+            'value',
+            testElement,
+            'extra',
+          ])
+        ).toContain('2-3 arguments');
+        expect(propertiesExpressions.attributeWithValue.validate!([123, 'value'])).toContain(
+          'attribute name must be a string'
+        );
+        expect(propertiesExpressions.attributeWithValue.validate!(['attr', 123])).toContain(
+          'expected value must be a string'
+        );
+        expect(
+          propertiesExpressions.attributeWithValue.validate!(['attr', 'value', 'not-element'])
+        ).toContain('must be an Element');
       });
     });
   });
@@ -315,14 +397,19 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string class name', async () => {
-        await expect(propertiesExpressions.classReference.evaluate(context, 123 as any))
-          .rejects.toThrow('Class name must be a string');
+        await expect(
+          propertiesExpressions.classReference.evaluate(context, 123 as any)
+        ).rejects.toThrow('Class name must be a string');
       });
 
       it('should validate arguments', () => {
         expect(propertiesExpressions.classReference.validate!(['class-name'])).toBeNull();
-        expect(propertiesExpressions.classReference.validate!([])).toContain('exactly one argument');
-        expect(propertiesExpressions.classReference.validate!(['class', 'extra'])).toContain('exactly one argument');
+        expect(propertiesExpressions.classReference.validate!([])).toContain(
+          'exactly one argument'
+        );
+        expect(propertiesExpressions.classReference.validate!(['class', 'extra'])).toContain(
+          'exactly one argument'
+        );
         expect(propertiesExpressions.classReference.validate!([123])).toContain('must be a string');
       });
     });
@@ -345,14 +432,17 @@ describe('Property Expressions', () => {
       });
 
       it('should throw error for non-string ID', async () => {
-        await expect(propertiesExpressions.idReference.evaluate(context, 123 as any))
-          .rejects.toThrow('ID value must be a string');
+        await expect(
+          propertiesExpressions.idReference.evaluate(context, 123 as any)
+        ).rejects.toThrow('ID value must be a string');
       });
 
       it('should validate arguments', () => {
         expect(propertiesExpressions.idReference.validate!(['id-value'])).toBeNull();
         expect(propertiesExpressions.idReference.validate!([])).toContain('exactly one argument');
-        expect(propertiesExpressions.idReference.validate!(['id', 'extra'])).toContain('exactly one argument');
+        expect(propertiesExpressions.idReference.validate!(['id', 'extra'])).toContain(
+          'exactly one argument'
+        );
         expect(propertiesExpressions.idReference.validate!([123])).toContain('must be a string');
       });
     });
@@ -381,7 +471,7 @@ describe('Property Expressions', () => {
       it('should get DOM tree navigation properties', () => {
         const children = getElementProperty(testElement, 'children');
         expect(Array.isArray(children)).toBe(true);
-        
+
         const parent = getElementProperty(testElement, 'parent');
         expect(parent).toBeInstanceOf(Element);
       });

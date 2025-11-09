@@ -34,7 +34,7 @@ describe('Fetch Command', () => {
       expressionStack: [],
       evaluationDepth: 0,
       validationMode: 'permissive' as const,
-      evaluationHistory: []
+      evaluationHistory: [],
     } as TypedExecutionContext;
 
     // Reset fetch mock
@@ -70,7 +70,7 @@ describe('Fetch Command', () => {
     it('should fetch data as text by default', async () => {
       const mockResponse = new Response('Hello World', {
         status: 200,
-        statusText: 'OK'
+        statusText: 'OK',
       });
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
@@ -81,7 +81,7 @@ describe('Fetch Command', () => {
         '/api/data',
         expect.objectContaining({
           sender: testElement,
-          signal: expect.any(AbortSignal)
+          signal: expect.any(AbortSignal),
         })
       );
       expect(result.success).toBe(true);
@@ -92,7 +92,7 @@ describe('Fetch Command', () => {
     it('should handle JSON response type', async () => {
       const mockData = { name: 'John', age: 30 };
       const mockResponse = new Response(JSON.stringify(mockData), {
-        status: 200
+        status: 200,
       });
       (global.fetch as any).mockResolvedValueOnce(mockResponse);
 
@@ -137,8 +137,8 @@ describe('Fetch Command', () => {
         responseType: 'json' as const,
         options: {
           method: 'POST',
-          body: JSON.stringify({ name: 'Test' })
-        }
+          body: JSON.stringify({ name: 'Test' }),
+        },
       };
 
       const result = await fetchCommand.execute(context, input);
@@ -147,7 +147,7 @@ describe('Fetch Command', () => {
         '/api/save',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({ name: 'Test' })
+          body: JSON.stringify({ name: 'Test' }),
         })
       );
       expect(result.success).toBe(true);
@@ -160,7 +160,7 @@ describe('Fetch Command', () => {
 
       const input = {
         url: '/api/update/1',
-        options: { method: 'PUT' }
+        options: { method: 'PUT' },
       };
 
       await fetchCommand.execute(context, input);
@@ -177,7 +177,7 @@ describe('Fetch Command', () => {
 
       const input = {
         url: '/api/delete/1',
-        options: { method: 'DELETE' }
+        options: { method: 'DELETE' },
       };
 
       const result = await fetchCommand.execute(context, input);
@@ -196,10 +196,10 @@ describe('Fetch Command', () => {
         url: '/api/protected',
         options: {
           headers: {
-            'Authorization': 'Bearer token123',
-            'X-Custom': 'value'
-          }
-        }
+            Authorization: 'Bearer token123',
+            'X-Custom': 'value',
+          },
+        },
       };
 
       await fetchCommand.execute(context, input);
@@ -208,9 +208,9 @@ describe('Fetch Command', () => {
         '/api/protected',
         expect.objectContaining({
           headers: {
-            'Authorization': 'Bearer token123',
-            'X-Custom': 'value'
-          }
+            Authorization: 'Bearer token123',
+            'X-Custom': 'value',
+          },
         })
       );
     });
@@ -225,8 +225,8 @@ describe('Fetch Command', () => {
           method: 'GET',
           mode: 'cors' as RequestMode,
           credentials: 'include' as RequestCredentials,
-          cache: 'no-cache' as RequestCache
-        }
+          cache: 'no-cache' as RequestCache,
+        },
       };
 
       await fetchCommand.execute(context, input);
@@ -236,7 +236,7 @@ describe('Fetch Command', () => {
         expect.objectContaining({
           mode: 'cors',
           credentials: 'include',
-          cache: 'no-cache'
+          cache: 'no-cache',
         })
       );
     });
@@ -340,8 +340,8 @@ describe('Fetch Command', () => {
         '/api/protected',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-Auth-Token': 'secret123'
-          })
+            'X-Auth-Token': 'secret123',
+          }),
         })
       );
     });
@@ -374,7 +374,7 @@ describe('Fetch Command', () => {
       vi.useFakeTimers();
 
       (global.fetch as any).mockImplementationOnce((_url: string, options: any) => {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
           options.signal.addEventListener('abort', () => {
             resolve(new Response('Aborted', { status: 0 }));
           });
@@ -386,7 +386,7 @@ describe('Fetch Command', () => {
 
       const input = {
         url: '/api/slow',
-        options: { timeout: 100 }
+        options: { timeout: 100 },
       };
 
       const promise = fetchCommand.execute(context, input);
@@ -467,7 +467,7 @@ describe('Fetch Command', () => {
       vi.useFakeTimers();
 
       (global.fetch as any).mockImplementationOnce(() => {
-        return new Promise((resolve) => {
+        return new Promise(resolve => {
           setTimeout(() => {
             resolve(new Response('OK', { status: 200 }));
           }, 100);
@@ -501,7 +501,7 @@ describe('Fetch Command', () => {
         expressionStack: [],
         evaluationDepth: 0,
         validationMode: 'permissive' as const,
-        evaluationHistory: []
+        evaluationHistory: [],
       } as TypedExecutionContext;
 
       const input = { url: '/api/data' };

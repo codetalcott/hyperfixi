@@ -12,14 +12,16 @@ import {
   EnhancedLessThanOrEqualExpression,
   EnhancedEqualityExpression,
   EnhancedInequalityExpression,
-  comparisonExpressions
+  comparisonExpressions,
 } from './index.ts';
 
 // ============================================================================
 // Test Helpers
 // ============================================================================
 
-function createTestContext(overrides: Partial<TypedExpressionContext> = {}): TypedExpressionContext {
+function createTestContext(
+  overrides: Partial<TypedExpressionContext> = {}
+): TypedExpressionContext {
   return {
     me: undefined,
     it: undefined,
@@ -28,14 +30,14 @@ function createTestContext(overrides: Partial<TypedExpressionContext> = {}): Typ
     locals: new Map(),
     globals: new Map(),
     event: undefined,
-    
+
     // Enhanced expression context properties
     expressionStack: [],
     evaluationDepth: 0,
     validationMode: 'strict',
     evaluationHistory: [],
-    
-    ...overrides
+
+    ...overrides,
   };
 }
 
@@ -551,7 +553,7 @@ describe('Enhanced Comparison Expressions Integration', () => {
 
   beforeEach(() => {
     context = createTestContext({
-      evaluationHistory: []
+      evaluationHistory: [],
     });
   });
 
@@ -559,8 +561,12 @@ describe('Enhanced Comparison Expressions Integration', () => {
     it('should provide all comparison expressions', () => {
       expect(comparisonExpressions.greaterThan).toBeInstanceOf(EnhancedGreaterThanExpression);
       expect(comparisonExpressions.lessThan).toBeInstanceOf(EnhancedLessThanExpression);
-      expect(comparisonExpressions.greaterThanOrEqual).toBeInstanceOf(EnhancedGreaterThanOrEqualExpression);
-      expect(comparisonExpressions.lessThanOrEqual).toBeInstanceOf(EnhancedLessThanOrEqualExpression);
+      expect(comparisonExpressions.greaterThanOrEqual).toBeInstanceOf(
+        EnhancedGreaterThanOrEqualExpression
+      );
+      expect(comparisonExpressions.lessThanOrEqual).toBeInstanceOf(
+        EnhancedLessThanOrEqualExpression
+      );
       expect(comparisonExpressions.equals).toBeInstanceOf(EnhancedEqualityExpression);
       expect(comparisonExpressions.notEquals).toBeInstanceOf(EnhancedInequalityExpression);
     });
@@ -577,7 +583,7 @@ describe('Enhanced Comparison Expressions Integration', () => {
 
       expect(result1.success).toBe(true);
       expect(result2.success).toBe(true);
-      
+
       if (result1.success && result2.success) {
         expect(result1.value && result2.value).toBe(true);
       }
@@ -589,7 +595,7 @@ describe('Enhanced Comparison Expressions Integration', () => {
       // Simulating: value >= min && value <= max
       const greaterOrEqual = comparisonExpressions.greaterThanOrEqual;
       const lessOrEqual = comparisonExpressions.lessThanOrEqual;
-      
+
       const value = 15;
       const min = 10;
       const max = 20;
@@ -599,7 +605,7 @@ describe('Enhanced Comparison Expressions Integration', () => {
 
       expect(result1.success).toBe(true);
       expect(result2.success).toBe(true);
-      
+
       if (result1.success && result2.success) {
         expect(result1.value && result2.value).toBe(true);
       }
@@ -621,7 +627,7 @@ describe('Enhanced Comparison Expressions Integration', () => {
   describe('Type safety', () => {
     it('should have consistent metadata', () => {
       const expressions = Object.values(comparisonExpressions);
-      
+
       expressions.forEach(expr => {
         expect(expr.category).toBe('Logical');
         expect(expr.outputType).toBe('Boolean');
@@ -637,11 +643,11 @@ describe('Enhanced Comparison Expressions Integration', () => {
   describe('Error consistency', () => {
     it('should provide consistent error structures', async () => {
       const expressions = Object.values(comparisonExpressions);
-      
+
       for (const expr of expressions) {
         // Test with invalid input (missing right operand)
         const result = await expr.evaluate(context, { left: 5 } as any);
-        
+
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.errors).toHaveLength(1);
@@ -655,17 +661,17 @@ describe('Enhanced Comparison Expressions Integration', () => {
   describe('Real-world scenarios', () => {
     it('should handle age verification', async () => {
       const greaterOrEqual = comparisonExpressions.greaterThanOrEqual;
-      
+
       const testCases = [
         { age: 25, minAge: 18, expected: true },
         { age: 16, minAge: 18, expected: false },
-        { age: 18, minAge: 18, expected: true }
+        { age: 18, minAge: 18, expected: true },
       ];
 
       for (const testCase of testCases) {
         const result = await greaterOrEqual.evaluate(context, {
           left: testCase.age,
-          right: testCase.minAge
+          right: testCase.minAge,
         });
 
         expect(result.success).toBe(true);
@@ -678,15 +684,15 @@ describe('Enhanced Comparison Expressions Integration', () => {
     it('should handle status checks', async () => {
       const equals = comparisonExpressions.equals;
       const notEquals = comparisonExpressions.notEquals;
-      
+
       const status = 'complete';
-      
+
       const isComplete = await equals.evaluate(context, { left: status, right: 'complete' });
       const notPending = await notEquals.evaluate(context, { left: status, right: 'pending' });
 
       expect(isComplete.success).toBe(true);
       expect(notPending.success).toBe(true);
-      
+
       if (isComplete.success && notPending.success) {
         expect(isComplete.value).toBe(true);
         expect(notPending.value).toBe(true);

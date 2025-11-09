@@ -1,9 +1,7 @@
-
-
 /**
  * Enhanced Core Types - Deep TypeScript Integration
  * Designed for LLM code agents with maximum type safety
- * 
+ *
  * IMPORTANT: Core types now imported from base-types.ts for consistency
  * This file now focuses on enhanced features while using unified base types
  */
@@ -20,7 +18,7 @@ import type {
   ValidationError,
   HyperScriptValueType,
   EvaluationResult,
-  TypedExecutionContext
+  TypedExecutionContext,
 } from './base-types';
 
 // ============================================================================
@@ -34,7 +32,7 @@ export type {
   TypedExecutionContext as TypedExpressionContext,
   ValidationResult,
   TypedResult,
-  LLMDocumentation
+  LLMDocumentation,
 } from './base-types';
 
 // ============================================================================
@@ -66,7 +64,7 @@ export const HyperScriptValueSchema = v.union([
   v.custom((value: unknown) => value instanceof HTMLElement),
   v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
   z.record(v.string(), v.unknown()), // Will be refined recursively
-  v.array(v.unknown())
+  v.array(v.unknown()),
 ]);
 
 // TypedExecutionContext and TypedExpressionContext now imported from base-types.ts above
@@ -100,29 +98,29 @@ export interface SourceLocation {
 export interface TypedCommandImplementation<
   TInput extends readonly HyperScriptValue[] = readonly HyperScriptValue[],
   TOutput extends HyperScriptValue = HyperScriptValue,
-  TContext extends TypedExecutionContext = TypedExecutionContext
+  TContext extends TypedExecutionContext = TypedExecutionContext,
 > {
   /** Command name - must be literal for LLM understanding */
   readonly name: string;
-  
+
   /** Human-readable syntax - for LLM documentation */
   readonly syntax: string;
-  
+
   /** Detailed description for LLMs */
   readonly description: string;
-  
+
   /** Input parameter schema for validation */
   readonly inputSchema: RuntimeValidator<TInput>;
-  
+
   /** Output type information for LLMs */
   readonly outputType: HyperScriptValueType;
-  
+
   /** Type-safe execution with validated inputs */
   execute(context: TContext, ...args: TInput): Promise<EvaluationResult<TOutput>>;
-  
+
   /** Compile-time validation for static analysis */
   validate(args: unknown[]): ValidationResult;
-  
+
   /** Runtime metadata */
   readonly metadata: CommandMetadata;
 }
@@ -159,19 +157,19 @@ export interface CommandExample {
  */
 export interface TypedExpressionImplementation<
   TOutput extends HyperScriptValue = HyperScriptValue,
-  TContext extends TypedExecutionContext = TypedExecutionContext
+  TContext extends TypedExecutionContext = TypedExecutionContext,
 > {
   readonly name: string;
   readonly category: ExpressionCategory;
   readonly precedence: number;
   readonly associativity: 'left' | 'right' | 'none';
-  
+
   /** Output type for LLM inference */
   readonly outputType: string;
-  
+
   /** Type-safe evaluation */
   evaluate(context: TContext, ...args: HyperScriptValue[]): Promise<EvaluationResult<TOutput>>;
-  
+
   /** Static analysis information */
   readonly analysisInfo: ExpressionAnalysisInfo;
 }
@@ -190,7 +188,7 @@ export interface ExpressionAnalysisInfo {
 // Use UnifiedHyperScriptValueType from unified-types.ts instead of local definition
 export type { UnifiedHyperScriptValueType as HyperScriptValueType } from './unified-types';
 
-export type ExpressionCategory = 
+export type ExpressionCategory =
   | 'reference'
   | 'logical'
   | 'comparison'
@@ -237,33 +235,38 @@ export class TypeChecker {
     if (typeof value === 'function') return 'function';
     if (value instanceof Promise) return 'promise';
     if (value instanceof HTMLElement) return 'element';
-    if (value instanceof NodeList || (Array.isArray(value) && value.every(v => v instanceof HTMLElement))) {
+    if (
+      value instanceof NodeList ||
+      (Array.isArray(value) && value.every(v => v instanceof HTMLElement))
+    ) {
       return 'element-list';
     }
     if (Array.isArray(value)) return 'array';
     if (typeof value === 'object') return 'object';
-    
+
     throw new Error(`Unknown type for value: ${value}`);
   }
 
   static validateType(value: unknown, expectedType: string): ValidationResult {
     const actualType = this.getType(value);
-    
+
     if (actualType === expectedType) {
       return { isValid: true, errors: [], suggestions: [] };
     }
-    
+
     return {
       isValid: false,
-      errors: [{
-        type: 'type-mismatch',
-        message: `Expected ${expectedType}, got ${actualType}`,
-        suggestions: [this.getTypeSuggestion(actualType, expectedType)]
-      }],
-      suggestions: [this.getTypeSuggestion(actualType, expectedType)]
+      errors: [
+        {
+          type: 'type-mismatch',
+          message: `Expected ${expectedType}, got ${actualType}`,
+          suggestions: [this.getTypeSuggestion(actualType, expectedType)],
+        },
+      ],
+      suggestions: [this.getTypeSuggestion(actualType, expectedType)],
     };
   }
-  
+
   private static getTypeSuggestion(actual: string, expected: string): string {
     const conversions: Record<string, Record<string, string>> = {
       string: {
@@ -276,13 +279,13 @@ export class TypeChecker {
       },
       // Add more conversion suggestions...
     };
-    
+
     return conversions[actual]?.[expected] || `Convert ${actual} to ${expected}`;
   }
 }
 
 // ============================================================================
-// LLM-Friendly Documentation Types  
+// LLM-Friendly Documentation Types
 // ============================================================================
 
 // LLMDocumentation is imported from base-types.ts
@@ -321,16 +324,16 @@ export interface DocumentationExample {
 export interface HyperScriptProgram {
   /** Original hyperscript source code */
   readonly source: string;
-  
+
   /** Parsed features that compose this program */
   readonly features: HyperScriptFeature[];
-  
+
   /** Program compilation and execution metadata */
   readonly metadata: ProgramMetadata;
-  
+
   /** Source location information for debugging */
   readonly sourceInfo?: SourceLocation;
-  
+
   /** Program execution state */
   readonly state: ProgramState;
 }
@@ -342,22 +345,22 @@ export interface HyperScriptProgram {
 export interface HyperScriptFeature {
   /** Type of hyperscript feature */
   readonly type: HyperScriptFeatureType;
-  
+
   /** Feature identifier for debugging and tooling */
   readonly id: string;
-  
+
   /** Event trigger configuration (for event-based features) */
   readonly trigger?: EventTrigger;
-  
+
   /** Commands that execute when this feature is triggered */
   readonly commands: ParsedCommand[];
-  
+
   /** Feature-specific configuration and options */
   readonly config: FeatureConfig;
-  
+
   /** Source location within the program */
   readonly sourceRange: SourceRange;
-  
+
   /** Feature execution metadata */
   readonly metadata: FeatureMetadata;
 }
@@ -370,19 +373,19 @@ export interface ParsedCommand {
   /** Command identifier and type information */
   readonly type: ParsedCommandType;
   readonly name: string;
-  
+
   /** Reference to executable implementation */
   readonly implementation?: unknown | TypedExpressionImplementation<unknown, TypedExecutionContext>;
-  
+
   /** Parsed arguments with type information */
   readonly args: ParsedArgument[];
-  
+
   /** Command execution options and metadata */
   readonly options: CommandOptions;
-  
+
   /** Source location for debugging */
   readonly sourceRange: SourceRange;
-  
+
   /** Static analysis results */
   readonly analysis?: CommandAnalysis;
 }
@@ -394,13 +397,13 @@ export interface ParsedArgument {
   /** Argument value and type */
   readonly value: HyperScriptValue;
   readonly type: string;
-  
+
   /** Whether this argument is a literal or expression */
   readonly kind: 'literal' | 'expression' | 'reference';
-  
+
   /** Source location for this argument */
   readonly sourceRange?: SourceRange;
-  
+
   /** Static analysis of argument usage */
   readonly analysis?: ArgumentAnalysis;
 }
@@ -412,31 +415,31 @@ export interface ParsedArgument {
 /**
  * Types of hyperscript features based on official specification
  */
-export type HyperScriptFeatureType = 
-  | 'event'        // on click, on load, etc.
-  | 'behavior'     // behavior definitions
-  | 'definition'   // def myFunction(), etc.
-  | 'init'         // init scripts
-  | 'worker'       // web worker integration
-  | 'socket'       // websocket integration
-  | 'eventsource'  // server-sent events
-  | 'set'          // variable definitions
-  | 'js'           // JavaScript integration
-  | 'custom';      // Extension features
+export type HyperScriptFeatureType =
+  | 'event' // on click, on load, etc.
+  | 'behavior' // behavior definitions
+  | 'definition' // def myFunction(), etc.
+  | 'init' // init scripts
+  | 'worker' // web worker integration
+  | 'socket' // websocket integration
+  | 'eventsource' // server-sent events
+  | 'set' // variable definitions
+  | 'js' // JavaScript integration
+  | 'custom'; // Extension features
 
 /**
  * Types of parsed commands
  */
-export type ParsedCommandType = 
-  | 'dom-manipulation'  // hide, show, add, remove, etc.
-  | 'content'          // put, take, settle
-  | 'navigation'       // go, back, forward
-  | 'event'            // send, trigger
-  | 'async'            // wait, fetch
-  | 'control-flow'     // if, repeat, while
-  | 'data'             // set, increment, decrement
-  | 'expression'       // pure expressions
-  | 'custom';          // Extension commands
+export type ParsedCommandType =
+  | 'dom-manipulation' // hide, show, add, remove, etc.
+  | 'content' // put, take, settle
+  | 'navigation' // go, back, forward
+  | 'event' // send, trigger
+  | 'async' // wait, fetch
+  | 'control-flow' // if, repeat, while
+  | 'data' // set, increment, decrement
+  | 'expression' // pure expressions
+  | 'custom'; // Extension commands
 
 /**
  * Event trigger configuration for event-based features
@@ -444,17 +447,17 @@ export type ParsedCommandType =
 export interface EventTrigger {
   /** Event name (click, load, customEvent, etc.) */
   readonly event: string;
-  
+
   /** Event target selector or reference */
   readonly target?: string | HTMLElement;
-  
+
   /** Event options (once, passive, capture, etc.) */
   readonly options: EventListenerOptions & {
     readonly once?: boolean;
     readonly debounce?: number;
     readonly throttle?: number;
   };
-  
+
   /** Event filter conditions */
   readonly filter?: EventFilter;
 }
@@ -465,10 +468,10 @@ export interface EventTrigger {
 export interface EventFilter {
   /** CSS selector that must match the event target */
   readonly selector?: string;
-  
+
   /** Key combinations for keyboard events */
   readonly keys?: string[];
-  
+
   /** Custom filter function */
   readonly condition?: string; // hyperscript expression
 }
@@ -479,16 +482,16 @@ export interface EventFilter {
 export interface FeatureConfig {
   /** Whether this feature is enabled */
   readonly enabled: boolean;
-  
+
   /** Execution priority (higher = executes first) */
   readonly priority: number;
-  
+
   /** Feature-specific options */
   readonly options: Record<string, HyperScriptValue>;
-  
+
   /** Dependencies on other features */
   readonly dependencies: string[];
-  
+
   /** Feature capabilities and requirements */
   readonly capabilities: FeatureCapabilities;
 }
@@ -499,16 +502,16 @@ export interface FeatureConfig {
 export interface FeatureCapabilities {
   /** Whether this feature requires DOM access */
   readonly requiresDOM: boolean;
-  
+
   /** Whether this feature uses async operations */
   readonly isAsync: boolean;
-  
+
   /** Whether this feature modifies global state */
   readonly modifiesGlobalState: boolean;
-  
+
   /** Required browser APIs */
   readonly requiredAPIs: string[];
-  
+
   /** Performance characteristics */
   readonly performance: PerformanceCharacteristics;
 }
@@ -519,13 +522,13 @@ export interface FeatureCapabilities {
 export interface PerformanceCharacteristics {
   /** Expected execution complexity */
   readonly complexity: 'low' | 'medium' | 'high';
-  
+
   /** Memory usage characteristics */
   readonly memoryUsage: 'minimal' | 'moderate' | 'heavy';
-  
+
   /** Whether operation is CPU intensive */
   readonly cpuIntensive: boolean;
-  
+
   /** Expected execution time range (ms) */
   readonly executionTime: {
     readonly min: number;
@@ -545,7 +548,7 @@ export interface ProgramMetadata {
     readonly compiler: string;
     readonly version: string;
   };
-  
+
   /** Static analysis results */
   readonly analysis: {
     readonly complexity: number;
@@ -554,7 +557,7 @@ export interface ProgramMetadata {
     readonly warnings: AnalysisWarning[];
     readonly optimizations: string[];
   };
-  
+
   /** Performance profiling data */
   readonly performance?: {
     readonly lastExecutionTime: number;
@@ -570,7 +573,7 @@ export interface ProgramMetadata {
 export interface FeatureMetadata {
   /** When this feature was last compiled */
   readonly compiledAt: Date;
-  
+
   /** Execution statistics */
   readonly stats: {
     readonly executionCount: number;
@@ -579,10 +582,10 @@ export interface FeatureMetadata {
     readonly errorCount: number;
     readonly lastExecuted?: Date;
   };
-  
+
   /** Dependencies resolved at compile time */
   readonly resolvedDependencies: string[];
-  
+
   /** Static analysis warnings specific to this feature */
   readonly warnings: AnalysisWarning[];
 }
@@ -593,16 +596,16 @@ export interface FeatureMetadata {
 export interface CommandOptions {
   /** Whether to validate inputs at runtime */
   readonly validateInputs: boolean;
-  
+
   /** Whether to track performance metrics */
   readonly trackPerformance: boolean;
-  
+
   /** Error handling strategy */
   readonly errorHandling: 'throw' | 'return' | 'ignore';
-  
+
   /** Timeout for async operations (ms) */
   readonly timeout?: number;
-  
+
   /** Retry configuration for failed operations */
   readonly retry?: {
     readonly attempts: number;
@@ -617,20 +620,20 @@ export interface CommandOptions {
 export interface CommandAnalysis {
   /** Estimated execution complexity */
   readonly complexity: number;
-  
+
   /** Required permissions or capabilities */
   readonly requirements: string[];
-  
+
   /** Potential side effects */
   readonly sideEffects: string[];
-  
+
   /** Type inference results */
   readonly typeInference: {
     readonly inputTypes: string[];
     readonly outputType: string;
     readonly confidence: number;
   };
-  
+
   /** Optimization opportunities */
   readonly optimizations: string[];
 }
@@ -641,10 +644,10 @@ export interface CommandAnalysis {
 export interface ArgumentAnalysis {
   /** Whether this argument is used by the command */
   readonly isUsed: boolean;
-  
+
   /** Type compatibility with command requirements */
   readonly typeCompatibility: number; // 0-1 score
-  
+
   /** Potential issues or improvements */
   readonly suggestions: string[];
 }
@@ -655,13 +658,13 @@ export interface ArgumentAnalysis {
 export interface SourceLocation {
   /** Source element where program is defined */
   readonly element?: HTMLElement;
-  
+
   /** Attribute name containing the program */
   readonly attribute?: string; // '_', 'script', 'data-script'
-  
+
   /** File path (if loaded from external file) */
   readonly file?: string;
-  
+
   /** Line and column information */
   readonly position?: {
     readonly line: number;
@@ -675,10 +678,10 @@ export interface SourceLocation {
 export interface SourceRange {
   /** Start position in source */
   readonly start: number;
-  
+
   /** End position in source */
   readonly end: number;
-  
+
   /** Line and column ranges */
   readonly lines?: {
     readonly start: { line: number; column: number };
@@ -692,23 +695,23 @@ export interface SourceRange {
 export interface ProgramState {
   /** Current execution status */
   readonly status: 'ready' | 'running' | 'completed' | 'error' | 'suspended';
-  
+
   /** Currently executing feature (if any) */
   readonly currentFeature?: string;
-  
+
   /** Execution context information */
   readonly context: {
     readonly element: HTMLElement | null;
     readonly variables: Map<string, HyperScriptValue>;
     readonly callStack: string[];
   };
-  
+
   /** Error information (if in error state) */
   readonly error?: HyperScriptError;
-  
+
   /** Execution start time */
   readonly startedAt?: Date;
-  
+
   /** Execution completion time */
   readonly completedAt?: Date;
 }
@@ -719,16 +722,16 @@ export interface ProgramState {
 export interface AnalysisWarning {
   /** Warning severity level */
   readonly level: 'info' | 'warning' | 'error';
-  
+
   /** Warning message */
   readonly message: string;
-  
+
   /** Source location of the issue */
   readonly location: SourceRange;
-  
+
   /** Suggested fix or improvement */
   readonly suggestion?: string;
-  
+
   /** Warning category */
   readonly category: 'performance' | 'compatibility' | 'security' | 'style' | 'type-safety';
 }
@@ -742,39 +745,72 @@ export interface AnalysisWarning {
  */
 export const HyperScriptProgramSchema = v.object({
   source: v.string(),
-  features: v.array(z.object({
-    type: z.enum(['event', 'behavior', 'definition', 'init', 'worker', 'socket', 'eventsource', 'set', 'js', 'custom']),
-    id: v.string(),
-    trigger: z.object({
-      event: v.string(),
-      target: v.union([v.string(), v.custom((value: unknown) => value instanceof HTMLElement)]).optional(),
-      options: z.object({
-        once: v.boolean().optional(),
-        debounce: v.number().optional(),
-        throttle: v.number().optional(),
+  features: v.array(
+    z.object({
+      type: z.enum([
+        'event',
+        'behavior',
+        'definition',
+        'init',
+        'worker',
+        'socket',
+        'eventsource',
+        'set',
+        'js',
+        'custom',
+      ]),
+      id: v.string(),
+      trigger: z
+        .object({
+          event: v.string(),
+          target: v
+            .union([v.string(), v.custom((value: unknown) => value instanceof HTMLElement)])
+            .optional(),
+          options: z.object({
+            once: v.boolean().optional(),
+            debounce: v.number().optional(),
+            throttle: v.number().optional(),
+          }),
+          filter: v
+            .object({
+              selector: v.string().optional(),
+              keys: v.array(v.string()).optional(),
+              condition: v.string().optional(),
+            })
+            .optional(),
+        })
+        .optional(),
+      commands: v.array(
+        v.object({
+          type: z.enum([
+            'dom-manipulation',
+            'content',
+            'navigation',
+            'event',
+            'async',
+            'control-flow',
+            'data',
+            'expression',
+            'custom',
+          ]),
+          name: v.string(),
+          args: v.array(
+            z.object({
+              value: HyperScriptValueSchema,
+              type: v.string(),
+              kind: z.enum(['literal', 'expression', 'reference']),
+            })
+          ),
+        })
+      ),
+      config: v.object({
+        enabled: v.boolean(),
+        priority: v.number(),
+        options: z.record(v.string(), HyperScriptValueSchema),
+        dependencies: v.array(v.string()),
       }),
-      filter: v.object({
-        selector: v.string().optional(),
-        keys: v.array(v.string()).optional(),
-        condition: v.string().optional(),
-      }).optional(),
-    }).optional(),
-    commands: v.array(v.object({
-      type: z.enum(['dom-manipulation', 'content', 'navigation', 'event', 'async', 'control-flow', 'data', 'expression', 'custom']),
-      name: v.string(),
-      args: v.array(z.object({
-        value: HyperScriptValueSchema,
-        type: v.string(),
-        kind: z.enum(['literal', 'expression', 'reference']),
-      })),
-    })),
-    config: v.object({
-      enabled: v.boolean(),
-      priority: v.number(),
-      options: z.record(v.string(), HyperScriptValueSchema),
-      dependencies: v.array(v.string()),
-    }),
-  })),
+    })
+  ),
   metadata: v.object({
     compilation: v.object({
       compiled: v.boolean(),

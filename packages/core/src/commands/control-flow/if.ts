@@ -18,7 +18,7 @@ export interface IfCommandInput {
   elseCommands?: any[];
 }
 
-// Output type definition  
+// Output type definition
 export interface IfCommandOutput {
   conditionResult: boolean;
   executedBranch: 'then' | 'else' | 'none';
@@ -28,23 +28,22 @@ export interface IfCommandOutput {
 /**
  * Enhanced If Command with full type safety and validation
  */
-export class IfCommand implements CommandImplementation<
-  IfCommandInput,
-  IfCommandOutput,
-  TypedExecutionContext
-> {
+export class IfCommand
+  implements CommandImplementation<IfCommandInput, IfCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'if',
-    description: 'The if command provides conditional execution. It evaluates a condition and executes the then branch if true, or the optional else branch if false.',
+    description:
+      'The if command provides conditional execution. It evaluates a condition and executes the then branch if true, or the optional else branch if false.',
     examples: [
       'if x > 5 then add .active',
       'if user.isAdmin then show #adminPanel else hide #adminPanel',
       'if localStorage.getItem("theme") == "dark" then add .dark-mode',
-      'if form.checkValidity() then submit else show .error'
+      'if form.checkValidity() then submit else show .error',
     ],
     syntax: 'if <condition> then <commands> [else <commands>]',
     category: 'flow' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -52,12 +51,14 @@ export class IfCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'If command requires an object input',
-            suggestions: ['Provide an object with condition and thenCommands properties']
-          }],
-          suggestions: ['Provide an object with condition and thenCommands properties']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'If command requires an object input',
+              suggestions: ['Provide an object with condition and thenCommands properties'],
+            },
+          ],
+          suggestions: ['Provide an object with condition and thenCommands properties'],
         };
       }
 
@@ -67,12 +68,14 @@ export class IfCommand implements CommandImplementation<
       if (inputObj.condition === undefined) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'If command requires a condition to evaluate',
-            suggestions: ['Provide a boolean expression as the condition']
-          }],
-          suggestions: ['Provide a boolean expression as the condition']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'If command requires a condition to evaluate',
+              suggestions: ['Provide a boolean expression as the condition'],
+            },
+          ],
+          suggestions: ['Provide a boolean expression as the condition'],
         };
       }
 
@@ -80,24 +83,28 @@ export class IfCommand implements CommandImplementation<
       if (!inputObj.thenCommands) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'If command requires commands for the then branch',
-            suggestions: ['Provide commands to execute when condition is true']
-          }],
-          suggestions: ['Provide commands to execute when condition is true']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'If command requires commands for the then branch',
+              suggestions: ['Provide commands to execute when condition is true'],
+            },
+          ],
+          suggestions: ['Provide commands to execute when condition is true'],
         };
       }
 
       if (!Array.isArray(inputObj.thenCommands)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Then commands must be an array',
-            suggestions: ['Provide an array of commands for the then branch']
-          }],
-          suggestions: ['Provide an array of commands for the then branch']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Then commands must be an array',
+              suggestions: ['Provide an array of commands for the then branch'],
+            },
+          ],
+          suggestions: ['Provide an array of commands for the then branch'],
         };
       }
 
@@ -105,12 +112,14 @@ export class IfCommand implements CommandImplementation<
       if (inputObj.elseCommands !== undefined && !Array.isArray(inputObj.elseCommands)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Else commands must be an array',
-            suggestions: ['Provide an array of commands for the else branch']
-          }],
-          suggestions: ['Provide an array of commands for the else branch']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Else commands must be an array',
+              suggestions: ['Provide an array of commands for the else branch'],
+            },
+          ],
+          suggestions: ['Provide an array of commands for the else branch'],
         };
       }
 
@@ -121,16 +130,13 @@ export class IfCommand implements CommandImplementation<
         data: {
           condition: inputObj.condition,
           thenCommands: inputObj.thenCommands,
-          elseCommands: inputObj.elseCommands
-        }
+          elseCommands: inputObj.elseCommands,
+        },
       };
-    }
+    },
   };
 
-  async execute(
-    input: IfCommandInput,
-    context: TypedExecutionContext
-  ): Promise<IfCommandOutput> {
+  async execute(input: IfCommandInput, context: TypedExecutionContext): Promise<IfCommandOutput> {
     const { condition, thenCommands, elseCommands } = input;
 
     debug.command('IF COMMAND received input:', {
@@ -139,7 +145,7 @@ export class IfCommand implements CommandImplementation<
       thenCommands,
       thenType: (thenCommands as any)?.type,
       elseCommands,
-      elseType: (elseCommands as any)?.type
+      elseType: (elseCommands as any)?.type,
     });
 
     // Evaluate the condition (might already be evaluated by runtime)
@@ -155,7 +161,10 @@ export class IfCommand implements CommandImplementation<
       debug.command('IF COMMAND: Executing THEN branch');
       executedBranch = 'then';
       result = await this.executeCommandsOrBlock(thenCommands, context);
-    } else if (elseCommands && (Array.isArray(elseCommands) ? elseCommands.length > 0 : elseCommands)) {
+    } else if (
+      elseCommands &&
+      (Array.isArray(elseCommands) ? elseCommands.length > 0 : elseCommands)
+    ) {
       // Execute else branch
       debug.command('IF COMMAND: Executing ELSE branch');
       executedBranch = 'else';
@@ -168,7 +177,7 @@ export class IfCommand implements CommandImplementation<
     return {
       conditionResult,
       executedBranch,
-      result
+      result,
     };
   }
 
@@ -184,7 +193,9 @@ export class IfCommand implements CommandImplementation<
     }
 
     if (condition instanceof Promise) {
-      throw new Error('If command does not support async conditions - use await in the condition expression');
+      throw new Error(
+        'If command does not support async conditions - use await in the condition expression'
+      );
     }
 
     // Handle string conditions (variable names or expressions)
@@ -203,9 +214,16 @@ export class IfCommand implements CommandImplementation<
     return Boolean(condition);
   }
 
-  private async executeCommandsOrBlock(commandsOrBlock: any, context: TypedExecutionContext): Promise<any> {
+  private async executeCommandsOrBlock(
+    commandsOrBlock: any,
+    context: TypedExecutionContext
+  ): Promise<any> {
     // Handle block nodes from parser (type: 'block', commands: [...])
-    if (commandsOrBlock && typeof commandsOrBlock === 'object' && commandsOrBlock.type === 'block') {
+    if (
+      commandsOrBlock &&
+      typeof commandsOrBlock === 'object' &&
+      commandsOrBlock.type === 'block'
+    ) {
       return this.executeBlock(commandsOrBlock, context);
     }
 
@@ -259,17 +277,17 @@ export class IfCommand implements CommandImplementation<
     if (context.locals && context.locals.has(name)) {
       return context.locals.get(name);
     }
-    
+
     // Check global variables
     if (context.globals && context.globals.has(name)) {
       return context.globals.get(name);
     }
-    
-    // Check general variables  
+
+    // Check general variables
     if (context.variables && context.variables.has(name)) {
       return context.variables.get(name);
     }
-    
+
     return undefined;
   }
 }

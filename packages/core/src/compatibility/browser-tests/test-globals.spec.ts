@@ -33,7 +33,7 @@ test.describe('Global Functions Test', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.result).toBe("hello world");
+    expect(result.result).toBe('hello world');
   });
 
   test('should work with math expressions', async ({ page }) => {

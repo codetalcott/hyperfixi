@@ -1,9 +1,9 @@
 /**
  * Enhanced Throw Command Implementation
  * Throws an error with a specified message
- * 
+ *
  * Syntax: throw <message>
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -24,23 +24,22 @@ export interface ThrowCommandOutput {
 /**
  * Enhanced Throw Command with full type safety and validation
  */
-export class ThrowCommand implements CommandImplementation<
-  ThrowCommandInput,
-  ThrowCommandOutput,
-  TypedExecutionContext
-> {
+export class ThrowCommand
+  implements CommandImplementation<ThrowCommandInput, ThrowCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'throw',
-    description: 'The throw command throws an error with a specified message, immediately terminating execution and propagating the error up the call stack.',
+    description:
+      'The throw command throws an error with a specified message, immediately terminating execution and propagating the error up the call stack.',
     examples: [
       'throw "Invalid input"',
       'throw new Error("Custom error")',
       'if not valid then throw "Validation failed"',
-      'throw `User ${user.name} not found`'
+      'throw `User ${user.name} not found`',
     ],
     syntax: 'throw <message>',
     category: 'flow' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -48,12 +47,14 @@ export class ThrowCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Throw command requires a message or error object',
-            suggestions: ['Provide an error message string or Error object to throw']
-          }],
-          suggestions: ['Provide an error message string or Error object to throw']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Throw command requires a message or error object',
+              suggestions: ['Provide an error message string or Error object to throw'],
+            },
+          ],
+          suggestions: ['Provide an error message string or Error object to throw'],
         };
       }
 
@@ -62,12 +63,14 @@ export class ThrowCommand implements CommandImplementation<
       if (!('message' in inputObj) && !inputObj.message) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Throw command requires a message property',
-            suggestions: ['Provide a message property with the error message']
-          }],
-          suggestions: ['Provide a message property with the error message']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Throw command requires a message property',
+              suggestions: ['Provide a message property with the error message'],
+            },
+          ],
+          suggestions: ['Provide a message property with the error message'],
         };
       }
 
@@ -76,16 +79,13 @@ export class ThrowCommand implements CommandImplementation<
         errors: [],
         suggestions: [],
         data: {
-          message: inputObj.message
-        }
+          message: inputObj.message,
+        },
       };
-    }
+    },
   };
 
-  execute(
-    input: ThrowCommandInput,
-    _context: TypedExecutionContext
-  ): Promise<ThrowCommandOutput> {
+  execute(input: ThrowCommandInput, _context: TypedExecutionContext): Promise<ThrowCommandOutput> {
     const { message } = input;
 
     // Create appropriate error object

@@ -9,20 +9,20 @@ import type { TypedExecutionContext } from './types/command-types';
 export interface TypedExpressionContext {
   // Core context data
   [key: string]: unknown;
-  
+
   // Standard hyperscript context
   me: HTMLElement;
   you: HTMLElement | null;
   it: unknown;
-  
+
   // Variable storage
   locals: Map<string, unknown>;
   globals: Map<string, unknown>;
   variables: Map<string, unknown>;
-  
+
   // Meta context for template variables
   meta: Map<string, unknown>;
-  
+
   // Performance tracking
   evaluationHistory: unknown[];
   performanceMetrics: {
@@ -46,15 +46,19 @@ export function createMockElement(
     nodeName: tag.toUpperCase(),
     nodeType: 1, // Element node
     ownerDocument: global.document || {},
-    
+
     // Style object
     style: {
       display: '',
       visibility: '',
       opacity: '',
-      ...Object.fromEntries(Object.keys(properties).filter(k => k.startsWith('style.')).map(k => [k.slice(6), properties[k]]))
+      ...Object.fromEntries(
+        Object.keys(properties)
+          .filter(k => k.startsWith('style.'))
+          .map(k => [k.slice(6), properties[k]])
+      ),
     },
-    
+
     // ClassList mock
     classList: {
       classes: new Set<string>(),
@@ -78,16 +82,16 @@ export function createMockElement(
       },
       toString() {
         return Array.from(this.classes).join(' ');
-      }
+      },
     },
-    
+
     // Common properties
     id: '',
     className: '',
     textContent: '',
     innerHTML: '',
     outerHTML: `<${tag}></${tag}>`,
-    
+
     // Attributes
     attributes: new Map(Object.entries(attributes)),
     getAttribute(name: string) {
@@ -102,7 +106,7 @@ export function createMockElement(
     hasAttribute(name: string) {
       return this.attributes.has(name);
     },
-    
+
     // DOM navigation
     parentNode: null,
     parentElement: null,
@@ -111,7 +115,7 @@ export function createMockElement(
     lastChild: null,
     nextSibling: null,
     previousSibling: null,
-    
+
     // DOM manipulation methods
     appendChild(child: any) {
       this.children.push(child);
@@ -135,16 +139,16 @@ export function createMockElement(
       newNode.parentElement = this;
       return newNode;
     },
-    
+
     // Event handling
     addEventListener: () => {},
     removeEventListener: () => {},
     dispatchEvent: () => true,
-    
+
     // Query methods
     querySelector: () => null,
     querySelectorAll: () => [],
-    
+
     // Scroll methods for navigation commands
     scrollIntoView: () => {},
     getBoundingClientRect: () => ({
@@ -155,13 +159,13 @@ export function createMockElement(
       width: 100,
       height: 50,
       x: 0,
-      y: 0
+      y: 0,
     }),
-    
+
     // Apply custom properties
-    ...properties
+    ...properties,
   } as any;
-  
+
   // Sync className with classList
   Object.defineProperty(element, 'className', {
     get() {
@@ -170,27 +174,32 @@ export function createMockElement(
     set(value: string) {
       element.classList.classes.clear();
       if (value) {
-        value.split(' ').filter(Boolean).forEach((cls: string) => {
-          element.classList.add(cls);
-        });
+        value
+          .split(' ')
+          .filter(Boolean)
+          .forEach((cls: string) => {
+            element.classList.add(cls);
+          });
       }
-    }
+    },
   });
-  
+
   return element as HTMLElement;
 }
 
 /**
  * Create a mock typed execution context for command testing
  */
-export function createTypedExecutionContext(options: {
-  me?: HTMLElement | null;
-  you?: HTMLElement | null;
-  it?: any;
-  locals?: Map<string, any>;
-  globals?: Map<string, any>;
-  variables?: Map<string, any>;
-} = {}): TypedExecutionContext {
+export function createTypedExecutionContext(
+  options: {
+    me?: HTMLElement | null;
+    you?: HTMLElement | null;
+    it?: any;
+    locals?: Map<string, any>;
+    globals?: Map<string, any>;
+    variables?: Map<string, any>;
+  } = {}
+): TypedExecutionContext {
   return {
     me: options.me || null,
     you: options.you || null,
@@ -212,44 +221,46 @@ export function createTypedExecutionContext(options: {
     meta: {
       startTime: Date.now(),
       commandStack: [],
-      debugMode: false
-    }
+      debugMode: false,
+    },
   };
 }
 
 /**
  * Create a mock typed expression context for expression testing
  */
-export function createTypedExpressionContext(data: Record<string, any> = {}): TypedExpressionContext {
+export function createTypedExpressionContext(
+  data: Record<string, any> = {}
+): TypedExpressionContext {
   const context = {
     // Core context data
     ...data,
-    
+
     // Standard hyperscript context
     me: data.me || createMockElement(),
     you: data.you || null,
     it: data.it || null,
-    
+
     // Variable storage
     locals: new Map(Object.entries(data.locals || {})),
     globals: new Map(Object.entries(data.globals || {})),
     variables: new Map(Object.entries(data.variables || {})),
-    
+
     // Meta context for template variables
     meta: new Map(),
-    
+
     // Performance tracking
     evaluationHistory: [],
     performanceMetrics: {
       totalEvaluations: 0,
       averageExecutionTime: 0,
-      lastEvaluationTime: 0
-    }
+      lastEvaluationTime: 0,
+    },
   };
-  
+
   // Add data properties directly to context for property access
   Object.assign(context, data);
-  
+
   return context as TypedExpressionContext;
 }
 
@@ -265,7 +276,7 @@ export function setupMockDOM() {
       body: createMockElement('body'),
       head: createMockElement('head'),
       documentElement: createMockElement('html'),
-      
+
       // Mock location for navigation tests
       location: {
         href: 'http://localhost:3000',
@@ -276,10 +287,10 @@ export function setupMockDOM() {
         hash: '',
         assign: () => {},
         replace: () => {},
-        reload: () => {}
-      }
+        reload: () => {},
+      },
     };
-    
+
     (global as any).window = {
       location: (global as any).document.location,
       document: (global as any).document,
@@ -293,9 +304,9 @@ export function setupMockDOM() {
         forward: () => {},
         go: () => {},
         pushState: () => {},
-        replaceState: () => {}
+        replaceState: () => {},
       },
-      scrollTo: () => {}
+      scrollTo: () => {},
     };
   }
 }
@@ -318,21 +329,24 @@ export function waitForTick(): Promise<void> {
  */
 export function createPerformanceContext() {
   const start = Date.now();
-  
+
   return {
     mark: (name: string) => {
       const time = Date.now() - start;
       console.debug(`⏱️ Mark ${name}: ${time}ms`);
       return time;
     },
-    
-    measure: async <T>(name: string, operation: () => Promise<T> | T): Promise<{ result: T; duration: number }> => {
+
+    measure: async <T>(
+      name: string,
+      operation: () => Promise<T> | T
+    ): Promise<{ result: T; duration: number }> => {
       const opStart = Date.now();
       const result = await operation();
       const duration = Date.now() - opStart;
       console.debug(`⏱️ ${name}: ${duration}ms`);
       return { result, duration };
-    }
+    },
   };
 }
 

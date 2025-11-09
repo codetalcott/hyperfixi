@@ -29,7 +29,7 @@ export interface LSPFeature {
   tags?: string[];
 }
 
-// Generated Code Interfaces  
+// Generated Code Interfaces
 export interface ParsedCommand {
   name: string;
   syntax: string;
@@ -64,47 +64,47 @@ export interface FilePaths {
 export class CodeGenerator {
   private commandCategories: Record<string, string> = {
     // DOM Manipulation
-    'put': 'dom',
-    'add': 'dom', 
-    'remove': 'dom',
-    'toggle': 'dom',
-    'hide': 'dom',
-    'show': 'dom',
-    'append': 'dom',
-    'take': 'dom',
-    'make': 'dom',
-    
+    put: 'dom',
+    add: 'dom',
+    remove: 'dom',
+    toggle: 'dom',
+    hide: 'dom',
+    show: 'dom',
+    append: 'dom',
+    take: 'dom',
+    make: 'dom',
+
     // Control Flow
-    'if': 'control-flow',
-    'repeat': 'control-flow',
-    'call': 'control-flow',
-    'return': 'control-flow',
-    'break': 'control-flow',
-    'continue': 'control-flow',
-    'halt': 'control-flow',
-    
+    if: 'control-flow',
+    repeat: 'control-flow',
+    call: 'control-flow',
+    return: 'control-flow',
+    break: 'control-flow',
+    continue: 'control-flow',
+    halt: 'control-flow',
+
     // Data Operations
-    'set': 'data',
-    'get': 'data',
-    'default': 'data',
-    'increment': 'data',
-    'decrement': 'data',
-    'pick': 'data',
-    
+    set: 'data',
+    get: 'data',
+    default: 'data',
+    increment: 'data',
+    decrement: 'data',
+    pick: 'data',
+
     // Async Operations
-    'fetch': 'async',
-    'wait': 'async',
-    'send': 'async',
-    'go': 'async',
-    
+    fetch: 'async',
+    wait: 'async',
+    send: 'async',
+    go: 'async',
+
     // Advanced
-    'measure': 'advanced',
-    'transition': 'advanced',
-    'settle': 'advanced',
-    'render': 'advanced',
-    'beep': 'advanced',
-    'throw': 'advanced',
-    'js': 'advanced'
+    measure: 'advanced',
+    transition: 'advanced',
+    settle: 'advanced',
+    render: 'advanced',
+    beep: 'advanced',
+    throw: 'advanced',
+    js: 'advanced',
   };
 
   /**
@@ -116,7 +116,7 @@ export class CodeGenerator {
       syntax: data.syntax_canonical,
       description: data.description,
       examples: data.example_usage || [],
-      category: this.categorizeCommand(data.name)
+      category: this.categorizeCommand(data.name),
     };
   }
 
@@ -128,7 +128,7 @@ export class CodeGenerator {
       name: data.name,
       syntax: data.syntax_canonical,
       description: data.description,
-      examples: data.example_usage || []
+      examples: data.example_usage || [],
     };
   }
 
@@ -147,12 +147,12 @@ export class CodeGenerator {
       const category = this.categorizeCommand(name);
       return {
         implementation: `src/commands/${category}/${name}.ts`,
-        test: `src/commands/${category}/${name}.test.ts`
+        test: `src/commands/${category}/${name}.test.ts`,
       };
     } else {
       return {
         implementation: `src/features/${name}.ts`,
-        test: `src/features/${name}.test.ts`
+        test: `src/features/${name}.test.ts`,
       };
     }
   }
@@ -164,7 +164,7 @@ export class CodeGenerator {
     const parsed = this.parseCommand(data);
     const className = this.capitalizeFirst(parsed.name) + 'Command';
     const paths = this.generateFilePaths(parsed.name, 'command');
-    
+
     const code = `/**
  * ${parsed.description}
  * Generated from LSP data with manual implementation required
@@ -198,7 +198,7 @@ export default ${className};
 
     return {
       code,
-      filePath: paths.implementation
+      filePath: paths.implementation,
     };
   }
 
@@ -209,7 +209,7 @@ export default ${className};
     const parsed = this.parseCommand(data);
     const className = this.capitalizeFirst(parsed.name) + 'Command';
     const paths = this.generateFilePaths(parsed.name, 'command');
-    
+
     const testCases = parsed.examples.map((example, index) => {
       return this.generateTestCase(parsed.name, example, index);
     });
@@ -269,7 +269,7 @@ ${testCases.join('\n\n')}
     return {
       code,
       filePath: paths.test,
-      testCases: testCases
+      testCases: testCases,
     };
   }
 
@@ -280,7 +280,7 @@ ${testCases.join('\n\n')}
     // Extract the hyperscript from the example
     const hyperscriptMatch = example.match(/_="([^"]+)"/);
     const hyperscript = hyperscriptMatch ? hyperscriptMatch[1] : example;
-    
+
     return `    it('should handle example ${index + 1}: ${this.escapeString(hyperscript)}', async () => {
       // TODO: Implement test for: ${this.escapeString(example)}
       // Expected behavior: ${commandName} command should execute successfully
@@ -299,10 +299,10 @@ ${testCases.join('\n\n')}
     const scriptDir = dirname(new URL(import.meta.url).pathname);
     const commandsPath = join(scriptDir, '../../scripts/lsp-data', 'markdown_commands.json');
     const featuresPath = join(scriptDir, '../../scripts/lsp-data', 'markdown_features.json');
-    
+
     const commands: LSPCommand[] = JSON.parse(readFileSync(commandsPath, 'utf-8'));
     const features: LSPFeature[] = JSON.parse(readFileSync(featuresPath, 'utf-8'));
-    
+
     return { commands, features };
   }
 
@@ -311,28 +311,24 @@ ${testCases.join('\n\n')}
    */
   generateMissingCommands(): void {
     const { commands } = this.loadLSPData();
-    const implementedCommands = [
-      'hide', 'show', 'toggle', 'add', 'remove', 'fetch'
-    ];
-    
-    const missingCommands = commands.filter(cmd => 
-      !implementedCommands.includes(cmd.name)
-    );
+    const implementedCommands = ['hide', 'show', 'toggle', 'add', 'remove', 'fetch'];
+
+    const missingCommands = commands.filter(cmd => !implementedCommands.includes(cmd.name));
 
     console.log(`Generating ${missingCommands.length} missing commands...`);
-    
+
     missingCommands.forEach(commandData => {
       const implementation = this.generateCommandInterface(commandData);
       const test = this.generateCommandTest(commandData);
-      
+
       // Create directories if they don't exist
       mkdirSync(dirname(implementation.filePath), { recursive: true });
       mkdirSync(dirname(test.filePath), { recursive: true });
-      
+
       // Write files
       writeFileSync(implementation.filePath, implementation.code);
       writeFileSync(test.filePath, test.code);
-      
+
       console.log(`Generated: ${implementation.filePath}`);
       console.log(`Generated: ${test.filePath}`);
     });
@@ -351,7 +347,7 @@ ${testCases.join('\n\n')}
 // CLI interface
 if (import.meta.url === `file://${process.argv[1]}`) {
   const generator = new CodeGenerator();
-  
+
   if (process.argv[2] === 'generate') {
     generator.generateMissingCommands();
   } else {

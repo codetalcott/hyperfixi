@@ -7,7 +7,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { evalHyperScript } from './eval-hyperscript';
 
 describe('evalHyperScript API Compatibility', () => {
-  
   describe('Basic Expression Evaluation', () => {
     it('should evaluate simple arithmetic expressions', async () => {
       const result = await evalHyperScript('5 + 3');
@@ -48,8 +47,8 @@ describe('evalHyperScript API Compatibility', () => {
     });
 
     it('should handle possessive expressions with locals', async () => {
-      const result = await evalHyperScript("foo's bar", { 
-        locals: { foo: { bar: 'baz' } } 
+      const result = await evalHyperScript("foo's bar", {
+        locals: { foo: { bar: 'baz' } },
       });
       expect(result).toBe('baz');
     });
@@ -57,10 +56,10 @@ describe('evalHyperScript API Compatibility', () => {
 
   describe('Original _hyperscript Test Cases', () => {
     // These are direct copies from _hyperscript/test/expressions/possessiveExpression.js
-    
+
     it('can access basic properties', async () => {
-      const result = await evalHyperScript("foo's foo", { locals: { foo: { foo: "foo" } } });
-      expect(result).toBe("foo");
+      const result = await evalHyperScript("foo's foo", { locals: { foo: { foo: 'foo' } } });
+      expect(result).toBe('foo');
     });
 
     it('is null safe', async () => {
@@ -71,28 +70,28 @@ describe('evalHyperScript API Compatibility', () => {
     it('can access my properties', async () => {
       // Create a more complete mock element with DOM methods
       const mockElement = {
-        foo: "foo",
+        foo: 'foo',
         hasAttribute: () => false,
         getAttribute: () => null,
         setAttribute: () => {},
-        tagName: 'DIV'
+        tagName: 'DIV',
       };
-      const result = await evalHyperScript("my foo", { me: mockElement });
-      expect(result).toBe("foo");
+      const result = await evalHyperScript('my foo', { me: mockElement });
+      expect(result).toBe('foo');
     });
 
     it('my property is null safe', async () => {
-      const result = await evalHyperScript("my foo");
+      const result = await evalHyperScript('my foo');
       expect(result).toBeUndefined();
     });
 
     it('can access its properties', async () => {
-      const result = await evalHyperScript("its foo", { result: { foo: "foo" } });
-      expect(result).toBe("foo");
+      const result = await evalHyperScript('its foo', { result: { foo: 'foo' } });
+      expect(result).toBe('foo');
     });
 
     it('its property is null safe', async () => {
-      const result = await evalHyperScript("its foo");
+      const result = await evalHyperScript('its foo');
       expect(result).toBeUndefined();
     });
   });
@@ -108,14 +107,14 @@ describe('evalHyperScript API Compatibility', () => {
     });
 
     it('should handle complex nested property access', async () => {
-      const result = await evalHyperScript("obj's nested's value", { 
-        locals: { 
-          obj: { 
-            nested: { 
-              value: 'deep' 
-            } 
-          } 
-        } 
+      const result = await evalHyperScript("obj's nested's value", {
+        locals: {
+          obj: {
+            nested: {
+              value: 'deep',
+            },
+          },
+        },
       });
       expect(result).toBe('deep');
     });

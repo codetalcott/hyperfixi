@@ -5,11 +5,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { JSDOM } from 'jsdom';
-import { 
-  equalsExpression, 
-  andExpression, 
-  matchesExpression 
-} from './index';
+import { equalsExpression, andExpression, matchesExpression } from './index';
 import type { ExecutionContext } from '../../types/core';
 import type { TypedExpressionContext } from '../../types/expression-types';
 
@@ -39,7 +35,7 @@ describe('Enhanced Logical Expressions', () => {
       locals: new Map(),
       globals: new Map(),
       event: null,
-      evaluationHistory: [] // Enhanced tracking
+      evaluationHistory: [], // Enhanced tracking
     };
 
     // Clear DOM
@@ -52,7 +48,7 @@ describe('Enhanced Logical Expressions', () => {
       const result = await equalsExpression.evaluate(mockContext, 5, 5);
       expect(result).toBe(true);
 
-      const result2 = await equalsExpression.evaluate(mockContext, "5", 5);
+      const result2 = await equalsExpression.evaluate(mockContext, '5', 5);
       expect(result2).toBe(true); // Loose equality
     });
 
@@ -74,7 +70,7 @@ describe('Enhanced Logical Expressions', () => {
 
     it('should track evaluation history', async () => {
       await equalsExpression.evaluate(mockContext, 10, 10);
-      
+
       expect(mockContext.evaluationHistory).toHaveLength(1);
       const evaluation = mockContext.evaluationHistory![0];
       expect(evaluation.expressionName).toBe('equals');
@@ -87,13 +83,13 @@ describe('Enhanced Logical Expressions', () => {
 
     it('should have enhanced input schema', () => {
       expect(equalsExpression.inputSchema).toBeDefined();
-      
+
       // Test valid input
       const validResult = equalsExpression.inputSchema?.safeParse([5, 10]);
       expect(validResult?.success).toBe(true);
-      
+
       // Test invalid input (not a tuple)
-      const invalidResult = equalsExpression.inputSchema?.safeParse("not-a-tuple");
+      const invalidResult = equalsExpression.inputSchema?.safeParse('not-a-tuple');
       expect(invalidResult?.success).toBe(false);
     });
 
@@ -102,12 +98,12 @@ describe('Enhanced Logical Expressions', () => {
         [null, null, true],
         [undefined, null, true], // Loose equality
         [0, false, true], // Type coercion
-        ["", false, true], // Type coercion
+        ['', false, true], // Type coercion
         [[], false, true], // Type coercion
-        [42, "42", true], // String to number coercion
+        [42, '42', true], // String to number coercion
         [true, 1, true], // Boolean to number coercion
         [{}, {}, false], // Different object instances
-        [NaN, NaN, false] // NaN special case
+        [NaN, NaN, false], // NaN special case
       ];
 
       for (const [left, right, expected] of tests) {
@@ -125,7 +121,7 @@ describe('Enhanced Logical Expressions', () => {
       const result2 = await andExpression.evaluate(mockContext, true, false);
       expect(result2).toBe(false);
 
-      const result3 = await andExpression.evaluate(mockContext, "hello", "world");
+      const result3 = await andExpression.evaluate(mockContext, 'hello', 'world');
       expect(result3).toBe(true); // Both truthy
     });
 
@@ -145,8 +141,8 @@ describe('Enhanced Logical Expressions', () => {
     });
 
     it('should track evaluation history', async () => {
-      await andExpression.evaluate(mockContext, "name", "email");
-      
+      await andExpression.evaluate(mockContext, 'name', 'email');
+
       expect(mockContext.evaluationHistory).toHaveLength(1);
       const evaluation = mockContext.evaluationHistory![0];
       expect(evaluation.expressionName).toBe('and');
@@ -161,13 +157,13 @@ describe('Enhanced Logical Expressions', () => {
         [true, false, false],
         [false, true, false],
         [false, false, false],
-        ["hello", "world", true], // Both truthy strings
-        ["hello", "", false], // Empty string is falsy
+        ['hello', 'world', true], // Both truthy strings
+        ['hello', '', false], // Empty string is falsy
         [1, 2, true], // Both truthy numbers
         [0, 1, false], // 0 is falsy
         [[], {}, true], // Both truthy objects
         [null, undefined, false], // Both falsy
-        ["text", 42, true], // Mixed truthy types
+        ['text', 42, true], // Mixed truthy types
       ];
 
       for (const [left, right, expected] of tests) {
@@ -179,11 +175,11 @@ describe('Enhanced Logical Expressions', () => {
     it('should handle error tracking', async () => {
       // This test verifies error tracking works, but we'll simulate it differently
       // since mocking the function breaks the test
-      
+
       // Instead, let's test with a context that might cause issues
       const errorContext = {
         ...mockContext,
-        evaluationHistory: [] // Fresh history for this test
+        evaluationHistory: [], // Fresh history for this test
       };
 
       // Test normal operation first
@@ -207,13 +203,13 @@ describe('Enhanced Logical Expressions', () => {
     });
 
     it('should maintain backward compatibility for string pattern matching', async () => {
-      const result1 = await matchesExpression.evaluate(mockContext, "hello world", "/^hello/");
+      const result1 = await matchesExpression.evaluate(mockContext, 'hello world', '/^hello/');
       expect(result1).toBe(true);
 
-      const result2 = await matchesExpression.evaluate(mockContext, "hello world", "world");
+      const result2 = await matchesExpression.evaluate(mockContext, 'hello world', 'world');
       expect(result2).toBe(true); // String includes
 
-      const result3 = await matchesExpression.evaluate(mockContext, "hello world", "/^goodbye/");
+      const result3 = await matchesExpression.evaluate(mockContext, 'hello world', '/^goodbye/');
       expect(result3).toBe(false);
     });
 
@@ -227,7 +223,9 @@ describe('Enhanced Logical Expressions', () => {
 
     it('should have comprehensive LLM documentation', () => {
       expect(matchesExpression.documentation).toBeDefined();
-      expect(matchesExpression.documentation?.summary).toContain('CSS selector or string matches regex');
+      expect(matchesExpression.documentation?.summary).toContain(
+        'CSS selector or string matches regex'
+      );
       expect(matchesExpression.documentation?.parameters).toHaveLength(2);
       expect(matchesExpression.documentation?.examples).toHaveLength(4);
       expect(matchesExpression.documentation?.tags).toContain('pattern');
@@ -237,7 +235,7 @@ describe('Enhanced Logical Expressions', () => {
 
     it('should track evaluation history for DOM queries', async () => {
       await matchesExpression.evaluate(mockContext, mockElement, '.active');
-      
+
       expect(mockContext.evaluationHistory).toHaveLength(1);
       const evaluation = mockContext.evaluationHistory![0];
       expect(evaluation.expressionName).toBe('matches');
@@ -272,11 +270,11 @@ describe('Enhanced Logical Expressions', () => {
 
     it('should handle regex patterns correctly', async () => {
       const tests = [
-        ["hello world", "/^hello/", true],
-        ["hello world", "/world$/", true],
-        ["hello world", "/^world/", false],
-        ["test123", "\\d+", true], // Simple digits pattern
-        ["123", "^\\d+$", true], // Only digits
+        ['hello world', '/^hello/', true],
+        ['hello world', '/world$/', true],
+        ['hello world', '/^world/', false],
+        ['test123', '\\d+', true], // Simple digits pattern
+        ['123', '^\\d+$', true], // Only digits
       ];
 
       for (const [text, pattern, expected] of tests) {
@@ -286,21 +284,21 @@ describe('Enhanced Logical Expressions', () => {
     });
 
     it('should fallback to string includes for invalid regex', async () => {
-      const result = await matchesExpression.evaluate(mockContext, "hello world", "hello");
+      const result = await matchesExpression.evaluate(mockContext, 'hello world', 'hello');
       expect(result).toBe(true); // Falls back to string includes
-      
-      const result2 = await matchesExpression.evaluate(mockContext, "hello world", "xyz");
+
+      const result2 = await matchesExpression.evaluate(mockContext, 'hello world', 'xyz');
       expect(result2).toBe(false); // String doesn't include xyz
     });
 
     it('should handle type mismatches gracefully', async () => {
-      const result1 = await matchesExpression.evaluate(mockContext, null, ".class");
+      const result1 = await matchesExpression.evaluate(mockContext, null, '.class');
       expect(result1).toBe(false);
 
       const result2 = await matchesExpression.evaluate(mockContext, mockElement, null);
       expect(result2).toBe(false);
 
-      const result3 = await matchesExpression.evaluate(mockContext, 123, ".class");
+      const result3 = await matchesExpression.evaluate(mockContext, 123, '.class');
       expect(result3).toBe(false);
     });
   });
@@ -321,7 +319,7 @@ describe('Enhanced Logical Expressions', () => {
 
     it('should have all original properties', () => {
       const requiredProps = ['name', 'category', 'evaluatesTo'];
-      
+
       for (const prop of requiredProps) {
         expect(equalsExpression).toHaveProperty(prop);
         expect(andExpression).toHaveProperty(prop);
@@ -331,7 +329,7 @@ describe('Enhanced Logical Expressions', () => {
 
     it('should have new enhanced properties', () => {
       const enhancedProps = ['metadata', 'documentation', 'inputSchema'];
-      
+
       for (const prop of enhancedProps) {
         expect(equalsExpression).toHaveProperty(prop);
         expect(andExpression).toHaveProperty(prop);
@@ -347,7 +345,7 @@ describe('Enhanced Logical Expressions', () => {
         result: null,
         locals: new Map(),
         globals: new Map(),
-        event: null
+        event: null,
       };
 
       // Should not throw errors even without evaluationHistory

@@ -3,23 +3,28 @@
  * Minimal implementation to isolate the core issue
  */
 
+import { debug } from '../../utils/debug';
+
 export class SimpleSetCommand {
   name = 'set' as const;
-  
+
   async execute(context: any, ...args: unknown[]): Promise<unknown> {
-    console.log('🚨🚨🚨 SIMPLE SET COMMAND CALLED - THIS SHOULD BE VISIBLE 🚨🚨🚨');
-    console.log('🔧 SIMPLE SET: Args received:', args);
-    console.log('🔧 SIMPLE SET: Context me:', context.me?.tagName);
-    console.log('🔧 SIMPLE SET: Args length:', args.length);
-    console.log('🔧 SIMPLE SET: Args details:', args.map((arg, i) => ({ index: i, type: typeof arg, value: arg })));
-    
+    debug.command('SIMPLE SET COMMAND CALLED - THIS SHOULD BE VISIBLE');
+    debug.command('SIMPLE SET: Args received:', args);
+    debug.command('SIMPLE SET: Context me:', context.me?.tagName);
+    debug.command('SIMPLE SET: Args length:', args.length);
+    debug.command(
+      'SIMPLE SET: Args details:',
+      args.map((arg, i) => ({ index: i, type: typeof arg, value: arg }))
+    );
+
     try {
       // Simple case: expect 2 args [target, value]
       if (args.length >= 2) {
         const [targetArg, valueArg] = args;
-        console.log('🔧 Target arg:', targetArg, 'Type:', typeof targetArg);
-        console.log('🔧 Value arg:', valueArg, 'Type:', typeof valueArg);
-        
+        debug.command('Target arg:', targetArg, 'Type:', typeof targetArg);
+        debug.command('Value arg:', valueArg, 'Type:', typeof valueArg);
+
         // Extract target name
         let target: string;
         if (typeof targetArg === 'string') {
@@ -31,7 +36,7 @@ export class SimpleSetCommand {
         } else {
           target = String(targetArg);
         }
-        
+
         // Extract value
         let value: unknown;
         if (valueArg && typeof valueArg === 'object' && 'value' in valueArg) {
@@ -39,23 +44,21 @@ export class SimpleSetCommand {
         } else {
           value = valueArg;
         }
-        
-        console.log('🔧 Final target:', target, 'Final value:', value);
-        
+
+        debug.command('Final target:', target, 'Final value:', value);
+
         // Set the variable in local context
         if (!context.locals) {
           context.locals = new Map();
         }
         context.locals.set(target, value);
         Object.assign(context, { it: value });
-        
-        console.log('✅ SET successful:', target, '=', value);
+
+        debug.command('SET successful:', target, '=', value);
         return value;
-        
       } else {
         throw new Error(`Simple SET: Expected 2+ args, got ${args.length}`);
       }
-      
     } catch (error) {
       console.error('❌ Simple SET failed:', error);
       throw error;

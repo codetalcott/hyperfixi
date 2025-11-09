@@ -49,9 +49,7 @@ describe('Exit Command', () => {
     it('should throw an exit error when executed', async () => {
       const context = {} as TypedExecutionContext;
 
-      await expect(
-        command.execute({}, context)
-      ).rejects.toThrow('EXIT_COMMAND');
+      await expect(command.execute({}, context)).rejects.toThrow('EXIT_COMMAND');
     });
 
     it('should throw error with isExit flag', async () => {

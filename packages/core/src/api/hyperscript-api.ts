@@ -28,19 +28,19 @@ export interface HyperscriptAPI {
   execute(ast: ASTNode, context?: ExecutionContext): Promise<unknown>;
   run(code: string, context?: ExecutionContext): Promise<unknown>;
   evaluate(code: string, context?: ExecutionContext): Promise<unknown>; // Alias for run
-  
+
   // DOM processing (HTMX compatibility)
   processNode(element: Element): void;
   process(element: Element): void; // Alias for processNode
-  
+
   // Context management
   createContext(element?: HTMLElement | null): ExecutionContext;
   createChildContext(parent: ExecutionContext, element?: HTMLElement | null): ExecutionContext;
-  
+
   // Utilities
   isValidHyperscript(code: string): boolean;
   version: string;
-  
+
   // Advanced
   createRuntime(options?: RuntimeOptions): Runtime;
   parse: typeof parse;
@@ -50,7 +50,11 @@ export interface HyperscriptAPI {
 // Internal Runtime Instance
 // ============================================================================
 
-const defaultRuntime = new Runtime();
+// Browser runtime uses eager loading for maximum compatibility
+// Lazy loading causes race conditions since preloading is async but constructor is sync
+const defaultRuntime = new Runtime({
+  lazyLoad: false, // Eager load all expressions synchronously
+});
 
 // ============================================================================
 // API Implementation
@@ -60,58 +64,60 @@ const defaultRuntime = new Runtime();
  * Compile hyperscript code into an Abstract Syntax Tree (AST)
  */
 function compile(code: string): CompilationResult {
-  debug.runtime('COMPILE: hyperscript-api compile() called', { 
-    code, 
+  debug.runtime('COMPILE: hyperscript-api compile() called', {
+    code,
     codeLength: code.length,
-    codeType: typeof code 
+    codeType: typeof code,
   });
-  
+
   // Input validation
   if (typeof code !== 'string') {
     throw new TypeError('Code must be a string');
   }
 
   const startTime = performance.now();
-  
+
   try {
     debug.runtime('COMPILE: about to call parse()');
     const parseResult = parse(code);
-    debug.runtime('COMPILE: parse() returned', { 
+    debug.runtime('COMPILE: parse() returned', {
       success: parseResult.success,
       hasNode: !!parseResult.node,
-      hasError: !!parseResult.error 
+      hasError: !!parseResult.error,
     });
     const compilationTime = performance.now() - startTime;
-    
+
     if (parseResult.success && parseResult.node) {
       return {
         success: true,
         ast: parseResult.node,
         errors: [],
         tokens: parseResult.tokens,
-        compilationTime
+        compilationTime,
       };
     } else {
       return {
         success: false,
         errors: parseResult.error ? [parseResult.error] : [],
         tokens: parseResult.tokens,
-        compilationTime
+        compilationTime,
       };
     }
   } catch (error) {
     const compilationTime = performance.now() - startTime;
-    
+
     return {
       success: false,
-      errors: [{
-        name: 'CompilationError',
-        message: error instanceof Error ? error.message : 'Unknown compilation error',
-        line: 1,
-        column: 1
-      }],
+      errors: [
+        {
+          name: 'CompilationError',
+          message: error instanceof Error ? error.message : 'Unknown compilation error',
+          line: 1,
+          column: 1,
+        },
+      ],
       tokens: [],
-      compilationTime
+      compilationTime,
     };
   }
 }
@@ -139,38 +145,36 @@ async function run(code: string, context?: ExecutionContext): Promise<unknown> {
   }
 
   const normalizedCode = code.trim();
-  
+
   // Create default context if none provided
   const executionContext = context || createContext();
-  
-  debug.runtime('HyperFixi Enhanced Evaluate:', { 
-    code: normalizedCode, 
+
+  debug.runtime('HyperFixi Enhanced Evaluate:', {
+    code: normalizedCode,
     hasContext: !!context,
-    contextElement: executionContext.me?.tagName || 'none'
+    contextElement: executionContext.me?.tagName || 'none',
   });
 
   try {
     // Compile the hyperscript code
     const compiled = compile(normalizedCode);
-    
+
     if (!compiled.success) {
-      const errorMsg = compiled.errors.length > 0 
-        ? compiled.errors[0].message 
-        : 'Unknown compilation error';
+      const errorMsg =
+        compiled.errors.length > 0 ? compiled.errors[0].message : 'Unknown compilation error';
       throw new Error(`Compilation failed: ${errorMsg}`);
     }
 
-    debug.runtime('Compilation successful:', { 
+    debug.runtime('Compilation successful:', {
       astType: compiled.ast?.type,
-      tokenCount: compiled.tokens?.length || 0
+      tokenCount: compiled.tokens?.length || 0,
     });
 
     // Enhanced execution with pattern-specific handling
     const result = await executeWithCompatibility(compiled.ast!, executionContext, normalizedCode);
-    
+
     debug.runtime('Execution completed:', { result: typeof result, value: result });
     return result;
-
   } catch (error) {
     console.error('❌ HyperFixi execution error:', error);
     throw error;
@@ -182,35 +186,34 @@ async function run(code: string, context?: ExecutionContext): Promise<unknown> {
  * This makes evaluate() work exactly like traditional _="" attribute processing
  */
 async function executeWithCompatibility(
-  ast: ASTNode, 
-  context: ExecutionContext, 
+  ast: ASTNode,
+  context: ExecutionContext,
   originalCode: string
 ): Promise<unknown> {
-  
   // Pattern 1: Event handlers (on click, on submit, etc.)
   if (isEventHandlerPattern(originalCode)) {
     debug.runtime('Detected event handler pattern');
     return await handleEventHandlerPattern(ast, context, originalCode);
   }
-  
+
   // Pattern 2: Direct commands (hide me, show #element, toggle .class, etc.)
   if (isDirectCommandPattern(originalCode)) {
     debug.runtime('Detected direct command pattern');
     return await defaultRuntime.execute(ast, context);
   }
-  
+
   // Pattern 3: Expression evaluation (5 + 3, my.value, etc.)
   if (isExpressionPattern(originalCode)) {
     debug.runtime('Detected expression pattern');
     return await defaultRuntime.execute(ast, context);
   }
-  
+
   // Pattern 4: Complex hyperscript (if/then, fetch, etc.)
   if (isComplexPattern(originalCode)) {
     debug.runtime('Detected complex hyperscript pattern');
     return await defaultRuntime.execute(ast, context);
   }
-  
+
   // Default: Execute normally
   debug.runtime('Using default execution');
   return await defaultRuntime.execute(ast, context);
@@ -228,10 +231,22 @@ function isEventHandlerPattern(code: string): boolean {
  */
 function isDirectCommandPattern(code: string): boolean {
   const directCommands = [
-    'hide', 'show', 'toggle', 'add', 'remove', 'set', 'put', 
-    'take', 'make', 'call', 'send', 'fetch', 'wait', 'go'
+    'hide',
+    'show',
+    'toggle',
+    'add',
+    'remove',
+    'set',
+    'put',
+    'take',
+    'make',
+    'call',
+    'send',
+    'fetch',
+    'wait',
+    'go',
   ];
-  
+
   const firstWord = code.trim().split(/\s+/)[0];
   return directCommands.includes(firstWord);
 }
@@ -241,7 +256,8 @@ function isDirectCommandPattern(code: string): boolean {
  */
 function isExpressionPattern(code: string): boolean {
   // Simple heuristic: no commands, likely an expression
-  const hasCommands = /\b(hide|show|toggle|add|remove|set|put|take|make|call|send|fetch|wait|go|on)\b/.test(code);
+  const hasCommands =
+    /\b(hide|show|toggle|add|remove|set|put|take|make|call|send|fetch|wait|go|on)\b/.test(code);
   return !hasCommands;
 }
 
@@ -256,27 +272,25 @@ function isComplexPattern(code: string): boolean {
  * Enhanced event handler processing that seamlessly handles traditional patterns
  */
 async function handleEventHandlerPattern(
-  ast: ASTNode, 
-  context: ExecutionContext, 
+  ast: ASTNode,
+  context: ExecutionContext,
   _originalCode: string
 ): Promise<unknown> {
-  
   try {
     // If context has an element, set up the event handler on it
     if (context.me && typeof context.me.addEventListener === 'function') {
       debug.event('Setting up event handler on element:', context.me);
-      
+
       // Process the event handler AST to set up listeners
       await defaultRuntime.execute(ast, context);
-      
+
       // Event handlers return undefined (they set up listeners)
       return undefined;
     }
-    
+
     // If no element context, this might be a standalone evaluation
     // Execute normally and let the runtime handle it
     return await defaultRuntime.execute(ast, context);
-    
   } catch (error) {
     console.error('❌ Error in event handler setup:', error);
     throw error;
@@ -324,7 +338,7 @@ function processNode(element: Element): void {
     if (hyperscriptAttr) {
       processHyperscriptAttribute(element, hyperscriptAttr);
     }
-    
+
     // Process all child elements with hyperscript attributes
     const hyperscriptElements = element.querySelectorAll('[_]');
     hyperscriptElements.forEach(child => {
@@ -333,7 +347,6 @@ function processNode(element: Element): void {
         processHyperscriptAttribute(child, childHyperscriptAttr);
       }
     });
-    
   } catch (error) {
     console.error('Error processing hyperscript node:', error);
   }
@@ -345,15 +358,18 @@ function processNode(element: Element): void {
 function processHyperscriptAttribute(element: Element, hyperscriptCode: string): void {
   try {
     debug.runtime('Processing hyperscript:', hyperscriptCode);
-    
+
     // Compile the hyperscript code
     const compileResult = compile(hyperscriptCode);
-    
+
     if (!compileResult.success) {
       console.error(`❌ Failed to compile hyperscript on element:`, element);
       console.error(`❌ Hyperscript code: "${hyperscriptCode}"`);
-      console.error(`❌ Parse errors (count: ${compileResult.errors.length}):`, compileResult.errors);
-      
+      console.error(
+        `❌ Parse errors (count: ${compileResult.errors.length}):`,
+        compileResult.errors
+      );
+
       // Enhanced error logging
       if (compileResult.errors.length === 0) {
         console.error(`❌ No specific error details available - compilation failed without errors`);
@@ -361,27 +377,32 @@ function processHyperscriptAttribute(element: Element, hyperscriptCode: string):
         compileResult.errors.forEach((error, index) => {
           console.error(`❌ Error ${index + 1}:`);
           console.error(`   Message: ${error.message || 'No message'}`);
-          console.error(`   Line: ${error.line || 'Unknown'}, Column: ${error.column || 'Unknown'}`);
+          console.error(
+            `   Line: ${error.line || 'Unknown'}, Column: ${error.column || 'Unknown'}`
+          );
           console.error(`   Name: ${error.name || 'Unknown'}`);
           console.error(`   Full error object:`, JSON.stringify(error, null, 2));
         });
       }
-      
+
       // Try to identify the specific syntax issue
       const lines = hyperscriptCode.split('\n');
       lines.forEach((line, lineIndex) => {
         console.error(`❌ Line ${lineIndex + 1}: "${line.trim()}"`);
       });
-      
+
       // Test tokenization of the failing code
       try {
         const tokens = tokenize(hyperscriptCode);
-        console.error(`🔍 Tokens generated:`, tokens.map((t: any) => `${t.type}:"${t.value}"`).join(', '));
+        console.error(
+          `🔍 Tokens generated:`,
+          tokens.map((t: any) => `${t.type}:"${t.value}"`).join(', ')
+        );
         console.error(`🔍 Token count: ${tokens.length}`);
       } catch (tokenError) {
         console.error(`❌ Tokenization failed:`, tokenError);
       }
-      
+
       // Also try to parse manually to get more details
       try {
         console.error(`🔧 Attempting manual parse for debugging...`);
@@ -390,47 +411,49 @@ function processHyperscriptAttribute(element: Element, hyperscriptCode: string):
           success: parseResult.success,
           errorCount: parseResult.error ? 1 : 0,
           error: parseResult.error,
-          nodeType: parseResult.node?.type || 'none'
+          nodeType: parseResult.node?.type || 'none',
         });
       } catch (manualError) {
         console.error(`❌ Manual parse also failed:`, manualError);
       }
-      
+
       return;
     }
-    
+
     if (!compileResult.ast) {
       console.warn('⚠️ No AST generated for hyperscript:', hyperscriptCode);
       return;
     }
-    
+
     debug.runtime('Successfully compiled hyperscript:', hyperscriptCode);
     debug.runtime('Generated AST:', compileResult.ast);
-    
+
     // Create execution context for this element
     const context = createHyperscriptContext(element as HTMLElement);
-    
+
     // Check if this is an event handler (starts with "on ")
     if (hyperscriptCode.trim().startsWith('on ')) {
       debug.event('Setting up event handler for:', hyperscriptCode);
       debug.event('Element for event handler:', element);
       debug.event('AST for event handler:', compileResult.ast);
-      
+
       try {
         debug.event('About to call setupEventHandler...');
         setupEventHandler(element, compileResult.ast, context);
         debug.event('setupEventHandler completed successfully');
       } catch (setupError) {
         console.error('❌ Error in setupEventHandler:', setupError);
-        console.error('❌ setupError stack:', setupError instanceof Error ? setupError.stack : 'No stack trace');
+        console.error(
+          '❌ setupError stack:',
+          setupError instanceof Error ? setupError.stack : 'No stack trace'
+        );
         throw setupError; // Re-throw to see it in outer catch
       }
     } else {
       debug.runtime('Executing immediate hyperscript:', hyperscriptCode);
       // Execute immediately for non-event code
-      executeHyperscriptAST(compileResult.ast, context);
+      void executeHyperscriptAST(compileResult.ast, context);
     }
-    
   } catch (error) {
     console.error('❌ Error processing hyperscript attribute:', error, 'on element:', element);
   }
@@ -445,31 +468,31 @@ function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionCon
     debug.event('Element:', element);
     debug.event('AST:', ast);
     debug.event('Context:', context);
-    
+
     // Parse the event from the AST (simplified - assumes "on eventName" structure)
     const eventInfo = extractEventInfo(ast);
     debug.event('extractEventInfo returned:', eventInfo);
-    
+
     if (!eventInfo) {
       console.error('❌ Could not extract event information from AST:', ast);
       return;
     }
-    
+
     // Add event listener
     const eventHandler = async (event: Event) => {
       debug.event(`Event handler triggered: ${eventInfo.eventType} on element:`, element);
       debug.event(`Event object:`, event);
       debug.event(`Event target:`, event.target);
       debug.event(`Current element:`, element);
-      
+
       try {
         // Set event context
         context.locals.set('event', event);
         context.locals.set('target', event.target);
-        
+
         debug.event('About to execute hyperscript AST:', eventInfo.body);
         debug.event('Context:', context);
-        
+
         // Execute the event handler body
         const result = await executeHyperscriptAST(eventInfo.body, context);
         debug.event('Hyperscript AST execution completed, result:', result);
@@ -480,13 +503,12 @@ function setupEventHandler(element: Element, ast: ASTNode, context: ExecutionCon
         console.error('❌ Context:', context);
       }
     };
-    
+
     element.addEventListener(eventInfo.eventType, eventHandler);
     debug.event(`Event listener attached: ${eventInfo.eventType} on element:`, element);
     debug.event(`Event handler function:`, eventHandler);
-    
+
     debug.event(`Set up ${eventInfo.eventType} event handler on element:`, element);
-    
   } catch (error) {
     console.error('Error setting up event handler:', error);
   }
@@ -501,14 +523,14 @@ function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNode } | 
     debug.event('AST type:', ast.type);
     debug.event('AST keys:', Object.keys(ast));
     debug.event('Full AST structure:', JSON.stringify(ast, null, 2));
-    
+
     // Handle the actual HyperFixi AST structure
     if (ast.type === 'eventHandler') {
       const eventType = (ast as { event?: string }).event || 'click';
       const commands = (ast as { commands?: ASTNode[] }).commands;
-      
+
       debug.event(`Found event handler: ${eventType} with ${commands?.length || 0} commands`);
-      
+
       // Create a body node from the commands
       const body: ASTNode = {
         type: 'CommandSequence',
@@ -516,27 +538,26 @@ function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNode } | 
         start: ast.start || 0,
         end: ast.end || 0,
         line: ast.line || 1,
-        column: ast.column || 1
+        column: ast.column || 1,
       };
-      
+
       return { eventType, body };
     }
-    
+
     // Handle legacy AST structures
     if (ast.type === 'FeatureNode' && (ast as { name?: string }).name === 'on') {
       const eventType = (ast as { args?: Array<{ value?: string }> }).args?.[0]?.value || 'click';
       const body = (ast as { body?: ASTNode }).body || ast;
       return { eventType, body };
     }
-    
+
     // Handle direct command sequences
     if (ast.type === 'CommandSequence' || ast.type === 'Block') {
       return { eventType: 'click', body: ast }; // Default to click
     }
-    
+
     console.warn('⚠️ Unknown AST structure for event extraction:', ast.type);
     return null;
-    
   } catch (error) {
     console.error('❌ Error extracting event info:', error);
     return null;
@@ -590,7 +611,7 @@ export const hyperscript: HyperscriptAPI = {
 
   // Advanced
   createRuntime: createRuntimeInstance,
-  parse
+  parse,
 };
 
 // Export as _hyperscript for official _hyperscript API compatibility

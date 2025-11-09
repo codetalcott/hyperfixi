@@ -16,7 +16,10 @@ const sharedGlobals = new Map<string, any>();
  * @param element - The element to use as 'me' in the context
  * @param globals - Optional globals Map (defaults to shared globals)
  */
-export function createContext(element?: HTMLElement | null, globals?: Map<string, any>): ExecutionContext {
+export function createContext(
+  element?: HTMLElement | null,
+  globals?: Map<string, any>
+): ExecutionContext {
   return {
     me: element || null,
     it: null,
@@ -205,10 +208,7 @@ export function snapshotContext(context: ExecutionContext): Record<string, any> 
 /**
  * Restores context state from a snapshot
  */
-export function restoreContext(
-  context: ExecutionContext,
-  snapshot: Record<string, any>
-): void {
+export function restoreContext(context: ExecutionContext, snapshot: Record<string, any>): void {
   if (snapshot.me !== undefined) Object.assign(context, { me: snapshot.me });
   if (snapshot.it !== undefined) Object.assign(context, { it: snapshot.it });
   if (snapshot.you !== undefined) context.you = snapshot.you;
@@ -256,7 +256,7 @@ export function cloneContext(context: ExecutionContext): ExecutionContext {
   if (cloned.flags && context.flags) {
     Object.assign(cloned.flags, context.flags);
   }
-  
+
   return cloned;
 }
 
@@ -268,7 +268,7 @@ export function mergeContexts(target: ExecutionContext, source: ExecutionContext
   source.locals.forEach((value, key) => {
     target.locals.set(key, value);
   });
-  
+
   // Update special variables if they exist in source
   if (source.it !== null) Object.assign(target, { it: source.it });
   if (source.you !== null) target.you = source.you;
@@ -280,23 +280,23 @@ export function mergeContexts(target: ExecutionContext, source: ExecutionContext
  */
 export function getContextVariableNames(context: ExecutionContext): string[] {
   const names = new Set<string>();
-  
+
   // Add special variables
   names.add('me');
   names.add('it');
   names.add('you');
   names.add('result');
-  
+
   // Add local variables
   context.locals.forEach((_, key) => names.add(key));
-  
+
   // Add global variables
   context.globals.forEach((_, key) => names.add(key));
-  
+
   // Add parent variables (recursive)
   if (context.parent) {
     getContextVariableNames(context.parent).forEach(name => names.add(name));
   }
-  
+
   return Array.from(names).sort();
 }

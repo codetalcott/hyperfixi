@@ -17,7 +17,7 @@ describe('Template Literals', () => {
     context.locals = new Map([
       ['name', 'world'],
       ['count', 5],
-      ['user', { name: 'Alice', age: 30 }]
+      ['user', { name: 'Alice', age: 30 }],
     ]);
   });
 
@@ -29,7 +29,7 @@ describe('Template Literals', () => {
         type: 'template_literal',
         value: 'hello world',
         line: 1,
-        column: 1
+        column: 1,
       });
     });
 
@@ -40,7 +40,7 @@ describe('Template Literals', () => {
         type: 'template_literal',
         value: '',
         line: 1,
-        column: 1
+        column: 1,
       });
     });
 
@@ -58,7 +58,7 @@ describe('Template Literals', () => {
         type: 'template_literal',
         value: 'hello ${name}',
         line: 1,
-        column: 1
+        column: 1,
       });
     });
 
@@ -73,7 +73,10 @@ describe('Template Literals', () => {
     });
 
     it('should handle property access in interpolation', async () => {
-      const result = await parseAndEvaluateExpression('`Hello ${user.name}, age ${user.age}`', context);
+      const result = await parseAndEvaluateExpression(
+        '`Hello ${user.name}, age ${user.age}`',
+        context
+      );
       expect(result).toBe('Hello Alice, age 30');
     });
   });
@@ -85,7 +88,10 @@ describe('Template Literals', () => {
     });
 
     it('should handle complex expressions in interpolation', async () => {
-      const result = await parseAndEvaluateExpression('`doubled: ${count * 2}, tripled: ${count * 3}`', context);
+      const result = await parseAndEvaluateExpression(
+        '`doubled: ${count * 2}, tripled: ${count * 3}`',
+        context
+      );
       expect(result).toBe('doubled: 10, tripled: 15');
     });
 
@@ -118,9 +124,7 @@ describe('Template Literals', () => {
     });
 
     it.skip('should handle syntax errors in interpolation expressions', async () => {
-      await expect(parseAndEvaluateExpression('`result: ${1 + }`', context))
-        .rejects.toThrow();
+      await expect(parseAndEvaluateExpression('`result: ${1 + }`', context)).rejects.toThrow();
     });
   });
 });
-

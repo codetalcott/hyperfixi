@@ -7,7 +7,16 @@ import type { Token, ParseError } from '../types/core';
 import { TokenType } from './tokenizer';
 
 export interface ErrorContext {
-  parsing: 'expression' | 'binary_op' | 'unary_op' | 'call' | 'member' | 'primary' | 'parentheses' | 'string' | 'command';
+  parsing:
+    | 'expression'
+    | 'binary_op'
+    | 'unary_op'
+    | 'call'
+    | 'member'
+    | 'primary'
+    | 'parentheses'
+    | 'string'
+    | 'command';
   expected?: string[];
   operators?: string[];
   lastValidToken?: Token;
@@ -45,7 +54,7 @@ export class ErrorHandler {
       column: currentToken.column,
       context,
       ...(suggestion && { suggestion }),
-      ...(recovery && { recovery })
+      ...(recovery && { recovery }),
     };
 
     this.errors.push(error);
@@ -71,7 +80,7 @@ export class ErrorHandler {
    */
   private enhanceErrorMessage(message: string, context: ErrorContext, _token: Token): string {
     const baseMessage = message;
-    
+
     switch (context.parsing) {
       case 'binary_op':
         if (message.includes('Expected expression after')) {
@@ -167,22 +176,22 @@ export class ErrorHandler {
   private generateRecoveryStrategy(context: ErrorContext): string | undefined {
     switch (context.parsing) {
       case 'binary_op':
-        return "Add the missing operand or remove the extra operator";
+        return 'Add the missing operand or remove the extra operator';
 
       case 'parentheses':
-        return "Add missing closing parenthesis or remove extra opening parenthesis";
+        return 'Add missing closing parenthesis or remove extra opening parenthesis';
 
       case 'member':
-        return "Complete the member access with a property name";
+        return 'Complete the member access with a property name';
 
       case 'string':
-        return "Close the string literal with a matching quote";
+        return 'Close the string literal with a matching quote';
 
       case 'command':
-        return "Provide the required command arguments";
+        return 'Provide the required command arguments';
 
       default:
-        return "Check syntax and ensure all expressions are complete";
+        return 'Check syntax and ensure all expressions are complete';
     }
   }
 
@@ -225,7 +234,9 @@ export class ErrorHandler {
    * Calculate Levenshtein distance for typo detection
    */
   private levenshteinDistance(a: string, b: string): number {
-    const matrix = Array(b.length + 1).fill(null).map(() => Array(a.length + 1).fill(null));
+    const matrix = Array(b.length + 1)
+      .fill(null)
+      .map(() => Array(a.length + 1).fill(null));
 
     for (let i = 0; i <= a.length; i++) matrix[0][i] = i;
     for (let j = 0; j <= b.length; j++) matrix[j][0] = j;
@@ -234,8 +245,8 @@ export class ErrorHandler {
       for (let i = 1; i <= a.length; i++) {
         const indicator = a[i - 1] === b[j - 1] ? 0 : 1;
         matrix[j][i] = Math.min(
-          matrix[j][i - 1] + 1,     // insertion
-          matrix[j - 1][i] + 1,     // deletion
+          matrix[j][i - 1] + 1, // insertion
+          matrix[j - 1][i] + 1, // deletion
           matrix[j - 1][i - 1] + indicator // substitution
         );
       }
@@ -280,7 +291,7 @@ export class ErrorHandler {
         start: lastToken ? lastToken.end : 0,
         end: lastToken ? lastToken.end : 0,
         line: lastToken ? lastToken.line : 1,
-        column: lastToken ? lastToken.column + lastToken.value.length : 1
+        column: lastToken ? lastToken.column + lastToken.value.length : 1,
       };
     }
     return this.tokens[this.position];
@@ -291,7 +302,7 @@ export class ErrorHandler {
    */
   static detectErrorPatterns(tokens: Token[]): EnhancedParseError[] {
     const errors: EnhancedParseError[] = [];
-    
+
     for (let i = 0; i < tokens.length; i++) {
       const token = tokens[i];
       const next = tokens[i + 1];
@@ -305,12 +316,16 @@ export class ErrorHandler {
           column: token.column,
           context: { parsing: 'binary_op', operators: [token.value, next.value] },
           suggestion: `Remove one operator or add an operand between them`,
-          recovery: 'Fix operator sequence'
+          recovery: 'Fix operator sequence',
         });
       }
 
       // Detect unclosed strings
-      if (token.type === TokenType.STRING && !token.value.endsWith('"') && !token.value.endsWith("'")) {
+      if (
+        token.type === TokenType.STRING &&
+        !token.value.endsWith('"') &&
+        !token.value.endsWith("'")
+      ) {
         errors.push({
           name: 'ParseError',
           message: `Unclosed string literal: ${token.value}`,
@@ -318,7 +333,7 @@ export class ErrorHandler {
           column: token.column,
           context: { parsing: 'string' },
           suggestion: `Add closing quote: ${token.value.startsWith('"') ? '"' : "'"}`,
-          recovery: 'Close the string literal'
+          recovery: 'Close the string literal',
         });
       }
 
@@ -331,7 +346,7 @@ export class ErrorHandler {
           column: token.column,
           context: { parsing: 'binary_op', operators: [token.value] },
           suggestion: `Use '${token.value === '++' ? 'value + 1' : 'value - 1'}' instead`,
-          recovery: 'Replace with valid hyperscript syntax'
+          recovery: 'Replace with valid hyperscript syntax',
         });
       }
     }

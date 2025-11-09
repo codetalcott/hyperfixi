@@ -28,8 +28,8 @@ describe('PseudoCommand', () => {
       asyncMethod: vi.fn(async () => 'async result'),
       methodWithArgs: vi.fn((a: string, b: number) => `${a}-${b}`),
       nested: {
-        method: vi.fn(() => 'nested result')
-      }
+        method: vi.fn(() => 'nested result'),
+      },
     };
 
     // Create mock context
@@ -37,7 +37,7 @@ describe('PseudoCommand', () => {
       locals: new Map([
         ['me', mockElement],
         ['testObj', mockObject],
-        ['result', undefined]
+        ['result', undefined],
       ]),
       globals: new Map(),
       variables: new Map(),
@@ -45,7 +45,7 @@ describe('PseudoCommand', () => {
       it: undefined,
       commandRegistry: {} as any,
       features: {} as any,
-      parser: null as any
+      parser: null as any,
     };
   });
 
@@ -63,7 +63,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'getElementById',
         methodArgs: ['test'],
-        targetExpression: 'document'
+        targetExpression: 'document',
       };
       const result = pseudoCmd.validation.validate(input);
 
@@ -76,7 +76,7 @@ describe('PseudoCommand', () => {
         methodName: 'setAttribute',
         methodArgs: ['foo', 'bar'],
         preposition: 'on' as const,
-        targetExpression: 'me'
+        targetExpression: 'me',
       };
       const result = pseudoCmd.validation.validate(input);
 
@@ -88,7 +88,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'reload',
         methodArgs: [],
-        targetExpression: 'window.location'
+        targetExpression: 'window.location',
       };
       const result = pseudoCmd.validation.validate(input);
 
@@ -99,7 +99,7 @@ describe('PseudoCommand', () => {
     it('should reject missing method name', () => {
       const input = {
         methodArgs: [],
-        targetExpression: 'document'
+        targetExpression: 'document',
       };
       const result = pseudoCmd.validation.validate(input);
 
@@ -111,7 +111,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 123,
         methodArgs: [],
-        targetExpression: 'document'
+        targetExpression: 'document',
       };
       const result = pseudoCmd.validation.validate(input);
 
@@ -123,7 +123,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'test',
         methodArgs: 'not-an-array',
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
       const result = pseudoCmd.validation.validate(input);
 
@@ -136,7 +136,7 @@ describe('PseudoCommand', () => {
         methodName: 'test',
         methodArgs: [],
         preposition: 'invalid',
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
       const result = pseudoCmd.validation.validate(input);
 
@@ -147,7 +147,7 @@ describe('PseudoCommand', () => {
     it('should reject missing target expression', () => {
       const input = {
         methodName: 'test',
-        methodArgs: []
+        methodArgs: [],
       };
       const result = pseudoCmd.validation.validate(input);
 
@@ -175,7 +175,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'testMethod',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -190,7 +190,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'methodWithArgs',
         methodArgs: ['hello', 42],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -203,7 +203,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'asyncMethod',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -216,7 +216,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'testMethod',
         methodArgs: [],
-        targetExpression: mockObject
+        targetExpression: mockObject,
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -229,7 +229,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'getAttribute',
         methodArgs: ['data-test'],
-        targetExpression: 'me'
+        targetExpression: 'me',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -242,7 +242,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'testMethod',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
       await pseudoCmd.execute(input, mockContext);
@@ -254,7 +254,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'testMethod',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
       await pseudoCmd.execute(input, mockContext);
@@ -266,20 +266,24 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'test',
         methodArgs: [],
-        targetExpression: 'nonexistent'
+        targetExpression: 'nonexistent',
       };
 
-      await expect(pseudoCmd.execute(input, mockContext)).rejects.toThrow('Target expression resolved to');
+      await expect(pseudoCmd.execute(input, mockContext)).rejects.toThrow(
+        'Target expression resolved to'
+      );
     });
 
     it('should throw error if method not found', async () => {
       const input = {
         methodName: 'nonexistentMethod',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
-      await expect(pseudoCmd.execute(input, mockContext)).rejects.toThrow('Method "nonexistentMethod" not found');
+      await expect(pseudoCmd.execute(input, mockContext)).rejects.toThrow(
+        'Method "nonexistentMethod" not found'
+      );
     });
 
     it('should throw error if property is not a function', async () => {
@@ -288,7 +292,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'notAFunction',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
       await expect(pseudoCmd.execute(input, mockContext)).rejects.toThrow('is not a function');
@@ -298,7 +302,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'nested.method',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -315,10 +319,12 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'errorMethod',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
-      await expect(pseudoCmd.execute(input, mockContext)).rejects.toThrow('Method execution failed');
+      await expect(pseudoCmd.execute(input, mockContext)).rejects.toThrow(
+        'Method execution failed'
+      );
     });
   });
 
@@ -327,7 +333,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'querySelector',
         methodArgs: ['#test-element'],
-        targetExpression: 'document'
+        targetExpression: 'document',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -343,7 +349,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'method',
         methodArgs: [],
-        targetExpression: 'globalObj'
+        targetExpression: 'globalObj',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -359,7 +365,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'method',
         methodArgs: [],
-        targetExpression: 'varObj'
+        targetExpression: 'varObj',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -375,7 +381,7 @@ describe('PseudoCommand', () => {
         methodName: 'getElementById',
         methodArgs: ['test-element'],
         preposition: 'from' as const,
-        targetExpression: 'document'
+        targetExpression: 'document',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -389,7 +395,7 @@ describe('PseudoCommand', () => {
         methodName: 'setAttribute',
         methodArgs: ['data-custom', 'custom-value'],
         preposition: 'on' as const,
-        targetExpression: 'me'
+        targetExpression: 'me',
       };
 
       await pseudoCmd.execute(input, mockContext);
@@ -404,7 +410,7 @@ describe('PseudoCommand', () => {
         methodName: 'foo',
         methodArgs: [],
         preposition: 'on' as const,
-        targetExpression: 'me'
+        targetExpression: 'me',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -419,7 +425,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'testMethod',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -434,7 +440,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'returnsUndefined',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -448,7 +454,7 @@ describe('PseudoCommand', () => {
       const input = {
         methodName: 'returnsNull',
         methodArgs: [],
-        targetExpression: 'testObj'
+        targetExpression: 'testObj',
       };
 
       const output = await pseudoCmd.execute(input, mockContext);
@@ -457,15 +463,21 @@ describe('PseudoCommand', () => {
     });
 
     it('should handle all valid prepositions', async () => {
-      const prepositions: Array<'from' | 'on' | 'with' | 'into' | 'at' | 'to'> =
-        ['from', 'on', 'with', 'into', 'at', 'to'];
+      const prepositions: Array<'from' | 'on' | 'with' | 'into' | 'at' | 'to'> = [
+        'from',
+        'on',
+        'with',
+        'into',
+        'at',
+        'to',
+      ];
 
       for (const prep of prepositions) {
         const input = {
           methodName: 'testMethod',
           methodArgs: [],
           preposition: prep,
-          targetExpression: 'testObj'
+          targetExpression: 'testObj',
         };
 
         const result = pseudoCmd.validation.validate(input);

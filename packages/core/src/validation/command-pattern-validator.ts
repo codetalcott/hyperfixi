@@ -34,7 +34,6 @@ export interface CommandAnalysis {
  * Core pattern validator for individual commands
  */
 export class CommandPatternValidator {
-  
   /**
    * Validates if a command follows the enhanced TypeScript pattern
    */
@@ -46,10 +45,10 @@ export class CommandPatternValidator {
     const passed: string[] = [];
     const failed: string[] = [];
     const suggestions: string[] = [];
-    
+
     let score = 0;
     const maxScore = 8; // Total number of checks
-    
+
     // Create instance for testing
     let instance: Record<string, unknown>;
     try {
@@ -71,8 +70,8 @@ export class CommandPatternValidator {
           hasValidation: false,
           hasFactoryFunction: false,
           hasBundleAnnotations: false,
-          hasStructuredErrors: false
-        }
+          hasStructuredErrors: false,
+        },
       };
     }
 
@@ -83,13 +82,17 @@ export class CommandPatternValidator {
       score++;
     } else {
       failed.push('❌ Does not implement TypedCommandImplementation interface');
-      suggestions.push('Update class to implement TypedCommandImplementation<TInput, TOutput, TContext>');
+      suggestions.push(
+        'Update class to implement TypedCommandImplementation<TInput, TOutput, TContext>'
+      );
     }
 
     // 2. Check required properties
     const hasRequiredProperties = this.validateRequiredProperties(instance);
     if (hasRequiredProperties) {
-      passed.push('✅ Has all required properties (name, syntax, description, inputSchema, outputType)');
+      passed.push(
+        '✅ Has all required properties (name, syntax, description, inputSchema, outputType)'
+      );
       score++;
     } else {
       failed.push('❌ Missing required properties');
@@ -103,17 +106,23 @@ export class CommandPatternValidator {
       score++;
     } else {
       failed.push('❌ Missing or invalid CommandMetadata');
-      suggestions.push('Add comprehensive metadata with category, complexity, sideEffects, examples, and relatedCommands');
+      suggestions.push(
+        'Add comprehensive metadata with category, complexity, sideEffects, examples, and relatedCommands'
+      );
     }
 
     // 4. Check LLM documentation
-    const hasLLMDocumentation = this.validateLLMDocumentation(instance.documentation as Record<string, unknown>);
+    const hasLLMDocumentation = this.validateLLMDocumentation(
+      instance.documentation as Record<string, unknown>
+    );
     if (hasLLMDocumentation) {
       passed.push('✅ Has comprehensive LLMDocumentation');
       score++;
     } else {
       failed.push('❌ Missing or incomplete LLMDocumentation');
-      suggestions.push('Add detailed documentation with summary, parameters, returns, examples, seeAlso, and tags');
+      suggestions.push(
+        'Add detailed documentation with summary, parameters, returns, examples, seeAlso, and tags'
+      );
     }
 
     // 5. Check validation method
@@ -173,8 +182,8 @@ export class CommandPatternValidator {
         hasValidation,
         hasFactoryFunction,
         hasBundleAnnotations,
-        hasStructuredErrors
-      }
+        hasStructuredErrors,
+      },
     };
   }
 
@@ -192,10 +201,14 @@ export class CommandPatternValidator {
 
   private static validateRequiredProperties(instance: Record<string, unknown>): boolean {
     return (
-      typeof instance.name === 'string' && instance.name.length > 0 &&
-      typeof instance.syntax === 'string' && instance.syntax.length > 0 &&
-      typeof instance.description === 'string' && instance.description.length > 0 &&
-      typeof instance.outputType === 'string' && instance.outputType.length > 0 &&
+      typeof instance.name === 'string' &&
+      instance.name.length > 0 &&
+      typeof instance.syntax === 'string' &&
+      instance.syntax.length > 0 &&
+      typeof instance.description === 'string' &&
+      instance.description.length > 0 &&
+      typeof instance.outputType === 'string' &&
+      instance.outputType.length > 0 &&
       instance.inputSchema !== undefined
     );
   }
@@ -209,16 +222,17 @@ export class CommandPatternValidator {
       Array.isArray(metadata.sideEffects) &&
       Array.isArray(metadata.examples) &&
       Array.isArray(metadata.relatedCommands) &&
-      Array.isArray(metadata.examples) && metadata.examples.every((ex: Record<string, unknown>) =>
-        typeof ex.code === 'string' &&
-        typeof ex.description === 'string'
+      Array.isArray(metadata.examples) &&
+      metadata.examples.every(
+        (ex: Record<string, unknown>) =>
+          typeof ex.code === 'string' && typeof ex.description === 'string'
       )
     );
   }
 
   private static validateLLMDocumentation(documentation: Record<string, unknown>): boolean {
     if (!documentation || typeof documentation !== 'object') return false;
-    
+
     return (
       typeof documentation.summary === 'string' &&
       Array.isArray(documentation.parameters) &&
@@ -226,19 +240,21 @@ export class CommandPatternValidator {
       Array.isArray(documentation.examples) &&
       Array.isArray(documentation.seeAlso) &&
       Array.isArray(documentation.tags) &&
-      Array.isArray(documentation.parameters) && documentation.parameters.every((param: Record<string, unknown>) =>
-        typeof param.name === 'string' &&
-        typeof param.type === 'string' &&
-        typeof param.description === 'string' &&
-        typeof param.optional === 'boolean' &&
-        Array.isArray(param.examples)
+      Array.isArray(documentation.parameters) &&
+      documentation.parameters.every(
+        (param: Record<string, unknown>) =>
+          typeof param.name === 'string' &&
+          typeof param.type === 'string' &&
+          typeof param.description === 'string' &&
+          typeof param.optional === 'boolean' &&
+          Array.isArray(param.examples)
       )
     );
   }
 
   private static validateValidationMethod(instance: Record<string, unknown>): boolean {
     if (typeof instance.validate !== 'function') return false;
-    
+
     try {
       // Test with empty args to see if it returns ValidationResult structure
       const result = instance.validate([]);
@@ -254,10 +270,7 @@ export class CommandPatternValidator {
   }
 
   private static validateBundleAnnotations(sourceCode: string): boolean {
-    return (
-      sourceCode.includes('@llm-bundle-size') &&
-      sourceCode.includes('@llm-description')
-    );
+    return sourceCode.includes('@llm-bundle-size') && sourceCode.includes('@llm-description');
   }
 
   private static validateStructuredErrors(instance: Record<string, unknown>): boolean {
@@ -276,13 +289,14 @@ export class CommandPatternValidator {
  * Batch validator for multiple commands
  */
 export class CommandSuiteValidator {
-  
-  static async validateCommandSuite(commands: Array<{
-    name: string;
-    filePath: string;
-    CommandClass: any;
-    factoryFunction?: Function;
-  }>): Promise<{
+  static async validateCommandSuite(
+    commands: Array<{
+      name: string;
+      filePath: string;
+      CommandClass: any;
+      factoryFunction?: Function;
+    }>
+  ): Promise<{
     overall: {
       total: number;
       enhanced: number;
@@ -295,7 +309,7 @@ export class CommandSuiteValidator {
     const analyses: CommandAnalysis[] = [];
     let totalScore = 0;
     let enhancedCount = 0;
-    
+
     for (const command of commands) {
       // Read source code for annotation checking
       let sourceCode: string | undefined;
@@ -305,29 +319,29 @@ export class CommandSuiteValidator {
       } catch {
         // Source code reading failed, continue without it
       }
-      
+
       const validation = CommandPatternValidator.validateCommand(
         command.CommandClass,
         command.factoryFunction,
         sourceCode
       );
-      
+
       const recommendations = validation.suggestions.slice(0, 3); // Top 3 suggestions
-      
+
       analyses.push({
         commandName: command.name,
         filePath: command.filePath,
         validation,
-        recommendations
+        recommendations,
       });
-      
+
       totalScore += validation.score;
       if (validation.isEnhanced) enhancedCount++;
     }
-    
+
     const averageScore = Math.round(totalScore / commands.length);
     const needsWork = commands.length - enhancedCount;
-    
+
     // Generate overall recommendations
     const overallRecommendations: string[] = [];
     if (averageScore < 80) {
@@ -337,16 +351,16 @@ export class CommandSuiteValidator {
       overallRecommendations.push('Prioritize enhancing commands with lowest scores');
     }
     overallRecommendations.push('Consider creating command enhancement templates for consistency');
-    
+
     return {
       overall: {
         total: commands.length,
         enhanced: enhancedCount,
         averageScore,
-        needsWork
+        needsWork,
       },
       commands: analyses,
-      recommendations: overallRecommendations
+      recommendations: overallRecommendations,
     };
   }
 }
@@ -355,38 +369,39 @@ export class CommandSuiteValidator {
  * Pretty print validation results
  */
 export class ValidationReporter {
-  
   static printCommandValidation(analysis: CommandAnalysis): void {
     const { commandName, validation } = analysis;
     const { score, isEnhanced, passed, failed, suggestions } = validation;
-    
+
     console.log(`\n🔍 ${commandName} Command Analysis`);
     console.log(`📊 Score: ${score}/100 ${isEnhanced ? '✅ ENHANCED' : '⚠️  NEEDS WORK'}`);
-    
+
     if (passed.length > 0) {
       console.log('\n✅ Passed Checks:');
       passed.forEach(check => console.log(`  ${check}`));
     }
-    
+
     if (failed.length > 0) {
       console.log('\n❌ Failed Checks:');
       failed.forEach(check => console.log(`  ${check}`));
     }
-    
+
     if (suggestions.length > 0) {
       console.log('\n💡 Suggestions:');
       suggestions.slice(0, 3).forEach(suggestion => console.log(`  • ${suggestion}`));
     }
   }
-  
-  static printSuiteValidation(result: Awaited<ReturnType<typeof CommandSuiteValidator.validateCommandSuite>>): void {
+
+  static printSuiteValidation(
+    result: Awaited<ReturnType<typeof CommandSuiteValidator.validateCommandSuite>>
+  ): void {
     const { overall, commands, recommendations } = result;
-    
+
     console.log('\n🏗️  HYPERFIXI COMMAND SUITE VALIDATION');
     console.log(`📈 Overall Score: ${overall.averageScore}/100`);
     console.log(`✅ Enhanced Commands: ${overall.enhanced}/${overall.total}`);
     console.log(`⚠️  Need Enhancement: ${overall.needsWork}`);
-    
+
     console.log('\n📋 Command Breakdown:');
     commands
       .sort((a, b) => b.validation.score - a.validation.score)
@@ -394,7 +409,7 @@ export class ValidationReporter {
         const status = cmd.validation.isEnhanced ? '✅' : '⚠️';
         console.log(`  ${status} ${cmd.commandName}: ${cmd.validation.score}/100`);
       });
-    
+
     if (recommendations.length > 0) {
       console.log('\n🎯 Priority Recommendations:');
       recommendations.forEach(rec => console.log(`  • ${rec}`));

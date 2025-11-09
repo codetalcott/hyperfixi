@@ -13,7 +13,7 @@ import type {
   UnifiedLLMDocumentation as LLMDocumentation,
   UnifiedEvaluationType as EvaluationType,
   UnifiedExpressionMetadata as ExpressionMetadata,
-  UnifiedExpressionCategory as ExpressionCategory
+  UnifiedExpressionCategory as ExpressionCategory,
 } from '../../types/index';
 
 // Define BaseTypedExpression locally for now
@@ -43,9 +43,9 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
   public readonly outputType: EvaluationType = 'Any';
   public readonly inputSchema = v.object({
     parameters: v.array(v.string()).describe('Function parameter names'),
-    body: v.string().describe('Function body expression')
+    body: v.string().describe('Function body expression'),
   });
-  
+
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'medium',
@@ -56,15 +56,15 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
     relatedExpressions: [],
     performance: {
       averageTime: 1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly analysisInfo = {
     isPure: true,
     canThrow: false,
     complexity: 'O(1)' as const,
-    dependencies: ['context']
+    dependencies: ['context'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -75,37 +75,37 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
         type: 'array',
         description: 'Function parameter names',
         optional: false,
-        examples: ['["x", "y"]', '["item"]', '[]']
+        examples: ['["x", "y"]', '["item"]', '[]'],
       },
       {
         name: 'body',
         type: 'string',
         description: 'Function body expression',
         optional: false,
-        examples: ['x + y', 'item.name', 'true']
-      }
+        examples: ['x + y', 'item.name', 'true'],
+      },
     ],
     returns: {
       type: 'function',
       description: 'Lambda function that can be called with arguments',
-      examples: ['function(x, y) { return x + y; }']
+      examples: ['function(x, y) { return x + y; }'],
     },
     examples: [
       {
         title: 'Simple arithmetic lambda',
         code: 'lambda(["x", "y"], "x + y")',
         explanation: 'Create function that adds two numbers',
-        output: 'function(x, y) { return x + y; }'
+        output: 'function(x, y) { return x + y; }',
       },
       {
         title: 'Property accessor lambda',
         code: 'lambda(["item"], "item.name")',
         explanation: 'Create function that extracts name property',
-        output: 'function(item) { return item.name; }'
-      }
+        output: 'function(item) { return item.name; }',
+      },
     ],
     seeAlso: ['apply', 'curry', 'compose'],
-    tags: ['function', 'lambda', 'closure', 'higher-order']
+    tags: ['function', 'lambda', 'closure', 'higher-order'],
   };
 
   validate(input: unknown): ValidationResult {
@@ -114,12 +114,13 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid lambda input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: ['Provide valid parameters and body']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid lambda input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide valid parameters and body'],
         };
       }
       return { isValid: true, errors: [], suggestions: [] };
@@ -127,7 +128,7 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
       return {
         isValid: false,
         errors: [{ type: 'runtime-error', message: 'Validation failed', suggestions: [] }],
-        suggestions: ['Check input structure']
+        suggestions: ['Check input structure'],
       };
     }
   }
@@ -142,9 +143,9 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
             name: 'LambdaError',
             message: 'Parameters must be an array of strings',
             code: 'INVALID_PARAMETERS',
-            suggestions: ['Provide an array of parameter names like ["x", "y"]']
+            suggestions: ['Provide an array of parameter names like ["x", "y"]'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -155,9 +156,9 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
             name: 'LambdaError',
             message: 'Body must be a string expression',
             code: 'INVALID_BODY',
-            suggestions: ['Provide a string expression for the function body']
+            suggestions: ['Provide a string expression for the function body'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -166,14 +167,14 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
         // Create new context for lambda execution
         const lambdaContext: TypedExecutionContext = {
           ...context,
-          locals: new Map(context.locals)
+          locals: new Map(context.locals),
         };
-        
+
         // Bind parameters to arguments
         parameters.forEach((param, index) => {
           lambdaContext.locals.set(param, args[index] ?? null);
         });
-        
+
         // In a real implementation, this would evaluate the body expression
         // For now, return a simplified evaluation
         return this.evaluateLambdaBody(body, lambdaContext, args);
@@ -182,9 +183,8 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
       return {
         success: true,
         value: lambdaFunction,
-        type: 'function'
+        type: 'function',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -192,25 +192,29 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
           name: 'LambdaError',
           message: error instanceof Error ? error.message : 'Lambda creation failed',
           code: 'LAMBDA_CREATION_FAILED',
-          suggestions: ['Check parameter and body syntax']
+          suggestions: ['Check parameter and body syntax'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
 
-  private evaluateLambdaBody(body: string, context: TypedExecutionContext, _args: unknown[]): unknown {
+  private evaluateLambdaBody(
+    body: string,
+    context: TypedExecutionContext,
+    _args: unknown[]
+  ): unknown {
     // Simple expression evaluation for common patterns
     if (body.includes('+') && body.split('+').length === 2) {
       const [left, right] = body.split('+').map(s => s.trim());
       const leftVal = context.locals.get(left) ?? left;
       const rightVal = context.locals.get(right) ?? right;
-      
+
       if (typeof leftVal === 'number' && typeof rightVal === 'number') {
         return leftVal + rightVal;
       }
     }
-    
+
     // Property access
     if (body.includes('.') && body.split('.').length === 2) {
       const [obj, prop] = body.split('.').map(s => s.trim());
@@ -219,18 +223,18 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
         return (objVal as any)[prop];
       }
     }
-    
+
     // Variable access
     if (context.locals.has(body)) {
       return context.locals.get(body)!;
     }
-    
+
     // Literals
     if (body === 'true') return true;
     if (body === 'false') return false;
     if (body === 'null') return null;
     if (!isNaN(Number(body))) return Number(body);
-    
+
     return body;
   }
 }
@@ -247,7 +251,7 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'promise(executor)';
   public readonly inputSchema = v.object({
-    executor: v.string().describe('Executor expression')
+    executor: v.string().describe('Executor expression'),
   });
   public readonly outputType: EvaluationType = 'Any';
 
@@ -261,8 +265,8 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
     relatedExpressions: ['await'],
     performance: {
       averageTime: 1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -273,30 +277,30 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
         type: 'string',
         description: 'Executor expression (resolve/reject calls)',
         optional: false,
-        examples: ['resolve(42)', 'reject("error")', 'setTimeout(() => resolve("done"), 1000)']
-      }
+        examples: ['resolve(42)', 'reject("error")', 'setTimeout(() => resolve("done"), 1000)'],
+      },
     ],
     returns: {
       type: 'promise',
       description: 'Promise that resolves or rejects based on executor',
-      examples: ['Promise.resolve(42)', 'Promise.reject("error")']
+      examples: ['Promise.resolve(42)', 'Promise.reject("error")'],
     },
     examples: [
       {
         title: 'Resolve promise',
         code: 'promise("resolve(42)")',
         explanation: 'Create promise that resolves with value 42',
-        output: 'Promise.resolve(42)'
+        output: 'Promise.resolve(42)',
       },
       {
         title: 'Reject promise',
         code: 'promise("reject(\\"error\\")")',
         explanation: 'Create promise that rejects with error',
-        output: 'Promise.reject("error")'
-      }
+        output: 'Promise.reject("error")',
+      },
     ],
     seeAlso: ['await', 'then', 'catch'],
-    tags: ['async', 'promise', 'concurrent']
+    tags: ['async', 'promise', 'concurrent'],
   };
 
   validate(input: unknown): ValidationResult {
@@ -305,12 +309,13 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid promise input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: ['Provide valid executor string']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid promise input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide valid executor string'],
         };
       }
       return { isValid: true, errors: [], suggestions: [] };
@@ -318,12 +323,15 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
       return {
         isValid: false,
         errors: [{ type: 'runtime-error', message: 'Validation failed', suggestions: [] }],
-        suggestions: ['Check input structure']
+        suggestions: ['Check input structure'],
       };
     }
   }
 
-  async evaluate(_context: TypedExecutionContext, executor: string): Promise<TypedResult<Promise<unknown>>> {
+  async evaluate(
+    _context: TypedExecutionContext,
+    executor: string
+  ): Promise<TypedResult<Promise<unknown>>> {
     try {
       const promise = new Promise<unknown>((resolve, reject) => {
         try {
@@ -344,7 +352,9 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
           }
 
           // Handle timeout patterns
-          const timeoutMatch = executor.match(/setTimeout\(\(\)\s*=>\s*resolve\((.+?)\),\s*(\d+)\)/);
+          const timeoutMatch = executor.match(
+            /setTimeout\(\(\)\s*=>\s*resolve\((.+?)\),\s*(\d+)\)/
+          );
           if (timeoutMatch) {
             const value = this.parseValue(timeoutMatch[1]);
             const delay = parseInt(timeoutMatch[2]);
@@ -362,9 +372,8 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
       return Promise.resolve({
         success: true,
         value: promise,
-        type: 'any'
+        type: 'any',
       });
-
     } catch (error) {
       return Promise.resolve({
         success: false,
@@ -372,32 +381,34 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
           name: 'PromiseError',
           message: error instanceof Error ? error.message : 'Promise creation failed',
           code: 'PROMISE_CREATION_FAILED',
-          suggestions: ['Check executor syntax', 'Use resolve() or reject() calls']
+          suggestions: ['Check executor syntax', 'Use resolve() or reject() calls'],
         },
-        type: 'error'
+        type: 'error',
       });
     }
   }
 
   private parseValue(valueStr: string): unknown {
     const trimmed = valueStr.trim();
-    
+
     // String literals
-    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || 
-        (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    if (
+      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+      (trimmed.startsWith("'") && trimmed.endsWith("'"))
+    ) {
       return trimmed.slice(1, -1);
     }
-    
+
     // Numbers
     if (!isNaN(Number(trimmed))) {
       return Number(trimmed);
     }
-    
+
     // Booleans
     if (trimmed === 'true') return true;
     if (trimmed === 'false') return false;
     if (trimmed === 'null') return null;
-    
+
     return trimmed;
   }
 }
@@ -414,7 +425,7 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'await promise';
   public readonly inputSchema = v.object({
-    promise: v.unknown().describe('Promise to await')
+    promise: v.unknown().describe('Promise to await'),
   });
   public readonly outputType: EvaluationType = 'Any';
 
@@ -428,8 +439,8 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
     relatedExpressions: ['promise'],
     performance: {
       averageTime: 1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -440,30 +451,30 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
         type: 'promise',
         description: 'Promise to await',
         optional: false,
-        examples: ['fetch("/api/data")', 'promise("resolve(42)")', 'delay(1000)']
-      }
+        examples: ['fetch("/api/data")', 'promise("resolve(42)")', 'delay(1000)'],
+      },
     ],
     returns: {
       type: 'unknown',
       description: 'Resolved value of the promise',
-      examples: ['42', '{"data": "value"}', 'null']
+      examples: ['42', '{"data": "value"}', 'null'],
     },
     examples: [
       {
         title: 'Await simple promise',
         code: 'await promise("resolve(42)")',
         explanation: 'Wait for promise to resolve and return value',
-        output: 42
+        output: 42,
       },
       {
         title: 'Await with error handling',
         code: 'await fetch("/api/data")',
         explanation: 'Await API response',
-        output: '{"success": true}'
-      }
+        output: '{"success": true}',
+      },
     ],
     seeAlso: ['promise', 'then', 'catch'],
-    tags: ['async', 'await', 'promise']
+    tags: ['async', 'await', 'promise'],
   };
 
   validate(input: unknown): ValidationResult {
@@ -472,12 +483,13 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid await input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: ['Provide valid promise']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid await input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide valid promise'],
         };
       }
       return { isValid: true, errors: [], suggestions: [] };
@@ -485,7 +497,7 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
       return {
         isValid: false,
         errors: [{ type: 'runtime-error', message: 'Validation failed', suggestions: [] }],
-        suggestions: ['Check input structure']
+        suggestions: ['Check input structure'],
       };
     }
   }
@@ -497,7 +509,7 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
         return {
           success: true,
           value: result,
-          type: typeof result as any
+          type: typeof result as any,
         };
       }
 
@@ -505,9 +517,8 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
       return {
         success: true,
         value: promise,
-        type: typeof promise as any
+        type: typeof promise as any,
       };
-
     } catch (error) {
       return {
         success: false,
@@ -515,9 +526,9 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
           name: 'AwaitError',
           message: error instanceof Error ? error.message : 'Await operation failed',
           code: 'AWAIT_FAILED',
-          suggestions: ['Check promise implementation', 'Handle promise rejection']
+          suggestions: ['Check promise implementation', 'Handle promise rejection'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -537,7 +548,7 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
   public readonly inputSchema = v.object({
     message: v.string().describe('Error message'),
     name: v.string().optional().describe('Error name'),
-    code: v.string().optional().describe('Error code')
+    code: v.string().optional().describe('Error code'),
   });
   public readonly outputType: EvaluationType = 'Any';
 
@@ -551,8 +562,8 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
     relatedExpressions: [],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -563,44 +574,44 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
         type: 'string',
         description: 'Error message',
         optional: false,
-        examples: ['"Something went wrong"', '"Validation failed"', '"Network error"']
+        examples: ['"Something went wrong"', '"Validation failed"', '"Network error"'],
       },
       {
         name: 'name',
         type: 'string',
         description: 'Error name/type',
         optional: true,
-        examples: ['"ValidationError"', '"NetworkError"', '"TypeError"']
+        examples: ['"ValidationError"', '"NetworkError"', '"TypeError"'],
       },
       {
         name: 'code',
         type: 'string',
         description: 'Error code',
         optional: true,
-        examples: ['"E001"', '"NETWORK_TIMEOUT"', '"INVALID_INPUT"']
-      }
+        examples: ['"E001"', '"NETWORK_TIMEOUT"', '"INVALID_INPUT"'],
+      },
     ],
     returns: {
       type: 'error',
       description: 'Error object with specified properties',
-      examples: ['Error("Something went wrong")', 'ValidationError("Invalid input")']
+      examples: ['Error("Something went wrong")', 'ValidationError("Invalid input")'],
     },
     examples: [
       {
         title: 'Basic error',
         code: 'error("Something went wrong")',
         explanation: 'Create simple error with message',
-        output: 'Error("Something went wrong")'
+        output: 'Error("Something went wrong")',
       },
       {
         title: 'Typed error',
         code: 'error("Invalid input", "ValidationError")',
         explanation: 'Create error with custom type',
-        output: 'ValidationError("Invalid input")'
-      }
+        output: 'ValidationError("Invalid input")',
+      },
     ],
     seeAlso: ['throw', 'try', 'catch'],
-    tags: ['error', 'exception', 'validation']
+    tags: ['error', 'exception', 'validation'],
   };
 
   validate(input: unknown): ValidationResult {
@@ -609,12 +620,13 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid error input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: ['Provide valid error message']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid error input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide valid error message'],
         };
       }
       return { isValid: true, errors: [], suggestions: [] };
@@ -622,19 +634,24 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
       return {
         isValid: false,
         errors: [{ type: 'runtime-error', message: 'Validation failed', suggestions: [] }],
-        suggestions: ['Check input structure']
+        suggestions: ['Check input structure'],
       };
     }
   }
 
-  async evaluate(_context: TypedExecutionContext, message: string, name?: string, code?: string): Promise<TypedResult<Error>> {
+  async evaluate(
+    _context: TypedExecutionContext,
+    message: string,
+    name?: string,
+    code?: string
+  ): Promise<TypedResult<Error>> {
     try {
       const error = new Error(String(message));
-      
+
       if (name) {
         error.name = String(name);
       }
-      
+
       if (code) {
         (error as any).code = String(code);
       }
@@ -642,9 +659,8 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
       return {
         success: true,
         value: error,
-        type: 'any'
+        type: 'any',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -652,9 +668,9 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
           name: 'ErrorCreationError',
           message: error instanceof Error ? error.message : 'Error creation failed',
           code: 'ERROR_CREATION_FAILED',
-          suggestions: ['Check error message and properties']
+          suggestions: ['Check error message and properties'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -672,7 +688,7 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'typeof value';
   public readonly inputSchema = v.object({
-    value: v.unknown().describe('Value to check type of')
+    value: v.unknown().describe('Value to check type of'),
   });
   public readonly outputType: EvaluationType = 'string';
 
@@ -686,8 +702,8 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
     relatedExpressions: [],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -698,30 +714,30 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
         type: 'unknown',
         description: 'Value to check type of',
         optional: false,
-        examples: ['42', '"hello"', 'true', 'null', '[]', '{}']
-      }
+        examples: ['42', '"hello"', 'true', 'null', '[]', '{}'],
+      },
     ],
     returns: {
       type: 'string',
       description: 'Type string with detailed information',
-      examples: ['"number"', '"string"', '"boolean"', '"null"', '"array"', '"object"']
+      examples: ['"number"', '"string"', '"boolean"', '"null"', '"array"', '"object"'],
     },
     examples: [
       {
         title: 'Number type',
         code: 'typeof 42',
         explanation: 'Check type of number',
-        output: '"number"'
+        output: '"number"',
       },
       {
         title: 'Array type',
         code: 'typeof []',
         explanation: 'Check type of array',
-        output: '"array"'
-      }
+        output: '"array"',
+      },
     ],
     seeAlso: ['instanceof', 'isError', 'isArray'],
-    tags: ['type', 'check', 'validation']
+    tags: ['type', 'check', 'validation'],
   };
 
   validate(input: unknown): ValidationResult {
@@ -730,12 +746,13 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid typeof input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: ['Provide valid value']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid typeof input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide valid value'],
         };
       }
       return { isValid: true, errors: [], suggestions: [] };
@@ -743,7 +760,7 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
       return {
         isValid: false,
         errors: [{ type: 'runtime-error', message: 'Validation failed', suggestions: [] }],
-        suggestions: ['Check input structure']
+        suggestions: ['Check input structure'],
       };
     }
   }
@@ -771,9 +788,8 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
       return {
         success: true,
         value: typeResult,
-        type: 'string'
+        type: 'string',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -781,9 +797,9 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
           name: 'TypeofError',
           message: error instanceof Error ? error.message : 'Type checking failed',
           code: 'TYPEOF_FAILED',
-          suggestions: ['Check if value is accessible']
+          suggestions: ['Check if value is accessible'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -797,11 +813,11 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
  * Enhanced advanced expressions registry
  */
 export const enhancedAdvancedExpressions = {
-  'lambda': new EnhancedLambdaExpression(),
-  'promise': new EnhancedPromiseExpression(),
-  'await': new EnhancedAwaitExpression(),
-  'error': new EnhancedErrorExpression(),
-  'typeof': new EnhancedTypeofExpression()
+  lambda: new EnhancedLambdaExpression(),
+  promise: new EnhancedPromiseExpression(),
+  await: new EnhancedAwaitExpression(),
+  error: new EnhancedErrorExpression(),
+  typeof: new EnhancedTypeofExpression(),
 } as const;
 
 /**
@@ -830,27 +846,45 @@ export function createEnhancedTypeof(): EnhancedTypeofExpression {
 /**
  * Utility functions for advanced operations
  */
-export async function createLambda(parameters: string[], body: string, context: TypedExecutionContext): Promise<TypedResult<Function>> {
+export async function createLambda(
+  parameters: string[],
+  body: string,
+  context: TypedExecutionContext
+): Promise<TypedResult<Function>> {
   const expr = new EnhancedLambdaExpression();
   return expr.evaluate(context, { parameters, body });
 }
 
-export async function createPromise(executor: string, context: TypedExecutionContext): Promise<TypedResult<Promise<unknown>>> {
+export async function createPromise(
+  executor: string,
+  context: TypedExecutionContext
+): Promise<TypedResult<Promise<unknown>>> {
   const expr = new EnhancedPromiseExpression();
   return expr.evaluate(context, executor);
 }
 
-export async function awaitPromise(promise: unknown, context: TypedExecutionContext): Promise<TypedResult<unknown>> {
+export async function awaitPromise(
+  promise: unknown,
+  context: TypedExecutionContext
+): Promise<TypedResult<unknown>> {
   const expr = new EnhancedAwaitExpression();
   return expr.evaluate(context, promise);
 }
 
-export async function createError(message: string, context: TypedExecutionContext, name?: string, code?: string): Promise<TypedResult<Error>> {
+export async function createError(
+  message: string,
+  context: TypedExecutionContext,
+  name?: string,
+  code?: string
+): Promise<TypedResult<Error>> {
   const expr = new EnhancedErrorExpression();
   return expr.evaluate(context, message, name, code);
 }
 
-export async function getTypeOf(value: unknown, context: TypedExecutionContext): Promise<TypedResult<string>> {
+export async function getTypeOf(
+  value: unknown,
+  context: TypedExecutionContext
+): Promise<TypedResult<string>> {
   const expr = new EnhancedTypeofExpression();
   return expr.evaluate(context, value);
 }

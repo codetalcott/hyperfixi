@@ -45,7 +45,7 @@ export interface BenchmarkSuite {
  */
 export class EnhancedBenchmark {
   private results: BenchmarkResult[] = [];
-  
+
   async benchmark<T>(
     name: string,
     category: BenchmarkResult['category'],
@@ -60,25 +60,25 @@ export class EnhancedBenchmark {
   ): Promise<BenchmarkResult> {
     const iterations = options.iterations || 1000;
     const warmupRuns = options.warmupRuns || 100;
-    
+
     // Warmup runs to stabilize performance
     for (let i = 0; i < warmupRuns; i++) {
       await operation();
     }
-    
+
     // Force garbage collection if available
     if (global.gc) {
       global.gc();
     }
-    
+
     const times: number[] = [];
     let validationPassed = true;
     const startMemory = process.memoryUsage();
-    
+
     // Actual benchmark runs
     for (let i = 0; i < iterations; i++) {
       const start = performance.now();
-      
+
       try {
         const result = await operation();
         // Basic validation - ensure operation returns something meaningful
@@ -89,19 +89,19 @@ export class EnhancedBenchmark {
         validationPassed = false;
         console.warn(`Benchmark ${name} failed on iteration ${i}:`, error);
       }
-      
+
       const end = performance.now();
       times.push(end - start);
     }
-    
+
     const endMemory = process.memoryUsage();
-    
+
     // Calculate statistics
     const totalTime = times.reduce((sum, time) => sum + time, 0);
     const averageTime = totalTime / times.length;
     const minTime = Math.min(...times);
     const maxTime = Math.max(...times);
-    
+
     const result: BenchmarkResult = {
       name,
       category,
@@ -119,21 +119,21 @@ export class EnhancedBenchmark {
         complexity: options.complexity || 'medium',
         operationType: options.operationType,
         ...(options.inputSize !== undefined && { inputSize: options.inputSize }),
-        validationPassed
-      }
+        validationPassed,
+      },
     };
-    
+
     this.results.push(result);
     return result;
   }
-  
+
   getResults(): BenchmarkResult[] {
     return [...this.results];
   }
-  
+
   generateSuite(name: string): BenchmarkSuite {
     const results = this.getResults();
-    
+
     if (results.length === 0) {
       return {
         name,
@@ -144,23 +144,23 @@ export class EnhancedBenchmark {
           fastestTest: 'none',
           slowestTest: 'none',
           memoryEfficient: 'none',
-          memoryIntensive: 'none'
-        }
+          memoryIntensive: 'none',
+        },
       };
     }
-    
+
     const totalTime = results.reduce((sum, r) => sum + r.totalTime, 0);
-    const fastestTest = results.reduce((min, r) => r.averageTime < min.averageTime ? r : min);
-    const slowestTest = results.reduce((max, r) => r.averageTime > max.averageTime ? r : max);
-    
+    const fastestTest = results.reduce((min, r) => (r.averageTime < min.averageTime ? r : min));
+    const slowestTest = results.reduce((max, r) => (r.averageTime > max.averageTime ? r : max));
+
     const memoryEfficient = results
       .filter(r => r.memoryUsage)
-      .reduce((min, r) => r.memoryUsage!.heapUsed < min.memoryUsage!.heapUsed ? r : min);
-      
+      .reduce((min, r) => (r.memoryUsage!.heapUsed < min.memoryUsage!.heapUsed ? r : min));
+
     const memoryIntensive = results
       .filter(r => r.memoryUsage)
-      .reduce((max, r) => r.memoryUsage!.heapUsed > max.memoryUsage!.heapUsed ? r : max);
-    
+      .reduce((max, r) => (r.memoryUsage!.heapUsed > max.memoryUsage!.heapUsed ? r : max));
+
     return {
       name,
       results,
@@ -170,28 +170,28 @@ export class EnhancedBenchmark {
         fastestTest: fastestTest.name,
         slowestTest: slowestTest.name,
         memoryEfficient: memoryEfficient?.name || 'none',
-        memoryIntensive: memoryIntensive?.name || 'none'
-      }
+        memoryIntensive: memoryIntensive?.name || 'none',
+      },
     };
   }
-  
+
   clear(): void {
     this.results = [];
   }
-  
+
   /**
    * Format results for console output
    */
   formatResults(suite: BenchmarkSuite): string {
     const lines: string[] = [];
     lines.push(`\n📊 Performance Benchmark: ${suite.name}`);
-    lines.push('=' .repeat(50));
-    
+    lines.push('='.repeat(50));
+
     if (suite.results.length === 0) {
       lines.push('No benchmark results available');
       return lines.join('\n');
     }
-    
+
     // Summary
     lines.push(`\n📈 Summary:`);
     lines.push(`  Total Tests: ${suite.summary.totalTests}`);
@@ -200,31 +200,36 @@ export class EnhancedBenchmark {
     lines.push(`  Slowest: ${suite.summary.slowestTest}`);
     lines.push(`  Memory Efficient: ${suite.summary.memoryEfficient}`);
     lines.push(`  Memory Intensive: ${suite.summary.memoryIntensive}`);
-    
+
     // Detailed results by category
     const categories = ['command', 'expression', 'validation', 'integration'] as const;
-    
+
     for (const category of categories) {
       const categoryResults = suite.results.filter(r => r.category === category);
       if (categoryResults.length === 0) continue;
-      
+
       lines.push(`\n🔍 ${category.toUpperCase()} Performance:`);
       lines.push('-'.repeat(30));
-      
+
       categoryResults
         .sort((a, b) => a.averageTime - b.averageTime)
         .forEach(result => {
           const validation = result.metadata.validationPassed ? '✅' : '❌';
           const complexity = result.metadata.complexity.toUpperCase();
-          const memory = result.memoryUsage ? 
-            `${(result.memoryUsage.heapUsed / 1024).toFixed(1)}KB` : 'N/A';
-          
+          const memory = result.memoryUsage
+            ? `${(result.memoryUsage.heapUsed / 1024).toFixed(1)}KB`
+            : 'N/A';
+
           lines.push(`  ${validation} ${result.name}`);
-          lines.push(`     Avg: ${result.averageTime.toFixed(3)}ms | Min: ${result.minTime.toFixed(3)}ms | Max: ${result.maxTime.toFixed(3)}ms`);
-          lines.push(`     Complexity: ${complexity} | Memory: ${memory} | Iterations: ${result.iterations}`);
+          lines.push(
+            `     Avg: ${result.averageTime.toFixed(3)}ms | Min: ${result.minTime.toFixed(3)}ms | Max: ${result.maxTime.toFixed(3)}ms`
+          );
+          lines.push(
+            `     Complexity: ${complexity} | Memory: ${memory} | Iterations: ${result.iterations}`
+          );
         });
     }
-    
+
     return lines.join('\n');
   }
 }
@@ -243,7 +248,7 @@ export async function quickBenchmark<T>(
 ): Promise<BenchmarkResult> {
   return globalBenchmark.benchmark(name, category, operation, {
     iterations,
-    operationType: 'quick-test'
+    operationType: 'quick-test',
   });
 }
 
@@ -251,7 +256,7 @@ export async function quickBenchmark<T>(
  * Production performance measurement decorator
  */
 export function measurePerformance(
-  name: string, 
+  name: string,
   category: BenchmarkResult['category'] = 'command'
 ) {
   return function <T extends (...args: any[]) => any>(
@@ -260,20 +265,21 @@ export function measurePerformance(
     descriptor: TypedPropertyDescriptor<T>
   ) {
     const originalMethod = descriptor.value!;
-    
+
     descriptor.value = async function (this: any, ...args: Parameters<T>) {
       const start = performance.now();
       const result = await originalMethod.apply(this, args);
       const end = performance.now();
-      
+
       // Log performance data for production monitoring
-      if (end - start > 10) { // Only log slow operations (>10ms)
+      if (end - start > 10) {
+        // Only log slow operations (>10ms)
         console.debug(`🐌 Slow ${category}: ${name} took ${(end - start).toFixed(2)}ms`);
       }
-      
+
       return result;
     } as T;
-    
+
     return descriptor;
   };
 }

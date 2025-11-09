@@ -3,7 +3,11 @@
  * Enables gradual migration from legacy to enhanced expressions while maintaining compatibility
  */
 
-import type { ExecutionContext, TypedExpressionContext, ExpressionEvaluationOptions } from '../../../types/base-types';
+import type {
+  ExecutionContext,
+  TypedExpressionContext,
+  ExpressionEvaluationOptions,
+} from '../../../types/base-types';
 import { conversionExpressions } from './index';
 
 /**
@@ -22,12 +26,12 @@ export function createTypedExpressionContext(
     locals: context.locals || new Map(),
     globals: context.globals || new Map(),
     event: context.event || null,
-    
+
     // Enhanced expression context properties
     expressionStack: [],
     evaluationDepth: 0,
     validationMode: options.validationMode || 'strict',
-    evaluationHistory: []
+    evaluationHistory: [],
   };
 }
 
@@ -47,7 +51,7 @@ export function updateExecutionContext(
     result: typedContext.result,
     locals: typedContext.locals,
     globals: typedContext.globals,
-    event: typedContext.event
+    event: typedContext.event,
   };
 }
 
@@ -58,11 +62,15 @@ export class EnhancedConversionAdapter {
   /**
    * Evaluate enhanced 'as' expression with legacy context
    */
-  static async evaluateAs(context: ExecutionContext, value: unknown, type: string): Promise<unknown> {
+  static async evaluateAs(
+    context: ExecutionContext,
+    value: unknown,
+    type: string
+  ): Promise<unknown> {
     const typedContext = createTypedExpressionContext(context);
     const input = { value, type };
     const result = await conversionExpressions.as.evaluate(typedContext, input);
-    
+
     if (result.success) {
       return result.value;
     } else {
@@ -75,7 +83,11 @@ export class EnhancedConversionAdapter {
   /**
    * Evaluate enhanced 'is' expression with legacy context
    */
-  static async evaluateIs(context: ExecutionContext, value: unknown, type: string): Promise<boolean> {
+  static async evaluateIs(
+    context: ExecutionContext,
+    value: unknown,
+    type: string
+  ): Promise<boolean> {
     const typedContext = createTypedExpressionContext(context);
     const input = { value, type };
     const result = await conversionExpressions.is.evaluate(typedContext, input);
@@ -125,11 +137,11 @@ export class LegacyCompatibilityLayer {
     name: 'as',
     category: 'Conversion' as const,
     evaluatesTo: 'Any' as const,
-    
+
     async evaluate(context: ExecutionContext, value: unknown, type: string): Promise<unknown> {
       return EnhancedConversionAdapter.evaluateAs(context, value, type);
     },
-    
+
     validate(args: unknown[]): string | null {
       if (args.length !== 2) {
         return 'as expression requires exactly two arguments (value, type)';
@@ -138,7 +150,7 @@ export class LegacyCompatibilityLayer {
         return 'conversion type must be a string';
       }
       return null;
-    }
+    },
   };
 
   /**
@@ -148,11 +160,11 @@ export class LegacyCompatibilityLayer {
     name: 'is',
     category: 'Conversion' as const,
     evaluatesTo: 'Boolean' as const,
-    
+
     async evaluate(context: ExecutionContext, value: unknown, type: string): Promise<boolean> {
       return EnhancedConversionAdapter.evaluateIs(context, value, type);
     },
-    
+
     validate(args: unknown[]): string | null {
       if (args.length !== 2) {
         return 'is expression requires exactly two arguments (value, type)';
@@ -161,7 +173,7 @@ export class LegacyCompatibilityLayer {
         return 'type must be a string';
       }
       return null;
-    }
+    },
   };
 }
 
@@ -235,14 +247,14 @@ export class ConversionUtilities {
       const typedContext = createTypedExpressionContext(context);
       const input = { value, type };
       const result = await conversionExpressions.as.evaluate(typedContext, input);
-      
+
       if (result.success) {
         return { success: true, value: result.value };
       } else {
         return {
           success: false,
           value: fallback !== undefined ? fallback : value,
-          error: result.error
+          error: result.error,
         };
       }
     } catch (error) {
@@ -252,8 +264,8 @@ export class ConversionUtilities {
         error: {
           type: 'runtime-error',
           message: error instanceof Error ? error.message : String(error),
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -272,7 +284,7 @@ export class ConversionUtilities {
     for (let i = 0; i < conversions.length; i++) {
       const { value, type, key } = conversions[i];
       const conversionResult = await this.safeConvert(context, value, type);
-      
+
       const resultKey = key || `conversion_${i}`;
       results[resultKey] = conversionResult.value;
 
@@ -282,7 +294,7 @@ export class ConversionUtilities {
           key: resultKey,
           value,
           type,
-          error: conversionResult.error
+          error: conversionResult.error,
         });
       }
     }
@@ -295,21 +307,24 @@ export class ConversionUtilities {
    */
   static getAvailableConversions() {
     return {
-      'String': { description: 'Convert to string', complexity: 'simple' },
-      'Number': { description: 'Convert to number', complexity: 'simple' },
-      'Int': { description: 'Convert to integer', complexity: 'simple' },
-      'Float': { description: 'Convert to float', complexity: 'simple' },
-      'Boolean': { description: 'Convert to boolean', complexity: 'simple' },
-      'Array': { description: 'Convert to array', complexity: 'simple' },
-      'Object': { description: 'Convert to object', complexity: 'medium' },
-      'Date': { description: 'Convert to date', complexity: 'medium' },
-      'JSON': { description: 'Convert to JSON string', complexity: 'medium' },
-      'Values': { description: 'Extract form values', complexity: 'medium' },
-      'Values:Form': { description: 'Extract form values as URL-encoded string', complexity: 'medium' },
+      String: { description: 'Convert to string', complexity: 'simple' },
+      Number: { description: 'Convert to number', complexity: 'simple' },
+      Int: { description: 'Convert to integer', complexity: 'simple' },
+      Float: { description: 'Convert to float', complexity: 'simple' },
+      Boolean: { description: 'Convert to boolean', complexity: 'simple' },
+      Array: { description: 'Convert to array', complexity: 'simple' },
+      Object: { description: 'Convert to object', complexity: 'medium' },
+      Date: { description: 'Convert to date', complexity: 'medium' },
+      JSON: { description: 'Convert to JSON string', complexity: 'medium' },
+      Values: { description: 'Extract form values', complexity: 'medium' },
+      'Values:Form': {
+        description: 'Extract form values as URL-encoded string',
+        complexity: 'medium',
+      },
       'Values:JSON': { description: 'Extract form values as JSON string', complexity: 'medium' },
-      'HTML': { description: 'Convert to HTML string', complexity: 'medium' },
-      'Fragment': { description: 'Convert to document fragment', complexity: 'medium' },
-      'Fixed:N': { description: 'Convert to fixed-precision decimal', complexity: 'simple' }
+      HTML: { description: 'Convert to HTML string', complexity: 'medium' },
+      Fragment: { description: 'Convert to document fragment', complexity: 'medium' },
+      'Fixed:N': { description: 'Convert to fixed-precision decimal', complexity: 'simple' },
     };
   }
 }
@@ -320,5 +335,5 @@ export default {
   EnhancedConversionAdapter,
   LegacyCompatibilityLayer,
   ExpressionMigrationUtility,
-  ConversionUtilities
+  ConversionUtilities,
 };

@@ -10,13 +10,10 @@ import type {
   ElseDirectiveInput,
   TemplateDirectiveType,
   TemplateRenderStrategy,
-  TemplateLLMDocumentation
+  TemplateLLMDocumentation,
 } from '../../../types/template-types';
 import { ElseDirectiveInputSchema } from '../../../types/template-types';
-import type {
-  EvaluationResult,
-  ExpressionMetadata
-} from '../../../types/base-types';
+import type { EvaluationResult, ExpressionMetadata } from '../../../types/base-types';
 import type { UnifiedValidationResult, UnifiedValidationError } from '../../../types/unified-types';
 import { TemplateContextUtils } from '../template-context';
 
@@ -47,133 +44,141 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
       {
         input: '@if user.isLoggedIn\nWelcome back!\n@else\nPlease log in\n@end',
         description: 'Show login prompt if user is not authenticated',
-        expectedOutput: 'Please log in'
+        expectedOutput: 'Please log in',
       },
       {
         input: '@if items.length > 0\nYou have items\n@else\nYour cart is empty\n@end',
         description: 'Show empty cart message when no items',
-        expectedOutput: 'Your cart is empty'
+        expectedOutput: 'Your cart is empty',
       },
       {
         input: '@if user.role === "admin"\nAdmin panel\n@else\nUser dashboard\n@end',
         description: 'Show different interface based on user role',
-        expectedOutput: 'User dashboard'
-      }
+        expectedOutput: 'User dashboard',
+      },
     ],
     relatedExpressions: ['@if', '@repeat', 'boolean conversion'],
     performance: {
       averageTime: 0.3,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: TemplateLLMDocumentation = {
-    summary: 'Renders alternative template content when the preceding @if condition evaluates to false',
+    summary:
+      'Renders alternative template content when the preceding @if condition evaluates to false',
     parameters: [
       {
         name: 'templateContent',
         type: 'string',
         description: 'Template content to render when @if condition is false',
         optional: false,
-        examples: ['Please log in', 'No items found', '<div class="error">Error occurred</div>']
-      }
+        examples: ['Please log in', 'No items found', '<div class="error">Error occurred</div>'],
+      },
     ],
     returns: {
       type: 'object',
       description: 'Structured result with rendered content or empty string',
-      examples: ['{ success: true, value: "Please log in", type: "string" }']
+      examples: ['{ success: true, value: "Please log in", type: "string" }'],
     },
     examples: [
       {
         title: 'Basic if-else branch',
         code: '@if user.isActive\nActive user content\n@else\nInactive user message\n@end',
         explanation: 'Shows different content based on user activation status',
-        output: 'Inactive user message'
+        output: 'Inactive user message',
       },
       {
         title: 'Authentication check',
         code: '@if user.token\nWelcome back, ${user.name}!\n@else\nPlease sign in to continue\n@end',
         explanation: 'Authentication-based content rendering',
-        output: 'Please sign in to continue'
+        output: 'Please sign in to continue',
       },
       {
         title: 'Data availability check',
         code: '@if data.results && data.results.length > 0\nShowing ${data.results.length} results\n@else\nNo results found for your search\n@end',
         explanation: 'Show results count or empty state message',
-        output: 'No results found for your search'
+        output: 'No results found for your search',
       },
       {
         title: 'Feature flag fallback',
         code: '@if features.betaFeature\n<div class="beta">Beta feature content</div>\n@else\n<div class="stable">Standard feature content</div>\n@end',
         explanation: 'Feature flag with fallback content',
-        output: '<div class="stable">Standard feature content</div>'
-      }
+        output: '<div class="stable">Standard feature content</div>',
+      },
     ],
     patterns: [
       {
         name: 'Authentication Flow',
-        template: '@if user.authenticated\nWelcome to your dashboard\n@else\nPlease log in to access your account\n@end',
+        template:
+          '@if user.authenticated\nWelcome to your dashboard\n@else\nPlease log in to access your account\n@end',
         context: { user: { authenticated: false } },
         expectedOutput: 'Please log in to access your account',
-        explanation: 'Standard authentication check with fallback'
+        explanation: 'Standard authentication check with fallback',
       },
       {
         name: 'Content Availability',
-        template: '@if content.available\n${content.body}\n@else\nContent is currently unavailable\n@end',
+        template:
+          '@if content.available\n${content.body}\n@else\nContent is currently unavailable\n@end',
         context: { content: { available: false } },
         expectedOutput: 'Content is currently unavailable',
-        explanation: 'Content availability check with fallback message'
+        explanation: 'Content availability check with fallback message',
       },
       {
         name: 'Permission-Based UI',
-        template: '@if user.canEdit\n<button>Edit</button>\n@else\n<span class="disabled">Read Only</span>\n@end',
+        template:
+          '@if user.canEdit\n<button>Edit</button>\n@else\n<span class="disabled">Read Only</span>\n@end',
         context: { user: { canEdit: false } },
         expectedOutput: '<span class="disabled">Read Only</span>',
-        explanation: 'Show different UI elements based on permissions'
-      }
+        explanation: 'Show different UI elements based on permissions',
+      },
     ],
     combinations: [
       {
         directives: ['@if', '@else'],
         description: 'Binary conditional rendering',
         example: '@if condition\nTrue branch\n@else\nFalse branch\n@end',
-        useCase: 'Show different content based on single condition'
+        useCase: 'Show different content based on single condition',
       },
       {
         directives: ['@if', '@else', '@repeat'],
         description: 'Conditional list rendering',
-        example: '@if items.length > 0\n@repeat in items\n${it.name}\n@end\n@else\nNo items available\n@end',
-        useCase: 'Show list if items exist, otherwise show empty message'
-      }
+        example:
+          '@if items.length > 0\n@repeat in items\n${it.name}\n@end\n@else\nNo items available\n@end',
+        useCase: 'Show list if items exist, otherwise show empty message',
+      },
     ],
     troubleshooting: [
       {
         error: '@else directive without preceding @if',
         cause: '@else used without a matching @if directive',
         solution: 'Ensure @else follows an @if directive in the same scope',
-        prevention: 'Use template validation and proper nesting'
+        prevention: 'Use template validation and proper nesting',
       },
       {
         error: 'Multiple @else directives for single @if',
         cause: 'More than one @else for the same @if block',
         solution: 'Use only one @else per @if block',
-        prevention: 'Follow if-else-end pattern consistently'
+        prevention: 'Follow if-else-end pattern consistently',
       },
       {
         error: '@else content not rendering',
         cause: 'Previous @if condition was true, so @else branch skipped',
         solution: 'Check @if condition logic - @else only renders when @if is false',
-        prevention: 'Test both branches of conditional logic'
-      }
+        prevention: 'Test both branches of conditional logic',
+      },
     ],
     seeAlso: ['@if', '@repeat', 'boolean expressions', 'template interpolation'],
-    tags: ['conditional', 'template', 'rendering', 'boolean', 'branching', 'fallback']
+    tags: ['conditional', 'template', 'rendering', 'boolean', 'branching', 'fallback'],
   };
 
   /**
    * Main evaluation method for expressions
    */
-  evaluate(context: TemplateExecutionContext, input: ElseDirectiveInput): Promise<EvaluationResult<string>> {
+  evaluate(
+    context: TemplateExecutionContext,
+    input: ElseDirectiveInput
+  ): Promise<EvaluationResult<string>> {
     return this.executeTemplate(context, input, input.templateContent);
   }
 
@@ -201,9 +206,9 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
             suggestions: validation.suggestions || [
               'Ensure templateContent is provided',
               'Check template content is valid',
-              'Verify @else follows @if directive'
-            ]
-          }
+              'Verify @else follows @if directive',
+            ],
+          },
         };
       }
 
@@ -217,19 +222,19 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
             type: 'invalid-argument',
             message: contextValidation.errors[0]?.message || 'Invalid template context',
             code: 'ELSE_CONTEXT_INVALID',
-            suggestions: contextValidation.suggestions || ['Check template context structure']
-          }
+            suggestions: contextValidation.suggestions || ['Check template context structure'],
+          },
         };
       }
 
       // Check if @else should execute based on conditional context
       const shouldExecute = this.shouldExecuteElse(context);
-      
+
       let result = '';
       if (shouldExecute) {
         // Create conditional context for else branch
         const elseContext = this.createElseContext(context);
-        
+
         // Execute template content
         result = await this.renderTemplateContent(templateContent, elseContext);
       }
@@ -240,9 +245,8 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
       return {
         success: true,
         value: result,
-        type: 'string'
+        type: 'string',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -254,9 +258,9 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
           suggestions: [
             'Check template content is valid',
             'Ensure @else follows @if directive',
-            'Verify all referenced variables exist in context'
-          ]
-        }
+            'Verify all referenced variables exist in context',
+          ],
+        },
       };
     }
   }
@@ -267,54 +271,58 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
   validate(input: unknown): UnifiedValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch' as const,
-            message: `Invalid @else directive: ${err.message}`,
-            suggestions: [`Expected { templateContent: string }, got: ${typeof input}`]
-          })) ?? [],
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch' as const,
+              message: `Invalid @else directive: ${err.message}`,
+              suggestions: [`Expected { templateContent: string }, got: ${typeof input}`],
+            })) ?? [],
           suggestions: [
             'Provide templateContent as a string',
             'Check @else directive syntax: @else',
-            'Ensure @else follows @if directive'
-          ]
+            'Ensure @else follows @if directive',
+          ],
         };
       }
 
       // Additional semantic validation
       const data = parsed.data as any;
       const { templateContent } = data;
-      
+
       if (!templateContent.trim()) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Template content cannot be empty',
-            suggestions: ['Provide content to render in else branch']
-          }],
-          suggestions: ['Add content between @else and @end directives']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Template content cannot be empty',
+              suggestions: ['Provide content to render in else branch'],
+            },
+          ],
+          suggestions: ['Add content between @else and @end directives'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: ['Check @else directive input structure']
-        }],
-        suggestions: ['Ensure input matches expected format']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: ['Check @else directive input structure'],
+          },
+        ],
+        suggestions: ['Ensure input matches expected format'],
       };
     }
   }
@@ -327,38 +335,38 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
     _input: ElseDirectiveInput
   ): UnifiedValidationResult {
     const errors: UnifiedValidationError[] = [];
-    
+
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {
       errors.push({
         type: 'runtime-error',
         message: 'Template buffer not initialized',
-        suggestions: ['Ensure template context is properly created']
+        suggestions: ['Ensure template context is properly created'],
       });
     }
-    
+
     // Check conditional context exists (required for @else)
     if (!context.conditionalContext) {
       errors.push({
         type: 'validation-error',
         message: '@else directive requires preceding @if directive',
-        suggestions: ['Ensure @else follows @if in the same scope']
+        suggestions: ['Ensure @else follows @if in the same scope'],
       });
     }
-    
+
     // Check nesting depth
     if (context.templateDepth > 10) {
       errors.push({
         type: 'runtime-error',
         message: `Template nesting too deep (${context.templateDepth})`,
-        suggestions: ['Reduce template nesting complexity']
+        suggestions: ['Reduce template nesting complexity'],
       });
     }
-    
+
     return {
       isValid: errors.length === 0,
       errors,
-      suggestions: errors.length > 0 ? ['Fix template context issues'] : []
+      suggestions: errors.length > 0 ? ['Fix template context issues'] : [],
     };
   }
 
@@ -367,12 +375,12 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
    */
   private shouldExecuteElse(context: TemplateExecutionContext): boolean {
     const conditional = context.conditionalContext;
-    
+
     if (!conditional) {
       // No conditional context means no preceding @if
       return false;
     }
-    
+
     // @else executes when:
     // 1. The @if condition was false (!conditionMet)
     // 2. No branch has been executed yet (!branchExecuted)
@@ -383,16 +391,14 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
   /**
    * Create conditional context for else branch
    */
-  private createElseContext(
-    context: TemplateExecutionContext
-  ): TemplateExecutionContext {
+  private createElseContext(context: TemplateExecutionContext): TemplateExecutionContext {
     return {
       ...context,
       conditionalContext: {
         conditionMet: false,
         elseAllowed: false, // No further @else allowed after this one
-        branchExecuted: true // Mark that a branch has been executed
-      }
+        branchExecuted: true, // Mark that a branch has been executed
+      },
     };
   }
 
@@ -408,7 +414,7 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
       try {
         // Simple variable resolution from context
         const variables = TemplateContextUtils.extractVariables(context);
-        
+
         // Handle simple property access (e.g., user.name, items.length)
         const value = this.resolveExpression(expression.trim(), variables);
         return String(value ?? '');
@@ -427,12 +433,12 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
     if (variables.hasOwnProperty(expression)) {
       return variables[expression];
     }
-    
+
     // Handle property access (e.g., user.name)
     if (expression.includes('.')) {
       const parts = expression.split('.');
       let current = variables[parts[0]];
-      
+
       for (let i = 1; i < parts.length && current != null; i++) {
         if (typeof current === 'object' && current !== null) {
           current = (current as Record<string, unknown>)[parts[i]];
@@ -440,10 +446,10 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
           return undefined;
         }
       }
-      
+
       return current;
     }
-    
+
     // Handle array length
     if (expression.endsWith('.length')) {
       const varName = expression.slice(0, -7);
@@ -452,7 +458,7 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
         return value.length;
       }
     }
-    
+
     return undefined;
   }
 
@@ -473,7 +479,7 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
         output: result,
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success: true
+        success: true,
       });
     }
   }

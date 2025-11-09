@@ -23,29 +23,34 @@ describe('InstallCommand', () => {
 
     // Create mock behavior registry with install function
     mockBehaviorRegistry = new Map();
-    const mockInstallFn = vi.fn(async (behaviorName: string, element: HTMLElement, params: Record<string, unknown>) => {
-      return {
-        id: `instance-${Date.now()}`,
-        behaviorName,
-        element,
-        parameters: params,
-        isInstalled: true
-      };
-    });
+    const mockInstallFn = vi.fn(
+      async (behaviorName: string, element: HTMLElement, params: Record<string, unknown>) => {
+        return {
+          id: `instance-${Date.now()}`,
+          behaviorName,
+          element,
+          parameters: params,
+          isInstalled: true,
+        };
+      }
+    );
 
     // Create mock context
     mockContext = {
       locals: new Map([
         ['me', mockElement],
-        ['_behaviors', {
-          has: (name: string) => mockBehaviorRegistry.has(name),
-          install: mockInstallFn
-        }]
+        [
+          '_behaviors',
+          {
+            has: (name: string) => mockBehaviorRegistry.has(name),
+            install: mockInstallFn,
+          },
+        ],
       ]),
       globals: new Map(),
       commandRegistry: {} as any,
       features: {} as any,
-      parser: null as any
+      parser: null as any,
     };
   });
 
@@ -70,7 +75,7 @@ describe('InstallCommand', () => {
     it('should validate correct input with parameters', () => {
       const input = {
         behaviorName: 'Tooltip',
-        parameters: { text: 'Help', position: 'top' }
+        parameters: { text: 'Help', position: 'top' },
       };
       const result = installCmd.validation.validate(input);
 
@@ -81,7 +86,7 @@ describe('InstallCommand', () => {
     it('should validate correct input with target', () => {
       const input = {
         behaviorName: 'Draggable',
-        target: '#box'
+        target: '#box',
       };
       const result = installCmd.validation.validate(input);
 
@@ -126,7 +131,7 @@ describe('InstallCommand', () => {
     it('should reject non-object parameters', () => {
       const input = {
         behaviorName: 'Tooltip',
-        parameters: 'invalid'
+        parameters: 'invalid',
       };
       const result = installCmd.validation.validate(input);
 
@@ -137,7 +142,7 @@ describe('InstallCommand', () => {
     it('should reject array as parameters', () => {
       const input = {
         behaviorName: 'Tooltip',
-        parameters: ['text', 'Help']
+        parameters: ['text', 'Help'],
       };
       const result = installCmd.validation.validate(input);
 
@@ -148,7 +153,7 @@ describe('InstallCommand', () => {
     it('should reject invalid parameter names', () => {
       const input = {
         behaviorName: 'Tooltip',
-        parameters: { 'invalid-name': 'value' }
+        parameters: { 'invalid-name': 'value' },
       };
       const result = installCmd.validation.validate(input);
 
@@ -164,8 +169,8 @@ describe('InstallCommand', () => {
           position: 'top',
           delay_ms: 500,
           $priority: 1,
-          _internal: true
-        }
+          _internal: true,
+        },
       };
       const result = installCmd.validation.validate(input);
 
@@ -192,11 +197,11 @@ describe('InstallCommand', () => {
       // Register a test behavior
       mockBehaviorRegistry.set('Removable', {
         name: 'Removable',
-        eventHandlers: []
+        eventHandlers: [],
       });
       mockBehaviorRegistry.set('Tooltip', {
         name: 'Tooltip',
-        parameters: ['text', 'position']
+        parameters: ['text', 'position'],
       });
     });
 
@@ -213,7 +218,7 @@ describe('InstallCommand', () => {
     it('should install behavior with parameters', async () => {
       const input = {
         behaviorName: 'Tooltip',
-        parameters: { text: 'Help', position: 'top' }
+        parameters: { text: 'Help', position: 'top' },
       };
       const result = await installCmd.execute(input, mockContext);
 
@@ -222,7 +227,10 @@ describe('InstallCommand', () => {
 
       // Verify install was called with correct parameters
       const installFn = (mockContext.locals.get('_behaviors') as any).install;
-      expect(installFn).toHaveBeenCalledWith('Tooltip', mockElement, { text: 'Help', position: 'top' });
+      expect(installFn).toHaveBeenCalledWith('Tooltip', mockElement, {
+        text: 'Help',
+        position: 'top',
+      });
     });
 
     it('should install behavior on explicit element target', async () => {
@@ -231,7 +239,7 @@ describe('InstallCommand', () => {
 
       const input = {
         behaviorName: 'Removable',
-        target: customElement
+        target: customElement,
       };
       const result = await installCmd.execute(input, mockContext);
 
@@ -248,7 +256,7 @@ describe('InstallCommand', () => {
 
       const input = {
         behaviorName: 'Removable',
-        target: [elem1, elem2]
+        target: [elem1, elem2],
       };
       const result = await installCmd.execute(input, mockContext);
 
@@ -260,7 +268,7 @@ describe('InstallCommand', () => {
     it('should handle "me" string as target', async () => {
       const input = {
         behaviorName: 'Removable',
-        target: 'me'
+        target: 'me',
       };
       const result = await installCmd.execute(input, mockContext);
 
@@ -280,15 +288,13 @@ describe('InstallCommand', () => {
       mockContext.locals.delete('me');
       const input = { behaviorName: 'Removable' };
 
-      await expect(installCmd.execute(input, mockContext)).rejects.toThrow(
-        /No target specified/
-      );
+      await expect(installCmd.execute(input, mockContext)).rejects.toThrow(/No target specified/);
     });
 
     it('should throw error if target array contains no HTMLElements', async () => {
       const input = {
         behaviorName: 'Removable',
-        target: ['not', 'elements']
+        target: ['not', 'elements'],
       };
 
       await expect(installCmd.execute(input, mockContext)).rejects.toThrow(
@@ -305,7 +311,7 @@ describe('InstallCommand', () => {
 
       const input = {
         behaviorName: 'Draggable',
-        target: '.draggable'
+        target: '.draggable',
       };
       const result = await installCmd.execute(input, mockContext);
 
@@ -318,7 +324,7 @@ describe('InstallCommand', () => {
     it('should throw error for CSS selector with no matches', async () => {
       const input = {
         behaviorName: 'Removable',
-        target: '.nonexistent'
+        target: '.nonexistent',
       };
 
       await expect(installCmd.execute(input, mockContext)).rejects.toThrow(
@@ -332,7 +338,7 @@ describe('InstallCommand', () => {
 
       const input = {
         behaviorName: 'Removable',
-        target: wrapper
+        target: wrapper,
       };
       const result = await installCmd.execute(input, mockContext);
 
@@ -343,7 +349,7 @@ describe('InstallCommand', () => {
     it('should throw error for unresolvable target type', async () => {
       const input = {
         behaviorName: 'Removable',
-        target: 123
+        target: 123,
       };
 
       await expect(installCmd.execute(input, mockContext)).rejects.toThrow(
@@ -366,7 +372,7 @@ describe('InstallCommand', () => {
   describe('edge cases', () => {
     beforeEach(() => {
       mockBehaviorRegistry.set('TestBehavior', {
-        name: 'TestBehavior'
+        name: 'TestBehavior',
       });
     });
 
@@ -391,7 +397,7 @@ describe('InstallCommand', () => {
     it('should handle empty parameters object', async () => {
       const input = {
         behaviorName: 'TestBehavior',
-        parameters: {}
+        parameters: {},
       };
       const result = await installCmd.execute(input, mockContext);
 
@@ -406,8 +412,8 @@ describe('InstallCommand', () => {
           array: [1, 2, 3],
           callback: () => 'test',
           nullValue: null,
-          undefinedValue: undefined
-        }
+          undefinedValue: undefined,
+        },
       };
       const result = await installCmd.execute(input, mockContext);
 

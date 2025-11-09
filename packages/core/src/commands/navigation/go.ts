@@ -1,4 +1,3 @@
-
 /**
  * Enhanced Go Command - Deep TypeScript Integration
  * Handles URL navigation, element scrolling, and browser history management with validation
@@ -28,24 +27,31 @@ export interface GoCommandOptions {
  */
 const GoCommandInputSchema = z.union([
   // URL navigation: go [to] url <url> [in new window]
-  v.tuple([
-    v.literal('url'),
-    v.string().describe('URL to navigate to'),
-    z.enum(['in', 'new', 'window']).optional()
-  ]).rest(),
-  
+  v
+    .tuple([
+      v.literal('url'),
+      v.string().describe('URL to navigate to'),
+      z.enum(['in', 'new', 'window']).optional(),
+    ])
+    .rest(),
+
   // History navigation: go back
   v.tuple([v.literal('back')]),
-  
+
   // Element scrolling: complex pattern
-  v.array(v.union([
-    v.string(),
-    v.number(),
-    v.boolean(),
-    v.custom((value: unknown) => value instanceof HTMLElement),
-    v.null(),
-    v.undefined()
-  ])).min(1).max(10)
+  v
+    .array(
+      v.union([
+        v.string(),
+        v.number(),
+        v.boolean(),
+        v.custom((value: unknown) => value instanceof HTMLElement),
+        v.null(),
+        v.undefined(),
+      ])
+    )
+    .min(1)
+    .max(10),
 ]);
 
 type GoCommandInput = any; // Inferred from RuntimeValidator
@@ -53,14 +59,19 @@ type GoCommandInput = any; // Inferred from RuntimeValidator
 /**
  * Enhanced Go Command with full type safety for LLM agents
  */
-export class GoCommand implements TypedCommandImplementation<
-  GoCommandInput,
-  string | HTMLElement,  // Returns URL or target element
-  TypedExecutionContext
-> {
+export class GoCommand
+  implements
+    TypedCommandImplementation<
+      GoCommandInput,
+      string | HTMLElement, // Returns URL or target element
+      TypedExecutionContext
+    >
+{
   public readonly name = 'go' as const;
-  public readonly syntax = 'go [to] url <url> [in new window] | go [to] [position] [of] <target> [offset] [behavior] | go back';
-  public readonly description = 'Provides navigation functionality including URL navigation, element scrolling, and browser history management';
+  public readonly syntax =
+    'go [to] url <url> [in new window] | go [to] [position] [of] <target> [offset] [behavior] | go back';
+  public readonly description =
+    'Provides navigation functionality including URL navigation, element scrolling, and browser history management';
   public readonly inputSchema = GoCommandInputSchema;
   public readonly outputType = 'object' as const;
 
@@ -72,75 +83,76 @@ export class GoCommand implements TypedCommandImplementation<
       {
         code: 'go to url "https://example.com"',
         description: 'Navigate to a URL',
-        expectedOutput: 'https://example.com'
+        expectedOutput: 'https://example.com',
       },
       {
         code: 'go back',
         description: 'Navigate back in browser history',
-        expectedOutput: 'back'
+        expectedOutput: 'back',
       },
       {
         code: 'go to top of <#header/>',
         description: 'Scroll to top of header element',
-        expectedOutput: 'HTMLElement'
-      }
+        expectedOutput: 'HTMLElement',
+      },
     ],
-    relatedCommands: ['fetch', 'redirect', 'scroll']
+    relatedCommands: ['fetch', 'redirect', 'scroll'],
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Provides comprehensive navigation functionality for URLs, elements, and browser history',
+    summary:
+      'Provides comprehensive navigation functionality for URLs, elements, and browser history',
     parameters: [
       {
         name: 'type',
         type: 'string',
         description: 'Navigation type: "url", "back", or position keywords',
         optional: false,
-        examples: ['url', 'back', 'top', 'middle', 'bottom']
+        examples: ['url', 'back', 'top', 'middle', 'bottom'],
       },
       {
         name: 'target',
         type: 'string',
         description: 'URL string or target element for scrolling',
         optional: true,
-        examples: ['"https://example.com"', '<#header/>', 'me']
-      }
+        examples: ['"https://example.com"', '<#header/>', 'me'],
+      },
     ],
     returns: {
       type: 'object',
       description: 'URL string for navigation or target element for scrolling',
-      examples: ['"https://example.com"', 'HTMLElement', '"back"']
+      examples: ['"https://example.com"', 'HTMLElement', '"back"'],
     },
     examples: [
       {
         title: 'URL navigation',
         code: 'go to url "https://example.com"',
         explanation: 'Navigate to the specified URL in the current window',
-        output: '"https://example.com"'
+        output: '"https://example.com"',
       },
       {
         title: 'New window navigation',
         code: 'go to url "https://example.com" in new window',
         explanation: 'Open URL in a new window/tab',
-        output: '"https://example.com"'
+        output: '"https://example.com"',
       },
       {
         title: 'Element scrolling',
         code: 'go to top of <#header/>',
         explanation: 'Scroll to the top of the header element',
-        output: 'HTMLElement'
+        output: 'HTMLElement',
       },
       {
         title: 'History navigation',
         code: 'go back',
         explanation: 'Navigate back in browser history',
-        output: '"back"'
-      }
+        output: '"back"',
+      },
     ],
     seeAlso: ['fetch', 'redirect', 'scroll', 'history'],
-    tags: ['navigation', 'url', 'scroll', 'history', 'browser']
+    tags: ['navigation', 'url', 'scroll', 'history', 'browser'],
   };
-  
+
   private options: GoCommandOptions;
 
   constructor(options: GoCommandOptions = {}) {
@@ -164,12 +176,12 @@ export class GoCommand implements TypedCommandImplementation<
           success: false,
           error: {
             name: 'ValidationError',
-          type: 'validation-error',
+            type: 'validation-error',
             message: validationResult.errors[0]?.message || 'Invalid input',
             code: 'GO_VALIDATION_FAILED',
-            suggestions: validationResult.suggestions
+            suggestions: validationResult.suggestions,
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -178,12 +190,12 @@ export class GoCommand implements TypedCommandImplementation<
           success: false,
           error: {
             name: 'ValidationError',
-          type: 'missing-argument',
+            type: 'missing-argument',
             message: 'Go command requires arguments',
             code: 'NO_ARGUMENTS',
-            suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>']
+            suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -202,7 +214,6 @@ export class GoCommand implements TypedCommandImplementation<
       // Handle element scrolling
       const result = await this.scrollToElement(args, context);
       return result;
-
     } catch (error) {
       return {
         success: false,
@@ -211,9 +222,13 @@ export class GoCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'GO_EXECUTION_FAILED',
-          suggestions: ['Check navigation parameters', 'Verify target elements exist', 'Ensure URLs are valid']
+          suggestions: [
+            'Check navigation parameters',
+            'Verify target elements exist',
+            'Ensure URLs are valid',
+          ],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -222,16 +237,17 @@ export class GoCommand implements TypedCommandImplementation<
     try {
       // Schema validation
       const parsed = this.inputSchema.safeParse(args);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch' as const,
-            message: `Invalid argument: ${err.message}`,
-            suggestions: [this.getValidationSuggestion(err.code ?? 'unknown')]
-          })) ?? [],
-          suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch' as const,
+              message: `Invalid argument: ${err.message}`,
+              suggestions: [this.getValidationSuggestion(err.code ?? 'unknown')],
+            })) ?? [],
+          suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>'],
         };
       }
 
@@ -239,12 +255,14 @@ export class GoCommand implements TypedCommandImplementation<
       if (args.length === 0) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument' as const,
-            message: 'Go command requires at least one argument',
-            suggestions: ['Use supported go command patterns']
-          }],
-          suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>']
+          errors: [
+            {
+              type: 'missing-argument' as const,
+              message: 'Go command requires at least one argument',
+              suggestions: ['Use supported go command patterns'],
+            },
+          ],
+          suggestions: ['Use: go back, go to url <url>, or go to <position> of <element>'],
         };
       }
 
@@ -253,18 +271,20 @@ export class GoCommand implements TypedCommandImplementation<
         if (args.length > 1) {
           return {
             isValid: false,
-            errors: [{
-              type: 'syntax-error' as const,
-              message: 'Go back command does not accept additional arguments',
-              suggestions: ['Use "go back" without additional parameters']
-            }],
-            suggestions: ['Use: go back']
+            errors: [
+              {
+                type: 'syntax-error' as const,
+                message: 'Go back command does not accept additional arguments',
+                suggestions: ['Use "go back" without additional parameters'],
+              },
+            ],
+            suggestions: ['Use: go back'],
           };
         }
         return {
           isValid: true,
           errors: [],
-          suggestions: [] 
+          suggestions: [],
         };
       }
 
@@ -275,16 +295,17 @@ export class GoCommand implements TypedCommandImplementation<
 
       // Validate element scrolling - most flexible pattern
       return this.validateElementScrolling(args);
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error' as const,
-          message: 'Validation failed with exception',
-          suggestions: ['Check input types and values']
-        }],
-        suggestions: ['Ensure arguments match expected types']
+        errors: [
+          {
+            type: 'runtime-error' as const,
+            message: 'Validation failed with exception',
+            suggestions: ['Check input types and values'],
+          },
+        ],
+        suggestions: ['Ensure arguments match expected types'],
       };
     }
   }
@@ -301,7 +322,7 @@ export class GoCommand implements TypedCommandImplementation<
       if (url.startsWith('/') || url.startsWith('#')) {
         return true;
       }
-      
+
       // Check if it's a valid URL
       new URL(url);
       return true;
@@ -312,31 +333,34 @@ export class GoCommand implements TypedCommandImplementation<
 
   private getValidationSuggestion(errorCode: string): string {
     const suggestions: Record<string, string> = {
-      'invalid_type': 'Use valid argument types for go command',
-      'invalid_union': 'Use supported go command patterns',
-      'too_small': 'Go command requires at least one argument',
-      'too_big': 'Too many arguments for go command'
+      invalid_type: 'Use valid argument types for go command',
+      invalid_union: 'Use supported go command patterns',
+      too_small: 'Go command requires at least one argument',
+      too_big: 'Too many arguments for go command',
     };
-    
+
     return suggestions[errorCode] || 'Check argument types and syntax';
   }
 
-  private async navigateToUrl(args: unknown[], context: TypedExecutionContext): Promise<EvaluationResult<string>> {
+  private async navigateToUrl(
+    args: unknown[],
+    context: TypedExecutionContext
+  ): Promise<EvaluationResult<string>> {
     try {
       const urlIndex = args.findIndex(arg => arg === 'url');
       const url = args[urlIndex + 1];
-      
+
       if (!url) {
         return {
           success: false,
           error: {
             name: 'ValidationError',
-          type: 'missing-argument',
+            type: 'missing-argument',
             message: 'URL is required after "url" keyword',
             code: 'MISSING_URL',
-            suggestions: ['Provide URL string after "url" keyword']
+            suggestions: ['Provide URL string after "url" keyword'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -345,19 +369,19 @@ export class GoCommand implements TypedCommandImplementation<
 
       // Resolve URL (could be from context variables)
       const resolvedUrl = this.resolveUrl(url, context);
-      
+
       // Validate resolved URL if validation is enabled
       if (this.options.validateUrls && !this.isValidUrl(resolvedUrl)) {
         return {
           success: false,
           error: {
             name: 'ValidationError',
-          type: 'invalid-argument',
+            type: 'invalid-argument',
             message: `Invalid URL: "${resolvedUrl}"`,
             code: 'INVALID_URL',
-            suggestions: ['Use valid URL format', 'Include protocol for absolute URLs']
+            suggestions: ['Use valid URL format', 'Include protocol for absolute URLs'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -390,12 +414,12 @@ export class GoCommand implements TypedCommandImplementation<
               success: false,
               error: {
                 name: 'ValidationError',
-          type: 'runtime-error',
+                type: 'runtime-error',
                 message: `Navigation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 code: 'NAVIGATION_FAILED',
-                suggestions: ['Check if URL is accessible', 'Verify network connectivity']
+                suggestions: ['Check if URL is accessible', 'Verify network connectivity'],
               },
-              type: 'error'
+              type: 'error',
             };
           }
         }
@@ -411,15 +435,14 @@ export class GoCommand implements TypedCommandImplementation<
         newWindow: inNewWindow,
         timestamp: Date.now(),
         metadata: this.metadata,
-        result: 'success'
+        result: 'success',
       });
 
       return {
         success: true,
         value: resolvedUrl,
-        type: 'string'
+        type: 'string',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -428,14 +451,17 @@ export class GoCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'URL navigation failed',
           code: 'URL_NAVIGATION_FAILED',
-          suggestions: ['Check URL format and accessibility']
+          suggestions: ['Check URL format and accessibility'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
 
-  private async scrollToElement(args: unknown[], context: TypedExecutionContext): Promise<EvaluationResult<HTMLElement>> {
+  private async scrollToElement(
+    args: unknown[],
+    context: TypedExecutionContext
+  ): Promise<EvaluationResult<HTMLElement>> {
     try {
       const position = this.parseScrollPosition(args);
       const target = this.parseScrollTarget(args);
@@ -449,12 +475,12 @@ export class GoCommand implements TypedCommandImplementation<
           success: false,
           error: {
             name: 'ValidationError',
-          type: 'runtime-error',
+            type: 'runtime-error',
             message: `Target element not found: ${target}`,
             code: 'TARGET_NOT_FOUND',
-            suggestions: ['Check if element exists in DOM', 'Verify selector syntax']
+            suggestions: ['Check if element exists in DOM', 'Verify selector syntax'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -464,11 +490,11 @@ export class GoCommand implements TypedCommandImplementation<
       // Perform scroll
       if (typeof window !== 'undefined') {
         const behavior = smooth ? 'smooth' : 'instant';
-        
+
         // Map position to scrollIntoView options
         let block: ScrollLogicalPosition = 'start';
         let inline: ScrollLogicalPosition = 'nearest';
-        
+
         switch (position.vertical) {
           case 'top':
             block = 'start';
@@ -486,7 +512,7 @@ export class GoCommand implements TypedCommandImplementation<
             block = 'start';
             break;
         }
-        
+
         switch (position.horizontal) {
           case 'left':
             inline = 'start';
@@ -502,25 +528,25 @@ export class GoCommand implements TypedCommandImplementation<
             inline = 'nearest';
             break;
         }
-        
+
         // For scrolling with offsets, calculate position and use scrollTo
         if (offset !== 0) {
           try {
             // Still call scrollIntoView first to handle basic positioning
             if (element.scrollIntoView) {
-              element.scrollIntoView({ 
+              element.scrollIntoView({
                 behavior: behavior as ScrollBehavior,
                 block,
-                inline
+                inline,
               });
             }
-            
+
             // Then adjust with scrollTo for offset
             if (window.scrollTo) {
               window.scrollTo({
                 left: x,
                 top: y,
-                behavior: behavior as ScrollBehavior
+                behavior: behavior as ScrollBehavior,
               });
             }
           } catch (error) {
@@ -530,22 +556,22 @@ export class GoCommand implements TypedCommandImplementation<
               success: false,
               error: {
                 name: 'ValidationError',
-          type: 'runtime-error',
+                type: 'runtime-error',
                 message: `Scroll with offset failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 code: 'SCROLL_OFFSET_FAILED',
-                suggestions: ['Check if element is visible', 'Verify scroll container']
+                suggestions: ['Check if element is visible', 'Verify scroll container'],
               },
-              type: 'error'
+              type: 'error',
             };
           }
         } else {
           try {
             // For basic element scrolling, use scrollIntoView
             if (element.scrollIntoView) {
-              element.scrollIntoView({ 
+              element.scrollIntoView({
                 behavior: behavior as ScrollBehavior,
                 block,
-                inline
+                inline,
               });
             }
           } catch (error) {
@@ -555,19 +581,20 @@ export class GoCommand implements TypedCommandImplementation<
               success: false,
               error: {
                 name: 'ValidationError',
-          type: 'runtime-error',
+                type: 'runtime-error',
                 message: `Scroll failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
                 code: 'SCROLL_FAILED',
-                suggestions: ['Check if element is visible', 'Verify element is scrollable']
+                suggestions: ['Check if element is visible', 'Verify element is scrollable'],
               },
-              type: 'error'
+              type: 'error',
             };
           }
         }
       }
 
       // Dispatch enhanced scroll event
-      const scrollEventTarget = (context.me instanceof HTMLElement ? context.me : null) || document.body;
+      const scrollEventTarget =
+        (context.me instanceof HTMLElement ? context.me : null) || document.body;
       dispatchCustomEvent(scrollEventTarget, 'hyperscript:go', {
         context,
         command: this.name,
@@ -578,15 +605,14 @@ export class GoCommand implements TypedCommandImplementation<
         coordinates: { x, y },
         timestamp: Date.now(),
         metadata: this.metadata,
-        result: 'success'
+        result: 'success',
       });
 
       return {
         success: true,
         value: element,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -595,23 +621,23 @@ export class GoCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Element scrolling failed',
           code: 'SCROLL_EXECUTION_FAILED',
-          suggestions: ['Check target element validity', 'Verify scroll parameters']
+          suggestions: ['Check target element validity', 'Verify scroll parameters'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
 
   private parseScrollPosition(args: any[]): { vertical: string; horizontal: string } {
     const position = { vertical: 'top', horizontal: 'nearest' }; // Default values
-    
+
     // Look for position keywords
     const verticalKeywords = ['top', 'middle', 'bottom'];
     const horizontalKeywords = ['left', 'center', 'right'];
-    
+
     let hasVerticalKeyword = false;
     let hasHorizontalKeyword = false;
-    
+
     for (const arg of args) {
       if (typeof arg === 'string') {
         if (verticalKeywords.includes(arg)) {
@@ -623,12 +649,12 @@ export class GoCommand implements TypedCommandImplementation<
         }
       }
     }
-    
+
     // If only horizontal positioning is specified, use 'nearest' for vertical
     if (hasHorizontalKeyword && !hasVerticalKeyword) {
       position.vertical = 'nearest';
     }
-    
+
     return position;
   }
 
@@ -637,12 +663,12 @@ export class GoCommand implements TypedCommandImplementation<
     const ofIndex = args.findIndex(arg => arg === 'of');
     if (ofIndex !== -1 && ofIndex + 1 < args.length) {
       let targetArg = args[ofIndex + 1];
-      
+
       // Skip "the" keyword if it appears right after "of"
       if (targetArg === 'the' && ofIndex + 2 < args.length) {
         targetArg = args[ofIndex + 2];
       }
-      
+
       return targetArg;
     }
 
@@ -658,22 +684,44 @@ export class GoCommand implements TypedCommandImplementation<
     for (let i = 0; i < args.length; i++) {
       if (args[i] === 'the' && i + 1 < args.length) {
         const next = args[i + 1];
-        if (typeof next === 'string' && next !== 'top' && next !== 'middle' && next !== 'bottom' && 
-            next !== 'left' && next !== 'center' && next !== 'right' && next !== 'of') {
+        if (
+          typeof next === 'string' &&
+          next !== 'top' &&
+          next !== 'middle' &&
+          next !== 'bottom' &&
+          next !== 'left' &&
+          next !== 'center' &&
+          next !== 'right' &&
+          next !== 'of'
+        ) {
           return next;
         }
       }
     }
 
     // Look for selector-like arguments or element names (skip position keywords)
-    const positionKeywords = ['top', 'middle', 'bottom', 'left', 'center', 'right', 'of', 'the', 'to', 'smoothly', 'instantly'];
+    const positionKeywords = [
+      'top',
+      'middle',
+      'bottom',
+      'left',
+      'center',
+      'right',
+      'of',
+      'the',
+      'to',
+      'smoothly',
+      'instantly',
+    ];
     for (const arg of args) {
-      if (typeof arg === 'string' && !positionKeywords.includes(arg) && (
-        arg.startsWith('#') || 
-        arg.startsWith('.') || 
-        arg.includes('[') ||
-        /^[a-zA-Z][a-zA-Z0-9-]*$/.test(arg) // Allow hyphens in element names
-      )) {
+      if (
+        typeof arg === 'string' &&
+        !positionKeywords.includes(arg) &&
+        (arg.startsWith('#') ||
+          arg.startsWith('.') ||
+          arg.includes('[') ||
+          /^[a-zA-Z][a-zA-Z0-9-]*$/.test(arg)) // Allow hyphens in element names
+      ) {
         return arg;
       }
     }
@@ -737,12 +785,12 @@ export class GoCommand implements TypedCommandImplementation<
     if (typeof target === 'object' && target && (target as any).nodeType) {
       return target as HTMLElement;
     }
-    
+
     // Handle string targets
     if (typeof target !== 'string') {
       target = String(target);
     }
-    
+
     // Handle special element names
     if (target === 'body' && typeof document !== 'undefined') {
       return document.body;
@@ -750,7 +798,7 @@ export class GoCommand implements TypedCommandImplementation<
     if (target === 'html' && typeof document !== 'undefined') {
       return document.documentElement;
     }
-    
+
     // Handle context references
     if (target === 'me' && context.me) {
       return asHTMLElement(context.me) || null;
@@ -790,15 +838,23 @@ export class GoCommand implements TypedCommandImplementation<
     return null;
   }
 
-  private calculateScrollPosition(element: HTMLElement, position: { vertical: string; horizontal: string }, offset: number): { x: number; y: number } {
+  private calculateScrollPosition(
+    element: HTMLElement,
+    position: { vertical: string; horizontal: string },
+    offset: number
+  ): { x: number; y: number } {
     // Default values for test environment
     let x = 0;
     let y = 0;
 
     if (typeof window !== 'undefined' && element.getBoundingClientRect) {
       const rect = element.getBoundingClientRect();
-      const scrollLeft = window.pageXOffset || (document.documentElement && document.documentElement.scrollLeft) || 0;
-      const scrollTop = window.pageYOffset || (document.documentElement && document.documentElement.scrollTop) || 0;
+      const scrollLeft =
+        window.pageXOffset ||
+        (document.documentElement && document.documentElement.scrollLeft) ||
+        0;
+      const scrollTop =
+        window.pageYOffset || (document.documentElement && document.documentElement.scrollTop) || 0;
       const innerWidth = window.innerWidth || 800; // Default width for testing
       const innerHeight = window.innerHeight || 600; // Default height for testing
 
@@ -844,17 +900,18 @@ export class GoCommand implements TypedCommandImplementation<
           success: false,
           error: {
             name: 'ValidationError',
-          type: 'runtime-error',
+            type: 'runtime-error',
             message: 'Browser history API not available',
             code: 'HISTORY_API_UNAVAILABLE',
-            suggestions: ['Check if running in browser environment']
+            suggestions: ['Check if running in browser environment'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
       // Dispatch enhanced history event
-      const historyEventTarget = (context.me instanceof HTMLElement ? context.me : null) || document.body;
+      const historyEventTarget =
+        (context.me instanceof HTMLElement ? context.me : null) || document.body;
       dispatchCustomEvent(historyEventTarget, 'hyperscript:go', {
         context,
         command: this.name,
@@ -862,15 +919,14 @@ export class GoCommand implements TypedCommandImplementation<
         direction: 'back',
         timestamp: Date.now(),
         metadata: this.metadata,
-        result: 'success'
+        result: 'success',
       });
 
       return {
         success: true,
         value: 'back',
-        type: 'string'
+        type: 'string',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -879,9 +935,9 @@ export class GoCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'History navigation failed',
           code: 'HISTORY_NAVIGATION_FAILED',
-          suggestions: ['Check browser history support', 'Verify navigation context']
+          suggestions: ['Check browser history support', 'Verify navigation context'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -891,24 +947,31 @@ export class GoCommand implements TypedCommandImplementation<
     if (urlIndex === -1) {
       return {
         isValid: false,
-        errors: [{
-          type: 'syntax-error' as const,
-          message: 'URL navigation requires "url" keyword',
-          suggestions: ['Use syntax: go to url <url>']
-        }],
-        suggestions: ['Use: go to url "https://example.com"']
+        errors: [
+          {
+            type: 'syntax-error' as const,
+            message: 'URL navigation requires "url" keyword',
+            suggestions: ['Use syntax: go to url <url>'],
+          },
+        ],
+        suggestions: ['Use: go to url "https://example.com"'],
       };
     }
 
     if (urlIndex + 1 >= args.length) {
       return {
         isValid: false,
-        errors: [{
-          type: 'missing-argument' as const,
-          message: 'URL is required after "url" keyword',
-          suggestions: ['Provide URL string after "url" keyword']
-        }],
-        suggestions: ['Use: go to url "https://example.com"', 'Include URL string as next argument']
+        errors: [
+          {
+            type: 'missing-argument' as const,
+            message: 'URL is required after "url" keyword',
+            suggestions: ['Provide URL string after "url" keyword'],
+          },
+        ],
+        suggestions: [
+          'Use: go to url "https://example.com"',
+          'Include URL string as next argument',
+        ],
       };
     }
 
@@ -918,12 +981,14 @@ export class GoCommand implements TypedCommandImplementation<
       if (typeof url === 'string' && !this.isValidUrl(url)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error' as const,
-            message: `Invalid URL format: "${url}"`,
-            suggestions: ['Use valid URL format like "https://example.com"']
-          }],
-          suggestions: ['Include protocol (http:// or https://)', 'Check URL syntax']
+          errors: [
+            {
+              type: 'syntax-error' as const,
+              message: `Invalid URL format: "${url}"`,
+              suggestions: ['Use valid URL format like "https://example.com"'],
+            },
+          ],
+          suggestions: ['Include protocol (http:// or https://)', 'Check URL syntax'],
         };
       }
     }
@@ -931,38 +996,40 @@ export class GoCommand implements TypedCommandImplementation<
     return {
       isValid: true,
       errors: [],
-      suggestions: [] 
+      suggestions: [],
     };
   }
 
   private validateElementScrolling(args: unknown[]): UnifiedValidationResult {
     // Element scrolling is very flexible, so minimal validation
     // Most patterns are allowed: go to top of <element>, go to <element>, etc.
-    
+
     // Check for obviously invalid patterns
     if (args.length >= 2 && typeof args[0] === 'string' && typeof args[1] === 'string') {
       const firstArg = args[0].toLowerCase();
       const secondArg = args[1].toLowerCase();
-      
+
       // Check for clearly invalid combinations
       if (firstArg === 'invalid' && secondArg === 'combination') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error' as const,
-            message: 'Invalid go command syntax',
-            suggestions: ['Use valid go command patterns']
-          }],
-          suggestions: ['Use: go to top of <element>', 'Use: go to <element>', 'Use: go back']
+          errors: [
+            {
+              type: 'syntax-error' as const,
+              message: 'Invalid go command syntax',
+              suggestions: ['Use valid go command patterns'],
+            },
+          ],
+          suggestions: ['Use: go to top of <element>', 'Use: go to <element>', 'Use: go back'],
         };
       }
     }
-    
+
     // Allow most other patterns - they'll be validated at runtime
     return {
       isValid: true,
       errors: [],
-      suggestions: [] 
+      suggestions: [],
     };
   }
 
@@ -984,7 +1051,6 @@ export class GoCommand implements TypedCommandImplementation<
 
     return undefined;
   }
-
 }
 
 /**

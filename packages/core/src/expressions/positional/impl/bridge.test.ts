@@ -11,7 +11,7 @@ import {
   EnhancedPositionalAdapter,
   LegacyCompatibilityLayer,
   ExpressionMigrationUtility,
-  PositionalUtilities
+  PositionalUtilities,
 } from './bridge.ts';
 import type { ExecutionContext } from '../../../types/core.ts';
 
@@ -41,7 +41,7 @@ describe('Enhanced Positional Bridge', () => {
       result: 'test-result',
       locals: new Map(),
       globals: new Map(),
-      event: null
+      event: null,
     };
 
     // Clear DOM
@@ -52,7 +52,7 @@ describe('Enhanced Positional Bridge', () => {
   describe('Context Conversion', () => {
     it('should convert ExecutionContext to TypedExpressionContext', () => {
       const typedContext = createTypedExpressionContext(mockContext);
-      
+
       expect(typedContext.me).toBe(mockContext.me);
       expect(typedContext.you).toBe(mockContext.you);
       expect(typedContext.it).toBe(mockContext.it);
@@ -60,7 +60,7 @@ describe('Enhanced Positional Bridge', () => {
       expect(typedContext.locals).toBe(mockContext.locals);
       expect(typedContext.globals).toBe(mockContext.globals);
       expect(typedContext.event).toBe(mockContext.event);
-      
+
       // Enhanced properties
       expect(typedContext.expressionStack).toEqual([]);
       expect(typedContext.evaluationDepth).toBe(0);
@@ -73,11 +73,11 @@ describe('Enhanced Positional Bridge', () => {
         ...mockContext,
         locals: undefined,
         globals: undefined,
-        event: undefined
+        event: undefined,
       } as any;
 
       const typedContext = createTypedExpressionContext(contextWithoutMaps);
-      
+
       expect(typedContext.locals).toBeInstanceOf(Map);
       expect(typedContext.globals).toBeInstanceOf(Map);
       expect(typedContext.event).toBe(null);
@@ -85,13 +85,13 @@ describe('Enhanced Positional Bridge', () => {
 
     it('should update ExecutionContext from TypedExpressionContext', () => {
       const typedContext = createTypedExpressionContext(mockContext);
-      
+
       // Modify typed context
       typedContext.result = 'updated-result';
       typedContext.it = ['modified', 'collection'];
-      
+
       const updatedContext = updateExecutionContext(mockContext, typedContext);
-      
+
       expect(updatedContext.result).toBe('updated-result');
       expect(updatedContext.it).toEqual(['modified', 'collection']);
       expect(updatedContext.me).toBe(mockContext.me);
@@ -140,7 +140,10 @@ describe('Enhanced Positional Bridge', () => {
     });
 
     it('should validate expression input', () => {
-      const validation = EnhancedPositionalAdapter.validateExpressionInput('at', { index: 0, collection: [1, 2, 3] });
+      const validation = EnhancedPositionalAdapter.validateExpressionInput('at', {
+        index: 0,
+        collection: [1, 2, 3],
+      });
       expect(validation).toBeDefined();
       expect(validation?.isValid).toBe(true);
     });
@@ -149,33 +152,33 @@ describe('Enhanced Positional Bridge', () => {
   describe('LegacyCompatibilityLayer', () => {
     it('should provide legacy-compatible first expression', async () => {
       const expression = LegacyCompatibilityLayer.firstExpression;
-      
+
       expect(expression.name).toBe('first');
       expect(expression.category).toBe('Reference');
       expect(expression.evaluatesTo).toBe('Any');
-      
+
       const result = await expression.evaluate(mockContext, [100, 200, 300]);
       expect(result).toBe(100);
     });
 
     it('should provide legacy-compatible last expression', async () => {
       const expression = LegacyCompatibilityLayer.lastExpression;
-      
+
       expect(expression.name).toBe('last');
       expect(expression.category).toBe('Reference');
       expect(expression.evaluatesTo).toBe('Any');
-      
+
       const result = await expression.evaluate(mockContext, [100, 200, 300]);
       expect(result).toBe(300);
     });
 
     it('should provide legacy-compatible at expression', async () => {
       const expression = LegacyCompatibilityLayer.atExpression;
-      
+
       expect(expression.name).toBe('at');
       expect(expression.category).toBe('Reference');
       expect(expression.evaluatesTo).toBe('Any');
-      
+
       const result = await expression.evaluate(mockContext, 1, [100, 200, 300]);
       expect(result).toBe(200);
     });
@@ -203,23 +206,23 @@ describe('Enhanced Positional Bridge', () => {
 
     it('should manage expression migration states', () => {
       expect(ExpressionMigrationUtility.isEnhancedEnabled('first')).toBe(false);
-      
+
       ExpressionMigrationUtility.enableEnhanced('first');
       expect(ExpressionMigrationUtility.isEnhancedEnabled('first')).toBe(true);
-      
+
       ExpressionMigrationUtility.disableEnhanced('first');
       expect(ExpressionMigrationUtility.isEnhancedEnabled('first')).toBe(false);
     });
 
     it('should enable/disable all enhanced expressions', () => {
       ExpressionMigrationUtility.enableAllEnhanced();
-      
+
       expect(ExpressionMigrationUtility.isEnhancedEnabled('first')).toBe(true);
       expect(ExpressionMigrationUtility.isEnhancedEnabled('last')).toBe(true);
       expect(ExpressionMigrationUtility.isEnhancedEnabled('at')).toBe(true);
-      
+
       ExpressionMigrationUtility.disableAllEnhanced();
-      
+
       expect(ExpressionMigrationUtility.isEnhancedEnabled('first')).toBe(false);
       expect(ExpressionMigrationUtility.isEnhancedEnabled('last')).toBe(false);
       expect(ExpressionMigrationUtility.isEnhancedEnabled('at')).toBe(false);
@@ -228,7 +231,7 @@ describe('Enhanced Positional Bridge', () => {
     it('should provide migration status', () => {
       ExpressionMigrationUtility.enableEnhanced('first');
       ExpressionMigrationUtility.enableEnhanced('last');
-      
+
       const status = ExpressionMigrationUtility.getMigrationStatus();
       expect(status.first).toBe(true);
       expect(status.last).toBe(true);
@@ -244,7 +247,11 @@ describe('Enhanced Positional Bridge', () => {
     });
 
     it('should handle first operation failures with fallback', async () => {
-      const result = await PositionalUtilities.safeFirst(mockContext, Symbol('invalid'), 'fallback');
+      const result = await PositionalUtilities.safeFirst(
+        mockContext,
+        Symbol('invalid'),
+        'fallback'
+      );
       expect(result.success).toBe(false);
       expect(result.value).toBe('fallback');
       expect(result.error).toBeDefined();
@@ -273,11 +280,11 @@ describe('Enhanced Positional Bridge', () => {
       const operations = [
         { type: 'first' as const, collection: [1, 2, 3], key: 'first_result' },
         { type: 'last' as const, collection: [4, 5, 6], key: 'last_result' },
-        { type: 'at' as const, collection: [7, 8, 9], index: 1, key: 'at_result' }
+        { type: 'at' as const, collection: [7, 8, 9], index: 1, key: 'at_result' },
       ];
 
       const result = await PositionalUtilities.batchPositionalOperations(mockContext, operations);
-      
+
       expect(result.success).toBe(true);
       expect(result.results.first_result).toBe(1);
       expect(result.results.last_result).toBe(6);
@@ -289,11 +296,11 @@ describe('Enhanced Positional Bridge', () => {
       const operations = [
         { type: 'first' as const, collection: [1, 2, 3], key: 'success' },
         { type: 'at' as const, collection: [4, 5, 6], key: 'missing_index' }, // Missing index
-        { type: 'first' as const, collection: Symbol('invalid'), key: 'invalid_collection' }
+        { type: 'first' as const, collection: Symbol('invalid'), key: 'invalid_collection' },
       ];
 
       const result = await PositionalUtilities.batchPositionalOperations(mockContext, operations);
-      
+
       expect(result.success).toBe(false);
       expect(result.results.success).toBe(1); // Should succeed
       expect(result.errors).toHaveLength(2); // Two failures
@@ -301,7 +308,7 @@ describe('Enhanced Positional Bridge', () => {
 
     it('should provide available operations metadata', () => {
       const operations = PositionalUtilities.getAvailableOperations();
-      
+
       expect(operations.first).toBeDefined();
       expect(operations.first.description).toContain('Get first element');
       expect(operations.last).toBeDefined();
@@ -367,19 +374,19 @@ describe('Enhanced Positional Bridge', () => {
   describe('Error Handling Integration', () => {
     it('should provide detailed error information through bridge', async () => {
       const result = await PositionalUtilities.safeAt(mockContext, 0, Symbol('invalid'));
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
     });
 
     it('should handle unexpected errors gracefully', async () => {
       // Force an error by passing invalid arguments to internal functions
-      const result = await PositionalUtilities.safeFirst(mockContext, { 
-        get length() { 
-          throw new Error('Getter error'); 
-        } 
+      const result = await PositionalUtilities.safeFirst(mockContext, {
+        get length() {
+          throw new Error('Getter error');
+        },
       });
-      
+
       expect(result.success).toBe(false);
       expect(result.value).toBe(null);
       expect(result.error).toBeDefined();
@@ -391,7 +398,7 @@ describe('Enhanced Positional Bridge', () => {
       const startTime = Date.now();
       await PositionalUtilities.safeFirst(mockContext, [1, 2, 3]);
       const duration = Date.now() - startTime;
-      
+
       expect(duration).toBeLessThan(50); // Should be very fast
     });
 
@@ -400,13 +407,13 @@ describe('Enhanced Positional Bridge', () => {
         type: 'at' as const,
         collection: Array.from({ length: 100 }, (_, j) => j),
         index: i * 10,
-        key: `op_${i}`
+        key: `op_${i}`,
       }));
 
       const startTime = Date.now();
       const result = await PositionalUtilities.batchPositionalOperations(mockContext, operations);
       const duration = Date.now() - startTime;
-      
+
       expect(result.success).toBe(true);
       expect(duration).toBeLessThan(100); // Should handle batch operations efficiently
     });
@@ -415,13 +422,13 @@ describe('Enhanced Positional Bridge', () => {
   describe('Backward Compatibility', () => {
     it('should maintain compatibility with existing expression interfaces', () => {
       const firstExpr = LegacyCompatibilityLayer.firstExpression;
-      
+
       expect(firstExpr).toHaveProperty('name');
       expect(firstExpr).toHaveProperty('category');
       expect(firstExpr).toHaveProperty('evaluatesTo');
       expect(firstExpr).toHaveProperty('evaluate');
       expect(firstExpr).toHaveProperty('validate');
-      
+
       expect(typeof firstExpr.evaluate).toBe('function');
       expect(typeof firstExpr.validate).toBe('function');
     });
@@ -431,14 +438,14 @@ describe('Enhanced Positional Bridge', () => {
       const expressions = {
         first: LegacyCompatibilityLayer.firstExpression,
         last: LegacyCompatibilityLayer.lastExpression,
-        at: LegacyCompatibilityLayer.atExpression
+        at: LegacyCompatibilityLayer.atExpression,
       };
 
       // Test first
       const firstResult = await expressions.first.evaluate(mockContext, [10, 20, 30]);
       expect(firstResult).toBe(10);
 
-      // Test last  
+      // Test last
       const lastResult = await expressions.last.evaluate(mockContext, [10, 20, 30]);
       expect(lastResult).toBe(30);
 

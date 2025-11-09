@@ -11,7 +11,7 @@ import type {
   UnifiedExpressionMetadata as ExpressionMetadata,
   UnifiedTypedResult as TypedResult,
   UnifiedLLMDocumentation as LLMDocumentation,
-  UnifiedExpressionCategory as ExpressionCategory
+  UnifiedExpressionCategory as ExpressionCategory,
 } from '../../../types/index';
 
 // Define BaseTypedExpression locally for now
@@ -31,11 +31,13 @@ interface BaseTypedExpression<T> {
 // Input Schemas
 // ============================================================================
 
-const ComparisonInputSchema = v.object({
-  left: v.unknown().describe('Left operand value'),
-  operator: z.enum(['==', '!=', '>', '<', '>=', '<=']).describe('Comparison operator'),
-  right: v.unknown().describe('Right operand value')
-}).strict();
+const ComparisonInputSchema = v
+  .object({
+    left: v.unknown().describe('Left operand value'),
+    operator: z.enum(['==', '!=', '>', '<', '>=', '<=']).describe('Comparison operator'),
+    right: v.unknown().describe('Right operand value'),
+  })
+  .strict();
 
 type ComparisonInput = any; // Inferred from RuntimeValidator
 
@@ -61,20 +63,20 @@ export class EnhancedEqualsExpression implements BaseTypedExpression<boolean> {
       {
         input: '5 == "5"',
         description: 'Type coercion equality',
-        expectedOutput: true
+        expectedOutput: true,
       },
       {
         input: 'user.name == "John"',
         description: 'String comparison',
         expectedOutput: true,
-        context: { locals: new Map([['user', { name: 'John' }]]) }
-      }
+        context: { locals: new Map([['user', { name: 'John' }]]) },
+      },
     ],
     relatedExpressions: ['notEquals', 'strictEquals'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -85,49 +87,49 @@ export class EnhancedEqualsExpression implements BaseTypedExpression<boolean> {
         type: 'any',
         description: 'Left operand for comparison',
         optional: false,
-        examples: ['5', '"hello"', 'user.name', 'true']
+        examples: ['5', '"hello"', 'user.name', 'true'],
       },
       {
         name: 'right',
         type: 'any',
         description: 'Right operand for comparison',
         optional: false,
-        examples: ['"5"', '"hello"', '"John"', 'false']
-      }
+        examples: ['"5"', '"hello"', '"John"', 'false'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if operands are equal after type coercion, false otherwise',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Number equality',
         code: '5 == 5',
         explanation: 'Compare two numbers',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Type coercion',
         code: '5 == "5"',
         explanation: 'String "5" is coerced to number 5',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'String comparison',
         code: '"hello" == "hello"',
         explanation: 'Compare two identical strings',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Boolean comparison',
         code: 'true == 1',
         explanation: 'Boolean true is coerced to number 1',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['!=', '===', 'strictEquals', 'notEquals'],
-    tags: ['comparison', 'equality', 'coercion', 'logical']
+    tags: ['comparison', 'equality', 'coercion', 'logical'],
   };
 
   async evaluate(
@@ -142,7 +144,7 @@ export class EnhancedEqualsExpression implements BaseTypedExpression<boolean> {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -154,23 +156,21 @@ export class EnhancedEqualsExpression implements BaseTypedExpression<boolean> {
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Equality comparison failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
-        suggestions: [
-          'Ensure operands are valid values',
-          'Check for null or undefined values'
-        ]
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Equality comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Ensure operands are valid values', 'Check for null or undefined values'],
       };
     }
   }
@@ -178,19 +178,17 @@ export class EnhancedEqualsExpression implements BaseTypedExpression<boolean> {
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid comparison input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide left and right operands',
-            'Use valid comparison operator'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid comparison input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide left and right operands', 'Use valid comparison operator'],
         };
       }
 
@@ -198,38 +196,46 @@ export class EnhancedEqualsExpression implements BaseTypedExpression<boolean> {
       if ((parsed.data as any).operator !== '==') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: `Equals expression expects == operator, got ${(parsed.data as any).operator}`,
-            suggestions: []
-          }],
+          errors: [
+            {
+              type: 'missing-argument',
+              message: `Equals expression expects == operator, got ${(parsed.data as any).operator}`,
+              suggestions: [],
+            },
+          ],
           suggestions: [
             'Use == for equality comparison',
-            'Use appropriate expression for other operators'
-          ]
+            'Use appropriate expression for other operators',
+          ],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -238,7 +244,7 @@ export class EnhancedEqualsExpression implements BaseTypedExpression<boolean> {
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -266,55 +272,56 @@ export class EnhancedNotEqualsExpression implements BaseTypedExpression<boolean>
       {
         input: '5 != "6"',
         description: 'Type coercion inequality',
-        expectedOutput: true
-      }
+        expectedOutput: true,
+      },
     ],
     relatedExpressions: ['equals', 'strictNotEquals'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Performs inequality comparison between two values with JavaScript-style type coercion',
+    summary:
+      'Performs inequality comparison between two values with JavaScript-style type coercion',
     parameters: [
       {
         name: 'left',
         type: 'any',
         description: 'Left operand for comparison',
         optional: false,
-        examples: ['5', '"hello"', 'user.status']
+        examples: ['5', '"hello"', 'user.status'],
       },
       {
         name: 'right',
         type: 'any',
         description: 'Right operand for comparison',
         optional: false,
-        examples: ['"6"', '"world"', '"active"']
-      }
+        examples: ['"6"', '"world"', '"active"'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if operands are not equal after type coercion, false otherwise',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Number inequality',
         code: '5 != 3',
         explanation: 'Compare two different numbers',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Type coercion',
         code: '5 != "3"',
         explanation: 'String "3" is coerced to number 3',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['==', '!==', 'equals'],
-    tags: ['comparison', 'inequality', 'coercion', 'logical']
+    tags: ['comparison', 'inequality', 'coercion', 'logical'],
   };
 
   async evaluate(
@@ -329,7 +336,7 @@ export class EnhancedNotEqualsExpression implements BaseTypedExpression<boolean>
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -340,23 +347,21 @@ export class EnhancedNotEqualsExpression implements BaseTypedExpression<boolean>
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Inequality comparison failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
-        suggestions: [
-          'Ensure operands are valid values',
-          'Check for null or undefined values'
-        ]
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Inequality comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Ensure operands are valid values', 'Check for null or undefined values'],
       };
     }
   }
@@ -364,56 +369,60 @@ export class EnhancedNotEqualsExpression implements BaseTypedExpression<boolean>
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid comparison input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide left and right operands',
-            'Use valid comparison operator'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid comparison input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide left and right operands', 'Use valid comparison operator'],
         };
       }
 
       if ((parsed.data as any).operator !== '!=') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: `Not equals expression expects != operator, got ${(parsed.data as any).operator}`,
-            suggestions: []
-          }],
-          suggestions: [
-            'Use != for inequality comparison'
-          ]
+          errors: [
+            {
+              type: 'missing-argument',
+              message: `Not equals expression expects != operator, got ${(parsed.data as any).operator}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Use != for inequality comparison'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -422,7 +431,7 @@ export class EnhancedNotEqualsExpression implements BaseTypedExpression<boolean>
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -450,19 +459,19 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
       {
         input: '10 > 5',
         description: 'Numeric greater than',
-        expectedOutput: true
+        expectedOutput: true,
       },
       {
         input: '"b" > "a"',
         description: 'String comparison',
-        expectedOutput: true
-      }
+        expectedOutput: true,
+      },
     ],
     relatedExpressions: ['lessThan', 'greaterThanOrEqual'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -473,43 +482,43 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
         type: 'any',
         description: 'Left operand for comparison',
         optional: false,
-        examples: ['10', '"b"', 'age', 'price']
+        examples: ['10', '"b"', 'age', 'price'],
       },
       {
         name: 'right',
         type: 'any',
         description: 'Right operand for comparison',
         optional: false,
-        examples: ['5', '"a"', '18', '100']
-      }
+        examples: ['5', '"a"', '18', '100'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if left operand is greater than right operand',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Number comparison',
         code: '10 > 5',
         explanation: 'Compare two numbers',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'String comparison',
         code: '"banana" > "apple"',
         explanation: 'Lexicographic string comparison',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Mixed type coercion',
         code: '"10" > 5',
         explanation: 'String "10" coerced to number 10',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['<', '>=', '<=', 'lessThan'],
-    tags: ['comparison', 'greater', 'numeric', 'logical']
+    tags: ['comparison', 'greater', 'numeric', 'logical'],
   };
 
   async evaluate(
@@ -524,7 +533,7 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -535,23 +544,24 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Greater than comparison failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Greater than comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Ensure operands can be compared',
-          'Check for valid numeric or string values'
-        ]
+          'Check for valid numeric or string values',
+        ],
       };
     }
   }
@@ -559,56 +569,60 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid comparison input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide left and right operands',
-            'Use valid comparison operator'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid comparison input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide left and right operands', 'Use valid comparison operator'],
         };
       }
 
       if ((parsed.data as any).operator !== '>') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: `Greater than expression expects > operator, got ${(parsed.data as any).operator}`,
-            suggestions: []
-          }],
-          suggestions: [
-            'Use > for greater than comparison'
-          ]
+          errors: [
+            {
+              type: 'missing-argument',
+              message: `Greater than expression expects > operator, got ${(parsed.data as any).operator}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Use > for greater than comparison'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -617,7 +631,7 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -645,14 +659,14 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
       {
         input: '5 < 10',
         description: 'Numeric less than',
-        expectedOutput: true
-      }
+        expectedOutput: true,
+      },
     ],
     relatedExpressions: ['greaterThan', 'lessThanOrEqual'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -663,37 +677,37 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
         type: 'any',
         description: 'Left operand for comparison',
         optional: false,
-        examples: ['5', '"a"', 'age']
+        examples: ['5', '"a"', 'age'],
       },
       {
         name: 'right',
         type: 'any',
         description: 'Right operand for comparison',
         optional: false,
-        examples: ['10', '"b"', '65']
-      }
+        examples: ['10', '"b"', '65'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if left operand is less than right operand',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Number comparison',
         code: '5 < 10',
         explanation: 'Compare two numbers',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'String comparison',
         code: '"apple" < "banana"',
         explanation: 'Lexicographic string comparison',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['>', '<=', '>=', 'greaterThan'],
-    tags: ['comparison', 'less', 'numeric', 'logical']
+    tags: ['comparison', 'less', 'numeric', 'logical'],
   };
 
   async evaluate(
@@ -708,7 +722,7 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -719,23 +733,24 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Less than comparison failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Less than comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Ensure operands can be compared',
-          'Check for valid numeric or string values'
-        ]
+          'Check for valid numeric or string values',
+        ],
       };
     }
   }
@@ -743,55 +758,60 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid comparison input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide left and right operands'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid comparison input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide left and right operands'],
         };
       }
 
       if ((parsed.data as any).operator !== '<') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: `Less than expression expects < operator, got ${(parsed.data as any).operator}`,
-            suggestions: []
-          }],
-          suggestions: [
-            'Use < for less than comparison'
-          ]
+          errors: [
+            {
+              type: 'missing-argument',
+              message: `Less than expression expects < operator, got ${(parsed.data as any).operator}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Use < for less than comparison'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -800,7 +820,7 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -828,14 +848,14 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
       {
         input: '10 >= 10',
         description: 'Equal values comparison',
-        expectedOutput: true
-      }
+        expectedOutput: true,
+      },
     ],
     relatedExpressions: ['greaterThan', 'lessThanOrEqual'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -846,37 +866,37 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
         type: 'any',
         description: 'Left operand for comparison',
         optional: false,
-        examples: ['10', 'score']
+        examples: ['10', 'score'],
       },
       {
         name: 'right',
         type: 'any',
         description: 'Right operand for comparison',
         optional: false,
-        examples: ['10', 'threshold']
-      }
+        examples: ['10', 'threshold'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if left operand is greater than or equal to right operand',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Equal values',
         code: '10 >= 10',
         explanation: 'Equal values return true',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Greater value',
         code: '15 >= 10',
         explanation: 'Greater value returns true',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['>', '<', '<=', 'greaterThan'],
-    tags: ['comparison', 'greater-equal', 'numeric', 'logical']
+    tags: ['comparison', 'greater-equal', 'numeric', 'logical'],
   };
 
   async evaluate(
@@ -891,7 +911,7 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -902,23 +922,24 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Greater than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Greater than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Ensure operands can be compared',
-          'Check for valid numeric or string values'
-        ]
+          'Check for valid numeric or string values',
+        ],
       };
     }
   }
@@ -926,55 +947,60 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid comparison input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide left and right operands'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid comparison input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide left and right operands'],
         };
       }
 
       if ((parsed.data as any).operator !== '>=') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: `Greater than or equal expression expects >= operator, got ${(parsed.data as any).operator}`,
-            suggestions: []
-          }],
-          suggestions: [
-            'Use >= for greater than or equal comparison'
-          ]
+          errors: [
+            {
+              type: 'missing-argument',
+              message: `Greater than or equal expression expects >= operator, got ${(parsed.data as any).operator}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Use >= for greater than or equal comparison'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -983,7 +1009,7 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -1011,14 +1037,14 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
       {
         input: '5 <= 10',
         description: 'Less than comparison',
-        expectedOutput: true
-      }
+        expectedOutput: true,
+      },
     ],
     relatedExpressions: ['lessThan', 'greaterThanOrEqual'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -1029,37 +1055,37 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
         type: 'any',
         description: 'Left operand for comparison',
         optional: false,
-        examples: ['5', 'age']
+        examples: ['5', 'age'],
       },
       {
         name: 'right',
         type: 'any',
         description: 'Right operand for comparison',
         optional: false,
-        examples: ['10', 'maxAge']
-      }
+        examples: ['10', 'maxAge'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if left operand is less than or equal to right operand',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Less than',
         code: '5 <= 10',
         explanation: 'Less than value returns true',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Equal values',
         code: '10 <= 10',
         explanation: 'Equal values return true',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['<', '>', '>=', 'lessThan'],
-    tags: ['comparison', 'less-equal', 'numeric', 'logical']
+    tags: ['comparison', 'less-equal', 'numeric', 'logical'],
   };
 
   async evaluate(
@@ -1074,7 +1100,7 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -1085,23 +1111,24 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Less than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Less than or equal comparison failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Ensure operands can be compared',
-          'Check for valid numeric or string values'
-        ]
+          'Check for valid numeric or string values',
+        ],
       };
     }
   }
@@ -1109,55 +1136,60 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid comparison input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide left and right operands'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid comparison input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide left and right operands'],
         };
       }
 
       if ((parsed.data as any).operator !== '<=') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: `Less than or equal expression expects <= operator, got ${(parsed.data as any).operator}`,
-            suggestions: []
-          }],
-          suggestions: [
-            'Use <= for less than or equal comparison'
-          ]
+          errors: [
+            {
+              type: 'missing-argument',
+              message: `Less than or equal expression expects <= operator, got ${(parsed.data as any).operator}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Use <= for less than or equal comparison'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -1166,7 +1198,7 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -1210,5 +1242,5 @@ export const comparisonExpressions = {
   greaterThan: createEnhancedGreaterThanExpression(),
   lessThan: createEnhancedLessThanExpression(),
   greaterThanOrEqual: createEnhancedGreaterThanOrEqualExpression(),
-  lessThanOrEqual: createEnhancedLessThanOrEqualExpression()
+  lessThanOrEqual: createEnhancedLessThanOrEqualExpression(),
 } as const;

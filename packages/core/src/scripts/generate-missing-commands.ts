@@ -9,14 +9,14 @@ import { join } from 'path';
 
 // Critical missing commands we want to implement first
 const PRIORITY_COMMANDS = [
-  'put',     // Content insertion - CRITICAL
-  'set',     // Variable assignment - CRITICAL  
-  'if',      // Conditional execution - CRITICAL
-  'repeat',  // Loops and iteration - CRITICAL
-  'call',    // Function execution - HIGH
-  'append',  // Content addition - HIGH
-  'make',    // Element creation - HIGH
-  'send'     // Event dispatching - HIGH
+  'put', // Content insertion - CRITICAL
+  'set', // Variable assignment - CRITICAL
+  'if', // Conditional execution - CRITICAL
+  'repeat', // Loops and iteration - CRITICAL
+  'call', // Function execution - HIGH
+  'append', // Content addition - HIGH
+  'make', // Element creation - HIGH
+  'send', // Event dispatching - HIGH
 ];
 
 function getCurrentlyImplemented(): string[] {
@@ -26,10 +26,9 @@ function getCurrentlyImplemented(): string[] {
     'src/commands/async',
     'src/commands/data',
     'src/commands/control-flow',
-    'src/commands/advanced'
+    'src/commands/advanced',
   ];
 
-  
   commandDirs.forEach(dir => {
     const fullPath = join(process.cwd(), dir);
     if (existsSync(fullPath)) {
@@ -43,15 +42,14 @@ function getCurrentlyImplemented(): string[] {
 
 function generatePriorityCommands(): void {
   console.log('🎯 Generating priority commands with LSP data...');
-  
+
   const generator = new CodeGenerator();
   const { commands } = generator.loadLSPData();
   const implemented = getCurrentlyImplemented();
-  
+
   // Filter to priority commands that aren't implemented
-  const toGenerate = commands.filter(cmd => 
-    PRIORITY_COMMANDS.includes(cmd.name) && 
-    !implemented.includes(cmd.name)
+  const toGenerate = commands.filter(
+    cmd => PRIORITY_COMMANDS.includes(cmd.name) && !implemented.includes(cmd.name)
   );
 
   console.log(`📋 Found ${toGenerate.length} priority commands to generate:`);
@@ -69,17 +67,16 @@ function generatePriorityCommands(): void {
     try {
       const implementation = generator.generateCommandInterface(commandData);
       const test = generator.generateCommandTest(commandData);
-      
+
       console.log(`\n🚀 Generating ${commandData.name} command...`);
       console.log(`   Implementation: ${implementation.filePath}`);
       console.log(`   Tests: ${test.filePath}`);
       console.log(`   Examples: ${commandData.example_usage?.length || 0}`);
-      
+
       // In a real implementation, we would write the files here
       // For now, let's just show what would be generated
       console.log(`\n📝 Generated interface preview:`);
       console.log(implementation.code.substring(0, 200) + '...');
-      
     } catch (error) {
       console.error(`❌ Error generating ${commandData.name}:`, error);
     }
@@ -95,30 +92,32 @@ function generatePriorityCommands(): void {
 
 function analyzeImplementationGap(): void {
   console.log('🔍 Analyzing implementation gap...');
-  
+
   const generator = new CodeGenerator();
   const { commands, features } = generator.loadLSPData();
   const implemented = getCurrentlyImplemented();
-  
+
   console.log(`\n📊 Current Status:`);
   console.log(`   Implemented Commands: ${implemented.length}`);
   console.log(`   Total Commands: ${commands.length}`);
-  console.log(`   Implementation Rate: ${Math.round((implemented.length / commands.length) * 100)}%`);
-  
+  console.log(
+    `   Implementation Rate: ${Math.round((implemented.length / commands.length) * 100)}%`
+  );
+
   const missing = commands.filter(cmd => !implemented.includes(cmd.name));
   const priorityMissing = missing.filter(cmd => PRIORITY_COMMANDS.includes(cmd.name));
-  
+
   console.log(`\n🔴 Missing Commands (${missing.length}):`);
   console.log(`   Priority Missing: ${priorityMissing.length}`);
   console.log(`   Regular Missing: ${missing.length - priorityMissing.length}`);
-  
+
   console.log(`\n🎯 Priority Commands Status:`);
   PRIORITY_COMMANDS.forEach(cmd => {
     const status = implemented.includes(cmd) ? '✅' : '❌';
     const data = commands.find(c => c.name === cmd);
     console.log(`   ${status} ${cmd}: ${data?.syntax_canonical || 'Not found in LSP data'}`);
   });
-  
+
   console.log(`\n📋 Features Status:`);
   console.log(`   Total Features: ${features.length}`);
   features.forEach(feature => {
@@ -130,7 +129,7 @@ function analyzeImplementationGap(): void {
 // Main execution
 if (import.meta.url === `file://${process.argv[1]}`) {
   const command = process.argv[2];
-  
+
   switch (command) {
     case 'analyze':
       analyzeImplementationGap();

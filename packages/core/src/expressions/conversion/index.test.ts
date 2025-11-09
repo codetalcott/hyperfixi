@@ -5,12 +5,12 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createTestElement, createMockHyperscriptContext } from '../../test-setup';
-import { 
-  conversionExpressions, 
-  defaultConversions, 
-  getFormValues, 
-  getInputValue, 
-  parseFixedPrecision 
+import {
+  conversionExpressions,
+  defaultConversions,
+  getFormValues,
+  getInputValue,
+  parseFixedPrecision,
 } from './index';
 import type { ExecutionContext } from '../../types/core';
 
@@ -24,8 +24,12 @@ describe('Conversion Expressions', () => {
   describe('as expression', () => {
     describe('Basic type conversions', () => {
       it('should convert to Array', async () => {
-        expect(await conversionExpressions.as.evaluate(context, 'hello', 'Array')).toEqual(['hello']);
-        expect(await conversionExpressions.as.evaluate(context, [1, 2, 3], 'Array')).toEqual([1, 2, 3]);
+        expect(await conversionExpressions.as.evaluate(context, 'hello', 'Array')).toEqual([
+          'hello',
+        ]);
+        expect(await conversionExpressions.as.evaluate(context, [1, 2, 3], 'Array')).toEqual([
+          1, 2, 3,
+        ]);
         expect(await conversionExpressions.as.evaluate(context, null, 'Array')).toEqual([]);
       });
 
@@ -33,7 +37,9 @@ describe('Conversion Expressions', () => {
         expect(await conversionExpressions.as.evaluate(context, 123, 'String')).toBe('123');
         expect(await conversionExpressions.as.evaluate(context, true, 'String')).toBe('true');
         expect(await conversionExpressions.as.evaluate(context, null, 'String')).toBe('');
-        expect(await conversionExpressions.as.evaluate(context, { key: 'value' }, 'String')).toBe('{"key":"value"}');
+        expect(await conversionExpressions.as.evaluate(context, { key: 'value' }, 'String')).toBe(
+          '{"key":"value"}'
+        );
       });
 
       it('should convert to Number', async () => {
@@ -111,7 +117,7 @@ describe('Conversion Expressions', () => {
         const div = document.createElement('div');
         div.textContent = 'Hello';
         div.id = 'test';
-        
+
         const result = await conversionExpressions.as.evaluate(context, div, 'HTML');
         expect(result).toBe('<div id="test">Hello</div>');
 
@@ -139,34 +145,34 @@ describe('Conversion Expressions', () => {
           text: 'hello',
           number: 123,
           checkbox: true,
-          select: 'option1'
+          select: 'option1',
         });
       });
 
       it('should convert to Values:Form encoded string', async () => {
         const mockValues = { name: 'John Doe', age: '30' };
-        
+
         // Mock the Values conversion to return our test data
         const originalValues = defaultConversions.Values;
         defaultConversions.Values = () => mockValues;
-        
+
         const result = await conversionExpressions.as.evaluate(context, {}, 'Values:Form');
         expect(result).toBe('name=John+Doe&age=30');
-        
+
         // Restore original
         defaultConversions.Values = originalValues;
       });
 
       it('should convert to Values:JSON string', async () => {
         const mockValues = { name: 'John Doe', age: 30 };
-        
+
         // Mock the Values conversion to return our test data
         const originalValues = defaultConversions.Values;
         defaultConversions.Values = () => mockValues;
-        
+
         const result = await conversionExpressions.as.evaluate(context, {}, 'Values:JSON');
         expect(result).toBe('{"name":"John Doe","age":30}');
-        
+
         // Restore original
         defaultConversions.Values = originalValues;
       });
@@ -174,8 +180,12 @@ describe('Conversion Expressions', () => {
 
     describe('Fixed precision conversion', () => {
       it('should convert to fixed precision string', async () => {
-        expect(await conversionExpressions.as.evaluate(context, 123.456789, 'Fixed')).toBe('123.46');
-        expect(await conversionExpressions.as.evaluate(context, 123.456789, 'Fixed:4')).toBe('123.4568');
+        expect(await conversionExpressions.as.evaluate(context, 123.456789, 'Fixed')).toBe(
+          '123.46'
+        );
+        expect(await conversionExpressions.as.evaluate(context, 123.456789, 'Fixed:4')).toBe(
+          '123.4568'
+        );
         expect(await conversionExpressions.as.evaluate(context, 123.1, 'Fixed:3')).toBe('123.100');
       });
     });
@@ -183,23 +193,26 @@ describe('Conversion Expressions', () => {
     describe('Error handling', () => {
       it('should warn for unknown conversion types', async () => {
         const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        
+
         const result = await conversionExpressions.as.evaluate(context, 'test', 'UnknownType');
         expect(result).toBe('test'); // Returns original value
         expect(consoleSpy).toHaveBeenCalledWith('Unknown conversion type: UnknownType');
-        
+
         consoleSpy.mockRestore();
       });
 
       it('should throw error for non-string type', async () => {
-        await expect(conversionExpressions.as.evaluate(context, 'test', 123 as any))
-          .rejects.toThrow('Conversion type must be a string');
+        await expect(
+          conversionExpressions.as.evaluate(context, 'test', 123 as any)
+        ).rejects.toThrow('Conversion type must be a string');
       });
 
       it('should validate arguments', () => {
         expect(conversionExpressions.as.validate!(['value', 'String'])).toBeNull();
         expect(conversionExpressions.as.validate!(['value'])).toContain('exactly two arguments');
-        expect(conversionExpressions.as.validate!(['value', 'String', 'extra'])).toContain('exactly two arguments');
+        expect(conversionExpressions.as.validate!(['value', 'String', 'extra'])).toContain(
+          'exactly two arguments'
+        );
         expect(conversionExpressions.as.validate!(['value', 123])).toContain('must be a string');
       });
     });
@@ -229,7 +242,7 @@ describe('Conversion Expressions', () => {
         expect(await conversionExpressions.is.evaluate(context, 123, 'number')).toBe(true);
         expect(await conversionExpressions.is.evaluate(context, true, 'boolean')).toBe(true);
         expect(await conversionExpressions.is.evaluate(context, () => {}, 'function')).toBe(true);
-        
+
         expect(await conversionExpressions.is.evaluate(context, 123, 'string')).toBe(false);
         expect(await conversionExpressions.is.evaluate(context, 'hello', 'number')).toBe(false);
       });
@@ -238,7 +251,7 @@ describe('Conversion Expressions', () => {
         expect(await conversionExpressions.is.evaluate(context, {}, 'object')).toBe(true);
         expect(await conversionExpressions.is.evaluate(context, [], 'array')).toBe(true);
         expect(await conversionExpressions.is.evaluate(context, new Date(), 'date')).toBe(true);
-        
+
         expect(await conversionExpressions.is.evaluate(context, null, 'object')).toBe(false);
         expect(await conversionExpressions.is.evaluate(context, {}, 'array')).toBe(false);
       });
@@ -246,7 +259,7 @@ describe('Conversion Expressions', () => {
       it('should check DOM types', async () => {
         const div = document.createElement('div');
         const text = document.createTextNode('text');
-        
+
         expect(await conversionExpressions.is.evaluate(context, div, 'element')).toBe(true);
         expect(await conversionExpressions.is.evaluate(context, div, 'node')).toBe(true);
         expect(await conversionExpressions.is.evaluate(context, text, 'node')).toBe(true);
@@ -259,10 +272,12 @@ describe('Conversion Expressions', () => {
         expect(await conversionExpressions.is.evaluate(context, '', 'empty')).toBe(true);
         expect(await conversionExpressions.is.evaluate(context, [], 'empty')).toBe(true);
         expect(await conversionExpressions.is.evaluate(context, {}, 'empty')).toBe(true);
-        
+
         expect(await conversionExpressions.is.evaluate(context, 'hello', 'empty')).toBe(false);
         expect(await conversionExpressions.is.evaluate(context, [1], 'empty')).toBe(false);
-        expect(await conversionExpressions.is.evaluate(context, { key: 'value' }, 'empty')).toBe(false);
+        expect(await conversionExpressions.is.evaluate(context, { key: 'value' }, 'empty')).toBe(
+          false
+        );
       });
 
       it('should handle NaN for number type', async () => {
@@ -275,22 +290,27 @@ describe('Conversion Expressions', () => {
       it('should check constructor names', async () => {
         class CustomClass {}
         const instance = new CustomClass();
-        
-        expect(await conversionExpressions.is.evaluate(context, instance, 'customclass')).toBe(true);
+
+        expect(await conversionExpressions.is.evaluate(context, instance, 'customclass')).toBe(
+          true
+        );
         expect(await conversionExpressions.is.evaluate(context, {}, 'customclass')).toBe(false);
       });
     });
 
     describe('Error handling', () => {
       it('should throw error for non-string type', async () => {
-        await expect(conversionExpressions.is.evaluate(context, 'test', 123 as any))
-          .rejects.toThrow('Type check requires a string type');
+        await expect(
+          conversionExpressions.is.evaluate(context, 'test', 123 as any)
+        ).rejects.toThrow('Type check requires a string type');
       });
 
       it('should validate arguments', () => {
         expect(conversionExpressions.is.validate!(['value', 'string'])).toBeNull();
         expect(conversionExpressions.is.validate!(['value'])).toContain('exactly two arguments');
-        expect(conversionExpressions.is.validate!(['value', 'string', 'extra'])).toContain('exactly two arguments');
+        expect(conversionExpressions.is.validate!(['value', 'string', 'extra'])).toContain(
+          'exactly two arguments'
+        );
         expect(conversionExpressions.is.validate!(['value', 123])).toContain('must be a string');
       });
     });
@@ -312,12 +332,12 @@ describe('Conversion Expressions', () => {
       const testValue = 'test';
       const result = await conversionExpressions.async.evaluate(context, testValue);
       expect(result).toBe(testValue);
-      
+
       // Test with object
       const testObj = { key: 'value' };
       const result2 = await conversionExpressions.async.evaluate(context, testObj);
       expect(result2).toBe(testObj);
-      
+
       // Test that it doesn't modify the input
       const testArray = [1, 2, 3];
       const result3 = await conversionExpressions.async.evaluate(context, testArray);
@@ -333,7 +353,9 @@ describe('Conversion Expressions', () => {
     it('should validate arguments', () => {
       expect(conversionExpressions.async.validate!(['expression'])).toBeNull();
       expect(conversionExpressions.async.validate!([])).toContain('exactly one argument');
-      expect(conversionExpressions.async.validate!(['expr1', 'expr2'])).toContain('exactly one argument');
+      expect(conversionExpressions.async.validate!(['expr1', 'expr2'])).toContain(
+        'exactly one argument'
+      );
     });
 
     it('should have correct metadata', () => {
@@ -367,7 +389,7 @@ describe('Conversion Expressions', () => {
       it('should get checkbox value', () => {
         const checkbox = createTestElement('<input type="checkbox" checked />') as HTMLInputElement;
         expect(getInputValue(checkbox)).toBe(true);
-        
+
         checkbox.checked = false;
         expect(getInputValue(checkbox)).toBe(false);
       });
@@ -413,8 +435,12 @@ describe('Conversion Expressions', () => {
 
     it('should have appropriate precedence', () => {
       // async should have highest precedence (evaluated first)
-      expect(conversionExpressions.async.precedence).toBeGreaterThan(conversionExpressions.as.precedence!);
-      expect(conversionExpressions.as.precedence).toBeGreaterThan(conversionExpressions.is.precedence!);
+      expect(conversionExpressions.async.precedence).toBeGreaterThan(
+        conversionExpressions.as.precedence!
+      );
+      expect(conversionExpressions.as.precedence).toBeGreaterThan(
+        conversionExpressions.is.precedence!
+      );
     });
   });
 });

@@ -1,14 +1,14 @@
 /**
  * Command Execution Runtime
- * 
+ *
  * Provides the runtime system for executing hyperscript commands
  * Compatible with _hyperscript command execution patterns
  */
 
-import type { 
+import type {
   UnifiedExecutionContext as ExecutionContext,
   ExpressionNode,
-  CommandNode
+  CommandNode,
 } from './types/index';
 
 /**
@@ -16,16 +16,16 @@ import type {
  */
 export class CommandRuntime {
   private config: any;
-  
+
   constructor(config: any = {}) {
     this.config = {
       conversions: {
         Fragment: this.convertToFragment.bind(this),
         String: (val: any) => String(val),
         Number: (val: any) => Number(val),
-        ...config.conversions
+        ...config.conversions,
       },
-      ...config
+      ...config,
     };
   }
 
@@ -106,7 +106,10 @@ export class CommandRuntime {
   /**
    * Execute REMOVE command: remove <class/attribute> from <target>
    */
-  private async executeRemoveCommand(command: CommandNode, context: ExecutionContext): Promise<void> {
+  private async executeRemoveCommand(
+    command: CommandNode,
+    context: ExecutionContext
+  ): Promise<void> {
     const args = command.args as unknown[];
     const [itemExpr, targetExpr] = args;
     const item = await this.evaluateExpression(itemExpr as ExpressionNode, context);
@@ -132,12 +135,19 @@ export class CommandRuntime {
   /**
    * Execute TOGGLE command: toggle <class/attribute> on <target>
    */
-  private async executeToggleCommand(command: CommandNode, context: ExecutionContext): Promise<void> {
+  private async executeToggleCommand(
+    command: CommandNode,
+    context: ExecutionContext
+  ): Promise<void> {
     const args = command.args as unknown[];
     const [itemExpr, targetExpr] = args;
     const item = await this.evaluateExpression(itemExpr as ExpressionNode, context);
-    const targets = targetExpr ? await this.resolveTargets(targetExpr as ExpressionNode, context) : [context.me];
-    const validTargets = Array.isArray(targets) ? targets.filter((t): t is Element => t != null) : targets;
+    const targets = targetExpr
+      ? await this.resolveTargets(targetExpr as ExpressionNode, context)
+      : [context.me];
+    const validTargets = Array.isArray(targets)
+      ? targets.filter((t): t is Element => t != null)
+      : targets;
 
     await this.implicitLoop(validTargets, async (target: Element) => {
       if (typeof item === 'string') {
@@ -167,7 +177,7 @@ export class CommandRuntime {
     const args = command.args as unknown[];
     const [variableExpr, valueExpr] = args;
     const value = await this.evaluateExpression(valueExpr as ExpressionNode, context);
-    
+
     // Handle variable assignment
     const variable = variableExpr as ExpressionNode;
     if (variable.type === 'expression' && typeof variable.value === 'string') {
@@ -213,11 +223,14 @@ export class CommandRuntime {
       // Style assignment
       await this.implicitLoop(target.element, async (element: HTMLElement) => {
         if (element && target.property) {
-          element.style[target.property as any] = String(value);
+          element.style[target.property] = String(value);
         }
       });
-    } else if (target instanceof Element || target instanceof Document || 
-               (target && typeof target === 'object' && 'appendChild' in target)) {
+    } else if (
+      target instanceof Element ||
+      target instanceof Document ||
+      (target && typeof target === 'object' && 'appendChild' in target)
+    ) {
       // Element content replacement (including mock elements in tests)
       const fragment = this.convertValue(value, 'Fragment');
       target.innerHTML = '';
@@ -263,26 +276,26 @@ export class CommandRuntime {
 
     // Handle possessive expressions first
     if (expr.operator === 'possessive' && expr.operands?.length === 2) {
-      const object = await this.evaluateExpression(expr.operands[0] as ExpressionNode, context);
-      const property = await this.evaluateExpression(expr.operands[1] as ExpressionNode, context);
+      const object = await this.evaluateExpression(expr.operands[0], context);
+      const property = await this.evaluateExpression(expr.operands[1], context);
       return object?.[property];
     }
 
     // Handle expressions with values
     if (expr.type === 'expression' && typeof expr.value === 'string') {
       const name = expr.value;
-      
+
       // Handle context variables
       if (name === 'me') return context.me;
       if (name === 'it') return context.it;
       if (name === 'event') return context.event;
-      
+
       // Look up variable in context
       const varValue = this.getSymbol(name, context);
       if (varValue !== undefined) {
         return varValue;
       }
-      
+
       // Return literal value if no variable found
       return name;
     }
@@ -301,7 +314,7 @@ export class CommandRuntime {
     // Handle different target types
     if (typeof expr.value === 'string') {
       const value = expr.value;
-      
+
       if (value.startsWith('#')) {
         // ID reference
         return document.getElementById(value.slice(1));
@@ -313,14 +326,14 @@ export class CommandRuntime {
         return {
           type: 'attribute',
           element: context.me,
-          name: value.slice(1)
+          name: value.slice(1),
         };
       } else if (value.startsWith('*')) {
         // Style reference
         return {
-          type: 'style', 
+          type: 'style',
           element: context.me,
-          property: value.slice(1)
+          property: value.slice(1),
         };
       } else if (value === 'me') {
         return context.me;
@@ -330,31 +343,36 @@ export class CommandRuntime {
         // Variable reference
         return {
           type: 'symbol',
-          name: value
+          name: value,
         };
       }
     }
 
     if (expr.operator === 'possessive' && expr.operands?.length === 2) {
-      const object = await this.evaluateExpression(expr.operands[0] as ExpressionNode, context);
-      const property = await this.evaluateExpression(expr.operands[1] as ExpressionNode, context);
-      
-      if (object instanceof Element || 
-          (object && typeof object === 'object' && 'innerHTML' in object)) {
+      const object = await this.evaluateExpression(expr.operands[0], context);
+      const property = await this.evaluateExpression(expr.operands[1], context);
+
+      if (
+        object instanceof Element ||
+        (object && typeof object === 'object' && 'innerHTML' in object)
+      ) {
         return {
           type: 'property',
           root: object,
-          property: property
+          property: property,
         };
       }
     }
 
-    return await this.evaluateExpression(expr as ExpressionNode, context);
+    return await this.evaluateExpression(expr, context);
   }
 
-  private async resolveTargets(expr: ExpressionNode, context: ExecutionContext): Promise<Element[]> {
+  private async resolveTargets(
+    expr: ExpressionNode,
+    context: ExecutionContext
+  ): Promise<Element[]> {
     const target = await this.resolveTarget(expr, context);
-    
+
     if (target instanceof Element) {
       return [target];
     } else if (target instanceof NodeList) {
@@ -362,11 +380,14 @@ export class CommandRuntime {
     } else if (Array.isArray(target)) {
       return target.filter(item => item instanceof Element);
     }
-    
+
     return [];
   }
 
-  private async implicitLoop<T>(targets: T | T[], callback: (target: T) => Promise<void> | void): Promise<void> {
+  private async implicitLoop<T>(
+    targets: T | T[],
+    callback: (target: T) => Promise<void> | void
+  ): Promise<void> {
     if (Array.isArray(targets) || targets instanceof NodeList) {
       for (const target of targets) {
         await callback(target as T);
@@ -379,7 +400,7 @@ export class CommandRuntime {
   private hasKeyword(command: CommandNode, keyword: string): boolean {
     // Simple keyword detection - check for whole word boundaries
     if (!command.source) return false;
-    
+
     // Use word boundaries to avoid false positives like 'at' in '@data-test'
     const regex = new RegExp(`\\b${keyword}\\b`, 'i');
     return regex.test(command.source);
@@ -392,7 +413,7 @@ export class CommandRuntime {
 
   private convertToFragment(val: any): DocumentFragment {
     const frag = document.createDocumentFragment();
-    
+
     if (val instanceof Node) {
       frag.append(val);
     } else if (Array.isArray(val)) {
@@ -410,7 +431,7 @@ export class CommandRuntime {
       temp.innerHTML = String(val);
       frag.append(temp.content);
     }
-    
+
     return frag;
   }
 
@@ -430,7 +451,7 @@ export class CommandRuntime {
   }
 
   private getSymbol(name: string, context: ExecutionContext): any {
-    // Variable lookup - simplified for now  
+    // Variable lookup - simplified for now
     return (context as any)[name];
   }
 }

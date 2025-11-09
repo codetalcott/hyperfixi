@@ -22,7 +22,7 @@ describe('Beep Command', () => {
     testElement.className = 'test-class';
     testElement.setAttribute('data-test', 'test-value');
     document.body.appendChild(testElement);
-    
+
     context = {
       me: testElement,
       locals: new Map(),
@@ -38,7 +38,7 @@ describe('Beep Command', () => {
     if (testElement.parentNode) {
       document.body.removeChild(testElement);
     }
-    
+
     // Restore original console.log
     console.log = originalConsoleLog;
   });
@@ -55,7 +55,7 @@ describe('Beep Command', () => {
   describe('Basic Debugging Output', () => {
     it('should debug a simple number value', async () => {
       await beepCommand.execute(context, 42);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '///_ BEEP! The expression (42) evaluates to:',
         42,
@@ -65,7 +65,7 @@ describe('Beep Command', () => {
 
     it('should debug a string value', async () => {
       await beepCommand.execute(context, 'hello world');
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '///_ BEEP! The expression ("hello world") evaluates to:',
         '"hello world"',
@@ -75,7 +75,7 @@ describe('Beep Command', () => {
 
     it('should debug a null value', async () => {
       await beepCommand.execute(context, null);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '///_ BEEP! The expression (null) evaluates to:',
         null,
@@ -85,7 +85,7 @@ describe('Beep Command', () => {
 
     it('should debug an undefined value', async () => {
       await beepCommand.execute(context, undefined);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '///_ BEEP! The expression (undefined) evaluates to:',
         undefined,
@@ -95,7 +95,7 @@ describe('Beep Command', () => {
 
     it('should debug a boolean value', async () => {
       await beepCommand.execute(context, true);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '///_ BEEP! The expression (true) evaluates to:',
         true,
@@ -106,7 +106,7 @@ describe('Beep Command', () => {
     it('should debug an array value', async () => {
       const testArray = [1, 2, 3];
       await beepCommand.execute(context, testArray);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '///_ BEEP! The expression ([1,2,3]) evaluates to:',
         testArray,
@@ -117,7 +117,7 @@ describe('Beep Command', () => {
     it('should debug an object value', async () => {
       const testObj = { foo: 'bar', count: 42 };
       await beepCommand.execute(context, testObj);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '///_ BEEP! The expression ({"foo":"bar","count":42}) evaluates to:',
         testObj,
@@ -127,7 +127,7 @@ describe('Beep Command', () => {
 
     it('should debug an element value', async () => {
       await beepCommand.execute(context, testElement);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '///_ BEEP! The expression (Element) evaluates to:',
         expect.any(Object), // Element display value may be serialized differently
@@ -139,20 +139,23 @@ describe('Beep Command', () => {
   describe('Multiple Expressions', () => {
     it('should debug multiple expressions in order', async () => {
       await beepCommand.execute(context, 42, 'hello', true);
-      
-      expect(mockConsoleLog).toHaveBeenNthCalledWith(1,
+
+      expect(mockConsoleLog).toHaveBeenNthCalledWith(
+        1,
         '///_ BEEP! The expression (42) evaluates to:',
         42,
         'of type Number'
       );
-      
-      expect(mockConsoleLog).toHaveBeenNthCalledWith(2,
+
+      expect(mockConsoleLog).toHaveBeenNthCalledWith(
+        2,
         '///_ BEEP! The expression ("hello") evaluates to:',
         '"hello"',
         'of type String'
       );
-      
-      expect(mockConsoleLog).toHaveBeenNthCalledWith(3,
+
+      expect(mockConsoleLog).toHaveBeenNthCalledWith(
+        3,
         '///_ BEEP! The expression (true) evaluates to:',
         true,
         'of type Boolean'
@@ -162,22 +165,25 @@ describe('Beep Command', () => {
     it('should handle mixed types in multiple expressions', async () => {
       const testArray = [1, 2];
       const testObj = { key: 'value' };
-      
+
       await beepCommand.execute(context, testArray, null, testObj);
-      
-      expect(mockConsoleLog).toHaveBeenNthCalledWith(1,
+
+      expect(mockConsoleLog).toHaveBeenNthCalledWith(
+        1,
         '///_ BEEP! The expression ([1,2]) evaluates to:',
         testArray,
         'of type Array'
       );
-      
-      expect(mockConsoleLog).toHaveBeenNthCalledWith(2,
+
+      expect(mockConsoleLog).toHaveBeenNthCalledWith(
+        2,
         '///_ BEEP! The expression (null) evaluates to:',
         null,
         'of type object (null)'
       );
-      
-      expect(mockConsoleLog).toHaveBeenNthCalledWith(3,
+
+      expect(mockConsoleLog).toHaveBeenNthCalledWith(
+        3,
         '///_ BEEP! The expression ({"key":"value"}) evaluates to:',
         testObj,
         'of type Object'
@@ -187,9 +193,11 @@ describe('Beep Command', () => {
 
   describe('Complex Value Handling', () => {
     it('should debug functions', async () => {
-      const testFunc = function example() { return 42; };
+      const testFunc = function example() {
+        return 42;
+      };
       await beepCommand.execute(context, testFunc);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('///_ BEEP! The expression (function example()'),
         testFunc,
@@ -200,7 +208,7 @@ describe('Beep Command', () => {
     it('should debug dates', async () => {
       const testDate = new Date('2023-01-01T00:00:00.000Z');
       await beepCommand.execute(context, testDate);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '///_ BEEP! The expression (2023-01-01T00:00:00.000Z) evaluates to:',
         testDate,
@@ -211,7 +219,7 @@ describe('Beep Command', () => {
     it('should debug regular expressions', async () => {
       const testRegex = /test\d+/gi;
       await beepCommand.execute(context, testRegex);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         '///_ BEEP! The expression (/test\\d+/gi) evaluates to:',
         testRegex,
@@ -223,11 +231,11 @@ describe('Beep Command', () => {
       const secondElement = document.createElement('div');
       secondElement.className = 'test-class';
       document.body.appendChild(secondElement);
-      
+
       try {
         const elements = [testElement, secondElement];
         await beepCommand.execute(context, elements);
-        
+
         expect(mockConsoleLog).toHaveBeenCalledWith(
           '///_ BEEP! The expression (ElementCollection) evaluates to:',
           expect.any(Object), // Element collection display may be serialized differently
@@ -243,14 +251,14 @@ describe('Beep Command', () => {
     it('should trigger hyperscript:beep event with value', async () => {
       let eventTriggered = false;
       let eventValue: any;
-      
+
       testElement.addEventListener('hyperscript:beep', (event: any) => {
         eventTriggered = true;
         eventValue = event.detail.value;
       });
-      
+
       await beepCommand.execute(context, 'test-value');
-      
+
       expect(eventTriggered).toBe(true);
       expect(eventValue).toBe('test-value');
     });
@@ -259,22 +267,22 @@ describe('Beep Command', () => {
       testElement.addEventListener('hyperscript:beep', (event: any) => {
         event.preventDefault();
       });
-      
+
       await beepCommand.execute(context, 'canceled-value');
-      
+
       // Should not log if event was canceled
       expect(mockConsoleLog).not.toHaveBeenCalled();
     });
 
     it('should trigger event for each expression in multiple beeps', async () => {
       const eventValues: any[] = [];
-      
+
       testElement.addEventListener('hyperscript:beep', (event: any) => {
         eventValues.push(event.detail.value);
       });
-      
+
       await beepCommand.execute(context, 'first', 'second', 'third');
-      
+
       expect(eventValues).toEqual(['first', 'second', 'third']);
     });
   });
@@ -284,11 +292,11 @@ describe('Beep Command', () => {
       const errorObj = {
         get value() {
           throw new Error('Property access failed');
-        }
+        },
       };
-      
+
       await beepCommand.execute(context, errorObj);
-      
+
       expect(mockConsoleLog).toHaveBeenCalledWith(
         expect.stringContaining('[Error: Property access failed]'),
         expect.objectContaining({ value: '[Error: Property access failed]' }),
@@ -298,7 +306,7 @@ describe('Beep Command', () => {
 
     it('should work with no arguments', async () => {
       await beepCommand.execute(context);
-      
+
       // Should not throw and should not log anything
       expect(mockConsoleLog).not.toHaveBeenCalled();
     });

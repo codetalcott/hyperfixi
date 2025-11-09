@@ -1,6 +1,6 @@
 /**
  * TDD Fix for Exponentiation Operators
- * 
+ *
  * Current issue: ^ and ** operators not recognized by tokenizer
  * Expected: Should handle exponentiation with correct right-associative precedence
  */
@@ -21,7 +21,7 @@ const context: ExecutionContext = {
   returned: false,
   broke: false,
   continued: false,
-  async: false
+  async: false,
 };
 
 describe('Exponentiation Operators - TDD Fix', () => {
@@ -55,7 +55,7 @@ describe('Exponentiation Operators - TDD Fix', () => {
     });
 
     it('should have higher precedence than addition: 2 + 3 ^ 2 = 11', async () => {
-      // Should evaluate as: 2 + (3 ^ 2) = 2 + 9 = 11  
+      // Should evaluate as: 2 + (3 ^ 2) = 2 + 9 = 11
       const result = await parseAndEvaluateExpression('2 + 3 ^ 2', context);
       expect(result).toBe(11);
     });
@@ -113,16 +113,16 @@ describe('Exponentiation Operators - TDD Fix', () => {
   describe('Current Behavior Documentation', () => {
     it('documents current ^ operator parsing failure', async () => {
       // Currently fails with "Unexpected token: ^"
-      await expect(parseAndEvaluateExpression('2 ^ 3', context))
-        .rejects
-        .toThrow(/Unexpected token.*\^/);
+      await expect(parseAndEvaluateExpression('2 ^ 3', context)).rejects.toThrow(
+        /Unexpected token.*\^/
+      );
     });
 
     it('documents current ** operator parsing failure', async () => {
       // Currently fails with "Unexpected token: *"
-      await expect(parseAndEvaluateExpression('2 ** 3', context))
-        .rejects
-        .toThrow(/Unexpected token.*\*/);
+      await expect(parseAndEvaluateExpression('2 ** 3', context)).rejects.toThrow(
+        /Unexpected token.*\*/
+      );
     });
   });
 });

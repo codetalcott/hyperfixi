@@ -32,12 +32,15 @@ describe('Method Chaining', () => {
     context.locals = new Map([
       ['arr', [1, 2, 3, 4, 5]],
       ['str', 'hello world'],
-      ['users', [
-        { name: 'Alice', age: 30 },
-        { name: 'Bob', age: 25 },
-        { name: 'Charlie', age: 35 }
-      ]],
-      ['text', '  hello world  ']
+      [
+        'users',
+        [
+          { name: 'Alice', age: 30 },
+          { name: 'Bob', age: 25 },
+          { name: 'Charlie', age: 35 },
+        ],
+      ],
+      ['text', '  hello world  '],
     ]);
   });
 
@@ -80,7 +83,10 @@ describe('Method Chaining', () => {
     });
 
     it('should handle complex method chaining', async () => {
-      const result = await parseAndEvaluateExpression('arr.slice(1, 4).reverse().join("-")', context);
+      const result = await parseAndEvaluateExpression(
+        'arr.slice(1, 4).reverse().join("-")',
+        context
+      );
       expect(result).toBe('4-3-2');
     });
   });
@@ -132,13 +138,15 @@ describe('Method Chaining', () => {
   describe('Error Handling', () => {
     it('should handle method calls on undefined', async () => {
       context.locals?.set('notDefined', undefined);
-      await expect(parseAndEvaluateExpression('notDefined.someMethod()', context))
-        .rejects.toThrow();
+      await expect(
+        parseAndEvaluateExpression('notDefined.someMethod()', context)
+      ).rejects.toThrow();
     });
 
     it('should handle non-existent methods', async () => {
-      await expect(parseAndEvaluateExpression('str.nonExistentMethod()', context))
-        .rejects.toThrow();
+      await expect(
+        parseAndEvaluateExpression('str.nonExistentMethod()', context)
+      ).rejects.toThrow();
     });
 
     it('should handle method calls with wrong arguments', async () => {

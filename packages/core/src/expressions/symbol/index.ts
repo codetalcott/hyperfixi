@@ -14,7 +14,7 @@ import type {
   LLMDocumentation,
   ValidationResult,
   ExpressionCategory,
-  ExpressionAnalysisInfo
+  ExpressionAnalysisInfo,
 } from '../../types/command-types';
 import type { ValidationError } from '../../types/base-types';
 
@@ -26,9 +26,7 @@ import type { ValidationError } from '../../types/base-types';
  * Schema for symbol expression input validation
  */
 export const SymbolExpressionInputSchema = v.tuple([
-  v.string()
-    .min(1)
-    .describe('Variable name to resolve from context')
+  v.string().min(1).describe('Variable name to resolve from context'),
 ]);
 
 export type SymbolExpressionInput = any; // Inferred from RuntimeValidator
@@ -41,50 +39,50 @@ export type SymbolExpressionInput = any; // Inferred from RuntimeValidator
  * Enhanced symbol expression for variable resolution
  * Provides comprehensive context-aware variable lookup
  */
-export class EnhancedSymbolExpression implements TypedExpressionImplementation<
-  HyperScriptValue,
-  TypedExpressionContext
-> {
+export class EnhancedSymbolExpression
+  implements TypedExpressionImplementation<HyperScriptValue, TypedExpressionContext>
+{
   public readonly inputSchema = SymbolExpressionInputSchema;
-  
+
   public readonly documentation: LLMDocumentation = {
-    summary: 'Resolves variables from hyperscript execution context with comprehensive scope chain lookup',
+    summary:
+      'Resolves variables from hyperscript execution context with comprehensive scope chain lookup',
     parameters: [
       {
         name: 'symbolName',
         type: 'string',
         description: 'Name of the variable to resolve from context',
         optional: false,
-        examples: ['foo', 'userName', 'count', 'element']
-      }
+        examples: ['foo', 'userName', 'count', 'element'],
+      },
     ],
     returns: {
       type: 'any',
       description: 'The resolved variable value from context, or undefined if not found',
-      examples: ['42', '"hello"', 'HTMLElement', 'null']
+      examples: ['42', '"hello"', 'HTMLElement', 'null'],
     },
     examples: [
       {
         title: 'Local variable resolution',
         code: 'foo',
         explanation: 'Resolves "foo" from local context variables',
-        output: 42
+        output: 42,
       },
       {
         title: 'Global variable resolution',
         code: 'document',
         explanation: 'Resolves "document" from global context (browser)',
-        output: 'HTMLDocument'
+        output: 'HTMLDocument',
       },
       {
         title: 'Element property resolution',
         code: 'className',
         explanation: 'Resolves "className" from current element context',
-        output: '"nav-item active"'
-      }
+        output: '"nav-item active"',
+      },
     ],
     seeAlso: ['my expression', 'property access', 'context variables'],
-    tags: ['variable', 'context', 'resolution', 'scope']
+    tags: ['variable', 'context', 'resolution', 'scope'],
   };
 
   // Required TypedExpressionImplementation properties
@@ -97,7 +95,7 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
     isPure: true,
     canThrow: false,
     complexity: 'O(1)',
-    dependencies: []
+    dependencies: [],
   };
 
   /**
@@ -117,7 +115,7 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
         issues.push({
           type: 'validation-error',
           message: `"${symbolName}" is a reserved hyperscript keyword - use context references instead`,
-          suggestions: []
+          suggestions: [],
         });
       }
 
@@ -126,7 +124,7 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
         issues.push({
           type: 'validation-error',
           message: `Symbol names with dots should use property access syntax instead: "${symbolName.split('.')[0]}'s ${symbolName.split('.').slice(1).join('.')}"`,
-          suggestions: []
+          suggestions: [],
         });
       }
 
@@ -134,32 +132,37 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
         issues.push({
           type: 'validation-error',
           message: `Symbol names starting with "__" are typically internal - consider a different name`,
-          suggestions: []
+          suggestions: [],
         });
       }
 
       return {
         isValid: issues.length === 0,
         errors: issues,
-        suggestions: issues.length > 0 ? [
-          'Use standard variable naming conventions',
-          'Avoid reserved keywords for variable names',
-          'Use property access for nested properties'
-        ] : []
+        suggestions:
+          issues.length > 0
+            ? [
+                'Use standard variable naming conventions',
+                'Avoid reserved keywords for variable names',
+                'Use property access for nested properties',
+              ]
+            : [],
       };
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'syntax-error',
-          message: error instanceof Error ? error.message : 'Invalid symbol expression arguments',
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'syntax-error',
+            message: error instanceof Error ? error.message : 'Invalid symbol expression arguments',
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Provide a valid string for the symbol name',
           'Ensure symbol name is not empty',
-          'Use alphanumeric characters and underscores for variable names'
-        ]
+          'Use alphanumeric characters and underscores for variable names',
+        ],
       };
     }
   }
@@ -183,9 +186,9 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
             message: `Symbol expression validation failed: ${validationResult.errors.join(', ')}`,
             code: 'SYMBOL_VALIDATION_ERROR',
             severity: 'error',
-          suggestions: []
+            suggestions: [],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -198,7 +201,7 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
       return {
         success: true,
         value: resolvedValue,
-        type: valueType
+        type: valueType,
       };
     } catch (error) {
       return {
@@ -209,9 +212,9 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
           message: `Failed to evaluate symbol expression: ${error instanceof Error ? error.message : String(error)}`,
           code: 'SYMBOL_EVALUATION_ERROR',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -229,18 +232,22 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
     context: TypedExpressionContext
   ): Promise<HyperScriptValue> {
     // 1. Check meta context first (for template variables, local scope)
-    if (context.meta && typeof (context.meta as any).has === 'function' && (context.meta as any).has(symbolName)) {
+    if (
+      context.meta &&
+      typeof (context.meta as any).has === 'function' &&
+      (context.meta as any).has(symbolName)
+    ) {
       return (context.meta as any).get(symbolName) as HyperScriptValue;
     }
 
     // 2. Check local variables
     if (context.locals && context.locals.has(symbolName)) {
-      return context.locals.get(symbolName) as HyperScriptValue;
+      return context.locals.get(symbolName);
     }
 
     // 3. Check variables map (alternative local storage)
     if (context.variables && context.variables.has(symbolName)) {
-      return context.variables.get(symbolName) as HyperScriptValue;
+      return context.variables.get(symbolName);
     }
 
     // 4. Check direct context properties (for expressions like 'testValue')
@@ -252,12 +259,12 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
     if (context.me && typeof context.me === 'object' && context.me !== null) {
       if (symbolName in context.me) {
         const elementProperty = (context.me as any)[symbolName];
-        
+
         // Handle methods bound to element
         if (typeof elementProperty === 'function') {
           return elementProperty.bind(context.me);
         }
-        
+
         return elementProperty as HyperScriptValue;
       }
     }
@@ -314,14 +321,14 @@ export class EnhancedSymbolExpression implements TypedExpressionImplementation<
       performance: {
         complexity: 'low',
         averageExecutionTime: '< 1ms',
-        memoryUsage: 'minimal'
+        memoryUsage: 'minimal',
       },
       capabilities: {
         contextAware: true,
         supportsAsync: true,
         sideEffects: false,
-        cacheable: true
-      }
+        cacheable: true,
+      },
     };
   }
 }

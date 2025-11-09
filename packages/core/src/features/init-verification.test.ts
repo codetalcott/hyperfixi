@@ -15,7 +15,7 @@ describe('Init Feature - Complex Initialization Verification', () => {
   beforeEach(() => {
     testElement = createTestElement('<div>Test</div>');
     context = createMockHyperscriptContext(testElement) as ExecutionContext;
-    
+
     // Ensure required context properties exist
     if (!context.locals) context.locals = new Map();
     if (!context.globals) context.globals = new Map();
@@ -29,29 +29,29 @@ describe('Init Feature - Complex Initialization Verification', () => {
       // No wait command - test immediate execution
     ];
     initFeature.registerElement(testElement, commands, false);
-    
+
     // Process completely and wait
     await initFeature.processElement(testElement, context);
-    
+
     // Both should work
     expect(testElement.classList.contains('initializing')).toBe(true);
     expect(testElement.getAttribute('data-version')).toBe('1.0');
   });
 
   it('VERIFICATION: should set attribute with wait command but no fake timers', async () => {
-    // Same exact commands as the failing test  
+    // Same exact commands as the failing test
     const commands = [
       { type: 'command', name: 'add', args: ['.initializing'] },
       { type: 'command', name: 'set', args: ['attribute', 'data-version', '1.0'] },
       { type: 'command', name: 'wait', args: [10] },
       { type: 'command', name: 'remove', args: ['.initializing'] },
-      { type: 'command', name: 'add', args: ['.initialized'] }
+      { type: 'command', name: 'add', args: ['.initialized'] },
     ];
     initFeature.registerElement(testElement, commands, false);
-    
+
     // Process completely and wait (with real timers)
     await initFeature.processElement(testElement, context);
-    
+
     // All should work after completion
     expect(testElement.classList.contains('initialized')).toBe(true);
     expect(testElement.getAttribute('data-version')).toBe('1.0');
@@ -63,19 +63,19 @@ describe('Init Feature - Complex Initialization Verification', () => {
     const workingCommands = [
       { type: 'command', name: 'set', args: ['attribute', 'data-init', 'completed'] },
     ];
-    
+
     // This is from the failing test
-    const failingCommands = [  
+    const failingCommands = [
       { type: 'command', name: 'set', args: ['attribute', 'data-version', '1.0'] },
     ];
-    
+
     // Test working pattern
     const workingElement = createTestElement('<div>Working</div>');
     initFeature.registerElement(workingElement, workingCommands, false);
     await initFeature.processElement(workingElement, context);
     expect(workingElement.getAttribute('data-init')).toBe('completed');
-    
-    // Test failing pattern  
+
+    // Test failing pattern
     const failingElement = createTestElement('<div>Failing</div>');
     initFeature.registerElement(failingElement, failingCommands, false);
     await initFeature.processElement(failingElement, context);

@@ -1,17 +1,17 @@
 /**
  * Minimal Runtime System - No Enhanced Features
- * 
+ *
  * This is a stripped-down runtime that excludes all commands and features
  * that require zod validation. It provides basic hyperscript execution
  * for demonstrations and basic usage.
  */
 
-import type { 
-  ASTNode, 
-  ExecutionContext, 
-  CommandNode, 
+import type {
+  ASTNode,
+  ExecutionContext,
+  CommandNode,
   ExpressionNode,
-  EventHandlerNode
+  EventHandlerNode,
 } from '../types/base-types';
 
 export interface MinimalRuntimeOptions {
@@ -40,13 +40,13 @@ export class MinimalRuntime {
       switch (ast.type) {
         case 'command':
           return this.executeCommand(ast as CommandNode, context);
-        
+
         case 'expression':
           return this.executeExpression(ast as ExpressionNode, context);
-        
+
         case 'event-handler':
           return this.executeEventHandler(ast as EventHandlerNode, context);
-        
+
         default:
           throw new Error(`Unsupported AST node type: ${ast.type}`);
       }
@@ -99,7 +99,7 @@ export class MinimalRuntime {
     if (classArg.type === 'literal' && typeof classArg.value === 'string') {
       const className = classArg.value.startsWith('.') ? classArg.value.slice(1) : classArg.value;
       const element = context.me;
-      
+
       if (element instanceof HTMLElement) {
         element.classList.toggle(className);
         return element;
@@ -142,7 +142,7 @@ export class MinimalRuntime {
     if (classArg.type === 'literal' && typeof classArg.value === 'string') {
       const className = classArg.value.startsWith('.') ? classArg.value.slice(1) : classArg.value;
       const element = context.me;
-      
+
       if (element instanceof HTMLElement) {
         element.classList.add(className);
         return element;
@@ -169,7 +169,7 @@ export class MinimalRuntime {
       if (classArg.type === 'literal' && typeof classArg.value === 'string') {
         const className = classArg.value.startsWith('.') ? classArg.value.slice(1) : classArg.value;
         const element = context.me;
-        
+
         if (element instanceof HTMLElement) {
           element.classList.remove(className);
           return element;
@@ -183,7 +183,10 @@ export class MinimalRuntime {
   /**
    * Execute an expression (minimal implementation)
    */
-  private async executeExpression(node: ExpressionNode, context: ExecutionContext): Promise<unknown> {
+  private async executeExpression(
+    node: ExpressionNode,
+    context: ExecutionContext
+  ): Promise<unknown> {
     switch (node.subtype || node.type) {
       case 'literal':
         return (node as any).value;
@@ -197,14 +200,19 @@ export class MinimalRuntime {
         return obj && typeof obj === 'object' ? (obj as any)[prop] : undefined;
 
       default:
-        throw new Error(`Expression type '${node.subtype || node.type}' not supported in minimal runtime`);
+        throw new Error(
+          `Expression type '${node.subtype || node.type}' not supported in minimal runtime`
+        );
     }
   }
 
   /**
    * Execute an event handler
    */
-  private async executeEventHandler(node: EventHandlerNode, context: ExecutionContext): Promise<unknown> {
+  private async executeEventHandler(
+    node: EventHandlerNode,
+    context: ExecutionContext
+  ): Promise<unknown> {
     const { event, commands } = node;
 
     // Set up event listener

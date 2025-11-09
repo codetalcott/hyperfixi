@@ -44,17 +44,15 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
       locals: new Map([
         ['username', 'john'],
         ['items', [1, 2, 3, 4, 5]],
-        ['user', { name: 'John', age: 30, email: 'john@example.com' }]
+        ['user', { name: 'John', age: 30, email: 'john@example.com' }],
       ]),
-      globals: new Map([
-        ['app', { name: 'TestApp', version: '1.0' }]
-      ]),
+      globals: new Map([['app', { name: 'TestApp', version: '1.0' }]]),
       parent: null,
       halted: false,
       returned: false,
       broke: false,
       continued: false,
-      async: false
+      async: false,
     };
   });
 
@@ -67,11 +65,11 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
   describe('String Expressions (Official Test Patterns)', () => {
     it('should handle string literals correctly', async () => {
       const tests = [
-        { expr: '"foo"', expected: "foo" },
+        { expr: '"foo"', expected: 'foo' },
         { expr: '"fo\'o"', expected: "fo'o" },
-        { expr: "'foo'", expected: "foo" },
-        { expr: "'hello world'", expected: "hello world" },
-        { expr: '"hello world"', expected: "hello world" }
+        { expr: "'foo'", expected: 'foo' },
+        { expr: "'hello world'", expected: 'hello world' },
+        { expr: '"hello world"', expected: 'hello world' },
       ];
 
       for (const test of tests) {
@@ -81,13 +79,13 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
     });
 
     it('should handle empty strings', async () => {
-      expect(await parseAndEvaluateExpression('""', context)).toBe("");
-      expect(await parseAndEvaluateExpression("''", context)).toBe("");
+      expect(await parseAndEvaluateExpression('""', context)).toBe('');
+      expect(await parseAndEvaluateExpression("''", context)).toBe('');
     });
 
     it('should handle string concatenation patterns', async () => {
       const result = await parseAndEvaluateExpression('"Hello " + "World"', context);
-      expect(result).toBe("Hello World");
+      expect(result).toBe('Hello World');
     });
   });
 
@@ -125,7 +123,7 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
         { expr: 'not true', expected: false },
         { expr: 'not false', expected: true },
         { expr: 'true and true', expected: true },
-        { expr: 'false or false', expected: false }
+        { expr: 'false or false', expected: false },
       ];
 
       for (const test of tests) {
@@ -151,7 +149,7 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
         { expr: '5 == 5', expected: true },
         { expr: '5 != 4', expected: true },
         { expr: '"hello" == "hello"', expected: true },
-        { expr: '"hello" != "world"', expected: true }
+        { expr: '"hello" != "world"', expected: true },
       ];
 
       for (const test of tests) {
@@ -172,7 +170,7 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
       const meResult = await parseAndEvaluateExpression('me', context);
       expect(meResult).toBe(context.me);
 
-      // Test 'you' reference  
+      // Test 'you' reference
       const youResult = await parseAndEvaluateExpression('you', context);
       expect(youResult).toBe(context.you);
 
@@ -183,10 +181,10 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
 
     it('should handle possessive references', async () => {
       // Test my/your/its possessive syntax
-      const myClass = await parseAndEvaluateExpression("my className", context);
+      const myClass = await parseAndEvaluateExpression('my className', context);
       expect(typeof myClass).toBe('string');
 
-      const itsValue = await parseAndEvaluateExpression("its value", context);
+      const itsValue = await parseAndEvaluateExpression('its value', context);
       expect(itsValue).toBe('john'); // Username input value
     });
   });
@@ -225,10 +223,10 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
       const tests = [
         { expr: '"123" as Int', expected: 123 },
         { expr: '"45.67" as Number', expected: 45.67 },
-        { expr: '123 as String', expected: "123" },
+        { expr: '123 as String', expected: '123' },
         { expr: '1 as Boolean', expected: true },
         { expr: '0 as Boolean', expected: false },
-        { expr: '[1, 2, 3] as String', expected: "[1,2,3]" }
+        { expr: '[1, 2, 3] as String', expected: '[1,2,3]' },
       ];
 
       for (const test of tests) {
@@ -276,34 +274,34 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
         // String literals
         '"test"',
         "'test'",
-        
+
         // Math operations
         '5 + 3',
         '10 * 2',
-        
+
         // Boolean operations
         'true and false',
         'not true',
-        
+
         // Comparisons
         '5 > 3',
         '"a" == "a"',
-        
+
         // Context references
         'me',
         'it',
-        
+
         // CSS selectors
         '#test-form',
         '.form-control',
-        
+
         // Type conversions
         '"123" as Int',
         '123 as String',
-        
+
         // Variable access
         'username',
-        'user.name'
+        'user.name',
       ];
 
       let passedCount = 0;
@@ -319,10 +317,12 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
       }
 
       const compatibilityScore = (passedCount / total) * 100;
-      
+
       // Log compatibility assessment
-      console.log(`Expression Compatibility: ${compatibilityScore.toFixed(1)}% (${passedCount}/${total})`);
-      
+      console.log(
+        `Expression Compatibility: ${compatibilityScore.toFixed(1)}% (${passedCount}/${total})`
+      );
+
       // We expect very high compatibility now
       expect(compatibilityScore).toBeGreaterThan(80); // 80%+ compatibility target
       expect(passedCount).toBeGreaterThanOrEqual(16); // At least 16 out of 20 patterns should work

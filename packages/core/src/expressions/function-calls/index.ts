@@ -14,7 +14,7 @@ import type {
   LLMDocumentation,
   ValidationResult,
   ExpressionCategory,
-  ExpressionAnalysisInfo
+  ExpressionAnalysisInfo,
 } from '../../types/command-types';
 import type { ValidationError } from '../../types/base-types';
 
@@ -28,30 +28,34 @@ import type { ValidationError } from '../../types/base-types';
 export const FunctionCallExpressionInputSchema = z.union([
   // Standard function call: functionName, [args]
   v.tuple([
-    v.union([
-      v.string().describe('Function name or object.method path'),
-      z.function().describe('Direct function reference')
-    ]).describe('Function to call'),
-    v.array(v.unknown()).describe('Function arguments')
+    v
+      .union([
+        v.string().describe('Function name or object.method path'),
+        z.function().describe('Direct function reference'),
+      ])
+      .describe('Function to call'),
+    v.array(v.unknown()).describe('Function arguments'),
   ]),
   // Function call without arguments: functionName
   v.tuple([
-    v.union([
-      v.string().describe('Function name or object.method path'),
-      z.function().describe('Direct function reference')
-    ]).describe('Function to call')
+    v
+      .union([
+        v.string().describe('Function name or object.method path'),
+        z.function().describe('Direct function reference'),
+      ])
+      .describe('Function to call'),
   ]),
   // Constructor call: 'new', constructorName, [args]
   v.tuple([
     v.literal('new').describe('Constructor keyword'),
     v.string().describe('Constructor name'),
-    v.array(v.unknown()).describe('Constructor arguments')
+    v.array(v.unknown()).describe('Constructor arguments'),
   ]),
   // Constructor call without arguments: 'new', constructorName
   v.tuple([
     v.literal('new').describe('Constructor keyword'),
-    v.string().describe('Constructor name')
-  ])
+    v.string().describe('Constructor name'),
+  ]),
 ]);
 
 export type FunctionCallExpressionInput = any; // Inferred from RuntimeValidator
@@ -64,12 +68,11 @@ export type FunctionCallExpressionInput = any; // Inferred from RuntimeValidator
  * Enhanced function call expression for JavaScript interoperability
  * Provides comprehensive function invocation with async support
  */
-export class EnhancedFunctionCallExpression implements TypedExpressionImplementation<
-  HyperScriptValue,
-  TypedExpressionContext
-> {
+export class EnhancedFunctionCallExpression
+  implements TypedExpressionImplementation<HyperScriptValue, TypedExpressionContext>
+{
   public readonly inputSchema = FunctionCallExpressionInputSchema;
-  
+
   public readonly documentation: LLMDocumentation = {
     summary: 'Invokes JavaScript functions with comprehensive argument handling and async support',
     parameters: [
@@ -78,7 +81,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         type: 'string',
         description: 'Function name (for globals) or object.method path (for methods)',
         optional: false,
-        examples: ['identity', 'obj.getValue', 'utils.formatDate', 'Math.max']
+        examples: ['identity', 'obj.getValue', 'utils.formatDate', 'Math.max'],
       },
       {
         name: 'arguments',
@@ -86,54 +89,54 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         description: 'Array of arguments to pass to the function',
         optional: true,
         defaultValue: [],
-        examples: ['["hello"]', '[42, true]', '[obj, "key"]']
-      }
+        examples: ['["hello"]', '[42, true]', '[obj, "key"]'],
+      },
     ],
     returns: {
       type: 'any',
       description: 'The return value of the invoked function, properly awaited if async',
-      examples: ['"result"', '42', 'Promise<value>', 'null']
+      examples: ['"result"', '42', 'Promise<value>', 'null'],
     },
     examples: [
       {
         title: 'Global function call',
         code: 'identity("hello")',
         explanation: 'Calls window.identity with string argument',
-        output: '"hello"'
+        output: '"hello"',
       },
       {
         title: 'Method call on object',
         code: 'obj.getValue()',
         explanation: 'Calls getValue method on obj with proper this binding',
-        output: '"foo"'
+        output: '"foo"',
       },
       {
         title: 'Function with multiple arguments',
         code: 'Math.max(1, 5, 3)',
         explanation: 'Calls Math.max with multiple numeric arguments',
-        output: 5
+        output: 5,
       },
       {
         title: 'Constructor call',
         code: 'new Date()',
         explanation: 'Creates new Date instance using constructor',
-        output: 'Date object'
+        output: 'Date object',
       },
       {
         title: 'Constructor with arguments',
         code: 'new Array(10)',
         explanation: 'Creates new Array with specified length using constructor',
-        output: 'Array of length 10'
+        output: 'Array of length 10',
       },
       {
         title: 'Async function call',
         code: 'fetchData("url")',
         explanation: 'Calls async function and awaits the result',
-        output: 'Promise<data>'
-      }
+        output: 'Promise<data>',
+      },
     ],
     seeAlso: ['call command', 'method chaining', 'async operations'],
-    tags: ['function', 'interoperability', 'javascript', 'async', 'method']
+    tags: ['function', 'interoperability', 'javascript', 'async', 'method'],
   };
 
   // Required TypedExpressionImplementation properties
@@ -146,7 +149,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
     isPure: false,
     canThrow: true,
     complexity: 'O(1)',
-    dependencies: []
+    dependencies: [],
   };
 
   /**
@@ -164,77 +167,114 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         // Constructor call validation
         const constructorName = validatedArgs[1] as string;
         const constructorArgs = validatedArgs.length > 2 ? (validatedArgs[2] as unknown[]) : [];
-        
+
         if (!constructorName || constructorName.trim().length === 0) {
-          issues.push({ type: 'validation-error', message: 'Constructor name cannot be empty', suggestions: [] });
+          issues.push({
+            type: 'validation-error',
+            message: 'Constructor name cannot be empty',
+            suggestions: [],
+          });
         }
 
         // Check for potentially dangerous constructors
         const dangerousConstructors = ['Function', 'eval'];
         if (dangerousConstructors.includes(constructorName)) {
-          issues.push({ type: 'validation-error', message: `Constructor "${constructorName}" may pose security risks - use with caution`, suggestions: [] });
+          issues.push({
+            type: 'validation-error',
+            message: `Constructor "${constructorName}" may pose security risks - use with caution`,
+            suggestions: [],
+          });
         }
 
         // Validate arguments array for constructor
         if (constructorArgs && !Array.isArray(constructorArgs)) {
-          issues.push({ type: 'validation-error', message: 'Constructor arguments must be provided as an array', suggestions: [] });
+          issues.push({
+            type: 'validation-error',
+            message: 'Constructor arguments must be provided as an array',
+            suggestions: [],
+          });
         }
       } else {
         // Regular function call validation
         const functionReference = validatedArgs[0];
         const functionArgs = validatedArgs.length > 1 ? (validatedArgs[1] as unknown[]) : [];
-        
+
         // Validate function reference
         if (typeof functionReference === 'string') {
           if (functionReference.trim().length === 0) {
-            issues.push({ type: 'validation-error', message: 'Function name cannot be empty', suggestions: [] });
+            issues.push({
+              type: 'validation-error',
+              message: 'Function name cannot be empty',
+              suggestions: [],
+            });
           }
 
           if (functionReference.includes('..')) {
-            issues.push({ type: 'validation-error', message: 'Invalid function path - contains consecutive dots', suggestions: [] });
+            issues.push({
+              type: 'validation-error',
+              message: 'Invalid function path - contains consecutive dots',
+              suggestions: [],
+            });
           }
 
           if (functionReference.startsWith('.') || functionReference.endsWith('.')) {
-            issues.push({ type: 'validation-error', message: 'Function path cannot start or end with a dot', suggestions: [] });
+            issues.push({
+              type: 'validation-error',
+              message: 'Function path cannot start or end with a dot',
+              suggestions: [],
+            });
           }
 
           // Check for potentially dangerous function names
           const dangerousFunctions = ['eval', 'Function', 'setTimeout', 'setInterval'];
           const functionName = functionReference.split('.').pop() || '';
           if (dangerousFunctions.includes(functionName)) {
-            issues.push({ type: 'validation-error', message: `Function "${functionName}" may pose security risks - use with caution`, suggestions: [] });
+            issues.push({
+              type: 'validation-error',
+              message: `Function "${functionName}" may pose security risks - use with caution`,
+              suggestions: [],
+            });
           }
         }
 
         // Validate arguments array
         if (functionArgs && !Array.isArray(functionArgs)) {
-          issues.push({ type: 'validation-error', message: 'Function arguments must be provided as an array', suggestions: [] });
+          issues.push({
+            type: 'validation-error',
+            message: 'Function arguments must be provided as an array',
+            suggestions: [],
+          });
         }
       }
 
       return {
         isValid: issues.length === 0,
         errors: issues,
-        suggestions: issues.length > 0 ? [
-          'Ensure function reference is a valid string or function',
-          'Provide arguments as an array, even if empty',
-          'Use dot notation for method calls: "object.method"',
-          'Avoid potentially dangerous function names'
-        ] : []
+        suggestions:
+          issues.length > 0
+            ? [
+                'Ensure function reference is a valid string or function',
+                'Provide arguments as an array, even if empty',
+                'Use dot notation for method calls: "object.method"',
+                'Avoid potentially dangerous function names',
+              ]
+            : [],
       };
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'syntax-error',
-          message: error instanceof Error ? error.message : 'Invalid function call arguments',
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'syntax-error',
+            message: error instanceof Error ? error.message : 'Invalid function call arguments',
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Provide a function name or reference as the first argument',
           'Provide arguments as an array (optional)',
-          'Use valid JavaScript identifier syntax for function names'
-        ]
+          'Use valid JavaScript identifier syntax for function names',
+        ],
       };
     }
   }
@@ -258,9 +298,9 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
             message: `Function call validation failed: ${validationResult.errors.join(', ')}`,
             code: 'FUNCTION_CALL_VALIDATION_ERROR',
             severity: 'error',
-          suggestions: []
+            suggestions: [],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -281,7 +321,10 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         const functionArgs = parsedArgs.length > 1 ? (parsedArgs[1] as unknown[]) : [];
 
         // Resolve the function to call
-        const resolvedFunction = await this.resolveFunction(functionReference as string | Function, context);
+        const resolvedFunction = await this.resolveFunction(
+          functionReference as string | Function,
+          context
+        );
         if (!resolvedFunction.success || !resolvedFunction.value) {
           return resolvedFunction;
         }
@@ -293,7 +336,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           functionArgs,
           context
         );
-        
+
         return result;
       }
     } catch (error) {
@@ -305,9 +348,9 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           message: `Failed to evaluate function call: ${error instanceof Error ? error.message : String(error)}`,
           code: 'FUNCTION_CALL_EVALUATION_ERROR',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -319,17 +362,16 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
     functionReference: string | Function,
     context: TypedExpressionContext
   ): Promise<EvaluationResult<{ func: Function; thisBinding: any }>> {
-    
     // Handle direct function reference
     if (typeof functionReference === 'function') {
       return {
         success: true,
         value: { func: functionReference, thisBinding: null },
-        type: 'function'
+        type: 'function',
       };
     }
 
-    const functionPath = functionReference as string;
+    const functionPath = functionReference;
     const pathParts = functionPath.split('.');
 
     try {
@@ -344,7 +386,15 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         // 3. Current element
         { name: 'element', obj: context.me },
         // 4. Global context
-        { name: 'global', obj: typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : global) }
+        {
+          name: 'global',
+          obj:
+            typeof globalThis !== 'undefined'
+              ? globalThis
+              : typeof window !== 'undefined'
+                ? window
+                : global,
+        },
       ];
 
       for (const resolutionContext of resolutionContexts) {
@@ -353,7 +403,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           return {
             success: true,
             value: result,
-            type: 'function'
+            type: 'function',
           };
         }
       }
@@ -361,17 +411,21 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
       // Special handling for context method calls (like testArray.join)
       if (pathParts.length > 1) {
         const objectName = pathParts[0];
-        
+
         // Check if we have the object in any context
         for (const resolutionContext of resolutionContexts) {
           let targetObj = null;
-          
+
           if (resolutionContext.obj instanceof Map) {
             targetObj = resolutionContext.obj.get(objectName);
-          } else if (resolutionContext.obj && typeof resolutionContext.obj === 'object' && objectName in resolutionContext.obj) {
+          } else if (
+            resolutionContext.obj &&
+            typeof resolutionContext.obj === 'object' &&
+            objectName in resolutionContext.obj
+          ) {
             targetObj = (resolutionContext.obj as Record<string, unknown>)[objectName];
           }
-          
+
           if (targetObj && typeof targetObj === 'object') {
             // Try to resolve the method on this object
             const methodResult = this.resolveFromContext(pathParts.slice(1), targetObj);
@@ -379,11 +433,11 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
               // Update the thisBinding to be the target object
               return {
                 success: true,
-                value: { 
-                  func: methodResult.func, 
-                  thisBinding: targetObj // Bind to the target object
+                value: {
+                  func: methodResult.func,
+                  thisBinding: targetObj, // Bind to the target object
                 },
-                type: 'function'
+                type: 'function',
               };
             }
           }
@@ -399,9 +453,9 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           message: `Function "${functionPath}" not found in any accessible context`,
           code: 'FUNCTION_NOT_FOUND',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     } catch (error) {
       return {
@@ -412,9 +466,9 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           message: `Failed to resolve function "${functionPath}": ${error instanceof Error ? error.message : String(error)}`,
           code: 'FUNCTION_RESOLUTION_ERROR',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -422,7 +476,10 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
   /**
    * Resolve function from a specific context object
    */
-  private resolveFromContext(pathParts: string[], contextObj: any): { func: Function; thisBinding: any } | null {
+  private resolveFromContext(
+    pathParts: string[],
+    contextObj: any
+  ): { func: Function; thisBinding: any } | null {
     try {
       if (!contextObj) {
         return null;
@@ -457,7 +514,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
       // Navigate the object path
       for (let i = 0; i < pathParts.length; i++) {
         const part = pathParts[i];
-        
+
         if (!(part in currentObj)) {
           return null;
         }
@@ -495,9 +552,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
   ): Promise<EvaluationResult<HyperScriptValue>> {
     try {
       // Resolve any promise arguments first
-      const resolvedArgs = await Promise.all(
-        args.map(arg => this.resolveArgument(arg, context))
-      );
+      const resolvedArgs = await Promise.all(args.map(arg => this.resolveArgument(arg, context)));
 
       // Execute the function with proper this binding
       let result: unknown;
@@ -516,8 +571,8 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
 
       return {
         success: true,
-        value: result as HyperScriptValue,
-        type: valueType
+        value: result,
+        type: valueType,
       };
     } catch (error) {
       return {
@@ -528,9 +583,9 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           message: `Function execution failed: ${error instanceof Error ? error.message : String(error)}`,
           code: 'FUNCTION_EXECUTION_ERROR',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -551,9 +606,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
       }
 
       // Resolve any promise arguments first
-      const resolvedArgs = await Promise.all(
-        args.map(arg => this.resolveArgument(arg, context))
-      );
+      const resolvedArgs = await Promise.all(args.map(arg => this.resolveArgument(arg, context)));
 
       // Execute the constructor with new keyword
       const result = new (constructor.value as new (...args: any[]) => any)(...resolvedArgs);
@@ -569,7 +622,7 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
       return {
         success: true,
         value: finalResult as HyperScriptValue,
-        type: valueType
+        type: valueType,
       };
     } catch (error) {
       return {
@@ -580,9 +633,9 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           message: `Constructor execution failed: ${error instanceof Error ? error.message : String(error)}`,
           code: 'CONSTRUCTOR_EXECUTION_ERROR',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -606,23 +659,35 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         // 3. Current element
         { name: 'element', obj: context.me },
         // 4. Global context
-        { name: 'global', obj: typeof globalThis !== 'undefined' ? globalThis : (typeof window !== 'undefined' ? window : global) }
+        {
+          name: 'global',
+          obj:
+            typeof globalThis !== 'undefined'
+              ? globalThis
+              : typeof window !== 'undefined'
+                ? window
+                : global,
+        },
       ];
 
       for (const resolutionContext of resolutionContexts) {
         let constructor = null;
-        
+
         if (resolutionContext.obj instanceof Map) {
           constructor = resolutionContext.obj.get(constructorName);
-        } else if (resolutionContext.obj && typeof resolutionContext.obj === 'object' && constructorName in resolutionContext.obj) {
+        } else if (
+          resolutionContext.obj &&
+          typeof resolutionContext.obj === 'object' &&
+          constructorName in resolutionContext.obj
+        ) {
           constructor = (resolutionContext.obj as Record<string, unknown>)[constructorName];
         }
-        
+
         if (typeof constructor === 'function') {
           return {
             success: true,
             value: constructor,
-            type: 'function'
+            type: 'function',
           };
         }
       }
@@ -636,9 +701,9 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           message: `Constructor "${constructorName}" not found in any accessible context`,
           code: 'CONSTRUCTOR_NOT_FOUND',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     } catch (error) {
       return {
@@ -649,9 +714,9 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
           message: `Failed to resolve constructor "${constructorName}": ${error instanceof Error ? error.message : String(error)}`,
           code: 'CONSTRUCTOR_RESOLUTION_ERROR',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -694,7 +759,8 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
       name: 'FunctionCallExpression',
       category: 'interoperability' as const,
       version: '1.0.0',
-      description: 'Enhanced function call evaluation with async support and proper context binding',
+      description:
+        'Enhanced function call evaluation with async support and proper context binding',
       inputSchema: this.inputSchema,
       supportedFeatures: [
         'global functions',
@@ -702,19 +768,19 @@ export class EnhancedFunctionCallExpression implements TypedExpressionImplementa
         'async functions',
         'promise arguments',
         'proper this binding',
-        'error handling'
+        'error handling',
       ],
       performance: {
         complexity: 'medium',
         averageExecutionTime: '< 5ms',
-        memoryUsage: 'moderate'
+        memoryUsage: 'moderate',
       },
       capabilities: {
         contextAware: true,
         supportsAsync: true,
         sideEffects: true, // Functions may have side effects
-        cacheable: false // Function results shouldn't be cached
-      }
+        cacheable: false, // Function results shouldn't be cached
+      },
     };
   }
 }

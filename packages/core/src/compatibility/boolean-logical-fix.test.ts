@@ -28,12 +28,12 @@ describe('Boolean/Logical Operations Fix', () => {
         { expr: 'false and true', expected: false },
         { expr: 'false and false', expected: false },
         { expr: '(5 > 3) and (2 < 4)', expected: true },
-        { expr: '(5 < 3) and (2 < 4)', expected: false }
+        { expr: '(5 < 3) and (2 < 4)', expected: false },
       ];
 
       let passed = 0;
       console.log('\n🔍 Testing AND operator:');
-      
+
       for (const test of tests) {
         try {
           const result = await evalHyperScript(test.expr, context);
@@ -47,8 +47,10 @@ describe('Boolean/Logical Operations Fix', () => {
           console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
         }
       }
-      
-      console.log(`  📊 AND Tests: ${passed}/${tests.length} passed (${Math.round(passed/tests.length*100)}%)`);
+
+      console.log(
+        `  📊 AND Tests: ${passed}/${tests.length} passed (${Math.round((passed / tests.length) * 100)}%)`
+      );
       expect(passed).toBe(tests.length); // All must pass
     });
   });
@@ -61,12 +63,12 @@ describe('Boolean/Logical Operations Fix', () => {
         { expr: 'false or true', expected: true },
         { expr: 'false or false', expected: false },
         { expr: '(5 > 3) or (2 > 4)', expected: true },
-        { expr: '(5 < 3) or (2 > 4)', expected: false }
+        { expr: '(5 < 3) or (2 > 4)', expected: false },
       ];
 
       let passed = 0;
       console.log('\n🔍 Testing OR operator:');
-      
+
       for (const test of tests) {
         try {
           const result = await evalHyperScript(test.expr, context);
@@ -80,8 +82,10 @@ describe('Boolean/Logical Operations Fix', () => {
           console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
         }
       }
-      
-      console.log(`  📊 OR Tests: ${passed}/${tests.length} passed (${Math.round(passed/tests.length*100)}%)`);
+
+      console.log(
+        `  📊 OR Tests: ${passed}/${tests.length} passed (${Math.round((passed / tests.length) * 100)}%)`
+      );
       expect(passed).toBe(tests.length); // All must pass
     });
   });
@@ -94,12 +98,12 @@ describe('Boolean/Logical Operations Fix', () => {
         { expr: 'not (5 > 3)', expected: false },
         { expr: 'not (5 < 3)', expected: true },
         { expr: 'not not true', expected: true },
-        { expr: 'not not false', expected: false }
+        { expr: 'not not false', expected: false },
       ];
 
       let passed = 0;
       console.log('\n🔍 Testing NOT operator:');
-      
+
       for (const test of tests) {
         try {
           const result = await evalHyperScript(test.expr, context);
@@ -113,8 +117,10 @@ describe('Boolean/Logical Operations Fix', () => {
           console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
         }
       }
-      
-      console.log(`  📊 NOT Tests: ${passed}/${tests.length} passed (${Math.round(passed/tests.length*100)}%)`);
+
+      console.log(
+        `  📊 NOT Tests: ${passed}/${tests.length} passed (${Math.round((passed / tests.length) * 100)}%)`
+      );
       expect(passed).toBe(tests.length); // All must pass
     });
   });
@@ -126,12 +132,12 @@ describe('Boolean/Logical Operations Fix', () => {
         { expr: 'not (true and false)', expected: true },
         { expr: 'true and (not false)', expected: true },
         { expr: '(5 > 3) and not (2 > 4)', expected: true },
-        { expr: 'not (5 < 3) or (2 < 4)', expected: true }
+        { expr: 'not (5 < 3) or (2 < 4)', expected: true },
       ];
 
       let passed = 0;
       console.log('\n🔍 Testing complex logical combinations:');
-      
+
       for (const test of tests) {
         try {
           const result = await evalHyperScript(test.expr, context);
@@ -145,8 +151,10 @@ describe('Boolean/Logical Operations Fix', () => {
           console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
         }
       }
-      
-      console.log(`  📊 Complex Logic Tests: ${passed}/${tests.length} passed (${Math.round(passed/tests.length*100)}%)`);
+
+      console.log(
+        `  📊 Complex Logic Tests: ${passed}/${tests.length} passed (${Math.round((passed / tests.length) * 100)}%)`
+      );
       expect(passed).toBe(tests.length); // All must pass
     });
   });
@@ -157,7 +165,7 @@ describe('Boolean/Logical Operations Fix', () => {
       console.log('  This test identifies specific failures in and, or, not operators');
       console.log('  Once implemented, these tests should achieve 100% pass rate');
       console.log('  Expected after fix: Boolean compatibility 100% (was 22%)');
-      
+
       expect(true).toBe(true);
     });
   });

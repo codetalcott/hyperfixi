@@ -9,7 +9,7 @@ import '../../test-setup.js'; // Import DOM setup
 
 describe('Template Compiler - Two-Phase Processing', () => {
   let compiler: TemplateCompiler;
-  
+
   beforeEach(() => {
     compiler = new TemplateCompiler();
   });
@@ -27,13 +27,13 @@ describe('Template Compiler - Two-Phase Processing', () => {
       `;
 
       const compiled = compiler.compileTemplate(template);
-      
+
       // Expected: @ lines become hyperscript commands
       expect(compiled.commands).toContain('repeat in colors');
       expect(compiled.commands).toContain('set bg to it');
       expect(compiled.commands).toContain('set fg to getContrastingColor(it)');
       expect(compiled.commands).toContain('end');
-      
+
       // Expected: content includes processed HTML with escape directives
       expect(compiled.content).toContain('<ul>');
       expect(compiled.content).toContain('${escape html bg}');
@@ -55,7 +55,7 @@ describe('Template Compiler - Two-Phase Processing', () => {
       `;
 
       const compiled = compiler.compileTemplate(template);
-      
+
       expect(compiled.commands).toContain('repeat in items');
       expect(compiled.commands).toContain('if item.active');
       expect(compiled.commands).toContain('set status to "active"');
@@ -72,10 +72,10 @@ describe('Template Compiler - Two-Phase Processing', () => {
       `;
 
       const compiled = compiler.compileTemplate(template);
-      
+
       // Normal ${} should be converted to ${escape html userInput}
       expect(compiled.content).toContain('${escape html userInput}');
-      
+
       // ${unescaped ...} should remain as-is (just remove unescaped prefix)
       expect(compiled.content).toContain('${htmlContent}');
     });
@@ -89,10 +89,10 @@ describe('Template Compiler - Two-Phase Processing', () => {
       `;
 
       const compiled = compiler.compileTemplate(template);
-      
+
       // Content calls should be generated for non-directive lines
       expect(compiled.contentCalls.length).toBeGreaterThan(0);
-      
+
       // Check that content processing includes HTML escaping
       expect(compiled.content).toContain('${escape html name}');
       expect(compiled.content).toContain('${escape html it}');
@@ -106,11 +106,11 @@ describe('Template Compiler - Two-Phase Processing', () => {
         it: null,
         you: null,
         result: null,
-        locals: new Map([['colors', ['red', 'green', 'blue']]])
+        locals: new Map([['colors', ['red', 'green', 'blue']]]),
       };
 
       const templateContext = compiler.createTemplateExecutionContext(baseContext);
-      
+
       // Should have meta scope with template result buffer
       expect(templateContext.meta).toBeDefined();
       expect(templateContext.meta.__ht_template_result).toBeInstanceOf(Array);
@@ -124,18 +124,18 @@ describe('Template Compiler - Two-Phase Processing', () => {
         you: null,
         result: 'previous-result',
         locals: new Map([['var1', 'value1']]),
-        globals: new Map([['globalFunc', () => 'test']])
+        globals: new Map([['globalFunc', () => 'test']]),
       };
 
       const templateContext = compiler.createTemplateExecutionContext(baseContext);
-      
+
       // Original context should be preserved
       expect(templateContext.me).toBe(baseContext.me);
       expect(templateContext.it).toBe(baseContext.it);
       expect(templateContext.result).toBe(baseContext.result);
       expect(templateContext.locals).toBe(baseContext.locals);
       expect(templateContext.globals).toBe(baseContext.globals);
-      
+
       // Template meta should be added
       expect(templateContext.meta.__ht_template_result).toBeInstanceOf(Array);
     });
@@ -153,16 +153,14 @@ describe('Template Compiler - Two-Phase Processing', () => {
       `;
 
       const compiled = compiler.compileTemplate(template);
-      
+
       // Verify compilation structure
-      expect(compiled.commands).toEqual([
-        'repeat in colors',
-        'set bg to it',
-        'end'
-      ]);
-      
+      expect(compiled.commands).toEqual(['repeat in colors', 'set bg to it', 'end']);
+
       expect(compiled.content).toContain('<ul>');
-      expect(compiled.content).toContain('<li style="background: ${escape html bg}">${escape html bg}</li>');
+      expect(compiled.content).toContain(
+        '<li style="background: ${escape html bg}">${escape html bg}</li>'
+      );
       expect(compiled.content).toContain('</ul>');
     });
 
@@ -173,15 +171,17 @@ describe('Template Compiler - Two-Phase Processing', () => {
         you: null,
         result: null,
         locals: new Map([['colors', ['red', 'yellow']]]),
-        globals: new Map([['getContrastingColor', (color: string) => color === 'red' ? 'white' : 'black']])
+        globals: new Map([
+          ['getContrastingColor', (color: string) => (color === 'red' ? 'white' : 'black')],
+        ]),
       };
 
       const templateContext = compiler.createTemplateExecutionContext(baseContext);
-      
+
       // Should have result buffer
       expect(templateContext.meta?.__ht_template_result).toBeInstanceOf(Array);
       expect(templateContext.meta?.__ht_template_result).toEqual([]);
-      
+
       // Original context preserved
       expect(templateContext.locals).toBe(baseContext.locals);
       expect(templateContext.globals).toBe(baseContext.globals);

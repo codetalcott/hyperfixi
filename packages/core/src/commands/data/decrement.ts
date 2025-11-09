@@ -1,9 +1,9 @@
 /**
- * Enhanced Decrement Command Implementation  
+ * Enhanced Decrement Command Implementation
  * Decreases the value of a variable or element property by a specified amount
- * 
+ *
  * Syntax: decrement <target> [by <number>]
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -20,7 +20,7 @@ export interface DecrementCommandInput {
   byKeyword?: 'by'; // For syntax validation
 }
 
-// Output type definition  
+// Output type definition
 export interface DecrementCommandOutput {
   oldValue: number;
   newValue: number;
@@ -30,26 +30,26 @@ export interface DecrementCommandOutput {
 /**
  * Enhanced Decrement Command with full type safety and validation
  */
-export class DecrementCommand implements CommandImplementation<
-  DecrementCommandInput,
-  DecrementCommandOutput,
-  TypedExecutionContext
-> {
+export class DecrementCommand
+  implements
+    CommandImplementation<DecrementCommandInput, DecrementCommandOutput, TypedExecutionContext>
+{
   name = 'decrement';
-  
+
   metadata = {
     name: 'decrement',
-    description: 'The decrement command subtracts from an existing variable, property, or attribute. It defaults to subtracting the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then decremented by the specified amount.',
+    description:
+      'The decrement command subtracts from an existing variable, property, or attribute. It defaults to subtracting the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then decremented by the specified amount.',
     examples: [
       'decrement counter',
       'decrement counter by 5',
       'decrement global score by 10',
       'decrement element.value by 2',
-      'decrement me.scrollTop by 100'
+      'decrement me.scrollTop by 100',
     ],
     syntax: 'decrement <target> [by <number>]',
     category: 'data' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -57,12 +57,14 @@ export class DecrementCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Decrement command requires an object input',
-            suggestions: ['Provide an object with target property']
-          }],
-          suggestions: ['Provide an object with target property']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Decrement command requires an object input',
+              suggestions: ['Provide an object with target property'],
+            },
+          ],
+          suggestions: ['Provide an object with target property'],
         };
       }
 
@@ -72,58 +74,74 @@ export class DecrementCommand implements CommandImplementation<
       if (!inputObj.target) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Decrement command requires a target',
-            suggestions: ['Provide a target variable, element, or property to decrement']
-          }],
-          suggestions: ['Provide a target variable, element, or property to decrement']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Decrement command requires a target',
+              suggestions: ['Provide a target variable, element, or property to decrement'],
+            },
+          ],
+          suggestions: ['Provide a target variable, element, or property to decrement'],
         };
       }
 
       // Validate target type
       const target = inputObj.target;
-      if (typeof target !== 'string' && typeof target !== 'number' && 
-          !(target instanceof HTMLElement)) {
+      if (
+        typeof target !== 'string' &&
+        typeof target !== 'number' &&
+        !(target instanceof HTMLElement)
+      ) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Target must be a string (variable name), number, or HTMLElement',
-            suggestions: ['Use a variable name like "counter" or an element reference']
-          }],
-          suggestions: ['Use a variable name like "counter" or an element reference']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Target must be a string (variable name), number, or HTMLElement',
+              suggestions: ['Use a variable name like "counter" or an element reference'],
+            },
+          ],
+          suggestions: ['Use a variable name like "counter" or an element reference'],
         };
       }
 
       // Validate amount if provided
       if (inputObj.amount !== undefined) {
         const amount = inputObj.amount;
-        if (typeof amount !== 'number' && 
-            (typeof amount !== 'string' || isNaN(parseFloat(amount)))) {
+        if (
+          typeof amount !== 'number' &&
+          (typeof amount !== 'string' || isNaN(parseFloat(amount)))
+        ) {
           return {
             isValid: false,
-            errors: [{
-              type: 'type-mismatch',
-              message: 'Amount must be a number',
-              suggestions: ['Provide a numeric value like 1, 5, or 10.5']
-            }],
-            suggestions: ['Provide a numeric value like 1, 5, or 10.5']
+            errors: [
+              {
+                type: 'type-mismatch',
+                message: 'Amount must be a number',
+                suggestions: ['Provide a numeric value like 1, 5, or 10.5'],
+              },
+            ],
+            suggestions: ['Provide a numeric value like 1, 5, or 10.5'],
           };
         }
       }
 
       // Validate scope if provided
-      if (inputObj.scope !== undefined && 
-          inputObj.scope !== 'global' && inputObj.scope !== 'local') {
+      if (
+        inputObj.scope !== undefined &&
+        inputObj.scope !== 'global' &&
+        inputObj.scope !== 'local'
+      ) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Scope must be "global" or "local"',
-            suggestions: ['Use "global" or "local" scope, or omit for default behavior']
-          }],
-          suggestions: ['Use "global" or "local" scope, or omit for default behavior']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Scope must be "global" or "local"',
+              suggestions: ['Use "global" or "local" scope, or omit for default behavior'],
+            },
+          ],
+          suggestions: ['Use "global" or "local" scope, or omit for default behavior'],
         };
       }
 
@@ -136,54 +154,56 @@ export class DecrementCommand implements CommandImplementation<
           ...(inputObj.property !== undefined && { property: inputObj.property }),
           ...(inputObj.scope !== undefined && { scope: inputObj.scope }),
           amount: inputObj.amount || 1,
-          ...(inputObj.byKeyword !== undefined && { byKeyword: inputObj.byKeyword })
-        }
+          ...(inputObj.byKeyword !== undefined && { byKeyword: inputObj.byKeyword }),
+        },
       };
-    }
+    },
   };
 
   async execute(
-    input: DecrementCommandInput, 
+    input: DecrementCommandInput,
     context: TypedExecutionContext
   ): Promise<DecrementCommandOutput> {
     const { target, property, scope, amount = 1 } = input;
 
     // Get current value
     const currentValue = this.getCurrentValue(target, property, scope, context);
-    
-    // Perform decrement  
+
+    // Perform decrement
     const newValue = this.performDecrement(currentValue, amount);
-    
+
     // Set the new value
     this.setTargetValue(target, property, scope, newValue, context);
-    
+
     // Update context
     Object.assign(context, { it: newValue });
-    
+
     return {
       oldValue: currentValue,
       newValue,
-      target: typeof target === 'number' ? String(target) : target
+      target: typeof target === 'number' ? String(target) : target,
     };
   }
 
   private getCurrentValue(
-    target: string | HTMLElement | number, 
-    property: string | undefined, 
-    scope: string | undefined, 
+    target: string | HTMLElement | number,
+    property: string | undefined,
+    scope: string | undefined,
     context: TypedExecutionContext
   ): number {
     // Handle direct numeric values
     if (typeof target === 'number') {
       return target;
     }
-    
+
     // Handle HTMLElement
     if (target instanceof HTMLElement) {
       if (property) {
         // Get element property or attribute
-        if (property.startsWith('data-') || 
-            ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)) {
+        if (
+          property.startsWith('data-') ||
+          ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)
+        ) {
           const value = target.getAttribute(property);
           return this.convertToNumber(value);
         } else {
@@ -196,7 +216,7 @@ export class DecrementCommand implements CommandImplementation<
         return this.convertToNumber(value);
       }
     }
-    
+
     // Handle string (variable name or element reference)
     if (typeof target === 'string') {
       // Handle scoped variables
@@ -204,12 +224,12 @@ export class DecrementCommand implements CommandImplementation<
         const value = this.getVariableValue(target, context, 'global');
         return this.convertToNumber(value);
       }
-      
+
       // Handle element property references (e.g., "me.value", "element.scrollTop")
       if (target.includes('.')) {
         return this.getElementProperty(target, context);
       }
-      
+
       // Handle context references
       if (target === 'me' && context.me) {
         return this.convertToNumber((context.me as any).value || 0);
@@ -218,12 +238,12 @@ export class DecrementCommand implements CommandImplementation<
       } else if (target === 'you' && context.you) {
         return this.convertToNumber((context.you as any).value || 0);
       }
-      
+
       // Get variable value
       const value = this.getVariableValue(target, context);
       return this.convertToNumber(value);
     }
-    
+
     return this.convertToNumber(target);
   }
 
@@ -232,28 +252,30 @@ export class DecrementCommand implements CommandImplementation<
     if (isNaN(currentValue)) {
       return NaN;
     }
-    
+
     // Handle special cases for decrementBy
     if (!isFinite(decrementBy)) {
       decrementBy = 1;
     }
-    
+
     return currentValue - decrementBy;
   }
 
   private setTargetValue(
-    target: string | HTMLElement | number, 
-    property: string | undefined, 
-    scope: string | undefined, 
-    newValue: number, 
+    target: string | HTMLElement | number,
+    property: string | undefined,
+    scope: string | undefined,
+    newValue: number,
     context: TypedExecutionContext
   ): void {
     // Handle HTMLElement
     if (target instanceof HTMLElement) {
       if (property) {
         // Set element property or attribute
-        if (property.startsWith('data-') || 
-            ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)) {
+        if (
+          property.startsWith('data-') ||
+          ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)
+        ) {
           target.setAttribute(property, String(newValue));
         } else {
           (target as any)[property] = newValue;
@@ -268,7 +290,7 @@ export class DecrementCommand implements CommandImplementation<
       }
       return;
     }
-    
+
     // Handle string (variable name or element reference)
     if (typeof target === 'string') {
       // Handle scoped variables
@@ -276,13 +298,13 @@ export class DecrementCommand implements CommandImplementation<
         this.setVariableValue(target, newValue, context, 'global');
         return;
       }
-      
+
       // Handle element property references
       if (target.includes('.')) {
         this.setElementProperty(target, newValue, context);
         return;
       }
-      
+
       // Handle context references
       if (target === 'me' && context.me) {
         (context.me as any).value = newValue;
@@ -294,7 +316,7 @@ export class DecrementCommand implements CommandImplementation<
         (context.you as any).value = newValue;
         return;
       }
-      
+
       // Set variable value
       this.setVariableValue(target, newValue, context);
     }
@@ -304,9 +326,9 @@ export class DecrementCommand implements CommandImplementation<
     const parts = propertyPath.split('.');
     const elementRef = parts[0];
     const property = parts[1];
-    
+
     let element: any = null;
-    
+
     // Resolve element reference
     if (elementRef === 'me') {
       element = context.me;
@@ -318,23 +340,27 @@ export class DecrementCommand implements CommandImplementation<
       // Try to resolve as variable
       element = this.getVariableValue(elementRef, context);
     }
-    
+
     if (!element) {
       return 0;
     }
-    
+
     // Get property value
     const value = element[property];
     return this.convertToNumber(value);
   }
 
-  private setElementProperty(propertyPath: string, value: number, context: TypedExecutionContext): void {
+  private setElementProperty(
+    propertyPath: string,
+    value: number,
+    context: TypedExecutionContext
+  ): void {
     const parts = propertyPath.split('.');
     const elementRef = parts[0];
     const property = parts[1];
-    
+
     let element: any = null;
-    
+
     // Resolve element reference
     if (elementRef === 'me') {
       element = context.me;
@@ -346,7 +372,7 @@ export class DecrementCommand implements CommandImplementation<
       // Try to resolve as variable
       element = this.getVariableValue(elementRef, context);
     }
-    
+
     if (element) {
       element[property] = value;
     }
@@ -356,24 +382,24 @@ export class DecrementCommand implements CommandImplementation<
     if (value === null || value === undefined) {
       return 0;
     }
-    
+
     if (typeof value === 'number') {
       return isFinite(value) ? value : 0;
     }
-    
+
     if (typeof value === 'string') {
       const parsed = parseFloat(value);
       return parsed; // Return NaN if invalid string to preserve test expectations
     }
-    
+
     if (typeof value === 'boolean') {
       return value ? 1 : 0;
     }
-    
+
     if (Array.isArray(value)) {
       return value.length;
     }
-    
+
     if (typeof value === 'object') {
       // Try to get length or valueOf
       if ('length' in value && typeof value.length === 'number') {
@@ -388,11 +414,15 @@ export class DecrementCommand implements CommandImplementation<
       // Return NaN for objects that can't be converted
       return NaN;
     }
-    
+
     return 0;
   }
 
-  private getVariableValue(name: string, context: TypedExecutionContext, preferredScope?: string): any {
+  private getVariableValue(
+    name: string,
+    context: TypedExecutionContext,
+    preferredScope?: string
+  ): any {
     // If preferred scope is specified, check that first
     if (preferredScope === 'global' && context.globals && context.globals.has(name)) {
       return context.globals.get(name);
@@ -430,7 +460,12 @@ export class DecrementCommand implements CommandImplementation<
     return undefined;
   }
 
-  private setVariableValue(name: string, value: number, context: TypedExecutionContext, preferredScope?: string): void {
+  private setVariableValue(
+    name: string,
+    value: number,
+    context: TypedExecutionContext,
+    preferredScope?: string
+  ): void {
     // If preferred scope is specified, handle it
     if (preferredScope === 'global') {
       context.globals.set(name, value);

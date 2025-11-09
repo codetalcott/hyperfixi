@@ -4,13 +4,13 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { 
+import {
   EnhancedObjectLiteralExpression,
   createObjectLiteralExpression,
   createField,
   createStaticField,
   createDynamicField,
-  createObject
+  createObject,
 } from './index.ts';
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
@@ -31,22 +31,20 @@ describe('Enhanced Object Expression', () => {
     });
 
     test('validates single field object', async () => {
-      const result = await objectExpression.validate([
-        createStaticField('foo', true)
-      ]);
+      const result = await objectExpression.validate([createStaticField('foo', true)]);
       expect(result.isValid).toBe(true);
     });
 
     test('validates multi-field object', async () => {
       const result = await objectExpression.validate([
         createStaticField('foo', true),
-        createStaticField('bar', false)
+        createStaticField('bar', false),
       ]);
       expect(result.isValid).toBe(true);
     });
 
     test('warns about very large objects', async () => {
-      const largeFieldArray = Array.from({ length: 1001 }, (_, i) => 
+      const largeFieldArray = Array.from({ length: 1001 }, (_, i) =>
         createStaticField(`field${i}`, i)
       );
       const result = await objectExpression.validate(largeFieldArray);
@@ -57,7 +55,7 @@ describe('Enhanced Object Expression', () => {
     test('detects duplicate static keys', async () => {
       const result = await objectExpression.validate([
         createStaticField('foo', true),
-        createStaticField('foo', false)
+        createStaticField('foo', false),
       ]);
       expect(result.isValid).toBe(false);
       expect(result.errors[0]).toContain('Duplicate field names');
@@ -65,7 +63,7 @@ describe('Enhanced Object Expression', () => {
 
     test('validates static field key types', async () => {
       const result = await objectExpression.validate([
-        createField(123, 'value', false) // Invalid: non-string static key
+        createField(123, 'value', false), // Invalid: non-string static key
       ]);
       expect(result.isValid).toBe(false);
       expect(result.errors[0]).toContain('Static field key must be a string');
@@ -75,7 +73,7 @@ describe('Enhanced Object Expression', () => {
   describe('Empty Object Creation', () => {
     test('creates empty object literal', async () => {
       const result = await objectExpression.evaluate(context);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({});
@@ -86,11 +84,8 @@ describe('Enhanced Object Expression', () => {
 
   describe('Single Field Objects', () => {
     test('creates single field object with boolean value', async () => {
-      const result = await objectExpression.evaluate(
-        context, 
-        createStaticField('foo', true)
-      );
-      
+      const result = await objectExpression.evaluate(context, createStaticField('foo', true));
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ foo: true });
@@ -99,11 +94,8 @@ describe('Enhanced Object Expression', () => {
     });
 
     test('creates single field object with string value', async () => {
-      const result = await objectExpression.evaluate(
-        context, 
-        createStaticField('name', 'John')
-      );
-      
+      const result = await objectExpression.evaluate(context, createStaticField('name', 'John'));
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ name: 'John' });
@@ -112,11 +104,8 @@ describe('Enhanced Object Expression', () => {
     });
 
     test('creates single field object with numeric value', async () => {
-      const result = await objectExpression.evaluate(
-        context, 
-        createStaticField('age', 30)
-      );
-      
+      const result = await objectExpression.evaluate(context, createStaticField('age', 30));
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ age: 30 });
@@ -132,7 +121,7 @@ describe('Enhanced Object Expression', () => {
         createStaticField('foo', true),
         createStaticField('bar', false)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ foo: true, bar: false });
@@ -148,14 +137,14 @@ describe('Enhanced Object Expression', () => {
         createStaticField('active', true),
         createStaticField('tags', ['developer', 'javascript'])
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({
           name: 'John',
           age: 30,
           active: true,
-          tags: ['developer', 'javascript']
+          tags: ['developer', 'javascript'],
         });
         expect(result.type).toBe('object');
       }
@@ -169,7 +158,7 @@ describe('Enhanced Object Expression', () => {
         createStaticField('foo', true),
         createStaticField('bar', false)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ foo: true, bar: false });
@@ -183,13 +172,13 @@ describe('Enhanced Object Expression', () => {
         createStaticField('field_with_underscores', false),
         createStaticField('field.with.dots', 'value')
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({
           'field-with-hyphens': true,
-          'field_with_underscores': false,
-          'field.with.dots': 'value'
+          field_with_underscores: false,
+          'field.with.dots': 'value',
         });
       }
     });
@@ -202,12 +191,12 @@ describe('Enhanced Object Expression', () => {
         createStaticField('-foo', true),
         createStaticField('bar-baz', false)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({
           '-foo': true,
-          'bar-baz': false
+          'bar-baz': false,
         });
       }
     });
@@ -218,50 +207,50 @@ describe('Enhanced Object Expression', () => {
       // Set up context with variables
       context.me = document.createElement('div');
       context.locals = { keyName: 'dynamicKey' };
-      
+
       const result = await objectExpression.evaluate(
         context,
         createDynamicField('dynamicKey', true),
         createStaticField('static', false)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({
-          'dynamicKey': true,
-          'static': false
+          dynamicKey: true,
+          static: false,
         });
       }
     });
 
     test('evaluates dynamic field names from functions', async () => {
       const keyFunction = () => 'computedKey';
-      
+
       const result = await objectExpression.evaluate(
         context,
         createDynamicField(keyFunction, 'computed-value')
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({
-          'computedKey': 'computed-value'
+          computedKey: 'computed-value',
         });
       }
     });
 
     test('handles promise-based dynamic keys', async () => {
       const keyPromise = Promise.resolve('asyncKey');
-      
+
       const result = await objectExpression.evaluate(
         context,
         createDynamicField(keyPromise, 'async-value')
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({
-          'asyncKey': 'async-value'
+          asyncKey: 'async-value',
         });
       }
     });
@@ -270,16 +259,16 @@ describe('Enhanced Object Expression', () => {
   describe('Promise Value Handling', () => {
     test('resolves promise values', async () => {
       const promiseValue = Promise.resolve('resolved-value');
-      
+
       const result = await objectExpression.evaluate(
         context,
         createStaticField('asyncField', promiseValue)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({
-          'asyncField': 'resolved-value'
+          asyncField: 'resolved-value',
         });
       }
     });
@@ -287,20 +276,20 @@ describe('Enhanced Object Expression', () => {
     test('handles multiple promise values', async () => {
       const promise1 = Promise.resolve('value1');
       const promise2 = Promise.resolve('value2');
-      
+
       const result = await objectExpression.evaluate(
         context,
         createStaticField('field1', promise1),
         createStaticField('field2', promise2),
         createStaticField('field3', 'sync-value')
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({
-          'field1': 'value1',
-          'field2': 'value2',
-          'field3': 'sync-value'
+          field1: 'value1',
+          field2: 'value2',
+          field3: 'sync-value',
         });
       }
     });
@@ -309,36 +298,36 @@ describe('Enhanced Object Expression', () => {
   describe('Nested Objects and Arrays', () => {
     test('handles nested objects', async () => {
       const nestedObject = { inner: 'value' };
-      
+
       const result = await objectExpression.evaluate(
         context,
         createStaticField('nested', nestedObject),
         createStaticField('simple', 'value')
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({
-          'nested': { inner: 'value' },
-          'simple': 'value'
+          nested: { inner: 'value' },
+          simple: 'value',
         });
       }
     });
 
     test('handles nested arrays', async () => {
       const nestedArray = [1, 2, 3];
-      
+
       const result = await objectExpression.evaluate(
         context,
         createStaticField('array', nestedArray),
         createStaticField('count', nestedArray.length)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({
-          'array': [1, 2, 3],
-          'count': 3
+          array: [1, 2, 3],
+          count: 3,
         });
       }
     });
@@ -346,13 +335,15 @@ describe('Enhanced Object Expression', () => {
 
   describe('Error Handling', () => {
     test('handles dynamic field key resolution errors', async () => {
-      const errorFunction = () => { throw new Error('Key resolution failed'); };
-      
+      const errorFunction = () => {
+        throw new Error('Key resolution failed');
+      };
+
       const result = await objectExpression.evaluate(
         context,
         createDynamicField(errorFunction, 'value')
       );
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.name).toBe('DynamicFieldKeyError');
@@ -360,13 +351,15 @@ describe('Enhanced Object Expression', () => {
     });
 
     test('handles field value function errors', async () => {
-      const errorValueFunction = () => { throw new Error('Value function failed'); };
-      
+      const errorValueFunction = () => {
+        throw new Error('Value function failed');
+      };
+
       const result = await objectExpression.evaluate(
         context,
         createStaticField('key', errorValueFunction)
       );
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.name).toBe('FieldValueFunctionError');
@@ -385,23 +378,23 @@ describe('Enhanced Object Expression', () => {
       expect(staticField).toEqual({
         key: 'key',
         value: 'value',
-        isDynamic: false
+        isDynamic: false,
       });
 
       const dynamicField = createDynamicField('keyExpr', 'value');
       expect(dynamicField).toEqual({
         key: 'keyExpr',
         value: 'value',
-        isDynamic: true
+        isDynamic: true,
       });
     });
 
     test('createObject utility works', async () => {
-      const result = await createObject([
-        createStaticField('foo', true),
-        createStaticField('bar', false)
-      ], context);
-      
+      const result = await createObject(
+        [createStaticField('foo', true), createStaticField('bar', false)],
+        context
+      );
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ foo: true, bar: false });
@@ -410,7 +403,7 @@ describe('Enhanced Object Expression', () => {
 
     test('metadata provides comprehensive information', () => {
       const metadata = objectExpression.getMetadata();
-      
+
       expect(metadata.name).toBe('ObjectLiteralExpression');
       expect(metadata.category).toBe('literal');
       expect(metadata.supportedFeatures).toContain('dynamic field names');
@@ -423,7 +416,7 @@ describe('Enhanced Object Expression', () => {
   describe('LLM Documentation', () => {
     test('provides comprehensive documentation', () => {
       const docs = objectExpression.documentation;
-      
+
       expect(docs.summary).toContain('object literals');
       expect(docs.parameters).toHaveLength(1);
       expect(docs.parameters[0].name).toBe('fields');
@@ -436,36 +429,30 @@ describe('Enhanced Object Expression', () => {
 
   describe('Performance Characteristics', () => {
     test('handles medium-sized objects efficiently', async () => {
-      const fields = Array.from({ length: 100 }, (_, i) => 
-        createStaticField(`field${i}`, i)
-      );
-      
+      const fields = Array.from({ length: 100 }, (_, i) => createStaticField(`field${i}`, i));
+
       const startTime = performance.now();
       const result = await objectExpression.evaluate(context, ...fields);
       const endTime = performance.now();
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Object.keys(result.value)).toHaveLength(100);
       }
-      
+
       // Should be reasonably fast even for medium-sized objects
       expect(endTime - startTime).toBeLessThan(50); // Less than 50ms
     });
 
     test('processes multiple async values efficiently', async () => {
-      const promises = Array.from({ length: 20 }, (_, i) => 
-        Promise.resolve(`value${i}`)
-      );
-      
-      const fields = promises.map((promise, i) => 
-        createStaticField(`field${i}`, promise)
-      );
-      
+      const promises = Array.from({ length: 20 }, (_, i) => Promise.resolve(`value${i}`));
+
+      const fields = promises.map((promise, i) => createStaticField(`field${i}`, promise));
+
       const startTime = performance.now();
       const result = await objectExpression.evaluate(context, ...fields);
       const endTime = performance.now();
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Object.keys(result.value)).toHaveLength(20);
@@ -474,7 +461,7 @@ describe('Enhanced Object Expression', () => {
           expect(result.value[`field${i}`]).toBe(`value${i}`);
         }
       }
-      
+
       // Should handle async values efficiently
       expect(endTime - startTime).toBeLessThan(100); // Less than 100ms
     });
@@ -483,7 +470,7 @@ describe('Enhanced Object Expression', () => {
   describe('Integration with Official Test Cases', () => {
     test('matches official empty object behavior', async () => {
       const result = await objectExpression.evaluate(context);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({});
@@ -491,11 +478,8 @@ describe('Enhanced Object Expression', () => {
     });
 
     test('matches official single field object behavior', async () => {
-      const result = await objectExpression.evaluate(
-        context,
-        createStaticField('foo', true)
-      );
-      
+      const result = await objectExpression.evaluate(context, createStaticField('foo', true));
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ foo: true });
@@ -508,7 +492,7 @@ describe('Enhanced Object Expression', () => {
         createStaticField('foo', true),
         createStaticField('bar', false)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ foo: true, bar: false });
@@ -521,7 +505,7 @@ describe('Enhanced Object Expression', () => {
         createStaticField('foo', true),
         createStaticField('bar', false)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ foo: true, bar: false });
@@ -534,7 +518,7 @@ describe('Enhanced Object Expression', () => {
         createStaticField('-foo', true),
         createStaticField('bar-baz', false)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ '-foo': true, 'bar-baz': false });
@@ -549,7 +533,7 @@ describe('Enhanced Object Expression', () => {
         createStaticField('foo', true),
         createStaticField('bar-baz', false)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ foo: true, 'bar-baz': false });
@@ -561,13 +545,13 @@ describe('Enhanced Object Expression', () => {
       // where foo="bar" and bar()="foo"
       const keyValue1 = 'bar';
       const keyValue2 = 'foo';
-      
+
       const result = await objectExpression.evaluate(
         context,
         createDynamicField(keyValue1, true),
         createDynamicField(keyValue2, false)
       );
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual({ bar: true, foo: false });

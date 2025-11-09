@@ -17,11 +17,11 @@ describe('ContextBridge', () => {
       classList: {
         add: () => {},
         remove: () => {},
-        contains: () => false
+        contains: () => false,
       },
       style: {},
       addEventListener: () => {},
-      removeEventListener: () => {}
+      removeEventListener: () => {},
     } as HTMLElement;
 
     // Create base execution context
@@ -35,7 +35,7 @@ describe('ContextBridge', () => {
       locals: new Map([['localVar', 'localValue']]),
       globals: new Map([['globalVar', 'globalValue']]),
       events: new Map(),
-      meta: { testMeta: 'metaValue' }
+      meta: { testMeta: 'metaValue' },
     };
   });
 
@@ -71,7 +71,7 @@ describe('ContextBridge', () => {
         it: null,
         you: null,
         result: undefined,
-        event: undefined
+        event: undefined,
       };
 
       const typedContext = ContextBridge.toTyped(minimalContext);
@@ -87,7 +87,7 @@ describe('ContextBridge', () => {
   describe('fromTyped conversion', () => {
     it('should update ExecutionContext from TypedExecutionContext', () => {
       const typedContext = ContextBridge.toTyped(baseContext);
-      
+
       // Modify typed context
       typedContext.result = 'new-result';
       typedContext.it = 'modified-it';
@@ -132,12 +132,12 @@ describe('ContextBridge', () => {
 
     it('should handle context modifications during round-trip', () => {
       const typedContext = ContextBridge.toTyped(baseContext);
-      
+
       // Simulate command execution modifying context
       typedContext.result = { status: 'success', data: 'command-result' };
       typedContext.errors.push('warning: test warning');
       typedContext.commandHistory.push('hide .example');
-      
+
       const finalContext = ContextBridge.fromTyped(typedContext, baseContext);
 
       expect(finalContext.result).toEqual({ status: 'success', data: 'command-result' });
@@ -159,16 +159,16 @@ describe('ContextBridge', () => {
       // Should be mutable for command use
       typedContext.errors.push('test error');
       typedContext.commandHistory.push('test command');
-      
+
       expect(typedContext.errors).toContain('test error');
       expect(typedContext.commandHistory).toContain('test command');
     });
 
     it('should support different validation modes', () => {
       const typedContext = ContextBridge.toTyped(baseContext);
-      
+
       expect(typedContext.validationMode).toBe('strict');
-      
+
       typedContext.validationMode = 'lenient';
       expect(typedContext.validationMode).toBe('lenient');
     });
@@ -181,11 +181,11 @@ describe('ContextBridge', () => {
         it: null,
         you: null,
         result: undefined,
-        event: undefined
+        event: undefined,
       } as ExecutionContext;
 
       const typedContext = ContextBridge.toTyped(nullContext);
-      
+
       expect(typedContext.me).toBe(null);
       expect(typedContext.it).toBe(null);
       expect(typedContext.variables).toEqual(new Map());
@@ -194,11 +194,11 @@ describe('ContextBridge', () => {
     it('should handle context with missing properties', () => {
       const partialContext = {
         me: mockElement,
-        it: 'test'
+        it: 'test',
       } as ExecutionContext;
 
       const typedContext = ContextBridge.toTyped(partialContext);
-      
+
       expect(typedContext.me).toBe(mockElement);
       expect(typedContext.it).toBe('test');
       expect(typedContext.you).toBe(undefined);

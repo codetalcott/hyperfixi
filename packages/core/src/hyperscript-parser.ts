@@ -1,6 +1,6 @@
 /**
  * Basic HyperScript Parser
- * 
+ *
  * Implements a simple recursive descent parser for hyperscript syntax
  * Compatible with _hyperscript parser patterns
  */
@@ -60,7 +60,7 @@ export class HyperscriptParser {
   parse(): ParseResult<ProgramNode> {
     try {
       const features: FeatureNode[] = [];
-      
+
       while (this.tokens.hasMore() && this.tokens.currentToken().type !== 'EOF') {
         const feature = this.parseFeature();
         if (feature) {
@@ -72,13 +72,13 @@ export class HyperscriptParser {
         type: 'program',
         features,
         source: this.source,
-        children: features
+        children: features,
       };
 
       return {
         success: true,
         node: program,
-        tokens: []
+        tokens: [],
       };
     } catch (error) {
       const parseError: ParseError = {
@@ -86,13 +86,13 @@ export class HyperscriptParser {
         message: error instanceof Error ? error.message : 'Unknown parse error',
         line: this.tokens.currentToken().line,
         column: this.tokens.currentToken().column,
-        source: this.source
+        source: this.source,
       };
 
       return {
         success: false,
         error: parseError,
-        tokens: []
+        tokens: [],
       };
     }
   }
@@ -102,7 +102,7 @@ export class HyperscriptParser {
    */
   private parseFeature(): FeatureNode | null {
     const token = this.tokens.currentToken();
-    
+
     if (token.type !== 'IDENTIFIER') {
       return null;
     }
@@ -135,11 +135,13 @@ export class HyperscriptParser {
 
     // Parse optional event details (from, etc.)
     const body: HyperscriptASTNode[] = [];
-    
+
     // Parse commands until end of feature
-    while (this.tokens.hasMore() && 
-           this.tokens.currentToken().type !== 'EOF' &&
-           !this.isFeatureStart()) {
+    while (
+      this.tokens.hasMore() &&
+      this.tokens.currentToken().type !== 'EOF' &&
+      !this.isFeatureStart()
+    ) {
       const command = this.parseCommand();
       if (command) {
         body.push(command);
@@ -153,7 +155,7 @@ export class HyperscriptParser {
       keyword: 'on',
       body,
       children: body,
-      source: this.extractSource()
+      source: this.extractSource(),
     };
   }
 
@@ -169,7 +171,7 @@ export class HyperscriptParser {
     // Parse parameter list
     this.tokens.requireOpToken('(');
     const params: string[] = [];
-    
+
     while (this.tokens.currentToken().value !== ')') {
       if (this.tokens.currentToken().type === 'IDENTIFIER') {
         params.push(this.tokens.consumeToken().value);
@@ -180,7 +182,7 @@ export class HyperscriptParser {
         break;
       }
     }
-    
+
     this.tokens.requireOpToken(')');
 
     // Parse function body until 'end'
@@ -201,7 +203,7 @@ export class HyperscriptParser {
       keyword: 'def',
       body,
       children: body,
-      source: this.extractSource()
+      source: this.extractSource(),
     };
   }
 
@@ -210,13 +212,15 @@ export class HyperscriptParser {
    */
   private parseInitFeature(): FeatureNode {
     this.tokens.requireToken('init');
-    
+
     const body: HyperscriptASTNode[] = [];
-    
+
     // Parse commands until end of feature
-    while (this.tokens.hasMore() && 
-           this.tokens.currentToken().type !== 'EOF' &&
-           !this.isFeatureStart()) {
+    while (
+      this.tokens.hasMore() &&
+      this.tokens.currentToken().type !== 'EOF' &&
+      !this.isFeatureStart()
+    ) {
       const command = this.parseCommand();
       if (command) {
         body.push(command);
@@ -230,7 +234,7 @@ export class HyperscriptParser {
       keyword: 'init',
       body,
       children: body,
-      source: this.extractSource()
+      source: this.extractSource(),
     };
   }
 
@@ -248,7 +252,7 @@ export class HyperscriptParser {
       keyword: 'command',
       body: [command],
       children: [command],
-      source: this.extractSource()
+      source: this.extractSource(),
     };
   }
 
@@ -257,7 +261,7 @@ export class HyperscriptParser {
    */
   private parseCommand(): CommandNode | null {
     const token = this.tokens.currentToken();
-    
+
     if (token.type !== 'IDENTIFIER') {
       return null;
     }
@@ -272,7 +276,7 @@ export class HyperscriptParser {
       type: 'command',
       name: commandName,
       args,
-      source: this.extractSource()
+      source: this.extractSource(),
     };
   }
 
@@ -280,7 +284,6 @@ export class HyperscriptParser {
    * Parse arguments for a specific command
    */
   private parseCommandArgs(commandName: string): any[] {
-
     switch (commandName) {
       case 'put':
         return this.parsePutArgs();
@@ -365,10 +368,12 @@ export class HyperscriptParser {
    */
   private parseGenericArgs(): any[] {
     const args: any[] = [];
-    
-    while (this.tokens.hasMore() && 
-           this.tokens.currentToken().type !== 'EOF' &&
-           !this.isStatementEnd()) {
+
+    while (
+      this.tokens.hasMore() &&
+      this.tokens.currentToken().type !== 'EOF' &&
+      !this.isStatementEnd()
+    ) {
       const expr = this.parseExpression();
       if (expr) {
         args.push(expr);
@@ -392,17 +397,17 @@ export class HyperscriptParser {
    */
   private parseOrExpression(): ExpressionNode | null {
     let left = this.parseAndExpression();
-    
+
     while (this.tokens.matchToken('or')) {
       const right = this.parseAndExpression();
       left = {
         type: 'expression',
         operator: 'or',
         operands: [left!, right!],
-        source: this.extractSource()
+        source: this.extractSource(),
       };
     }
-    
+
     return left;
   }
 
@@ -411,17 +416,17 @@ export class HyperscriptParser {
    */
   private parseAndExpression(): ExpressionNode | null {
     let left = this.parseEqualityExpression();
-    
+
     while (this.tokens.matchToken('and')) {
       const right = this.parseEqualityExpression();
       left = {
         type: 'expression',
         operator: 'and',
         operands: [left!, right!],
-        source: this.extractSource()
+        source: this.extractSource(),
       };
     }
-    
+
     return left;
   }
 
@@ -430,19 +435,18 @@ export class HyperscriptParser {
    */
   private parseEqualityExpression(): ExpressionNode | null {
     let left = this.parseComparisonExpression();
-    
-    while (this.tokens.currentToken().type === 'EQ' || 
-           this.tokens.currentToken().type === 'NEQ') {
+
+    while (this.tokens.currentToken().type === 'EQ' || this.tokens.currentToken().type === 'NEQ') {
       const op = this.tokens.consumeToken();
       const right = this.parseComparisonExpression();
       left = {
         type: 'expression',
         operator: op.value,
         operands: [left!, right!],
-        source: this.extractSource()
+        source: this.extractSource(),
       };
     }
-    
+
     return left;
   }
 
@@ -451,21 +455,23 @@ export class HyperscriptParser {
    */
   private parseComparisonExpression(): ExpressionNode | null {
     let left = this.parseAdditiveExpression();
-    
-    while (this.tokens.currentToken().type === 'L_ANG' || 
-           this.tokens.currentToken().type === 'R_ANG' ||
-           this.tokens.currentToken().type === 'LTE_ANG' ||
-           this.tokens.currentToken().type === 'GTE_ANG') {
+
+    while (
+      this.tokens.currentToken().type === 'L_ANG' ||
+      this.tokens.currentToken().type === 'R_ANG' ||
+      this.tokens.currentToken().type === 'LTE_ANG' ||
+      this.tokens.currentToken().type === 'GTE_ANG'
+    ) {
       const op = this.tokens.consumeToken();
       const right = this.parseAdditiveExpression();
       left = {
         type: 'expression',
         operator: op.value,
         operands: [left!, right!],
-        source: this.extractSource()
+        source: this.extractSource(),
       };
     }
-    
+
     return left;
   }
 
@@ -474,19 +480,21 @@ export class HyperscriptParser {
    */
   private parseAdditiveExpression(): ExpressionNode | null {
     let left = this.parseMultiplicativeExpression();
-    
-    while (this.tokens.currentToken().type === 'PLUS' || 
-           this.tokens.currentToken().type === 'MINUS') {
+
+    while (
+      this.tokens.currentToken().type === 'PLUS' ||
+      this.tokens.currentToken().type === 'MINUS'
+    ) {
       const op = this.tokens.consumeToken();
       const right = this.parseMultiplicativeExpression();
       left = {
         type: 'expression',
         operator: op.value,
         operands: [left!, right!],
-        source: this.extractSource()
+        source: this.extractSource(),
       };
     }
-    
+
     return left;
   }
 
@@ -495,20 +503,22 @@ export class HyperscriptParser {
    */
   private parseMultiplicativeExpression(): ExpressionNode | null {
     let left = this.parsePrimaryExpression();
-    
-    while (this.tokens.currentToken().type === 'MULTIPLY' || 
-           this.tokens.currentToken().type === 'DIVIDE' ||
-           this.tokens.currentToken().type === 'PERCENT') {
+
+    while (
+      this.tokens.currentToken().type === 'MULTIPLY' ||
+      this.tokens.currentToken().type === 'DIVIDE' ||
+      this.tokens.currentToken().type === 'PERCENT'
+    ) {
       const op = this.tokens.consumeToken();
       const right = this.parsePrimaryExpression();
       left = {
         type: 'expression',
         operator: op.value,
         operands: [left!, right!],
-        source: this.extractSource()
+        source: this.extractSource(),
       };
     }
-    
+
     return left;
   }
 
@@ -524,7 +534,7 @@ export class HyperscriptParser {
         return {
           type: 'expression',
           value: parseFloat(token.value),
-          source: this.extractSource()
+          source: this.extractSource(),
         };
 
       case 'STRING':
@@ -534,7 +544,7 @@ export class HyperscriptParser {
         return {
           type: 'expression',
           value: stringValue,
-          source: this.extractSource()
+          source: this.extractSource(),
         };
 
       case 'IDENTIFIER':
@@ -547,7 +557,7 @@ export class HyperscriptParser {
         return {
           type: 'expression',
           value: token.value,
-          source: this.extractSource()
+          source: this.extractSource(),
         };
 
       case 'L_PAREN':
@@ -566,24 +576,30 @@ export class HyperscriptParser {
     let expr: ExpressionNode = {
       type: 'expression',
       value: nameToken.value,
-      source: this.extractSource()
+      source: this.extractSource(),
     };
 
     // Handle possessive expressions (foo's bar)
-    if (this.tokens.currentToken().type === "APOSTROPHE" || this.tokens.currentToken().value === "'") {
+    if (
+      this.tokens.currentToken().type === 'APOSTROPHE' ||
+      this.tokens.currentToken().value === "'"
+    ) {
       this.tokens.consumeToken(); // consume apostrophe
       this.tokens.requireToken('s');
       const property = this.tokens.requireTokenType('IDENTIFIER');
-      
+
       expr = {
         type: 'expression',
         operator: 'possessive',
-        operands: [expr, {
-          type: 'expression',
-          value: property.value,
-          source: this.extractSource()
-        }],
-        source: this.extractSource()
+        operands: [
+          expr,
+          {
+            type: 'expression',
+            value: property.value,
+            source: this.extractSource(),
+          },
+        ],
+        source: this.extractSource(),
       };
     }
 
@@ -605,8 +621,7 @@ export class HyperscriptParser {
    */
   private isFeatureStart(): boolean {
     const token = this.tokens.currentToken();
-    return token.type === 'IDENTIFIER' && 
-           ['on', 'def', 'init'].includes(token.value);
+    return token.type === 'IDENTIFIER' && ['on', 'def', 'init'].includes(token.value);
   }
 
   /**
@@ -614,11 +629,13 @@ export class HyperscriptParser {
    */
   private isStatementEnd(): boolean {
     const token = this.tokens.currentToken();
-    return token.type === 'EOF' || 
-           this.isFeatureStart() ||
-           token.value === 'then' ||
-           token.value === 'else' ||
-           token.value === 'end';
+    return (
+      token.type === 'EOF' ||
+      this.isFeatureStart() ||
+      token.value === 'then' ||
+      token.value === 'else' ||
+      token.value === 'end'
+    );
   }
 
   /**

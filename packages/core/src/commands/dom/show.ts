@@ -27,13 +27,15 @@ export interface ShowCommandOptions {
  * Input validation schema for LLM understanding
  */
 const ShowCommandInputSchema = v.tuple([
-  v.union([
-    v.custom((value: unknown) => value instanceof HTMLElement),
-    v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-    v.string(), // CSS selector
-    v.null(),   // Use implicit target (me)
-    v.undefined()
-  ]).optional()
+  v
+    .union([
+      v.custom((value: unknown) => value instanceof HTMLElement),
+      v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
+      v.string(), // CSS selector
+      v.null(), // Use implicit target (me)
+      v.undefined(),
+    ])
+    .optional(),
 ]);
 
 type ShowCommandInput = any; // Inferred from RuntimeValidator
@@ -41,14 +43,18 @@ type ShowCommandInput = any; // Inferred from RuntimeValidator
 /**
  * Enhanced Show Command with full type safety for LLM agents
  */
-export class ShowCommand implements TypedCommandImplementation<
-  ShowCommandInput,
-  HTMLElement[],  // Returns list of shown elements
-  TypedExecutionContext
-> {
+export class ShowCommand
+  implements
+    TypedCommandImplementation<
+      ShowCommandInput,
+      HTMLElement[], // Returns list of shown elements
+      TypedExecutionContext
+    >
+{
   public readonly name = 'show' as const;
   public readonly syntax = 'show [<target-expression>]';
-  public readonly description = 'Shows one or more elements by restoring display or removing CSS classes';
+  public readonly description =
+    'Shows one or more elements by restoring display or removing CSS classes';
   public readonly inputSchema = ShowCommandInputSchema;
   public readonly outputType = 'element-list' as const;
 
@@ -60,15 +66,15 @@ export class ShowCommand implements TypedCommandImplementation<
       {
         code: 'show me',
         description: 'Show the current element',
-        expectedOutput: []
+        expectedOutput: [],
       },
       {
         code: 'show <.hidden/>',
         description: 'Show all elements with hidden class',
-        expectedOutput: []
-      }
+        expectedOutput: [],
+      },
     ],
-    relatedCommands: ['hide', 'toggle']
+    relatedCommands: ['hide', 'toggle'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -79,32 +85,32 @@ export class ShowCommand implements TypedCommandImplementation<
         type: 'element',
         description: 'Element(s) to show. If omitted, shows the current element (me)',
         optional: true,
-        examples: ['me', '<#modal/>', '<.hidden/>']
-      }
+        examples: ['me', '<#modal/>', '<.hidden/>'],
+      },
     ],
     returns: {
       type: 'element-list',
       description: 'Array of elements that were shown',
-      examples: [[]]
+      examples: [[]],
     },
     examples: [
       {
         title: 'Show current element',
         code: 'on click show me',
         explanation: 'When clicked, the button shows itself',
-        output: []
+        output: [],
       },
       {
         title: 'Show hidden modal',
         code: 'on click show <#modal/>',
         explanation: 'Click to reveal a previously hidden modal',
-        output: []
-      }
+        output: [],
+      },
     ],
     seeAlso: ['hide', 'toggle', 'remove-class'],
-    tags: ['dom', 'visibility', 'css']
+    tags: ['dom', 'visibility', 'css'],
   };
-  
+
   private options: ShowCommandOptions;
 
   constructor(options: ShowCommandOptions = {}) {
@@ -124,10 +130,10 @@ export class ShowCommand implements TypedCommandImplementation<
     try {
       // Type-safe target resolution
       const elements = this.resolveTargets(context, input);
-      
+
       // Process elements with enhanced error handling
       const shownElements: HTMLElement[] = [];
-      
+
       for (const element of elements) {
         const showResult = this.showElement(element, context);
         if (showResult.success) {
@@ -138,20 +144,19 @@ export class ShowCommand implements TypedCommandImplementation<
       return {
         success: true,
         value: shownElements,
-        type: 'element-list'
+        type: 'element-list',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Unknown error',
+          message: error instanceof Error ? error.message : 'Unknown error',
           code: 'SHOW_EXECUTION_FAILED',
-          suggestions: [ 'Check if element exists', 'Verify element is not null']
+          suggestions: ['Check if element exists', 'Verify element is not null'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -195,7 +200,10 @@ export class ShowCommand implements TypedCommandImplementation<
     return [];
   }
 
-  private showElement(element: HTMLElement, context: TypedExecutionContext): EvaluationResult<HTMLElement> {
+  private showElement(
+    element: HTMLElement,
+    context: TypedExecutionContext
+  ): EvaluationResult<HTMLElement> {
     try {
       if (this.options.useClass) {
         this.showWithClass(element);
@@ -210,26 +218,25 @@ export class ShowCommand implements TypedCommandImplementation<
         command: this.name,
         timestamp: Date.now(),
         metadata: this.metadata,
-        result: 'success'
+        result: 'success',
       });
 
       return {
         success: true,
         value: element,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Failed to show element',
+          message: error instanceof Error ? error.message : 'Failed to show element',
           code: 'ELEMENT_SHOW_FAILED',
-          suggestions: [ 'Check if element is still in DOM', 'Verify element is not null']
+          suggestions: ['Check if element is still in DOM', 'Verify element is not null'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -237,11 +244,11 @@ export class ShowCommand implements TypedCommandImplementation<
   private showWithDisplay(element: HTMLElement): void {
     // Restore original display value if available
     const originalDisplay = element.dataset.originalDisplay;
-    
+
     if (originalDisplay !== undefined) {
       // Use original display or default if original was empty
       element.style.display = originalDisplay || this.options.defaultDisplay!;
-      
+
       // Clean up the data attribute
       delete element.dataset.originalDisplay;
     } else {
@@ -262,60 +269,64 @@ export class ShowCommand implements TypedCommandImplementation<
     try {
       // Schema validation
       const parsed = ShowCommandInputSchema.safeParse(args);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch' as const,
-            message: `Invalid argument: ${err.message}`,
-            suggestions: [this.getValidationSuggestion(err.code ?? "unknown")]
-          })) ?? [],
-          suggestions: ['Use HTMLElement, CSS selector string, or omit for implicit target']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch' as const,
+              message: `Invalid argument: ${err.message}`,
+              suggestions: [this.getValidationSuggestion(err.code ?? 'unknown')],
+            })) ?? [],
+          suggestions: ['Use HTMLElement, CSS selector string, or omit for implicit target'],
         };
       }
 
       // Additional semantic validation
       const [target] = parsed.data as [unknown];
-      
+
       if (typeof target === 'string' && !this.isValidCSSSelector(target)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: `Invalid CSS selector: "${target}"`,
-            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"']
-          }],
-          suggestions: [ 'Check CSS selector syntax', 'Use document.querySelector() test']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: `Invalid CSS selector: "${target}"`,
+              suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"'],
+            },
+          ],
+          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: [] 
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: ['Check input types and values']
-        }],
-        suggestions: ['Ensure arguments match expected types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: ['Check input types and values'],
+          },
+        ],
+        suggestions: ['Ensure arguments match expected types'],
       };
     }
   }
 
   private getValidationSuggestion(errorCode: string): string {
     const suggestions: Record<string, string> = {
-      'invalid_type': 'Use HTMLElement, string (CSS selector), or omit argument',
-      'invalid_union': 'Target must be an element, CSS selector, or null',
-      'too_big': 'Too many arguments - show command takes 0-1 arguments'
+      invalid_type: 'Use HTMLElement, string (CSS selector), or omit argument',
+      invalid_union: 'Target must be an element, CSS selector, or null',
+      too_big: 'Too many arguments - show command takes 0-1 arguments',
     };
-    
+
     return suggestions[errorCode] || 'Check argument types and syntax';
   }
 

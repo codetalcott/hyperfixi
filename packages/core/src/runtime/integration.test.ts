@@ -14,9 +14,9 @@ describe('Runtime Integration with Enhanced Commands', () => {
 
   beforeEach(() => {
     // Create runtime with enhanced commands enabled
-    runtime = new Runtime({ 
+    runtime = new Runtime({
       useEnhancedCommands: true,
-      enableErrorReporting: true // Debug output for remove command
+      enableErrorReporting: true, // Debug output for remove command
     });
 
     // Create mock DOM element with realistic classList behavior
@@ -38,15 +38,15 @@ describe('Runtime Integration with Enhanced Commands', () => {
         }),
         contains: vi.fn((className: string) => {
           return mockClassList.has(className);
-        })
+        }),
       },
       style: {
-        display: 'block'
+        display: 'block',
       },
       dataset: {},
       addEventListener: vi.fn(),
       removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn()
+      dispatchEvent: vi.fn(),
     } as HTMLElement;
 
     // Create execution context
@@ -60,7 +60,7 @@ describe('Runtime Integration with Enhanced Commands', () => {
       locals: new Map(),
       globals: new Map(),
       events: new Map(),
-      meta: {}
+      meta: {},
     };
   });
 
@@ -69,11 +69,11 @@ describe('Runtime Integration with Enhanced Commands', () => {
       // Debug: check if command is registered
       expect(runtime.getEnhancedRegistry().has('hide')).toBe(true);
       expect(runtime.getEnhancedRegistry().getCommandNames()).toContain('hide');
-      
+
       const commandNode: CommandNode = {
         type: 'command',
         name: 'hide',
-        args: []
+        args: [],
       };
 
       await runtime.execute(commandNode, context);
@@ -83,11 +83,11 @@ describe('Runtime Integration with Enhanced Commands', () => {
 
     it('should execute show command through enhanced adapter', async () => {
       mockElement.style.display = 'none';
-      
+
       const commandNode: CommandNode = {
         type: 'command',
         name: 'show',
-        args: []
+        args: [],
       };
 
       await runtime.execute(commandNode, context);
@@ -99,7 +99,7 @@ describe('Runtime Integration with Enhanced Commands', () => {
       const commandNode: CommandNode = {
         type: 'command',
         name: 'add',
-        args: [{ type: 'literal', value: 'active' }]
+        args: [{ type: 'literal', value: 'active' }],
       };
 
       await runtime.execute(commandNode, context);
@@ -111,15 +111,15 @@ describe('Runtime Integration with Enhanced Commands', () => {
       // Debug: check registry contents
       const hasRemove = runtime.getEnhancedRegistry().has('remove');
       const commands = runtime.getEnhancedRegistry().getCommandNames();
-      
+
       // Use assertion to see debug info
       expect(hasRemove).toBe(true); // This should fail if remove is not registered
       expect(commands).toContain('remove'); // This should fail if remove is not in the list
-      
+
       const commandNode: CommandNode = {
         type: 'command',
         name: 'remove',
-        args: [{ type: 'literal', value: 'inactive' }]
+        args: [{ type: 'literal', value: 'inactive' }],
       };
 
       await runtime.execute(commandNode, context);
@@ -131,7 +131,7 @@ describe('Runtime Integration with Enhanced Commands', () => {
       const commandNode: CommandNode = {
         type: 'command',
         name: 'toggle',
-        args: [{ type: 'literal', value: 'selected' }]
+        args: [{ type: 'literal', value: 'selected' }],
       };
 
       await runtime.execute(commandNode, context);
@@ -181,15 +181,15 @@ describe('Runtime Integration with Enhanced Commands', () => {
 
     it('should fallback to legacy commands when enhanced commands fail', async () => {
       // Create runtime with enhanced commands disabled
-      const legacyRuntime = new Runtime({ 
+      const legacyRuntime = new Runtime({
         useEnhancedCommands: false,
-        enableErrorReporting: false
+        enableErrorReporting: false,
       });
 
       const commandNode: CommandNode = {
         type: 'command',
         name: 'hide',
-        args: []
+        args: [],
       };
 
       // Should still work with legacy implementation
@@ -201,7 +201,7 @@ describe('Runtime Integration with Enhanced Commands', () => {
   describe('Command Registry Access', () => {
     it('should provide access to available commands', () => {
       const commands = runtime.getAvailableCommands();
-      
+
       expect(commands).toContain('hide');
       expect(commands).toContain('show');
       expect(commands).toContain('add');
@@ -215,7 +215,7 @@ describe('Runtime Integration with Enhanced Commands', () => {
 
     it('should report enhanced command status', () => {
       expect(runtime.isUsingEnhancedCommands()).toBe(true);
-      
+
       const legacyRuntime = new Runtime({ useEnhancedCommands: false });
       expect(legacyRuntime.isUsingEnhancedCommands()).toBe(false);
     });
@@ -236,7 +236,7 @@ describe('Runtime Integration with Enhanced Commands', () => {
       const commandNode: CommandNode = {
         type: 'command',
         name: 'hide',
-        args: []
+        args: [],
       };
 
       await runtime.execute(commandNode, context);
@@ -251,7 +251,7 @@ describe('Runtime Integration with Enhanced Commands', () => {
       const commandNode: CommandNode = {
         type: 'command',
         name: 'hide',
-        args: []
+        args: [],
       };
 
       await runtime.execute(commandNode, context);
@@ -289,12 +289,10 @@ describe('Runtime Integration with Enhanced Commands', () => {
         { type: 'command', name: 'hide', args: [] },
         { type: 'command', name: 'show', args: [] },
         { type: 'command', name: 'add', args: [{ type: 'literal', value: 'test' }] },
-        { type: 'command', name: 'remove', args: [{ type: 'literal', value: 'test' }] }
+        { type: 'command', name: 'remove', args: [{ type: 'literal', value: 'test' }] },
       ];
 
-      const promises = commands.map(cmd => 
-        runtime.execute(cmd, context)
-      );
+      const promises = commands.map(cmd => runtime.execute(cmd, context));
 
       // Should handle concurrent execution
       await Promise.all(promises);
@@ -304,13 +302,19 @@ describe('Runtime Integration with Enhanced Commands', () => {
     });
 
     it('should maintain consistency across enhanced and legacy modes', async () => {
-      const enhancedRuntime = new Runtime({ useEnhancedCommands: true, enableErrorReporting: false });
-      const legacyRuntime = new Runtime({ useEnhancedCommands: false, enableErrorReporting: false });
+      const enhancedRuntime = new Runtime({
+        useEnhancedCommands: true,
+        enableErrorReporting: false,
+      });
+      const legacyRuntime = new Runtime({
+        useEnhancedCommands: false,
+        enableErrorReporting: false,
+      });
 
       const commandNode: CommandNode = {
         type: 'command',
         name: 'hide',
-        args: []
+        args: [],
       };
 
       const mockElement1 = { ...mockElement };

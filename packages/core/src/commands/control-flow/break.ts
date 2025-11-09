@@ -1,9 +1,9 @@
 /**
  * Enhanced Break Command Implementation
  * Exits from the current loop
- * 
+ *
  * Syntax: break
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -15,7 +15,7 @@ export interface BreakCommandInput {
   // No input required
 }
 
-// Output type definition  
+// Output type definition
 export interface BreakCommandOutput {
   broken: true;
   timestamp: number;
@@ -24,22 +24,17 @@ export interface BreakCommandOutput {
 /**
  * Enhanced Break Command with full type safety and validation
  */
-export class BreakCommand implements CommandImplementation<
-  BreakCommandInput,
-  BreakCommandOutput,
-  TypedExecutionContext
-> {
+export class BreakCommand
+  implements CommandImplementation<BreakCommandInput, BreakCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'break',
-    description: 'The break command exits from the current loop (repeat, for, while, until). Execution continues after the loop.',
-    examples: [
-      'break',
-      'if found then break',
-      'unless isValid then break'
-    ],
+    description:
+      'The break command exits from the current loop (repeat, for, while, until). Execution continues after the loop.',
+    examples: ['break', 'if found then break', 'unless isValid then break'],
     syntax: 'break',
     category: 'flow' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -49,9 +44,9 @@ export class BreakCommand implements CommandImplementation<
         isValid: true,
         errors: [],
         suggestions: [],
-        data: {}
+        data: {},
       };
-    }
+    },
   };
 
   async execute(

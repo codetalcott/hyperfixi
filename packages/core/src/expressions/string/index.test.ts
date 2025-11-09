@@ -4,14 +4,14 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { 
+import {
   EnhancedStringInterpolationExpression,
   EnhancedStringConcatenationExpression,
   EnhancedStringLengthExpression,
   enhancedStringExpressions,
   interpolateString,
   concatenateStrings,
-  getStringLength
+  getStringLength,
 } from './index';
 import type { TypedExecutionContext } from '../../types/command-types';
 
@@ -24,18 +24,18 @@ function createMockContext(): TypedExecutionContext {
     locals: new Map([
       ['name', 'John'],
       ['age', 30],
-      ['user', { name: 'Jane', age: 25, email: 'jane@example.com' }]
+      ['user', { name: 'Jane', age: 25, email: 'jane@example.com' }],
     ]),
     globals: new Map([
       ['appName', 'TestApp'],
-      ['version', '1.0.0']
+      ['version', '1.0.0'],
     ]),
     result: null,
     meta: {
       startTime: Date.now(),
       commandStack: [],
-      debugMode: false
-    }
+      debugMode: false,
+    },
   };
 }
 
@@ -46,7 +46,7 @@ describe('Enhanced String Interpolation Expression', () => {
   beforeEach(() => {
     expression = new EnhancedStringInterpolationExpression();
     context = createMockContext();
-    
+
     // Set up element properties for testing
     (context.me as any).id = 'test-element';
     (context.me as any).className = 'test-class';
@@ -56,7 +56,7 @@ describe('Enhanced String Interpolation Expression', () => {
   describe('Basic Interpolation', () => {
     test('interpolates simple variables', async () => {
       const result = await expression.evaluate(context, 'Hello ${name}!');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Hello John!');
@@ -66,7 +66,7 @@ describe('Enhanced String Interpolation Expression', () => {
 
     test('handles multiple variables', async () => {
       const result = await expression.evaluate(context, 'User: ${name}, Age: ${age}');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('User: John, Age: 30');
@@ -75,7 +75,7 @@ describe('Enhanced String Interpolation Expression', () => {
 
     test('handles nested object properties', async () => {
       const result = await expression.evaluate(context, 'Email: ${user.email}');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Email: jane@example.com');
@@ -86,7 +86,7 @@ describe('Enhanced String Interpolation Expression', () => {
   describe('Context Variable Access', () => {
     test('accesses me element properties', async () => {
       const result = await expression.evaluate(context, 'Element: ${me.tagName}');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Element: DIV');
@@ -97,9 +97,9 @@ describe('Enhanced String Interpolation Expression', () => {
       // Debug: Check what you.tagName actually is
       console.log('you element:', context.you);
       console.log('you.tagName:', context.you?.tagName);
-      
+
       const result = await expression.evaluate(context, 'Element: ${you.tagName}');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         // Use the actual value for now to make test pass
@@ -109,7 +109,7 @@ describe('Enhanced String Interpolation Expression', () => {
 
     test('accesses it context variable', async () => {
       const result = await expression.evaluate(context, 'It value: ${it}');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('It value: test-value');
@@ -120,7 +120,7 @@ describe('Enhanced String Interpolation Expression', () => {
   describe('Global Variables', () => {
     test('accesses global variables', async () => {
       const result = await expression.evaluate(context, 'App: ${appName} v${version}');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('App: TestApp v1.0.0');
@@ -132,7 +132,7 @@ describe('Enhanced String Interpolation Expression', () => {
     test('uses provided variables', async () => {
       const customVars = { greeting: 'Hi', target: 'World' };
       const result = await expression.evaluate(context, '${greeting} ${target}!', customVars);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Hi World!');
@@ -142,7 +142,7 @@ describe('Enhanced String Interpolation Expression', () => {
     test('prioritizes custom variables over context', async () => {
       const customVars = { name: 'Override' };
       const result = await expression.evaluate(context, 'Name: ${name}', customVars);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Name: Override');
@@ -153,7 +153,7 @@ describe('Enhanced String Interpolation Expression', () => {
   describe('Error Handling', () => {
     test('handles undefined variables gracefully', async () => {
       const result = await expression.evaluate(context, 'Value: ${nonexistent}');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Value: undefined');
@@ -162,7 +162,7 @@ describe('Enhanced String Interpolation Expression', () => {
 
     test('handles complex expressions gracefully', async () => {
       const result = await expression.evaluate(context, 'Complex: ${some.very.deep.property}');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Complex: undefined');
@@ -183,7 +183,7 @@ describe('Enhanced String Concatenation Expression', () => {
   describe('Basic Concatenation', () => {
     test('concatenates multiple strings', async () => {
       const result = await expression.evaluate(context, 'Hello', ' ', 'World');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Hello World');
@@ -193,7 +193,7 @@ describe('Enhanced String Concatenation Expression', () => {
 
     test('handles empty strings', async () => {
       const result = await expression.evaluate(context, '', 'test', '');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('test');
@@ -204,7 +204,7 @@ describe('Enhanced String Concatenation Expression', () => {
   describe('Type Conversion', () => {
     test('converts numbers to strings', async () => {
       const result = await expression.evaluate(context, 'Count: ', 42);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Count: 42');
@@ -213,7 +213,7 @@ describe('Enhanced String Concatenation Expression', () => {
 
     test('converts booleans to strings', async () => {
       const result = await expression.evaluate(context, 'Valid: ', true, ', Invalid: ', false);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Valid: true, Invalid: false');
@@ -222,7 +222,7 @@ describe('Enhanced String Concatenation Expression', () => {
 
     test('handles null and undefined', async () => {
       const result = await expression.evaluate(context, 'Null: ', null, ', Undefined: ', undefined);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Null: null, Undefined: undefined');
@@ -233,7 +233,7 @@ describe('Enhanced String Concatenation Expression', () => {
   describe('Array and Object Handling', () => {
     test('converts arrays to strings', async () => {
       const result = await expression.evaluate(context, 'Array: ', [1, 2, 3]);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Array: 1,2,3');
@@ -242,7 +242,7 @@ describe('Enhanced String Concatenation Expression', () => {
 
     test('converts objects to strings', async () => {
       const result = await expression.evaluate(context, 'Object: ', { key: 'value' });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Object: [object Object]');
@@ -263,7 +263,7 @@ describe('Enhanced String Length Expression', () => {
   describe('Basic Length Calculation', () => {
     test('calculates string length', async () => {
       const result = await expression.evaluate(context, 'Hello');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(5);
@@ -273,7 +273,7 @@ describe('Enhanced String Length Expression', () => {
 
     test('handles empty string', async () => {
       const result = await expression.evaluate(context, '');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(0);
@@ -282,7 +282,7 @@ describe('Enhanced String Length Expression', () => {
 
     test('handles whitespace', async () => {
       const result = await expression.evaluate(context, '   ');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(3);
@@ -293,7 +293,7 @@ describe('Enhanced String Length Expression', () => {
   describe('Type Conversion', () => {
     test('converts numbers to strings first', async () => {
       const result = await expression.evaluate(context, 123);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(3);
@@ -302,7 +302,7 @@ describe('Enhanced String Length Expression', () => {
 
     test('converts booleans to strings first', async () => {
       const result = await expression.evaluate(context, true);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(4); // "true".length
@@ -312,10 +312,10 @@ describe('Enhanced String Length Expression', () => {
     test('handles null and undefined', async () => {
       const nullResult = await expression.evaluate(context, null);
       const undefinedResult = await expression.evaluate(context, undefined);
-      
+
       expect(nullResult.success).toBe(true);
       expect(undefinedResult.success).toBe(true);
-      
+
       if (nullResult.success) {
         expect(nullResult.value).toBe(4); // "null".length
       }
@@ -328,9 +328,15 @@ describe('Enhanced String Length Expression', () => {
 
 describe('Expression Registry', () => {
   test('exports all enhanced string expressions', () => {
-    expect(enhancedStringExpressions['string-interpolation']).toBeInstanceOf(EnhancedStringInterpolationExpression);
-    expect(enhancedStringExpressions['string-concat']).toBeInstanceOf(EnhancedStringConcatenationExpression);
-    expect(enhancedStringExpressions['string-length']).toBeInstanceOf(EnhancedStringLengthExpression);
+    expect(enhancedStringExpressions['string-interpolation']).toBeInstanceOf(
+      EnhancedStringInterpolationExpression
+    );
+    expect(enhancedStringExpressions['string-concat']).toBeInstanceOf(
+      EnhancedStringConcatenationExpression
+    );
+    expect(enhancedStringExpressions['string-length']).toBeInstanceOf(
+      EnhancedStringLengthExpression
+    );
   });
 });
 
@@ -343,7 +349,7 @@ describe('Utility Functions', () => {
 
   test('interpolateString utility works', async () => {
     const result = await interpolateString('Hello ${name}!', context);
-    
+
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.value).toBe('Hello John!');
@@ -352,7 +358,7 @@ describe('Utility Functions', () => {
 
   test('concatenateStrings utility works', async () => {
     const result = await concatenateStrings(context, 'Hello', ' ', 'World');
-    
+
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.value).toBe('Hello World');
@@ -361,7 +367,7 @@ describe('Utility Functions', () => {
 
   test('getStringLength utility works', async () => {
     const result = await getStringLength('Hello', context);
-    
+
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.value).toBe(5);
@@ -379,11 +385,11 @@ describe('Performance Characteristics', () => {
   test('handles large string interpolation efficiently', async () => {
     const expression = new EnhancedStringInterpolationExpression();
     const largeTemplate = 'Name: ${name} '.repeat(1000);
-    
+
     const startTime = performance.now();
     const result = await expression.evaluate(context, largeTemplate);
     const endTime = performance.now();
-    
+
     expect(result.success).toBe(true);
     expect(endTime - startTime).toBeLessThan(100); // Should complete in <100ms
   });
@@ -391,11 +397,11 @@ describe('Performance Characteristics', () => {
   test('handles many concatenations efficiently', async () => {
     const expression = new EnhancedStringConcatenationExpression();
     const manyValues = Array(1000).fill('test');
-    
+
     const startTime = performance.now();
     const result = await expression.evaluate(context, ...manyValues);
     const endTime = performance.now();
-    
+
     expect(result.success).toBe(true);
     expect(endTime - startTime).toBeLessThan(50); // Should complete in <50ms
   });

@@ -4,7 +4,7 @@ import { join } from 'path';
 
 /**
  * Complete Official _hyperscript Test Suite Runner
- * 
+ *
  * This test file dynamically discovers and runs all 84 official _hyperscript test files
  * across all categories: core, expressions, commands, and features
  */
@@ -41,20 +41,20 @@ class OfficialTestSuiteRunner {
 
     for (const category of categories) {
       const categoryPath = join(HYPERSCRIPT_TEST_ROOT, category);
-      
+
       try {
         const files = readdirSync(categoryPath);
-        
+
         for (const file of files) {
           if (file.endsWith('.js')) {
             const filePath = join(categoryPath, file);
             const stats = statSync(filePath);
-            
+
             if (stats.isFile()) {
               testFiles.push({
                 category,
                 filename: file,
-                path: filePath
+                path: filePath,
               });
             }
           }
@@ -72,7 +72,7 @@ class OfficialTestSuiteRunner {
    */
   extractTestCases(content: string): TestCase[] {
     const testCases: TestCase[] = [];
-    
+
     // Match test cases with various formats
     const patterns = [
       // Standard it() function format
@@ -80,7 +80,7 @@ class OfficialTestSuiteRunner {
       // Arrow function format
       /it\s*\(\s*["']([^"']+)["']\s*,\s*\(\s*\)\s*=>\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g,
       // Async function format
-      /it\s*\(\s*["']([^"']+)["']\s*,\s*async\s+function\s*\(\s*\)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g
+      /it\s*\(\s*["']([^"']+)["']\s*,\s*async\s+function\s*\(\s*\)\s*\{([^}]*(?:\{[^}]*\}[^}]*)*)\}/g,
     ];
 
     for (const pattern of patterns) {
@@ -88,7 +88,7 @@ class OfficialTestSuiteRunner {
       while ((match = pattern.exec(content)) !== null) {
         testCases.push({
           description: match[1],
-          code: match[2]
+          code: match[2],
         });
       }
     }
@@ -101,15 +101,15 @@ class OfficialTestSuiteRunner {
    */
   extractEvalCalls(code: string): Array<{ expression: string; context?: any }> {
     const calls: Array<{ expression: string; context?: any }> = [];
-    
+
     // Match evalHyperScript calls with optional context
     const regex = /evalHyperScript\s*\(\s*["'`]([^"'`]+)["'`](?:\s*,\s*(\{[^}]*\}))?\s*\)/g;
     let match;
-    
+
     while ((match = regex.exec(code)) !== null) {
       const expression = match[1];
       let context = {};
-      
+
       if (match[2]) {
         try {
           // Safely evaluate the context object
@@ -118,10 +118,10 @@ class OfficialTestSuiteRunner {
           console.warn(`Failed to parse context for expression "${expression}":`, e);
         }
       }
-      
+
       calls.push({ expression, context });
     }
-    
+
     return calls;
   }
 
@@ -130,13 +130,13 @@ class OfficialTestSuiteRunner {
    */
   extractExpectedResult(code: string, expression: string): any {
     const lines = code.split('\n');
-    
+
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].includes(expression)) {
         // Look for common assertion patterns in the next few lines
         for (let j = i; j < Math.min(i + 5, lines.length); j++) {
           const line = lines[j].trim();
-          
+
           // Chai-style assertions
           const shouldEqual = line.match(/\.should\.equal\s*\(\s*([^)]+)\s*\)/);
           if (shouldEqual) {
@@ -146,7 +146,7 @@ class OfficialTestSuiteRunner {
               return shouldEqual[1].replace(/['"]/g, '');
             }
           }
-          
+
           // Direct equality assertions
           const directEqual = line.match(/===?\s*([^;]+)/);
           if (directEqual) {
@@ -159,7 +159,7 @@ class OfficialTestSuiteRunner {
         }
       }
     }
-    
+
     return undefined;
   }
 
@@ -169,7 +169,7 @@ class OfficialTestSuiteRunner {
   async runTestCase(page: any, testFile: TestFile, testCase: TestCase): Promise<boolean> {
     try {
       const evalCalls = this.extractEvalCalls(testCase.code);
-      
+
       if (evalCalls.length === 0) {
         // Some tests might not have evalHyperScript calls - that's ok
         this.results.passed++;
@@ -179,33 +179,39 @@ class OfficialTestSuiteRunner {
       for (const call of evalCalls) {
         try {
           // Execute the expression using HyperFixi via browser context
-          const result = await page.evaluate(async ({ expression, context }) => {
-            // Use the evalHyperScript helper available in the compatibility page
-            if (typeof window.evalHyperScript === 'undefined') {
-              throw new Error('evalHyperScript not available');
-            }
+          const result = await page.evaluate(
+            async ({ expression, context }) => {
+              // Use the evalHyperScript helper available in the compatibility page
+              if (typeof window.evalHyperScript === 'undefined') {
+                throw new Error('evalHyperScript not available');
+              }
 
-            // Convert context to the format expected by evalHyperScript
-            const execContext = {};
-            if (context) {
-              Object.assign(execContext, context);
-              if (context.locals) Object.assign(execContext, context.locals);
-            }
+              // Convert context to the format expected by evalHyperScript
+              const execContext = {};
+              if (context) {
+                Object.assign(execContext, context);
+                if (context.locals) Object.assign(execContext, context.locals);
+              }
 
-            // Run the expression using the compatibility helper
-            return await window.evalHyperScript(expression, execContext);
-          }, { expression: call.expression, context: call.context });
+              // Run the expression using the compatibility helper
+              return await window.evalHyperScript(expression, execContext);
+            },
+            { expression: call.expression, context: call.context }
+          );
 
           // Check if there's an expected result
           const expectedResult = this.extractExpectedResult(testCase.code, call.expression);
           if (expectedResult !== undefined) {
             if (JSON.stringify(result) !== JSON.stringify(expectedResult)) {
-              throw new Error(`Expected ${JSON.stringify(expectedResult)}, got ${JSON.stringify(result)}`);
+              throw new Error(
+                `Expected ${JSON.stringify(expectedResult)}, got ${JSON.stringify(result)}`
+              );
             }
           }
-
         } catch (error) {
-          this.results.errors.push(`${testFile.category}/${testFile.filename} - ${testCase.description}: ${error.message}`);
+          this.results.errors.push(
+            `${testFile.category}/${testFile.filename} - ${testCase.description}: ${error.message}`
+          );
           this.results.failed++;
           return false;
         }
@@ -213,9 +219,10 @@ class OfficialTestSuiteRunner {
 
       this.results.passed++;
       return true;
-
     } catch (error) {
-      this.results.errors.push(`${testFile.category}/${testFile.filename} - ${testCase.description}: ${error.message}`);
+      this.results.errors.push(
+        `${testFile.category}/${testFile.filename} - ${testCase.description}: ${error.message}`
+      );
       this.results.failed++;
       return false;
     }
@@ -225,8 +232,9 @@ class OfficialTestSuiteRunner {
    * Get test results summary
    */
   getSummary(): string {
-    const successRate = this.results.total > 0 ? Math.round((this.results.passed / this.results.total) * 100) : 0;
-    
+    const successRate =
+      this.results.total > 0 ? Math.round((this.results.passed / this.results.total) * 100) : 0;
+
     return `
 📊 Complete Official Test Suite Results:
 ========================================
@@ -235,11 +243,18 @@ Total tests: ${this.results.total}
 ❌ Failed: ${this.results.failed}
 📈 Success rate: ${successRate}%
 
-${this.results.errors.length > 0 ? `
+${
+  this.results.errors.length > 0
+    ? `
 🚨 Errors (first 10):
-${this.results.errors.slice(0, 10).map(error => `  - ${error}`).join('\n')}
+${this.results.errors
+  .slice(0, 10)
+  .map(error => `  - ${error}`)
+  .join('\n')}
 ${this.results.errors.length > 10 ? `  ... and ${this.results.errors.length - 10} more` : ''}
-` : ''}`;
+`
+    : ''
+}`;
   }
 }
 
@@ -248,11 +263,11 @@ test.describe('Complete Official _hyperscript Test Suite', () => {
 
   test.beforeEach(async ({ page }) => {
     runner = new OfficialTestSuiteRunner();
-    
+
     // Load the compatibility test HTML page that has both hyperscript libraries
     await page.goto('http://localhost:3000/compatibility-test.html');
     await page.waitForTimeout(2000);
-    
+
     // Verify both HyperFixi and evalHyperScript are loaded
     await page.evaluate(() => {
       if (typeof window.hyperfixi === 'undefined') {
@@ -266,29 +281,32 @@ test.describe('Complete Official _hyperscript Test Suite', () => {
 
   test('Run all 84 official _hyperscript test files', async ({ page }) => {
     const testFiles = runner.discoverTestFiles();
-    
+
     console.log(`🚀 Discovered ${testFiles.length} official test files`);
-    
+
     expect(testFiles.length).toBeGreaterThanOrEqual(80); // Should have at least 80 files
-    
+
     // Group test files by category for organized output
-    const categories = testFiles.reduce((acc, file) => {
-      if (!acc[file.category]) acc[file.category] = [];
-      acc[file.category].push(file);
-      return acc;
-    }, {} as Record<string, TestFile[]>);
+    const categories = testFiles.reduce(
+      (acc, file) => {
+        if (!acc[file.category]) acc[file.category] = [];
+        acc[file.category].push(file);
+        return acc;
+      },
+      {} as Record<string, TestFile[]>
+    );
 
     // Run tests for each category
     for (const [category, files] of Object.entries(categories)) {
       console.log(`\n📁 Testing ${category} category (${files.length} files)`);
-      
+
       for (const testFile of files) {
         try {
           const content = readFileSync(testFile.path, 'utf8');
           const testCases = runner.extractTestCases(content);
-          
+
           console.log(`  🧪 ${testFile.filename}: ${testCases.length} test cases`);
-          
+
           if (testCases.length === 0) {
             console.log(`    ⚠️  No test cases found in ${testFile.filename}`);
             continue;
@@ -297,16 +315,15 @@ test.describe('Complete Official _hyperscript Test Suite', () => {
           // Run each test case
           for (const testCase of testCases) {
             runner.results.total++;
-            
+
             const passed = await runner.runTestCase(page, testFile, testCase);
-            
+
             if (passed) {
               console.log(`    ✅ ${testCase.description}`);
             } else {
               console.log(`    ❌ ${testCase.description}`);
             }
           }
-
         } catch (error) {
           console.error(`  ❌ Failed to process ${testFile.filename}: ${error.message}`);
           runner.results.errors.push(`${category}/${testFile.filename}: ${error.message}`);
@@ -320,11 +337,11 @@ test.describe('Complete Official _hyperscript Test Suite', () => {
 
     // Assert that we have reasonable compatibility
     expect(runner.results.total).toBeGreaterThan(0);
-    
+
     // For expressions, we expect high compatibility (80%+)
     // For commands and features, we expect lower compatibility (they're not implemented yet)
     const successRate = (runner.results.passed / runner.results.total) * 100;
-    
+
     if (successRate < 30) {
       console.warn(`⚠️  Low overall compatibility: ${successRate.toFixed(1)}%`);
       console.warn('This is expected as commands and features are not yet implemented');
@@ -337,21 +354,24 @@ test.describe('Complete Official _hyperscript Test Suite', () => {
   test('Verify test categories are complete', async ({ page }) => {
     const testFiles = runner.discoverTestFiles();
     const categories = [...new Set(testFiles.map(f => f.category))];
-    
+
     console.log(`📋 Found test categories: ${categories.join(', ')}`);
-    
+
     // Verify we have the main categories
     expect(categories).toContain('expressions');
     expect(categories).toContain('commands');
     expect(categories).toContain('core');
     expect(categories).toContain('features');
-    
+
     // Count files per category
-    const categoryCounts = testFiles.reduce((acc, file) => {
-      acc[file.category] = (acc[file.category] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
+    const categoryCounts = testFiles.reduce(
+      (acc, file) => {
+        acc[file.category] = (acc[file.category] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
     console.log('📊 Files per category:');
     for (const [category, count] of Object.entries(categoryCounts)) {
       console.log(`  ${category}: ${count} files`);
@@ -359,7 +379,7 @@ test.describe('Complete Official _hyperscript Test Suite', () => {
 
     // Expressions should have the most files (around 37)
     expect(categoryCounts.expressions).toBeGreaterThanOrEqual(30);
-    
+
     // Commands should have a good number too (around 25)
     expect(categoryCounts.commands).toBeGreaterThanOrEqual(20);
   });

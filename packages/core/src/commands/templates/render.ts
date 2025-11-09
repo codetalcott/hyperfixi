@@ -1,9 +1,9 @@
 /**
  * Enhanced Render Command Implementation
  * Renders templates with @if, @else, and @repeat directives
- * 
+ *
  * Syntax: render <template> [with (<variables>)]
- * 
+ *
  * Integrates with the enhanced template directive system
  */
 
@@ -19,16 +19,20 @@ import { debug } from '../../utils/debug';
 /**
  * Zod schema for RENDER command input validation
  */
-export const RenderCommandInputSchema = v.object({
-  template: v.union([
-    z.instanceof(HTMLTemplateElement),
-    v.string().min(1),
-  ]).describe('Template element or template string to render'),
-  
-  variables: z.record(v.string(), v.unknown()).optional().describe('Variables to pass to template context'),
-  
-  withKeyword: v.literal('with').optional().describe('Syntax keyword "with"'),
-}).describe('RENDER command input parameters');
+export const RenderCommandInputSchema = v
+  .object({
+    template: v
+      .union([z.instanceof(HTMLTemplateElement), v.string().min(1)])
+      .describe('Template element or template string to render'),
+
+    variables: z
+      .record(v.string(), v.unknown())
+      .optional()
+      .describe('Variables to pass to template context'),
+
+    withKeyword: v.literal('with').optional().describe('Syntax keyword "with"'),
+  })
+  .describe('RENDER command input parameters');
 
 // Input type definition
 export interface RenderCommandInput {
@@ -37,7 +41,7 @@ export interface RenderCommandInput {
   withKeyword?: 'with'; // For syntax validation
 }
 
-// Output type definition  
+// Output type definition
 export interface RenderCommandOutput {
   rendered: string;
   templateSource: string;
@@ -48,29 +52,29 @@ export interface RenderCommandOutput {
 /**
  * Enhanced Render Command with full type safety and validation
  */
-export class RenderCommand implements CommandImplementation<
-  RenderCommandInput,
-  Element | null,
-  TypedExecutionContext
-> {
+export class RenderCommand
+  implements CommandImplementation<RenderCommandInput, Element | null, TypedExecutionContext>
+{
   public readonly name = 'render' as const;
   public readonly syntax = 'render <template> [with (<variables>)]';
-  public readonly description = 'The render command processes templates with @if, @else, and @repeat directives, supporting variable interpolation and HTML escaping.';
+  public readonly description =
+    'The render command processes templates with @if, @else, and @repeat directives, supporting variable interpolation and HTML escaping.';
   public readonly inputSchema = RenderCommandInputSchema;
   public readonly outputType = 'object' as const;
-  
+
   public readonly metadata = {
     name: 'render',
-    description: 'The render command processes templates with @if, @else, and @repeat directives, supporting variable interpolation and HTML escaping.',
+    description:
+      'The render command processes templates with @if, @else, and @repeat directives, supporting variable interpolation and HTML escaping.',
     syntax: 'render <template> [with (<variables>)]',
     category: 'template',
     examples: [
       'render myTemplate',
       'render myTemplate with (name: "Alice", items: [1,2,3])',
       'render "<template>Hello ${name}!</template>" with (name: "World")',
-      'render template with (items: data) then put result into #output'
+      'render template with (items: data) then put result into #output',
     ],
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   // Template directive instances
@@ -79,7 +83,8 @@ export class RenderCommand implements CommandImplementation<
   private readonly repeatDirective = new RepeatDirective();
 
   public readonly validation = {
-    validate: (input: unknown): UnifiedValidationResult<RenderCommandInput> => this.validateInput(input)
+    validate: (input: unknown): UnifiedValidationResult<RenderCommandInput> =>
+      this.validateInput(input),
   };
 
   /**
@@ -88,39 +93,45 @@ export class RenderCommand implements CommandImplementation<
   validateInput(input: unknown): UnifiedValidationResult<RenderCommandInput> {
     try {
       const result = RenderCommandInputSchema.safeParse(input);
-      
+
       if (result.success) {
         return {
           isValid: true,
           errors: [],
           suggestions: [],
-          data: result.data as RenderCommandInput
+          data: result.data as RenderCommandInput,
         };
       } else {
         // Convert Zod errors to our format
-        const errors = result.error?.errors.map(err => ({
-          type: 'validation-error' as const,
-          message: `${Array.isArray(err.path) ? err.path.join('.') : ''}: ${err.message}`,
-          suggestions: this.generateSuggestions(err.code ?? 'unknown', (Array.isArray(err.path) ? err.path : []) as (string | number)[])
-        })) ?? [];
+        const errors =
+          result.error?.errors.map(err => ({
+            type: 'validation-error' as const,
+            message: `${Array.isArray(err.path) ? err.path.join('.') : ''}: ${err.message}`,
+            suggestions: this.generateSuggestions(
+              err.code ?? 'unknown',
+              (Array.isArray(err.path) ? err.path : []) as (string | number)[]
+            ),
+          })) ?? [];
 
         const suggestions = errors.flatMap(err => err.suggestions);
 
         return {
           isValid: false,
           errors,
-          suggestions
+          suggestions,
         };
       }
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'validation-error',
-          message: `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          suggestions: ['Check input format and try again']
-        }],
-        suggestions: ['Check input format and try again']
+        errors: [
+          {
+            type: 'validation-error',
+            message: `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            suggestions: ['Check input format and try again'],
+          },
+        ],
+        suggestions: ['Check input format and try again'],
       };
     }
   }
@@ -130,21 +141,21 @@ export class RenderCommand implements CommandImplementation<
    */
   private generateSuggestions(errorCode: string, path: (string | number)[]): string[] {
     const suggestions: string[] = [];
-    
+
     if (path.includes('template')) {
       suggestions.push('Provide a template: HTMLTemplateElement or template string');
       suggestions.push('Examples: myTemplate, "<template>Hello ${name}!</template>"');
     }
-    
+
     if (path.includes('variables')) {
       suggestions.push('Provide variables as object: { key: value }');
       suggestions.push('Examples: { name: "Alice", count: 42 }');
     }
-    
+
     if (errorCode === 'invalid_type') {
       suggestions.push('Check the data type of your input');
     }
-    
+
     if (errorCode === 'too_small') {
       suggestions.push('Template must not be empty');
     }
@@ -154,7 +165,7 @@ export class RenderCommand implements CommandImplementation<
       suggestions.push('Use syntax: render <template> [with (<variables>)]');
       suggestions.push('See examples in command metadata');
     }
-    
+
     return suggestions;
   }
 
@@ -163,20 +174,20 @@ export class RenderCommand implements CommandImplementation<
     context: TypedExecutionContext
   ): Promise<Element | null> {
     debug.command('Enhanced RENDER command executing with:', { input, contextMe: context.me?.id });
-    
+
     // Handle legacy argument formats from command executor
     let normalizedInput: RenderCommandInput;
-    
+
     if (typeof input === 'string') {
       // Single string argument - probably template name
       normalizedInput = { template: input };
     } else if (Array.isArray(input)) {
       // Array arguments from command executor: ['tmpl', 'with', 'data'] or ['tmpl']
       if (input.length >= 3 && input[1] === 'with') {
-        normalizedInput = { 
-          template: input[0] as string, 
+        normalizedInput = {
+          template: input[0] as string,
           variables: this.parseVariables(input[2] as string, context),
-          withKeyword: 'with'
+          withKeyword: 'with',
         };
       } else {
         normalizedInput = { template: input[0] as string };
@@ -186,19 +197,27 @@ export class RenderCommand implements CommandImplementation<
       if (input instanceof HTMLTemplateElement) {
         normalizedInput = { template: input };
       } else {
-        normalizedInput = input as RenderCommandInput;
+        normalizedInput = input;
       }
     }
-    
+
     let { template, variables } = normalizedInput;
     const directivesProcessed: string[] = [];
     const variablesUsed: string[] = [];
 
     // Resolve template from context if it's a variable name
-    if (typeof template === 'string' && !template.includes('<') && !template.startsWith('#') && !template.startsWith('.')) {
+    if (
+      typeof template === 'string' &&
+      !template.includes('<') &&
+      !template.startsWith('#') &&
+      !template.startsWith('.')
+    ) {
       // This might be a variable name, try to resolve it from context
       const resolvedTemplate = this.resolveVariable(template, context);
-      if (resolvedTemplate && (typeof resolvedTemplate === 'string' || resolvedTemplate instanceof HTMLTemplateElement)) {
+      if (
+        resolvedTemplate &&
+        (typeof resolvedTemplate === 'string' || resolvedTemplate instanceof HTMLTemplateElement)
+      ) {
         template = resolvedTemplate;
       }
     }
@@ -211,15 +230,21 @@ export class RenderCommand implements CommandImplementation<
     const templateContext = this.createTemplateContext(context, variables || {});
 
     // Process template with directives
-    const rendered = await this.processTemplate(templateContent, templateContext, directivesProcessed, variablesUsed);
+    const rendered = await this.processTemplate(
+      templateContent,
+      templateContext,
+      directivesProcessed,
+      variablesUsed
+    );
 
     // Create a DOM element with the rendered content for _hyperscript compatibility
     const resultElement = document.createElement('div');
     resultElement.innerHTML = rendered;
-    
+
     // If there's only one child element, return it directly (cleaner for single elements)
-    const content = resultElement.children.length === 1 ? resultElement.firstElementChild : resultElement;
-    
+    const content =
+      resultElement.children.length === 1 ? resultElement.firstElementChild : resultElement;
+
     // Set result in context.it for chaining
     Object.assign(context, { it: content });
 
@@ -262,7 +287,10 @@ export class RenderCommand implements CommandImplementation<
   /**
    * Create template execution context with variables
    */
-  private createTemplateContext(context: TypedExecutionContext, variables: Record<string, unknown>) {
+  private createTemplateContext(
+    context: TypedExecutionContext,
+    variables: Record<string, unknown>
+  ) {
     const templateContext = {
       ...context,
       templateBuffer: [] as string[],
@@ -273,12 +301,9 @@ export class RenderCommand implements CommandImplementation<
         templateName: 'render-command-template',
         compiledAt: Date.now(),
         executionStartTime: Date.now(),
-        directiveStack: []
+        directiveStack: [],
       },
-      locals: new Map([
-        ...Array.from(context.locals.entries()),
-        ...Object.entries(variables)
-      ])
+      locals: new Map([...Array.from(context.locals.entries()), ...Object.entries(variables)]),
     };
 
     return templateContext;
@@ -295,7 +320,7 @@ export class RenderCommand implements CommandImplementation<
   ): Promise<string> {
     // Parse and execute directives in the template
     const result = await this.parseAndExecuteDirectives(content, context, directivesProcessed);
-    
+
     // Track variables used
     const variables = this.extractVariablesFromContent(content);
     variablesUsed.push(...variables);
@@ -314,15 +339,18 @@ export class RenderCommand implements CommandImplementation<
     // Simple directive parser - looks for @repeat, @if, @else, @end patterns
     const lines = content.split('\n');
     const result: string[] = [];
-    
+
     let i = 0;
     while (i < lines.length) {
       const line = lines[i].trim();
-      
+
       if (line.startsWith('@repeat ')) {
         // Process @repeat directive
         const { nextIndex, renderedContent } = await this.processRepeatDirective(
-          lines, i, context, directivesProcessed
+          lines,
+          i,
+          context,
+          directivesProcessed
         );
         result.push(renderedContent);
         i = nextIndex;
@@ -330,7 +358,10 @@ export class RenderCommand implements CommandImplementation<
       } else if (line.startsWith('@if ')) {
         // Process @if directive
         const { nextIndex, renderedContent } = await this.processIfDirective(
-          lines, i, context, directivesProcessed
+          lines,
+          i,
+          context,
+          directivesProcessed
         );
         result.push(renderedContent);
         i = nextIndex;
@@ -364,7 +395,7 @@ export class RenderCommand implements CommandImplementation<
     _directivesProcessed: string[]
   ): Promise<{ nextIndex: number; renderedContent: string }> {
     const repeatLine = lines[startIndex].trim();
-    
+
     // Parse repeat expression: "@repeat in <collection>"
     const repeatMatch = repeatLine.match(/^@repeat\s+in\s+(.+)$/);
     if (!repeatMatch) {
@@ -380,18 +411,22 @@ export class RenderCommand implements CommandImplementation<
     // Execute repeat directive
     const repeatInput = {
       collection,
-      templateContent: blockContent.join('\n')
+      templateContent: blockContent.join('\n'),
     };
 
-    const repeatResult = await this.repeatDirective.executeTemplate(context, repeatInput, repeatInput.templateContent);
-    
+    const repeatResult = await this.repeatDirective.executeTemplate(
+      context,
+      repeatInput,
+      repeatInput.templateContent
+    );
+
     if (!repeatResult.success) {
       throw new Error(`@repeat directive failed: ${repeatResult.error?.message}`);
     }
 
     return {
       nextIndex: endIndex + 1,
-      renderedContent: repeatResult.value || ''
+      renderedContent: repeatResult.value || '',
     };
   }
 
@@ -405,7 +440,7 @@ export class RenderCommand implements CommandImplementation<
     directivesProcessed: string[]
   ): Promise<{ nextIndex: number; renderedContent: string }> {
     const ifLine = lines[startIndex].trim();
-    
+
     // Parse if expression: "@if <condition>"
     const ifMatch = ifLine.match(/^@if\s+(.+)$/);
     if (!ifMatch) {
@@ -421,7 +456,7 @@ export class RenderCommand implements CommandImplementation<
     // Execute if directive
     const ifInput = {
       condition,
-      templateContent: blockContent.join('\n')
+      templateContent: blockContent.join('\n'),
     };
 
     // Create conditional context
@@ -429,13 +464,17 @@ export class RenderCommand implements CommandImplementation<
       ...context,
       conditionalContext: {
         conditionMet: Boolean(condition),
-        elseAllowed: !Boolean(condition),
-        branchExecuted: Boolean(condition)
-      }
+        elseAllowed: !condition,
+        branchExecuted: Boolean(condition),
+      },
     };
 
-    const ifResult = await this.ifDirective.executeTemplate(conditionalContext, ifInput, ifInput.templateContent);
-    
+    const ifResult = await this.ifDirective.executeTemplate(
+      conditionalContext,
+      ifInput,
+      ifInput.templateContent
+    );
+
     if (!ifResult.success) {
       throw new Error(`@if directive failed: ${ifResult.error?.message}`);
     }
@@ -445,7 +484,7 @@ export class RenderCommand implements CommandImplementation<
     // Execute @else if condition was false and else content exists
     if (!condition && elseContent.length > 0) {
       const elseInput = {
-        templateContent: elseContent.join('\n')
+        templateContent: elseContent.join('\n'),
       };
 
       const elseContext = {
@@ -453,12 +492,16 @@ export class RenderCommand implements CommandImplementation<
         conditionalContext: {
           conditionMet: false,
           elseAllowed: true,
-          branchExecuted: false
-        }
+          branchExecuted: false,
+        },
       };
 
-      const elseResult = await this.elseDirective.executeTemplate(elseContext, elseInput, elseInput.templateContent);
-      
+      const elseResult = await this.elseDirective.executeTemplate(
+        elseContext,
+        elseInput,
+        elseInput.templateContent
+      );
+
       if (elseResult.success) {
         renderedContent = elseResult.value || '';
         directivesProcessed.push('@else');
@@ -467,7 +510,7 @@ export class RenderCommand implements CommandImplementation<
 
     return {
       nextIndex: endIndex + 1,
-      renderedContent
+      renderedContent,
     };
   }
 
@@ -485,7 +528,7 @@ export class RenderCommand implements CommandImplementation<
 
     while (i < lines.length && nestLevel > 0) {
       const line = lines[i].trim();
-      
+
       if (line.startsWith('@repeat ') || line.startsWith('@if ')) {
         nestLevel++;
         blockContent.push(lines[i]);
@@ -497,13 +540,13 @@ export class RenderCommand implements CommandImplementation<
       } else {
         blockContent.push(lines[i]);
       }
-      
+
       i++;
     }
 
     return {
       endIndex: i - 1,
-      blockContent
+      blockContent,
     };
   }
 
@@ -522,7 +565,7 @@ export class RenderCommand implements CommandImplementation<
 
     while (i < lines.length && nestLevel > 0) {
       const line = lines[i].trim();
-      
+
       if (line.startsWith('@if ')) {
         nestLevel++;
       } else if (line === '@else' && nestLevel === 1) {
@@ -533,20 +576,20 @@ export class RenderCommand implements CommandImplementation<
         nestLevel--;
         if (nestLevel === 0) break;
       }
-      
+
       if (inElse) {
         elseContent.push(lines[i]);
       } else {
         blockContent.push(lines[i]);
       }
-      
+
       i++;
     }
 
     return {
       endIndex: i,
       blockContent,
-      elseContent
+      elseContent,
     };
   }
 
@@ -557,7 +600,7 @@ export class RenderCommand implements CommandImplementation<
     return content.replace(/\$\{([^}]+)\}/g, (match, expression) => {
       try {
         const trimmedExpr = expression.trim();
-        
+
         if (trimmedExpr.startsWith('unescaped ')) {
           // Unescaped expression
           const varName = trimmedExpr.substring('unescaped '.length).trim();
@@ -584,11 +627,11 @@ export class RenderCommand implements CommandImplementation<
     if (expression === 'false') return false;
     if (expression === 'null') return null;
     if (expression === 'undefined') return undefined;
-    
+
     // Handle numbers
     const num = Number(expression);
     if (!isNaN(num)) return num;
-    
+
     // Handle arrays
     if (expression.startsWith('[') && expression.endsWith(']')) {
       try {
@@ -597,10 +640,12 @@ export class RenderCommand implements CommandImplementation<
         // Fall through to variable resolution
       }
     }
-    
+
     // Handle string literals
-    if ((expression.startsWith('"') && expression.endsWith('"')) ||
-        (expression.startsWith("'") && expression.endsWith("'"))) {
+    if (
+      (expression.startsWith('"') && expression.endsWith('"')) ||
+      (expression.startsWith("'") && expression.endsWith("'"))
+    ) {
       return expression.slice(1, -1);
     }
 
@@ -608,7 +653,7 @@ export class RenderCommand implements CommandImplementation<
     if (expression.includes('.')) {
       const parts = expression.split('.');
       let current = this.resolveVariable(parts[0], context);
-      
+
       for (let i = 1; i < parts.length && current != null; i++) {
         if (typeof current === 'object' && current !== null) {
           current = (current as Record<string, unknown>)[parts[i]];
@@ -616,10 +661,10 @@ export class RenderCommand implements CommandImplementation<
           return undefined;
         }
       }
-      
+
       return current;
     }
-    
+
     // Simple variable resolution
     return this.resolveVariable(expression, context);
   }
@@ -632,18 +677,18 @@ export class RenderCommand implements CommandImplementation<
     if (context.locals?.has(name)) {
       return context.locals.get(name);
     }
-    
+
     // Check context variables
     if (name === 'me') return context.me;
     if (name === 'it') return context.it;
     if (name === 'you') return context.you;
     if (name === 'result') return context.result;
-    
+
     // Check globals
     if (context.globals?.has(name)) {
       return context.globals.get(name);
     }
-    
+
     return undefined;
   }
 
@@ -654,10 +699,10 @@ export class RenderCommand implements CommandImplementation<
     const variables: Set<string> = new Set();
     const regex = /\$\{([^}]+)\}/g;
     let match;
-    
+
     while ((match = regex.exec(content)) !== null) {
       const expression = match[1].trim();
-      
+
       // Extract base variable name
       if (expression.includes('.')) {
         variables.add(expression.split('.')[0]);
@@ -672,7 +717,7 @@ export class RenderCommand implements CommandImplementation<
         variables.add(expression);
       }
     }
-    
+
     return Array.from(variables);
   }
 
@@ -685,7 +730,7 @@ export class RenderCommand implements CommandImplementation<
       const inner = variableExpr.slice(1, -1);
       const pairs = inner.split(',').map(pair => pair.trim());
       const variables: Record<string, unknown> = {};
-      
+
       for (const pair of pairs) {
         const colonIndex = pair.indexOf(':');
         if (colonIndex > 0) {
@@ -694,16 +739,16 @@ export class RenderCommand implements CommandImplementation<
           variables[key] = this.resolveVariable(value, context);
         }
       }
-      
+
       return variables;
     }
-    
+
     // Handle simple variable reference: "data"
     const resolved = this.resolveVariable(variableExpr, context);
     if (resolved && typeof resolved === 'object') {
       return resolved as Record<string, unknown>;
     }
-    
+
     return {};
   }
 

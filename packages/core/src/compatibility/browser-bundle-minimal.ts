@@ -20,16 +20,7 @@ import { defaultAttributeProcessor } from '../dom/attribute-processor';
 import { createContext } from '../core/context';
 
 // Minimal command set (8 most common commands)
-const MINIMAL_COMMANDS = [
-  'add',
-  'remove',
-  'toggle',
-  'put',
-  'set',
-  'if',
-  'send',
-  'log'
-];
+const MINIMAL_COMMANDS = ['add', 'remove', 'toggle', 'put', 'set', 'if', 'send', 'log'];
 
 /**
  * Create a minimal hyperscript runtime with only essential commands
@@ -45,7 +36,7 @@ export function createMinimalRuntime() {
     commands: MINIMAL_COMMANDS,
     useEnhancedCommands: true,
     enableAsyncCommands: false,
-    expressionPreload: 'core'  // Phase 2: Only load core expressions
+    expressionPreload: 'core', // Phase 2: Only load core expressions
   });
 }
 
@@ -79,7 +70,7 @@ const runtime = createMinimalRuntime();
    */
   init: () => {
     defaultAttributeProcessor.init();
-  }
+  },
 };
 
 // Auto-initialize on DOMContentLoaded

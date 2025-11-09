@@ -17,7 +17,7 @@ import { mathematicalExpressions } from '../expressions/mathematical/index';
 // Create alias for backward compatibility - combine special and mathematical expressions
 const specialExpressions = {
   ...importedSpecialExpressions,
-  ...mathematicalExpressions
+  ...mathematicalExpressions,
 };
 
 // ============================================================================
@@ -82,34 +82,34 @@ export async function evaluateAST(node: ASTNode, context: ExecutionContext): Pro
 
     case 'identifier':
       return evaluateIdentifier(node, context);
-      
+
     case 'binaryExpression':
       return evaluateBinaryExpression(node, context);
-      
+
     case 'unaryExpression':
       return evaluateUnaryExpression(node, context);
-      
+
     case 'memberExpression':
       return evaluateMemberExpression(node, context);
-      
+
     case 'callExpression':
       return evaluateCallExpression(node, context);
-      
+
     case 'selector':
       return evaluateSelector(node, context);
-      
+
     case 'possessiveExpression':
       return evaluatePossessiveExpression(node, context);
-      
+
     case 'eventHandler':
       return evaluateEventHandler(node, context);
-      
+
     case 'command':
       return evaluateCommand(node, context);
-      
+
     case 'conditionalExpression':
       return evaluateConditionalExpression(node, context);
-      
+
     default:
       throw new Error(`Unknown AST node type: ${(node as any).type}`);
   }
@@ -137,7 +137,7 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
   // Check cache first for frequently accessed identifiers
   const cached = identifierCache.get(cacheKey);
   const now = Date.now();
-  if (cached && (now - cached.timestamp) < CACHE_TTL) {
+  if (cached && now - cached.timestamp < CACHE_TTL) {
     return cached.value;
   }
 
@@ -184,23 +184,23 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
 async function evaluateBinaryExpression(node: any, context: ExecutionContext): Promise<any> {
   const left = await evaluateAST(node.left, context);
   const operator = node.operator;
-  
+
   // Handle short-circuit evaluation for logical operators
   if (operator === 'and') {
     if (!left) return false;
     const right = await evaluateAST(node.right, context);
     return logicalExpressions.and.evaluate(context, left, right);
   }
-  
+
   if (operator === 'or') {
     if (left) return true;
     const right = await evaluateAST(node.right, context);
     return logicalExpressions.or.evaluate(context, left, right);
   }
-  
+
   // Evaluate right side for other operators
   const right = await evaluateAST(node.right, context);
-  
+
   // Delegate to Phase 3 expression system based on operator
   switch (operator) {
     case '+':
@@ -214,7 +214,7 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     case '%':
     case 'mod':
       return specialExpressions.modulo.evaluate(context as any, { left, right });
-      
+
     case '>':
       return logicalExpressions.greaterThan.evaluate(context, left, right);
     case '<':
@@ -232,30 +232,33 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       return logicalExpressions.strictEquals.evaluate(context, left, right);
     case '!==':
       return logicalExpressions.strictNotEquals.evaluate(context, left, right);
-      
+
     case 'as':
       // For 'as' conversion, right operand should be a string type name
-      const typeName = typeof right === 'string' ? right : 
-                      right?.type === 'identifier' ? right.name :
-                      right?.type === 'literal' ? right.value :
-                      String(right);
+      const typeName =
+        typeof right === 'string'
+          ? right
+          : right?.type === 'identifier'
+            ? right.name
+            : right?.type === 'literal'
+              ? right.value
+              : String(right);
       return conversionExpressions.as.evaluate(context, left, typeName);
-      
-      
+
     case 'contains':
       return logicalExpressions.contains.evaluate(context, left, right);
-      
+
     case 'matches':
       return logicalExpressions.matches.evaluate(context, left, right);
-      
+
     case 'in':
       // Simple 'in' operator - check if left exists in right
       return Array.isArray(right) ? right.includes(left) : left in right;
-      
+
     case 'of':
       // Simple 'of' operator - get property/index of object/array
       return right && typeof right === 'object' ? right[left] : undefined;
-      
+
     default:
       throw new Error(`Unknown binary operator: ${operator}`);
   }
@@ -267,17 +270,17 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
 async function evaluateUnaryExpression(node: any, context: ExecutionContext): Promise<any> {
   const argument = await evaluateAST(node.argument, context);
   const operator = node.operator;
-  
+
   switch (operator) {
     case 'not':
       return logicalExpressions.not.evaluate(context, argument);
-      
+
     case '-':
       return -argument;
-      
+
     case '+':
       return +argument;
-      
+
     default:
       throw new Error(`Unknown unary operator: ${operator}`);
   }
@@ -288,7 +291,7 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
  */
 async function evaluateMemberExpression(node: any, context: ExecutionContext): Promise<any> {
   const object = await evaluateAST(node.object, context);
-  
+
   if (node.computed) {
     // Computed access: object[property]
     const property = await evaluateAST(node.property, context);
@@ -305,30 +308,28 @@ async function evaluateMemberExpression(node: any, context: ExecutionContext): P
  */
 async function evaluateCallExpression(node: any, context: ExecutionContext): Promise<any> {
   const callee = await evaluateAST(node.callee, context);
-  const args = await Promise.all(
-    node.arguments.map((arg: ASTNode) => evaluateAST(arg, context))
-  );
-  
+  const args = await Promise.all(node.arguments.map((arg: ASTNode) => evaluateAST(arg, context)));
+
   // Handle special hyperscript functions
   if (node.callee.type === 'identifier') {
     const funcName = node.callee.name;
-    
+
     switch (funcName) {
       case 'closest':
         return referencesExpressions.closest.evaluate(context, ...args);
-        
+
       case 'first':
         return positionalExpressions.first.evaluate(context, ...args);
-        
+
       case 'last':
         return positionalExpressions.last.evaluate(context, ...args);
-        
+
       case 'next':
         return positionalExpressions.next.evaluate(context, ...args);
-        
+
       case 'previous':
         return positionalExpressions.previous.evaluate(context, ...args);
-        
+
       default:
         // Regular function call
         if (typeof callee === 'function') {
@@ -337,12 +338,12 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
         throw new Error(`Cannot call non-function: ${funcName}`);
     }
   }
-  
+
   // Method calls
   if (typeof callee === 'function') {
     return callee(...args);
   }
-  
+
   throw new Error('Cannot call non-function');
 }
 
@@ -352,12 +353,12 @@ async function evaluateCallExpression(node: any, context: ExecutionContext): Pro
 async function evaluateSelector(node: any, context: ExecutionContext): Promise<any> {
   const selector = node.value;
   const result = await referencesExpressions.elementWithSelector.evaluate(context, selector);
-  
+
   // If result is array, return first element to match hyperscript behavior
   if (Array.isArray(result) && result.length > 0) {
     return result[0];
   }
-  
+
   return result;
 }
 
@@ -387,14 +388,14 @@ async function evaluateEventHandler(node: any, context: ExecutionContext): Promi
         ...context,
         event,
         target: event.target,
-        currentTarget: event.currentTarget
+        currentTarget: event.currentTarget,
       };
-      
+
       // Execute commands in sequence
       for (const command of node.commands) {
         await evaluateAST(command, eventContext);
       }
-    }
+    },
   };
 }
 
@@ -406,7 +407,7 @@ async function evaluateCommand(node: any, context: ExecutionContext): Promise<an
   const args = await Promise.all(
     (node.args || []).map((arg: ASTNode) => evaluateAST(arg, context))
   );
-  
+
   // Use Phase 3 command system when available
   // For now, return command descriptor
   return {
@@ -416,7 +417,7 @@ async function evaluateCommand(node: any, context: ExecutionContext): Promise<an
     execute: async () => {
       // Command execution logic will be implemented in Phase 4 command system
       console.log(`Executing command: ${commandName}`, args);
-    }
+    },
   };
 }
 
@@ -425,12 +426,12 @@ async function evaluateCommand(node: any, context: ExecutionContext): Promise<an
  */
 async function evaluateConditionalExpression(node: any, context: ExecutionContext): Promise<any> {
   const test = await evaluateAST(node.test, context);
-  
+
   if (test) {
     return evaluateAST(node.consequent, context);
   } else if (node.alternate) {
     return evaluateAST(node.alternate, context);
   }
-  
+
   return undefined;
 }

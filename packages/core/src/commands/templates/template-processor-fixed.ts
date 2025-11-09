@@ -15,7 +15,6 @@ export interface TemplateSection {
 }
 
 export class FixedTemplateProcessor {
-  
   /**
    * Process template with proper line break and directive handling
    */
@@ -36,7 +35,11 @@ export class FixedTemplateProcessor {
   /**
    * Parse lines into sections recursively
    */
-  private parseLines(lines: string[], start: number, end: number): { sections: TemplateSection[]; nextIndex: number } {
+  private parseLines(
+    lines: string[],
+    start: number,
+    end: number
+  ): { sections: TemplateSection[]; nextIndex: number } {
     const sections: TemplateSection[] = [];
     let i = start;
 
@@ -53,7 +56,7 @@ export class FixedTemplateProcessor {
             type: 'repeat',
             content: '',
             variable,
-            children
+            children,
           });
           i = nextIndex;
         } else {
@@ -69,7 +72,7 @@ export class FixedTemplateProcessor {
             content: '',
             condition,
             children: ifBlock.ifChildren,
-            ...(ifBlock.elseChildren !== undefined && { elseChildren: ifBlock.elseChildren })
+            ...(ifBlock.elseChildren !== undefined && { elseChildren: ifBlock.elseChildren }),
           });
           i = ifBlock.nextIndex;
         } else {
@@ -99,7 +102,10 @@ export class FixedTemplateProcessor {
   /**
    * Parse @if/@else/@end block properly
    */
-  private parseIfBlock(lines: string[], startIndex: number): {
+  private parseIfBlock(
+    lines: string[],
+    startIndex: number
+  ): {
     ifChildren: TemplateSection[];
     elseChildren?: TemplateSection[];
     nextIndex: number;
@@ -112,7 +118,7 @@ export class FixedTemplateProcessor {
     // Find @else and @end positions
     while (i < lines.length && nestLevel > 0) {
       const trimmed = lines[i].trim();
-      
+
       if (trimmed.startsWith('@if ')) {
         nestLevel++;
       } else if (trimmed === '@else' && nestLevel === 1) {
@@ -139,14 +145,17 @@ export class FixedTemplateProcessor {
     return {
       ifChildren,
       ...(elseChildren !== undefined && { elseChildren }),
-      nextIndex: endIndex + 1
+      nextIndex: endIndex + 1,
     };
   }
 
   /**
    * Render sections to final output
    */
-  private async renderSections(sections: TemplateSection[], context: ExecutionContext): Promise<string> {
+  private async renderSections(
+    sections: TemplateSection[],
+    context: ExecutionContext
+  ): Promise<string> {
     const results: string[] = [];
 
     for (const section of sections) {
@@ -159,7 +168,12 @@ export class FixedTemplateProcessor {
           results.push(repeatResult);
         }
       } else if (section.type === 'if' && section.condition && section.children) {
-        const ifResult = await this.renderIf(section.condition, section.children, section.elseChildren, context);
+        const ifResult = await this.renderIf(
+          section.condition,
+          section.children,
+          section.elseChildren,
+          context
+        );
         if (ifResult !== '') {
           results.push(ifResult);
         }
@@ -172,7 +186,11 @@ export class FixedTemplateProcessor {
   /**
    * Render @repeat directive
    */
-  private async renderRepeat(variable: string, children: TemplateSection[], context: ExecutionContext): Promise<string> {
+  private async renderRepeat(
+    variable: string,
+    children: TemplateSection[],
+    context: ExecutionContext
+  ): Promise<string> {
     const array = this.resolveVariable(variable, context);
     if (!Array.isArray(array)) {
       console.warn('Repeat variable is not an array:', variable);
@@ -189,7 +207,7 @@ export class FixedTemplateProcessor {
       const iterContext = {
         ...context,
         locals: new Map(context.locals),
-        it: item
+        it: item,
       };
       iterContext.locals?.set('it', item);
 
@@ -204,9 +222,14 @@ export class FixedTemplateProcessor {
   /**
    * Render @if directive with @else support
    */
-  private async renderIf(condition: string, ifChildren: TemplateSection[], elseChildren: TemplateSection[] | undefined, context: ExecutionContext): Promise<string> {
+  private async renderIf(
+    condition: string,
+    ifChildren: TemplateSection[],
+    elseChildren: TemplateSection[] | undefined,
+    context: ExecutionContext
+  ): Promise<string> {
     const conditionValue = this.evaluateCondition(condition, context);
-    
+
     if (conditionValue) {
       // Render the if part
       return await this.renderSections(ifChildren, context);
@@ -225,7 +248,7 @@ export class FixedTemplateProcessor {
   private processInterpolation(content: string, context: ExecutionContext): string {
     return content.replace(/\$\{([^}]+)\}/g, (_match, expression) => {
       const trimmed = expression.trim();
-      
+
       if (trimmed.startsWith('unescaped ')) {
         const varName = trimmed.substring('unescaped '.length).trim();
         const value = this.resolveVariable(varName, context);
@@ -255,7 +278,7 @@ export class FixedTemplateProcessor {
     if (context.locals?.has(name)) return context.locals.get(name);
     if (context.globals?.has(name)) return context.globals.get(name);
     if (context.variables?.has(name)) return context.variables.get(name);
-    
+
     return undefined;
   }
 
@@ -266,19 +289,21 @@ export class FixedTemplateProcessor {
     // Handle boolean literals directly
     if (condition === 'true') return true;
     if (condition === 'false') return false;
-    
-    // Handle numeric literals  
+
+    // Handle numeric literals
     if (/^\d+$/.test(condition)) {
       return parseInt(condition, 10) !== 0;
     }
-    
+
     // Handle string literals
-    if ((condition.startsWith('"') && condition.endsWith('"')) ||
-        (condition.startsWith("'") && condition.endsWith("'"))) {
+    if (
+      (condition.startsWith('"') && condition.endsWith('"')) ||
+      (condition.startsWith("'") && condition.endsWith("'"))
+    ) {
       const str = condition.slice(1, -1);
       return str.length > 0;
     }
-    
+
     // Resolve as variable
     const value = this.resolveVariable(condition, context);
     return Boolean(value);

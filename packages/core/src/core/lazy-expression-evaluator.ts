@@ -16,7 +16,11 @@
  */
 
 import type { ASTNode, ExecutionContext } from '../types/core';
-import { EXPRESSION_TIERS, type ExpressionCategory, type ExpressionTier } from '../expressions/expression-tiers';
+import {
+  EXPRESSION_TIERS,
+  type ExpressionCategory,
+  type ExpressionTier,
+} from '../expressions/expression-tiers';
 import { debug } from '../utils/debug';
 
 /**
@@ -51,7 +55,7 @@ export class LazyExpressionEvaluator {
   constructor(options: LazyExpressionEvaluatorOptions = {}) {
     this.options = {
       preload: 'core',
-      ...options
+      ...options,
     };
 
     // Preload based on strategy
@@ -66,9 +70,7 @@ export class LazyExpressionEvaluator {
   private async preloadExpressions(): Promise<void> {
     if (this.options.categories) {
       // Explicit category list
-      await Promise.all(
-        this.options.categories.map(cat => this.loadCategory(cat))
-      );
+      await Promise.all(this.options.categories.map(cat => this.loadCategory(cat)));
       return;
     }
 
@@ -222,37 +224,37 @@ export class LazyExpressionEvaluator {
     // Map node types to categories based on Phase 2 plan
     const typeToCategory: Record<string, string> = {
       // Reference expressions
-      'identifier': 'references',  // Could be me, you, it, etc.
-      'selector': 'references',    // CSS selectors
-      'dollarExpression': 'references',
+      identifier: 'references', // Could be me, you, it, etc.
+      selector: 'references', // CSS selectors
+      dollarExpression: 'references',
 
       // Logical expressions
-      'binaryExpression': 'logical',
-      'unaryExpression': 'logical',
-      'comparison': 'logical',
+      binaryExpression: 'logical',
+      unaryExpression: 'logical',
+      comparison: 'logical',
 
       // Special expressions (literals)
-      'literal': 'special',
-      'string': 'special',
-      'numberLiteral': 'special',
-      'stringLiteral': 'special',
-      'booleanLiteral': 'special',
-      'arrayLiteral': 'special',
-      'objectLiteral': 'special',
-      'templateLiteral': 'special',
+      literal: 'special',
+      string: 'special',
+      numberLiteral: 'special',
+      stringLiteral: 'special',
+      booleanLiteral: 'special',
+      arrayLiteral: 'special',
+      objectLiteral: 'special',
+      templateLiteral: 'special',
 
       // Property expressions
-      'memberExpression': 'properties',
-      'possessiveExpression': 'properties',
+      memberExpression: 'properties',
+      possessiveExpression: 'properties',
 
       // Conversion expressions
-      'asExpression': 'conversion',
+      asExpression: 'conversion',
 
       // Positional expressions
-      'positional': 'positional',
+      positional: 'positional',
 
       // Call expressions (might need special handling)
-      'callExpression': 'references',
+      callExpression: 'references',
     };
 
     return typeToCategory[nodeType] || null;
@@ -312,7 +314,10 @@ export class LazyExpressionEvaluator {
   /**
    * Evaluate identifier nodes (me, you, it, etc.)
    */
-  private async evaluateIdentifier(node: { name: string }, context: ExecutionContext): Promise<any> {
+  private async evaluateIdentifier(
+    node: { name: string },
+    context: ExecutionContext
+  ): Promise<any> {
     const { name } = node;
 
     // Check for special context variables first
@@ -390,7 +395,9 @@ export class LazyExpressionEvaluator {
 
       // Verify we have a valid DOM element as context
       if (!contextElement || typeof contextElement.querySelectorAll !== 'function') {
-        throw new Error(`'in' operator requires a DOM element as the right operand (got: ${typeof contextElement})`);
+        throw new Error(
+          `'in' operator requires a DOM element as the right operand (got: ${typeof contextElement})`
+        );
       }
 
       // Query for ALL matching elements within the context element
@@ -407,11 +414,15 @@ export class LazyExpressionEvaluator {
     switch (operator) {
       case '>':
         const greaterThanExpr = this.expressionRegistry.get('greaterThan');
-        return greaterThanExpr ? greaterThanExpr.evaluate(context, leftValue, rightValue) : leftValue > rightValue;
+        return greaterThanExpr
+          ? greaterThanExpr.evaluate(context, leftValue, rightValue)
+          : leftValue > rightValue;
 
       case '<':
         const lessThanExpr = this.expressionRegistry.get('lessThan');
-        return lessThanExpr ? lessThanExpr.evaluate(context, leftValue, rightValue) : leftValue < rightValue;
+        return lessThanExpr
+          ? lessThanExpr.evaluate(context, leftValue, rightValue)
+          : leftValue < rightValue;
 
       case '>=':
         const gteExpr = this.expressionRegistry.get('greaterThanOrEqual');
@@ -426,13 +437,17 @@ export class LazyExpressionEvaluator {
       case 'equals':
       case 'is':
         const equalsExpr = this.expressionRegistry.get('equals');
-        return equalsExpr ? equalsExpr.evaluate(context, leftValue, rightValue) : leftValue === rightValue;
+        return equalsExpr
+          ? equalsExpr.evaluate(context, leftValue, rightValue)
+          : leftValue === rightValue;
 
       case '!=':
       case '!==':
       case 'is not':
         const notEqualsExpr = this.expressionRegistry.get('notEquals');
-        return notEqualsExpr ? notEqualsExpr.evaluate(context, leftValue, rightValue) : leftValue !== rightValue;
+        return notEqualsExpr
+          ? notEqualsExpr.evaluate(context, leftValue, rightValue)
+          : leftValue !== rightValue;
 
       case '+':
         return leftValue + rightValue;
@@ -510,9 +525,7 @@ export class LazyExpressionEvaluator {
     const { callee, arguments: args } = node;
 
     // Evaluate arguments first
-    const evaluatedArgs = await Promise.all(
-      args.map((arg: any) => this.evaluate(arg, context))
-    );
+    const evaluatedArgs = await Promise.all(args.map((arg: any) => this.evaluate(arg, context)));
 
     // Handle simple function names (identifiers)
     if (callee.type === 'identifier') {
@@ -561,7 +574,10 @@ export class LazyExpressionEvaluator {
   /**
    * Evaluate CSS selector nodes
    */
-  private async evaluateSelector(node: { value: string }, context: ExecutionContext): Promise<HTMLElement[]> {
+  private async evaluateSelector(
+    node: { value: string },
+    context: ExecutionContext
+  ): Promise<HTMLElement[]> {
     const selectorExpr = this.expressionRegistry.get('querySelector');
     if (selectorExpr) {
       const element = await selectorExpr.evaluate(context, node.value);
@@ -576,7 +592,10 @@ export class LazyExpressionEvaluator {
   /**
    * Evaluate dollar expressions ($variable, $1, $window.foo)
    */
-  private async evaluateDollarExpression(node: { expression: any }, context: ExecutionContext): Promise<any> {
+  private async evaluateDollarExpression(
+    node: { expression: any },
+    context: ExecutionContext
+  ): Promise<any> {
     // Evaluate the inner expression normally
     const value = await this.evaluate(node.expression, context);
 
@@ -693,12 +712,17 @@ export class LazyExpressionEvaluator {
    * Evaluate simple expressions like "clientX - xoff" or "clientX-xoff" using context variables
    * Handles basic arithmetic: +, -, *, /, %
    */
-  private async evaluateSimpleExpression(exprCode: string, context: ExecutionContext): Promise<any> {
+  private async evaluateSimpleExpression(
+    exprCode: string,
+    context: ExecutionContext
+  ): Promise<any> {
     debug.expressions('EVAL: Evaluating arithmetic expression:', exprCode);
 
     // Try to find an operator in the expression
     // Match identifier/number, operator, identifier/number (with or without spaces)
-    const arithmeticMatch = exprCode.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*|\d+(?:\.\d+)?)\s*([\+\-\*\/\%])\s*([a-zA-Z_$][a-zA-Z0-9_$]*|\d+(?:\.\d+)?)$/);
+    const arithmeticMatch = exprCode.match(
+      /^([a-zA-Z_$][a-zA-Z0-9_$]*|\d+(?:\.\d+)?)\s*([\+\-\*\/\%])\s*([a-zA-Z_$][a-zA-Z0-9_$]*|\d+(?:\.\d+)?)$/
+    );
 
     if (arithmeticMatch) {
       const [, left, operator, right] = arithmeticMatch;
@@ -716,12 +740,23 @@ export class LazyExpressionEvaluator {
       if (!isNaN(leftNum) && !isNaN(rightNum)) {
         let result: number;
         switch (operator) {
-          case '+': result = leftNum + rightNum; break;
-          case '-': result = leftNum - rightNum; break;
-          case '*': result = leftNum * rightNum; break;
-          case '/': result = leftNum / rightNum; break;
-          case '%': result = leftNum % rightNum; break;
-          default: result = leftNum;
+          case '+':
+            result = leftNum + rightNum;
+            break;
+          case '-':
+            result = leftNum - rightNum;
+            break;
+          case '*':
+            result = leftNum * rightNum;
+            break;
+          case '/':
+            result = leftNum / rightNum;
+            break;
+          case '%':
+            result = leftNum % rightNum;
+            break;
+          default:
+            result = leftNum;
         }
         debug.expressions('EVAL: Arithmetic result:', result);
         return result;
@@ -764,7 +799,10 @@ export class LazyExpressionEvaluator {
     }
 
     // Try parsing as string literal
-    if ((name.startsWith('"') && name.endsWith('"')) || (name.startsWith("'") && name.endsWith("'"))) {
+    if (
+      (name.startsWith('"') && name.endsWith('"')) ||
+      (name.startsWith("'") && name.endsWith("'"))
+    ) {
       return name.slice(1, -1);
     }
 
@@ -790,7 +828,10 @@ export class LazyExpressionEvaluator {
   /**
    * Evaluate object literal
    */
-  private async evaluateObjectLiteral(node: any, context: ExecutionContext): Promise<Record<string, any>> {
+  private async evaluateObjectLiteral(
+    node: any,
+    context: ExecutionContext
+  ): Promise<Record<string, any>> {
     const properties = node.properties || [];
     const result: Record<string, any> = {};
 

@@ -1,4 +1,3 @@
-
 /**
  * Enhanced Put Command - Deep TypeScript Integration
  * Inserts content into DOM elements or properties with comprehensive validation
@@ -27,23 +26,27 @@ export interface PutCommandOptions {
  * Input validation schema for LLM understanding
  */
 const PutCommandInputSchema = v.tuple([
-  v.union([
-    v.string(),
-    v.number(),
-    v.boolean(),
-    v.custom((value: unknown) => value instanceof HTMLElement),
-    v.array(v.unknown()),
-    z.record(v.string(), v.unknown()),
-    v.null(),
-    v.undefined()
-  ]).describe('Content to insert'),
+  v
+    .union([
+      v.string(),
+      v.number(),
+      v.boolean(),
+      v.custom((value: unknown) => value instanceof HTMLElement),
+      v.array(v.unknown()),
+      z.record(v.string(), v.unknown()),
+      v.null(),
+      v.undefined(),
+    ])
+    .describe('Content to insert'),
   z.enum(['into', 'before', 'after', 'at start of', 'at end of']).describe('Insertion position'),
-  v.union([
-    v.custom((value: unknown) => value instanceof HTMLElement),
-    v.string(), // CSS selector or property access
-    v.null(),   // Use implicit target (me)
-    v.undefined()
-  ]).describe('Target element or property')
+  v
+    .union([
+      v.custom((value: unknown) => value instanceof HTMLElement),
+      v.string(), // CSS selector or property access
+      v.null(), // Use implicit target (me)
+      v.undefined(),
+    ])
+    .describe('Target element or property'),
 ]);
 
 type PutCommandInput = any; // Inferred from RuntimeValidator
@@ -51,13 +54,17 @@ type PutCommandInput = any; // Inferred from RuntimeValidator
 /**
  * Enhanced Put Command with full type safety for LLM agents
  */
-export class PutCommand implements TypedCommandImplementation<
-  PutCommandInput,
-  HTMLElement,  // Returns the target element
-  TypedExecutionContext
-> {
+export class PutCommand
+  implements
+    TypedCommandImplementation<
+      PutCommandInput,
+      HTMLElement, // Returns the target element
+      TypedExecutionContext
+    >
+{
   public readonly name = 'put' as const;
-  public readonly syntax = 'put <content> (into | before | after | at start of | at end of) <target>';
+  public readonly syntax =
+    'put <content> (into | before | after | at start of | at end of) <target>';
   public readonly description = 'Inserts content into DOM elements or properties with validation';
   public readonly inputSchema = PutCommandInputSchema;
   public readonly outputType = 'element' as const;
@@ -70,15 +77,15 @@ export class PutCommand implements TypedCommandImplementation<
       {
         code: 'put "Hello World" into me',
         description: 'Insert text content into current element',
-        expectedOutput: 'HTMLElement'
+        expectedOutput: 'HTMLElement',
       },
       {
         code: 'put <div>Content</div> before <#target/>',
         description: 'Insert HTML before target element',
-        expectedOutput: 'HTMLElement'
-      }
+        expectedOutput: 'HTMLElement',
+      },
     ],
-    relatedCommands: ['take', 'add', 'remove']
+    relatedCommands: ['take', 'add', 'remove'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -89,52 +96,52 @@ export class PutCommand implements TypedCommandImplementation<
         type: 'string',
         description: 'Content to insert (text, HTML, or values)',
         optional: false,
-        examples: ['"Hello"', '<div>HTML</div>', 'variable']
+        examples: ['"Hello"', '<div>HTML</div>', 'variable'],
       },
       {
         name: 'position',
         type: 'string',
         description: 'Where to insert the content',
         optional: false,
-        examples: ['into', 'before', 'after', 'at start of', 'at end of']
+        examples: ['into', 'before', 'after', 'at start of', 'at end of'],
       },
       {
         name: 'target',
         type: 'element',
         description: 'Target element or property. If omitted, uses current element (me)',
         optional: true,
-        examples: ['me', '<#content/>', 'me.innerHTML']
-      }
+        examples: ['me', '<#content/>', 'me.innerHTML'],
+      },
     ],
     returns: {
       type: 'element',
       description: 'The target element that was modified',
-      examples: ['HTMLElement']
+      examples: ['HTMLElement'],
     },
     examples: [
       {
         title: 'Insert text content',
         code: 'put "Hello World" into me',
         explanation: 'Inserts text into the current element',
-        output: 'HTMLElement'
+        output: 'HTMLElement',
       },
       {
         title: 'Insert HTML before element',
         code: 'put <span>New</span> before <.target/>',
         explanation: 'Inserts HTML content before elements with target class',
-        output: 'HTMLElement'
+        output: 'HTMLElement',
       },
       {
         title: 'Append to element',
         code: 'put "More content" at end of <#container/>',
         explanation: 'Appends content to the end of container element',
-        output: 'HTMLElement'
-      }
+        output: 'HTMLElement',
+      },
     ],
     seeAlso: ['take', 'add-class', 'remove-class', 'append'],
-    tags: ['dom', 'content', 'insertion', 'html']
+    tags: ['dom', 'content', 'insertion', 'html'],
   };
-  
+
   private options: PutCommandOptions;
 
   constructor(options: PutCommandOptions = {}) {
@@ -157,13 +164,13 @@ export class PutCommand implements TypedCommandImplementation<
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'validation-error',
-                        message: validationResult.errors[0]?.message || 'Invalid input',
+            name: 'ValidationError',
+            type: 'validation-error',
+            message: validationResult.errors[0]?.message || 'Invalid input',
             code: 'PUT_VALIDATION_FAILED',
-            suggestions: validationResult.suggestions
+            suggestions: validationResult.suggestions,
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -175,14 +182,14 @@ export class PutCommand implements TypedCommandImplementation<
           error: targetResult.error ?? {
             type: 'runtime-error',
             message: 'Unknown error occurred',
-            suggestions: []
+            suggestions: [],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
-      const { element: targetElement, property } = targetResult.value!
-      
+      const { element: targetElement, property } = targetResult.value!;
+
       // Convert content to string, handling null/undefined
       const contentStr = content == null ? '' : String(content);
 
@@ -191,7 +198,7 @@ export class PutCommand implements TypedCommandImplementation<
         content: contentStr,
         position,
         targetElement,
-        property
+        property,
       });
 
       // Execute the put operation
@@ -219,26 +226,29 @@ export class PutCommand implements TypedCommandImplementation<
         property,
         timestamp: Date.now(),
         metadata: this.metadata,
-        result: 'success'
+        result: 'success',
       });
 
       return {
         success: true,
         value: targetElement,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Unknown error',
+          message: error instanceof Error ? error.message : 'Unknown error',
           code: 'PUT_EXECUTION_FAILED',
-          suggestions: ['Check if target element exists', 'Verify content is valid', 'Ensure position is supported']
+          suggestions: [
+            'Check if target element exists',
+            'Verify content is valid',
+            'Ensure position is supported',
+          ],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -247,33 +257,40 @@ export class PutCommand implements TypedCommandImplementation<
     try {
       // Schema validation - the schema expects a tuple, so we need to validate the args as a tuple
       const parsed = this.inputSchema.safeParse(args.slice(0, 3)); // Take first 3 args for tuple validation
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch' as const,
-            message: `Invalid argument: ${err.message}`,
-            suggestions: [this.getValidationSuggestion(err.code ?? "unknown")]
-          })) ?? [],
-          suggestions: ['Provide content, position, and target', 'Use valid position keywords', 'Ensure target is element or selector']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch' as const,
+              message: `Invalid argument: ${err.message}`,
+              suggestions: [this.getValidationSuggestion(err.code ?? 'unknown')],
+            })) ?? [],
+          suggestions: [
+            'Provide content, position, and target',
+            'Use valid position keywords',
+            'Ensure target is element or selector',
+          ],
         };
       }
 
       // Additional semantic validation
       const [_content, position, target] = parsed.data as [unknown, unknown, unknown];
-      
+
       // Validate position is supported
       const validPositions = ['into', 'before', 'after', 'at start of', 'at end of'];
       if (!validPositions.includes(position as string)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error' as const,
-            message: `Invalid position: "${position}". Must be one of: ${validPositions.join(', ')}`,
-            suggestions: ['Use supported position keywords']
-          }],
-          suggestions: ['Use: into, before, after, at start of, at end of']
+          errors: [
+            {
+              type: 'syntax-error' as const,
+              message: `Invalid position: "${position}". Must be one of: ${validPositions.join(', ')}`,
+              suggestions: ['Use supported position keywords'],
+            },
+          ],
+          suggestions: ['Use: into, before, after, at start of, at end of'],
         };
       }
 
@@ -281,36 +298,39 @@ export class PutCommand implements TypedCommandImplementation<
       if (typeof target === 'string' && !this.isValidCSSSelector(target)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error' as const,
-            message: `Invalid CSS selector: "${target}"`,
-            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"']
-          }],
-          suggestions: ['Check CSS selector syntax', 'Test with document.querySelector()']
+          errors: [
+            {
+              type: 'syntax-error' as const,
+              message: `Invalid CSS selector: "${target}"`,
+              suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"'],
+            },
+          ],
+          suggestions: ['Check CSS selector syntax', 'Test with document.querySelector()'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: [] 
+        suggestions: [],
       };
-
     } catch (_error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error' as const,
-          message: 'Validation failed with exception',
-          suggestions: ['Check input types and values']
-        }],
-        suggestions: ['Ensure arguments match expected types']
+        errors: [
+          {
+            type: 'runtime-error' as const,
+            message: 'Validation failed with exception',
+            suggestions: ['Check input types and values'],
+          },
+        ],
+        suggestions: ['Ensure arguments match expected types'],
       };
     }
   }
 
   private resolveTarget(
-    target: PutCommandInput[2], 
+    target: PutCommandInput[2],
     context: TypedExecutionContext
   ): EvaluationResult<{ element: HTMLElement; property?: string }> {
     try {
@@ -320,12 +340,15 @@ export class PutCommand implements TypedCommandImplementation<
           return {
             success: false,
             error: {
-                            type: 'missing-argument',
-                            message: 'No target element available - context.me is undefined',
+              type: 'missing-argument',
+              message: 'No target element available - context.me is undefined',
               code: 'NO_TARGET_ELEMENT',
-              suggestions: ['Ensure command is called within element context', 'Provide explicit target element']
+              suggestions: [
+                'Ensure command is called within element context',
+                'Provide explicit target element',
+              ],
             },
-            type: 'error'
+            type: 'error',
           };
         }
         const htmlElement = asHTMLElement(context.me);
@@ -333,18 +356,18 @@ export class PutCommand implements TypedCommandImplementation<
           return {
             success: false,
             error: {
-                            type: 'invalid-argument',
-                            message: 'context.me is not an HTMLElement',
+              type: 'invalid-argument',
+              message: 'context.me is not an HTMLElement',
               code: 'INVALID_CONTEXT_ELEMENT',
-              suggestions: ['Ensure context.me is an HTMLElement']
+              suggestions: ['Ensure context.me is an HTMLElement'],
             },
-            type: 'error'
+            type: 'error',
           };
         }
         return {
           success: true,
           value: { element: htmlElement },
-          type: 'object'
+          type: 'object',
         };
       }
 
@@ -353,7 +376,7 @@ export class PutCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: { element: target },
-          type: 'object'
+          type: 'object',
         };
       }
 
@@ -362,86 +385,85 @@ export class PutCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: { element: target[0] },
-          type: 'object'
+          type: 'object',
         };
       }
-      
+
       // Handle string selector with optional property access
       if (typeof target === 'string') {
         // Check for property access syntax like "#element.innerHTML"
         const propertyMatch = target.match(/^(.+)\.(\w+)$/);
-        
+
         if (propertyMatch) {
           const [, selector, property] = propertyMatch;
           const element = this.querySelector(selector, context);
-          
+
           if (!element) {
             return {
               success: false,
               error: {
-                                name: 'ValidationError',
-          type: 'runtime-error',
-                                message: `Target element not found: ${selector}`,
+                name: 'ValidationError',
+                type: 'runtime-error',
+                message: `Target element not found: ${selector}`,
                 code: 'TARGET_NOT_FOUND',
-                suggestions: ['Check if element exists in DOM', 'Verify selector syntax']
+                suggestions: ['Check if element exists in DOM', 'Verify selector syntax'],
               },
-              type: 'error'
+              type: 'error',
             };
           }
-          
+
           return {
             success: true,
             value: { element, property },
-            type: 'object'
+            type: 'object',
           };
         } else {
           // Regular CSS selector without property access
           const element = this.querySelector(target, context);
-          
+
           if (!element) {
             return {
               success: false,
               error: {
-                                name: 'ValidationError',
-          type: 'runtime-error',
-                                message: `Target element not found: ${target}`,
+                name: 'ValidationError',
+                type: 'runtime-error',
+                message: `Target element not found: ${target}`,
                 code: 'TARGET_NOT_FOUND',
-                suggestions: ['Check if element exists in DOM', 'Verify selector syntax']
+                suggestions: ['Check if element exists in DOM', 'Verify selector syntax'],
               },
-              type: 'error'
+              type: 'error',
             };
           }
-          
+
           return {
             success: true,
             value: { element },
-            type: 'object'
+            type: 'object',
           };
         }
       }
-      
+
       return {
         success: false,
         error: {
           type: 'invalid-argument',
           message: `Invalid target type: ${typeof target}`,
           code: 'INVALID_TARGET_TYPE',
-          suggestions: ['Use HTMLElement, CSS selector string, or omit for implicit target']
+          suggestions: ['Use HTMLElement, CSS selector string, or omit for implicit target'],
         },
-        type: 'error'
+        type: 'error',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Target resolution failed',
+          message: error instanceof Error ? error.message : 'Target resolution failed',
           code: 'TARGET_RESOLUTION_FAILED',
-          suggestions: ['Check target syntax and availability']
+          suggestions: ['Check target syntax and availability'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -451,13 +473,13 @@ export class PutCommand implements TypedCommandImplementation<
     if (selector === 'me') {
       return (context.me as HTMLElement) || null;
     }
-    
+
     // Use document.querySelector if available
     if (typeof document !== 'undefined' && document.querySelector) {
       const element = document.querySelector(selector);
       return element as HTMLElement | null;
     }
-    
+
     // Test environment fallback
     return null;
   }
@@ -480,12 +502,15 @@ export class PutCommand implements TypedCommandImplementation<
             return {
               success: false,
               error: {
-                                type: 'invalid-argument',
-                                message: `Property access (${property}) only supports 'into' position`,
+                type: 'invalid-argument',
+                message: `Property access (${property}) only supports 'into' position`,
                 code: 'INVALID_PROPERTY_POSITION',
-                suggestions: ['Use "into" position for property access', 'Remove property access for other positions']
+                suggestions: [
+                  'Use "into" position for property access',
+                  'Remove property access for other positions',
+                ],
               },
-              type: 'error'
+              type: 'error',
             };
         }
       } else {
@@ -510,12 +535,12 @@ export class PutCommand implements TypedCommandImplementation<
             return {
               success: false,
               error: {
-                                type: 'invalid-argument',
-                                message: `Invalid position: ${position}`,
+                type: 'invalid-argument',
+                message: `Invalid position: ${position}`,
                 code: 'INVALID_POSITION',
-                suggestions: ['Use: into, before, after, at start of, at end of']
+                suggestions: ['Use: into, before, after, at start of, at end of'],
               },
-              type: 'error'
+              type: 'error',
             };
         }
       }
@@ -523,20 +548,19 @@ export class PutCommand implements TypedCommandImplementation<
       return {
         success: true,
         value: targetElement,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Put operation failed',
+          message: error instanceof Error ? error.message : 'Put operation failed',
           code: 'OPERATION_FAILED',
-          suggestions: ['Check if element is still in DOM', 'Verify content is valid']
+          suggestions: ['Check if element is still in DOM', 'Verify content is valid'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -558,7 +582,7 @@ export class PutCommand implements TypedCommandImplementation<
     if (!element.parentNode) {
       throw new Error('Cannot insert before element - no parent node');
     }
-    
+
     if (this.containsHTML(content)) {
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = this.options.sanitizeHTML ? this.sanitizeHTML(content) : content;
@@ -575,7 +599,7 @@ export class PutCommand implements TypedCommandImplementation<
     if (!element.parentNode) {
       throw new Error('Cannot insert after element - no parent node');
     }
-    
+
     if (this.containsHTML(content)) {
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = this.options.sanitizeHTML ? this.sanitizeHTML(content) : content;
@@ -590,16 +614,18 @@ export class PutCommand implements TypedCommandImplementation<
   }
 
   private putAtStartOf(element: HTMLElement, content: string): void {
-    const sanitizedContent = this.options.sanitizeHTML && this.containsHTML(content) 
-      ? this.sanitizeHTML(content) 
-      : content;
+    const sanitizedContent =
+      this.options.sanitizeHTML && this.containsHTML(content)
+        ? this.sanitizeHTML(content)
+        : content;
     element.innerHTML = sanitizedContent + element.innerHTML;
   }
 
   private putAtEndOf(element: HTMLElement, content: string): void {
-    const sanitizedContent = this.options.sanitizeHTML && this.containsHTML(content) 
-      ? this.sanitizeHTML(content) 
-      : content;
+    const sanitizedContent =
+      this.options.sanitizeHTML && this.containsHTML(content)
+        ? this.sanitizeHTML(content)
+        : content;
     element.innerHTML = element.innerHTML + sanitizedContent;
   }
 
@@ -618,12 +644,12 @@ export class PutCommand implements TypedCommandImplementation<
 
   private getValidationSuggestion(errorCode: string): string {
     const suggestions: Record<string, string> = {
-      'invalid_type': 'Provide content, position keyword, and target element',
-      'invalid_enum_value': 'Use valid position: into, before, after, at start of, at end of',
-      'too_small': 'Put command requires content, position, and target arguments',
-      'too_big': 'Put command takes 2-3 arguments maximum'
+      invalid_type: 'Provide content, position keyword, and target element',
+      invalid_enum_value: 'Use valid position: into, before, after, at start of, at end of',
+      too_small: 'Put command requires content, position, and target arguments',
+      too_big: 'Put command takes 2-3 arguments maximum',
     };
-    
+
     return suggestions[errorCode] || 'Check argument types and syntax';
   }
 

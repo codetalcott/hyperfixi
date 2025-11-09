@@ -81,7 +81,7 @@ export interface TypedCommandImplementation<_TInput = unknown[], TOutput = unkno
   readonly outputType: string;
   readonly metadata: CommandMetadata;
   readonly documentation: LLMDocumentation;
-  
+
   execute(context: TypedExecutionContext, ...args: unknown[]): Promise<EvaluationResult<TOutput>>;
   validate(args: unknown[]): ValidationResult;
 }
@@ -114,7 +114,7 @@ export function getRuntimeInfo(): RuntimeInfo {
 
 export function getLLMRuntimeInfo() {
   const info = getRuntimeInfo();
-  
+
   return {
     runtime: info.name,
     version: info.version,
@@ -146,7 +146,9 @@ export function getLLMRuntimeInfo() {
 // Simple Hide Command (Deno-Compatible)
 // ============================================================================
 
-export class HideCommand implements TypedCommandImplementation<[HTMLElement | string | null], HTMLElement[]> {
+export class HideCommand
+  implements TypedCommandImplementation<[HTMLElement | string | null], HTMLElement[]>
+{
   public readonly name = 'hide' as const;
   public readonly syntax = 'hide [<target-expression>]';
   public readonly description = 'Hides one or more elements by setting display: none';
@@ -198,64 +200,73 @@ export class HideCommand implements TypedCommandImplementation<[HTMLElement | st
     context: TypedExecutionContext,
     target?: HTMLElement | string | null
   ): Promise<EvaluationResult<HTMLElement[]>> {
-    return Promise.resolve((() => {
-      try {
-        const elements = this.resolveTargets(context, target);
-        const hiddenElements: HTMLElement[] = [];
+    return Promise.resolve(
+      (() => {
+        try {
+          const elements = this.resolveTargets(context, target);
+          const hiddenElements: HTMLElement[] = [];
 
-        for (const element of elements) {
-          if (element) {
-            // Store original display for show command
-            if (!element.dataset.originalDisplay) {
-              const computed = globalThis.getComputedStyle ? globalThis.getComputedStyle(element) : null;
-              element.dataset.originalDisplay = computed?.display === 'none' ? 'block' : computed?.display || 'block';
+          for (const element of elements) {
+            if (element) {
+              // Store original display for show command
+              if (!element.dataset.originalDisplay) {
+                const computed = globalThis.getComputedStyle
+                  ? globalThis.getComputedStyle(element)
+                  : null;
+                element.dataset.originalDisplay =
+                  computed?.display === 'none' ? 'block' : computed?.display || 'block';
+              }
+
+              // Hide the element
+              element.style.display = 'none';
+
+              // Dispatch event if available
+              if (typeof CustomEvent !== 'undefined') {
+                element.dispatchEvent(
+                  new CustomEvent('hyperscript:hidden', {
+                    detail: { command: 'hide', timestamp: Date.now() },
+                  })
+                );
+              }
+
+              hiddenElements.push(element);
             }
-
-            // Hide the element
-            element.style.display = 'none';
-
-            // Dispatch event if available
-            if (typeof CustomEvent !== 'undefined') {
-              element.dispatchEvent(new CustomEvent('hyperscript:hidden', {
-                detail: { command: 'hide', timestamp: Date.now() }
-              }));
-            }
-
-            hiddenElements.push(element);
           }
-        }
 
-        return {
-          success: true,
-          value: hiddenElements,
-          type: 'element-list',
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: {
-            name: 'HideCommandError',
-            type: 'runtime-error',
-            message: error instanceof Error ? error.message : 'Unknown error',
-            code: 'HIDE_EXECUTION_FAILED',
-            suggestions: ['Check if element exists', 'Verify element is not null'],
-          },
-          type: 'error',
-        };
-      }
-    })());
+          return {
+            success: true,
+            value: hiddenElements,
+            type: 'element-list',
+          };
+        } catch (error) {
+          return {
+            success: false,
+            error: {
+              name: 'HideCommandError',
+              type: 'runtime-error',
+              message: error instanceof Error ? error.message : 'Unknown error',
+              code: 'HIDE_EXECUTION_FAILED',
+              suggestions: ['Check if element exists', 'Verify element is not null'],
+            },
+            type: 'error',
+          };
+        }
+      })()
+    );
   }
 
   validate(args: unknown[]): ValidationResult {
     if (args.length > 1) {
       return {
         isValid: false,
-        errors: [{
-          type: 'invalid-arguments',
-          message: 'Hide command accepts at most one argument',
-          suggestion: 'Use hide me, hide element, or hide <selector/>',
-        suggestions: []
-        }],
+        errors: [
+          {
+            type: 'invalid-arguments',
+            message: 'Hide command accepts at most one argument',
+            suggestion: 'Use hide me, hide element, or hide <selector/>',
+            suggestions: [],
+          },
+        ],
         suggestions: ['Use hide me, hide element, or hide <selector/>'],
       };
     }
@@ -267,7 +278,10 @@ export class HideCommand implements TypedCommandImplementation<[HTMLElement | st
     };
   }
 
-  private resolveTargets(context: TypedExecutionContext, target?: HTMLElement | string | null): HTMLElement[] {
+  private resolveTargets(
+    context: TypedExecutionContext,
+    target?: HTMLElement | string | null
+  ): HTMLElement[] {
     // Default to context.me if no target specified
     if (target === undefined || target === null) {
       return context.me ? [context.me] : [];
@@ -315,16 +329,16 @@ export function createMinimalRuntime() {
   return {
     commands: new Map<string, TypedCommandImplementation>(),
     environment: getRuntimeInfo(),
-    
+
     addCommand(command: TypedCommandImplementation) {
       this.commands.set(command.name, command);
       return this;
     },
-    
+
     getCommand(name: string) {
       return this.commands.get(name);
     },
-    
+
     listCommands() {
       return Array.from(this.commands.keys());
     },
@@ -339,15 +353,15 @@ export const logger = {
   info: (message: string, ...args: unknown[]) => {
     console.log(`[HyperFixi] ${message}`, ...args);
   },
-  
+
   warn: (message: string, ...args: unknown[]) => {
     console.warn(`[HyperFixi] ${message}`, ...args);
   },
-  
+
   error: (message: string, ...args: unknown[]) => {
     console.error(`[HyperFixi] ${message}`, ...args);
   },
-  
+
   debug: (message: string, ...args: unknown[]) => {
     if (Deno.env.get('DEBUG') === 'hyperfixi') {
       console.log(`[HyperFixi Debug] ${message}`, ...args);
@@ -361,13 +375,13 @@ export const logger = {
 
 export const performance = {
   now: (): number => globalThis.performance.now(),
-  
+
   mark: (name: string): void => {
     if (globalThis.performance?.mark) {
       globalThis.performance.mark(name);
     }
   },
-  
+
   measure: (name: string, startMark?: string, endMark?: string): void => {
     if (globalThis.performance?.measure) {
       globalThis.performance.measure(name, startMark, endMark);

@@ -3,9 +3,9 @@
  * The call command allows you evaluate an expression.
  * The value of this expression will be put into the it variable.
  * get is an alias for call and can be used if it more clearly expresses the meaning of the code.
- * 
+ *
  * Syntax: call <expression> | get <expression>
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -19,7 +19,7 @@ export interface CallCommandInput {
   alias?: 'call' | 'get'; // Command alias used
 }
 
-// Output type definition  
+// Output type definition
 export interface CallCommandOutput {
   result: any;
   wasAsync: boolean;
@@ -29,24 +29,23 @@ export interface CallCommandOutput {
 /**
  * Enhanced Call Command with full type safety and validation
  */
-export class CallCommand implements CommandImplementation<
-  CallCommandInput,
-  CallCommandOutput,
-  TypedExecutionContext
-> {
+export class CallCommand
+  implements CommandImplementation<CallCommandInput, CallCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'call',
-    description: 'The call command allows you evaluate an expression. The value of this expression will be put into the it variable. get is an alias for call and can be used if it more clearly expresses the meaning of the code.',
+    description:
+      'The call command allows you evaluate an expression. The value of this expression will be put into the it variable. get is an alias for call and can be used if it more clearly expresses the meaning of the code.',
     examples: [
       'call myFunction()',
       'get user.name',
       'call fetch("/api/data")',
       'get Math.random()',
-      'call new Date().toISOString()'
+      'call new Date().toISOString()',
     ],
     syntax: 'call <expression> | get <expression>',
     category: 'utility' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -54,12 +53,14 @@ export class CallCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Call command requires an object input',
-            suggestions: ['Provide an object with expression property']
-          }],
-          suggestions: ['Provide an object with expression property']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Call command requires an object input',
+              suggestions: ['Provide an object with expression property'],
+            },
+          ],
+          suggestions: ['Provide an object with expression property'],
         };
       }
 
@@ -69,26 +70,29 @@ export class CallCommand implements CommandImplementation<
       if (inputObj.expression === undefined) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Call command requires an expression to evaluate',
-            suggestions: ['Provide a function, Promise, or value to evaluate']
-          }],
-          suggestions: ['Provide a function, Promise, or value to evaluate']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Call command requires an expression to evaluate',
+              suggestions: ['Provide a function, Promise, or value to evaluate'],
+            },
+          ],
+          suggestions: ['Provide a function, Promise, or value to evaluate'],
         };
       }
 
       // Validate alias if provided
-      if (inputObj.alias !== undefined && 
-          inputObj.alias !== 'call' && inputObj.alias !== 'get') {
+      if (inputObj.alias !== undefined && inputObj.alias !== 'call' && inputObj.alias !== 'get') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Call command alias must be "call" or "get"',
-            suggestions: ['Use "call" or "get" as the command alias']
-          }],
-          suggestions: ['Use "call" or "get" as the command alias']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Call command alias must be "call" or "get"',
+              suggestions: ['Use "call" or "get" as the command alias'],
+            },
+          ],
+          suggestions: ['Use "call" or "get" as the command alias'],
         };
       }
 
@@ -98,10 +102,10 @@ export class CallCommand implements CommandImplementation<
         suggestions: [],
         data: {
           expression: inputObj.expression,
-          alias: inputObj.alias || 'call'
-        }
+          alias: inputObj.alias || 'call',
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -109,7 +113,7 @@ export class CallCommand implements CommandImplementation<
     context: TypedExecutionContext
   ): Promise<CallCommandOutput> {
     const { expression } = input;
-    
+
     try {
       let result: any;
       let wasAsync = false;
@@ -119,7 +123,7 @@ export class CallCommand implements CommandImplementation<
       if (typeof expression === 'function') {
         expressionType = 'function';
         result = expression();
-        
+
         // Handle async functions and promises
         if (result instanceof Promise) {
           wasAsync = true;
@@ -140,11 +144,11 @@ export class CallCommand implements CommandImplementation<
 
       // Set the result in the 'it' context variable
       Object.assign(context, { it: result });
-      
+
       return {
         result,
         wasAsync,
-        expressionType
+        expressionType,
       };
     } catch (error) {
       // Re-throw with enhanced error information
@@ -161,14 +165,15 @@ export class EnhancedGetCommand extends CallCommand {
   override metadata = {
     ...(this.constructor as any).prototype.metadata,
     name: 'get',
-    description: 'The get command is an alias for call and can be used if it more clearly expresses the meaning of the code. It allows you to evaluate an expression and put the value into the it variable.',
+    description:
+      'The get command is an alias for call and can be used if it more clearly expresses the meaning of the code. It allows you to evaluate an expression and put the value into the it variable.',
     examples: [
       'get user.profile',
       'get document.title',
       'get localStorage.getItem("key")',
       'get Math.floor(Math.random() * 100)',
-      'get fetch("/api/user").then(r => r.json())'
-    ]
+      'get fetch("/api/user").then(r => r.json())',
+    ],
   };
 }
 

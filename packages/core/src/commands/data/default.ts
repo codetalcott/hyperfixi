@@ -1,9 +1,9 @@
 /**
  * Enhanced Default Command Implementation
  * Sets values only if they don't already exist
- * 
+ *
  * Syntax: default <expression> to <expression>
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -31,23 +31,22 @@ export interface DefaultCommandOutput {
 /**
  * Enhanced Default Command with full type safety and validation
  */
-export class DefaultCommand implements CommandImplementation<
-  DefaultCommandInput,
-  DefaultCommandOutput,
-  TypedExecutionContext
-> {
+export class DefaultCommand
+  implements CommandImplementation<DefaultCommandInput, DefaultCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'default',
-    description: 'The default command sets a value only if it doesn\'t already exist. It provides a way to set fallback values for variables, attributes, and properties.',
+    description:
+      "The default command sets a value only if it doesn't already exist. It provides a way to set fallback values for variables, attributes, and properties.",
     examples: [
       'default myVar to "fallback"',
       'default @data-theme to "light"',
       'default my innerHTML to "No content"',
-      'default count to 0'
+      'default count to 0',
     ],
     syntax: 'default <expression> to <expression>',
     category: 'data' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -55,12 +54,14 @@ export class DefaultCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Default command requires target and value',
-            suggestions: ['Provide target and value with "to" keyword']
-          }],
-          suggestions: ['Provide target and value with "to" keyword']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Default command requires target and value',
+              suggestions: ['Provide target and value with "to" keyword'],
+            },
+          ],
+          suggestions: ['Provide target and value with "to" keyword'],
         };
       }
 
@@ -69,24 +70,28 @@ export class DefaultCommand implements CommandImplementation<
       if (!inputObj.target) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Default command requires a target',
-            suggestions: ['Provide a variable name, attribute, or property reference']
-          }],
-          suggestions: ['Provide a variable name, attribute, or property reference']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Default command requires a target',
+              suggestions: ['Provide a variable name, attribute, or property reference'],
+            },
+          ],
+          suggestions: ['Provide a variable name, attribute, or property reference'],
         };
       }
 
       if (inputObj.value === undefined) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Default command requires a value',
-            suggestions: ['Provide a default value to set']
-          }],
-          suggestions: ['Provide a default value to set']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Default command requires a value',
+              suggestions: ['Provide a default value to set'],
+            },
+          ],
+          suggestions: ['Provide a default value to set'],
         };
       }
 
@@ -97,10 +102,10 @@ export class DefaultCommand implements CommandImplementation<
         data: {
           target: inputObj.target,
           value: inputObj.value,
-          toKeyword: inputObj.toKeyword
-        }
+          toKeyword: inputObj.toKeyword,
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -141,9 +146,10 @@ export class DefaultCommand implements CommandImplementation<
     value: any
   ): DefaultCommandOutput {
     // Check if variable already exists
-    const existingValue = context.locals?.get(variableName) || 
-                         context.globals?.get(variableName) || 
-                         context.variables?.get(variableName);
+    const existingValue =
+      context.locals?.get(variableName) ||
+      context.globals?.get(variableName) ||
+      context.variables?.get(variableName);
 
     if (existingValue !== undefined) {
       return {
@@ -151,7 +157,7 @@ export class DefaultCommand implements CommandImplementation<
         value,
         wasSet: false,
         existingValue,
-        targetType: 'variable'
+        targetType: 'variable',
       };
     }
 
@@ -167,7 +173,7 @@ export class DefaultCommand implements CommandImplementation<
       target: variableName,
       value,
       wasSet: true,
-      targetType: 'variable'
+      targetType: 'variable',
     };
   }
 
@@ -188,7 +194,7 @@ export class DefaultCommand implements CommandImplementation<
         value,
         wasSet: false,
         existingValue,
-        targetType: 'attribute'
+        targetType: 'attribute',
       };
     }
 
@@ -200,7 +206,7 @@ export class DefaultCommand implements CommandImplementation<
       target: `@${attributeName}`,
       value,
       wasSet: true,
-      targetType: 'attribute'
+      targetType: 'attribute',
     };
   }
 
@@ -216,7 +222,11 @@ export class DefaultCommand implements CommandImplementation<
     switch (possessive) {
       case 'my':
         if (!context.me) throw new Error('No "me" element in context');
-        targetElement = asHTMLElement(context.me) || (() => { throw new Error('context.me is not an HTMLElement'); })();
+        targetElement =
+          asHTMLElement(context.me) ||
+          (() => {
+            throw new Error('context.me is not an HTMLElement');
+          })();
         break;
       case 'its':
       case 'it':
@@ -226,7 +236,11 @@ export class DefaultCommand implements CommandImplementation<
       case 'your':
       case 'you':
         if (!context.you) throw new Error('No "you" element in context');
-        targetElement = asHTMLElement(context.you) || (() => { throw new Error('context.you is not an HTMLElement'); })();
+        targetElement =
+          asHTMLElement(context.you) ||
+          (() => {
+            throw new Error('context.you is not an HTMLElement');
+          })();
         break;
       default:
         throw new Error(`Unknown possessive: ${possessive}`);
@@ -241,7 +255,7 @@ export class DefaultCommand implements CommandImplementation<
         value,
         wasSet: false,
         existingValue,
-        targetType: 'property'
+        targetType: 'property',
       };
     }
 
@@ -253,7 +267,7 @@ export class DefaultCommand implements CommandImplementation<
       target: `${possessive} ${property}`,
       value,
       wasSet: true,
-      targetType: 'property'
+      targetType: 'property',
     };
   }
 
@@ -270,7 +284,7 @@ export class DefaultCommand implements CommandImplementation<
         value,
         wasSet: false,
         existingValue,
-        targetType: 'element'
+        targetType: 'element',
       };
     }
 
@@ -282,7 +296,7 @@ export class DefaultCommand implements CommandImplementation<
       target: 'element',
       value,
       wasSet: true,
-      targetType: 'element'
+      targetType: 'element',
     };
   }
 

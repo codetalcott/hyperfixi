@@ -17,7 +17,7 @@ describe('Send Command', () => {
     command = new SendCommand();
     testElement = createTestElement('<div id="test">Test</div>');
     context = createMockHyperscriptContext(testElement) as ExecutionContext;
-    
+
     // Ensure locals and globals Maps exist
     if (!context.locals) context.locals = new Map();
     if (!context.globals) context.globals = new Map();
@@ -25,13 +25,13 @@ describe('Send Command', () => {
     // Mock document.dispatchEvent and element.dispatchEvent
     vi.spyOn(document, 'dispatchEvent').mockReturnValue(true);
     vi.spyOn(testElement, 'dispatchEvent').mockReturnValue(true);
-    
+
     // Mock CustomEvent constructor to ensure it works properly in tests
     global.CustomEvent = vi.fn().mockImplementation((type: string, options?: any) => ({
       type,
       bubbles: options?.bubbles || false,
       cancelable: options?.cancelable || false,
-      detail: options?.detail || {}
+      detail: options?.detail || {},
     }));
   });
 
@@ -42,30 +42,34 @@ describe('Send Command', () => {
   describe('Command Properties', () => {
     it('should have correct metadata', () => {
       expect(command.name).toBe('send');
-      expect(command.syntax).toBe('send <event-name>[(<named arguments>)] [to <expression>]\ntrigger <event-name>[(<named arguments>)] [on <expression>]');
-      expect(command.description).toBe('The send command sends an event to the given target. Arguments can optionally be provided in a named argument list and will be passed in the event.detail object.\nYou can alternatively use the equivalent trigger syntax.');
+      expect(command.syntax).toBe(
+        'send <event-name>[(<named arguments>)] [to <expression>]\ntrigger <event-name>[(<named arguments>)] [on <expression>]'
+      );
+      expect(command.description).toBe(
+        'The send command sends an event to the given target. Arguments can optionally be provided in a named argument list and will be passed in the event.detail object.\nYou can alternatively use the equivalent trigger syntax.'
+      );
     });
   });
 
   describe('Basic Event Dispatch', () => {
     it('should dispatch simple event to current element', async () => {
       await command.execute(context, 'myEvent');
-      
+
       expect(testElement.dispatchEvent).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'myEvent',
           bubbles: true,
-          cancelable: true
+          cancelable: true,
         })
       );
     });
 
     it('should dispatch event with custom name', async () => {
       await command.execute(context, 'customEvent');
-      
+
       expect(testElement.dispatchEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'customEvent'
+          type: 'customEvent',
         })
       );
     });
@@ -75,7 +79,7 @@ describe('Send Command', () => {
         type,
         bubbles: options?.bubbles || false,
         cancelable: options?.cancelable || false,
-        detail: options?.detail
+        detail: options?.detail,
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -84,7 +88,7 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('testEvent', {
         bubbles: true,
         cancelable: true,
-        detail: {}
+        detail: {},
       });
     });
   });
@@ -93,7 +97,7 @@ describe('Send Command', () => {
     it('should dispatch event with single named argument', async () => {
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        detail: options?.detail || {}
+        detail: options?.detail || {},
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -102,34 +106,34 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('doIt', {
         bubbles: true,
         cancelable: true,
-        detail: { answer: 42 }
+        detail: { answer: 42 },
       });
     });
 
     it('should dispatch event with multiple named arguments', async () => {
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        detail: options?.detail || {}
+        detail: options?.detail || {},
       }));
       global.CustomEvent = mockCustomEvent;
 
-      await command.execute(context, 'userAction', { 
-        name: 'John', 
-        age: 30, 
-        active: true 
+      await command.execute(context, 'userAction', {
+        name: 'John',
+        age: 30,
+        active: true,
       });
 
       expect(mockCustomEvent).toHaveBeenCalledWith('userAction', {
         bubbles: true,
         cancelable: true,
-        detail: { name: 'John', age: 30, active: true }
+        detail: { name: 'John', age: 30, active: true },
       });
     });
 
     it('should handle empty argument object', async () => {
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        detail: options?.detail || {}
+        detail: options?.detail || {},
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -138,7 +142,7 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('emptyArgs', {
         bubbles: true,
         cancelable: true,
-        detail: {}
+        detail: {},
       });
     });
 
@@ -146,12 +150,12 @@ describe('Send Command', () => {
       const complexData = {
         user: { id: 1, name: 'Test' },
         items: [1, 2, 3],
-        metadata: { timestamp: Date.now() }
+        metadata: { timestamp: Date.now() },
       };
 
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        detail: options?.detail || {}
+        detail: options?.detail || {},
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -160,7 +164,7 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('complexEvent', {
         bubbles: true,
         cancelable: true,
-        detail: complexData
+        detail: complexData,
       });
     });
   });
@@ -169,10 +173,10 @@ describe('Send Command', () => {
     it('should dispatch event to specific element by ID', async () => {
       const targetElement = createTestElement('<div id="div1">Target</div>');
       document.body.appendChild(targetElement);
-      
+
       // Create a spy that captures the event object
       const dispatchSpy = vi.spyOn(targetElement, 'dispatchEvent').mockReturnValue(true);
-      
+
       // Mock querySelector to return our target
       vi.spyOn(document, 'querySelector').mockReturnValue(targetElement);
 
@@ -180,7 +184,7 @@ describe('Send Command', () => {
 
       expect(document.querySelector).toHaveBeenCalledWith('#div1');
       expect(dispatchSpy).toHaveBeenCalledTimes(1);
-      
+
       // Check the actual event object passed to dispatchEvent
       const eventArg = dispatchSpy.mock.calls[0][0];
       expect(eventArg).toBeDefined();
@@ -198,7 +202,7 @@ describe('Send Command', () => {
 
       expect(targetElement.dispatchEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'testEvent'
+          type: 'testEvent',
         })
       );
     });
@@ -206,10 +210,10 @@ describe('Send Command', () => {
     it('should dispatch event to multiple elements via querySelectorAll', async () => {
       const element1 = createTestElement('<form class="target">Form 1</form>');
       const element2 = createTestElement('<form class="target">Form 2</form>');
-      
+
       vi.spyOn(element1, 'dispatchEvent').mockReturnValue(true);
       vi.spyOn(element2, 'dispatchEvent').mockReturnValue(true);
-      
+
       const nodeList = [element1, element2];
       vi.spyOn(document, 'querySelectorAll').mockReturnValue(nodeList as any);
 
@@ -247,7 +251,7 @@ describe('Send Command', () => {
 
       expect(targetElement.dispatchEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'doIt'
+          type: 'doIt',
         })
       );
     });
@@ -257,7 +261,7 @@ describe('Send Command', () => {
 
       expect(testElement.dispatchEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'selfEvent'
+          type: 'selfEvent',
         })
       );
     });
@@ -268,7 +272,7 @@ describe('Send Command', () => {
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
         bubbles: options?.bubbles,
-        cancelable: options?.cancelable
+        cancelable: options?.cancelable,
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -277,7 +281,7 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('bubblingEvent', {
         bubbles: true,
         cancelable: true,
-        detail: {}
+        detail: {},
       });
     });
 
@@ -285,7 +289,7 @@ describe('Send Command', () => {
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
         bubbles: options?.bubbles,
-        cancelable: options?.cancelable
+        cancelable: options?.cancelable,
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -294,20 +298,20 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('cancelableEvent', {
         bubbles: true,
         cancelable: true,
-        detail: {}
+        detail: {},
       });
     });
 
     it('should preserve event detail structure', async () => {
-      const eventDetail = { 
+      const eventDetail = {
         user: { name: 'Test User', id: 123 },
         action: 'click',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        detail: options?.detail
+        detail: options?.detail,
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -316,7 +320,7 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('detailedEvent', {
         bubbles: true,
         cancelable: true,
-        detail: eventDetail
+        detail: eventDetail,
       });
     });
   });
@@ -325,7 +329,7 @@ describe('Send Command', () => {
     it('should create standard DOM events when appropriate', async () => {
       const mockEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        bubbles: options?.bubbles || false
+        bubbles: options?.bubbles || false,
       }));
       global.Event = mockEvent;
 
@@ -351,7 +355,7 @@ describe('Send Command', () => {
     it('should support custom event names with special characters', async () => {
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        detail: options?.detail || {}
+        detail: options?.detail || {},
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -360,14 +364,14 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('my-custom-event', {
         bubbles: true,
         cancelable: true,
-        detail: {}
+        detail: {},
       });
     });
 
     it('should support namespace-style event names', async () => {
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        detail: options?.detail || {}
+        detail: options?.detail || {},
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -376,7 +380,7 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('app:user:login', {
         bubbles: true,
         cancelable: true,
-        detail: {}
+        detail: {},
       });
     });
   });
@@ -469,7 +473,7 @@ describe('Send Command', () => {
       // Should not throw when handling null arguments
       await expect(command.execute(context, 'testEvent', null)).resolves.toBeDefined();
 
-      // Should not throw when handling undefined arguments  
+      // Should not throw when handling undefined arguments
       await expect(command.execute(context, 'testEvent', undefined)).resolves.toBeDefined();
     });
   });
@@ -483,7 +487,7 @@ describe('Send Command', () => {
 
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        detail: options?.detail || {}
+        detail: options?.detail || {},
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -492,7 +496,7 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('doIt', {
         bubbles: true,
         cancelable: true,
-        detail: { answer: 42 }
+        detail: { answer: 42 },
       });
       expect(targetElement.dispatchEvent).toHaveBeenCalled();
     });
@@ -501,7 +505,7 @@ describe('Send Command', () => {
       // From LSP: on click trigger doIt(answer:42) end
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        detail: options?.detail || {}
+        detail: options?.detail || {},
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -513,7 +517,7 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('doIt', {
         bubbles: true,
         cancelable: true,
-        detail: { answer: 42 }
+        detail: { answer: 42 },
       });
       expect(testElement.dispatchEvent).toHaveBeenCalled();
     });
@@ -529,7 +533,7 @@ describe('Send Command', () => {
 
       expect(formElement.dispatchEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'hello'
+          type: 'hello',
         })
       );
     });
@@ -546,7 +550,7 @@ describe('Send Command', () => {
 
       expect(targetElement.dispatchEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'hello'
+          type: 'hello',
         })
       );
     });
@@ -562,7 +566,7 @@ describe('Send Command', () => {
 
       expect(targetElement.dispatchEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'doIt'
+          type: 'doIt',
         })
       );
     });
@@ -575,16 +579,17 @@ describe('Send Command', () => {
           type,
           bubbles: options?.bubbles,
           cancelable: options?.cancelable,
-          detail: options?.detail
+          detail: options?.detail,
         };
       });
       global.CustomEvent = mockCustomEvent;
 
       await command.execute(context, 'bubblingEvent');
 
-      expect(mockCustomEvent).toHaveBeenCalledWith('bubblingEvent', 
+      expect(mockCustomEvent).toHaveBeenCalledWith(
+        'bubblingEvent',
         expect.objectContaining({
-          bubbles: true
+          bubbles: true,
         })
       );
     });
@@ -595,16 +600,17 @@ describe('Send Command', () => {
           type,
           bubbles: options?.bubbles,
           cancelable: options?.cancelable,
-          detail: options?.detail
+          detail: options?.detail,
         };
       });
       global.CustomEvent = mockCustomEvent;
 
       await command.execute(context, 'cancelableEvent');
 
-      expect(mockCustomEvent).toHaveBeenCalledWith('cancelableEvent', 
+      expect(mockCustomEvent).toHaveBeenCalledWith(
+        'cancelableEvent',
         expect.objectContaining({
-          cancelable: true
+          cancelable: true,
         })
       );
     });
@@ -612,17 +618,17 @@ describe('Send Command', () => {
 
   describe('Integration with Hyperscript Context', () => {
     it('should work with context variables in event data', async () => {
-      context.locals!.set('userId', 123);
-      context.locals!.set('action', 'click');
-      
+      context.locals.set('userId', 123);
+      context.locals.set('action', 'click');
+
       const eventData = {
-        userId: context.locals!.get('userId'),
-        action: context.locals!.get('action')
+        userId: context.locals.get('userId'),
+        action: context.locals.get('action'),
       };
 
       const mockCustomEvent = vi.fn().mockImplementation((type, options) => ({
         type,
-        detail: options?.detail || {}
+        detail: options?.detail || {},
       }));
       global.CustomEvent = mockCustomEvent;
 
@@ -631,20 +637,20 @@ describe('Send Command', () => {
       expect(mockCustomEvent).toHaveBeenCalledWith('userAction', {
         bubbles: true,
         cancelable: true,
-        detail: { userId: 123, action: 'click' }
+        detail: { userId: 123, action: 'click' },
       });
     });
 
     it('should work with dynamic event names', async () => {
-      context.locals!.set('eventType', 'customEvent');
-      
-      const eventName = context.locals!.get('eventType');
-      
+      context.locals.set('eventType', 'customEvent');
+
+      const eventName = context.locals.get('eventType');
+
       await command.execute(context, eventName);
 
       expect(testElement.dispatchEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'customEvent'
+          type: 'customEvent',
         })
       );
     });
@@ -652,16 +658,16 @@ describe('Send Command', () => {
     it('should work with dynamic targets from context', async () => {
       const targetElement = createTestElement('<div class="dynamic-target">Target</div>');
       vi.spyOn(targetElement, 'dispatchEvent').mockReturnValue(true);
-      
-      context.locals!.set('target', targetElement);
-      
-      const target = context.locals!.get('target');
+
+      context.locals.set('target', targetElement);
+
+      const target = context.locals.get('target');
 
       await command.execute(context, 'dynamicEvent', null, 'to', target);
 
       expect(targetElement.dispatchEvent).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: 'dynamicEvent'
+          type: 'dynamicEvent',
         })
       );
     });

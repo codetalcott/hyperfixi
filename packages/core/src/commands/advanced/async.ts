@@ -1,9 +1,9 @@
 /**
  * Enhanced Async Command Implementation
  * Executes commands asynchronously using async/await patterns
- * 
+ *
  * Syntax: async <command1> [<command2> ...]
- * 
+ *
  * Modernized with TypedCommandImplementation interface
  */
 
@@ -41,23 +41,23 @@ export interface AsyncCommandOutput {
 /**
  * Enhanced Async Command with full type safety and validation
  */
-export class AsyncCommand implements TypedCommandImplementation<
-  AsyncCommandInput,
-  AsyncCommandOutput,
-  TypedExecutionContext
-> {
+export class AsyncCommand
+  implements
+    TypedCommandImplementation<AsyncCommandInput, AsyncCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'async',
-    description: 'The async command executes other commands asynchronously without blocking the main execution flow. It runs commands in sequence using async/await patterns.',
+    description:
+      'The async command executes other commands asynchronously without blocking the main execution flow. It runs commands in sequence using async/await patterns.',
     examples: [
       'async command1 command2',
       'async fetchData processData',
       'async animateIn showContent',
-      'async loadImage fadeIn'
+      'async loadImage fadeIn',
     ],
     syntax: 'async <command> [<command> ...]',
     category: 'advanced' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -65,12 +65,14 @@ export class AsyncCommand implements TypedCommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Async command requires at least one command to execute',
-            suggestions: ['Provide command objects to execute asynchronously']
-          }],
-          suggestions: ['Provide command objects to execute asynchronously']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Async command requires at least one command to execute',
+              suggestions: ['Provide command objects to execute asynchronously'],
+            },
+          ],
+          suggestions: ['Provide command objects to execute asynchronously'],
         };
       }
 
@@ -79,40 +81,49 @@ export class AsyncCommand implements TypedCommandImplementation<
       if (!inputObj.commands || !Array.isArray(inputObj.commands)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Commands must be provided as an array',
-            suggestions: ['Provide an array of command objects']
-          }],
-          suggestions: ['Provide an array of command objects']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Commands must be provided as an array',
+              suggestions: ['Provide an array of command objects'],
+            },
+          ],
+          suggestions: ['Provide an array of command objects'],
         };
       }
 
       if (inputObj.commands.length === 0) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Async command requires at least one command to execute',
-            suggestions: ['Provide at least one command to execute']
-          }],
-          suggestions: ['Provide at least one command to execute']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Async command requires at least one command to execute',
+              suggestions: ['Provide at least one command to execute'],
+            },
+          ],
+          suggestions: ['Provide at least one command to execute'],
         };
       }
 
       // Validate that all items are command objects
       for (const command of inputObj.commands) {
-        if (!command || typeof command !== 'object' || 
-            typeof command.name !== 'string' || 
-            typeof command.execute !== 'function') {
+        if (
+          !command ||
+          typeof command !== 'object' ||
+          typeof command.name !== 'string' ||
+          typeof command.execute !== 'function'
+        ) {
           return {
             isValid: false,
-            errors: [{
-              type: 'type-mismatch',
-              message: 'All items must be valid command objects with name and execute method',
-              suggestions: ['Ensure all commands have name and execute properties']
-            }],
-            suggestions: ['Ensure all commands have name and execute properties']
+            errors: [
+              {
+                type: 'type-mismatch',
+                message: 'All items must be valid command objects with name and execute method',
+                suggestions: ['Ensure all commands have name and execute properties'],
+              },
+            ],
+            suggestions: ['Ensure all commands have name and execute properties'],
           };
         }
       }
@@ -122,10 +133,10 @@ export class AsyncCommand implements TypedCommandImplementation<
         errors: [],
         suggestions: [],
         data: {
-          commands: inputObj.commands
-        }
+          commands: inputObj.commands,
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -149,17 +160,17 @@ export class AsyncCommand implements TypedCommandImplementation<
         commandCount: commands.length,
         results,
         executed: true,
-        duration
+        duration,
       };
-
     } catch (error) {
-      throw new Error(`Async command execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Async command execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
-
   private async executeCommandsAsync(
-    context: TypedExecutionContext, 
+    context: TypedExecutionContext,
     commands: Array<{ name: string; execute: Function }>
   ): Promise<any[]> {
     const results: any[] = [];
@@ -172,9 +183,10 @@ export class AsyncCommand implements TypedCommandImplementation<
 
         // Update context for next command
         Object.assign(context, { it: result });
-
       } catch (error) {
-        throw new Error(`Command '${command.name}' failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Command '${command.name}' failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
 

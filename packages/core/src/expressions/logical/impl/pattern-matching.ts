@@ -10,31 +10,36 @@ import type {
   ExpressionCategory,
   EvaluationType,
   ExpressionMetadata,
-  ValidationResult
+  ValidationResult,
 } from '../../../types/expression-types';
-import type { 
-  EvaluationResult,
-  LLMDocumentation
-} from '../../../types/command-types';
+import type { EvaluationResult, LLMDocumentation } from '../../../types/command-types';
 
 // ============================================================================
 // Input Schemas
 // ============================================================================
 
-const PatternMatchInputSchema = v.object({
-  value: v.unknown().describe('Value to test against pattern'),
-  pattern: v.union([v.string(), v.instanceof(RegExp)]).describe('Pattern to match (string or regex)')
-}).strict();
+const PatternMatchInputSchema = v
+  .object({
+    value: v.unknown().describe('Value to test against pattern'),
+    pattern: v
+      .union([v.string(), v.instanceof(RegExp)])
+      .describe('Pattern to match (string or regex)'),
+  })
+  .strict();
 
-const ContainsInputSchema = v.object({
-  container: v.unknown().describe('Container to search in (array, string, or object)'),
-  item: v.unknown().describe('Item to search for')
-}).strict();
+const ContainsInputSchema = v
+  .object({
+    container: v.unknown().describe('Container to search in (array, string, or object)'),
+    item: v.unknown().describe('Item to search for'),
+  })
+  .strict();
 
-const InInputSchema = v.object({
-  item: v.unknown().describe('Item to search for'),
-  container: v.unknown().describe('Container to search in (array, string, or object)')
-}).strict();
+const InInputSchema = v
+  .object({
+    item: v.unknown().describe('Item to search for'),
+    container: v.unknown().describe('Container to search in (array, string, or object)'),
+  })
+  .strict();
 
 type PatternMatchInput = any; // Inferred from RuntimeValidator
 type ContainsInput = any; // Inferred from RuntimeValidator
@@ -44,7 +49,9 @@ type InInput = any; // Inferred from RuntimeValidator
 // Enhanced Matches Expression
 // ============================================================================
 
-export class EnhancedMatchesExpression implements TypedExpressionImplementation<PatternMatchInput, boolean> {
+export class EnhancedMatchesExpression
+  implements TypedExpressionImplementation<PatternMatchInput, boolean>
+{
   public readonly name = 'matches';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'value matches pattern';
@@ -62,83 +69,84 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
       {
         input: 'element matches .active',
         description: 'CSS selector matching',
-        expectedOutput: true
+        expectedOutput: true,
       },
       {
         input: '"hello@example.com" matches /\\S+@\\S+\\.\\S+/',
         description: 'Email regex validation',
-        expectedOutput: true
+        expectedOutput: true,
       },
       {
         input: '"hello world" matches "hello"',
         description: 'String contains matching',
-        expectedOutput: true
-      }
+        expectedOutput: true,
+      },
     ],
     relatedExpressions: ['contains', 'in', 'querySelector'],
     performance: {
       averageTime: 0.5,
-      complexity: 'O(n)' // Depends on pattern complexity
-    }
+      complexity: 'O(n)', // Depends on pattern complexity
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Tests if a value matches a pattern using CSS selectors, regular expressions, or string matching',
+    summary:
+      'Tests if a value matches a pattern using CSS selectors, regular expressions, or string matching',
     parameters: [
       {
         name: 'value',
         type: 'any',
         description: 'Value to test against the pattern',
         optional: false,
-        examples: ['element', '"email@example.com"', '"hello world"', 'user.name']
+        examples: ['element', '"email@example.com"', '"hello world"', 'user.name'],
       },
       {
         name: 'pattern',
         type: 'string | RegExp',
         description: 'Pattern to match against (CSS selector, regex, or substring)',
         optional: false,
-        examples: ['.active', '/\\d+/', '"hello"', '#container > .item']
-      }
+        examples: ['.active', '/\\d+/', '"hello"', '#container > .item'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if value matches pattern, false otherwise',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'CSS selector matching',
         code: 'element matches .active',
         explanation: 'Check if element has "active" class',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Email validation',
         code: 'email matches /\\S+@\\S+\\.\\S+/',
         explanation: 'Validate email format with regex',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'String substring matching',
         code: '"hello world" matches "world"',
         explanation: 'Check if string contains substring',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Complex CSS selector',
         code: 'element matches "#main .content > .item:first-child"',
         explanation: 'Test against complex CSS selector',
-        output: 'false'
+        output: 'false',
       },
       {
         title: 'Number pattern matching',
         code: 'phoneNumber matches /^\\d{3}-\\d{3}-\\d{4}$/',
         explanation: 'Validate phone number format',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['contains', 'in', 'querySelector', 'regular expressions'],
-    tags: ['pattern', 'matching', 'css', 'regex', 'validation']
+    tags: ['pattern', 'matching', 'css', 'regex', 'validation'],
   };
 
   async evaluate(
@@ -152,7 +160,7 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0]
+          error: validation.errors[0],
         };
       }
 
@@ -180,9 +188,8 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -191,8 +198,8 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
         error: {
           type: 'runtime-error',
           message: `Pattern matching failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -200,25 +207,23 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid matches input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide value and pattern',
-            'Use string or RegExp for pattern'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid matches input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide value and pattern', 'Use string or RegExp for pattern'],
         };
       }
 
       // Additional validation for pattern
       const { pattern } = parsed.data as { value: unknown; pattern: string | RegExp };
-      
+
       if (typeof pattern === 'string') {
         // Validate CSS selector syntax if it looks like a selector
         if (this.isCSSSelector(pattern) && !this.isValidCSSSelector(pattern)) {
@@ -227,13 +232,13 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
             error: {
               type: 'syntax-error',
               message: `Invalid CSS selector: ${pattern}`,
-              suggestions: []
+              suggestions: [],
             },
             suggestions: [
               'Check CSS selector syntax',
-              'Use valid selector patterns like .class, #id, tag[attr]'
+              'Use valid selector patterns like .class, #id, tag[attr]',
             ],
-            errors: []
+            errors: [],
           };
         }
       }
@@ -241,19 +246,18 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: ['Check input structure and types'],
-        errors: []
+        errors: [],
       };
     }
   }
@@ -284,9 +288,11 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
 
   private isCSSSelector(pattern: string): boolean {
     // Simple heuristic to detect CSS selectors
-    return /^[.#[]/.test(pattern) || // Starts with . # or [
-           /[>+~]/.test(pattern) ||   // Contains combinators
-           /:/.test(pattern);         // Contains pseudo-selectors
+    return (
+      /^[.#[]/.test(pattern) || // Starts with . # or [
+      /[>+~]/.test(pattern) || // Contains combinators
+      /:/.test(pattern)
+    ); // Contains pseudo-selectors
   }
 
   private isValidCSSSelector(selector: string): boolean {
@@ -298,7 +304,12 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -307,7 +318,7 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -317,7 +328,9 @@ export class EnhancedMatchesExpression implements TypedExpressionImplementation<
 // Enhanced Contains Expression
 // ============================================================================
 
-export class EnhancedContainsExpression implements TypedExpressionImplementation<ContainsInput, boolean> {
+export class EnhancedContainsExpression
+  implements TypedExpressionImplementation<ContainsInput, boolean>
+{
   public readonly name = 'contains';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'container contains item';
@@ -335,24 +348,24 @@ export class EnhancedContainsExpression implements TypedExpressionImplementation
       {
         input: '[1, 2, 3] contains 2',
         description: 'Array contains value',
-        expectedOutput: true
+        expectedOutput: true,
       },
       {
         input: '"hello world" contains "world"',
         description: 'String contains substring',
-        expectedOutput: true
+        expectedOutput: true,
       },
       {
         input: 'user contains "name"',
         description: 'Object contains property',
-        expectedOutput: true
-      }
+        expectedOutput: true,
+      },
     ],
     relatedExpressions: ['matches', 'in', 'includes'],
     performance: {
       averageTime: 0.2,
-      complexity: 'O(n)'
-    }
+      complexity: 'O(n)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -363,49 +376,49 @@ export class EnhancedContainsExpression implements TypedExpressionImplementation
         type: 'array | string | object',
         description: 'Container to search in',
         optional: false,
-        examples: ['[1, 2, 3]', '"hello world"', 'user', 'items']
+        examples: ['[1, 2, 3]', '"hello world"', 'user', 'items'],
       },
       {
         name: 'item',
         type: 'any',
         description: 'Item to search for',
         optional: false,
-        examples: ['2', '"world"', '"name"', 'value']
-      }
+        examples: ['2', '"world"', '"name"', 'value'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if container contains item, false otherwise',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Array membership',
         code: '[1, 2, 3] contains 2',
         explanation: 'Check if array contains specific value',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'String substring',
         code: '"hello world" contains "world"',
         explanation: 'Check if string contains substring',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Object property',
         code: 'user contains "email"',
         explanation: 'Check if object has property',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Case-sensitive string search',
         code: '"Hello World" contains "hello"',
         explanation: 'String search is case-sensitive',
-        output: 'false'
-      }
+        output: 'false',
+      },
     ],
     seeAlso: ['matches', 'in', 'includes', 'hasOwnProperty'],
-    tags: ['contains', 'membership', 'search', 'array', 'string', 'object']
+    tags: ['contains', 'membership', 'search', 'array', 'string', 'object'],
   };
 
   async evaluate(
@@ -419,7 +432,7 @@ export class EnhancedContainsExpression implements TypedExpressionImplementation
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0]
+          error: validation.errors[0],
         };
       }
 
@@ -445,9 +458,8 @@ export class EnhancedContainsExpression implements TypedExpressionImplementation
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -456,8 +468,8 @@ export class EnhancedContainsExpression implements TypedExpressionImplementation
         error: {
           type: 'runtime-error',
           message: `Contains operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -465,43 +477,48 @@ export class EnhancedContainsExpression implements TypedExpressionImplementation
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid contains input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid contains input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
           suggestions: [
             'Provide container and item',
-            'Ensure container is array, string, or object'
-          ]
+            'Ensure container is array, string, or object',
+          ],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: ['Check input structure and types'],
-        errors: []
+        errors: [],
       };
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -510,7 +527,7 @@ export class EnhancedContainsExpression implements TypedExpressionImplementation
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -538,66 +555,67 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
       {
         input: '2 in [1, 2, 3]',
         description: 'Value in array',
-        expectedOutput: true
+        expectedOutput: true,
       },
       {
         input: '"world" in "hello world"',
         description: 'Substring in string',
-        expectedOutput: true
-      }
+        expectedOutput: true,
+      },
     ],
     relatedExpressions: ['contains', 'matches'],
     performance: {
       averageTime: 0.2,
-      complexity: 'O(n)'
-    }
+      complexity: 'O(n)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Tests if an item is present in a container (array, string, or object) - reverse syntax of contains',
+    summary:
+      'Tests if an item is present in a container (array, string, or object) - reverse syntax of contains',
     parameters: [
       {
         name: 'item',
         type: 'any',
         description: 'Item to search for',
         optional: false,
-        examples: ['2', '"world"', '"name"', 'value']
+        examples: ['2', '"world"', '"name"', 'value'],
       },
       {
         name: 'container',
         type: 'array | string | object',
         description: 'Container to search in',
         optional: false,
-        examples: ['[1, 2, 3]', '"hello world"', 'user', 'items']
-      }
+        examples: ['[1, 2, 3]', '"hello world"', 'user', 'items'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if item is in container, false otherwise',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Array membership',
         code: '2 in [1, 2, 3]',
         explanation: 'Check if value is in array',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'String substring',
         code: '"world" in "hello world"',
         explanation: 'Check if substring is in string',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Object property',
         code: '"email" in user',
         explanation: 'Check if property is in object',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['contains', 'matches', 'includes'],
-    tags: ['in', 'membership', 'search', 'array', 'string', 'object']
+    tags: ['in', 'membership', 'search', 'array', 'string', 'object'],
   };
 
   async evaluate(
@@ -611,7 +629,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0]
+          error: validation.errors[0],
         };
       }
 
@@ -619,13 +637,17 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
       const containsExpr = new EnhancedContainsExpression();
       const containsResult = await containsExpr.evaluate(context, {
         container: input.container,
-        item: input.item
+        item: input.item,
       });
 
-      this.trackPerformance(context, startTime, containsResult.success, containsResult.success ? containsResult.value : undefined);
+      this.trackPerformance(
+        context,
+        startTime,
+        containsResult.success,
+        containsResult.success ? containsResult.value : undefined
+      );
 
       return containsResult;
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -634,8 +656,8 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
         error: {
           type: 'runtime-error',
           message: `In operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -643,43 +665,48 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid in input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid in input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
           suggestions: [
             'Provide item and container',
-            'Ensure container is array, string, or object'
-          ]
+            'Ensure container is array, string, or object',
+          ],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: ['Check input structure and types'],
-        errors: []
+        errors: [],
       };
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -688,7 +715,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -717,5 +744,5 @@ export function createEnhancedInExpression(): EnhancedInExpression {
 export const enhancedPatternMatchingExpressions = {
   matches: createEnhancedMatchesExpression(),
   contains: createEnhancedContainsExpression(),
-  in: createEnhancedInExpression()
+  in: createEnhancedInExpression(),
 } as const;

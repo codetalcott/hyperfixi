@@ -4,11 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { 
-  EnhancedNotExpression,
-  createNotExpression,
-  evaluateNot
-} from './index.ts';
+import { EnhancedNotExpression, createNotExpression, evaluateNot } from './index.ts';
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
 describe('Enhanced Not Expression', () => {
@@ -29,7 +25,7 @@ describe('Enhanced Not Expression', () => {
 
     test('validates any value type', () => {
       const testValues = [false, 0, '', null, undefined, [], {}, 'hello', 42];
-      
+
       testValues.forEach(value => {
         const result = notExpression.validate([value]);
         expect(result.isValid).toBe(true);
@@ -46,7 +42,7 @@ describe('Enhanced Not Expression', () => {
   describe('Boolean Negation', () => {
     test('negates true to false', async () => {
       const result = await notExpression.evaluate(context, true);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -56,7 +52,7 @@ describe('Enhanced Not Expression', () => {
 
     test('negates false to true', async () => {
       const result = await notExpression.evaluate(context, false);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -68,10 +64,10 @@ describe('Enhanced Not Expression', () => {
   describe('Truthiness Evaluation', () => {
     test('handles falsy values correctly', async () => {
       const falsyValues = [false, 0, -0, '', null, undefined];
-      
+
       for (const value of falsyValues) {
         const result = await notExpression.evaluate(context, value);
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(true); // not falsy = true
@@ -82,10 +78,10 @@ describe('Enhanced Not Expression', () => {
 
     test('handles truthy values correctly', async () => {
       const truthyValues = [true, 1, -1, 'hello', 'false', [], {}, [1, 2, 3], { key: 'value' }];
-      
+
       for (const value of truthyValues) {
         const result = await notExpression.evaluate(context, value);
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(false); // not truthy = false
@@ -96,7 +92,7 @@ describe('Enhanced Not Expression', () => {
 
     test('handles NaN correctly', async () => {
       const result = await notExpression.evaluate(context, NaN);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true); // not NaN = true (NaN is falsy)
@@ -124,7 +120,7 @@ describe('Enhanced Not Expression', () => {
   describe('Array and Object Handling', () => {
     test('treats empty arrays as truthy', async () => {
       const result = await notExpression.evaluate(context, []);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false); // not [] = false (arrays are truthy)
@@ -133,7 +129,7 @@ describe('Enhanced Not Expression', () => {
 
     test('treats non-empty arrays as truthy', async () => {
       const result = await notExpression.evaluate(context, [1, 2, 3]);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false); // not [1,2,3] = false
@@ -142,7 +138,7 @@ describe('Enhanced Not Expression', () => {
 
     test('treats empty objects as truthy', async () => {
       const result = await notExpression.evaluate(context, {});
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false); // not {} = false (objects are truthy)
@@ -151,7 +147,7 @@ describe('Enhanced Not Expression', () => {
 
     test('treats non-empty objects as truthy', async () => {
       const result = await notExpression.evaluate(context, { key: 'value' });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false); // not {key: 'value'} = false
@@ -169,7 +165,10 @@ describe('Enhanced Not Expression', () => {
       }
 
       // Now negate the result (simulate "not not 'hello'")
-      const result2 = await notExpression.evaluate(context, result1.success ? result1.value : false);
+      const result2 = await notExpression.evaluate(
+        context,
+        result1.success ? result1.value : false
+      );
       expect(result2.success).toBe(true);
       if (result2.success) {
         expect(result2.value).toBe(true); // not false = true
@@ -196,7 +195,7 @@ describe('Enhanced Not Expression', () => {
   describe('String Handling', () => {
     test('handles non-empty strings as truthy', async () => {
       const result = await notExpression.evaluate(context, 'hello');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false); // not 'hello' = false
@@ -205,7 +204,7 @@ describe('Enhanced Not Expression', () => {
 
     test('handles empty string as falsy', async () => {
       const result = await notExpression.evaluate(context, '');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true); // not '' = true
@@ -214,7 +213,7 @@ describe('Enhanced Not Expression', () => {
 
     test('handles string "false" as truthy', async () => {
       const result = await notExpression.evaluate(context, 'false');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false); // not 'false' = false (string is truthy)
@@ -223,7 +222,7 @@ describe('Enhanced Not Expression', () => {
 
     test('handles string "0" as truthy', async () => {
       const result = await notExpression.evaluate(context, '0');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false); // not '0' = false (string is truthy)
@@ -234,7 +233,7 @@ describe('Enhanced Not Expression', () => {
   describe('Number Handling', () => {
     test('handles positive numbers as truthy', async () => {
       const result = await notExpression.evaluate(context, 42);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false); // not 42 = false
@@ -243,7 +242,7 @@ describe('Enhanced Not Expression', () => {
 
     test('handles negative numbers as truthy', async () => {
       const result = await notExpression.evaluate(context, -42);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false); // not -42 = false
@@ -252,7 +251,7 @@ describe('Enhanced Not Expression', () => {
 
     test('handles zero as falsy', async () => {
       const result = await notExpression.evaluate(context, 0);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true); // not 0 = true
@@ -261,7 +260,7 @@ describe('Enhanced Not Expression', () => {
 
     test('handles negative zero as falsy', async () => {
       const result = await notExpression.evaluate(context, -0);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true); // not -0 = true
@@ -272,7 +271,7 @@ describe('Enhanced Not Expression', () => {
   describe('Error Handling', () => {
     test('handles validation errors gracefully', async () => {
       const result = await notExpression.evaluate(context);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.name).toBe('NotExpressionValidationError');
@@ -288,7 +287,7 @@ describe('Enhanced Not Expression', () => {
 
     test('evaluateNot utility works', async () => {
       const result = await evaluateNot(true, context);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -297,7 +296,7 @@ describe('Enhanced Not Expression', () => {
 
     test('metadata provides comprehensive information', () => {
       const metadata = notExpression.getMetadata();
-      
+
       expect(metadata.name).toBe('NotExpression');
       expect(metadata.category).toBe('logical');
       expect(metadata.supportedFeatures).toContain('boolean negation');
@@ -310,7 +309,7 @@ describe('Enhanced Not Expression', () => {
   describe('LLM Documentation', () => {
     test('provides comprehensive documentation', () => {
       const docs = notExpression.documentation;
-      
+
       expect(docs.summary).toContain('logical negation');
       expect(docs.parameters).toHaveLength(1);
       expect(docs.parameters[0].name).toBe('value');
@@ -323,16 +322,14 @@ describe('Enhanced Not Expression', () => {
   describe('Performance Characteristics', () => {
     test('handles many negations efficiently', async () => {
       const testValues = Array.from({ length: 1000 }, (_, i) => i % 2 === 0);
-      
+
       const startTime = performance.now();
-      
-      const promises = testValues.map(value => 
-        notExpression.evaluate(context, value)
-      );
-      
+
+      const promises = testValues.map(value => notExpression.evaluate(context, value));
+
       const results = await Promise.all(promises);
       const endTime = performance.now();
-      
+
       // All should succeed
       results.forEach((result, index) => {
         expect(result.success).toBe(true);
@@ -340,7 +337,7 @@ describe('Enhanced Not Expression', () => {
           expect(result.value).toBe(!testValues[index]);
         }
       });
-      
+
       // Should be very fast for many operations
       expect(endTime - startTime).toBeLessThan(50); // Less than 50ms for 1000 operations
     });
@@ -349,7 +346,7 @@ describe('Enhanced Not Expression', () => {
   describe('Integration with Official Test Cases', () => {
     test('matches official "not true" behavior', async () => {
       const result = await notExpression.evaluate(context, true);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -358,7 +355,7 @@ describe('Enhanced Not Expression', () => {
 
     test('matches official "not false" behavior', async () => {
       const result = await notExpression.evaluate(context, false);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -369,11 +366,11 @@ describe('Enhanced Not Expression', () => {
       // Simulate "not not true"
       const result1 = await notExpression.evaluate(context, true);
       expect(result1.success).toBe(true);
-      
+
       if (result1.success) {
         const result2 = await notExpression.evaluate(context, result1.value);
         expect(result2.success).toBe(true);
-        
+
         if (result2.success) {
           expect(result2.value).toBe(true); // not not true = true
         }

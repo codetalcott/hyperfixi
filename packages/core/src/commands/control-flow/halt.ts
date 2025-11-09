@@ -30,23 +30,17 @@ export interface HaltCommandOutput {
  * 1. `halt` - Stops command execution
  * 2. `halt the event` - Prevents default event behavior without stopping execution
  */
-export class HaltCommand implements CommandImplementation<
-  HaltCommandInput,
-  HaltCommandOutput,
-  TypedExecutionContext
-> {
+export class HaltCommand
+  implements CommandImplementation<HaltCommandInput, HaltCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'halt',
-    description: 'The halt command stops execution or prevents event defaults. Use "halt" to stop command sequence, or "halt the event" to preventDefault() without stopping.',
-    examples: [
-      'halt',
-      'halt the event',
-      'if error then halt',
-      'unless user.isValid then halt'
-    ],
+    description:
+      'The halt command stops execution or prevents event defaults. Use "halt" to stop command sequence, or "halt the event" to preventDefault() without stopping.',
+    examples: ['halt', 'halt the event', 'if error then halt', 'unless user.isValid then halt'],
     syntax: 'halt [the event]',
     category: 'flow' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -56,9 +50,9 @@ export class HaltCommand implements CommandImplementation<
         isValid: true,
         errors: [],
         suggestions: [],
-        data: _input as HaltCommandInput || {}
+        data: (_input as HaltCommandInput) || {},
       };
-    }
+    },
   };
 
   async execute(
@@ -74,7 +68,7 @@ export class HaltCommand implements CommandImplementation<
     debug.command('HALT: Received input:', {
       input,
       inputType: typeof input,
-      hasContextEvent: !!context.event
+      hasContextEvent: !!context.event,
     });
 
     // If input is "the" or {target: "the"} (from "halt the event"), use context.event
@@ -101,7 +95,7 @@ export class HaltCommand implements CommandImplementation<
       return {
         halted: true,
         timestamp: Date.now(),
-        eventHalted: true
+        eventHalted: true,
       };
     }
 

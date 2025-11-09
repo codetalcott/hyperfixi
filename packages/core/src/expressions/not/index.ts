@@ -11,7 +11,7 @@ import type {
   TypedExpressionImplementation,
   LLMDocumentation,
   ValidationResult,
-  TypedExecutionContext
+  TypedExecutionContext,
 } from '../../types/command-types';
 
 // ============================================================================
@@ -21,9 +21,7 @@ import type {
 /**
  * Schema for 'not' expression input validation
  */
-export const NotExpressionInputSchema = v.tuple([
-  v.unknown().describe('Value to negate')
-]);
+export const NotExpressionInputSchema = v.tuple([v.unknown().describe('Value to negate')]);
 
 export type NotExpressionInput = any; // Inferred from RuntimeValidator
 
@@ -35,24 +33,22 @@ export type NotExpressionInput = any; // Inferred from RuntimeValidator
  * Enhanced 'not' expression for logical negation
  * Provides comprehensive boolean negation with truthiness evaluation
  */
-export class EnhancedNotExpression implements TypedExpressionImplementation<
-  boolean
-> {
+export class EnhancedNotExpression implements TypedExpressionImplementation<boolean> {
   public readonly name = 'not';
   public readonly category = 'logical' as const;
   public readonly precedence = 9; // High precedence for unary operators
   public readonly associativity = 'right' as const; // Right associative for unary
   public readonly outputType = 'boolean' as const;
-  
+
   public readonly analysisInfo = {
     isPure: true,
-    canThrow: false,  
+    canThrow: false,
     complexity: 'O(1)' as const,
-    dependencies: []
+    dependencies: [],
   };
 
   public readonly inputSchema = NotExpressionInputSchema;
-  
+
   public readonly documentation: LLMDocumentation = {
     summary: 'Performs logical negation with comprehensive truthiness evaluation and type coercion',
     parameters: [
@@ -61,36 +57,36 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<
         type: 'object',
         description: 'Value to negate (evaluated for truthiness)',
         optional: false,
-        examples: ['true', 'false', '0', '""', 'null', 'undefined', '[]', '{}']
-      }
+        examples: ['true', 'false', '0', '""', 'null', 'undefined', '[]', '{}'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'Negated boolean value based on truthiness evaluation',
-      examples: [true, false]
+      examples: [true, false],
     },
     examples: [
       {
         title: 'Simple boolean negation',
         code: 'not true',
         explanation: 'Returns false',
-        output: false
+        output: false,
       },
       {
         title: 'Falsy value negation',
         code: 'not 0',
         explanation: 'Returns true (0 is falsy)',
-        output: true
+        output: true,
       },
       {
         title: 'Double negation',
         code: 'not not true',
         explanation: 'Returns true (double negation)',
-        output: true
-      }
+        output: true,
+      },
     ],
     seeAlso: ['logical operators', 'boolean expressions', 'truthiness evaluation'],
-    tags: ['logical', 'negation', 'boolean', 'unary']
+    tags: ['logical', 'negation', 'boolean', 'unary'],
   };
 
   /**
@@ -99,25 +95,27 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<
   validate(args: unknown[]): ValidationResult {
     try {
       this.inputSchema.parse(args);
-      
+
       // 'Not' expressions are always valid as any value can be negated
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'missing-argument',
-          message: error instanceof Error ? error.message : 'Invalid not expression arguments',
-          suggestions: ['Provide a value to negate']
-        }],
+        errors: [
+          {
+            type: 'missing-argument',
+            message: error instanceof Error ? error.message : 'Invalid not expression arguments',
+            suggestions: ['Provide a value to negate'],
+          },
+        ],
         suggestions: [
           'Provide a single value to negate',
-          'Any value type is acceptable for negation'
-        ]
+          'Any value type is acceptable for negation',
+        ],
       };
     }
   }
@@ -140,22 +138,22 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<
             type: 'validation-error',
             message: `Not expression validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`,
             code: 'NOT_EXPRESSION_VALIDATION_ERROR',
-            suggestions: validationResult.suggestions
+            suggestions: validationResult.suggestions,
           },
-          type: 'error'
+          type: 'error',
         });
       }
 
       const [value] = this.inputSchema.parse(args) as [unknown];
-      
+
       // Evaluate truthiness and negate
       const truthiness = this.evaluateTruthiness(value);
       const negated = !truthiness;
-      
+
       return Promise.resolve({
         success: true,
         value: negated,
-        type: 'boolean'
+        type: 'boolean',
       });
     } catch (error) {
       return Promise.resolve({
@@ -165,9 +163,9 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<
           type: 'runtime-error',
           message: `Failed to evaluate not expression: ${error instanceof Error ? error.message : String(error)}`,
           code: 'NOT_EXPRESSION_EVALUATION_ERROR',
-          suggestions: ['Check the input value', 'Ensure the value is evaluable']
+          suggestions: ['Check the input value', 'Ensure the value is evaluable'],
         },
-        type: 'error'
+        type: 'error',
       });
     }
   }
@@ -184,18 +182,18 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<
     if (value === null) return false;
     if (value === undefined) return false;
     if (typeof value === 'number' && isNaN(value)) return false;
-    
+
     // Special cases for objects
     if (Array.isArray(value)) {
       // Arrays are always truthy in JavaScript, even empty ones
       return true;
     }
-    
+
     if (typeof value === 'object' && value !== null) {
       // Objects are always truthy in JavaScript, even empty ones
       return true;
     }
-    
+
     // All other values are truthy
     return true;
   }
@@ -216,19 +214,19 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<
         'type coercion',
         'JavaScript-compatible falsy values',
         'array and object handling',
-        'NaN detection'
+        'NaN detection',
       ],
       performance: {
         complexity: 'very low',
         averageExecutionTime: '< 0.5ms',
-        memoryUsage: 'minimal'
+        memoryUsage: 'minimal',
       },
       capabilities: {
         contextAware: false,
         supportsAsync: false,
         sideEffects: false,
-        cacheable: true
-      }
+        cacheable: true,
+      },
     };
   }
 }

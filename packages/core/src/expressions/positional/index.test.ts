@@ -5,11 +5,11 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createTestElement, createMockHyperscriptContext } from '../../test-setup';
-import { 
-  positionalExpressions, 
-  findNextElementInDOM, 
-  findPreviousElementInDOM, 
-  getElementPosition 
+import {
+  positionalExpressions,
+  findNextElementInDOM,
+  findPreviousElementInDOM,
+  getElementPosition,
 } from './index';
 import type { ExecutionContext } from '../../types/core';
 
@@ -147,7 +147,9 @@ describe('Positional Expressions', () => {
       });
 
       it('should handle DOM element children', async () => {
-        const container = createTestElement('<div><span>0</span><span>1</span><span>2</span></div>');
+        const container = createTestElement(
+          '<div><span>0</span><span>1</span><span>2</span></div>'
+        );
         const result = await positionalExpressions.at.evaluate(context, 2, container);
         expect(result.textContent).toBe('2');
       });
@@ -159,8 +161,9 @@ describe('Positional Expressions', () => {
       });
 
       it('should throw error for non-number index', async () => {
-        await expect(positionalExpressions.at.evaluate(context, 'invalid' as any, []))
-          .rejects.toThrow('Index must be a number');
+        await expect(
+          positionalExpressions.at.evaluate(context, 'invalid' as any, [])
+        ).rejects.toThrow('Index must be a number');
       });
 
       it('should validate arguments', () => {
@@ -191,7 +194,7 @@ describe('Positional Expressions', () => {
       it('should get next sibling element when no selector', async () => {
         const item1 = document.getElementById('item1')!;
         context.me = item1;
-        
+
         const result = await positionalExpressions.next.evaluate(context);
         expect(result.id).toBe('item2');
       });
@@ -199,7 +202,7 @@ describe('Positional Expressions', () => {
       it('should find next element with selector', async () => {
         const item2 = document.getElementById('item2')!;
         context.me = item2;
-        
+
         const result = await positionalExpressions.next.evaluate(context, '.item');
         expect(result.id).toBe('item3');
       });
@@ -207,7 +210,7 @@ describe('Positional Expressions', () => {
       it('should handle explicit fromElement', async () => {
         const item1 = document.getElementById('item1')!;
         const item2 = document.getElementById('item2')!;
-        
+
         const result = await positionalExpressions.next.evaluate(context, undefined, item1);
         expect(result.id).toBe('item2');
       });
@@ -215,7 +218,7 @@ describe('Positional Expressions', () => {
       it('should return null when no next element', async () => {
         const item4 = document.getElementById('item4')!;
         context.me = item4;
-        
+
         const result = await positionalExpressions.next.evaluate(context);
         expect(result).toBeNull();
       });
@@ -230,9 +233,13 @@ describe('Positional Expressions', () => {
         expect(positionalExpressions.next.validate!([])).toBeNull();
         expect(positionalExpressions.next.validate!(['selector'])).toBeNull();
         expect(positionalExpressions.next.validate!(['selector', document.body])).toBeNull();
-        expect(positionalExpressions.next.validate!(['selector', document.body, 'extra'])).toContain('at most 2 arguments');
+        expect(
+          positionalExpressions.next.validate!(['selector', document.body, 'extra'])
+        ).toContain('at most 2 arguments');
         expect(positionalExpressions.next.validate!([123])).toContain('must be a string');
-        expect(positionalExpressions.next.validate!(['selector', 'not-element'])).toContain('must be an Element');
+        expect(positionalExpressions.next.validate!(['selector', 'not-element'])).toContain(
+          'must be an Element'
+        );
       });
     });
 
@@ -240,7 +247,7 @@ describe('Positional Expressions', () => {
       it('should get previous sibling element when no selector', async () => {
         const item2 = document.getElementById('item2')!;
         context.me = item2;
-        
+
         const result = await positionalExpressions.previous.evaluate(context);
         expect(result.id).toBe('item1');
       });
@@ -248,14 +255,14 @@ describe('Positional Expressions', () => {
       it('should find previous element with selector', async () => {
         const item3 = document.getElementById('item3')!;
         context.me = item3;
-        
+
         const result = await positionalExpressions.previous.evaluate(context, '.item');
         expect(result.id).toBe('item2');
       });
 
       it('should handle explicit fromElement', async () => {
         const item3 = document.getElementById('item3')!;
-        
+
         const result = await positionalExpressions.previous.evaluate(context, undefined, item3);
         expect(result.id).toBe('item2');
       });
@@ -263,7 +270,7 @@ describe('Positional Expressions', () => {
       it('should return null when no previous element', async () => {
         const item1 = document.getElementById('item1')!;
         context.me = item1;
-        
+
         const result = await positionalExpressions.previous.evaluate(context);
         expect(result).toBeNull();
       });
@@ -278,9 +285,13 @@ describe('Positional Expressions', () => {
         expect(positionalExpressions.previous.validate!([])).toBeNull();
         expect(positionalExpressions.previous.validate!(['selector'])).toBeNull();
         expect(positionalExpressions.previous.validate!(['selector', document.body])).toBeNull();
-        expect(positionalExpressions.previous.validate!(['selector', document.body, 'extra'])).toContain('at most 2 arguments');
+        expect(
+          positionalExpressions.previous.validate!(['selector', document.body, 'extra'])
+        ).toContain('at most 2 arguments');
         expect(positionalExpressions.previous.validate!([123])).toContain('must be a string');
-        expect(positionalExpressions.previous.validate!(['selector', 'not-element'])).toContain('must be an Element');
+        expect(positionalExpressions.previous.validate!(['selector', 'not-element'])).toContain(
+          'must be an Element'
+        );
       });
     });
 
@@ -288,8 +299,12 @@ describe('Positional Expressions', () => {
       it('should find next element within container', async () => {
         const item2 = document.getElementById('item2')!;
         context.me = item2;
-        
-        const result = await positionalExpressions.nextWithin.evaluate(context, '.item', '#container');
+
+        const result = await positionalExpressions.nextWithin.evaluate(
+          context,
+          '.item',
+          '#container'
+        );
         expect(result.id).toBe('item3');
       });
 
@@ -306,28 +321,51 @@ describe('Positional Expressions', () => {
 
         const target1 = document.getElementById('target1')!;
         context.me = target1;
-        
+
         // Should not find target2 because it's outside the inner container
-        const result = await positionalExpressions.nextWithin.evaluate(context, '.target', '#inner');
+        const result = await positionalExpressions.nextWithin.evaluate(
+          context,
+          '.target',
+          '#inner'
+        );
         expect(result).toBeNull();
       });
 
       it('should return null when no container found', async () => {
         const item1 = document.getElementById('item1')!;
         context.me = item1;
-        
-        const result = await positionalExpressions.nextWithin.evaluate(context, '.item', '.nonexistent');
+
+        const result = await positionalExpressions.nextWithin.evaluate(
+          context,
+          '.item',
+          '.nonexistent'
+        );
         expect(result).toBeNull();
       });
 
       it('should validate arguments', () => {
         expect(positionalExpressions.nextWithin.validate!(['selector', 'container'])).toBeNull();
-        expect(positionalExpressions.nextWithin.validate!(['selector', 'container', document.body])).toBeNull();
+        expect(
+          positionalExpressions.nextWithin.validate!(['selector', 'container', document.body])
+        ).toBeNull();
         expect(positionalExpressions.nextWithin.validate!(['selector'])).toContain('2-3 arguments');
-        expect(positionalExpressions.nextWithin.validate!(['selector', 'container', document.body, 'extra'])).toContain('2-3 arguments');
-        expect(positionalExpressions.nextWithin.validate!([123, 'container'])).toContain('selector must be a string');
-        expect(positionalExpressions.nextWithin.validate!(['selector', 123])).toContain('withinSelector must be a string');
-        expect(positionalExpressions.nextWithin.validate!(['selector', 'container', 'not-element'])).toContain('must be an Element');
+        expect(
+          positionalExpressions.nextWithin.validate!([
+            'selector',
+            'container',
+            document.body,
+            'extra',
+          ])
+        ).toContain('2-3 arguments');
+        expect(positionalExpressions.nextWithin.validate!([123, 'container'])).toContain(
+          'selector must be a string'
+        );
+        expect(positionalExpressions.nextWithin.validate!(['selector', 123])).toContain(
+          'withinSelector must be a string'
+        );
+        expect(
+          positionalExpressions.nextWithin.validate!(['selector', 'container', 'not-element'])
+        ).toContain('must be an Element');
       });
     });
 
@@ -335,8 +373,12 @@ describe('Positional Expressions', () => {
       it('should find previous element within container', async () => {
         const item3 = document.getElementById('item3')!;
         context.me = item3;
-        
-        const result = await positionalExpressions.previousWithin.evaluate(context, '.item', '#container');
+
+        const result = await positionalExpressions.previousWithin.evaluate(
+          context,
+          '.item',
+          '#container'
+        );
         expect(result.id).toBe('item2');
       });
 
@@ -353,28 +395,55 @@ describe('Positional Expressions', () => {
 
         const target2 = document.getElementById('target2')!;
         context.me = target2;
-        
+
         // Should not find target1 because it's outside the inner container
-        const result = await positionalExpressions.previousWithin.evaluate(context, '.target', '#inner');
+        const result = await positionalExpressions.previousWithin.evaluate(
+          context,
+          '.target',
+          '#inner'
+        );
         expect(result).toBeNull();
       });
 
       it('should return null when no container found', async () => {
         const item3 = document.getElementById('item3')!;
         context.me = item3;
-        
-        const result = await positionalExpressions.previousWithin.evaluate(context, '.item', '.nonexistent');
+
+        const result = await positionalExpressions.previousWithin.evaluate(
+          context,
+          '.item',
+          '.nonexistent'
+        );
         expect(result).toBeNull();
       });
 
       it('should validate arguments', () => {
-        expect(positionalExpressions.previousWithin.validate!(['selector', 'container'])).toBeNull();
-        expect(positionalExpressions.previousWithin.validate!(['selector', 'container', document.body])).toBeNull();
-        expect(positionalExpressions.previousWithin.validate!(['selector'])).toContain('2-3 arguments');
-        expect(positionalExpressions.previousWithin.validate!(['selector', 'container', document.body, 'extra'])).toContain('2-3 arguments');
-        expect(positionalExpressions.previousWithin.validate!([123, 'container'])).toContain('selector must be a string');
-        expect(positionalExpressions.previousWithin.validate!(['selector', 123])).toContain('withinSelector must be a string');
-        expect(positionalExpressions.previousWithin.validate!(['selector', 'container', 'not-element'])).toContain('must be an Element');
+        expect(
+          positionalExpressions.previousWithin.validate!(['selector', 'container'])
+        ).toBeNull();
+        expect(
+          positionalExpressions.previousWithin.validate!(['selector', 'container', document.body])
+        ).toBeNull();
+        expect(positionalExpressions.previousWithin.validate!(['selector'])).toContain(
+          '2-3 arguments'
+        );
+        expect(
+          positionalExpressions.previousWithin.validate!([
+            'selector',
+            'container',
+            document.body,
+            'extra',
+          ])
+        ).toContain('2-3 arguments');
+        expect(positionalExpressions.previousWithin.validate!([123, 'container'])).toContain(
+          'selector must be a string'
+        );
+        expect(positionalExpressions.previousWithin.validate!(['selector', 123])).toContain(
+          'withinSelector must be a string'
+        );
+        expect(
+          positionalExpressions.previousWithin.validate!(['selector', 'container', 'not-element'])
+        ).toContain('must be an Element');
       });
     });
   });
@@ -423,10 +492,10 @@ describe('Positional Expressions', () => {
       it('should return different positions for different elements', () => {
         const item1 = document.getElementById('item1')!;
         const item2 = document.getElementById('item2')!;
-        
+
         const pos1 = getElementPosition(item1);
         const pos2 = getElementPosition(item2);
-        
+
         expect(pos1).not.toBe(pos2);
         expect(typeof pos1).toBe('number');
         expect(typeof pos2).toBe('number');

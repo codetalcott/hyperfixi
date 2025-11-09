@@ -23,15 +23,15 @@ class PerformanceTracker {
     evaluationTime: 0,
     cacheHitRate: 0,
     memoryUsage: 0,
-    domOperations: 0
+    domOperations: 0,
   };
-  
+
   private startTimes = new Map<string, number>();
-  
+
   startTimer(operation: string): void {
     this.startTimes.set(operation, performance.now());
   }
-  
+
   endTimer(operation: string): number {
     const startTime = this.startTimes.get(operation);
     if (startTime) {
@@ -41,32 +41,32 @@ class PerformanceTracker {
     }
     return 0;
   }
-  
+
   recordTokenization(duration: number): void {
     this.metrics.tokenizationTime += duration;
   }
-  
+
   recordEvaluation(duration: number): void {
     this.metrics.evaluationTime += duration;
   }
-  
+
   updateCacheMetrics(): void {
     const cacheStats = globalCache.getPerformanceStats();
     this.metrics.cacheHitRate = cacheStats.hitRate;
   }
-  
+
   getMetrics(): PerformanceMetrics {
     this.updateCacheMetrics();
     return { ...this.metrics };
   }
-  
+
   reset(): void {
     this.metrics = {
       tokenizationTime: 0,
       evaluationTime: 0,
       cacheHitRate: 0,
       memoryUsage: 0,
-      domOperations: 0
+      domOperations: 0,
     };
   }
 }
@@ -84,16 +84,16 @@ export async function evaluateExpressionWithCache<T>(
   if (cached !== undefined) {
     return cached;
   }
-  
+
   // Track evaluation time
   performanceTracker.startTimer('evaluation');
-  
+
   try {
     const result = await evaluator();
-    
+
     // Cache the result
     globalCache.setExpressionResult(cacheKey, result);
-    
+
     return result;
   } finally {
     const duration = performanceTracker.endTimer('evaluation');
@@ -123,36 +123,38 @@ export function wrapExpressionForPerformance(
     async evaluate(_context: ExecutionContext, ...args: any[]): Promise<any> {
       // Create cache key from expression name and arguments
       const cacheKey = createExpressionCacheKey(expression.name, args);
-      
+
       return evaluateExpressionWithCache(
         cacheKey,
         () => expression.evaluate(_context, ...args),
         _context
       );
-    }
+    },
   };
 }
 
 // Cache key generation for expressions
 function createExpressionCacheKey(expressionName: string, args: any[]): string {
-  const argsKey = args.map(arg => {
-    if (arg === null || arg === undefined) return 'null';
-    if (typeof arg === 'object') {
-      if (arg instanceof Element) {
-        return `element:${arg.tagName}:${arg.id || arg.className || 'unknown'}`;
+  const argsKey = args
+    .map(arg => {
+      if (arg === null || arg === undefined) return 'null';
+      if (typeof arg === 'object') {
+        if (arg instanceof Element) {
+          return `element:${arg.tagName}:${arg.id || arg.className || 'unknown'}`;
+        }
+        return JSON.stringify(arg);
       }
-      return JSON.stringify(arg);
-    }
-    return String(arg);
-  }).join('|');
-  
+      return String(arg);
+    })
+    .join('|');
+
   return `expr:${expressionName}:${argsKey}`;
 }
 
 // Optimized tokenization with performance tracking
 export function tokenizeWithPerformance(input: string) {
   performanceTracker.startTimer('tokenization');
-  
+
   try {
     const tokens = tokenizeOptimized(input);
     return tokens;
@@ -166,12 +168,13 @@ export function tokenizeWithPerformance(input: string) {
 export function performCleanup(): void {
   // Clean up expression cache
   globalCache.cleanup();
-  
+
   // Reset performance metrics if needed
   const metrics = performanceTracker.getMetrics();
-  
+
   // Clean up old metrics if memory usage is high
-  if (metrics.memoryUsage > 50 * 1024 * 1024) { // 50MB threshold
+  if (metrics.memoryUsage > 50 * 1024 * 1024) {
+    // 50MB threshold
     performanceTracker.reset();
   }
 }
@@ -183,7 +186,7 @@ export function enableAutoCleanup(intervalMs: number = 30000): void {
   if (cleanupInterval) {
     clearInterval(cleanupInterval);
   }
-  
+
   cleanupInterval = setInterval(performCleanup, intervalMs);
 }
 
@@ -198,23 +201,23 @@ export function disableAutoCleanup(): void {
 class DOMBatcher {
   private pendingOperations: (() => void)[] = [];
   private batchTimeout: NodeJS.Timeout | null = null;
-  
+
   addOperation(operation: () => void): void {
     this.pendingOperations.push(operation);
-    
+
     if (!this.batchTimeout) {
       this.batchTimeout = setTimeout(() => {
         this.flush();
       }, 0); // Next tick
     }
   }
-  
+
   flush(): void {
     if (this.batchTimeout) {
       clearTimeout(this.batchTimeout);
       this.batchTimeout = null;
     }
-    
+
     if (this.pendingOperations.length > 0) {
       // Execute all operations in a single frame
       this.pendingOperations.forEach(op => op());
@@ -234,7 +237,7 @@ export function batchDOMOperation(operation: () => void): void {
 export function generatePerformanceReport(): string {
   const metrics = performanceTracker.getMetrics();
   const cacheStats = globalCache.getPerformanceStats();
-  
+
   return `
 Performance Report:
 ==================

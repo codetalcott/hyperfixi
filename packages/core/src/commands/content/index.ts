@@ -1,5 +1,5 @@
 /**
- * Content Commands Export Module  
+ * Content Commands Export Module
  * Provides all content manipulation commands for hyperscript
  */
 

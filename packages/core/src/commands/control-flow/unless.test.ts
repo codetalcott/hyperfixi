@@ -1,5 +1,5 @@
 /**
- * Unless Command Tests  
+ * Unless Command Tests
  * Test conditional command execution (inverse of if)
  */
 
@@ -19,7 +19,7 @@ describe('Unless Command', () => {
     testElement.id = 'test-element';
     testElement.className = 'test-class';
     document.body.appendChild(testElement);
-    
+
     context = {
       me: testElement,
       locals: new Map(),
@@ -44,47 +44,47 @@ describe('Unless Command', () => {
   describe('Basic Conditional Execution', () => {
     it('should execute command when condition is false', async () => {
       let executed = false;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async () => {
           executed = true;
           return 'executed';
-        }
+        },
       };
 
       const result = await unlessCommand.execute(context, false, mockCommand);
-      
+
       expect(executed).toBe(true);
       expect(result).toBe('executed');
     });
 
     it('should not execute command when condition is true', async () => {
       let executed = false;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async () => {
           executed = true;
           return 'executed';
-        }
+        },
       };
 
       const result = await unlessCommand.execute(context, true, mockCommand);
-      
+
       expect(executed).toBe(false);
       expect(result).toBe(undefined);
     });
 
     it('should handle truthy conditions', async () => {
       let executed = false;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async () => {
           executed = true;
           return 'executed';
-        }
+        },
       };
 
       // Test with various truthy values
@@ -106,13 +106,13 @@ describe('Unless Command', () => {
 
     it('should handle falsy conditions', async () => {
       let executionCount = 0;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async () => {
           executionCount++;
           return 'executed';
-        }
+        },
       };
 
       // Test with various falsy values
@@ -130,13 +130,13 @@ describe('Unless Command', () => {
   describe('Multiple Commands', () => {
     it('should execute all commands when condition is false', async () => {
       const execOrder: number[] = [];
-      
+
       const command1 = {
         name: 'cmd1',
         execute: async () => {
           execOrder.push(1);
           return 'cmd1';
-        }
+        },
       };
 
       const command2 = {
@@ -144,7 +144,7 @@ describe('Unless Command', () => {
         execute: async () => {
           execOrder.push(2);
           return 'cmd2';
-        }
+        },
       };
 
       const command3 = {
@@ -152,24 +152,24 @@ describe('Unless Command', () => {
         execute: async () => {
           execOrder.push(3);
           return 'cmd3';
-        }
+        },
       };
 
       const result = await unlessCommand.execute(context, false, command1, command2, command3);
-      
+
       expect(execOrder).toEqual([1, 2, 3]);
       expect(result).toBe('cmd3'); // Last command result
     });
 
     it('should not execute any commands when condition is true', async () => {
       const execOrder: number[] = [];
-      
+
       const command1 = {
         name: 'cmd1',
         execute: async () => {
           execOrder.push(1);
           return 'cmd1';
-        }
+        },
       };
 
       const command2 = {
@@ -177,24 +177,24 @@ describe('Unless Command', () => {
         execute: async () => {
           execOrder.push(2);
           return 'cmd2';
-        }
+        },
       };
 
       const result = await unlessCommand.execute(context, true, command1, command2);
-      
+
       expect(execOrder).toEqual([]);
       expect(result).toBe(undefined);
     });
 
     it('should stop execution if a command fails', async () => {
       const execOrder: number[] = [];
-      
+
       const command1 = {
         name: 'cmd1',
         execute: async () => {
           execOrder.push(1);
           return 'cmd1';
-        }
+        },
       };
 
       const errorCommand = {
@@ -202,7 +202,7 @@ describe('Unless Command', () => {
         execute: async () => {
           execOrder.push(2);
           throw new Error('Command failed');
-        }
+        },
       };
 
       const command3 = {
@@ -210,12 +210,13 @@ describe('Unless Command', () => {
         execute: async () => {
           execOrder.push(3);
           return 'cmd3';
-        }
+        },
       };
 
-      await expect(unlessCommand.execute(context, false, command1, errorCommand, command3))
-        .rejects.toThrow('Command failed');
-      
+      await expect(
+        unlessCommand.execute(context, false, command1, errorCommand, command3)
+      ).rejects.toThrow('Command failed');
+
       expect(execOrder).toEqual([1, 2]); // Third command should not execute
     });
   });
@@ -223,19 +224,19 @@ describe('Unless Command', () => {
   describe('Expression-Based Conditions', () => {
     it('should handle DOM-based conditions', async () => {
       let executed = false;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async () => {
           executed = true;
           return 'executed';
-        }
+        },
       };
 
       // Element does not have 'special' class, so condition is false
       const hasSpecialClass = testElement.classList.contains('special');
       await unlessCommand.execute(context, hasSpecialClass, mockCommand);
-      
+
       expect(executed).toBe(true);
 
       // Add the class and test again
@@ -243,25 +244,25 @@ describe('Unless Command', () => {
       executed = false;
       const hasSpecialClassNow = testElement.classList.contains('special');
       await unlessCommand.execute(context, hasSpecialClassNow, mockCommand);
-      
+
       expect(executed).toBe(false);
     });
 
     it('should handle variable-based conditions', async () => {
       let executed = false;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async () => {
           executed = true;
           return 'executed';
-        }
+        },
       };
 
       // Set a variable and use it in condition
       context.locals?.set('shouldSkip', false);
       const shouldSkip = context.locals?.get('shouldSkip');
-      
+
       await unlessCommand.execute(context, shouldSkip, mockCommand);
       expect(executed).toBe(true);
 
@@ -269,20 +270,20 @@ describe('Unless Command', () => {
       context.locals?.set('shouldSkip', true);
       executed = false;
       const shouldSkipNow = context.locals?.get('shouldSkip');
-      
+
       await unlessCommand.execute(context, shouldSkipNow, mockCommand);
       expect(executed).toBe(false);
     });
 
     it('should handle comparison-based conditions', async () => {
       let executed = false;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async () => {
           executed = true;
           return 'executed';
-        }
+        },
       };
 
       context.locals?.set('count', 5);
@@ -302,39 +303,39 @@ describe('Unless Command', () => {
   describe('Complex Scenarios', () => {
     it('should work with nested conditionals', async () => {
       const execOrder: string[] = [];
-      
+
       const nestedUnless = new UnlessCommand();
-      
+
       const outerCommand = {
         name: 'outer',
         execute: async () => {
           execOrder.push('outer-start');
-          
+
           const innerCommand = {
             name: 'inner',
             execute: async () => {
               execOrder.push('inner');
               return 'inner-result';
-            }
+            },
           };
-          
+
           // Nested unless - should execute because false condition
           await nestedUnless.execute(context, false, innerCommand);
-          
+
           execOrder.push('outer-end');
           return 'outer-result';
-        }
+        },
       };
 
       await unlessCommand.execute(context, false, outerCommand);
-      
+
       expect(execOrder).toEqual(['outer-start', 'inner', 'outer-end']);
     });
 
     it('should handle async commands properly', async () => {
       let executed = false;
       let asyncCompleted = false;
-      
+
       const asyncCommand = {
         name: 'async-test',
         execute: async () => {
@@ -342,11 +343,11 @@ describe('Unless Command', () => {
           await new Promise(resolve => setTimeout(resolve, 10));
           asyncCompleted = true;
           return 'async-result';
-        }
+        },
       };
 
       const result = await unlessCommand.execute(context, false, asyncCommand);
-      
+
       expect(executed).toBe(true);
       expect(asyncCompleted).toBe(true);
       expect(result).toBe('async-result');
@@ -354,17 +355,17 @@ describe('Unless Command', () => {
 
     it('should preserve execution context in commands', async () => {
       let capturedContext: ExecutionContext | null = null;
-      
+
       const contextCommand = {
         name: 'context-test',
         execute: async (ctx: ExecutionContext) => {
           capturedContext = ctx;
           return 'context-captured';
-        }
+        },
       };
 
       await unlessCommand.execute(context, false, contextCommand);
-      
+
       expect(capturedContext).not.toBe(null);
       expect(capturedContext?.me).toBe(testElement);
       expect(capturedContext?.locals).toBe(context.locals);
@@ -373,25 +374,26 @@ describe('Unless Command', () => {
 
   describe('Error Handling', () => {
     it('should throw error for missing arguments', async () => {
-      await expect(unlessCommand.execute(context))
-        .rejects.toThrow('Unless command requires at least 2 arguments');
+      await expect(unlessCommand.execute(context)).rejects.toThrow(
+        'Unless command requires at least 2 arguments'
+      );
     });
 
     it('should throw error for missing commands', async () => {
-      await expect(unlessCommand.execute(context, false))
-        .rejects.toThrow('Unless command requires at least 2 arguments');
+      await expect(unlessCommand.execute(context, false)).rejects.toThrow(
+        'Unless command requires at least 2 arguments'
+      );
     });
 
     it('should handle condition evaluation errors', async () => {
       const mockCommand = {
         name: 'test',
-        execute: async () => 'executed'
+        execute: async () => 'executed',
       };
 
       // This should work - we pass the condition value directly
       // Error handling for condition evaluation would happen at the expression level
-      await expect(unlessCommand.execute(context, false, mockCommand))
-        .resolves.toBe('executed');
+      await expect(unlessCommand.execute(context, false, mockCommand)).resolves.toBe('executed');
     });
 
     it('should propagate command execution errors', async () => {
@@ -399,11 +401,12 @@ describe('Unless Command', () => {
         name: 'error',
         execute: async () => {
           throw new Error('Command execution failed');
-        }
+        },
       };
 
-      await expect(unlessCommand.execute(context, false, errorCommand))
-        .rejects.toThrow('Command execution failed');
+      await expect(unlessCommand.execute(context, false, errorCommand)).rejects.toThrow(
+        'Command execution failed'
+      );
     });
   });
 
@@ -414,22 +417,22 @@ describe('Unless Command', () => {
         execute: async (ctx: ExecutionContext) => {
           ctx.me?.classList.add('conditional-class');
           return 'class-added';
-        }
+        },
       };
 
       // Should execute because element doesn't have 'skip' class
       const hasSkipClass = testElement.classList.contains('skip');
       await unlessCommand.execute(context, hasSkipClass, addClassCommand);
-      
+
       expect(testElement.classList.contains('conditional-class')).toBe(true);
 
       // Add skip class and try again
       testElement.classList.add('skip');
       testElement.classList.remove('conditional-class');
-      
+
       const hasSkipClassNow = testElement.classList.contains('skip');
       await unlessCommand.execute(context, hasSkipClassNow, addClassCommand);
-      
+
       expect(testElement.classList.contains('conditional-class')).toBe(false);
     });
   });
@@ -437,7 +440,7 @@ describe('Unless Command', () => {
   describe('Validation', () => {
     it('should validate correct syntax', () => {
       const mockCommand = { name: 'test', execute: async () => 'ok' };
-      
+
       expect(unlessCommand.validate([true, mockCommand])).toBeNull();
       expect(unlessCommand.validate([false, mockCommand, mockCommand])).toBeNull();
     });

@@ -18,7 +18,7 @@ export type {
   FeatureNode,
   StatementNode,
   ElementType,
-  ExpressionCategory
+  ExpressionCategory,
 } from './types/core';
 
 // Export utilities for direct usage
@@ -34,7 +34,7 @@ export {
   createDef,
   enhancedDefImplementation,
   type DefInput,
-  type DefOutput
+  type DefOutput,
 } from './features/def';
 
 export {
@@ -43,7 +43,7 @@ export {
   createEnhancedOn,
   enhancedOnImplementation,
   type EnhancedOnInput,
-  type EnhancedOnOutput
+  type EnhancedOnOutput,
 } from './features/on';
 
 export {
@@ -52,7 +52,7 @@ export {
   createBehaviors,
   enhancedBehaviorsImplementation,
   type BehaviorsInput,
-  type BehaviorsOutput
+  type BehaviorsOutput,
 } from './features/behaviors';
 
 export {
@@ -61,7 +61,7 @@ export {
   createSockets,
   enhancedSocketsImplementation,
   type SocketsInput,
-  type SocketsOutput
+  type SocketsOutput,
 } from './features/sockets';
 
 export {
@@ -70,7 +70,7 @@ export {
   createWebWorker,
   enhancedWebWorkerImplementation,
   type WebWorkerInput,
-  type WebWorkerOutput
+  type WebWorkerOutput,
 } from './features/webworker';
 
 export {
@@ -79,7 +79,7 @@ export {
   createEventSource,
   enhancedEventSourceImplementation,
   type EventSourceInput,
-  type EventSourceOutput
+  type EventSourceOutput,
 } from './features/eventsource';
 
 // Export enhanced context types
@@ -87,14 +87,12 @@ export type {
   TypedContextImplementation,
   ContextMetadata,
   EvaluationResult,
-  EnhancedContextBase
+  EnhancedContextBase,
 } from './types/context-types';
 
 export type { ValidationResult, EvaluationType } from './types/base-types';
 
-export type {
-  LLMDocumentation
-} from './types/command-types';
+export type { LLMDocumentation } from './types/command-types';
 
 // Export the main API as default
 export { default } from './api/hyperscript-api';

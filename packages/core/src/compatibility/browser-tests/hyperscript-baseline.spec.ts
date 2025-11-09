@@ -24,7 +24,11 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
       { expr: '3 mod 2', expected: 1, description: 'mod works' },
       { expr: '1 + 2 + 3', expected: 6, description: 'addition with multiple values works' },
       { expr: '1 + (2 * 3)', expected: 7, description: 'parenthesized expressions work' },
-      { expr: '1 + 2 * 3', expected: 7, description: 'mixed operators work with proper precedence' },
+      {
+        expr: '1 + 2 * 3',
+        expected: 7,
+        description: 'mixed operators work with proper precedence',
+      },
     ];
 
     const errorCases = [
@@ -32,31 +36,31 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
     ];
 
     let passed = 0;
-    let total = testCases.length + errorCases.length;
+    const total = testCases.length + errorCases.length;
 
     console.log('\n🧮 Math Operator Tests:');
 
     // Test successful expressions
     for (const testCase of testCases) {
-      const result = await page.evaluate(
-        ({ e }) => window.testExpressionWithContext(e, {}),
-        { e: testCase.expr }
-      );
+      const result = await page.evaluate(({ e }) => window.testExpressionWithContext(e, {}), {
+        e: testCase.expr,
+      });
 
       if (result.match && result.ours === testCase.expected) {
         console.log(`  ✅ ${testCase.description}: ${testCase.expr} = ${result.ours}`);
         passed++;
       } else {
-        console.log(`  ❌ ${testCase.description}: ${testCase.expr} - got ${result.ours}, expected ${testCase.expected}`);
+        console.log(
+          `  ❌ ${testCase.description}: ${testCase.expr} - got ${result.ours}, expected ${testCase.expected}`
+        );
       }
     }
 
     // Test error expressions
     for (const testCase of errorCases) {
-      const result = await page.evaluate(
-        ({ e }) => window.testExpressionWithContext(e, {}),
-        { e: testCase.expr }
-      );
+      const result = await page.evaluate(({ e }) => window.testExpressionWithContext(e, {}), {
+        e: testCase.expr,
+      });
 
       // Check if both libraries failed with appropriate error
       const bothFailed = result.original.includes('ERROR') && result.ours.includes('ERROR');
@@ -66,11 +70,15 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
         console.log(`  ✅ ${testCase.description}: ${testCase.expr} properly throws error`);
         passed++;
       } else {
-        console.log(`  ❌ ${testCase.description}: ${testCase.expr} - Expected error, got: ${result.ours}`);
+        console.log(
+          `  ❌ ${testCase.description}: ${testCase.expr} - Expected error, got: ${result.ours}`
+        );
       }
     }
 
-    console.log(`  📊 Math Tests: ${passed}/${total} passed (${Math.round(passed/total*100)}%)`);
+    console.log(
+      `  📊 Math Tests: ${passed}/${total} passed (${Math.round((passed / total) * 100)}%)`
+    );
 
     // We expect high pass rate here since we have 100% expression compatibility
     expect(passed).toBeGreaterThan(Math.floor(total * 0.6)); // At least 60%
@@ -86,20 +94,23 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
     console.log('\n🔤 String Tests:');
 
     for (const testCase of testCases) {
-      const result = await page.evaluate(
-        ({ e }) => window.testExpressionWithContext(e, {}),
-        { e: testCase.expr }
-      );
+      const result = await page.evaluate(({ e }) => window.testExpressionWithContext(e, {}), {
+        e: testCase.expr,
+      });
 
       if (result.match && result.ours === testCase.expected) {
         console.log(`  ✅ ${testCase.description}: ${testCase.expr} = "${result.ours}"`);
         passed++;
       } else {
-        console.log(`  ❌ ${testCase.description}: ${testCase.expr} - got "${result.ours}", expected "${testCase.expected}"`);
+        console.log(
+          `  ❌ ${testCase.description}: ${testCase.expr} - got "${result.ours}", expected "${testCase.expected}"`
+        );
       }
     }
 
-    console.log(`  📊 String Tests: ${passed}/${testCases.length} passed (${Math.round(passed/testCases.length*100)}%)`);
+    console.log(
+      `  📊 String Tests: ${passed}/${testCases.length} passed (${Math.round((passed / testCases.length) * 100)}%)`
+    );
 
     // Should pass 100%
     expect(passed).toBe(testCases.length);
@@ -107,23 +118,23 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
 
   test('Possessive Expression Tests', async () => {
     const testCases = [
-      { 
-        expr: 'its result', 
-        context: { result: { result: 'success' } }, 
-        expected: 'success', 
-        description: 'its result works' 
+      {
+        expr: 'its result',
+        context: { result: { result: 'success' } },
+        expected: 'success',
+        description: 'its result works',
       },
-      { 
-        expr: 'my value', 
-        context: { me: { value: 42 } }, 
-        expected: 42, 
-        description: 'my property works' 
+      {
+        expr: 'my value',
+        context: { me: { value: 42 } },
+        expected: 42,
+        description: 'my property works',
       },
-      { 
-        expr: 'your data', 
-        context: { you: { data: 'test' } }, 
-        expected: 'test', 
-        description: 'your property works' 
+      {
+        expr: 'your data',
+        context: { you: { data: 'test' } },
+        expected: 'test',
+        description: 'your property works',
       },
     ];
 
@@ -131,20 +142,24 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
     console.log('\n🔗 Possessive Expression Tests:');
 
     for (const testCase of testCases) {
-      const result = await page.evaluate(
-        ({ e, ctx }) => window.testExpressionWithContext(e, ctx),
-        { e: testCase.expr, ctx: testCase.context }
-      );
+      const result = await page.evaluate(({ e, ctx }) => window.testExpressionWithContext(e, ctx), {
+        e: testCase.expr,
+        ctx: testCase.context,
+      });
 
       if (result.match && result.ours === testCase.expected) {
         console.log(`  ✅ ${testCase.description}: ${testCase.expr} = ${result.ours}`);
         passed++;
       } else {
-        console.log(`  ❌ ${testCase.description}: ${testCase.expr} - got ${result.ours}, expected ${testCase.expected}`);
+        console.log(
+          `  ❌ ${testCase.description}: ${testCase.expr} - got ${result.ours}, expected ${testCase.expected}`
+        );
       }
     }
 
-    console.log(`  📊 Possessive Tests: ${passed}/${testCases.length} passed (${Math.round(passed/testCases.length*100)}%)`);
+    console.log(
+      `  📊 Possessive Tests: ${passed}/${testCases.length} passed (${Math.round((passed / testCases.length) * 100)}%)`
+    );
 
     // Should pass 100% since we fixed these
     expect(passed).toBe(testCases.length);
@@ -160,20 +175,23 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
     console.log('\n✅ Boolean Tests:');
 
     for (const testCase of testCases) {
-      const result = await page.evaluate(
-        ({ e }) => window.testExpressionWithContext(e, {}),
-        { e: testCase.expr }
-      );
+      const result = await page.evaluate(({ e }) => window.testExpressionWithContext(e, {}), {
+        e: testCase.expr,
+      });
 
       if (result.match && result.ours === testCase.expected) {
         console.log(`  ✅ ${testCase.description}: ${testCase.expr} = ${result.ours}`);
         passed++;
       } else {
-        console.log(`  ❌ ${testCase.description}: ${testCase.expr} - got ${result.ours}, expected ${testCase.expected}`);
+        console.log(
+          `  ❌ ${testCase.description}: ${testCase.expr} - got ${result.ours}, expected ${testCase.expected}`
+        );
       }
     }
 
-    console.log(`  📊 Boolean Tests: ${passed}/${testCases.length} passed (${Math.round(passed/testCases.length*100)}%)`);
+    console.log(
+      `  📊 Boolean Tests: ${passed}/${testCases.length} passed (${Math.round((passed / testCases.length) * 100)}%)`
+    );
     expect(passed).toBe(testCases.length);
   });
 
@@ -188,20 +206,23 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
     console.log('\n🔢 Number Tests:');
 
     for (const testCase of testCases) {
-      const result = await page.evaluate(
-        ({ e }) => window.testExpressionWithContext(e, {}),
-        { e: testCase.expr }
-      );
+      const result = await page.evaluate(({ e }) => window.testExpressionWithContext(e, {}), {
+        e: testCase.expr,
+      });
 
       if (result.match && result.ours === testCase.expected) {
         console.log(`  ✅ ${testCase.description}: ${testCase.expr} = ${result.ours}`);
         passed++;
       } else {
-        console.log(`  ❌ ${testCase.description}: ${testCase.expr} - got ${result.ours}, expected ${testCase.expected}`);
+        console.log(
+          `  ❌ ${testCase.description}: ${testCase.expr} - got ${result.ours}, expected ${testCase.expected}`
+        );
       }
     }
 
-    console.log(`  📊 Number Tests: ${passed}/${testCases.length} passed (${Math.round(passed/testCases.length*100)}%)`);
+    console.log(
+      `  📊 Number Tests: ${passed}/${testCases.length} passed (${Math.round((passed / testCases.length) * 100)}%)`
+    );
     expect(passed).toBe(testCases.length);
   });
 
@@ -213,7 +234,11 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
       { expr: 'false or false', expected: false, description: 'or with false works' },
       { expr: 'not true', expected: false, description: 'not operation works' },
       { expr: 'not false', expected: true, description: 'not false works' },
-      { expr: 'true and false or true', expected: true, description: 'mixed logical operators work with proper precedence' },
+      {
+        expr: 'true and false or true',
+        expected: true,
+        description: 'mixed logical operators work with proper precedence',
+      },
     ];
 
     const errorCases = [
@@ -221,29 +246,29 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
     ];
 
     let passed = 0;
-    let total = testCases.length + errorCases.length;
+    const total = testCases.length + errorCases.length;
 
     console.log('\n🤔 Logical Operator Tests:');
 
     for (const testCase of testCases) {
-      const result = await page.evaluate(
-        ({ e }) => window.testExpressionWithContext(e, {}),
-        { e: testCase.expr }
-      );
+      const result = await page.evaluate(({ e }) => window.testExpressionWithContext(e, {}), {
+        e: testCase.expr,
+      });
 
       if (result.match && result.ours === testCase.expected) {
         console.log(`  ✅ ${testCase.description}: ${testCase.expr} = ${result.ours}`);
         passed++;
       } else {
-        console.log(`  ❌ ${testCase.description}: ${testCase.expr} - got ${result.ours}, expected ${testCase.expected}`);
+        console.log(
+          `  ❌ ${testCase.description}: ${testCase.expr} - got ${result.ours}, expected ${testCase.expected}`
+        );
       }
     }
 
     for (const testCase of errorCases) {
-      const result = await page.evaluate(
-        ({ e }) => window.testExpressionWithContext(e, {}),
-        { e: testCase.expr }
-      );
+      const result = await page.evaluate(({ e }) => window.testExpressionWithContext(e, {}), {
+        e: testCase.expr,
+      });
 
       const bothFailed = result.original.includes('ERROR') && result.ours.includes('ERROR');
       const hasCorrectError = result.ours.includes(testCase.expectedError);
@@ -252,11 +277,15 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
         console.log(`  ✅ ${testCase.description}: ${testCase.expr} properly throws error`);
         passed++;
       } else {
-        console.log(`  ❌ ${testCase.description}: ${testCase.expr} - Expected error, got: ${result.ours}`);
+        console.log(
+          `  ❌ ${testCase.description}: ${testCase.expr} - Expected error, got: ${result.ours}`
+        );
       }
     }
 
-    console.log(`  📊 Logical Tests: ${passed}/${total} passed (${Math.round(passed/total*100)}%)`);
+    console.log(
+      `  📊 Logical Tests: ${passed}/${total} passed (${Math.round((passed / total) * 100)}%)`
+    );
     expect(passed).toBeGreaterThan(Math.floor(total * 0.6));
   });
 

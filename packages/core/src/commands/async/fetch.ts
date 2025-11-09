@@ -21,7 +21,7 @@ import type {
   TypedExecutionContext,
   EvaluationResult,
   CommandMetadata,
-  LLMDocumentation
+  LLMDocumentation,
 } from '../../types/command-types';
 
 // ============================================================================
@@ -75,13 +75,16 @@ const FetchOptionsSchema = v.object({
   redirect: v.string().optional().describe('Redirect mode'),
   referrer: v.string().optional().describe('Referrer'),
   referrerPolicy: v.string().optional().describe('Referrer policy'),
-  integrity: v.string().optional().describe('Subresource integrity')
+  integrity: v.string().optional().describe('Subresource integrity'),
 });
 
 const FetchCommandInputSchema = v.object({
   url: v.string().describe('URL to fetch from'),
-  responseType: z.enum(['text', 'json', 'html', 'response']).optional().describe('Response parsing type'),
-  options: FetchOptionsSchema.optional().describe('Fetch options')
+  responseType: z
+    .enum(['text', 'json', 'html', 'response'])
+    .optional()
+    .describe('Response parsing type'),
+  options: FetchOptionsSchema.optional().describe('Fetch options'),
 });
 
 // ============================================================================
@@ -98,11 +101,10 @@ const FetchCommandInputSchema = v.object({
  * - Request cancellation
  * - Timeout handling
  */
-export class FetchCommand implements TypedCommandImplementation<
-  FetchCommandInput,
-  FetchCommandOutput,
-  TypedExecutionContext
-> {
+export class FetchCommand
+  implements
+    TypedCommandImplementation<FetchCommandInput, FetchCommandOutput, TypedExecutionContext>
+{
   public readonly name = 'fetch' as const;
   public readonly syntax = 'fetch <url> [as (json|html|response)] [with <options>]';
   public readonly description = 'Issues HTTP requests with comprehensive lifecycle event support';
@@ -117,30 +119,30 @@ export class FetchCommand implements TypedCommandImplementation<
       {
         code: 'fetch /api/data',
         description: 'Fetch data as text',
-        expectedOutput: 'string'
+        expectedOutput: 'string',
       },
       {
         code: 'fetch /api/users as json',
         description: 'Fetch and parse JSON',
-        expectedOutput: 'object'
+        expectedOutput: 'object',
       },
       {
         code: 'fetch /api/save as json with method:"POST"',
         description: 'POST request with JSON response',
-        expectedOutput: 'object'
+        expectedOutput: 'object',
       },
       {
         code: 'fetch /page as html',
         description: 'Fetch HTML fragment',
-        expectedOutput: 'HTMLElement'
+        expectedOutput: 'HTMLElement',
       },
       {
         code: 'fetch /slow with timeout:5000',
         description: 'Fetch with 5 second timeout',
-        expectedOutput: 'string'
-      }
+        expectedOutput: 'string',
+      },
     ],
-    relatedCommands: ['wait', 'async', 'call']
+    relatedCommands: ['wait', 'async', 'call'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -150,20 +152,20 @@ export class FetchCommand implements TypedCommandImplementation<
         title: 'Basic GET request',
         code: 'fetch "/api/users" as json',
         explanation: 'Fetch JSON data from an API endpoint',
-        output: '{ users: [...] }'
+        output: '{ users: [...] }',
       },
       {
         title: 'POST request with data',
         code: 'fetch "/api/users" with { method: "POST", body: data }',
         explanation: 'Send a POST request with body data',
-        output: 'Response'
+        output: 'Response',
       },
       {
         title: 'HTML fragment fetch',
         code: 'fetch "/partial.html" as html',
         explanation: 'Fetch and parse HTML fragment',
-        output: 'HTMLElement | DocumentFragment'
-      }
+        output: 'HTMLElement | DocumentFragment',
+      },
     ],
     parameters: [
       {
@@ -171,30 +173,30 @@ export class FetchCommand implements TypedCommandImplementation<
         type: 'string',
         description: 'URL to fetch from (supports template literals)',
         optional: false,
-        examples: ['/api/data', 'https://example.com', '`/users/${userId}`']
+        examples: ['/api/data', 'https://example.com', '`/users/${userId}`'],
       },
       {
         name: 'responseType',
         type: '"json" | "html" | "response" | "text"',
         description: 'How to parse the response',
         optional: true,
-        examples: ['json', 'html', 'response']
+        examples: ['json', 'html', 'response'],
       },
       {
         name: 'options',
         type: 'object',
         description: 'Fetch options (method, headers, body, timeout, etc.)',
         optional: true,
-        examples: ['{ method: "POST" }', '{ headers: { "X-Auth": "token" } }']
-      }
+        examples: ['{ method: "POST" }', '{ headers: { "X-Auth": "token" } }'],
+      },
     ],
     returns: {
       type: 'Promise<any>',
       description: 'Resolves with parsed response based on responseType',
-      examples: ['{ name: "John" }', '<div>HTML</div>', 'text content']
+      examples: ['{ name: "John" }', '<div>HTML</div>', 'text content'],
     },
     seeAlso: ['go', 'post', 'put', 'delete'],
-    tags: ['async', 'http', 'network', 'request', 'ajax']
+    tags: ['async', 'http', 'network', 'request', 'ajax'],
   };
 
   /**
@@ -206,7 +208,7 @@ export class FetchCommand implements TypedCommandImplementation<
     return {
       isValid: true,
       errors: [],
-      suggestions: []
+      suggestions: [],
     };
   }
 
@@ -237,7 +239,7 @@ export class FetchCommand implements TypedCommandImplementation<
       ...options,
       sender: context.me,
       headers: options.headers || {},
-      signal: abortController.signal
+      signal: abortController.signal,
     };
 
     // Fire beforeRequest event (allows header configuration)
@@ -298,16 +300,16 @@ export class FetchCommand implements TypedCommandImplementation<
           headers: response.headers,
           data: result,
           url: response.url,
-          duration
+          duration,
         },
-        type: 'object'
+        type: 'object',
       };
     } catch (error) {
       // Fire error event
       if (context.me) {
         this.dispatchEvent(context.me, 'fetch:error', {
           reason: error instanceof Error ? error.message : String(error),
-          error
+          error,
         });
       }
 
@@ -318,9 +320,13 @@ export class FetchCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: `Fetch failed for ${url}: ${error instanceof Error ? error.message : String(error)}`,
           code: 'FETCH_FAILED',
-          suggestions: ['Check URL validity', 'Verify network connectivity', 'Review CORS settings']
+          suggestions: [
+            'Check URL validity',
+            'Verify network connectivity',
+            'Review CORS settings',
+          ],
         },
-        type: 'error'
+        type: 'error',
       };
     } finally {
       // Cleanup
@@ -343,7 +349,7 @@ export class FetchCommand implements TypedCommandImplementation<
 
     // Return body content as fragment
     const fragment = document.createDocumentFragment();
-    Array.from(doc.body.childNodes).forEach((node) => {
+    Array.from(doc.body.childNodes).forEach(node => {
       fragment.appendChild(node.cloneNode(true));
     });
 
@@ -362,7 +368,7 @@ export class FetchCommand implements TypedCommandImplementation<
     const event = new CustomEvent(eventName, {
       detail,
       bubbles: true,
-      cancelable: true
+      cancelable: true,
     });
     target.dispatchEvent(event);
   }

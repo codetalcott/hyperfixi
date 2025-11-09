@@ -15,7 +15,7 @@ describe('Render Command', () => {
 
   beforeEach(() => {
     renderCommand = new RenderCommand();
-    
+
     // Create execution context
     mockContext = {
       me: null,
@@ -23,7 +23,7 @@ describe('Render Command', () => {
       you: null,
       result: null,
       locals: new Map(),
-      globals: new Map()
+      globals: new Map(),
     };
 
     // Create real template element (Happy-DOM provides real DOM)
@@ -43,9 +43,9 @@ describe('Render Command', () => {
     it('should render simple template without data', async () => {
       // Setup template with simple content
       mockTemplate.innerHTML = '<div>Hello World</div>';
-      
+
       const result = await renderCommand.execute(mockContext, mockTemplate);
-      
+
       // Check that result is a DocumentFragment-like object with the expected structure
       expect(result).toBeDefined();
       expect(result.nodeType).toBe(11); // DocumentFragment nodeType
@@ -58,14 +58,14 @@ describe('Render Command', () => {
       // Setup template with ${} interpolation
       mockTemplate.innerHTML = '<div>Hello ${name}</div>';
       const data = { name: 'Alice' };
-      
+
       // Mock expression evaluator
       vi.doMock('../../core/expression-evaluator', () => ({
-        evalExpression: vi.fn().mockResolvedValue('Alice')
+        evalExpression: vi.fn().mockResolvedValue('Alice'),
       }));
 
       const result = await renderCommand.execute(mockContext, mockTemplate, 'with', data);
-      
+
       // Check that result is a DocumentFragment-like object with the expected structure
       expect(result).toBeDefined();
       expect(result.nodeType).toBe(11); // DocumentFragment nodeType
@@ -78,7 +78,7 @@ describe('Render Command', () => {
       const querySelector = vi.fn().mockReturnValue(mockTemplate);
       const originalQuerySelector = document.querySelector;
       vi.spyOn(document, 'querySelector').mockImplementation(querySelector);
-      
+
       try {
         await renderCommand.execute(mockContext, '#myTemplate');
         expect(querySelector).toHaveBeenCalledWith('#myTemplate');
@@ -104,9 +104,9 @@ describe('Render Command', () => {
 
     it('should handle template without data parameter', async () => {
       mockTemplate.innerHTML = 'Simple text content';
-      
+
       const result = await renderCommand.execute(mockContext, mockTemplate);
-      
+
       // Check DocumentFragment-like properties instead of instanceof (Happy-DOM compatibility)
       expect(result.nodeType).toBe(11); // Node.DOCUMENT_FRAGMENT_NODE
       expect(typeof result.appendChild).toBe('function');
@@ -117,7 +117,7 @@ describe('Render Command', () => {
   describe('Legacy Test Note', () => {
     it('should note that detailed HTML escaping tests are in template-line-breaks.test.ts', () => {
       // The legacy HTML escaping tests used complex mocking that doesn't apply
-      // to the new FixedTemplateProcessor. Comprehensive HTML escaping tests 
+      // to the new FixedTemplateProcessor. Comprehensive HTML escaping tests
       // are available in template-line-breaks.test.ts which directly test
       // the new template processor.
       expect(true).toBe(true);
@@ -134,15 +134,14 @@ describe('Render Command', () => {
         </div>
       `;
 
-      const mockEvalExpression = vi.fn()
-        .mockResolvedValueOnce(true); // @if condition
-      
+      const mockEvalExpression = vi.fn().mockResolvedValueOnce(true); // @if condition
+
       vi.doMock('../../core/expression-evaluator', () => ({
-        evalExpression: mockEvalExpression
+        evalExpression: mockEvalExpression,
       }));
 
       const result = await renderCommand.execute(mockContext, mockTemplate);
-      
+
       expect(mockEvalExpression).toHaveBeenCalledWith('showWelcome', expect.any(Object));
     });
 
@@ -156,13 +155,14 @@ describe('Render Command', () => {
       `;
 
       const mockItems = [{ name: 'Item 1' }, { name: 'Item 2' }];
-      const mockEvalExpression = vi.fn()
+      const mockEvalExpression = vi
+        .fn()
         .mockResolvedValueOnce(mockItems) // items array
-        .mockResolvedValueOnce('Item 1')  // first item.name
+        .mockResolvedValueOnce('Item 1') // first item.name
         .mockResolvedValueOnce('Item 2'); // second item.name
 
       vi.doMock('../../core/expression-evaluator', () => ({
-        evalExpression: mockEvalExpression
+        evalExpression: mockEvalExpression,
       }));
 
       await renderCommand.execute(mockContext, mockTemplate);
@@ -183,11 +183,11 @@ describe('Render Command', () => {
 
       const mockEvalExpression = vi.fn().mockResolvedValueOnce(false);
       vi.doMock('../../core/expression-evaluator', () => ({
-        evalExpression: mockEvalExpression
+        evalExpression: mockEvalExpression,
       }));
 
       const result = await renderCommand.execute(mockContext, mockTemplate);
-      
+
       expect(mockEvalExpression).toHaveBeenCalledWith('condition', expect.any(Object));
     });
   });
@@ -196,9 +196,9 @@ describe('Render Command', () => {
     it('should resolve "me" template reference', async () => {
       const templateElement = document.createElement('template');
       templateElement.innerHTML = '<div>Me Template</div>';
-      
+
       mockContext.me = templateElement;
-      
+
       const result = await renderCommand.execute(mockContext, 'me');
       // Check that result is a DocumentFragment-like object with the expected structure
       expect(result).toBeDefined();
@@ -210,9 +210,9 @@ describe('Render Command', () => {
     it('should resolve "it" template reference', async () => {
       const templateElement = document.createElement('template');
       templateElement.innerHTML = '<div>It Template</div>';
-      
+
       mockContext.it = templateElement;
-      
+
       const result = await renderCommand.execute(mockContext, 'it');
       // Check that result is a DocumentFragment-like object with the expected structure
       expect(result).toBeDefined();
@@ -224,9 +224,9 @@ describe('Render Command', () => {
     it('should resolve "you" template reference', async () => {
       const templateElement = document.createElement('template');
       templateElement.innerHTML = '<div>You Template</div>';
-      
+
       mockContext.you = templateElement;
-      
+
       const result = await renderCommand.execute(mockContext, 'you');
       // Check that result is a DocumentFragment-like object with the expected structure
       expect(result).toBeDefined();
@@ -238,8 +238,9 @@ describe('Render Command', () => {
 
   describe('Error Handling', () => {
     it('should throw error for missing template argument', async () => {
-      await expect(renderCommand.execute(mockContext))
-        .rejects.toThrow('Render command requires a template argument');
+      await expect(renderCommand.execute(mockContext)).rejects.toThrow(
+        'Render command requires a template argument'
+      );
     });
 
     it('should throw error for template not found', async () => {
@@ -247,8 +248,9 @@ describe('Render Command', () => {
       vi.spyOn(document, 'querySelector').mockImplementation(querySelector);
 
       try {
-        await expect(renderCommand.execute(mockContext, '#nonexistent'))
-          .rejects.toThrow('Template not found: #nonexistent');
+        await expect(renderCommand.execute(mockContext, '#nonexistent')).rejects.toThrow(
+          'Template not found: #nonexistent'
+        );
       } finally {
         vi.mocked(document.querySelector).mockRestore();
       }
@@ -256,14 +258,14 @@ describe('Render Command', () => {
 
     it('should handle interpolation errors gracefully', async () => {
       mockTemplate.innerHTML = '<div>${invalidExpression}</div>';
-      
+
       const mockEvalExpression = vi.fn().mockRejectedValue(new Error('Invalid expression'));
       vi.doMock('../../core/expression-evaluator', () => ({
-        evalExpression: mockEvalExpression
+        evalExpression: mockEvalExpression,
       }));
 
       const result = await renderCommand.execute(mockContext, mockTemplate);
-      
+
       // Should still return result with error placeholder
       // Check that result is a DocumentFragment-like object with the expected structure
       expect(result).toBeDefined();
@@ -299,10 +301,12 @@ describe('Render Command', () => {
 
     it('should reject invalid syntax', () => {
       expect(renderCommand.validate([])).toBe('Render command requires a template argument');
-      expect(renderCommand.validate(['#template', 'invalid']))
-        .toBe('Invalid render syntax. Use: render template [with data]');
-      expect(renderCommand.validate(['#template', 'with']))
-        .toBe('Render "with" keyword requires data argument');
+      expect(renderCommand.validate(['#template', 'invalid'])).toBe(
+        'Invalid render syntax. Use: render template [with data]'
+      );
+      expect(renderCommand.validate(['#template', 'with'])).toBe(
+        'Render "with" keyword requires data argument'
+      );
     });
   });
 
@@ -312,16 +316,14 @@ describe('Render Command', () => {
       const templateData = { name: 'John', age: 30 };
       mockTemplate.innerHTML = '<div>Hello ${name}, age ${age}</div>';
 
-      const mockEvalExpression = vi.fn()
-        .mockResolvedValueOnce('John')
-        .mockResolvedValueOnce('30');
-      
+      const mockEvalExpression = vi.fn().mockResolvedValueOnce('John').mockResolvedValueOnce('30');
+
       vi.doMock('../../core/expression-evaluator', () => ({
-        evalExpression: mockEvalExpression
+        evalExpression: mockEvalExpression,
       }));
 
       const result = await renderCommand.execute(mockContext, mockTemplate, 'with', templateData);
-      
+
       // Check that result is a DocumentFragment-like object with the expected structure
       expect(result).toBeDefined();
       expect(result.nodeType).toBe(11); // DocumentFragment nodeType
@@ -334,9 +336,9 @@ describe('Render Command', () => {
 
     it('should store result in context for hyperscript access', async () => {
       mockTemplate.innerHTML = '<div>Template Result</div>';
-      
+
       const result = await renderCommand.execute(mockContext, mockTemplate);
-      
+
       expect(mockContext.result).toBe(result);
       // Check that result is a DocumentFragment-like object with the expected structure
       expect(result).toBeDefined();
@@ -363,22 +365,23 @@ describe('Render Command', () => {
         author: 'Jane Doe',
         date: '2025-01-23',
         featured: true,
-        content: 'This is the post content.'
+        content: 'This is the post content.',
       };
 
-      const mockEvalExpression = vi.fn()
-        .mockResolvedValueOnce('My Blog Post')    // title
-        .mockResolvedValueOnce('Jane Doe')        // author
-        .mockResolvedValueOnce('2025-01-23')      // date
-        .mockResolvedValueOnce(true)              // featured condition
+      const mockEvalExpression = vi
+        .fn()
+        .mockResolvedValueOnce('My Blog Post') // title
+        .mockResolvedValueOnce('Jane Doe') // author
+        .mockResolvedValueOnce('2025-01-23') // date
+        .mockResolvedValueOnce(true) // featured condition
         .mockResolvedValueOnce('This is the post content.'); // content
 
       vi.doMock('../../core/expression-evaluator', () => ({
-        evalExpression: mockEvalExpression
+        evalExpression: mockEvalExpression,
       }));
 
       const result = await renderCommand.execute(mockContext, mockTemplate, 'with', postData);
-      
+
       // Check that result is a DocumentFragment-like object with the expected structure
       expect(result).toBeDefined();
       expect(result.nodeType).toBe(11); // DocumentFragment nodeType

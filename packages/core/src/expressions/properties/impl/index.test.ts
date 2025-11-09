@@ -13,7 +13,7 @@ import {
   EnhancedYourExpression,
   EnhancedAttributeExpression,
   EnhancedAttributeWithValueExpression,
-  propertyExpressions
+  propertyExpressions,
 } from './index';
 
 describe('Enhanced Property Expressions', () => {
@@ -24,7 +24,7 @@ describe('Enhanced Property Expressions', () => {
 
   beforeEach(() => {
     context = createTypedExecutionContext();
-    
+
     // Create test DOM elements
     testElement = document.createElement('div');
     testElement.id = 'test-element';
@@ -84,9 +84,9 @@ describe('Enhanced Property Expressions', () => {
         const testObj = { name: 'John', age: 30, active: true };
         const result = await expression.evaluate(context, {
           element: testObj,
-          property: 'name'
+          property: 'name',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('John');
@@ -95,16 +95,16 @@ describe('Enhanced Property Expressions', () => {
       });
 
       it('should access nested object properties', async () => {
-        const testObj = { 
-          user: { 
-            profile: { name: 'Jane', settings: { theme: 'dark' } } 
-          } 
+        const testObj = {
+          user: {
+            profile: { name: 'Jane', settings: { theme: 'dark' } },
+          },
         };
         const result = await expression.evaluate(context, {
           element: testObj.user.profile,
-          property: 'name'
+          property: 'name',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('Jane');
@@ -116,9 +116,9 @@ describe('Enhanced Property Expressions', () => {
         const testObj = { name: 'John' };
         const result = await expression.evaluate(context, {
           element: testObj,
-          property: 'email'
+          property: 'email',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -131,9 +131,9 @@ describe('Enhanced Property Expressions', () => {
       it('should access element ID', async () => {
         const result = await expression.evaluate(context, {
           element: testElement,
-          property: 'id'
+          property: 'id',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('test-element');
@@ -144,9 +144,9 @@ describe('Enhanced Property Expressions', () => {
       it('should access element className', async () => {
         const result = await expression.evaluate(context, {
           element: testElement,
-          property: 'className'
+          property: 'className',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('container active');
@@ -157,9 +157,9 @@ describe('Enhanced Property Expressions', () => {
       it('should access element tagName', async () => {
         const result = await expression.evaluate(context, {
           element: testElement,
-          property: 'tagName'
+          property: 'tagName',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('div');
@@ -170,9 +170,9 @@ describe('Enhanced Property Expressions', () => {
       it('should access element innerText', async () => {
         const result = await expression.evaluate(context, {
           element: testElement,
-          property: 'innerText'
+          property: 'innerText',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('Test content');
@@ -183,9 +183,9 @@ describe('Enhanced Property Expressions', () => {
       it('should access input value', async () => {
         const result = await expression.evaluate(context, {
           element: testInput,
-          property: 'value'
+          property: 'value',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('input value');
@@ -196,9 +196,9 @@ describe('Enhanced Property Expressions', () => {
       it('should access element children', async () => {
         const result = await expression.evaluate(context, {
           element: testForm,
-          property: 'children'
+          property: 'children',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(Array.isArray(result.value)).toBe(true);
@@ -210,9 +210,9 @@ describe('Enhanced Property Expressions', () => {
       it('should access element parent', async () => {
         const result = await expression.evaluate(context, {
           element: testInput,
-          property: 'parent'
+          property: 'parent',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(testForm);
@@ -225,9 +225,9 @@ describe('Enhanced Property Expressions', () => {
       it('should access data attributes', async () => {
         const result = await expression.evaluate(context, {
           element: testElement,
-          property: 'data-role'
+          property: 'data-role',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('component');
@@ -238,9 +238,9 @@ describe('Enhanced Property Expressions', () => {
       it('should access ARIA attributes', async () => {
         const result = await expression.evaluate(context, {
           element: testElement,
-          property: 'aria-label'
+          property: 'aria-label',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('Test component');
@@ -251,9 +251,9 @@ describe('Enhanced Property Expressions', () => {
       it('should return undefined for non-existent attributes', async () => {
         const result = await expression.evaluate(context, {
           element: testElement,
-          property: 'non-existent-attr'
+          property: 'non-existent-attr',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -266,9 +266,9 @@ describe('Enhanced Property Expressions', () => {
       it('should handle null element', async () => {
         const result = await expression.evaluate(context, {
           element: null,
-          property: 'anything'
+          property: 'anything',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -279,9 +279,9 @@ describe('Enhanced Property Expressions', () => {
       it('should handle undefined element', async () => {
         const result = await expression.evaluate(context, {
           element: undefined,
-          property: 'anything'
+          property: 'anything',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -292,9 +292,9 @@ describe('Enhanced Property Expressions', () => {
       it('should handle primitive values', async () => {
         const result = await expression.evaluate(context, {
           element: 'hello',
-          property: 'length'
+          property: 'length',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(5);
@@ -307,19 +307,19 @@ describe('Enhanced Property Expressions', () => {
       it('should validate correct input', () => {
         const validation = expression.validate({
           element: testElement,
-          property: 'id'
+          property: 'id',
         });
-        
+
         expect(validation.isValid).toBe(true);
         expect(validation.errors).toHaveLength(0);
       });
 
       it('should reject invalid input structure', () => {
         const validation = expression.validate({
-          element: testElement
+          element: testElement,
           // missing property
         });
-        
+
         expect(validation.isValid).toBe(false);
         expect(validation.errors).toHaveLength(1);
       });
@@ -327,23 +327,23 @@ describe('Enhanced Property Expressions', () => {
       it('should reject non-string property', () => {
         const validation = expression.validate({
           element: testElement,
-          property: 123
+          property: 123,
         });
-        
+
         expect(validation.isValid).toBe(false);
         expect(validation.errors).toHaveLength(1);
       });
 
       it('should track performance', async () => {
         const initialHistoryLength = context.evaluationHistory.length;
-        
+
         await expression.evaluate(context, {
           element: testElement,
-          property: 'id'
+          property: 'id',
         });
-        
+
         expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
-        
+
         const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
         expect(evaluation.expressionName).toBe('possessive');
         expect(evaluation.category).toBe('Property');
@@ -379,9 +379,9 @@ describe('Enhanced Property Expressions', () => {
 
     it('should access my property when me is available', async () => {
       const result = await expression.evaluate(context, {
-        property: 'id'
+        property: 'id',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('test-element');
@@ -392,9 +392,9 @@ describe('Enhanced Property Expressions', () => {
     it('should return undefined when me is not available', async () => {
       context.me = undefined;
       const result = await expression.evaluate(context, {
-        property: 'id'
+        property: 'id',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeUndefined();
@@ -404,7 +404,7 @@ describe('Enhanced Property Expressions', () => {
 
     it('should access multiple properties', async () => {
       const properties = ['id', 'className', 'tagName'];
-      
+
       for (const property of properties) {
         const result = await expression.evaluate(context, { property });
         expect(result.success).toBe(true);
@@ -416,9 +416,9 @@ describe('Enhanced Property Expressions', () => {
 
     it('should validate input correctly', () => {
       const validResult = expression.validate({
-        property: 'id'
+        property: 'id',
       });
-      
+
       expect(validResult.isValid).toBe(true);
       expect(validResult.errors).toHaveLength(0);
     });
@@ -427,7 +427,7 @@ describe('Enhanced Property Expressions', () => {
       const invalidResult = expression.validate({
         // missing property
       });
-      
+
       expect(invalidResult.isValid).toBe(false);
       expect(invalidResult.errors).toHaveLength(1);
     });
@@ -448,9 +448,9 @@ describe('Enhanced Property Expressions', () => {
 
     it('should access its property when it is available', async () => {
       const result = await expression.evaluate(context, {
-        property: 'name'
+        property: 'name',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('test object');
@@ -460,9 +460,9 @@ describe('Enhanced Property Expressions', () => {
 
     it('should access its length property', async () => {
       const result = await expression.evaluate(context, {
-        property: 'length'
+        property: 'length',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(5);
@@ -473,9 +473,9 @@ describe('Enhanced Property Expressions', () => {
     it('should return undefined when it is null', async () => {
       context.it = null;
       const result = await expression.evaluate(context, {
-        property: 'anything'
+        property: 'anything',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeUndefined();
@@ -486,9 +486,9 @@ describe('Enhanced Property Expressions', () => {
     it('should handle array it reference', async () => {
       context.it = ['a', 'b', 'c'];
       const result = await expression.evaluate(context, {
-        property: 'length'
+        property: 'length',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(3);
@@ -512,9 +512,9 @@ describe('Enhanced Property Expressions', () => {
 
     it('should access your property when you is available', async () => {
       const result = await expression.evaluate(context, {
-        property: 'value'
+        property: 'value',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('input value');
@@ -524,9 +524,9 @@ describe('Enhanced Property Expressions', () => {
 
     it('should access your id property', async () => {
       const result = await expression.evaluate(context, {
-        property: 'id'
+        property: 'id',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('test-input');
@@ -537,9 +537,9 @@ describe('Enhanced Property Expressions', () => {
     it('should return undefined when you is not available', async () => {
       context.you = undefined;
       const result = await expression.evaluate(context, {
-        property: 'anything'
+        property: 'anything',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeUndefined();
@@ -565,9 +565,9 @@ describe('Enhanced Property Expressions', () => {
     it('should get attribute value', async () => {
       const result = await expression.evaluate(context, {
         element: testElement,
-        attribute: 'data-role'
+        attribute: 'data-role',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('component');
@@ -578,9 +578,9 @@ describe('Enhanced Property Expressions', () => {
     it('should get standard HTML attributes', async () => {
       const result = await expression.evaluate(context, {
         element: testInput,
-        attribute: 'type'
+        attribute: 'type',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('text');
@@ -591,9 +591,9 @@ describe('Enhanced Property Expressions', () => {
     it('should get ARIA attributes', async () => {
       const result = await expression.evaluate(context, {
         element: testElement,
-        attribute: 'aria-label'
+        attribute: 'aria-label',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('Test component');
@@ -604,9 +604,9 @@ describe('Enhanced Property Expressions', () => {
     it('should return null for non-existent attributes', async () => {
       const result = await expression.evaluate(context, {
         element: testElement,
-        attribute: 'non-existent'
+        attribute: 'non-existent',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeNull();
@@ -617,9 +617,9 @@ describe('Enhanced Property Expressions', () => {
     it('should return null for non-element input', async () => {
       const result = await expression.evaluate(context, {
         element: 'not an element',
-        attribute: 'any'
+        attribute: 'any',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeNull();
@@ -630,19 +630,19 @@ describe('Enhanced Property Expressions', () => {
     it('should validate input correctly', () => {
       const validResult = expression.validate({
         element: testElement,
-        attribute: 'id'
+        attribute: 'id',
       });
-      
+
       expect(validResult.isValid).toBe(true);
       expect(validResult.errors).toHaveLength(0);
     });
 
     it('should reject invalid input', () => {
       const invalidResult = expression.validate({
-        element: testElement
+        element: testElement,
         // missing attribute
       });
-      
+
       expect(invalidResult.isValid).toBe(false);
       expect(invalidResult.errors).toHaveLength(1);
     });
@@ -666,9 +666,9 @@ describe('Enhanced Property Expressions', () => {
       const result = await expression.evaluate(context, {
         element: testElement,
         attribute: 'data-role',
-        value: 'component'
+        value: 'component',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -680,9 +680,9 @@ describe('Enhanced Property Expressions', () => {
       const result = await expression.evaluate(context, {
         element: testElement,
         attribute: 'data-role',
-        value: 'different'
+        value: 'different',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -694,9 +694,9 @@ describe('Enhanced Property Expressions', () => {
       const result = await expression.evaluate(context, {
         element: testElement,
         attribute: 'non-existent',
-        value: 'any'
+        value: 'any',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -708,9 +708,9 @@ describe('Enhanced Property Expressions', () => {
       const result = await expression.evaluate(context, {
         element: 'not an element',
         attribute: 'any',
-        value: 'any'
+        value: 'any',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -720,13 +720,13 @@ describe('Enhanced Property Expressions', () => {
 
     it('should handle complex attribute values', async () => {
       testElement.setAttribute('data-config', '{"theme":"dark","size":"large"}');
-      
+
       const result = await expression.evaluate(context, {
         element: testElement,
         attribute: 'data-config',
-        value: '{"theme":"dark","size":"large"}'
+        value: '{"theme":"dark","size":"large"}',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -738,9 +738,9 @@ describe('Enhanced Property Expressions', () => {
       const validResult = expression.validate({
         element: testElement,
         attribute: 'data-role',
-        value: 'component'
+        value: 'component',
       });
-      
+
       expect(validResult.isValid).toBe(true);
       expect(validResult.errors).toHaveLength(0);
     });
@@ -748,10 +748,10 @@ describe('Enhanced Property Expressions', () => {
     it('should reject invalid input', () => {
       const invalidResult = expression.validate({
         element: testElement,
-        attribute: 'data-role'
+        attribute: 'data-role',
         // missing value
       });
-      
+
       expect(invalidResult.isValid).toBe(false);
       expect(invalidResult.errors).toHaveLength(1);
     });
@@ -764,7 +764,9 @@ describe('Enhanced Property Expressions', () => {
       expect(propertyExpressions.its).toBeInstanceOf(EnhancedItsExpression);
       expect(propertyExpressions.your).toBeInstanceOf(EnhancedYourExpression);
       expect(propertyExpressions.attribute).toBeInstanceOf(EnhancedAttributeExpression);
-      expect(propertyExpressions.attributeWithValue).toBeInstanceOf(EnhancedAttributeWithValueExpression);
+      expect(propertyExpressions.attributeWithValue).toBeInstanceOf(
+        EnhancedAttributeWithValueExpression
+      );
     });
 
     it('should have consistent metadata across all expressions', () => {
@@ -786,35 +788,35 @@ describe('Enhanced Property Expressions', () => {
       const container = document.createElement('div');
       container.className = 'container';
       container.setAttribute('data-module', 'layout');
-      
+
       const header = document.createElement('header');
       header.className = 'header';
       header.setAttribute('data-section', 'top');
-      
+
       const title = document.createElement('h1');
       title.textContent = 'Page Title';
       title.id = 'main-title';
-      
+
       header.appendChild(title);
       container.appendChild(header);
       document.body.appendChild(container);
 
       const possessiveExpr = new EnhancedPossessiveExpression();
-      
+
       // Test nested property access
       const containerResult = await possessiveExpr.evaluate(context, {
         element: container,
-        property: 'data-module'
+        property: 'data-module',
       });
-      
+
       const headerResult = await possessiveExpr.evaluate(context, {
         element: header,
-        property: 'children'
+        property: 'children',
       });
-      
+
       const titleResult = await possessiveExpr.evaluate(context, {
         element: title,
-        property: 'innerText'
+        property: 'innerText',
       });
 
       expect(containerResult.success).toBe(true);
@@ -842,7 +844,7 @@ describe('Enhanced Property Expressions', () => {
       checkbox.type = 'checkbox';
       checkbox.checked = true;
       checkbox.name = 'accept';
-      
+
       const select = document.createElement('select');
       select.name = 'country';
       const option = document.createElement('option');
@@ -850,21 +852,21 @@ describe('Enhanced Property Expressions', () => {
       option.selected = true;
       option.textContent = 'United States';
       select.appendChild(option);
-      
+
       form.appendChild(checkbox);
       form.appendChild(select);
       document.body.appendChild(form);
 
       const possessiveExpr = new EnhancedPossessiveExpression();
-      
+
       const checkboxResult = await possessiveExpr.evaluate(context, {
         element: checkbox,
-        property: 'checked'
+        property: 'checked',
       });
-      
+
       const selectResult = await possessiveExpr.evaluate(context, {
         element: select,
-        property: 'value'
+        property: 'value',
       });
 
       expect(checkboxResult.success).toBe(true);
@@ -887,17 +889,17 @@ describe('Enhanced Property Expressions', () => {
       }
 
       const possessiveExpr = new EnhancedPossessiveExpression();
-      
+
       const startTime = Date.now();
       const result = await possessiveExpr.evaluate(context, {
         element: largeObject,
-        property: 'prop500'
+        property: 'prop500',
       });
       const duration = Date.now() - startTime;
-      
+
       expect(result.success).toBe(true);
       expect(duration).toBeLessThan(10); // Should be very fast
-      
+
       if (result.success) {
         expect(result.value).toBe('value500');
       }
@@ -912,11 +914,11 @@ describe('Enhanced Property Expressions', () => {
       const myExpr = new EnhancedMyExpression();
       const itsExpr = new EnhancedItsExpression();
       const yourExpr = new EnhancedYourExpression();
-      
+
       const [myResult, itsResult, yourResult] = await Promise.all([
         myExpr.evaluate(context, { property: 'id' }),
         itsExpr.evaluate(context, { property: 'data' }),
-        yourExpr.evaluate(context, { property: 'value' })
+        yourExpr.evaluate(context, { property: 'value' }),
       ]);
 
       expect(myResult.success).toBe(true);
@@ -926,11 +928,11 @@ describe('Enhanced Property Expressions', () => {
       if (myResult.success) {
         expect(myResult.value).toBe('test-element');
       }
-      
+
       if (itsResult.success) {
         expect(itsResult.value).toEqual({ nested: 'value' });
       }
-      
+
       if (yourResult.success) {
         expect(yourResult.value).toBe('input value');
       }
@@ -940,17 +942,17 @@ describe('Enhanced Property Expressions', () => {
   describe('Performance and Memory', () => {
     it('should not leak memory with repeated property access', async () => {
       const possessiveExpr = new EnhancedPossessiveExpression();
-      
+
       // Perform many property accesses
       for (let i = 0; i < 100; i++) {
         const result = await possessiveExpr.evaluate(context, {
           element: testElement,
-          property: 'id'
+          property: 'id',
         });
-        
+
         expect(result.success).toBe(true);
       }
-      
+
       // No memory leaks should occur
       expect(true).toBe(true); // Test completes successfully
     });
@@ -958,19 +960,19 @@ describe('Enhanced Property Expressions', () => {
     it('should maintain consistent performance', async () => {
       const possessiveExpr = new EnhancedPossessiveExpression();
       const durations: number[] = [];
-      
+
       for (let i = 0; i < 10; i++) {
         const startTime = Date.now();
         const result = await possessiveExpr.evaluate(context, {
           element: testElement,
-          property: 'className'
+          property: 'className',
         });
         const duration = Date.now() - startTime;
-        
+
         expect(result.success).toBe(true);
         durations.push(duration);
       }
-      
+
       // Performance should be consistent (all operations under 5ms)
       durations.forEach(duration => {
         expect(duration).toBeLessThan(5);

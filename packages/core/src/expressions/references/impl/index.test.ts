@@ -10,7 +10,7 @@ import {
   EnhancedYouExpression,
   EnhancedItExpression,
   EnhancedCSSSelectorExpression,
-  referenceExpressions
+  referenceExpressions,
 } from './index';
 import type { TypedExpressionContext } from '../../../types/expression-types';
 
@@ -45,12 +45,12 @@ describe('Enhanced Reference Expressions', () => {
       locals: new Map(),
       globals: new Map(),
       event: null,
-      
+
       // Enhanced expression context properties
       expressionStack: [],
       evaluationDepth: 0,
       validationMode: 'strict' as const,
-      evaluationHistory: []
+      evaluationHistory: [],
     };
 
     // Clear DOM
@@ -77,7 +77,7 @@ describe('Enhanced Reference Expressions', () => {
 
     it('should return the current element from context', async () => {
       const result = await meExpression.evaluate(mockContext, undefined);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(mockElement);
@@ -88,7 +88,7 @@ describe('Enhanced Reference Expressions', () => {
     it('should return null when me is not set', async () => {
       mockContext.me = null;
       const result = await meExpression.evaluate(mockContext, undefined);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(null);
@@ -98,7 +98,7 @@ describe('Enhanced Reference Expressions', () => {
 
     it('should track evaluation in history', async () => {
       await meExpression.evaluate(mockContext, undefined);
-      
+
       expect(mockContext.evaluationHistory).toHaveLength(1);
       const evaluation = mockContext.evaluationHistory[0];
       expect(evaluation.expressionName).toBe('me');
@@ -140,7 +140,7 @@ describe('Enhanced Reference Expressions', () => {
 
     it('should return the target element from context', async () => {
       const result = await youExpression.evaluate(mockContext, undefined);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(mockTargetElement);
@@ -151,7 +151,7 @@ describe('Enhanced Reference Expressions', () => {
     it('should return null when you is not set', async () => {
       mockContext.you = null;
       const result = await youExpression.evaluate(mockContext, undefined);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(null);
@@ -190,7 +190,7 @@ describe('Enhanced Reference Expressions', () => {
 
     it('should return the context variable value', async () => {
       const result = await itExpression.evaluate(mockContext, undefined);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('test-value');
@@ -239,16 +239,16 @@ describe('Enhanced Reference Expressions', () => {
 
     beforeEach(() => {
       selectorExpression = new EnhancedCSSSelectorExpression();
-      
+
       // Add more elements to DOM for testing
       const button1 = document.createElement('button');
       button1.className = 'btn primary';
       button1.textContent = 'Button 1';
-      
+
       const button2 = document.createElement('button');
       button2.className = 'btn secondary';
       button2.textContent = 'Button 2';
-      
+
       document.body.appendChild(button1);
       document.body.appendChild(button2);
     });
@@ -264,7 +264,7 @@ describe('Enhanced Reference Expressions', () => {
     it('should query all matching elements by default', async () => {
       const input = { selector: '.btn', single: false };
       const result = await selectorExpression.evaluate(mockContext, input);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Array.isArray(result.value)).toBe(true);
@@ -276,7 +276,7 @@ describe('Enhanced Reference Expressions', () => {
     it('should query single element when requested', async () => {
       const input = { selector: '#test-element', single: true };
       const result = await selectorExpression.evaluate(mockContext, input);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(mockElement);
@@ -287,7 +287,7 @@ describe('Enhanced Reference Expressions', () => {
     it('should return null for no matches', async () => {
       const input = { selector: '.nonexistent', single: false };
       const result = await selectorExpression.evaluate(mockContext, input);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(null);
@@ -297,7 +297,7 @@ describe('Enhanced Reference Expressions', () => {
     it('should validate CSS selector syntax', async () => {
       const invalidInput = { selector: '<<<invalid>>>', single: false };
       const result = await selectorExpression.evaluate(mockContext, invalidInput);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.name).toBe('CSSSelectorError');
@@ -324,7 +324,7 @@ describe('Enhanced Reference Expressions', () => {
     it('should track evaluation performance', async () => {
       const input = { selector: '.btn', single: false };
       await selectorExpression.evaluate(mockContext, input);
-      
+
       expect(mockContext.evaluationHistory).toHaveLength(1);
       const evaluation = mockContext.evaluationHistory[0];
       expect(evaluation.expressionName).toBe('css-selector');
@@ -350,11 +350,11 @@ describe('Enhanced Reference Expressions', () => {
     });
 
     it('should provide factory functions', async () => {
-      const { 
+      const {
         createEnhancedMeExpression,
         createEnhancedYouExpression,
         createEnhancedItExpression,
-        createEnhancedCSSSelectorExpression
+        createEnhancedCSSSelectorExpression,
       } = await import('./index');
 
       expect(createEnhancedMeExpression()).toBeInstanceOf(EnhancedMeExpression);
@@ -368,7 +368,7 @@ describe('Enhanced Reference Expressions', () => {
     it('should maintain backward compatibility with current expression interface', () => {
       // Test that enhanced expressions can be used where regular expressions are expected
       const meExpr = referenceExpressions.me;
-      
+
       expect(meExpr.name).toBe('me');
       expect(meExpr.category).toBe('Reference');
       expect(typeof meExpr.evaluate).toBe('function');
@@ -377,7 +377,7 @@ describe('Enhanced Reference Expressions', () => {
 
     it('should provide richer metadata than legacy expressions', () => {
       const meExpr = referenceExpressions.me;
-      
+
       expect(meExpr.metadata).toBeDefined();
       expect(meExpr.metadata.examples).toBeDefined();
       expect(meExpr.metadata.performance).toBeDefined();
@@ -389,7 +389,7 @@ describe('Enhanced Reference Expressions', () => {
       // Test that enhanced expressions work with TypedExpressionContext
       const meExpr = referenceExpressions.me;
       const result = await meExpr.evaluate(mockContext, undefined);
-      
+
       expect(result.success).toBe(true);
       expect(mockContext.evaluationHistory).toHaveLength(1);
     });
@@ -398,29 +398,29 @@ describe('Enhanced Reference Expressions', () => {
   describe('Error Handling', () => {
     it('should handle evaluation errors gracefully', async () => {
       const selectorExpr = referenceExpressions['css-selector'];
-      
+
       // Mock querySelector to throw
       const originalQuerySelector = document.querySelector;
       document.querySelector = vi.fn().mockImplementation(() => {
         throw new Error('DOM query failed');
       });
-      
+
       const input = { selector: '.test', single: true };
       const result = await selectorExpr.evaluate(mockContext, input);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.name).toBe('CSSSelectorError');
         expect(result.error.suggestions).toBeDefined();
       }
-      
+
       // Restore original function
       document.querySelector = originalQuerySelector;
     });
 
     it('should provide helpful validation messages', () => {
       const selectorExpr = referenceExpressions['css-selector'];
-      
+
       const result = selectorExpr.validate({ invalid: 'structure' });
       expect(result.isValid).toBe(false);
       expect(result.suggestions).toBeDefined();
@@ -431,19 +431,19 @@ describe('Enhanced Reference Expressions', () => {
   describe('Performance Characteristics', () => {
     it('should complete simple evaluations quickly', async () => {
       const meExpr = referenceExpressions.me;
-      
+
       const startTime = Date.now();
       await meExpr.evaluate(mockContext, undefined);
       const duration = Date.now() - startTime;
-      
+
       expect(duration).toBeLessThan(10); // Should be very fast
     });
 
     it('should track evaluation metrics', async () => {
       const itExpr = referenceExpressions.it;
-      
+
       await itExpr.evaluate(mockContext, undefined);
-      
+
       const evaluation = mockContext.evaluationHistory[0];
       expect(evaluation.timestamp).toBeDefined();
       expect(evaluation.duration).toBeGreaterThanOrEqual(0);

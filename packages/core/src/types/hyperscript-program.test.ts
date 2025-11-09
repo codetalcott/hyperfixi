@@ -4,12 +4,12 @@
  */
 
 import { describe, test, expect } from 'vitest';
-import type { 
-  HyperScriptProgram, 
-  HyperScriptFeature, 
+import type {
+  HyperScriptProgram,
+  HyperScriptFeature,
   ParsedCommand,
   HyperScriptFeatureType,
-  ParsedCommandType
+  ParsedCommandType,
 } from './command-types';
 import { HyperScriptProgramSchema } from './command-types';
 
@@ -18,97 +18,103 @@ describe('HyperScriptProgram Type System', () => {
     // Example program structure showing complete type coverage
     const exampleProgram: HyperScriptProgram = {
       source: 'on click toggle .red on me',
-      features: [{
-        type: 'event' as HyperScriptFeatureType,
-        id: 'click-handler-1',
-        trigger: {
-          event: 'click',
-          options: {
-            once: false
-          }
-        },
-        commands: [{
-          type: 'dom-manipulation' as ParsedCommandType,
-          name: 'toggle',
-          args: [{
-            value: '.red',
-            type: 'string',
-            kind: 'literal'
-          }],
-          options: {
-            validateInputs: true,
-            trackPerformance: true,
-            errorHandling: 'throw'
+      features: [
+        {
+          type: 'event' as HyperScriptFeatureType,
+          id: 'click-handler-1',
+          trigger: {
+            event: 'click',
+            options: {
+              once: false,
+            },
+          },
+          commands: [
+            {
+              type: 'dom-manipulation' as ParsedCommandType,
+              name: 'toggle',
+              args: [
+                {
+                  value: '.red',
+                  type: 'string',
+                  kind: 'literal',
+                },
+              ],
+              options: {
+                validateInputs: true,
+                trackPerformance: true,
+                errorHandling: 'throw',
+              },
+              sourceRange: {
+                start: 9,
+                end: 25,
+              },
+            },
+          ],
+          config: {
+            enabled: true,
+            priority: 1,
+            options: {},
+            dependencies: [],
+            capabilities: {
+              requiresDOM: true,
+              isAsync: false,
+              modifiesGlobalState: false,
+              requiredAPIs: [],
+              performance: {
+                complexity: 'low',
+                memoryUsage: 'minimal',
+                cpuIntensive: false,
+                executionTime: {
+                  min: 0.1,
+                  max: 5.0,
+                  typical: 1.0,
+                },
+              },
+            },
           },
           sourceRange: {
-            start: 9,
-            end: 25
-          }
-        }],
-        config: {
-          enabled: true,
-          priority: 1,
-          options: {},
-          dependencies: [],
-          capabilities: {
-            requiresDOM: true,
-            isAsync: false,
-            modifiesGlobalState: false,
-            requiredAPIs: [],
-            performance: {
-              complexity: 'low',
-              memoryUsage: 'minimal',
-              cpuIntensive: false,
-              executionTime: {
-                min: 0.1,
-                max: 5.0,
-                typical: 1.0
-              }
-            }
-          }
-        },
-        sourceRange: {
-          start: 0,
-          end: 26
-        },
-        metadata: {
-          compiledAt: new Date(),
-          stats: {
-            executionCount: 0,
-            totalExecutionTime: 0,
-            averageExecutionTime: 0,
-            errorCount: 0
+            start: 0,
+            end: 26,
           },
-          resolvedDependencies: [],
-          warnings: []
-        }
-      }],
+          metadata: {
+            compiledAt: new Date(),
+            stats: {
+              executionCount: 0,
+              totalExecutionTime: 0,
+              averageExecutionTime: 0,
+              errorCount: 0,
+            },
+            resolvedDependencies: [],
+            warnings: [],
+          },
+        },
+      ],
       metadata: {
         compilation: {
           compiled: true,
           compiledAt: new Date(),
           compiler: 'hyperfixi',
-          version: '1.0.0'
+          version: '1.0.0',
         },
         analysis: {
           complexity: 1,
           estimatedExecutionTime: 1.0,
           memoryRequirements: 512,
           warnings: [],
-          optimizations: []
-        }
+          optimizations: [],
+        },
       },
       sourceInfo: {
-        attribute: '_'
+        attribute: '_',
       },
       state: {
         status: 'ready',
         context: {
           element: null,
           variables: new Map(),
-          callStack: []
-        }
-      }
+          callStack: [],
+        },
+      },
     };
 
     // Type checking passes - this validates our type structure
@@ -121,7 +127,7 @@ describe('HyperScriptProgram Type System', () => {
   test('HyperScriptFeatureType enum covers all official features', () => {
     const featureTypes: HyperScriptFeatureType[] = [
       'event',
-      'behavior', 
+      'behavior',
       'definition',
       'init',
       'worker',
@@ -129,7 +135,7 @@ describe('HyperScriptProgram Type System', () => {
       'eventsource',
       'set',
       'js',
-      'custom'
+      'custom',
     ];
 
     // Validates that our type system covers all hyperscript features
@@ -143,13 +149,13 @@ describe('HyperScriptProgram Type System', () => {
     const commandTypes: ParsedCommandType[] = [
       'dom-manipulation',
       'content',
-      'navigation', 
+      'navigation',
       'event',
       'async',
       'control-flow',
       'data',
       'expression',
-      'custom'
+      'custom',
     ];
 
     // Validates command type coverage
@@ -162,35 +168,41 @@ describe('HyperScriptProgram Type System', () => {
   test('HyperScriptProgramSchema validates program structure', () => {
     const validProgram = {
       source: 'on click hide me',
-      features: [{
-        type: 'event',
-        id: 'test-feature',
-        commands: [{
-          type: 'dom-manipulation',
-          name: 'hide',
-          args: [{
-            value: 'me',
-            type: 'string',
-            kind: 'reference'
-          }]
-        }],
-        config: {
-          enabled: true,
-          priority: 1,
-          options: {},
-          dependencies: []
-        }
-      }],
+      features: [
+        {
+          type: 'event',
+          id: 'test-feature',
+          commands: [
+            {
+              type: 'dom-manipulation',
+              name: 'hide',
+              args: [
+                {
+                  value: 'me',
+                  type: 'string',
+                  kind: 'reference',
+                },
+              ],
+            },
+          ],
+          config: {
+            enabled: true,
+            priority: 1,
+            options: {},
+            dependencies: [],
+          },
+        },
+      ],
       metadata: {
         compilation: {
           compiled: false,
           compiler: 'hyperfixi',
-          version: '1.0.0'
-        }
+          version: '1.0.0',
+        },
       },
       state: {
-        status: 'ready'
-      }
+        status: 'ready',
+      },
     };
 
     // Schema validation should pass for valid program
@@ -203,24 +215,26 @@ describe('HyperScriptProgram Type System', () => {
     const commandWithMetadata: ParsedCommand = {
       type: 'dom-manipulation',
       name: 'hide',
-      args: [{
-        value: 'me',
-        type: 'element',
-        kind: 'reference',
-        analysis: {
-          isUsed: true,
-          typeCompatibility: 1.0,
-          suggestions: []
-        }
-      }],
+      args: [
+        {
+          value: 'me',
+          type: 'element',
+          kind: 'reference',
+          analysis: {
+            isUsed: true,
+            typeCompatibility: 1.0,
+            suggestions: [],
+          },
+        },
+      ],
       options: {
         validateInputs: true,
         trackPerformance: true,
-        errorHandling: 'throw'
+        errorHandling: 'throw',
       },
       sourceRange: {
         start: 9,
-        end: 16
+        end: 16,
       },
       analysis: {
         complexity: 1,
@@ -229,10 +243,10 @@ describe('HyperScriptProgram Type System', () => {
         typeInference: {
           inputTypes: ['element'],
           outputType: 'void',
-          confidence: 1.0
+          confidence: 1.0,
         },
-        optimizations: []
-      }
+        optimizations: [],
+      },
     };
 
     // Rich metadata enables LLM understanding
@@ -249,10 +263,10 @@ describe('HyperScriptProgram Type System', () => {
         context: {
           element: null,
           variables: new Map([['count', 5]]),
-          callStack: ['click-handler', 'toggle-command']
+          callStack: ['click-handler', 'toggle-command'],
         },
-        startedAt: new Date()
-      }
+        startedAt: new Date(),
+      },
     };
 
     // State tracking enables runtime monitoring and debugging

@@ -13,9 +13,8 @@ import { executeCommand } from '../../commands/command-executor';
  * Create a _hyperscript-compatible command execution environment
  */
 export function createHyperScriptCommandAdapter() {
-  
   // Main adapter function that mimics _hyperscript behavior
-  const adapter = async function(script: string, context?: any): Promise<any> {
+  const adapter = async function (script: string, context?: any): Promise<any> {
     // Convert _hyperscript context to our ExecutionContext
     const executionContext: ExecutionContext = {
       me: context?.me || null,
@@ -23,7 +22,7 @@ export function createHyperScriptCommandAdapter() {
       it: context?.it || context?.result || null,
       result: context?.result || null,
       locals: new Map(Object.entries(context?.locals || {})),
-      globals: new Map(Object.entries(context?.globals || {}))
+      globals: new Map(Object.entries(context?.globals || {})),
     };
 
     // Add direct context properties as locals
@@ -40,7 +39,7 @@ export function createHyperScriptCommandAdapter() {
       if (isExpression(script)) {
         return await parseAndEvaluateExpression(script, executionContext);
       }
-      
+
       // Otherwise, treat as command
       return await executeCommand(script, executionContext);
     } catch (error) {
@@ -53,7 +52,7 @@ export function createHyperScriptCommandAdapter() {
 
   // Add _hyperscript-compatible methods
   (adapter as any).evaluate = adapter;
-  (adapter as any).processNode = function(_node: Node) {
+  (adapter as any).processNode = function (_node: Node) {
     // Mock for now - would implement full DOM processing
     console.warn('processNode not fully implemented');
   };
@@ -66,27 +65,46 @@ export function createHyperScriptCommandAdapter() {
  */
 function isExpression(script: string): boolean {
   const trimmed = script.trim();
-  
+
   // Commands typically start with known command words
   const commandStarters = [
-    'put', 'set', 'add', 'remove', 'show', 'hide', 'toggle',
-    'if', 'repeat', 'wait', 'call', 'send', 'make', 'log',
-    'increment', 'decrement', 'fetch', 'throw', 'return',
-    'break', 'continue', 'halt', 'go'
+    'put',
+    'set',
+    'add',
+    'remove',
+    'show',
+    'hide',
+    'toggle',
+    'if',
+    'repeat',
+    'wait',
+    'call',
+    'send',
+    'make',
+    'log',
+    'increment',
+    'decrement',
+    'fetch',
+    'throw',
+    'return',
+    'break',
+    'continue',
+    'halt',
+    'go',
   ];
-  
+
   const firstWord = trimmed.split(/\s+/)[0];
-  
+
   // If it starts with a command word, treat as command
   if (commandStarters.includes(firstWord)) {
     return false;
   }
-  
+
   // If it has typical command syntax (e.g., "on click"), treat as command
   if (trimmed.startsWith('on ')) {
     return false;
   }
-  
+
   // Otherwise, treat as expression
   return true;
 }
@@ -96,20 +114,20 @@ function isExpression(script: string): boolean {
  */
 export const commandTestUtils = {
   // Execute hyperscript code (commands or expressions)
-  evalHyperScript: async function(src: string, ctx?: any) {
+  evalHyperScript: async function (src: string, ctx?: any) {
     const adapter = createHyperScriptCommandAdapter();
     return await adapter(src, ctx);
   },
 
   // Execute command specifically
-  executeCommand: async function(commandStr: string, ctx?: any) {
+  executeCommand: async function (commandStr: string, ctx?: any) {
     const executionContext: ExecutionContext = {
       me: ctx?.me || null,
       you: ctx?.you || null,
       it: ctx?.it || ctx?.result || null,
       result: ctx?.result || null,
       locals: new Map(Object.entries(ctx?.locals || {})),
-      globals: new Map(Object.entries(ctx?.globals || {}))
+      globals: new Map(Object.entries(ctx?.globals || {})),
     };
 
     if (ctx) {
@@ -124,67 +142,67 @@ export const commandTestUtils = {
   },
 
   // Get parse error for invalid syntax
-  getParseErrorFor: function(src: string, ctx?: any): string {
+  getParseErrorFor: function (src: string, ctx?: any): string {
     try {
       const adapter = createHyperScriptCommandAdapter();
-      adapter(src, ctx);
+      void adapter(src, ctx);
     } catch (e: any) {
       return e.message;
     }
-    return "";
+    return '';
   },
 
   // DOM utilities that command tests use
-  make: function(htmlStr: string): Element {
+  make: function (htmlStr: string): Element {
     const range = document.createRange();
     const fragment = range.createContextualFragment(htmlStr);
     const workArea = getOrCreateWorkArea();
     let child: Element | null = null;
-    
+
     while (fragment.children.length > 0) {
-      child = fragment.children[0] as Element;
+      child = fragment.children[0];
       // Process any _hyperscript attributes
       processHyperscriptAttributes(child);
       workArea.appendChild(child);
     }
-    
+
     return child!;
   },
 
-  clearWorkArea: function(): void {
+  clearWorkArea: function (): void {
     const workArea = document.getElementById('work-area');
     if (workArea) {
       workArea.innerHTML = '';
     }
   },
 
-  getWorkArea: function(): Element {
+  getWorkArea: function (): Element {
     return getOrCreateWorkArea();
   },
 
-  byId: function(id: string): Element | null {
+  byId: function (id: string): Element | null {
     return document.getElementById(id);
   },
 
   // Promise utilities for async tests
-  promiseAnIntIn: function(millis: number): Promise<number> {
-    return new Promise((resolve) => {
+  promiseAnIntIn: function (millis: number): Promise<number> {
+    return new Promise(resolve => {
       setTimeout(() => resolve(42), millis);
     });
   },
 
-  promiseValueBackIn: function(value: any, millis: number): Promise<any> {
-    return new Promise((resolve) => {
+  promiseValueBackIn: function (value: any, millis: number): Promise<any> {
+    return new Promise(resolve => {
       setTimeout(() => resolve(value), millis);
     });
   },
 
   // Assertion helpers
-  startsWith: function(str: string, expected: string): void {
+  startsWith: function (str: string, expected: string): void {
     if (!str || str.indexOf(expected) !== 0) {
       throw new Error(`Expected string '${str}' to start with '${expected}'`);
     }
-  }
+  },
 };
 
 /**
@@ -212,7 +230,7 @@ function processHyperscriptAttributes(element: Element): void {
     element.setAttribute('data-hyperscript-processed', 'pending');
     console.log('Found _hyperscript attribute:', hyprescriptAttr);
   }
-  
+
   // Process child elements recursively
   for (const child of Array.from(element.children)) {
     processHyperscriptAttributes(child);

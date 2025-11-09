@@ -1,9 +1,9 @@
 /**
  * Enhanced Log Command Implementation
  * Outputs values to the console for debugging and inspection
- * 
+ *
  * Syntax: log <value1> <value2> ...
- * 
+ *
  * Modernized with CommandImplementation interface and Zod validation
  */
 
@@ -15,9 +15,11 @@ import type { UnifiedValidationResult } from '../../types/unified-types';
 /**
  * Zod schema for LOG command input validation
  */
-export const LogCommandInputSchema = v.object({
-  values: v.array(v.unknown()).describe('Values to log to console')
-}).describe('LOG command input parameters');
+export const LogCommandInputSchema = v
+  .object({
+    values: v.array(v.unknown()).describe('Values to log to console'),
+  })
+  .describe('LOG command input parameters');
 
 // Input type definition
 export interface LogCommandInput {
@@ -26,7 +28,7 @@ export interface LogCommandInput {
 
 type LogCommandInputType = any; // Inferred from RuntimeValidator
 
-// Output type definition  
+// Output type definition
 export interface LogCommandOutput {
   values: unknown[];
   loggedAt: Date;
@@ -35,7 +37,9 @@ export interface LogCommandOutput {
 /**
  * Enhanced Log Command with full type safety and validation
  */
-export class LogCommand implements CommandImplementation<LogCommandInputType, LogCommandOutput, TypedExecutionContext> {
+export class LogCommand
+  implements CommandImplementation<LogCommandInputType, LogCommandOutput, TypedExecutionContext>
+{
   name = 'log' as const;
   inputSchema = LogCommandInputSchema;
 
@@ -45,11 +49,11 @@ export class LogCommand implements CommandImplementation<LogCommandInputType, Lo
     examples: ['log "message"', 'log variable', 'log value1 value2 value3'],
     syntax: 'log <values...>',
     category: 'utility',
-    version: '1.0.0'
+    version: '1.0.0',
   };
 
   validation = {
-    validate: (input: unknown) => this.validate(input)
+    validate: (input: unknown) => this.validate(input),
   };
 
   async execute(
@@ -57,7 +61,7 @@ export class LogCommand implements CommandImplementation<LogCommandInputType, Lo
     _context: TypedExecutionContext
   ): Promise<LogCommandOutput> {
     const { values } = input;
-    
+
     // If no values, just log empty
     if (values.length === 0) {
       console.log();
@@ -65,13 +69,13 @@ export class LogCommand implements CommandImplementation<LogCommandInputType, Lo
       // Log all values
       console.log(...values);
     }
-    
+
     return {
       values,
-      loggedAt: new Date()
+      loggedAt: new Date(),
     };
   }
-  
+
   validate(input: unknown): UnifiedValidationResult<LogCommandInputType> {
     try {
       const validInput = this.inputSchema.parse(input);
@@ -79,37 +83,37 @@ export class LogCommand implements CommandImplementation<LogCommandInputType, Lo
         isValid: true,
         errors: [],
         suggestions: [],
-        data: validInput
+        data: validInput,
       };
     } catch (error) {
       if (error instanceof Error && error.name === 'ValidationError') {
         return {
           isValid: false,
-          errors: [{
-            type: 'validation-error',
-            code: 'VALIDATION_ERROR',
-            message: `Invalid LOG command input: ${error.message}`,
-            path: '',
-            suggestions: []
-          }],
-          suggestions: [
-            'log "message"',
-            'log variable',
-            'log value1 value2 value3'
-          ]
+          errors: [
+            {
+              type: 'validation-error',
+              code: 'VALIDATION_ERROR',
+              message: `Invalid LOG command input: ${error.message}`,
+              path: '',
+              suggestions: [],
+            },
+          ],
+          suggestions: ['log "message"', 'log variable', 'log value1 value2 value3'],
         };
       }
 
       return {
         isValid: false,
-        errors: [{
-          type: 'validation-error',
-          code: 'VALIDATION_ERROR',
-          message: `LOG command validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          path: '',
-          suggestions: []
-        }],
-        suggestions: []
+        errors: [
+          {
+            type: 'validation-error',
+            code: 'VALIDATION_ERROR',
+            message: `LOG command validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            path: '',
+            suggestions: [],
+          },
+        ],
+        suggestions: [],
       };
     }
   }

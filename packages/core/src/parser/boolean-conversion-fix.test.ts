@@ -1,6 +1,6 @@
 /**
  * TDD Fix for Boolean Type Conversion
- * 
+ *
  * Current issue: "false" as Boolean returns "false" (string) instead of false (boolean)
  * Expected: Proper type conversion for Boolean, String, Number, and other conversions
  */
@@ -21,7 +21,7 @@ const context: ExecutionContext = {
   returned: false,
   broke: false,
   continued: false,
-  async: false
+  async: false,
 };
 
 describe('Boolean Type Conversion - TDD Fix', () => {
@@ -101,9 +101,9 @@ describe('Boolean Type Conversion - TDD Fix', () => {
     it('should handle null as Boolean', async () => {
       const contextWithNull = {
         ...context,
-        locals: new Map([['nullVar', null]])
+        locals: new Map([['nullVar', null]]),
       };
-      
+
       const result = await parseAndEvaluateExpression('nullVar as Boolean', contextWithNull);
       expect(result).toBe(false);
       expect(typeof result).toBe('boolean');
@@ -112,10 +112,13 @@ describe('Boolean Type Conversion - TDD Fix', () => {
     it('should handle undefined as Boolean', async () => {
       const contextWithUndefined = {
         ...context,
-        locals: new Map([['undefinedVar', undefined]])
+        locals: new Map([['undefinedVar', undefined]]),
       };
-      
-      const result = await parseAndEvaluateExpression('undefinedVar as Boolean', contextWithUndefined);
+
+      const result = await parseAndEvaluateExpression(
+        'undefinedVar as Boolean',
+        contextWithUndefined
+      );
       expect(result).toBe(false);
       expect(typeof result).toBe('boolean');
     });
@@ -123,7 +126,7 @@ describe('Boolean Type Conversion - TDD Fix', () => {
     it('should handle boolean literal as Boolean (passthrough)', async () => {
       const result1 = await parseAndEvaluateExpression('true as Boolean', context);
       expect(result1).toBe(true);
-      
+
       const result2 = await parseAndEvaluateExpression('false as Boolean', context);
       expect(result2).toBe(false);
     });

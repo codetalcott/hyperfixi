@@ -14,7 +14,7 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
     await page.waitForTimeout(2000);
 
     // Inject our command test adapter
-    await page.addScriptTag({ 
+    await page.addScriptTag({
       content: `
         // Command test adapter (inline for now)
         window.executeHyperScript = async function(script, context = {}) {
@@ -30,7 +30,7 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
             return { success: false, result: null, error: error.message };
           }
         };
-      `
+      `,
     });
   });
 
@@ -40,20 +40,20 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
         description: 'set simple variable',
         command: 'set x to 42',
         setup: {},
-        verify: (context: any) => context.x === 42
+        verify: (context: any) => context.x === 42,
       },
       {
         description: 'set string variable',
         command: 'set message to "hello world"',
         setup: {},
-        verify: (context: any) => context.message === 'hello world'
+        verify: (context: any) => context.message === 'hello world',
       },
       {
         description: 'set expression result',
         command: 'set result to 2 + 3',
         setup: {},
-        verify: (context: any) => context.result === 5
-      }
+        verify: (context: any) => context.result === 5,
+      },
     ];
 
     let passed = 0;
@@ -76,7 +76,9 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
       }
     }
 
-    console.log(`  📊 SET Tests: ${passed}/${testCases.length} passed (${Math.round(passed/testCases.length*100)}%)`);
+    console.log(
+      `  📊 SET Tests: ${passed}/${testCases.length} passed (${Math.round((passed / testCases.length) * 100)}%)`
+    );
     expect(passed).toBeGreaterThan(0); // At least some should work
   });
 
@@ -92,7 +94,7 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
             return { target: div };
           },
           command: 'put "hello" into #test1',
-          verify: (setup: any) => setup.target.textContent === 'hello'
+          verify: (setup: any) => setup.target.textContent === 'hello',
         },
         {
           description: 'put into innerHTML',
@@ -103,7 +105,7 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
             return { target: div };
           },
           command: 'put "hello" into #test2.innerHTML',
-          verify: (setup: any) => setup.target.innerHTML === 'hello'
+          verify: (setup: any) => setup.target.innerHTML === 'hello',
         },
         {
           description: 'put variable into element',
@@ -115,8 +117,8 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
           },
           command: 'put myValue into #test3',
           context: { myValue: 'test value' },
-          verify: (setup: any) => setup.target.textContent === 'test value'
-        }
+          verify: (setup: any) => setup.target.textContent === 'test value',
+        },
       ];
 
       const results = [];
@@ -124,16 +126,16 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
         try {
           const setup = testCase.setup();
           const context = testCase.context || {};
-          
+
           const result = await window.testCommandExecution(testCase.command, context);
-          
+
           const verified = result.success && testCase.verify(setup);
-          
+
           results.push({
             description: testCase.description,
             command: testCase.command,
             success: verified,
-            error: result.error
+            error: result.error,
           });
 
           // Cleanup
@@ -145,7 +147,7 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
             description: testCase.description,
             command: testCase.command,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
@@ -161,11 +163,15 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
         console.log(`  ✅ ${result.description}: ${result.command}`);
         passed++;
       } else {
-        console.log(`  ❌ ${result.description}: ${result.command} - ${result.error || 'verification failed'}`);
+        console.log(
+          `  ❌ ${result.description}: ${result.command} - ${result.error || 'verification failed'}`
+        );
       }
     });
 
-    console.log(`  📊 PUT Tests: ${passed}/${results.length} passed (${Math.round(passed/results.length*100)}%)`);
+    console.log(
+      `  📊 PUT Tests: ${passed}/${results.length} passed (${Math.round((passed / results.length) * 100)}%)`
+    );
     expect(passed).toBeGreaterThan(0); // At least some should work
   });
 
@@ -181,7 +187,7 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
             return { target: div };
           },
           command: 'add .test-class to #test4',
-          verify: (setup: any) => setup.target.classList.contains('test-class')
+          verify: (setup: any) => setup.target.classList.contains('test-class'),
         },
         {
           description: 'add attribute',
@@ -192,24 +198,24 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
             return { target: div };
           },
           command: 'add [@data-test="value"] to #test5',
-          verify: (setup: any) => setup.target.getAttribute('data-test') === 'value'
-        }
+          verify: (setup: any) => setup.target.getAttribute('data-test') === 'value',
+        },
       ];
 
       const results = [];
       for (const testCase of tests) {
         try {
           const setup = testCase.setup();
-          
+
           const result = await window.testCommandExecution(testCase.command, {});
-          
+
           const verified = result.success && testCase.verify(setup);
-          
+
           results.push({
             description: testCase.description,
             command: testCase.command,
             success: verified,
-            error: result.error
+            error: result.error,
           });
 
           // Cleanup
@@ -221,7 +227,7 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
             description: testCase.description,
             command: testCase.command,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
@@ -237,11 +243,15 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
         console.log(`  ✅ ${result.description}: ${result.command}`);
         passed++;
       } else {
-        console.log(`  ❌ ${result.description}: ${result.command} - ${result.error || 'verification failed'}`);
+        console.log(
+          `  ❌ ${result.description}: ${result.command} - ${result.error || 'verification failed'}`
+        );
       }
     });
 
-    console.log(`  📊 ADD Tests: ${passed}/${results.length} passed (${Math.round(passed/results.length*100)}%)`);
+    console.log(
+      `  📊 ADD Tests: ${passed}/${results.length} passed (${Math.round((passed / results.length) * 100)}%)`
+    );
     expect(passed).toBeGreaterThan(0);
   });
 
@@ -259,55 +269,56 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
         {
           description: 'log string literal',
           command: 'log "hello world"',
-          expected: ['hello world']
+          expected: ['hello world'],
         },
         {
           description: 'log number',
           command: 'log 42',
-          expected: [42]
+          expected: [42],
         },
         {
           description: 'log variable',
           command: 'log myVar',
           context: { myVar: 'test value' },
-          expected: ['test value']
-        }
+          expected: ['test value'],
+        },
       ];
 
       const results = [];
       for (const testCase of tests) {
         logCalls.length = 0; // Clear previous calls
-        
+
         try {
           const result = await window.testCommandExecution(
-            testCase.command, 
+            testCase.command,
             testCase.context || {}
           );
-          
-          const verified = result.success && 
-            logCalls.length > 0 && 
+
+          const verified =
+            result.success &&
+            logCalls.length > 0 &&
             JSON.stringify(logCalls[0]) === JSON.stringify(testCase.expected);
-          
+
           results.push({
             description: testCase.description,
             command: testCase.command,
             success: verified,
             error: result.error,
-            actualLog: logCalls[0]
+            actualLog: logCalls[0],
           });
         } catch (error) {
           results.push({
             description: testCase.description,
             command: testCase.command,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
 
       // Restore console.log
       console.log = originalLog;
-      
+
       return results;
     });
 
@@ -319,14 +330,18 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
         console.log(`  ✅ ${result.description}: ${result.command}`);
         passed++;
       } else {
-        console.log(`  ❌ ${result.description}: ${result.command} - ${result.error || 'verification failed'}`);
+        console.log(
+          `  ❌ ${result.description}: ${result.command} - ${result.error || 'verification failed'}`
+        );
         if (result.actualLog) {
           console.log(`    Actual log: ${JSON.stringify(result.actualLog)}`);
         }
       }
     });
 
-    console.log(`  📊 LOG Tests: ${passed}/${results.length} passed (${Math.round(passed/results.length*100)}%)`);
+    console.log(
+      `  📊 LOG Tests: ${passed}/${results.length} passed (${Math.round((passed / results.length) * 100)}%)`
+    );
     expect(passed).toBeGreaterThan(0);
   });
 
@@ -346,10 +361,10 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
           verify: (setup: any) => {
             const computed = window.getComputedStyle(setup.target);
             return computed.display !== 'none';
-          }
+          },
         },
         {
-          description: 'hide element', 
+          description: 'hide element',
           setup: () => {
             const div = document.createElement('div');
             div.id = 'test7';
@@ -360,24 +375,24 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
           verify: (setup: any) => {
             const computed = window.getComputedStyle(setup.target);
             return computed.display === 'none';
-          }
-        }
+          },
+        },
       ];
 
       const results = [];
       for (const testCase of tests) {
         try {
           const setup = testCase.setup();
-          
+
           const result = await window.testCommandExecution(testCase.command, {});
-          
+
           const verified = result.success && testCase.verify(setup);
-          
+
           results.push({
             description: testCase.description,
             command: testCase.command,
             success: verified,
-            error: result.error
+            error: result.error,
           });
 
           // Cleanup
@@ -389,7 +404,7 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
             description: testCase.description,
             command: testCase.command,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
@@ -405,11 +420,15 @@ test.describe('HyperFixi Command Compatibility Tests', () => {
         console.log(`  ✅ ${result.description}: ${result.command}`);
         passed++;
       } else {
-        console.log(`  ❌ ${result.description}: ${result.command} - ${result.error || 'verification failed'}`);
+        console.log(
+          `  ❌ ${result.description}: ${result.command} - ${result.error || 'verification failed'}`
+        );
       }
     });
 
-    console.log(`  📊 SHOW/HIDE Tests: ${passed}/${results.length} passed (${Math.round(passed/results.length*100)}%)`);
+    console.log(
+      `  📊 SHOW/HIDE Tests: ${passed}/${results.length} passed (${Math.round((passed / results.length) * 100)}%)`
+    );
     expect(passed).toBeGreaterThan(0);
   });
 

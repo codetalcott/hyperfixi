@@ -45,7 +45,7 @@ const STANDARD_COMMANDS = [
   'make',
   'append',
   'call',
-  'get'
+  'get',
 ];
 
 /**
@@ -62,7 +62,7 @@ export function createStandardRuntime() {
     commands: STANDARD_COMMANDS,
     useEnhancedCommands: true,
     enableAsyncCommands: true,
-    expressionPreload: 'common'  // Phase 2: Load core + common expressions
+    expressionPreload: 'common', // Phase 2: Load core + common expressions
   });
 }
 
@@ -96,7 +96,7 @@ const runtime = createStandardRuntime();
    */
   init: () => {
     defaultAttributeProcessor.init();
-  }
+  },
 };
 
 // Auto-initialize on DOMContentLoaded

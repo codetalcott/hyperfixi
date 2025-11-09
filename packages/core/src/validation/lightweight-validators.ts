@@ -60,31 +60,37 @@ export interface RuntimeValidator<T = unknown> {
 }
 
 // Environment-based validation control
-const isProduction = typeof process !== 'undefined' 
-  ? process.env.NODE_ENV === 'production'
-  : false; // Default to development mode in browser environments
-const skipValidation = isProduction || 
+const isProduction = typeof process !== 'undefined' ? process.env.NODE_ENV === 'production' : false; // Default to development mode in browser environments
+const skipValidation =
+  isProduction ||
   (typeof process !== 'undefined' && process.env.HYPERFIXI_SKIP_VALIDATION === 'true') ||
   (typeof globalThis !== 'undefined' && (globalThis as any).HYPERFIXI_SKIP_VALIDATION === 'true');
 
 /**
  * Helper function to add describe method to any validator
  */
-function addDescribeMethod<T>(baseValidator: { validate: (value: unknown) => ValidationResult<T>, description?: string | undefined }): RuntimeValidator<T> {
+function addDescribeMethod<T>(baseValidator: {
+  validate: (value: unknown) => ValidationResult<T>;
+  description?: string | undefined;
+}): RuntimeValidator<T> {
   const validator = {
     ...baseValidator,
     describe(description: string): RuntimeValidator<T> {
       validator.description = description;
       return validator;
     },
-    safeParse(value: unknown): { success: boolean; data?: T; error?: { errors: ValidationError[] } } {
+    safeParse(value: unknown): {
+      success: boolean;
+      data?: T;
+      error?: { errors: ValidationError[] };
+    } {
       const result = this.validate(value);
       if (result.success) {
         return { success: true, ...(result.data !== undefined && { data: result.data }) };
       } else {
         return {
           success: false,
-          error: { errors: result.error ? [result.error] : [] }
+          error: { errors: result.error ? [result.error] : [] },
         };
       }
     },
@@ -104,7 +110,7 @@ function addDescribeMethod<T>(baseValidator: { validate: (value: unknown) => Val
             return { success: true, data: undefined };
           }
           return validator.validate(value);
-        }
+        },
       };
       return optionalValidator as RuntimeValidator<T | undefined>;
     },
@@ -120,7 +126,7 @@ function addDescribeMethod<T>(baseValidator: { validate: (value: unknown) => Val
             return { success: true, data: defaultValue };
           }
           return validator.validate(value);
-        }
+        },
       };
       return defaultValidator;
     },
@@ -156,11 +162,11 @@ function addDescribeMethod<T>(baseValidator: { validate: (value: unknown) => Val
       throw new Error(result.error?.message || 'Validation failed');
     },
     merge(_other: RuntimeValidator<any>): RuntimeValidator<T> {
-      return validator as RuntimeValidator<T>;
+      return validator;
     },
     refine(_refineFn: (value: T) => boolean, _errorMessage?: string): RuntimeValidator<T> {
-      return validator as RuntimeValidator<T>;
-    }
+      return validator;
+    },
   } as RuntimeValidator<T>;
   return validator;
 }
@@ -172,8 +178,8 @@ function createPassthroughValidator<T>(): RuntimeValidator<T> {
   return addDescribeMethod({
     validate: (value: unknown): ValidationResult<T> => ({
       success: true,
-      data: value as T
-    })
+      data: value as T,
+    }),
   });
 }
 
@@ -191,7 +197,9 @@ export interface StringValidatorOptions {
 /**
  * Creates a string validator
  */
-export function createStringValidator(options: StringValidatorOptions = {}): RuntimeValidator<string> {
+export function createStringValidator(
+  options: StringValidatorOptions = {}
+): RuntimeValidator<string> {
   if (skipValidation) {
     return createPassthroughValidator<string>();
   }
@@ -210,7 +218,7 @@ export function createStringValidator(options: StringValidatorOptions = {}): Run
           error: createValidationError(
             'type-mismatch',
             `Expected string, received ${typeof value}`
-          )
+          ),
         };
       }
 
@@ -221,7 +229,7 @@ export function createStringValidator(options: StringValidatorOptions = {}): Run
           error: createValidationError(
             'runtime-error',
             `String must be at least ${options.minLength} characters long`
-          )
+          ),
         };
       }
 
@@ -232,7 +240,7 @@ export function createStringValidator(options: StringValidatorOptions = {}): Run
           error: createValidationError(
             'runtime-error',
             `String must be at most ${options.maxLength} characters long`
-          )
+          ),
         };
       }
 
@@ -246,19 +254,22 @@ export function createStringValidator(options: StringValidatorOptions = {}): Run
             error: createValidationError(
               'runtime-error',
               `Expected "${expected}", received "${value}"`
-            )
+            ),
           };
         }
 
         return {
           success: false,
-          error: createValidationError('missing-argument', `String does not match required pattern`)
+          error: createValidationError(
+            'missing-argument',
+            `String does not match required pattern`
+          ),
         };
       }
 
       return { success: true, data: value };
     },
-    ...(options.description && { description: options.description })
+    ...(options.description && { description: options.description }),
   });
 }
 
@@ -281,7 +292,7 @@ export function createObjectValidator<T extends Record<string, RuntimeValidator>
           error: createValidationError(
             'type-mismatch',
             `Expected object, received ${typeof value}`
-          )
+          ),
         };
       }
 
@@ -300,7 +311,7 @@ export function createObjectValidator<T extends Record<string, RuntimeValidator>
             error: createValidationError(
               'runtime-error',
               `Unexpected properties: ${extraKeys.join(', ')}`
-            )
+            ),
           };
         }
       }
@@ -311,14 +322,16 @@ export function createObjectValidator<T extends Record<string, RuntimeValidator>
         const fieldResult = validator.validate(fieldValue);
 
         if (!fieldResult.success) {
-          const errorPath = fieldResult.error!.path ? `${fieldName}.${fieldResult.error!.path}` : fieldName;
+          const errorPath = fieldResult.error!.path
+            ? `${fieldName}.${fieldResult.error!.path}`
+            : fieldName;
           return {
             success: false,
             error: createValidationError(
               'validation-error',
               fieldResult.error!.message || `Field "${fieldName}" validation failed`,
               errorPath
-            )
+            ),
           };
         }
 
@@ -330,7 +343,7 @@ export function createObjectValidator<T extends Record<string, RuntimeValidator>
               'missing-argument',
               `Required field "${fieldName}" is missing`,
               fieldName
-            )
+            ),
           };
         }
 
@@ -340,21 +353,21 @@ export function createObjectValidator<T extends Record<string, RuntimeValidator>
       }
 
       return { success: true, data: result };
-    }
+    },
   });
 
   // Add strict() method to return a new validator with strict mode enabled
   (validator as any).strict = () => createObjectValidator(fields, { strict: true });
 
-  return validator as RuntimeValidator<{ [K in keyof T]: T[K] extends RuntimeValidator<infer U> ? U : never }>;
+  return validator as RuntimeValidator<{
+    [K in keyof T]: T[K] extends RuntimeValidator<infer U> ? U : never;
+  }>;
 }
 
 /**
  * Creates an array validator
  */
-export function createArrayValidator<T>(
-  itemValidator: RuntimeValidator<T>
-): RuntimeValidator<T[]> {
+export function createArrayValidator<T>(itemValidator: RuntimeValidator<T>): RuntimeValidator<T[]> {
   if (skipValidation) {
     return createPassthroughValidator<T[]>();
   }
@@ -364,10 +377,7 @@ export function createArrayValidator<T>(
       if (!Array.isArray(value)) {
         return {
           success: false,
-          error: createValidationError(
-            'type-mismatch',
-            `Expected array, received ${typeof value}`
-          )
+          error: createValidationError('type-mismatch', `Expected array, received ${typeof value}`),
         };
       }
 
@@ -379,14 +389,14 @@ export function createArrayValidator<T>(
           const errorPath = itemResult.error!.path ? `${i}.${itemResult.error!.path}` : `${i}`;
           return {
             success: false,
-            error: createValidationError('runtime-error', itemResult.error!.message, errorPath)
+            error: createValidationError('runtime-error', itemResult.error!.message, errorPath),
           };
         }
         result.push(itemResult.data!);
       }
 
       return { success: true, data: result };
-    }
+    },
   });
 }
 
@@ -401,14 +411,13 @@ export function createTupleValidator<T extends readonly RuntimeValidator[]>(
   }
 
   return addDescribeMethod({
-    validate: (value: unknown): ValidationResult<{ [K in keyof T]: T[K] extends RuntimeValidator<infer U> ? U : never }> => {
+    validate: (
+      value: unknown
+    ): ValidationResult<{ [K in keyof T]: T[K] extends RuntimeValidator<infer U> ? U : never }> => {
       if (!Array.isArray(value)) {
         return {
           success: false,
-          error: createValidationError(
-            'type-mismatch',
-            `Expected array, received ${typeof value}`
-          )
+          error: createValidationError('type-mismatch', `Expected array, received ${typeof value}`),
         };
       }
 
@@ -418,7 +427,7 @@ export function createTupleValidator<T extends readonly RuntimeValidator[]>(
           error: createValidationError(
             'runtime-error',
             `Expected tuple of length ${validators.length}, received length ${value.length}`
-          )
+          ),
         };
       }
 
@@ -430,23 +439,24 @@ export function createTupleValidator<T extends readonly RuntimeValidator[]>(
           const errorPath = itemResult.error!.path ? `${i}.${itemResult.error!.path}` : `${i}`;
           return {
             success: false,
-            error: createValidationError('runtime-error', itemResult.error!.message, errorPath)
+            error: createValidationError('runtime-error', itemResult.error!.message, errorPath),
           };
         }
         result.push(itemResult.data);
       }
 
-      return { success: true, data: result as { [K in keyof T]: T[K] extends RuntimeValidator<infer U> ? U : never } };
-    }
+      return {
+        success: true,
+        data: result as { [K in keyof T]: T[K] extends RuntimeValidator<infer U> ? U : never },
+      };
+    },
   });
 }
 
 /**
  * Creates a union validator
  */
-export function createUnionValidator<T>(
-  validators: RuntimeValidator<T>[]
-): RuntimeValidator<T> {
+export function createUnionValidator<T>(validators: RuntimeValidator<T>[]): RuntimeValidator<T> {
   if (skipValidation) {
     return createPassthroughValidator<T>();
   }
@@ -465,9 +475,9 @@ export function createUnionValidator<T>(
 
       return {
         success: false,
-        error: createValidationError('type-mismatch', 'Value does not match any union type')
+        error: createValidationError('type-mismatch', 'Value does not match any union type'),
       };
-    }
+    },
   });
 }
 
@@ -492,9 +502,9 @@ export function createLiteralValidator<T extends string | number | boolean>(
         error: createValidationError(
           'runtime-error',
           `Expected ${JSON.stringify(literalValue)}, received ${JSON.stringify(value)}`
-        )
+        ),
       };
-    }
+    },
   });
 }
 
@@ -505,7 +515,9 @@ export function createLiteralValidator<T extends string | number | boolean>(
 /**
  * Creates a number validator
  */
-export function createNumberValidator(options: { min?: number; max?: number } = {}): RuntimeValidator<number> {
+export function createNumberValidator(
+  options: { min?: number; max?: number } = {}
+): RuntimeValidator<number> {
   if (skipValidation) {
     return createPassthroughValidator<number>();
   }
@@ -519,32 +531,26 @@ export function createNumberValidator(options: { min?: number; max?: number } = 
           error: createValidationError(
             'type-mismatch',
             `Expected number, received ${typeof value}`
-          )
+          ),
         };
       }
 
       if (options.min !== undefined && num < options.min) {
         return {
           success: false,
-          error: createValidationError(
-            'runtime-error',
-            `Number must be at least ${options.min}`
-          )
+          error: createValidationError('runtime-error', `Number must be at least ${options.min}`),
         };
       }
 
       if (options.max !== undefined && num > options.max) {
         return {
           success: false,
-          error: createValidationError(
-            'runtime-error',
-            `Number must be at most ${options.max}`
-          )
+          error: createValidationError('runtime-error', `Number must be at most ${options.max}`),
         };
       }
 
       return { success: true, data: num };
-    }
+    },
   });
 }
 
@@ -564,12 +570,12 @@ export function createBooleanValidator(): RuntimeValidator<boolean> {
           error: createValidationError(
             'type-mismatch',
             `Expected boolean, received ${typeof value}`
-          )
+          ),
         };
       }
 
       return { success: true, data: value };
-    }
+    },
   });
 }
 
@@ -592,36 +598,35 @@ export function createCustomValidator<T>(
 
       return {
         success: false,
-        error: createValidationError('runtime-error', errorMessage)
+        error: createValidationError('runtime-error', errorMessage),
       };
-    }
+    },
   });
 }
-
 
 // Quick fix: Add describe, optional, and chainable methods to all validators
 function addDescribeToValidator<T>(validator: any): RuntimeValidator<T> {
   if (!validator.describe) {
-    validator.describe = function(description: string) {
+    validator.describe = function (description: string) {
       this.description = description;
       return this;
     };
   }
   if (!validator.safeParse) {
-    validator.safeParse = function(value: unknown) {
+    validator.safeParse = function (value: unknown) {
       const result = this.validate(value);
       if (result.success) {
         return { success: true, data: result.data };
       } else {
         return {
           success: false,
-          error: { errors: result.error ? [result.error] : [] }
+          error: { errors: result.error ? [result.error] : [] },
         };
       }
     };
   }
   if (!validator.optional) {
-    validator.optional = function() {
+    validator.optional = function () {
       const originalValidate = this.validate.bind(this);
       const optionalValidator = {
         ...this,
@@ -631,7 +636,7 @@ function addDescribeToValidator<T>(validator: any): RuntimeValidator<T> {
             return { success: true, data: undefined };
           }
           return originalValidate(value);
-        }
+        },
       };
       // Re-add describe and optional methods to the new validator
       return addDescribeToValidator(optionalValidator);
@@ -639,34 +644,34 @@ function addDescribeToValidator<T>(validator: any): RuntimeValidator<T> {
   }
   // Add chainable methods for string validators (min, max)
   if (!validator.min) {
-    validator.min = function(minLength: number) {
+    validator.min = function (minLength: number) {
       const newValidator = createStringValidator({ minLength });
       return addDescribeToValidator(newValidator);
     };
   }
   if (!validator.max) {
-    validator.max = function(maxLength: number) {
+    validator.max = function (maxLength: number) {
       const newValidator = createStringValidator({ maxLength });
       return addDescribeToValidator(newValidator);
     };
   }
   // Add default method for enum-like validators
   if (!validator.default) {
-    validator.default = function(defaultValue: any) {
-      (this as any)._defaultValue = defaultValue;
+    validator.default = function (defaultValue: any) {
+      this._defaultValue = defaultValue;
       return this;
     };
   }
   // Add rest method for tuple validators (ignores rest elements for now)
   if (!validator.rest) {
-    validator.rest = function(_restValidator: any) {
+    validator.rest = function (_restValidator: any) {
       // For now, just return this - we don't enforce rest validation
       return this;
     };
   }
   // Add refine method (custom validation)
   if (!validator.refine) {
-    validator.refine = function(_refineFn: any, _errorMessage?: string) {
+    validator.refine = function (_refineFn: any, _errorMessage?: string) {
       // For now, just return this - we don't enforce refinements
       return this;
     };
@@ -683,19 +688,22 @@ function addDescribeToValidator<T>(validator: any): RuntimeValidator<T> {
 
       // For unknown methods that look like chainable validators, return a function
       // that returns 'this' (allows chaining but doesn't validate)
-      if (typeof prop === 'string' &&
-          !prop.startsWith('_') &&
-          prop !== 'constructor' &&
-          prop !== 'validate' &&
-          prop !== 'then') {  // Avoid breaking Promises
-        return function(..._args: any[]) {
+      if (
+        typeof prop === 'string' &&
+        !prop.startsWith('_') &&
+        prop !== 'constructor' &&
+        prop !== 'validate' &&
+        prop !== 'then'
+      ) {
+        // Avoid breaking Promises
+        return function (..._args: any[]) {
           // Return the validator itself for chaining
           return receiver;
         };
       }
 
       return Reflect.get(target, prop, receiver);
-    }
+    },
   });
 }
 
@@ -718,7 +726,7 @@ export function createRecordValidator<K extends string | number | symbol, V>(
           error: createValidationError(
             'type-mismatch',
             `Expected record object, received ${typeof value}`
-          )
+          ),
         };
       }
 
@@ -735,7 +743,7 @@ export function createRecordValidator<K extends string | number | symbol, V>(
               'invalid-argument',
               `Invalid key "${key}": ${keyResult.error!.message}`,
               key
-            )
+            ),
           };
         }
 
@@ -744,7 +752,7 @@ export function createRecordValidator<K extends string | number | symbol, V>(
           const errorPath = valueResult.error!.path ? `${key}.${valueResult.error!.path}` : key;
           return {
             success: false,
-            error: createValidationError('runtime-error', valueResult.error!.message, errorPath)
+            error: createValidationError('runtime-error', valueResult.error!.message, errorPath),
           };
         }
 
@@ -752,7 +760,7 @@ export function createRecordValidator<K extends string | number | symbol, V>(
       }
 
       return { success: true, data: result as Record<K, V> };
-    }
+    },
   });
 }
 
@@ -774,7 +782,7 @@ export function createEnumValidator<T extends readonly string[]>(
           error: createValidationError(
             'type-mismatch',
             `Expected string, received ${typeof value}`
-          )
+          ),
         };
       }
 
@@ -784,40 +792,57 @@ export function createEnumValidator<T extends readonly string[]>(
           error: createValidationError(
             'runtime-error',
             `Expected one of [${values.join(', ')}], received "${value}"`
-          )
+          ),
         };
       }
 
       return { success: true, data: value as T[number] };
-    }
+    },
   });
 }
 
 export const v = {
-  string: (options?: StringValidatorOptions) => addDescribeToValidator(createStringValidator(options || {})),
-  number: (options?: { min?: number; max?: number }) => addDescribeToValidator(createNumberValidator(options || {})),
+  string: (options?: StringValidatorOptions) =>
+    addDescribeToValidator(createStringValidator(options || {})),
+  number: (options?: { min?: number; max?: number }) =>
+    addDescribeToValidator(createNumberValidator(options || {})),
   boolean: () => addDescribeToValidator(createBooleanValidator()),
   object: (fields: any) => addDescribeToValidator(createObjectValidator(fields)),
   array: (itemValidator: any) => addDescribeToValidator(createArrayValidator(itemValidator)),
   tuple: (validators: any) => addDescribeToValidator(createTupleValidator(validators)),
   union: (validators: any) => addDescribeToValidator(createUnionValidator(validators)),
   literal: (value: any) => addDescribeToValidator(createLiteralValidator(value)),
-  custom: (validator: any, errorMessage?: string) => addDescribeToValidator(createCustomValidator(validator, errorMessage)),
-  record: (keyValidator: any, valueValidator: any) => addDescribeToValidator(createRecordValidator(keyValidator, valueValidator)),
+  custom: (validator: any, errorMessage?: string) =>
+    addDescribeToValidator(createCustomValidator(validator, errorMessage)),
+  record: (keyValidator: any, valueValidator: any) =>
+    addDescribeToValidator(createRecordValidator(keyValidator, valueValidator)),
   enum: (values: readonly string[]) => addDescribeToValidator(createEnumValidator(values)),
-  function: () => addDescribeToValidator(createCustomValidator((value) => typeof value === 'function', 'Expected function')),
+  function: () =>
+    addDescribeToValidator(
+      createCustomValidator(value => typeof value === 'function', 'Expected function')
+    ),
   unknown: () => addDescribeToValidator(createPassthroughValidator<unknown>()),
   any: () => addDescribeToValidator(createPassthroughValidator<any>()),
-  null: () => addDescribeToValidator(createCustomValidator((value) => value === null, 'Expected null')),
-  undefined: () => addDescribeToValidator(createCustomValidator((value) => value === undefined, 'Expected undefined')),
-  instanceOf: (constructor: any) => addDescribeToValidator(createCustomValidator(
-    (value) => value instanceof constructor,
-    `Expected instance of ${constructor.name}`
-  )),
-  instanceof: (constructor: any) => addDescribeToValidator(createCustomValidator(
-    (value) => value instanceof constructor,
-    `Expected instance of ${constructor.name}`
-  ))
+  null: () =>
+    addDescribeToValidator(createCustomValidator(value => value === null, 'Expected null')),
+  undefined: () =>
+    addDescribeToValidator(
+      createCustomValidator(value => value === undefined, 'Expected undefined')
+    ),
+  instanceOf: (constructor: any) =>
+    addDescribeToValidator(
+      createCustomValidator(
+        value => value instanceof constructor,
+        `Expected instance of ${constructor.name}`
+      )
+    ),
+  instanceof: (constructor: any) =>
+    addDescribeToValidator(
+      createCustomValidator(
+        value => value instanceof constructor,
+        `Expected instance of ${constructor.name}`
+      )
+    ),
 };
 
 // Alias z to v for backward compatibility with zod-style code

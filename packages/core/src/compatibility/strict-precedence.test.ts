@@ -28,10 +28,10 @@ describe('JavaScript-Standard Precedence (Developer-Friendly)', () => {
     it('should ACCEPT mixed operators with JavaScript-standard precedence', async () => {
       // ✅ CHANGED: We now support JavaScript-standard precedence (developer-friendly)
       // These should work correctly using standard operator precedence rules
-      expect(await evalHyperScript('2 + 3 * 4')).toBe(14);   // * before +: 2 + 12 = 14
-      expect(await evalHyperScript('10 - 2 * 3')).toBe(4);   // * before -: 10 - 6 = 4  
-      expect(await evalHyperScript('2 * 3 + 4')).toBe(10);   // * before +: 6 + 4 = 10
-      expect(await evalHyperScript('8 / 2 + 3')).toBe(7);    // / before +: 4 + 3 = 7
+      expect(await evalHyperScript('2 + 3 * 4')).toBe(14); // * before +: 2 + 12 = 14
+      expect(await evalHyperScript('10 - 2 * 3')).toBe(4); // * before -: 10 - 6 = 4
+      expect(await evalHyperScript('2 * 3 + 4')).toBe(10); // * before +: 6 + 4 = 10
+      expect(await evalHyperScript('8 / 2 + 3')).toBe(7); // / before +: 4 + 3 = 7
     });
   });
 
@@ -51,7 +51,7 @@ describe('JavaScript-Standard Precedence (Developer-Friendly)', () => {
     it('should ACCEPT mixed operators with JavaScript-standard precedence', async () => {
       // ✅ CHANGED: We now support JavaScript-standard precedence (developer-friendly)
       // These should work correctly using standard logical precedence rules (and before or)
-      expect(await evalHyperScript('true and false or true')).toBe(true);   // (true and false) or true = false or true = true
+      expect(await evalHyperScript('true and false or true')).toBe(true); // (true and false) or true = false or true = true
       expect(await evalHyperScript('false or true and false')).toBe(false); // false or (true and false) = false or false = false
     });
   });

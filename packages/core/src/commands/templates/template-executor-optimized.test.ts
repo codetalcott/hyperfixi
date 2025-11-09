@@ -11,7 +11,7 @@ import '../../test-setup.js';
 describe('Optimized Template Execution', () => {
   let executor: OptimizedTemplateExecutor;
   let compiler: TemplateCompiler;
-  
+
   beforeEach(() => {
     executor = new OptimizedTemplateExecutor();
     compiler = new TemplateCompiler();
@@ -21,7 +21,7 @@ describe('Optimized Template Execution', () => {
     it('should execute simple templates without memory leaks', async () => {
       const template = `<div>Hello \${name}!</div>`;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -29,11 +29,11 @@ describe('Optimized Template Execution', () => {
         result: null,
         locals: new Map([['name', 'World']]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toBe('<div>Hello World!</div>');
       // Verify buffer is properly managed
       expect(context.meta.__ht_template_result).toBeInstanceOf(Array);
@@ -49,7 +49,7 @@ describe('Optimized Template Execution', () => {
         </ul>
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -57,11 +57,11 @@ describe('Optimized Template Execution', () => {
         result: null,
         locals: new Map([['items', ['apple', 'banana']]]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toContain('<ul>');
       expect(result).toContain('<li>apple</li>');
       expect(result).toContain('<li>banana</li>');
@@ -70,14 +70,14 @@ describe('Optimized Template Execution', () => {
 
     it('should process large datasets efficiently', async () => {
       const largeItems = Array.from({ length: 100 }, (_, i) => `item${i}`);
-      
+
       const template = `
         @repeat in items
           <div>\${it}</div>
         @end
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -85,16 +85,16 @@ describe('Optimized Template Execution', () => {
         result: null,
         locals: new Map([['items', largeItems]]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const startTime = Date.now();
       const result = await executor.executeTemplate(compiled, context);
       const endTime = Date.now();
-      
+
       // Should complete in reasonable time (less than 1 second for 100 items)
       expect(endTime - startTime).toBeLessThan(1000);
-      
+
       // Should contain all items
       expect(result).toContain('<div>item0</div>');
       expect(result).toContain('<div>item99</div>');
@@ -111,7 +111,7 @@ describe('Optimized Template Execution', () => {
         @end
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -119,11 +119,11 @@ describe('Optimized Template Execution', () => {
         result: null,
         locals: new Map([['names', ['Alice', 'Bob']]]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toContain('<p>Hello Alice!</p>');
       expect(result).toContain('<p>Hello Bob!</p>');
     });
@@ -139,25 +139,28 @@ describe('Optimized Template Execution', () => {
         @end
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
         you: null,
         result: null,
         locals: new Map([
-          ['users', [
-            { name: 'Alice', active: true },
-            { name: 'Bob', active: false },
-            { name: 'Charlie', active: true }
-          ]]
+          [
+            'users',
+            [
+              { name: 'Alice', active: true },
+              { name: 'Bob', active: false },
+              { name: 'Charlie', active: true },
+            ],
+          ],
         ]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toContain('<div class="active">Alice</div>');
       expect(result).toContain('<div class="inactive">Bob</div>');
       expect(result).toContain('<div class="active">Charlie</div>');
@@ -172,7 +175,7 @@ describe('Optimized Template Execution', () => {
         @end
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -180,12 +183,12 @@ describe('Optimized Template Execution', () => {
         result: null,
         locals: new Map(),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       // Should not throw or hang
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(typeof result).toBe('string');
     });
 
@@ -200,28 +203,31 @@ describe('Optimized Template Execution', () => {
         @end
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
         you: null,
         result: null,
         locals: new Map([
-          ['outer', [
-            { 
-              inner: [
-                { condition: true, value: 'A' },
-                { condition: false, value: 'B' }
-              ]
-            }
-          ]]
+          [
+            'outer',
+            [
+              {
+                inner: [
+                  { condition: true, value: 'A' },
+                  { condition: false, value: 'B' },
+                ],
+              },
+            ],
+          ],
         ]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toContain('<span>A</span>');
       expect(result).not.toContain('<span>B</span>');
     });

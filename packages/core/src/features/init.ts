@@ -1,15 +1,10 @@
-
-
 /**
  * Enhanced Init Feature Implementation
  * Type-safe element initialization feature with enhanced validation and LLM integration
  */
 
 import { v, z } from '../validation/lightweight-validators';
-import type {
-  ContextMetadata,
-  EvaluationResult
-} from '../types/context-types';
+import type { ContextMetadata, EvaluationResult } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
 import type { ExecutionContext } from '../types/core';
@@ -23,48 +18,62 @@ export const InitInputSchema = v.object({
   initialization: z.object({
     target: v.union([v.custom((value: unknown) => value instanceof HTMLElement), v.string()]), // Element or selector
     commands: v.array(v.any()).min(1), // Commands to execute
-    timing: z.object({
-      immediate: v.boolean().default(false), // Execute before other features
-      delay: v.number().default(0), // Delay in milliseconds
-      defer: v.boolean().default(false), // Defer until DOM ready
-    }).default({}),
-    lifecycle: v.object({
-      runOnce: v.boolean().default(true), // Only run once per element
-      resetOnRemoval: v.boolean().default(false), // Reset state when element removed
-      propagateToChildren: v.boolean().default(false), // Apply to child elements
-    }).default({}),
+    timing: z
+      .object({
+        immediate: v.boolean().default(false), // Execute before other features
+        delay: v.number().default(0), // Delay in milliseconds
+        defer: v.boolean().default(false), // Defer until DOM ready
+      })
+      .default({}),
+    lifecycle: v
+      .object({
+        runOnce: v.boolean().default(true), // Only run once per element
+        resetOnRemoval: v.boolean().default(false), // Reset state when element removed
+        propagateToChildren: v.boolean().default(false), // Apply to child elements
+      })
+      .default({}),
   }),
   /** Command execution options */
-  execution: v.object({
-    parallel: v.boolean().default(false), // Execute commands in parallel
-    stopOnError: v.boolean().default(true), // Stop execution on first error
-    timeout: v.number().default(10000), // Execution timeout in ms
-    retries: z.object({
-      enabled: v.boolean().default(false),
-      maxAttempts: v.number().default(3),
-      delay: v.number().default(1000),
-    }).default({}),
-  }).default({}),
+  execution: v
+    .object({
+      parallel: v.boolean().default(false), // Execute commands in parallel
+      stopOnError: v.boolean().default(true), // Stop execution on first error
+      timeout: v.number().default(10000), // Execution timeout in ms
+      retries: z
+        .object({
+          enabled: v.boolean().default(false),
+          maxAttempts: v.number().default(3),
+          delay: v.number().default(1000),
+        })
+        .default({}),
+    })
+    .default({}),
   /** Error handling configuration */
-  errorHandling: v.object({
-    strategy: z.enum(['throw', 'log', 'ignore', 'emit']).default('log'),
-    fallbackCommands: v.array(v.any()).default([]),
-    setAttribute: v.boolean().default(true), // Set error attribute on element
-  }).default({}),
+  errorHandling: v
+    .object({
+      strategy: z.enum(['throw', 'log', 'ignore', 'emit']).default('log'),
+      fallbackCommands: v.array(v.any()).default([]),
+      setAttribute: v.boolean().default(true), // Set error attribute on element
+    })
+    .default({}),
   /** Execution context */
-  context: v.object({
-    variables: z.record(v.string(), v.any()).default({}),
-    me: v.any().optional(),
-    it: v.any().optional(),
-    target: v.any().optional(),
-  }).default({}),
+  context: v
+    .object({
+      variables: z.record(v.string(), v.any()).default({}),
+      me: v.any().optional(),
+      it: v.any().optional(),
+      target: v.any().optional(),
+    })
+    .default({}),
   /** Feature options */
-  options: v.object({
-    enableDOMObserver: v.boolean().default(true), // Watch for DOM changes
-    enablePerformanceTracking: v.boolean().default(true),
-    enableEventEmission: v.boolean().default(true),
-    maxConcurrentInits: v.number().default(10),
-  }).default({}),
+  options: v
+    .object({
+      enableDOMObserver: v.boolean().default(true), // Watch for DOM changes
+      enablePerformanceTracking: v.boolean().default(true),
+      enableEventEmission: v.boolean().default(true),
+      maxConcurrentInits: v.number().default(10),
+    })
+    .default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
   debug: v.boolean().default(false),
@@ -77,7 +86,7 @@ export const InitOutputSchema = v.object({
   category: v.literal('Frontend'),
   capabilities: v.array(v.string()),
   state: z.enum(['ready', 'initializing', 'completed', 'error']),
-  
+
   /** Element management */
   elements: z.object({
     register: v.any(),
@@ -89,7 +98,7 @@ export const InitOutputSchema = v.object({
     getRegistration: v.any(),
     listRegistered: v.any(),
   }),
-  
+
   /** Command execution */
   execution: v.object({
     execute: v.any(),
@@ -98,7 +107,7 @@ export const InitOutputSchema = v.object({
     getExecutionHistory: v.any(),
     clearHistory: v.any(),
   }),
-  
+
   /** Lifecycle management */
   lifecycle: v.object({
     onElementAdded: v.any(),
@@ -106,7 +115,7 @@ export const InitOutputSchema = v.object({
     onDOMReady: v.any(),
     reset: v.any(),
   }),
-  
+
   /** Error handling */
   errors: v.object({
     handle: v.any(),
@@ -164,7 +173,13 @@ export interface InitExecution {
 }
 
 export interface InitLifecycleEvent {
-  type: 'element-added' | 'element-removed' | 'dom-ready' | 'init-start' | 'init-complete' | 'init-error';
+  type:
+    | 'element-added'
+    | 'element-removed'
+    | 'dom-ready'
+    | 'init-start'
+    | 'init-complete'
+    | 'init-error';
   element?: HTMLElement;
   registration?: InitRegistration;
   timestamp: number;
@@ -178,7 +193,8 @@ export interface InitLifecycleEvent {
 export class TypedInitFeatureImplementation {
   public readonly name = 'initFeature';
   public readonly category = 'Frontend' as const;
-  public readonly description = 'Type-safe element initialization feature with lifecycle management, error handling, and performance optimization';
+  public readonly description =
+    'Type-safe element initialization feature with lifecycle management, error handling, and performance optimization';
   public readonly inputSchema = InitInputSchema;
   public readonly outputType: EvaluationType = 'Object';
 
@@ -206,20 +222,23 @@ export class TypedInitFeatureImplementation {
     returnTypes: ['Object'],
     examples: [
       {
-        input: '{ initialization: { target: ".component", commands: [{ name: "addClass", args: ["initialized"] }] } }',
+        input:
+          '{ initialization: { target: ".component", commands: [{ name: "addClass", args: ["initialized"] }] } }',
         description: 'Initialize elements with CSS class addition',
-        expectedOutput: 'TypedInitContext with element initialization and command execution'
+        expectedOutput: 'TypedInitContext with element initialization and command execution',
       },
       {
-        input: '{ initialization: { target: "#main", commands: [...], timing: { immediate: true } } }',
+        input:
+          '{ initialization: { target: "#main", commands: [...], timing: { immediate: true } } }',
         description: 'Immediate initialization before other features',
-        expectedOutput: 'High-priority init context with immediate execution'
+        expectedOutput: 'High-priority init context with immediate execution',
       },
       {
-        input: '{ initialization: { target: ".widget", commands: [...], lifecycle: { propagateToChildren: true } } }',
+        input:
+          '{ initialization: { target: ".widget", commands: [...], lifecycle: { propagateToChildren: true } } }',
         description: 'Initialize parent and child elements recursively',
-        expectedOutput: 'Hierarchical initialization with child propagation'
-      }
+        expectedOutput: 'Hierarchical initialization with child propagation',
+      },
     ],
     relatedExpressions: ['me', 'you', 'it', 'closest', 'query'],
     relatedContexts: ['defFeature', 'onFeature', 'behaviorFeature'],
@@ -227,66 +246,76 @@ export class TypedInitFeatureImplementation {
     environmentRequirements: {
       browser: true,
       server: false,
-      nodejs: false
+      nodejs: false,
     },
     performance: {
       averageTime: 12.0,
-      complexity: 'O(n)' // n = number of elements to initialize
-    }
+      complexity: 'O(n)', // n = number of elements to initialize
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates type-safe element initialization system for hyperscript with lifecycle management, performance optimization, and comprehensive error handling',
+    summary:
+      'Creates type-safe element initialization system for hyperscript with lifecycle management, performance optimization, and comprehensive error handling',
     parameters: [
       {
         name: 'initConfig',
         type: 'object',
-        description: 'Element initialization configuration including target elements, commands, timing, and lifecycle options',
+        description:
+          'Element initialization configuration including target elements, commands, timing, and lifecycle options',
         optional: false,
         examples: [
           '{ initialization: { target: ".component", commands: [{ name: "setup" }] } }',
           '{ initialization: { target: "#widget", commands: [...], timing: { immediate: true } } }',
-          '{ initialization: { target: ".form", commands: [...], lifecycle: { runOnce: false } } }'
-        ]
-      }
+          '{ initialization: { target: ".form", commands: [...], lifecycle: { runOnce: false } } }',
+        ],
+      },
     ],
     returns: {
       type: 'object',
-      description: 'Element initialization context with registration management, command execution, lifecycle control, and error recovery capabilities',
+      description:
+        'Element initialization context with registration management, command execution, lifecycle control, and error recovery capabilities',
       examples: [
         'context.elements.register(element, commands) → register element for initialization',
         'context.execution.execute(registration) → execute initialization commands',
         'context.lifecycle.onElementAdded(callback) → handle new elements',
-        'context.elements.processAll() → initialize all registered elements'
-      ]
+        'context.elements.processAll() → initialize all registered elements',
+      ],
     },
     examples: [
       {
         title: 'Basic element initialization',
         code: 'const initContext = await createInitFeature({ initialization: { target: ".component", commands: [{ name: "addClass", args: ["ready"] }] } })',
         explanation: 'Initialize components with CSS class when processed',
-        output: 'Init context ready for element processing'
+        output: 'Init context ready for element processing',
       },
       {
         title: 'Immediate initialization',
         code: 'await initContext.elements.register(element, commands, { immediate: true })',
         explanation: 'Register element for immediate initialization before other features',
-        output: 'High-priority element registration with immediate execution'
+        output: 'High-priority element registration with immediate execution',
       },
       {
         title: 'Lifecycle management',
         code: 'await initContext.lifecycle.onElementAdded((element) => initContext.elements.process(element))',
         explanation: 'Automatically initialize new elements added to DOM',
-        output: 'Dynamic initialization system with DOM observation'
-      }
+        output: 'Dynamic initialization system with DOM observation',
+      },
     ],
     seeAlso: ['defFeature', 'onFeature', 'behaviorFeature', 'elementManagement'],
-    tags: ['initialization', 'lifecycle', 'dom-management', 'element-processing', 'type-safe', 'enhanced-pattern']
+    tags: [
+      'initialization',
+      'lifecycle',
+      'dom-management',
+      'element-processing',
+      'type-safe',
+      'enhanced-pattern',
+    ],
   };
 
   async initialize(input: InitInput): Promise<EvaluationResult<InitOutput>> {
     const startTime = Date.now();
-    
+
     try {
       // Validate input using enhanced pattern
       const validation = this.validate(input);
@@ -294,21 +323,27 @@ export class TypedInitFeatureImplementation {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
       // Initialize init system
       const config = await this.initializeConfig(input);
-      
+
       // Create enhanced init context
       const context: InitOutput = {
         contextId: `init-${Date.now()}`,
         timestamp: startTime,
         category: 'Frontend',
-        capabilities: ['element-initialization', 'command-execution', 'lifecycle-management', 'dom-observation', 'error-recovery'],
+        capabilities: [
+          'element-initialization',
+          'command-execution',
+          'lifecycle-management',
+          'dom-observation',
+          'error-recovery',
+        ],
         state: 'ready',
-        
+
         // Element management
         elements: {
           register: this.createElementRegistrar(config),
@@ -320,7 +355,7 @@ export class TypedInitFeatureImplementation {
           getRegistration: this.createRegistrationGetter(),
           listRegistered: this.createRegisteredElementsLister(),
         },
-        
+
         // Command execution
         execution: {
           execute: this.createCommandExecutor(),
@@ -329,7 +364,7 @@ export class TypedInitFeatureImplementation {
           getExecutionHistory: this.createExecutionHistoryGetter(),
           clearHistory: this.createHistoryClearer(),
         },
-        
+
         // Lifecycle management
         lifecycle: {
           onElementAdded: this.createElementAddedHandler(),
@@ -337,14 +372,14 @@ export class TypedInitFeatureImplementation {
           onDOMReady: this.createDOMReadyHandler(),
           reset: this.createSystemResetter(),
         },
-        
+
         // Error handling
         errors: {
           handle: this.createErrorHandler(),
           getErrorHistory: this.createErrorHistoryGetter(),
           clearErrors: this.createErrorClearer(),
           setErrorHandler: this.createErrorHandlerSetter(),
-        }
+        },
       };
 
       // Set up DOM observer if enabled
@@ -359,28 +394,29 @@ export class TypedInitFeatureImplementation {
 
       // Track performance using enhanced pattern
       this.trackPerformance(startTime, true, context);
-      
+
       return {
         success: true,
         value: context,
-        type: 'Object'
+        type: 'Object',
       };
-
     } catch (error) {
       this.trackPerformance(startTime, false);
-      
+
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Init feature initialization failed: ${error instanceof Error ? error.message : String(error)}`
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Init feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
         suggestions: [
           'Verify target element exists or selector is valid',
           'Check commands array contains valid command objects',
           'Ensure DOM is ready for initialization',
-          'Validate timing and lifecycle configurations'
-        ]
+          'Validate timing and lifecycle configurations',
+        ],
       };
     }
   }
@@ -392,7 +428,7 @@ export class TypedInitFeatureImplementation {
         return {
           isValid: false,
           errors: [{ type: 'type-mismatch', message: 'Input must be an object', suggestions: [] }],
-          suggestions: ['Provide a valid init configuration object']
+          suggestions: ['Provide a valid init configuration object'],
         };
       }
 
@@ -402,23 +438,30 @@ export class TypedInitFeatureImplementation {
       const suggestions: string[] = [];
 
       // Check for empty commands arrays before Zod validation
-      if (inputData.initialization?.commands && Array.isArray(inputData.initialization.commands) && inputData.initialization.commands.length === 0) {
+      if (
+        inputData.initialization?.commands &&
+        Array.isArray(inputData.initialization.commands) &&
+        inputData.initialization.commands.length === 0
+      ) {
         errors.push({
           type: 'missing-argument',
           message: 'Initialization commands array cannot be empty',
           path: 'initialization.commands',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Add at least one command to execute during initialization');
       }
 
       // Check for invalid delay values
-      if (inputData.initialization?.timing?.delay !== undefined && inputData.initialization.timing.delay < 0) {
+      if (
+        inputData.initialization?.timing?.delay !== undefined &&
+        inputData.initialization.timing.delay < 0
+      ) {
         errors.push({
           type: 'syntax-error',
           message: 'Initialization delay must be non-negative',
           path: 'initialization.timing.delay',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Set delay to 0 or positive number in milliseconds');
       }
@@ -428,7 +471,7 @@ export class TypedInitFeatureImplementation {
         return {
           isValid: false,
           errors,
-          suggestions
+          suggestions,
         };
       }
 
@@ -439,12 +482,15 @@ export class TypedInitFeatureImplementation {
 
       // Validate target element/selector
       if (data.initialization.target) {
-        if (typeof data.initialization.target === 'string' && !this.isValidSelector(data.initialization.target)) {
+        if (
+          typeof data.initialization.target === 'string' &&
+          !this.isValidSelector(data.initialization.target)
+        ) {
           errors.push({
             type: 'syntax-error',
             message: `Invalid CSS selector: "${data.initialization.target}"`,
             path: 'initialization.target',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Use valid CSS selector syntax for target element');
         }
@@ -456,7 +502,7 @@ export class TypedInitFeatureImplementation {
           type: 'syntax-error',
           message: 'Execution timeout must be at least 1000ms',
           path: 'execution.timeout',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Set execution timeout to at least 1000ms for proper operation');
       }
@@ -468,7 +514,7 @@ export class TypedInitFeatureImplementation {
             type: 'syntax-error',
             message: 'Max retry attempts must be at least 1',
             path: 'execution.retries.maxAttempts',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set maxAttempts to at least 1 for retry functionality');
         }
@@ -478,7 +524,7 @@ export class TypedInitFeatureImplementation {
             type: 'syntax-error',
             message: 'Retry delay must be non-negative',
             path: 'execution.retries.delay',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set retry delay to 0 or positive number in milliseconds');
         }
@@ -490,7 +536,7 @@ export class TypedInitFeatureImplementation {
           type: 'syntax-error',
           message: 'Max concurrent initializations must be at least 1',
           path: 'options.maxConcurrentInits',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Set maxConcurrentInits to at least 1');
       }
@@ -498,13 +544,13 @@ export class TypedInitFeatureImplementation {
       // Validate commands structure
       if (data.initialization.commands) {
         for (let index = 0; index < data.initialization.commands.length; index++) {
-        const command = data.initialization.commands[index];
+          const command = data.initialization.commands[index];
           if (!command || typeof command !== 'object') {
             errors.push({
               type: 'type-mismatch',
               message: `Command at index ${index} must be an object`,
               path: `initialization.commands[${index}]`,
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Ensure all commands are valid objects with name and args properties');
           }
@@ -514,22 +560,23 @@ export class TypedInitFeatureImplementation {
       return {
         isValid: errors.length === 0,
         errors,
-        suggestions
+        suggestions,
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'type-mismatch',
-          message: error instanceof Error ? error.message : 'Invalid input format',
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'type-mismatch',
+            message: error instanceof Error ? error.message : 'Invalid input format',
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Ensure input matches InitInput schema',
           'Check initialization configuration structure',
-          'Verify commands and execution options'
-        ]
+          'Verify commands and execution options',
+        ],
       };
     }
   }
@@ -543,13 +590,13 @@ export class TypedInitFeatureImplementation {
       ...input.options,
       environment: input.environment,
       debug: input.debug,
-      initialized: Date.now()
+      initialized: Date.now(),
     };
   }
 
   private async registerElement(initConfig: any, _context: any): Promise<InitRegistration> {
     const id = `init-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     // Resolve target element
     let element: HTMLElement;
     if (typeof initConfig.target === 'string') {
@@ -588,7 +635,7 @@ export class TypedInitFeatureImplementation {
     };
 
     this.registrations.set(id, registration);
-    
+
     // Track element registrations
     if (!this.elementRegistrations.has(element)) {
       this.elementRegistrations.set(element, []);
@@ -606,7 +653,10 @@ export class TypedInitFeatureImplementation {
     return registration;
   }
 
-  private async processRegistration(registration: InitRegistration, context: any): Promise<InitExecution> {
+  private async processRegistration(
+    registration: InitRegistration,
+    context: any
+  ): Promise<InitExecution> {
     const execution: InitExecution = {
       id: `exec-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       registrationId: registration.id,
@@ -618,7 +668,7 @@ export class TypedInitFeatureImplementation {
 
     try {
       registration.state = 'running';
-      
+
       // Create execution context
       const executionContext = this.createExecutionContext(registration.element, context);
 
@@ -632,11 +682,11 @@ export class TypedInitFeatureImplementation {
       execution.endTime = Date.now();
       execution.duration = execution.endTime - execution.startTime;
       execution.success = true;
-      
+
       registration.state = 'completed';
       registration.processedAt = Date.now();
       registration.executionCount++;
-      
+
       // Mark element as processed
       this.processedElements.add(registration.element);
 
@@ -648,19 +698,18 @@ export class TypedInitFeatureImplementation {
         timestamp: Date.now(),
         data: { execution },
       });
-
     } catch (error) {
       execution.error = error as Error;
       execution.endTime = Date.now();
       execution.duration = execution.endTime - execution.startTime;
-      
+
       registration.state = 'error';
       registration.lastError = error as Error;
 
       this.errorHistory.push({
         error: error as Error,
         timestamp: Date.now(),
-        context: { registration, execution }
+        context: { registration, execution },
       });
 
       // Emit error event
@@ -699,10 +748,13 @@ export class TypedInitFeatureImplementation {
     };
   }
 
-  private async executeCommandsSequential(commands: any[], context: ExecutionContext): Promise<void> {
+  private async executeCommandsSequential(
+    commands: any[],
+    context: ExecutionContext
+  ): Promise<void> {
     for (const command of commands) {
       await this.executeCommand(command, context);
-      
+
       // Check for early termination
       if (context.flags?.halted || context.flags?.returning) {
         break;
@@ -745,7 +797,11 @@ export class TypedInitFeatureImplementation {
         }
         break;
       case 'setStyle':
-        if (context.me instanceof HTMLElement && command.args?.[0] && command.args?.[1] !== undefined) {
+        if (
+          context.me instanceof HTMLElement &&
+          command.args?.[0] &&
+          command.args?.[1] !== undefined
+        ) {
           (context.me.style as any)[command.args[0]] = command.args[1];
         }
         break;
@@ -758,16 +814,16 @@ export class TypedInitFeatureImplementation {
   private setupDOMObserver(): void {
     if (typeof MutationObserver === 'undefined') return;
 
-    this.domObserver = new MutationObserver((mutations) => {
+    this.domObserver = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
-          mutation.addedNodes.forEach((node) => {
+          mutation.addedNodes.forEach(node => {
             if (node instanceof HTMLElement) {
               this.handleElementAdded(node);
             }
           });
-          
-          mutation.removedNodes.forEach((node) => {
+
+          mutation.removedNodes.forEach(node => {
             if (node instanceof HTMLElement) {
               this.handleElementRemoved(node);
             }
@@ -810,7 +866,7 @@ export class TypedInitFeatureImplementation {
 
   private emitLifecycleEvent(event: InitLifecycleEvent): void {
     this.lifecycleEvents.push(event);
-    
+
     // Emit DOM event if element is available
     if (event.element) {
       const customEvent = new CustomEvent(`hyperscript:init:${event.type}`, {
@@ -865,7 +921,7 @@ export class TypedInitFeatureImplementation {
   private createElementProcessor() {
     return async (elementOrId: HTMLElement | string) => {
       let registration: InitRegistration | undefined;
-      
+
       if (typeof elementOrId === 'string') {
         registration = this.registrations.get(elementOrId);
       } else {
@@ -952,9 +1008,14 @@ export class TypedInitFeatureImplementation {
   }
 
   private createRetryExecutor() {
-    return async (commands: any[], context?: any, maxAttempts: number = 3, delay: number = 1000) => {
+    return async (
+      commands: any[],
+      context?: any,
+      maxAttempts: number = 3,
+      delay: number = 1000
+    ) => {
       let lastError: Error | null = null;
-      
+
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
           await this.createCommandExecutor()(commands, context);
@@ -966,7 +1027,7 @@ export class TypedInitFeatureImplementation {
           }
         }
       }
-      
+
       throw lastError;
     };
   }
@@ -1020,11 +1081,11 @@ export class TypedInitFeatureImplementation {
       this.lifecycleEvents = [];
       this.errorHistory = [];
       this.processedElements = new WeakSet();
-      
+
       if (this.domObserver) {
         this.domObserver.disconnect();
       }
-      
+
       return true;
     };
   }
@@ -1034,7 +1095,7 @@ export class TypedInitFeatureImplementation {
       this.errorHistory.push({
         error,
         timestamp: Date.now(),
-        context
+        context,
       });
       return true;
     };
@@ -1070,18 +1131,21 @@ export class TypedInitFeatureImplementation {
       output,
       success,
       duration,
-      timestamp: startTime
+      timestamp: startTime,
     });
   }
 
   getPerformanceMetrics() {
     const totalEvals = this.evaluationHistory.length;
     const successfulEvals = this.evaluationHistory.filter(h => h.success).length;
-    
+
     return {
       totalInitializations: totalEvals,
       successRate: totalEvals === 0 ? 0 : successfulEvals / totalEvals,
-      averageDuration: totalEvals === 0 ? 0 : this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / totalEvals,
+      averageDuration:
+        totalEvals === 0
+          ? 0
+          : this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / totalEvals,
       lastEvaluationTime: this.evaluationHistory[this.evaluationHistory.length - 1]?.timestamp || 0,
       evaluationHistory: this.evaluationHistory.slice(-10), // Last 10 evaluations
       totalRegistrations: this.registrations.size,
@@ -1136,7 +1200,7 @@ export async function createInit(
     },
     environment: 'frontend',
     debug: false,
-    ...options
+    ...options,
   });
 }
 

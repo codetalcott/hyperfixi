@@ -17,7 +17,12 @@ import { createMakeCommand, MakeCommand } from './creation/make';
 import { createAppendCommand, AppendCommand } from './content/append';
 
 // Execution Commands
-import { createCallCommand, createEnhancedGetCommand, CallCommand, EnhancedGetCommand } from './execution/call';
+import {
+  createCallCommand,
+  createEnhancedGetCommand,
+  CallCommand,
+  EnhancedGetCommand,
+} from './execution/call';
 import { createPseudoCommand, PseudoCommand } from './execution/pseudo-command';
 
 // Control Flow Commands
@@ -75,70 +80,109 @@ import { createWaitCommand, WaitCommand } from './async/wait';
 // Re-export everything
 export {
   // Data Commands
-  createIncrementCommand, IncrementCommand,
-  createDecrementCommand, DecrementCommand,
-  createSetCommand, SetCommand,
-  createDefaultCommand, DefaultCommand,
-  
+  createIncrementCommand,
+  IncrementCommand,
+  createDecrementCommand,
+  DecrementCommand,
+  createSetCommand,
+  SetCommand,
+  createDefaultCommand,
+  DefaultCommand,
+
   // Creation Commands
-  createMakeCommand, MakeCommand,
-  
+  createMakeCommand,
+  MakeCommand,
+
   // Content Commands
-  createAppendCommand, AppendCommand,
-  
+  createAppendCommand,
+  AppendCommand,
+
   // Execution Commands
-  createCallCommand, createEnhancedGetCommand, CallCommand, EnhancedGetCommand,
-  createPseudoCommand, PseudoCommand,
-  
+  createCallCommand,
+  createEnhancedGetCommand,
+  CallCommand,
+  EnhancedGetCommand,
+  createPseudoCommand,
+  PseudoCommand,
+
   // Control Flow Commands
-  createIfCommand, IfCommand,
-  createHaltCommand, HaltCommand,
-  createExitCommand, ExitCommand,
-  createReturnCommand, ReturnCommand,
-  createThrowCommand, ThrowCommand,
-  createRepeatCommand, RepeatCommand,
-  createUnlessCommand, UnlessCommand,
-  createContinueCommand, ContinueCommand,
-  createBreakCommand, BreakCommand,
-  
+  createIfCommand,
+  IfCommand,
+  createHaltCommand,
+  HaltCommand,
+  createExitCommand,
+  ExitCommand,
+  createReturnCommand,
+  ReturnCommand,
+  createThrowCommand,
+  ThrowCommand,
+  createRepeatCommand,
+  RepeatCommand,
+  createUnlessCommand,
+  UnlessCommand,
+  createContinueCommand,
+  ContinueCommand,
+  createBreakCommand,
+  BreakCommand,
+
   // Utility Commands
-  createPickCommand, PickCommand,
-  createLogCommand, LogCommand,
-  
+  createPickCommand,
+  PickCommand,
+  createLogCommand,
+  LogCommand,
+
   // Advanced Commands
-  createTellCommand, TellCommand,
-  createJSCommand, JSCommand,
-  createBeepCommand, BeepCommand,
-  createAsyncCommand, AsyncCommand,
-  
+  createTellCommand,
+  TellCommand,
+  createJSCommand,
+  JSCommand,
+  createBeepCommand,
+  BeepCommand,
+  createAsyncCommand,
+  AsyncCommand,
+
   // Animation Commands
-  createSettleCommand, SettleCommand,
-  createMeasureCommand, MeasureCommand,
-  createTransitionCommand, TransitionCommand,
-  
+  createSettleCommand,
+  SettleCommand,
+  createMeasureCommand,
+  MeasureCommand,
+  createTransitionCommand,
+  TransitionCommand,
+
   // Template Commands
-  createRenderCommand, RenderCommand,
-  
+  createRenderCommand,
+  RenderCommand,
+
   // DOM Commands
-  createAddCommand, AddCommand,
-  createRemoveCommand, RemoveCommand,
-  createToggleCommand, ToggleCommand,
-  createShowCommand, ShowCommand,
-  createHideCommand, HideCommand,
-  createPutCommand, PutCommand,
-  
+  createAddCommand,
+  AddCommand,
+  createRemoveCommand,
+  RemoveCommand,
+  createToggleCommand,
+  ToggleCommand,
+  createShowCommand,
+  ShowCommand,
+  createHideCommand,
+  HideCommand,
+  createPutCommand,
+  PutCommand,
+
   // Event Commands
-  createSendCommand, SendCommand,
-  createTriggerCommand, TriggerCommand,
+  createSendCommand,
+  SendCommand,
+  createTriggerCommand,
+  TriggerCommand,
 
   // Navigation Commands
-  createGoCommand, GoCommand,
+  createGoCommand,
+  GoCommand,
 
   // Behavior Commands
   InstallCommand,
 
   // Async Commands
-  createWaitCommand, WaitCommand,
+  createWaitCommand,
+  WaitCommand,
   // createFetchCommand,
 };
 
@@ -195,7 +239,7 @@ export const ENHANCED_COMMAND_FACTORIES = {
 
   // Template Commands
   render: createRenderCommand,
-  
+
   // DOM Commands
   add: createAddCommand,
   remove: createRemoveCommand,
@@ -203,7 +247,7 @@ export const ENHANCED_COMMAND_FACTORIES = {
   show: createShowCommand,
   hide: createHideCommand,
   put: createPutCommand,
-  
+
   // Event Commands
   send: createSendCommand,
   trigger: createTriggerCommand,
@@ -229,21 +273,28 @@ export function getEnhancedCommandNames(): string[] {
 /**
  * Create an enhanced command by name
  */
-export function createEnhancedCommand(name: string): CommandImplementation<unknown, unknown, TypedExecutionContext> | null {
+export function createEnhancedCommand(
+  name: string
+): CommandImplementation<unknown, unknown, TypedExecutionContext> | null {
   const factory = ENHANCED_COMMAND_FACTORIES[name as keyof typeof ENHANCED_COMMAND_FACTORIES];
-  return factory ? factory() as CommandImplementation<unknown, unknown, TypedExecutionContext> : null;
+  return factory
+    ? (factory() as CommandImplementation<unknown, unknown, TypedExecutionContext>)
+    : null;
 }
 
 /**
  * Create all enhanced commands and return as a Map
  */
-export function createAllEnhancedCommands(): Map<string, CommandImplementation<unknown, unknown, TypedExecutionContext>> {
+export function createAllEnhancedCommands(): Map<
+  string,
+  CommandImplementation<unknown, unknown, TypedExecutionContext>
+> {
   const commands = new Map();
-  
+
   for (const [name, factory] of Object.entries(ENHANCED_COMMAND_FACTORIES)) {
     commands.set(name, factory());
   }
-  
+
   return commands;
 }
 
@@ -267,7 +318,9 @@ export const ENHANCED_COMMAND_CATEGORIES = {
 /**
  * Get commands by category
  */
-export function getCommandsByCategory(category: keyof typeof ENHANCED_COMMAND_CATEGORIES): string[] {
+export function getCommandsByCategory(
+  category: keyof typeof ENHANCED_COMMAND_CATEGORIES
+): string[] {
   return [...(ENHANCED_COMMAND_CATEGORIES[category] || [])];
 }
 
@@ -288,12 +341,12 @@ export interface CommandMetadata {
  */
 export function getAllCommandMetadata(): CommandMetadata[] {
   const metadata: CommandMetadata[] = [];
-  
+
   for (const [_name, factory] of Object.entries(ENHANCED_COMMAND_FACTORIES)) {
     const command = factory();
     metadata.push(command.metadata);
   }
-  
+
   return metadata;
 }
 

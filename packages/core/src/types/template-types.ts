@@ -10,7 +10,7 @@ import type {
   TypedExpressionContext,
   EvaluationResult,
   ValidationResult,
-  LLMDocumentation
+  LLMDocumentation,
 } from './base-types';
 import type { HyperScriptValue } from './command-types';
 import type { ExecutionContext } from './core.ts';
@@ -26,10 +26,10 @@ import type { ExecutionContext } from './core.ts';
 export interface TemplateExecutionContext extends TypedExpressionContext {
   /** Template result buffer for content accumulation */
   readonly templateBuffer: string[];
-  
+
   /** Current template depth for nested directive handling */
   readonly templateDepth: number;
-  
+
   /** Template iteration context for @repeat directives */
   readonly iterationContext?: {
     collection: HyperScriptValue;
@@ -37,14 +37,16 @@ export interface TemplateExecutionContext extends TypedExpressionContext {
     currentItem: HyperScriptValue;
     totalItems: number;
   };
-  
+
   /** Conditional context for @if/@else chains */
-  readonly conditionalContext?: {
-    conditionMet: boolean;
-    elseAllowed: boolean;
-    branchExecuted: boolean;
-  } | undefined;
-  
+  readonly conditionalContext?:
+    | {
+        conditionMet: boolean;
+        elseAllowed: boolean;
+        branchExecuted: boolean;
+      }
+    | undefined;
+
   /** Template execution metadata */
   readonly templateMeta: {
     templateName?: string;
@@ -72,35 +74,32 @@ export type TemplateRenderStrategy = 'replace' | 'append' | 'conditional' | 'ite
  * Base interface for enhanced template directives
  * Extends BaseTypedExpression with template-specific functionality
  */
-export interface EnhancedTemplateDirective<TInput = unknown, TOutput = string> 
+export interface EnhancedTemplateDirective<TInput = unknown, TOutput = string>
   extends BaseTypedExpression<TOutput> {
   /** Template directive type (@if, @else, @repeat, etc.) */
   readonly directiveType: TemplateDirectiveType;
-  
+
   /** How this directive renders content */
   readonly renderStrategy: TemplateRenderStrategy;
-  
+
   /** Whether this directive creates a new scope */
   readonly createsScope: boolean;
-  
+
   /** Whether this directive can be nested inside others */
   readonly allowsNesting: boolean;
-  
+
   /** Directives that can follow this one */
   readonly allowedNext: TemplateDirectiveType[];
-  
+
   /** Enhanced template execution method */
   executeTemplate(
     context: TemplateExecutionContext,
     input: TInput,
     templateContent: string
   ): Promise<EvaluationResult<string>>;
-  
+
   /** Validate template context and input */
-  validateTemplateContext(
-    context: TemplateExecutionContext,
-    input: TInput
-  ): ValidationResult;
+  validateTemplateContext(context: TemplateExecutionContext, input: TInput): ValidationResult;
 }
 
 // ============================================================================
@@ -112,7 +111,7 @@ export interface EnhancedTemplateDirective<TInput = unknown, TOutput = string>
  */
 export const IfDirectiveInputSchema = v.object({
   condition: v.any(), // Any value that can be evaluated for truthiness
-  templateContent: v.string()
+  templateContent: v.string(),
 });
 
 export type IfDirectiveInput = any; // Inferred from RuntimeValidator
@@ -121,7 +120,7 @@ export type IfDirectiveInput = any; // Inferred from RuntimeValidator
  * Input schema for @else directive
  */
 export const ElseDirectiveInputSchema = v.object({
-  templateContent: v.string()
+  templateContent: v.string(),
 });
 
 export type ElseDirectiveInput = any; // Inferred from RuntimeValidator
@@ -132,7 +131,7 @@ export type ElseDirectiveInput = any; // Inferred from RuntimeValidator
 export const RepeatDirectiveInputSchema = v.object({
   collection: v.any(), // Collection to iterate over
   iteratorVariable: v.string().optional(), // Variable name for current item (defaults to 'it')
-  templateContent: v.string()
+  templateContent: v.string(),
 });
 
 export type RepeatDirectiveInput = any; // Inferred from RuntimeValidator
@@ -147,10 +146,10 @@ export type RepeatDirectiveInput = any; // Inferred from RuntimeValidator
 export interface EnhancedCompiledTemplate {
   /** Enhanced template directives */
   directives: EnhancedTemplateDirective[];
-  
+
   /** Static content segments */
   content: string[];
-  
+
   /** Template interpolation expressions */
   interpolations: Array<{
     expression: string;
@@ -158,7 +157,7 @@ export interface EnhancedCompiledTemplate {
     endIndex: number;
     evaluatedType?: string;
   }>;
-  
+
   /** Template metadata */
   metadata: {
     originalTemplate: string;
@@ -167,7 +166,7 @@ export interface EnhancedCompiledTemplate {
     interpolationCount: number;
     estimatedComplexity: 'simple' | 'medium' | 'complex';
   };
-  
+
   /** Template dependencies */
   dependencies: {
     requiredVariables: string[];
@@ -226,28 +225,28 @@ export interface TemplatePerformanceMetrics {
 export interface EnhancedTemplateConfig {
   /** Enable template caching */
   enableCaching: boolean;
-  
+
   /** Maximum template cache size */
   maxCacheSize: number;
-  
+
   /** Enable performance metrics collection */
   enableMetrics: boolean;
-  
+
   /** Enable template validation */
   enableValidation: boolean;
-  
+
   /** Template execution timeout (ms) */
   executionTimeout: number;
-  
+
   /** Maximum template nesting depth */
   maxNestingDepth: number;
-  
+
   /** Custom directive plugins */
   customDirectives: Record<string, EnhancedTemplateDirective>;
-  
+
   /** Template preprocessing hooks */
   preprocessors: Array<(template: string) => string>;
-  
+
   /** Template postprocessing hooks */
   postprocessors: Array<(result: string) => string>;
 }
@@ -268,7 +267,7 @@ export interface TemplateContextBridge {
       iterationContext?: TemplateExecutionContext['iterationContext'];
     }
   ): TemplateExecutionContext;
-  
+
   fromTemplateContext(
     templateContext: TemplateExecutionContext,
     originalContext: ExecutionContext
@@ -302,7 +301,7 @@ export interface TemplateLLMDocumentation extends LLMDocumentation {
     expectedOutput: string;
     explanation: string;
   }>;
-  
+
   /** Directive combinations */
   combinations: Array<{
     directives: TemplateDirectiveType[];
@@ -310,7 +309,7 @@ export interface TemplateLLMDocumentation extends LLMDocumentation {
     example: string;
     useCase: string;
   }>;
-  
+
   /** Common template errors and solutions */
   troubleshooting: Array<{
     error: string;
@@ -336,14 +335,14 @@ export type TemplateStringLiteral<T extends string> = T;
 export type InterpolationPattern = `\${${string}}`;
 
 /**
- * Standard directive pattern for @directive syntax  
+ * Standard directive pattern for @directive syntax
  */
 export type DirectivePattern = `@${string}`;
 
 /**
  * Common template data types used across templating systems
  */
-export type TemplateDataTypes = 
+export type TemplateDataTypes =
   | string
   | number
   | boolean
@@ -359,16 +358,16 @@ export type TemplateDataTypes =
 export interface StandardTemplateContext {
   /** Current data scope */
   readonly data: Record<string, TemplateDataTypes>;
-  
+
   /** Parent context (for nested scopes) */
   readonly parent?: StandardTemplateContext;
-  
+
   /** Helper functions */
   readonly helpers: Record<string, (...args: unknown[]) => unknown>;
-  
+
   /** Partial templates */
   readonly partials: Record<string, string>;
-  
+
   /** Template options */
   readonly options: Record<string, unknown>;
 }
@@ -379,5 +378,5 @@ export type {
   TypedExpressionContext,
   ExpressionMetadata,
   ValidationResult,
-  LLMDocumentation
+  LLMDocumentation,
 } from './expression-types';

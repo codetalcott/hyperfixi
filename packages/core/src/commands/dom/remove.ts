@@ -26,16 +26,18 @@ export interface RemoveCommandOptions {
  */
 const RemoveCommandInputSchema = v.tuple([
   v.union([
-    v.string(),                                    // Class names
-    v.array(v.string()),                          // Array of class names
+    v.string(), // Class names
+    v.array(v.string()), // Array of class names
   ]),
-  v.union([
-    v.custom((value: unknown) => value instanceof HTMLElement),
-    v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-    v.string(), // CSS selector
-    v.null(),   // Use implicit target (me)
-    v.undefined()
-  ]).optional()
+  v
+    .union([
+      v.custom((value: unknown) => value instanceof HTMLElement),
+      v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
+      v.string(), // CSS selector
+      v.null(), // Use implicit target (me)
+      v.undefined(),
+    ])
+    .optional(),
 ]);
 
 type RemoveCommandInput = any; // Inferred from RuntimeValidator
@@ -43,17 +45,20 @@ type RemoveCommandInput = any; // Inferred from RuntimeValidator
 /**
  * Enhanced Remove Command with full type safety for LLM agents
  */
-export class RemoveCommand implements TypedCommandImplementation<
-  RemoveCommandInput,
-  HTMLElement[],  // Returns list of modified elements
-  TypedExecutionContext
-> {
+export class RemoveCommand
+  implements
+    TypedCommandImplementation<
+      RemoveCommandInput,
+      HTMLElement[], // Returns list of modified elements
+      TypedExecutionContext
+    >
+{
   public readonly name = 'remove' as const;
   public readonly syntax = 'remove <class-expression> [from <target-expression>]';
   public readonly description = 'Removes CSS classes from elements';
   public readonly inputSchema = RemoveCommandInputSchema;
   public readonly outputType = 'element-list' as const;
-  
+
   public readonly metadata: CommandMetadata = {
     category: 'DOM',
     complexity: 'simple',
@@ -62,15 +67,15 @@ export class RemoveCommand implements TypedCommandImplementation<
       {
         code: 'remove .active from me',
         description: 'Remove active class from current element',
-        expectedOutput: []
+        expectedOutput: [],
       },
       {
         code: 'remove "loading spinner" from <.buttons/>',
         description: 'Remove multiple classes from elements with buttons class',
-        expectedOutput: []
-      }
+        expectedOutput: [],
+      },
     ],
-    relatedCommands: ['add', 'toggle', 'hide']
+    relatedCommands: ['add', 'toggle', 'hide'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -81,39 +86,39 @@ export class RemoveCommand implements TypedCommandImplementation<
         type: 'string',
         description: 'CSS class names to remove',
         optional: false,
-        examples: ['.active', 'highlighted', 'loading spinner']
+        examples: ['.active', 'highlighted', 'loading spinner'],
       },
       {
         name: 'target',
         type: 'element',
         description: 'Element(s) to modify. If omitted, uses the current element (me)',
         optional: true,
-        examples: ['me', '<#sidebar/>', '<.buttons/>']
-      }
+        examples: ['me', '<#sidebar/>', '<.buttons/>'],
+      },
     ],
     returns: {
       type: 'element-list',
       description: 'Array of elements that were modified',
-      examples: [[]]
+      examples: [[]],
     },
     examples: [
       {
         title: 'Remove single class',
         code: 'on click remove .active from me',
         explanation: 'When clicked, removes the "active" class from the element',
-        output: []
+        output: [],
       },
       {
         title: 'Remove multiple classes',
         code: 'remove "loading error" from <#submit-btn/>',
         explanation: 'Removes both "loading" and "error" classes from submit button',
-        output: []
-      }
+        output: [],
+      },
     ],
     seeAlso: ['add', 'toggle', 'hide', 'show'],
-    tags: ['dom', 'css', 'classes']
+    tags: ['dom', 'css', 'classes'],
   };
-  
+
   private readonly _options: RemoveCommandOptions; // Reserved for future enhancements - configuration storage
 
   constructor(options: RemoveCommandOptions = {}) {
@@ -139,13 +144,13 @@ export class RemoveCommand implements TypedCommandImplementation<
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'validation-error',
-                        message: validationResult.errors[0]?.message || 'Invalid input',
+            name: 'ValidationError',
+            type: 'validation-error',
+            message: validationResult.errors[0]?.message || 'Invalid input',
             code: 'REMOVE_VALIDATION_FAILED',
-            suggestions: validationResult.suggestions
+            suggestions: validationResult.suggestions,
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -155,36 +160,36 @@ export class RemoveCommand implements TypedCommandImplementation<
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'missing-argument',
-                        message: 'No valid classes provided to remove',
+            name: 'ValidationError',
+            type: 'missing-argument',
+            message: 'No valid classes provided to remove',
             code: 'NO_VALID_CLASSES',
-            suggestions: [ 'Provide valid CSS class names', 'Check class name syntax']
+            suggestions: ['Provide valid CSS class names', 'Check class name syntax'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
-      
+
       // Type-safe target resolution
       const elements = this.resolveTargets(context, target);
-      
+
       if (!elements.length) {
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'missing-argument',
-                        message: 'No target elements found',
+            name: 'ValidationError',
+            type: 'missing-argument',
+            message: 'No target elements found',
             code: 'NO_TARGET_ELEMENTS',
-            suggestions: [ 'Check if target selector is valid', 'Ensure elements exist in DOM']
+            suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
-      
+
       // Process elements with enhanced error handling
       const modifiedElements: HTMLElement[] = [];
-      
+
       for (const element of elements) {
         const classResult = await this.removeClassesFromElement(element, classes, context);
         if (classResult.success) {
@@ -195,20 +200,19 @@ export class RemoveCommand implements TypedCommandImplementation<
       return {
         success: true,
         value: modifiedElements,
-        type: 'element-list'
+        type: 'element-list',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Unknown error',
+          message: error instanceof Error ? error.message : 'Unknown error',
           code: 'REMOVE_EXECUTION_FAILED',
-          suggestions: [ 'Check if elements exist', 'Verify class names are valid']
+          suggestions: ['Check if elements exist', 'Verify class names are valid'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -231,9 +235,7 @@ export class RemoveCommand implements TypedCommandImplementation<
     }
 
     if (Array.isArray(classExpression)) {
-      return classExpression
-        .map(cls => String(cls).trim())
-        .filter(cls => cls.length > 0);
+      return classExpression.map(cls => String(cls).trim()).filter(cls => cls.length > 0);
     }
 
     // Convert other types to string
@@ -268,7 +270,7 @@ export class RemoveCommand implements TypedCommandImplementation<
 
     // Handle Array of elements
     if (Array.isArray(target)) {
-      return target.filter(item => item instanceof HTMLElement) as HTMLElement[];
+      return target.filter(item => item instanceof HTMLElement);
     }
 
     // Handle CSS selector string
@@ -285,13 +287,13 @@ export class RemoveCommand implements TypedCommandImplementation<
   }
 
   private async removeClassesFromElement(
-    element: HTMLElement, 
-    classes: string[], 
+    element: HTMLElement,
+    classes: string[],
     context: TypedExecutionContext
   ): Promise<EvaluationResult<HTMLElement>> {
     try {
       const removedClasses: string[] = [];
-      
+
       // Remove classes with validation
       for (const className of classes) {
         if (this.isValidClassName(className)) {
@@ -302,13 +304,13 @@ export class RemoveCommand implements TypedCommandImplementation<
           return {
             success: false,
             error: {
-                            name: 'ValidationError',
-          type: 'invalid-argument',
-                            message: `Invalid class name: "${className}"`,
+              name: 'ValidationError',
+              type: 'invalid-argument',
+              message: `Invalid class name: "${className}"`,
               code: 'INVALID_CLASS_NAME',
-              suggestions: [ 'Use valid CSS class names', 'Check for special characters']
+              suggestions: ['Use valid CSS class names', 'Check for special characters'],
             },
-            type: 'error'
+            type: 'error',
           };
         }
       }
@@ -324,27 +326,26 @@ export class RemoveCommand implements TypedCommandImplementation<
           allClasses: classes,
           timestamp: Date.now(),
           metadata: this.metadata,
-          result: 'success'
+          result: 'success',
         });
       }
 
       return {
         success: true,
         value: element,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Failed to remove classes',
+          message: error instanceof Error ? error.message : 'Failed to remove classes',
           code: 'CLASS_REMOVE_FAILED',
-          suggestions: [ 'Check if element is still in DOM', 'Verify class names are valid']
+          suggestions: ['Check if element is still in DOM', 'Verify class names are valid'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -365,75 +366,87 @@ export class RemoveCommand implements TypedCommandImplementation<
     try {
       // Schema validation
       const parsed = RemoveCommandInputSchema.safeParse(args);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch' as const,
-            message: `Invalid argument: ${err.message}`,
-            suggestions: [this.getValidationSuggestion(err.code ?? "unknown")]
-          })) ?? [],
-          suggestions: ['Use string or string array for classes, and valid target selector']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch' as const,
+              message: `Invalid argument: ${err.message}`,
+              suggestions: [this.getValidationSuggestion(err.code ?? 'unknown')],
+            })) ?? [],
+          suggestions: ['Use string or string array for classes, and valid target selector'],
         };
       }
 
       // Additional semantic validation
       const [classExpression, target] = parsed.data as [string | string[], unknown];
-      
+
       // Validate class expression is not empty
-      if (!classExpression || (typeof classExpression === 'string' && classExpression.trim().length === 0)) {
+      if (
+        !classExpression ||
+        (typeof classExpression === 'string' && classExpression.trim().length === 0)
+      ) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Class expression cannot be empty',
-            suggestions: ['Provide valid CSS class names']
-          }],
-          suggestions: [ 'Use class names like "active"', 'Use space-separated class names like "loading error"']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Class expression cannot be empty',
+              suggestions: ['Provide valid CSS class names'],
+            },
+          ],
+          suggestions: [
+            'Use class names like "active"',
+            'Use space-separated class names like "loading error"',
+          ],
         };
       }
-      
+
       // Validate target selector if provided
       if (typeof target === 'string' && !this.isValidCSSSelector(target)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: `Invalid CSS selector: "${target}"`,
-            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"']
-          }],
-          suggestions: [ 'Check CSS selector syntax', 'Use document.querySelector() test']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: `Invalid CSS selector: "${target}"`,
+              suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"'],
+            },
+          ],
+          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: [] 
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: ['Check input types and values']
-        }],
-        suggestions: ['Ensure arguments match expected types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: ['Check input types and values'],
+          },
+        ],
+        suggestions: ['Ensure arguments match expected types'],
       };
     }
   }
 
   private getValidationSuggestion(errorCode: string): string {
     const suggestions: Record<string, string> = {
-      'invalid_type': 'Use string or string array for classes, HTMLElement or selector for target',
-      'invalid_union': 'Classes must be string or string array, target must be element or selector',
-      'too_small': 'Remove command requires at least a class expression',
-      'too_big': 'Too many arguments - remove command takes 1-2 arguments'
+      invalid_type: 'Use string or string array for classes, HTMLElement or selector for target',
+      invalid_union: 'Classes must be string or string array, target must be element or selector',
+      too_small: 'Remove command requires at least a class expression',
+      too_big: 'Too many arguments - remove command takes 1-2 arguments',
     };
-    
+
     return suggestions[errorCode] || 'Check argument types and syntax';
   }
 

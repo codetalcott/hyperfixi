@@ -9,14 +9,16 @@ import {
   EnhancedMyExpression,
   EnhancedItsExpression,
   EnhancedAttributeExpression,
-  propertyExpressions
+  propertyExpressions,
 } from './index.ts';
 
 // ============================================================================
 // Test Helpers
 // ============================================================================
 
-function createTestContext(overrides: Partial<TypedExpressionContext> = {}): TypedExpressionContext {
+function createTestContext(
+  overrides: Partial<TypedExpressionContext> = {}
+): TypedExpressionContext {
   return {
     me: undefined,
     it: undefined,
@@ -25,18 +27,21 @@ function createTestContext(overrides: Partial<TypedExpressionContext> = {}): Typ
     locals: new Map(),
     globals: new Map(),
     event: undefined,
-    
+
     // Enhanced expression context properties
     expressionStack: [],
     evaluationDepth: 0,
     validationMode: 'strict',
     evaluationHistory: [],
-    
-    ...overrides
+
+    ...overrides,
   };
 }
 
-function createMockElement(properties: Record<string, any> = {}, attributes: Record<string, string> = {}): any {
+function createMockElement(
+  properties: Record<string, any> = {},
+  attributes: Record<string, string> = {}
+): any {
   const element = {
     nodeType: 1, // Element node
     id: properties.id || 'test-element',
@@ -45,13 +50,15 @@ function createMockElement(properties: Record<string, any> = {}, attributes: Rec
     dataset: properties.dataset || { value: '42', userId: '123' },
     style: properties.style || { display: 'block', color: 'red' },
     ...properties,
-    
+
     // Mock getAttribute functionality
-    getAttribute: (name: string) => attributes[name] !== undefined ? attributes[name] : null,
-    setAttribute: (name: string, value: string) => { attributes[name] = value; },
-    hasAttribute: (name: string) => name in attributes
+    getAttribute: (name: string) => (attributes[name] !== undefined ? attributes[name] : null),
+    setAttribute: (name: string, value: string) => {
+      attributes[name] = value;
+    },
+    hasAttribute: (name: string) => name in attributes,
   };
-  
+
   return element;
 }
 
@@ -111,8 +118,8 @@ describe('EnhancedMyExpression', () => {
 
   describe('Nested property access', () => {
     it('should access dataset properties', async () => {
-      const mockElement = createMockElement({ 
-        dataset: { value: '42', userId: '12345', config: 'test' }
+      const mockElement = createMockElement({
+        dataset: { value: '42', userId: '12345', config: 'test' },
       });
       context.me = mockElement;
 
@@ -126,8 +133,8 @@ describe('EnhancedMyExpression', () => {
     });
 
     it('should access style properties', async () => {
-      const mockElement = createMockElement({ 
-        style: { display: 'block', color: 'red', fontSize: '16px' }
+      const mockElement = createMockElement({
+        style: { display: 'block', color: 'red', fontSize: '16px' },
       });
       context.me = mockElement;
 
@@ -320,10 +327,13 @@ describe('EnhancedItsExpression', () => {
     });
 
     it('should access nested element properties', async () => {
-      const mockElement = createMockElement({ 
-        dataset: { value: '123', config: 'production' }
+      const mockElement = createMockElement({
+        dataset: { value: '123', config: 'production' },
       });
-      const result = await itsExpr.evaluate(context, { target: mockElement, property: 'dataset.value' });
+      const result = await itsExpr.evaluate(context, {
+        target: mockElement,
+        property: 'dataset.value',
+      });
 
       expect(result.success).toBe(true);
       if (result.success) {
@@ -364,14 +374,14 @@ describe('EnhancedItsExpression', () => {
           baseUrl: 'https://api.example.com',
           endpoints: {
             users: '/users',
-            posts: '/posts'
-          }
-        }
+            posts: '/posts',
+          },
+        },
       };
-      
-      const result = await itsExpr.evaluate(context, { 
-        target: config, 
-        property: 'api.baseUrl' 
+
+      const result = await itsExpr.evaluate(context, {
+        target: config,
+        property: 'api.baseUrl',
       });
 
       expect(result.success).toBe(true);
@@ -383,9 +393,9 @@ describe('EnhancedItsExpression', () => {
 
     it('should return undefined for non-existent nested properties', async () => {
       const obj = { level1: { level2: {} } };
-      const result = await itsExpr.evaluate(context, { 
-        target: obj, 
-        property: 'level1.level2.nonexistent' 
+      const result = await itsExpr.evaluate(context, {
+        target: obj,
+        property: 'level1.level2.nonexistent',
       });
 
       expect(result.success).toBe(true);
@@ -452,15 +462,18 @@ describe('EnhancedAttributeExpression', () => {
 
   describe('HTML attribute access', () => {
     it('should access existing attributes', async () => {
-      const mockElement = createMockElement({}, { 
-        'id': 'submit-button',
-        'class': 'btn btn-primary',
-        'data-value': '42'
-      });
+      const mockElement = createMockElement(
+        {},
+        {
+          id: 'submit-button',
+          class: 'btn btn-primary',
+          'data-value': '42',
+        }
+      );
 
-      const result = await attrExpr.evaluate(context, { 
-        element: mockElement, 
-        attribute: 'id' 
+      const result = await attrExpr.evaluate(context, {
+        element: mockElement,
+        attribute: 'id',
       });
 
       expect(result.success).toBe(true);
@@ -471,13 +484,16 @@ describe('EnhancedAttributeExpression', () => {
     });
 
     it('should access class attributes', async () => {
-      const mockElement = createMockElement({}, { 
-        'class': 'btn btn-primary active'
-      });
+      const mockElement = createMockElement(
+        {},
+        {
+          class: 'btn btn-primary active',
+        }
+      );
 
-      const result = await attrExpr.evaluate(context, { 
-        element: mockElement, 
-        attribute: 'class' 
+      const result = await attrExpr.evaluate(context, {
+        element: mockElement,
+        attribute: 'class',
       });
 
       expect(result.success).toBe(true);
@@ -488,14 +504,17 @@ describe('EnhancedAttributeExpression', () => {
     });
 
     it('should access data attributes', async () => {
-      const mockElement = createMockElement({}, { 
-        'data-user-id': '12345',
-        'data-config': 'production'
-      });
+      const mockElement = createMockElement(
+        {},
+        {
+          'data-user-id': '12345',
+          'data-config': 'production',
+        }
+      );
 
-      const result = await attrExpr.evaluate(context, { 
-        element: mockElement, 
-        attribute: 'data-user-id' 
+      const result = await attrExpr.evaluate(context, {
+        element: mockElement,
+        attribute: 'data-user-id',
       });
 
       expect(result.success).toBe(true);
@@ -508,9 +527,9 @@ describe('EnhancedAttributeExpression', () => {
     it('should return null for non-existent attributes', async () => {
       const mockElement = createMockElement({}, {});
 
-      const result = await attrExpr.evaluate(context, { 
-        element: mockElement, 
-        attribute: 'nonexistent' 
+      const result = await attrExpr.evaluate(context, {
+        element: mockElement,
+        attribute: 'nonexistent',
       });
 
       expect(result.success).toBe(true);
@@ -523,14 +542,17 @@ describe('EnhancedAttributeExpression', () => {
 
   describe('Boolean attributes', () => {
     it('should handle boolean attributes (disabled, checked, etc.)', async () => {
-      const mockElement = createMockElement({}, { 
-        'disabled': '',
-        'checked': 'checked'
-      });
+      const mockElement = createMockElement(
+        {},
+        {
+          disabled: '',
+          checked: 'checked',
+        }
+      );
 
-      const disabledResult = await attrExpr.evaluate(context, { 
-        element: mockElement, 
-        attribute: 'disabled' 
+      const disabledResult = await attrExpr.evaluate(context, {
+        element: mockElement,
+        attribute: 'disabled',
       });
 
       expect(disabledResult.success).toBe(true);
@@ -539,9 +561,9 @@ describe('EnhancedAttributeExpression', () => {
         expect(disabledResult.type).toBe('String');
       }
 
-      const checkedResult = await attrExpr.evaluate(context, { 
-        element: mockElement, 
-        attribute: 'checked' 
+      const checkedResult = await attrExpr.evaluate(context, {
+        element: mockElement,
+        attribute: 'checked',
       });
 
       expect(checkedResult.success).toBe(true);
@@ -556,9 +578,9 @@ describe('EnhancedAttributeExpression', () => {
     it('should reject non-DOM elements', async () => {
       const notAnElement = { name: 'not an element' };
 
-      const result = await attrExpr.evaluate(context, { 
-        element: notAnElement, 
-        attribute: 'id' 
+      const result = await attrExpr.evaluate(context, {
+        element: notAnElement,
+        attribute: 'id',
       });
 
       expect(result.success).toBe(false);
@@ -569,9 +591,9 @@ describe('EnhancedAttributeExpression', () => {
     });
 
     it('should reject null elements', async () => {
-      const result = await attrExpr.evaluate(context, { 
-        element: null, 
-        attribute: 'id' 
+      const result = await attrExpr.evaluate(context, {
+        element: null,
+        attribute: 'id',
       });
 
       expect(result.success).toBe(false);
@@ -581,9 +603,9 @@ describe('EnhancedAttributeExpression', () => {
     });
 
     it('should reject undefined elements', async () => {
-      const result = await attrExpr.evaluate(context, { 
-        element: undefined, 
-        attribute: 'id' 
+      const result = await attrExpr.evaluate(context, {
+        element: undefined,
+        attribute: 'id',
       });
 
       expect(result.success).toBe(false);
@@ -623,7 +645,7 @@ describe('Enhanced Property Expressions Integration', () => {
 
   beforeEach(() => {
     context = createTestContext({
-      evaluationHistory: []
+      evaluationHistory: [],
     });
   });
 
@@ -638,16 +660,19 @@ describe('Enhanced Property Expressions Integration', () => {
   describe('Cross-expression compatibility', () => {
     it('should work together for complex property access', async () => {
       // Setup context with element
-      const mockElement = createMockElement({ 
-        dataset: { userId: '123' }
-      }, {
-        'data-config': 'production'
-      });
+      const mockElement = createMockElement(
+        {
+          dataset: { userId: '123' },
+        },
+        {
+          'data-config': 'production',
+        }
+      );
       context.me = mockElement;
 
       // Test my expression
-      const myResult = await propertyExpressions.my.evaluate(context, { 
-        property: 'dataset.userId' 
+      const myResult = await propertyExpressions.my.evaluate(context, {
+        property: 'dataset.userId',
       });
 
       expect(myResult.success).toBe(true);
@@ -656,9 +681,9 @@ describe('Enhanced Property Expressions Integration', () => {
       }
 
       // Test its expression with same element
-      const itsResult = await propertyExpressions.its.evaluate(context, { 
-        target: mockElement, 
-        property: 'dataset.userId' 
+      const itsResult = await propertyExpressions.its.evaluate(context, {
+        target: mockElement,
+        property: 'dataset.userId',
       });
 
       expect(itsResult.success).toBe(true);
@@ -667,9 +692,9 @@ describe('Enhanced Property Expressions Integration', () => {
       }
 
       // Test attribute expression
-      const attrResult = await propertyExpressions.attribute.evaluate(context, { 
-        element: mockElement, 
-        attribute: 'data-config' 
+      const attrResult = await propertyExpressions.attribute.evaluate(context, {
+        element: mockElement,
+        attribute: 'data-config',
       });
 
       expect(attrResult.success).toBe(true);
@@ -696,7 +721,7 @@ describe('Enhanced Property Expressions Integration', () => {
       expect(context.evaluationHistory![0].expressionName).toBe('my');
       expect(context.evaluationHistory![1].expressionName).toBe('its');
       expect(context.evaluationHistory![2].expressionName).toBe('attribute');
-      
+
       context.evaluationHistory!.forEach(entry => {
         expect(entry.success).toBe(true);
         expect(entry.duration).toBeGreaterThanOrEqual(0);
@@ -707,7 +732,7 @@ describe('Enhanced Property Expressions Integration', () => {
   describe('Type safety', () => {
     it('should have consistent metadata', () => {
       const expressions = Object.values(propertyExpressions);
-      
+
       expressions.forEach(expr => {
         expect(expr.category).toBe('Properties');
         expect(expr.metadata.category).toBe('Properties');
@@ -719,31 +744,34 @@ describe('Enhanced Property Expressions Integration', () => {
 
   describe('Real-world scenarios', () => {
     it('should handle form field access patterns', async () => {
-      const formElement = createMockElement({ 
-        value: 'user@example.com',
-        validity: { valid: true }
-      }, {
-        'name': 'email',
-        'type': 'email',
-        'required': ''
-      });
+      const formElement = createMockElement(
+        {
+          value: 'user@example.com',
+          validity: { valid: true },
+        },
+        {
+          name: 'email',
+          type: 'email',
+          required: '',
+        }
+      );
       context.me = formElement;
 
       // Access form field value
-      const valueResult = await propertyExpressions.my.evaluate(context, { 
-        property: 'value' 
+      const valueResult = await propertyExpressions.my.evaluate(context, {
+        property: 'value',
       });
 
       // Access form field name attribute
-      const nameResult = await propertyExpressions.attribute.evaluate(context, { 
-        element: formElement, 
-        attribute: 'name' 
+      const nameResult = await propertyExpressions.attribute.evaluate(context, {
+        element: formElement,
+        attribute: 'name',
       });
 
       // Access validation state
-      const validityResult = await propertyExpressions.its.evaluate(context, { 
-        target: formElement, 
-        property: 'validity.valid' 
+      const validityResult = await propertyExpressions.its.evaluate(context, {
+        target: formElement,
+        property: 'validity.valid',
       });
 
       expect(valueResult.success).toBe(true);
@@ -764,28 +792,28 @@ describe('Enhanced Property Expressions Integration', () => {
           email: 'john@example.com',
           preferences: {
             theme: 'dark',
-            notifications: true
-          }
+            notifications: true,
+          },
         },
-        permissions: ['read', 'write']
+        permissions: ['read', 'write'],
       };
 
       const itsExpr = propertyExpressions.its;
 
       // Access nested user data
-      const nameResult = await itsExpr.evaluate(context, { 
-        target: userData, 
-        property: 'profile.name' 
+      const nameResult = await itsExpr.evaluate(context, {
+        target: userData,
+        property: 'profile.name',
       });
 
-      const themeResult = await itsExpr.evaluate(context, { 
-        target: userData, 
-        property: 'profile.preferences.theme' 
+      const themeResult = await itsExpr.evaluate(context, {
+        target: userData,
+        property: 'profile.preferences.theme',
       });
 
-      const permissionsResult = await itsExpr.evaluate(context, { 
-        target: userData, 
-        property: 'permissions.0' 
+      const permissionsResult = await itsExpr.evaluate(context, {
+        target: userData,
+        property: 'permissions.0',
       });
 
       expect(nameResult.success).toBe(true);

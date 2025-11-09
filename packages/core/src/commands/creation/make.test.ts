@@ -17,7 +17,7 @@ describe('Make Command', () => {
     command = new MakeCommand();
     testElement = createTestElement('<div id="test">Test</div>');
     context = createMockHyperscriptContext(testElement) as ExecutionContext;
-    
+
     // Ensure locals and globals Maps exist
     if (!context.locals) context.locals = new Map();
     if (!context.globals) context.globals = new Map();
@@ -26,8 +26,12 @@ describe('Make Command', () => {
   describe('Command Properties', () => {
     it('should have correct metadata', () => {
       expect(command.name).toBe('make');
-      expect(command.syntax).toBe('make (a|an) <expression> [from <arg-list>] [called <identifier>]\nmake (a|an) <query-ref>                    [called <identifier>]');
-      expect(command.description).toBe('The make command can be used to create class instances or DOM elements.\nIn the first form:\nis equal to the JavaScript new URL("/path/", "https://origin.example.com").\nIn the second form:\nwill create an <a> element and add the class "navlink" to it. Currently, onlyclasses and IDs are supported.');
+      expect(command.syntax).toBe(
+        'make (a|an) <expression> [from <arg-list>] [called <identifier>]\nmake (a|an) <query-ref>                    [called <identifier>]'
+      );
+      expect(command.description).toBe(
+        'The make command can be used to create class instances or DOM elements.\nIn the first form:\nis equal to the JavaScript new URL("/path/", "https://origin.example.com").\nIn the second form:\nwill create an <a> element and add the class "navlink" to it. Currently, onlyclasses and IDs are supported.'
+      );
     });
   });
 
@@ -37,44 +41,51 @@ describe('Make Command', () => {
       const MockURL = vi.fn().mockImplementation((path, base) => ({
         href: base + path.substring(1),
         path,
-        base
+        base,
       }));
       (global as any).URL = MockURL;
-      
-      const result = await command.execute(context, 'a', 'URL', 'from', '/path/', 'https://origin.example.com');
-      
+
+      const result = await command.execute(
+        context,
+        'a',
+        'URL',
+        'from',
+        '/path/',
+        'https://origin.example.com'
+      );
+
       expect(MockURL).toHaveBeenCalledWith('/path/', 'https://origin.example.com');
       expect(result.href).toBe('https://origin.example.com/path/');
       expect(context.it).toBe(result);
-      
+
       // Cleanup
       delete (global as any).URL;
     });
 
     it('should create class instances without arguments', async () => {
       const MockDate = vi.fn().mockImplementation(() => ({
-        toISOString: () => '2023-01-01T00:00:00.000Z'
+        toISOString: () => '2023-01-01T00:00:00.000Z',
       }));
       (global as any).Date = MockDate;
-      
+
       const result = await command.execute(context, 'a', 'Date');
-      
+
       expect(MockDate).toHaveBeenCalledWith();
       expect(result.toISOString()).toBe('2023-01-01T00:00:00.000Z');
       expect(context.it).toBe(result);
-      
-      // Cleanup  
+
+      // Cleanup
       delete (global as any).Date;
     });
 
     it('should handle "an" article', async () => {
       const MockArray = vi.fn().mockImplementation(() => []);
       (global as any).Array = MockArray;
-      
+
       await command.execute(context, 'an', 'Array');
-      
+
       expect(MockArray).toHaveBeenCalledWith();
-      
+
       // Cleanup
       delete (global as any).Array;
     });
@@ -82,12 +93,21 @@ describe('Make Command', () => {
     it('should store result in variable when "called" is specified', async () => {
       const MockURL = vi.fn().mockImplementation((path, base) => ({ href: base + path }));
       (global as any).URL = MockURL;
-      
-      await command.execute(context, 'a', 'URL', 'from', '/api', 'https://api.example.com', 'called', 'apiUrl');
-      
-      expect(context.locals!.get('apiUrl')).toBeDefined();
-      expect(context.locals!.get('apiUrl').href).toBe('https://api.example.com/api');
-      
+
+      await command.execute(
+        context,
+        'a',
+        'URL',
+        'from',
+        '/api',
+        'https://api.example.com',
+        'called',
+        'apiUrl'
+      );
+
+      expect(context.locals.get('apiUrl')).toBeDefined();
+      expect(context.locals.get('apiUrl').href).toBe('https://api.example.com/api');
+
       // Cleanup
       delete (global as any).URL;
     });
@@ -96,7 +116,7 @@ describe('Make Command', () => {
   describe('DOM Element Creation', () => {
     it('should create simple DOM elements', async () => {
       const result = await command.execute(context, 'a', '<div/>');
-      
+
       expect(result).toBeInstanceOf(HTMLElement);
       expect(result.tagName.toLowerCase()).toBe('div');
       expect(context.it).toBe(result);
@@ -104,7 +124,7 @@ describe('Make Command', () => {
 
     it('should create DOM elements with classes', async () => {
       const result = await command.execute(context, 'an', '<a.navlink/>');
-      
+
       expect(result).toBeInstanceOf(HTMLElement);
       expect(result.tagName.toLowerCase()).toBe('a');
       expect(result.classList.contains('navlink')).toBe(true);
@@ -112,7 +132,7 @@ describe('Make Command', () => {
 
     it('should create DOM elements with multiple classes', async () => {
       const result = await command.execute(context, 'a', '<span.highlight.important/>');
-      
+
       expect(result).toBeInstanceOf(HTMLElement);
       expect(result.tagName.toLowerCase()).toBe('span');
       expect(result.classList.contains('highlight')).toBe(true);
@@ -121,7 +141,7 @@ describe('Make Command', () => {
 
     it('should create DOM elements with ID', async () => {
       const result = await command.execute(context, 'a', '<div#myId/>');
-      
+
       expect(result).toBeInstanceOf(HTMLElement);
       expect(result.tagName.toLowerCase()).toBe('div');
       expect(result.id).toBe('myId');
@@ -129,7 +149,7 @@ describe('Make Command', () => {
 
     it('should create DOM elements with ID and classes', async () => {
       const result = await command.execute(context, 'a', '<button#submit.primary.large/>');
-      
+
       expect(result).toBeInstanceOf(HTMLElement);
       expect(result.tagName.toLowerCase()).toBe('button');
       expect(result.id).toBe('submit');
@@ -139,8 +159,8 @@ describe('Make Command', () => {
 
     it('should store DOM element in variable when "called" is specified', async () => {
       await command.execute(context, 'a', '<span.topping/>', 'called', 'toppingElement');
-      
-      const element = context.locals!.get('toppingElement');
+
+      const element = context.locals.get('toppingElement');
       expect(element).toBeInstanceOf(HTMLElement);
       expect(element.tagName.toLowerCase()).toBe('span');
       expect(element.classList.contains('topping')).toBe(true);
@@ -150,21 +170,23 @@ describe('Make Command', () => {
   describe('Complex Class Instantiation', () => {
     it('should handle Intl.ListFormat creation', async () => {
       const MockListFormat = vi.fn().mockImplementation((locale, options) => ({
-        format: (items) => items.join(', '),
-        formatToParts: (items) => items.map(item => ({ type: 'element', value: item })),
+        format: items => items.join(', '),
+        formatToParts: items => items.map(item => ({ type: 'element', value: item })),
         locale,
-        options
+        options,
       }));
-      
+
       // Mock Intl global
       (global as any).Intl = { ListFormat: MockListFormat };
-      
-      const result = await command.execute(context, 'an', 'Intl.ListFormat', 'from', 'en', { type: 'conjunction' });
-      
+
+      const result = await command.execute(context, 'an', 'Intl.ListFormat', 'from', 'en', {
+        type: 'conjunction',
+      });
+
       expect(MockListFormat).toHaveBeenCalledWith('en', { type: 'conjunction' });
       expect(result.locale).toBe('en');
       expect(result.options.type).toBe('conjunction');
-      
+
       // Cleanup
       delete (global as any).Intl;
     });
@@ -173,12 +195,12 @@ describe('Make Command', () => {
       const MockInnerClass = vi.fn().mockImplementation(() => ({ inner: true }));
       const MockOuterClass = { InnerClass: MockInnerClass };
       (global as any).Outer = MockOuterClass;
-      
+
       const result = await command.execute(context, 'an', 'Outer.InnerClass');
-      
+
       expect(MockInnerClass).toHaveBeenCalledWith();
       expect(result.inner).toBe(true);
-      
+
       // Cleanup
       delete (global as any).Outer;
     });
@@ -200,12 +222,12 @@ describe('Make Command', () => {
     it('should handle missing constructor arguments gracefully', async () => {
       const MockConstructor = vi.fn().mockImplementation(() => ({ created: true }));
       (global as any).TestClass = MockConstructor;
-      
+
       const result = await command.execute(context, 'a', 'TestClass', 'from');
-      
+
       expect(MockConstructor).toHaveBeenCalledWith();
       expect(result.created).toBe(true);
-      
+
       // Cleanup
       delete (global as any).TestClass;
     });
@@ -258,15 +280,22 @@ describe('Make Command', () => {
       // From LSP: make a URL from "/path/", "https://origin.example.com"
       const MockURL = vi.fn().mockImplementation((path, origin) => ({
         href: origin + path,
-        toString: () => origin + path
+        toString: () => origin + path,
       }));
       (global as any).URL = MockURL;
-      
-      const result = await command.execute(context, 'a', 'URL', 'from', '/path/', 'https://origin.example.com');
-      
+
+      const result = await command.execute(
+        context,
+        'a',
+        'URL',
+        'from',
+        '/path/',
+        'https://origin.example.com'
+      );
+
       expect(MockURL).toHaveBeenCalledWith('/path/', 'https://origin.example.com');
       expect(result.href).toBe('https://origin.example.com/path/');
-      
+
       // Cleanup
       delete (global as any).URL;
     });
@@ -274,7 +303,7 @@ describe('Make Command', () => {
     it('should handle LSP example 2: DOM element with class', async () => {
       // From LSP: make an <a.navlink/>
       const result = await command.execute(context, 'an', '<a.navlink/>');
-      
+
       expect(result).toBeInstanceOf(HTMLElement);
       expect(result.tagName.toLowerCase()).toBe('a');
       expect(result.classList.contains('navlink')).toBe(true);
@@ -287,28 +316,37 @@ describe('Make Command', () => {
         { type: 'literal', value: ', ' },
         { type: 'element', value: 'mushrooms' },
         { type: 'literal', value: ', and ' },
-        { type: 'element', value: 'cheese' }
+        { type: 'element', value: 'cheese' },
       ]);
-      
+
       const MockListFormat = vi.fn().mockImplementation((locale, options) => ({
         formatToParts: mockFormatToParts,
         locale,
-        options
+        options,
       }));
-      
+
       (global as any).Intl = { ListFormat: MockListFormat };
-      
-      const result = await command.execute(context, 'an', 'Intl.ListFormat', 'from', 'en', { type: 'conjunction' }, 'called', 'listFmt');
-      
+
+      const result = await command.execute(
+        context,
+        'an',
+        'Intl.ListFormat',
+        'from',
+        'en',
+        { type: 'conjunction' },
+        'called',
+        'listFmt'
+      );
+
       expect(MockListFormat).toHaveBeenCalledWith('en', { type: 'conjunction' });
-      expect(context.locals!.get('listFmt')).toBe(result);
+      expect(context.locals.get('listFmt')).toBe(result);
       expect(result.formatToParts).toBeDefined();
-      
+
       // Test the formatToParts functionality
       const parts = result.formatToParts(['pepperoni', 'mushrooms', 'cheese']);
       expect(parts).toHaveLength(5);
       expect(parts[0]).toEqual({ type: 'element', value: 'pepperoni' });
-      
+
       // Cleanup
       delete (global as any).Intl;
     });
@@ -316,7 +354,7 @@ describe('Make Command', () => {
     it('should handle LSP example 4: span element creation', async () => {
       // From LSP: make a <span.topping/>
       const result = await command.execute(context, 'a', '<span.topping/>');
-      
+
       expect(result).toBeInstanceOf(HTMLElement);
       expect(result.tagName.toLowerCase()).toBe('span');
       expect(result.classList.contains('topping')).toBe(true);
@@ -327,7 +365,7 @@ describe('Make Command', () => {
     it('should work within conditional logic', async () => {
       // Simulate conditional element creation
       const shouldCreateButton = true;
-      
+
       if (shouldCreateButton) {
         const result = await command.execute(context, 'a', '<button.submit/>');
         expect(result.classList.contains('submit')).toBe(true);
@@ -337,11 +375,11 @@ describe('Make Command', () => {
     it('should work with variable storage and retrieval', async () => {
       // Create and store element
       await command.execute(context, 'a', '<div.container/>', 'called', 'container');
-      
-      const storedElement = context.locals!.get('container');
+
+      const storedElement = context.locals.get('container');
       expect(storedElement).toBeInstanceOf(HTMLElement);
       expect(storedElement.classList.contains('container')).toBe(true);
-      
+
       // Element should be available for further operations
       storedElement.textContent = 'Container content';
       expect(storedElement.textContent).toBe('Container content');

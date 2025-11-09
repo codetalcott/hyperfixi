@@ -70,7 +70,10 @@ describe('ObjectPool', () => {
     it('should call reset function before reuse', () => {
       const pool = new ObjectPool(
         () => ({ value: 0, count: 0 }),
-        (obj) => { obj.value = 0; obj.count = 0; }
+        obj => {
+          obj.value = 0;
+          obj.count = 0;
+        }
       );
 
       const obj1 = pool.get();
@@ -104,13 +107,7 @@ describe('ObjectPool', () => {
     it('should handle multiple get() calls without release', () => {
       const pool = new ObjectPool(() => ({ id: Math.random() }));
 
-      const objects = [
-        pool.get(),
-        pool.get(),
-        pool.get(),
-        pool.get(),
-        pool.get()
-      ];
+      const objects = [pool.get(), pool.get(), pool.get(), pool.get(), pool.get()];
 
       // All should be different objects
       const ids = objects.map(o => o.id);
@@ -284,7 +281,7 @@ describe('ObjectPool', () => {
     it('should handle objects with complex reset logic', () => {
       const pool = new ObjectPool(
         () => ({ map: new Map(), set: new Set(), arr: [] }),
-        (obj) => {
+        obj => {
           obj.map.clear();
           obj.set.clear();
           obj.arr.length = 0;
@@ -423,7 +420,7 @@ describe('StyleBatcher', () => {
       batcher.add(testElement, {
         'font-size': '16px',
         'background-color': 'blue',
-        'border-radius': '5px'
+        'border-radius': '5px',
       });
 
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -436,7 +433,7 @@ describe('StyleBatcher', () => {
     it('should handle CSS custom properties (--variables)', async () => {
       batcher.add(testElement, {
         '--primary-color': '#ff0000',
-        '--spacing': '10px'
+        '--spacing': '10px',
       });
 
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -638,7 +635,7 @@ describe('StyleBatcher', () => {
     it('should handle special characters in values', async () => {
       batcher.add(testElement, {
         content: '"Hello, World!"',
-        background: 'url("image.png")'
+        background: 'url("image.png")',
       });
 
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -650,7 +647,7 @@ describe('StyleBatcher', () => {
     it('should handle numeric values', async () => {
       batcher.add(testElement, {
         opacity: '0.5',
-        zIndex: '999'
+        zIndex: '999',
       });
 
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -878,7 +875,7 @@ describe('EventQueue', () => {
 
       testElement.dispatchEvent(customEvent);
 
-      const event = await waitPromise as CustomEvent;
+      const event = (await waitPromise) as CustomEvent;
 
       expect(event.type).toBe('custom');
       expect(event.detail.value).toBe(42);

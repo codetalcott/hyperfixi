@@ -3,7 +3,11 @@
  * Enables gradual migration from legacy to enhanced expressions while maintaining compatibility
  */
 
-import type { ExecutionContext, TypedExpressionContext, ExpressionEvaluationOptions } from '../../../types/base-types';
+import type {
+  ExecutionContext,
+  TypedExpressionContext,
+  ExpressionEvaluationOptions,
+} from '../../../types/base-types';
 import { referenceExpressions } from './index';
 
 /**
@@ -22,12 +26,12 @@ export function createTypedExpressionContext(
     locals: context.locals || new Map(),
     globals: context.globals || new Map(),
     event: context.event || null,
-    
+
     // Enhanced expression context properties
     expressionStack: [],
     evaluationDepth: 0,
     validationMode: options.validationMode || 'strict',
-    evaluationHistory: []
+    evaluationHistory: [],
   };
 }
 
@@ -47,7 +51,7 @@ export function updateExecutionContext(
     result: typedContext.result,
     locals: typedContext.locals,
     globals: typedContext.globals,
-    event: typedContext.event
+    event: typedContext.event,
   };
 }
 
@@ -66,7 +70,7 @@ export class EnhancedExpressionAdapter {
       return (result.value as HTMLElement) || null;
     } else {
       console.warn('Enhanced me expression failed:', result.error);
-      return (context.me instanceof HTMLElement ? context.me : null); // Fallback to legacy behavior
+      return context.me instanceof HTMLElement ? context.me : null; // Fallback to legacy behavior
     }
   }
 
@@ -81,7 +85,7 @@ export class EnhancedExpressionAdapter {
       return result.value;
     } else {
       console.warn('Enhanced you expression failed:', result.error);
-      return (context.you instanceof HTMLElement ? context.you : null); // Fallback to legacy behavior
+      return context.you instanceof HTMLElement ? context.you : null; // Fallback to legacy behavior
     }
   }
 
@@ -91,7 +95,7 @@ export class EnhancedExpressionAdapter {
   static async evaluateIt(context: ExecutionContext): Promise<unknown> {
     const typedContext = createTypedExpressionContext(context);
     const result = await referenceExpressions.it.evaluate(typedContext, undefined);
-    
+
     if (result.success) {
       return result.value;
     } else {
@@ -104,23 +108,23 @@ export class EnhancedExpressionAdapter {
    * Evaluate enhanced CSS selector expression with legacy context
    */
   static async evaluateCSSSelector(
-    context: ExecutionContext, 
-    selector: string, 
+    context: ExecutionContext,
+    selector: string,
     single = false
   ): Promise<HTMLElement | HTMLElement[] | null> {
     const typedContext = createTypedExpressionContext(context);
     const input = { selector, single };
     const result = await referenceExpressions['css-selector'].evaluate(typedContext, input);
-    
+
     if (result.success) {
       return (result.value as HTMLElement | HTMLElement[] | null) ?? null;
     } else {
       console.warn('Enhanced CSS selector expression failed:', result.error);
       // Fallback to basic DOM query
       if (single) {
-        return document.querySelector(selector) as HTMLElement | null;
+        return document.querySelector(selector);
       } else {
-        const elements = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
+        const elements = Array.from(document.querySelectorAll(selector));
         return elements.length > 0 ? elements : null;
       }
     }
@@ -162,14 +166,14 @@ export class LegacyCompatibilityLayer {
     name: 'me',
     category: 'Reference' as const,
     evaluatesTo: 'Element' as const,
-    
+
     async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
       return EnhancedExpressionAdapter.evaluateMe(context);
     },
-    
+
     validate() {
       return null; // Enhanced expressions handle their own validation
-    }
+    },
   };
 
   /**
@@ -179,14 +183,14 @@ export class LegacyCompatibilityLayer {
     name: 'you',
     category: 'Reference' as const,
     evaluatesTo: 'Element' as const,
-    
+
     async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
       return EnhancedExpressionAdapter.evaluateYou(context);
     },
-    
+
     validate() {
       return null; // Enhanced expressions handle their own validation
-    }
+    },
   };
 
   /**
@@ -196,14 +200,14 @@ export class LegacyCompatibilityLayer {
     name: 'it',
     category: 'Reference' as const,
     evaluatesTo: 'Any' as const,
-    
+
     async evaluate(context: ExecutionContext): Promise<unknown> {
       return EnhancedExpressionAdapter.evaluateIt(context);
     },
-    
+
     validate() {
       return null; // Enhanced expressions handle their own validation
-    }
+    },
   };
 
   /**
@@ -213,12 +217,15 @@ export class LegacyCompatibilityLayer {
     return {
       name: single ? 'querySelector' : 'querySelectorAll',
       category: 'Reference' as const,
-      evaluatesTo: single ? 'Element' as const : 'Array' as const,
-      
-      async evaluate(context: ExecutionContext, selector: string): Promise<HTMLElement | HTMLElement[] | null> {
+      evaluatesTo: single ? ('Element' as const) : ('Array' as const),
+
+      async evaluate(
+        context: ExecutionContext,
+        selector: string
+      ): Promise<HTMLElement | HTMLElement[] | null> {
         return EnhancedExpressionAdapter.evaluateCSSSelector(context, selector, single);
       },
-      
+
       validate(args: any[]): string | null {
         if (args.length !== 1) {
           return `${single ? 'querySelector' : 'querySelectorAll'} requires exactly one argument (selector)`;
@@ -227,7 +234,7 @@ export class LegacyCompatibilityLayer {
           return `${single ? 'querySelector' : 'querySelectorAll'} selector must be a string`;
         }
         return null;
-      }
+      },
     };
   }
 }
@@ -290,5 +297,5 @@ export default {
   updateExecutionContext,
   EnhancedExpressionAdapter,
   LegacyCompatibilityLayer,
-  ExpressionMigrationUtility
+  ExpressionMigrationUtility,
 };

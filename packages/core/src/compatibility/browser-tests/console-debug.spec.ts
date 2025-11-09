@@ -37,7 +37,7 @@ test('capture console and errors', async ({ page }) => {
     return scripts.map(s => ({
       src: s.src,
       loaded: s.src ? 'has src' : 'inline',
-      hasError: s.onerror ? 'has error handler' : 'no error handler'
+      hasError: s.onerror ? 'has error handler' : 'no error handler',
     }));
   });
 

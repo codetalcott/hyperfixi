@@ -1,9 +1,9 @@
 /**
  * Enhanced Set Command Implementation
  * Sets values to variables, element properties, or attributes
- * 
+ *
  * Syntax: set <target> to <value>
- * 
+ *
  * Modernized with CommandImplementation interface and Zod validation
  */
 
@@ -16,18 +16,19 @@ import { asHTMLElement } from '../../utils/dom-utils';
 /**
  * Zod schema for SET command input validation
  */
-export const SetCommandInputSchema = v.object({
-  target: v.union([
-    v.string().min(1),
-    v.custom((value: unknown) => value instanceof HTMLElement),
-  ]).describe('Target variable, element property, or attribute'),
-  
-  value: v.unknown().describe('Value to set'),
-  
-  toKeyword: v.literal('to').optional().describe('Syntax keyword "to"'),
-  
-  scope: z.enum(['global', 'local']).optional().describe('Variable scope')
-}).describe('SET command input parameters');
+export const SetCommandInputSchema = v
+  .object({
+    target: v
+      .union([v.string().min(1), v.custom((value: unknown) => value instanceof HTMLElement)])
+      .describe('Target variable, element property, or attribute'),
+
+    value: v.unknown().describe('Value to set'),
+
+    toKeyword: v.literal('to').optional().describe('Syntax keyword "to"'),
+
+    scope: z.enum(['global', 'local']).optional().describe('Variable scope'),
+  })
+  .describe('SET command input parameters');
 
 // Input type definition
 export interface SetCommandInput {
@@ -39,7 +40,7 @@ export interface SetCommandInput {
 
 type SetCommandInputType = any; // Inferred from RuntimeValidator
 
-// Output type definition  
+// Output type definition
 export interface SetCommandOutput {
   target: string | HTMLElement;
   value: unknown;
@@ -50,20 +51,21 @@ export interface SetCommandOutput {
 /**
  * Enhanced Set Command with full type safety and validation
  */
-export class SetCommand implements CommandImplementation<
-  SetCommandInput,
-  SetCommandOutput,
-  TypedExecutionContext
-> {
+export class SetCommand
+  implements CommandImplementation<SetCommandInput, SetCommandOutput, TypedExecutionContext>
+{
   public readonly name = 'set' as const;
-  public readonly syntax = 'set <expression> to <expression>\n  set <object literal> on <expression>';
-  public readonly description = 'The set command allows you to set a value of a variable, property or the DOM.';
+  public readonly syntax =
+    'set <expression> to <expression>\n  set <object literal> on <expression>';
+  public readonly description =
+    'The set command allows you to set a value of a variable, property or the DOM.';
   public readonly inputSchema = SetCommandInputSchema;
   public readonly outputType = 'object' as const;
-  
+
   public readonly metadata = {
     name: 'set',
-    description: 'The set command assigns values to variables, element properties, or attributes. It supports both local and global scope assignment.',
+    description:
+      'The set command assigns values to variables, element properties, or attributes. It supports both local and global scope assignment.',
     syntax: 'set <target> to <value>',
     category: 'data',
     examples: [
@@ -71,13 +73,14 @@ export class SetCommand implements CommandImplementation<
       'set @data-theme to "dark"',
       'set my innerHTML to "content"',
       'set the textContent of #element to "text"',
-      'set global count to 10'
+      'set global count to 10',
     ],
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   public readonly validation = {
-    validate: (input: unknown): UnifiedValidationResult<SetCommandInput> => this.validateInput(input)
+    validate: (input: unknown): UnifiedValidationResult<SetCommandInput> =>
+      this.validateInput(input),
   };
 
   /**
@@ -86,39 +89,45 @@ export class SetCommand implements CommandImplementation<
   validateInput(input: unknown): UnifiedValidationResult<SetCommandInput> {
     try {
       const result = SetCommandInputSchema.safeParse(input);
-      
+
       if (result.success) {
         return {
           isValid: true,
           errors: [],
           suggestions: [],
-          data: result.data as SetCommandInput
+          data: result.data as SetCommandInput,
         };
       } else {
         // Convert Zod errors to our format
-        const errors = result.error?.errors.map(err => ({
-          type: 'validation-error' as const,
-          message: `${Array.isArray(err.path) ? err.path.join('.') : ''}: ${err.message}`,
-          suggestions: this.generateSuggestions(err.code ?? 'unknown', (Array.isArray(err.path) ? err.path : []) as (string | number)[])
-        })) ?? [];
+        const errors =
+          result.error?.errors.map(err => ({
+            type: 'validation-error' as const,
+            message: `${Array.isArray(err.path) ? err.path.join('.') : ''}: ${err.message}`,
+            suggestions: this.generateSuggestions(
+              err.code ?? 'unknown',
+              (Array.isArray(err.path) ? err.path : []) as (string | number)[]
+            ),
+          })) ?? [];
 
         const suggestions = errors.flatMap(err => err.suggestions);
 
         return {
           isValid: false,
           errors,
-          suggestions
+          suggestions,
         };
       }
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'validation-error',
-          message: `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          suggestions: ['Check input format and try again']
-        }],
-        suggestions: ['Check input format and try again']
+        errors: [
+          {
+            type: 'validation-error',
+            message: `Validation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            suggestions: ['Check input format and try again'],
+          },
+        ],
+        suggestions: ['Check input format and try again'],
       };
     }
   }
@@ -128,21 +137,25 @@ export class SetCommand implements CommandImplementation<
    */
   private generateSuggestions(errorCode: string, path: (string | number)[]): string[] {
     const suggestions: string[] = [];
-    
+
     if (path.includes('target')) {
-      suggestions.push('Provide a target: variable name, @attribute, my property, or "the property of selector"');
-      suggestions.push('Examples: "myVar", "@data-value", "my textContent", "the innerHTML of #element"');
+      suggestions.push(
+        'Provide a target: variable name, @attribute, my property, or "the property of selector"'
+      );
+      suggestions.push(
+        'Examples: "myVar", "@data-value", "my textContent", "the innerHTML of #element"'
+      );
     }
-    
+
     if (path.includes('value')) {
       suggestions.push('Provide a value to set');
       suggestions.push('Examples: "text", 42, true, variable');
     }
-    
+
     if (errorCode === 'invalid_type') {
       suggestions.push('Check the data type of your input');
     }
-    
+
     if (errorCode === 'too_small') {
       suggestions.push('Target must not be empty');
     }
@@ -174,10 +187,7 @@ export class SetCommand implements CommandImplementation<
   }
 
   // Enhanced API: execute(input, context) - exactly 2 params for proper detection
-  async execute(
-    input: SetCommandInput,
-    context: TypedExecutionContext
-  ): Promise<SetCommandOutput> {
+  async execute(input: SetCommandInput, context: TypedExecutionContext): Promise<SetCommandOutput> {
     return await this.executeEnhanced(input, context);
   }
 
@@ -246,7 +256,7 @@ export class SetCommand implements CommandImplementation<
           } else if (typeof val === 'boolean') {
             // Handle boolean attributes AND properties
             // Set the property first
-            (targetElement as any)[key] = val;
+            targetElement[key] = val;
             // Then set/remove the attribute
             if (val) {
               targetElement.setAttribute(key, 'true');
@@ -255,7 +265,7 @@ export class SetCommand implements CommandImplementation<
             }
           } else {
             // Handle regular properties
-            (targetElement as any)[key] = val;
+            targetElement[key] = val;
           }
         }
       }
@@ -263,7 +273,7 @@ export class SetCommand implements CommandImplementation<
       return {
         target: targetElement,
         value: properties,
-        targetType: 'property'
+        targetType: 'property',
       };
     }
 
@@ -314,13 +324,13 @@ export class SetCommand implements CommandImplementation<
   ): Promise<SetCommandOutput> {
     // Handle element.property format from legacy API
     if (target && typeof target === 'object' && 'element' in target && 'property' in target) {
-      const { element, property } = target as { element: HTMLElement, property: string };
+      const { element, property } = target as { element: HTMLElement; property: string };
       // Set property on the specific element
       this.setElementPropertyValue(element, property, value);
       return {
         target: element,
         value,
-        targetType: 'property'
+        targetType: 'property',
       };
     }
 
@@ -373,11 +383,14 @@ export class SetCommand implements CommandImplementation<
     value: any
   ): SetCommandOutput {
     // Get previous value
-    const previousValue = context.locals?.get(variableName) ||
-                         context.globals?.get(variableName) ||
-                         context.variables?.get(variableName) ||
-                         (typeof window !== 'undefined' && variableName in window ? (window as any)[variableName] : undefined) ||
-                         (context as any)[variableName];
+    const previousValue =
+      context.locals?.get(variableName) ||
+      context.globals?.get(variableName) ||
+      context.variables?.get(variableName) ||
+      (typeof window !== 'undefined' && variableName in window
+        ? (window as any)[variableName]
+        : undefined) ||
+      (context as any)[variableName];
 
     // ALWAYS store in locals unless explicitly marked as global (via 'set global x to ...')
     // This ensures variables like startX, xoff, yoff remain scoped to each element's context
@@ -396,7 +409,7 @@ export class SetCommand implements CommandImplementation<
       target: variableName,
       value,
       previousValue,
-      targetType: 'variable'
+      targetType: 'variable',
     };
   }
 
@@ -406,10 +419,13 @@ export class SetCommand implements CommandImplementation<
     value: any
   ): SetCommandOutput {
     // Get previous value
-    const previousValue = context.globals?.get(variableName) ||
-                         context.locals?.get(variableName) ||
-                         context.variables?.get(variableName) ||
-                         (typeof window !== 'undefined' && variableName in window ? (window as any)[variableName] : undefined);
+    const previousValue =
+      context.globals?.get(variableName) ||
+      context.locals?.get(variableName) ||
+      context.variables?.get(variableName) ||
+      (typeof window !== 'undefined' && variableName in window
+        ? (window as any)[variableName]
+        : undefined);
 
     // Set the value in global scope
     context.globals.set(variableName, value);
@@ -426,7 +442,7 @@ export class SetCommand implements CommandImplementation<
       target: variableName,
       value,
       previousValue,
-      targetType: 'variable'
+      targetType: 'variable',
     };
   }
 
@@ -449,7 +465,7 @@ export class SetCommand implements CommandImplementation<
       target: `@${attributeName}`,
       value,
       previousValue,
-      targetType: 'attribute'
+      targetType: 'attribute',
     };
   }
 
@@ -466,7 +482,11 @@ export class SetCommand implements CommandImplementation<
       case 'my':
       case 'me':
         if (!context.me) throw new Error('No "me" element in context');
-        targetElement = asHTMLElement(context.me) || (() => { throw new Error('context.me is not an HTMLElement'); })();
+        targetElement =
+          asHTMLElement(context.me) ||
+          (() => {
+            throw new Error('context.me is not an HTMLElement');
+          })();
         break;
       case 'its':
       case 'it':
@@ -476,7 +496,11 @@ export class SetCommand implements CommandImplementation<
       case 'your':
       case 'you':
         if (!context.you) throw new Error('No "you" element in context');
-        targetElement = asHTMLElement(context.you) || (() => { throw new Error('context.you is not an HTMLElement'); })();
+        targetElement =
+          asHTMLElement(context.you) ||
+          (() => {
+            throw new Error('context.you is not an HTMLElement');
+          })();
         break;
       default:
         throw new Error(`Unknown possessive: ${possessive}`);
@@ -493,7 +517,7 @@ export class SetCommand implements CommandImplementation<
       target: `${possessive} ${property}`,
       value,
       previousValue,
-      targetType: 'property'
+      targetType: 'property',
     };
   }
 
@@ -512,7 +536,7 @@ export class SetCommand implements CommandImplementation<
       target: element,
       value,
       previousValue,
-      targetType: 'element'
+      targetType: 'element',
     };
   }
 
@@ -527,7 +551,10 @@ export class SetCommand implements CommandImplementation<
 
     // Handle style properties
     if (property.includes('-') || property in element.style) {
-      return element.style.getPropertyValue(property) || (element.style as unknown as Record<string, string>)[property];
+      return (
+        element.style.getPropertyValue(property) ||
+        (element.style as unknown as Record<string, string>)[property]
+      );
     }
 
     // Handle generic property
@@ -544,7 +571,9 @@ export class SetCommand implements CommandImplementation<
       for (let i = 0; i < parts.length - 1; i++) {
         target = target[parts[i]];
         if (!target) {
-          throw new Error(`Cannot set property on null or undefined: ${parts.slice(0, i + 1).join('.')}`);
+          throw new Error(
+            `Cannot set property on null or undefined: ${parts.slice(0, i + 1).join('.')}`
+          );
         }
       }
 
@@ -587,7 +616,17 @@ export class SetCommand implements CommandImplementation<
     }
 
     // Handle boolean attributes (disabled, checked, readonly, required, selected, hidden, etc.)
-    const booleanAttributes = ['disabled', 'checked', 'readonly', 'required', 'selected', 'hidden', 'open', 'multiple', 'autofocus'];
+    const booleanAttributes = [
+      'disabled',
+      'checked',
+      'readonly',
+      'required',
+      'selected',
+      'hidden',
+      'open',
+      'multiple',
+      'autofocus',
+    ];
     if (booleanAttributes.includes(property.toLowerCase()) && typeof value === 'boolean') {
       if (value) {
         element.setAttribute(property, 'true');
@@ -606,7 +645,9 @@ export class SetCommand implements CommandImplementation<
       if (error instanceof TypeError && error.message.includes('only a getter')) {
         return; // Silently fail for readonly properties
       }
-      throw new Error(`Cannot set property '${property}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Cannot set property '${property}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
@@ -648,7 +689,7 @@ export class SetCommand implements CommandImplementation<
       target: `the ${property} of ${selector}`,
       value,
       previousValue,
-      targetType: 'property'
+      targetType: 'property',
     };
   }
 
@@ -657,7 +698,7 @@ export class SetCommand implements CommandImplementation<
     if (selector === 'me') {
       return (context.me as HTMLElement) || null;
     }
-    
+
     // Handle simple selectors
     if (typeof document === 'undefined') {
       return null; // In non-browser environment

@@ -9,7 +9,7 @@ import type {
   TypedExecutionContext,
   HyperScriptValue,
   EvaluationResult,
-  LLMDocumentation
+  LLMDocumentation,
 } from '../../types/command-types';
 
 // ============================================================================
@@ -21,7 +21,9 @@ import type {
 /**
  * Enhanced string interpolation expression with comprehensive variable substitution
  */
-export class EnhancedStringInterpolationExpression implements TypedExpressionImplementation<string> {
+export class EnhancedStringInterpolationExpression
+  implements TypedExpressionImplementation<string>
+{
   public readonly name = 'string-interpolation';
   public readonly category = 'string' as const;
   public readonly precedence = 1;
@@ -32,7 +34,7 @@ export class EnhancedStringInterpolationExpression implements TypedExpressionImp
     isPure: true,
     canThrow: false,
     complexity: 'O(n)' as const,
-    dependencies: ['context-variables']
+    dependencies: ['context-variables'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -43,49 +45,53 @@ export class EnhancedStringInterpolationExpression implements TypedExpressionImp
         type: 'string',
         description: 'Template string with ${variable} placeholders',
         optional: false,
-        examples: ['Hello ${name}!', 'User: ${user.name} (${user.age} years old)']
+        examples: ['Hello ${name}!', 'User: ${user.name} (${user.age} years old)'],
       },
       {
         name: 'variables',
         type: 'object',
         description: 'Optional variables to use for interpolation',
         optional: true,
-        examples: ['{"name": "John"}', '{"user": {"name": "Jane", "age": 30}}']
-      }
+        examples: ['{"name": "John"}', '{"user": {"name": "Jane", "age": 30}}'],
+      },
     ],
     returns: {
       type: 'string',
       description: 'String with variables interpolated',
-      examples: ['Hello John!', 'User: Jane (30 years old)']
+      examples: ['Hello John!', 'User: Jane (30 years old)'],
     },
     examples: [
       {
         title: 'Basic variable interpolation',
         code: 'Hello ${name}!',
         explanation: 'Substitutes the name variable into the template',
-        output: 'Hello John!'
+        output: 'Hello John!',
       },
       {
         title: 'Context variable access',
         code: 'Element: ${me.tagName}',
         explanation: 'Access current element properties',
-        output: 'Element: DIV'
+        output: 'Element: DIV',
       },
       {
         title: 'Complex object access',
         code: 'User: ${user.name} (${user.age})',
         explanation: 'Access nested object properties',
-        output: 'User: Jane (30)'
-      }
+        output: 'User: Jane (30)',
+      },
     ],
     seeAlso: ['string-concat', 'string-format'],
-    tags: ['string', 'template', 'interpolation', 'variables']
+    tags: ['string', 'template', 'interpolation', 'variables'],
   };
 
-  async evaluate(context: TypedExecutionContext, template: string, variables?: Record<string, unknown>): Promise<EvaluationResult<string>> {
+  async evaluate(
+    context: TypedExecutionContext,
+    template: string,
+    variables?: Record<string, unknown>
+  ): Promise<EvaluationResult<string>> {
     try {
       const templateStr = String(template || '');
-      
+
       // Handle ${variable} interpolation
       const result = templateStr.replace(/\$\{([^}]+)\}/g, (_match, expression) => {
         try {
@@ -99,7 +105,7 @@ export class EnhancedStringInterpolationExpression implements TypedExpressionImp
       return {
         success: true,
         value: result,
-        type: 'string'
+        type: 'string',
       };
     } catch (error) {
       return {
@@ -112,27 +118,31 @@ export class EnhancedStringInterpolationExpression implements TypedExpressionImp
           suggestions: [
             'Check template syntax using ${variable} format',
             'Ensure referenced variables exist in context',
-            'Verify property access paths are valid'
-          ]
+            'Verify property access paths are valid',
+          ],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
 
-  private evaluateExpression(expression: string, context: TypedExecutionContext, variables?: Record<string, unknown>): unknown {
+  private evaluateExpression(
+    expression: string,
+    context: TypedExecutionContext,
+    variables?: Record<string, unknown>
+  ): unknown {
     // Handle me.property
     if (expression.startsWith('me.')) {
       const prop = expression.substring(3);
       return context.me ? (context.me as any)[prop] : undefined;
     }
-    
+
     // Handle you.property
     if (expression.startsWith('you.')) {
       const prop = expression.substring(3);
       return context.you ? (context.you as any)[prop] : undefined;
     }
-    
+
     // Handle it.property or just it
     if (expression === 'it') {
       return context.it;
@@ -141,24 +151,25 @@ export class EnhancedStringInterpolationExpression implements TypedExpressionImp
       const prop = expression.substring(3);
       return (context.it as any)?.[prop];
     }
-    
+
     // Handle variables from input
     if (variables && expression in variables) {
       return variables[expression];
     }
-    
+
     // Handle nested object access (user.name)
     if (expression.includes('.')) {
       const parts = expression.split('.');
-      let current: any = variables?.[parts[0]] || context.locals.get(parts[0]) || context.globals.get(parts[0]);
-      
+      let current: any =
+        variables?.[parts[0]] || context.locals.get(parts[0]) || context.globals.get(parts[0]);
+
       for (let i = 1; i < parts.length && current != null; i++) {
         current = current[parts[i]];
       }
-      
+
       return current;
     }
-    
+
     // Handle local and global variables
     return context.locals.get(expression) || context.globals.get(expression) || undefined;
   }
@@ -171,7 +182,9 @@ export class EnhancedStringInterpolationExpression implements TypedExpressionImp
 /**
  * Enhanced string concatenation with type coercion
  */
-export class EnhancedStringConcatenationExpression implements TypedExpressionImplementation<string> {
+export class EnhancedStringConcatenationExpression
+  implements TypedExpressionImplementation<string>
+{
   public readonly name = 'string-concat';
   public readonly category = 'string' as const;
   public readonly precedence = 6;
@@ -182,7 +195,7 @@ export class EnhancedStringConcatenationExpression implements TypedExpressionImp
     isPure: true,
     canThrow: false,
     complexity: 'O(n)' as const,
-    dependencies: []
+    dependencies: [],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -193,50 +206,55 @@ export class EnhancedStringConcatenationExpression implements TypedExpressionImp
         type: 'array',
         description: 'Values to concatenate (will be converted to strings)',
         optional: false,
-        examples: ['["Hello", " ", "World"]', '[42, " items"]', '[null, undefined, "text"]']
-      }
+        examples: ['["Hello", " ", "World"]', '[42, " items"]', '[null, undefined, "text"]'],
+      },
     ],
     returns: {
       type: 'string',
       description: 'Concatenated string result',
-      examples: ['Hello World', '42 items', 'nullundefinedtext']
+      examples: ['Hello World', '42 items', 'nullundefinedtext'],
     },
     examples: [
       {
         title: 'Simple concatenation',
         code: 'concat("Hello", " ", "World")',
         explanation: 'Joins multiple strings together',
-        output: 'Hello World'
+        output: 'Hello World',
       },
       {
         title: 'Mixed type concatenation',
         code: 'concat("Count: ", 42)',
         explanation: 'Automatically converts numbers to strings',
-        output: 'Count: 42'
+        output: 'Count: 42',
       },
       {
         title: 'Null/undefined handling',
         code: 'concat("Value: ", null, " End")',
         explanation: 'Handles null and undefined values',
-        output: 'Value: null End'
-      }
+        output: 'Value: null End',
+      },
     ],
     seeAlso: ['string-interpolation', 'string-join'],
-    tags: ['string', 'concatenation', 'join', 'type-conversion']
+    tags: ['string', 'concatenation', 'join', 'type-conversion'],
   };
 
-  async evaluate(_context: TypedExecutionContext, ...values: HyperScriptValue[]): Promise<EvaluationResult<string>> {
+  async evaluate(
+    _context: TypedExecutionContext,
+    ...values: HyperScriptValue[]
+  ): Promise<EvaluationResult<string>> {
     try {
-      const result = values.map(value => {
-        if (value === null) return 'null';
-        if (value === undefined) return 'undefined';
-        return String(value);
-      }).join('');
+      const result = values
+        .map(value => {
+          if (value === null) return 'null';
+          if (value === undefined) return 'undefined';
+          return String(value);
+        })
+        .join('');
 
       return {
         success: true,
         value: result,
-        type: 'string'
+        type: 'string',
       };
     } catch (error) {
       return {
@@ -249,10 +267,10 @@ export class EnhancedStringConcatenationExpression implements TypedExpressionImp
           suggestions: [
             'Ensure all values can be converted to strings',
             'Check for circular object references',
-            'Consider handling null/undefined values explicitly'
-          ]
+            'Consider handling null/undefined values explicitly',
+          ],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -276,7 +294,7 @@ export class EnhancedStringLengthExpression implements TypedExpressionImplementa
     isPure: true,
     canThrow: false,
     complexity: 'O(1)' as const,
-    dependencies: []
+    dependencies: [],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -287,39 +305,42 @@ export class EnhancedStringLengthExpression implements TypedExpressionImplementa
         type: 'string',
         description: 'String to measure (non-strings will be converted)',
         optional: false,
-        examples: ['Hello', '""', '   ']
-      }
+        examples: ['Hello', '""', '   '],
+      },
     ],
     returns: {
       type: 'number',
       description: 'Length of the string',
-      examples: ['5', '0', '3']
+      examples: ['5', '0', '3'],
     },
     examples: [
       {
         title: 'Basic length',
         code: 'length("Hello")',
         explanation: 'Get length of a string',
-        output: 5
+        output: 5,
       },
       {
         title: 'Empty string',
         code: 'length("")',
         explanation: 'Empty string has length 0',
-        output: 0
+        output: 0,
       },
       {
         title: 'Type conversion',
         code: 'length(123)',
         explanation: 'Numbers are converted to strings first',
-        output: 3
-      }
+        output: 3,
+      },
     ],
     seeAlso: ['string-empty', 'string-trim'],
-    tags: ['string', 'length', 'measure', 'validation']
+    tags: ['string', 'length', 'measure', 'validation'],
   };
 
-  async evaluate(_context: TypedExecutionContext, value: HyperScriptValue): Promise<EvaluationResult<number>> {
+  async evaluate(
+    _context: TypedExecutionContext,
+    value: HyperScriptValue
+  ): Promise<EvaluationResult<number>> {
     try {
       const stringValue = String(value);
       const length = stringValue.length;
@@ -327,7 +348,7 @@ export class EnhancedStringLengthExpression implements TypedExpressionImplementa
       return {
         success: true,
         value: length,
-        type: 'number'
+        type: 'number',
       };
     } catch (error) {
       return {
@@ -339,10 +360,10 @@ export class EnhancedStringLengthExpression implements TypedExpressionImplementa
           code: 'STRING_LENGTH_FAILED',
           suggestions: [
             'Ensure value can be converted to string',
-            'Check for null or undefined input'
-          ]
+            'Check for null or undefined input',
+          ],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -358,7 +379,7 @@ export class EnhancedStringLengthExpression implements TypedExpressionImplementa
 export const enhancedStringExpressions = {
   'string-interpolation': new EnhancedStringInterpolationExpression(),
   'string-concat': new EnhancedStringConcatenationExpression(),
-  'string-length': new EnhancedStringLengthExpression()
+  'string-length': new EnhancedStringLengthExpression(),
 } as const;
 
 /**
@@ -379,17 +400,27 @@ export function createEnhancedStringLength(): EnhancedStringLengthExpression {
 /**
  * Utility functions for string operations
  */
-export async function interpolateString(template: string, context: TypedExecutionContext, variables?: Record<string, unknown>): Promise<EvaluationResult<string>> {
+export async function interpolateString(
+  template: string,
+  context: TypedExecutionContext,
+  variables?: Record<string, unknown>
+): Promise<EvaluationResult<string>> {
   const expr = new EnhancedStringInterpolationExpression();
   return expr.evaluate(context, template, variables);
 }
 
-export async function concatenateStrings(context: TypedExecutionContext, ...values: HyperScriptValue[]): Promise<EvaluationResult<string>> {
+export async function concatenateStrings(
+  context: TypedExecutionContext,
+  ...values: HyperScriptValue[]
+): Promise<EvaluationResult<string>> {
   const expr = new EnhancedStringConcatenationExpression();
   return expr.evaluate(context, ...values);
 }
 
-export async function getStringLength(value: HyperScriptValue, context: TypedExecutionContext): Promise<EvaluationResult<number>> {
+export async function getStringLength(
+  value: HyperScriptValue,
+  context: TypedExecutionContext
+): Promise<EvaluationResult<number>> {
   const expr = new EnhancedStringLengthExpression();
   return expr.evaluate(context, value);
 }

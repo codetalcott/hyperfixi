@@ -47,9 +47,14 @@ export class ExpressionEvaluator {
     });
 
     // Register property expressions
+    debug.expr('About to register properties expressions:', Object.keys(propertiesExpressions));
     Object.entries(propertiesExpressions).forEach(([name, impl]) => {
+      debug.expr(`Registering property expression: ${name}`);
       this.expressionRegistry.set(name, impl);
     });
+    debug.expr('Total expressions registered:', this.expressionRegistry.size);
+    debug.expr('Registry has "possessive":', this.expressionRegistry.has('possessive'));
+    debug.expr('Registry has "my":', this.expressionRegistry.has('my'));
 
     // Register special expressions
     Object.entries(specialExpressions).forEach(([name, impl]) => {
@@ -139,7 +144,10 @@ export class ExpressionEvaluator {
    * Evaluate object literal - evaluate each property's key and value
    * Example: { left: ${x}px, top: ${y}px } -> { left: "100px", top: "50px" }
    */
-  private async evaluateObjectLiteral(node: any, context: ExecutionContext): Promise<Record<string, any>> {
+  private async evaluateObjectLiteral(
+    node: any,
+    context: ExecutionContext
+  ): Promise<Record<string, any>> {
     const properties = node.properties || [];
     const result: Record<string, any> = {};
 
@@ -238,13 +246,18 @@ export class ExpressionEvaluator {
    * Evaluate simple expressions like "clientX - xoff" or "clientX-xoff" using context variables
    * Handles basic arithmetic: +, -, *, /, %
    */
-  private async evaluateSimpleExpression(exprCode: string, context: ExecutionContext): Promise<any> {
+  private async evaluateSimpleExpression(
+    exprCode: string,
+    context: ExecutionContext
+  ): Promise<any> {
     debug.expressions('EVAL: Evaluating arithmetic expression:', exprCode);
 
     // Try to find an operator in the expression
     // Match identifier/number, operator, identifier/number (with or without spaces)
     // Use a more specific pattern that matches identifiers
-    const arithmeticMatch = exprCode.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*|\d+(?:\.\d+)?)\s*([\+\-\*\/\%])\s*([a-zA-Z_$][a-zA-Z0-9_$]*|\d+(?:\.\d+)?)$/);
+    const arithmeticMatch = exprCode.match(
+      /^([a-zA-Z_$][a-zA-Z0-9_$]*|\d+(?:\.\d+)?)\s*([\+\-\*\/\%])\s*([a-zA-Z_$][a-zA-Z0-9_$]*|\d+(?:\.\d+)?)$/
+    );
 
     if (arithmeticMatch) {
       const [, left, operator, right] = arithmeticMatch;
@@ -262,12 +275,23 @@ export class ExpressionEvaluator {
       if (!isNaN(leftNum) && !isNaN(rightNum)) {
         let result: number;
         switch (operator) {
-          case '+': result = leftNum + rightNum; break;
-          case '-': result = leftNum - rightNum; break;
-          case '*': result = leftNum * rightNum; break;
-          case '/': result = leftNum / rightNum; break;
-          case '%': result = leftNum % rightNum; break;
-          default: result = leftNum;
+          case '+':
+            result = leftNum + rightNum;
+            break;
+          case '-':
+            result = leftNum - rightNum;
+            break;
+          case '*':
+            result = leftNum * rightNum;
+            break;
+          case '/':
+            result = leftNum / rightNum;
+            break;
+          case '%':
+            result = leftNum % rightNum;
+            break;
+          default:
+            result = leftNum;
         }
         debug.expressions('EVAL: Arithmetic result:', result);
         return result;
@@ -291,7 +315,7 @@ export class ExpressionEvaluator {
     debug.expressions(`RESOLVE: Looking for '${name}' in context`, {
       hasInLocals: context.locals.has(name),
       localsKeys: Array.from(context.locals.keys()),
-      value: context.locals.get(name)
+      value: context.locals.get(name),
     });
 
     // Check context
@@ -318,7 +342,10 @@ export class ExpressionEvaluator {
     }
 
     // Try parsing as string literal
-    if ((name.startsWith('"') && name.endsWith('"')) || (name.startsWith("'") && name.endsWith("'"))) {
+    if (
+      (name.startsWith('"') && name.endsWith('"')) ||
+      (name.startsWith("'") && name.endsWith("'"))
+    ) {
       return name.slice(1, -1);
     }
 
@@ -329,7 +356,10 @@ export class ExpressionEvaluator {
   /**
    * Evaluate identifier nodes (me, you, it, etc.)
    */
-  private async evaluateIdentifier(node: { name: string }, context: ExecutionContext): Promise<any> {
+  private async evaluateIdentifier(
+    node: { name: string },
+    context: ExecutionContext
+  ): Promise<any> {
     const { name } = node;
 
     // Check if it's a built-in reference expression
@@ -380,29 +410,29 @@ export class ExpressionEvaluator {
    */
   private async evaluateMemberExpression(node: any, context: ExecutionContext): Promise<any> {
     const { object, property, computed } = node;
-    
+
     // Special case: handle command-like member expressions (add.active, remove.active)
     if (object.type === 'identifier' && ['add', 'remove'].includes(object.name)) {
       const commandName = object.name;
       const className = property.name || property;
-      
+
       // Execute as class manipulation command on context.me
       if (!context.me) {
         throw new Error('Context element "me" is null');
       }
-      
+
       if (commandName === 'add') {
         context.me.classList.add(className);
       } else if (commandName === 'remove') {
         context.me.classList.remove(className);
       }
-      
+
       return; // No return value for these commands
     }
-    
+
     // Evaluate the object first for normal member expressions
     const objectValue = await this.evaluate(object, context);
-    
+
     if (computed) {
       // For computed access like obj[key]
       const propertyValue = await this.evaluate(property, context);
@@ -410,13 +440,13 @@ export class ExpressionEvaluator {
     } else {
       // For property access like obj.property
       const propertyName = property.name || property;
-      
+
       // Special handling for possessive syntax (element's property)
       if (propertyName && this.expressionRegistry.has('possessive')) {
         const possessiveExpr = this.expressionRegistry.get('possessive');
         return possessiveExpr.evaluate(context, objectValue, propertyName);
       }
-      
+
       return objectValue[propertyName];
     }
   }
@@ -434,7 +464,9 @@ export class ExpressionEvaluator {
 
       // Verify we have a valid DOM element as context
       if (!contextElement || typeof contextElement.querySelector !== 'function') {
-        throw new Error(`'in' operator requires a DOM element as the right operand (got: ${typeof contextElement})`);
+        throw new Error(
+          `'in' operator requires a DOM element as the right operand (got: ${typeof contextElement})`
+        );
       }
 
       // Query for ALL matching elements within the context element
@@ -446,81 +478,96 @@ export class ExpressionEvaluator {
     // Evaluate operands normally for other operators
     const leftValue = await this.evaluate(left, context);
     const rightValue = await this.evaluate(right, context);
-    
+
     // Map operators to expression implementations
     switch (operator) {
       case '>':
         const greaterThanExpr = this.expressionRegistry.get('greaterThan');
-        return greaterThanExpr ? greaterThanExpr.evaluate(context, leftValue, rightValue) : leftValue > rightValue;
-      
+        return greaterThanExpr
+          ? greaterThanExpr.evaluate(context, leftValue, rightValue)
+          : leftValue > rightValue;
+
       case '<':
         const lessThanExpr = this.expressionRegistry.get('lessThan');
-        return lessThanExpr ? lessThanExpr.evaluate(context, leftValue, rightValue) : leftValue < rightValue;
-      
+        return lessThanExpr
+          ? lessThanExpr.evaluate(context, leftValue, rightValue)
+          : leftValue < rightValue;
+
       case '>=':
         const gteExpr = this.expressionRegistry.get('greaterThanOrEqual');
         return gteExpr ? gteExpr.evaluate(context, leftValue, rightValue) : leftValue >= rightValue;
-      
+
       case '<=':
         const lteExpr = this.expressionRegistry.get('lessThanOrEqual');
         return lteExpr ? lteExpr.evaluate(context, leftValue, rightValue) : leftValue <= rightValue;
-      
+
       case '==':
       case '===':
       case 'equals':
         const equalsExpr = this.expressionRegistry.get('equals');
-        return equalsExpr ? equalsExpr.evaluate(context, leftValue, rightValue) : leftValue === rightValue;
-      
+        return equalsExpr
+          ? equalsExpr.evaluate(context, leftValue, rightValue)
+          : leftValue === rightValue;
+
       case 'is equal to':
         // Same as regular equals - loose equality
         return leftValue == rightValue;
-      
+
       case 'is really equal to':
       case 'really equals':
         // Strict equality - type and value must match
         return leftValue === rightValue;
-      
+
       case 'is not equal to':
         // Negated loose equality
         return leftValue != rightValue;
-      
+
       case 'is not really equal to':
         // Negated strict equality
         return leftValue !== rightValue;
-      
+
       case 'is greater than':
         return leftValue > rightValue;
-      
+
       case 'is less than':
         return leftValue < rightValue;
-      
+
       case 'is greater than or equal to':
         return leftValue >= rightValue;
-      
+
       case 'is less than or equal to':
         return leftValue <= rightValue;
-      
+
       case '!=':
       case '!==':
         const notEqualsExpr = this.expressionRegistry.get('notEquals');
-        return notEqualsExpr ? notEqualsExpr.evaluate(context, leftValue, rightValue) : leftValue !== rightValue;
-      
+        return notEqualsExpr
+          ? notEqualsExpr.evaluate(context, leftValue, rightValue)
+          : leftValue !== rightValue;
+
       case '+':
         // Smart operator resolution: choose between numeric addition and string concatenation
-        const shouldUseStringConcatenation = typeof leftValue === 'string' || typeof rightValue === 'string';
+        const shouldUseStringConcatenation =
+          typeof leftValue === 'string' || typeof rightValue === 'string';
 
         if (shouldUseStringConcatenation) {
           const stringConcatExpr = this.expressionRegistry.get('stringConcatenation');
           if (stringConcatExpr) {
             debug.expressions('Using string concatenation for:', { leftValue, rightValue });
-            const result = await stringConcatExpr.evaluate(context, { left: leftValue, right: rightValue });
+            const result = await stringConcatExpr.evaluate(context, {
+              left: leftValue,
+              right: rightValue,
+            });
             return result.success ? result.value : leftValue + rightValue;
           }
         } else {
           const additionExpr = this.expressionRegistry.get('addition');
           if (additionExpr) {
             debug.expressions('Using numeric addition for:', { leftValue, rightValue });
-            const result = await additionExpr.evaluate(context, { left: leftValue, right: rightValue });
+            const result = await additionExpr.evaluate(context, {
+              left: leftValue,
+              right: rightValue,
+            });
             return result.success ? result.value : leftValue + rightValue;
           }
         }
@@ -528,56 +575,66 @@ export class ExpressionEvaluator {
         // Fallback to native JavaScript addition/concatenation
         debug.expressions('Using fallback + operation for:', { leftValue, rightValue });
         return leftValue + rightValue;
-      
+
       case '-':
         const subtractExpr = this.expressionRegistry.get('subtract');
-        return subtractExpr ? subtractExpr.evaluate(context, leftValue, rightValue) : leftValue - rightValue;
-      
+        return subtractExpr
+          ? subtractExpr.evaluate(context, leftValue, rightValue)
+          : leftValue - rightValue;
+
       case '*':
         const multiplyExpr = this.expressionRegistry.get('multiply');
-        return multiplyExpr ? multiplyExpr.evaluate(context, leftValue, rightValue) : leftValue * rightValue;
-      
+        return multiplyExpr
+          ? multiplyExpr.evaluate(context, leftValue, rightValue)
+          : leftValue * rightValue;
+
       case '/':
         const divideExpr = this.expressionRegistry.get('divide');
-        return divideExpr ? divideExpr.evaluate(context, leftValue, rightValue) : leftValue / rightValue;
-      
+        return divideExpr
+          ? divideExpr.evaluate(context, leftValue, rightValue)
+          : leftValue / rightValue;
+
       case '%':
       case 'mod':
         const modExpr = this.expressionRegistry.get('modulo');
         return modExpr ? modExpr.evaluate(context, leftValue, rightValue) : leftValue % rightValue;
-      
+
       case 'as':
         // Type conversion - right operand should be a type name
-        const typeName = typeof rightValue === 'string' ? rightValue : 
-                        right.type === 'identifier' ? right.name :
-                        right.type === 'literal' ? right.value :
-                        String(rightValue);
+        const typeName =
+          typeof rightValue === 'string'
+            ? rightValue
+            : right.type === 'identifier'
+              ? right.name
+              : right.type === 'literal'
+                ? right.value
+                : String(rightValue);
         const asExpr = this.expressionRegistry.get('as');
         return asExpr ? asExpr.evaluate(context, leftValue, typeName) : leftValue;
-      
+
       case '&&':
       case 'and':
         const andExpr = this.expressionRegistry.get('and');
         return andExpr ? andExpr.evaluate(context, leftValue, rightValue) : leftValue && rightValue;
-      
+
       case '||':
       case 'or':
         const orExpr = this.expressionRegistry.get('or');
         return orExpr ? orExpr.evaluate(context, leftValue, rightValue) : leftValue || rightValue;
-      
+
       case 'is':
         // Identity comparison - strict equality (bypass registry for binary comparison)
         return leftValue === rightValue;
-      
+
       case 'is not':
         // Negative identity comparison - strict inequality
         return leftValue !== rightValue;
-      
+
       case '=':
         // Assignment operator - set variable in context
         if (left.type === 'identifier') {
           const variableName = left.name;
-          
+
           // Handle special context variables
           if (variableName === 'result') {
             Object.assign(context, { result: rightValue });
@@ -592,12 +649,12 @@ export class ExpressionEvaluator {
             }
             context.variables!.set(variableName, rightValue);
           }
-          
+
           return rightValue; // Assignment returns the assigned value
         } else {
           throw new Error('Left side of assignment must be an identifier');
         }
-      
+
       case 'contains':
         // Container contains item - works with arrays, strings, and DOM elements
         if (Array.isArray(leftValue)) {
@@ -611,7 +668,7 @@ export class ExpressionEvaluator {
           return leftValue.matches(String(rightValue));
         }
         return false;
-      
+
       case 'include':
       case 'includes':
         // Alias for contains
@@ -642,7 +699,9 @@ export class ExpressionEvaluator {
           if (typeof contextElement === 'object' && contextElement !== null) {
             return selector in contextElement;
           }
-          throw new Error(`'in' operator requires a DOM element, array, or object as the right operand (got: ${typeof contextElement})`);
+          throw new Error(
+            `'in' operator requires a DOM element, array, or object as the right operand (got: ${typeof contextElement})`
+          );
         }
 
         // Query for the selector within the context element
@@ -672,26 +731,26 @@ export class ExpressionEvaluator {
    */
   private async evaluateUnaryExpression(node: any, context: ExecutionContext): Promise<any> {
     const { operator, argument } = node;
-    
+
     // Evaluate operand
     const operandValue = await this.evaluate(argument, context);
-    
+
     switch (operator) {
       case 'not':
       case '!':
         const notExpr = this.expressionRegistry.get('not');
         return notExpr ? notExpr.evaluate(context, operandValue) : !operandValue;
-      
+
       case 'no':
         const noExpr = this.expressionRegistry.get('no');
         return noExpr ? noExpr.evaluate(context, operandValue) : false;
-      
+
       case '-':
         return -operandValue;
-      
+
       case '+':
         return +operandValue;
-      
+
       default:
         throw new Error(`Unsupported unary operator: ${operator}`);
     }
@@ -733,7 +792,9 @@ export class ExpressionEvaluator {
         return func.apply(thisContext, evaluatedArgs);
       }
 
-      throw new Error(`Member expression does not evaluate to a function: ${callee.property?.name || 'unknown'}`);
+      throw new Error(
+        `Member expression does not evaluate to a function: ${callee.property?.name || 'unknown'}`
+      );
     }
 
     // Get function name
@@ -743,9 +804,7 @@ export class ExpressionEvaluator {
     const expression = this.expressionRegistry.get(functionName);
     if (expression) {
       // Evaluate arguments
-      const evaluatedArgs = await Promise.all(
-        args.map((arg: any) => this.evaluate(arg, context))
-      );
+      const evaluatedArgs = await Promise.all(args.map((arg: any) => this.evaluate(arg, context)));
 
       return expression.evaluate(context, ...evaluatedArgs);
     }
@@ -753,9 +812,7 @@ export class ExpressionEvaluator {
     // For unknown functions, try to resolve from context or global scope
     const func = context.globals?.get(functionName) || (window as any)[functionName];
     if (typeof func === 'function') {
-      const evaluatedArgs = await Promise.all(
-        args.map((arg: any) => this.evaluate(arg, context))
-      );
+      const evaluatedArgs = await Promise.all(args.map((arg: any) => this.evaluate(arg, context)));
       return func(...evaluatedArgs);
     }
 
@@ -765,13 +822,16 @@ export class ExpressionEvaluator {
   /**
    * Evaluate CSS selector nodes
    */
-  private async evaluateSelector(node: { value: string }, context: ExecutionContext): Promise<HTMLElement[]> {
+  private async evaluateSelector(
+    node: { value: string },
+    context: ExecutionContext
+  ): Promise<HTMLElement[]> {
     const selectorExpr = this.expressionRegistry.get('querySelector');
     if (selectorExpr) {
       const element = await selectorExpr.evaluate(context, node.value);
       return element ? [element] : [];
     }
-    
+
     // Fallback to basic querySelector
     const elements = document.querySelectorAll(node.value);
     return Array.from(elements) as HTMLElement[];
@@ -787,43 +847,46 @@ export class ExpressionEvaluator {
   /**
    * Evaluate dollar expressions ($variable, $1, $window.foo)
    */
-  private async evaluateDollarExpression(node: { expression: any }, context: ExecutionContext): Promise<any> {
+  private async evaluateDollarExpression(
+    node: { expression: any },
+    context: ExecutionContext
+  ): Promise<any> {
     // Evaluate the inner expression normally
     const value = await this.evaluate(node.expression, context);
-    
+
     // If it's a simple identifier, try to resolve it from context
     if (node.expression.type === 'identifier') {
       const varName = node.expression.name;
-      
+
       // Handle numeric literals like $1, $2
       if (/^\d+$/.test(varName)) {
         return varName;
       }
-      
+
       // Handle context variables
       if (context.locals?.has(varName)) {
         return context.locals.get(varName);
       }
-      
+
       // Handle special context properties
       if (varName === 'me' && context.me) return context.me;
       if (varName === 'you' && context.you) return context.you;
       if (varName === 'it' && context.it) return context.it;
       if (varName === 'result' && context.result) return context.result;
-      
+
       // Handle globals including window
       if (typeof window !== 'undefined' && varName === 'window') {
         return window;
       }
-      
+
       if (context.globals?.has(varName)) {
         return context.globals.get(varName);
       }
-      
+
       // Return empty string for unresolved variables (hyperscript behavior)
       return '';
     }
-    
+
     // For member expressions, evaluate normally
     return value;
   }
@@ -833,17 +896,17 @@ export class ExpressionEvaluator {
    */
   private async evaluatePossessiveExpression(node: any, context: ExecutionContext): Promise<any> {
     const { object, property } = node;
-    
+
     // Evaluate the object first
     const objectValue = await this.evaluate(object, context);
-    
+
     if (!objectValue) {
       return undefined;
     }
-    
+
     // Get property name
     const propertyName = property.name || property.value || property;
-    
+
     // Handle special possessive syntax patterns
     if (typeof propertyName === 'string') {
       // Handle attribute access (@data-attr becomes getAttribute)
@@ -853,7 +916,7 @@ export class ExpressionEvaluator {
           return objectValue.getAttribute(attrName);
         }
       }
-      
+
       // Handle style access (style.color)
       if (propertyName.startsWith('style.')) {
         const styleProp = propertyName.substring(6);
@@ -861,11 +924,11 @@ export class ExpressionEvaluator {
           return objectValue.style[styleProp];
         }
       }
-      
+
       // Regular property access
       return objectValue[propertyName];
     }
-    
+
     return objectValue[propertyName];
   }
 

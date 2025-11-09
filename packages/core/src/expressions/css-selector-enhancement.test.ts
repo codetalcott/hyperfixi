@@ -41,7 +41,7 @@ describe('CSS Selector Enhancement (TDD)', () => {
       returned: false,
       broke: false,
       continued: false,
-      async: false
+      async: false,
     };
   });
 
@@ -66,7 +66,10 @@ describe('CSS Selector Enhancement (TDD)', () => {
     });
 
     it('should return NodeList for complex CSS selector with :not()', async () => {
-      const result = await parseAndEvaluateExpression('<input[type="text"]:not([disabled])/>', context);
+      const result = await parseAndEvaluateExpression(
+        '<input[type="text"]:not([disabled])/>',
+        context
+      );
       expect(result).toBeInstanceOf(NodeList);
       expect(result.length).toBe(1); // Text inputs that are not disabled (username only)
     });
@@ -84,7 +87,10 @@ describe('CSS Selector Enhancement (TDD)', () => {
     });
 
     it('should return NodeList for multiple attribute selectors', async () => {
-      const result = await parseAndEvaluateExpression('<input[type="text"][name="username"]/>', context);
+      const result = await parseAndEvaluateExpression(
+        '<input[type="text"][name="username"]/>',
+        context
+      );
       expect(result).toBeInstanceOf(NodeList);
       expect(result.length).toBe(1); // Username input specifically
     });

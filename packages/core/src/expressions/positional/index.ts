@@ -14,49 +14,49 @@ export const firstExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Any',
   operators: ['first'],
-  
+
   async evaluate(context: ExecutionContext, collection?: any): Promise<any> {
     // If no collection provided, use context.it
     const target = collection !== undefined ? collection : context.it;
-    
+
     if (target == null) {
       return null;
     }
-    
+
     // Handle arrays
     if (Array.isArray(target)) {
       return target.length > 0 ? target[0] : null;
     }
-    
+
     // Handle NodeList or HTMLCollection
     if (target instanceof NodeList || target instanceof HTMLCollection) {
       return target.length > 0 ? target[0] : null;
     }
-    
+
     // Handle DOM element - get first child element
     if (target instanceof Element) {
       return target.children.length > 0 ? target.children[0] : null;
     }
-    
+
     // Handle string
     if (typeof target === 'string') {
       return target.length > 0 ? target[0] : null;
     }
-    
+
     // Handle object with length property
     if (typeof target === 'object' && 'length' in target && typeof target.length === 'number') {
       return target.length > 0 ? target[0] : null;
     }
-    
+
     return null;
   },
-  
+
   validate(args: any[]): string | null {
     if (args.length > 1) {
       return 'first expression takes at most one argument (collection)';
     }
     return null;
-  }
+  },
 };
 
 export const lastExpression: ExpressionImplementation = {
@@ -64,50 +64,50 @@ export const lastExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Any',
   operators: ['last'],
-  
+
   async evaluate(context: ExecutionContext, collection?: any): Promise<any> {
     // If no collection provided, use context.it
     const target = collection !== undefined ? collection : context.it;
-    
+
     if (target == null) {
       return null;
     }
-    
+
     // Handle arrays
     if (Array.isArray(target)) {
       return target.length > 0 ? target[target.length - 1] : null;
     }
-    
+
     // Handle NodeList or HTMLCollection
     if (target instanceof NodeList || target instanceof HTMLCollection) {
       return target.length > 0 ? target[target.length - 1] : null;
     }
-    
+
     // Handle DOM element - get last child element
     if (target instanceof Element) {
       const children = target.children;
       return children.length > 0 ? children[children.length - 1] : null;
     }
-    
+
     // Handle string
     if (typeof target === 'string') {
       return target.length > 0 ? target[target.length - 1] : null;
     }
-    
+
     // Handle object with length property
     if (typeof target === 'object' && 'length' in target && typeof target.length === 'number') {
       return target.length > 0 ? target[target.length - 1] : null;
     }
-    
+
     return null;
   },
-  
+
   validate(args: any[]): string | null {
     if (args.length > 1) {
       return 'last expression takes at most one argument (collection)';
     }
     return null;
-  }
+  },
 };
 
 export const atExpression: ExpressionImplementation = {
@@ -115,7 +115,7 @@ export const atExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Any',
   operators: ['at'],
-  
+
   async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<any> {
     const [index, collection] = args;
     if (typeof index !== 'number') {
@@ -124,46 +124,46 @@ export const atExpression: ExpressionImplementation = {
 
     // If no collection provided, use context.it
     const target = collection !== undefined ? collection : context.it;
-    
+
     if (target == null) {
       return null;
     }
-    
+
     // Handle arrays
     if (Array.isArray(target)) {
       // Support negative indexing
       const actualIndex = index < 0 ? target.length + index : index;
       return actualIndex >= 0 && actualIndex < target.length ? target[actualIndex] : null;
     }
-    
+
     // Handle NodeList or HTMLCollection
     if (target instanceof NodeList || target instanceof HTMLCollection) {
       const actualIndex = index < 0 ? target.length + index : index;
       return actualIndex >= 0 && actualIndex < target.length ? target[actualIndex] : null;
     }
-    
+
     // Handle DOM element - get nth child element
     if (target instanceof Element) {
       const children = target.children;
       const actualIndex = index < 0 ? children.length + index : index;
       return actualIndex >= 0 && actualIndex < children.length ? children[actualIndex] : null;
     }
-    
+
     // Handle string
     if (typeof target === 'string') {
       const actualIndex = index < 0 ? target.length + index : index;
       return actualIndex >= 0 && actualIndex < target.length ? target[actualIndex] : null;
     }
-    
+
     // Handle object with length property and numeric indexing
     if (typeof target === 'object' && 'length' in target && typeof target.length === 'number') {
       const actualIndex = index < 0 ? target.length + index : index;
       return actualIndex >= 0 && actualIndex < target.length ? (target as any)[actualIndex] : null;
     }
-    
+
     return null;
   },
-  
+
   validate(args: any[]): string | null {
     if (args.length < 1 || args.length > 2) {
       return 'at expression requires 1-2 arguments (index, optional collection)';
@@ -172,7 +172,7 @@ export const atExpression: ExpressionImplementation = {
       return 'index must be a number';
     }
     return null;
-  }
+  },
 };
 
 // ============================================================================
@@ -184,7 +184,7 @@ export const nextExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Element',
   operators: ['next'],
-  
+
   async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
     const [selector, fromElement] = args;
     const startElement = (fromElement as HTMLElement | undefined) || context.me;
@@ -201,7 +201,7 @@ export const nextExpression: ExpressionImplementation = {
     // Find next element matching selector in DOM tree
     return findNextElementInDOM(startElement, selector as string);
   },
-  
+
   validate(args: any[]): string | null {
     if (args.length > 2) {
       return 'next expression takes at most 2 arguments (optional selector, optional fromElement)';
@@ -213,7 +213,7 @@ export const nextExpression: ExpressionImplementation = {
       return 'fromElement must be an Element';
     }
     return null;
-  }
+  },
 };
 
 export const previousExpression: ExpressionImplementation = {
@@ -238,7 +238,7 @@ export const previousExpression: ExpressionImplementation = {
     // Find previous element matching selector in DOM tree
     return findPreviousElementInDOM(startElement, selector as string);
   },
-  
+
   validate(args: any[]): string | null {
     if (args.length > 2) {
       return 'previous expression takes at most 2 arguments (optional selector, optional fromElement)';
@@ -250,7 +250,7 @@ export const previousExpression: ExpressionImplementation = {
       return 'fromElement must be an Element';
     }
     return null;
-  }
+  },
 };
 
 // ============================================================================
@@ -260,7 +260,7 @@ export const previousExpression: ExpressionImplementation = {
 function findNextElementInDOM(startElement: Element, selector: string): HTMLElement | null {
   // Start with the next sibling
   let current = startElement.nextElementSibling;
-  
+
   // Check siblings first
   while (current) {
     if (current.matches(selector)) {
@@ -273,20 +273,20 @@ function findNextElementInDOM(startElement: Element, selector: string): HTMLElem
     }
     current = current.nextElementSibling;
   }
-  
+
   // If no siblings found, move up to parent and continue
   const parent = startElement.parentElement;
   if (parent && parent !== document.documentElement) {
     return findNextElementInDOM(parent, selector);
   }
-  
+
   return null;
 }
 
 function findPreviousElementInDOM(startElement: Element, selector: string): HTMLElement | null {
   // Start with the previous sibling
   let current = startElement.previousElementSibling;
-  
+
   // Check siblings first (in reverse order)
   while (current) {
     // Check the sibling's descendants first (depth-first, reverse)
@@ -294,21 +294,21 @@ function findPreviousElementInDOM(startElement: Element, selector: string): HTML
     if (descendants.length > 0) {
       return descendants[0] as HTMLElement;
     }
-    
+
     // Then check the sibling itself
     if (current.matches(selector)) {
       return current as HTMLElement;
     }
-    
+
     current = current.previousElementSibling;
   }
-  
+
   // If no siblings found, move up to parent and continue
   const parent = startElement.parentElement;
   if (parent && parent !== document.documentElement) {
     return findPreviousElementInDOM(parent, selector);
   }
-  
+
   return null;
 }
 
@@ -321,7 +321,7 @@ export const nextWithinExpression: ExpressionImplementation = {
   category: 'Reference',
   evaluatesTo: 'Element',
   operators: ['next within'],
-  
+
   async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
     const [selector, withinSelector, fromElement] = args;
     const startElement = (fromElement as HTMLElement | undefined) || context.me;
@@ -339,7 +339,7 @@ export const nextWithinExpression: ExpressionImplementation = {
     // Find next element within the container
     return findNextElementWithinContainer(startElement, selector as string, container);
   },
-  
+
   validate(args: any[]): string | null {
     if (args.length < 2 || args.length > 3) {
       return 'nextWithin expression requires 2-3 arguments (selector, withinSelector, optional fromElement)';
@@ -354,7 +354,7 @@ export const nextWithinExpression: ExpressionImplementation = {
       return 'fromElement must be an Element';
     }
     return null;
-  }
+  },
 };
 
 export const previousWithinExpression: ExpressionImplementation = {
@@ -380,7 +380,7 @@ export const previousWithinExpression: ExpressionImplementation = {
     // Find previous element within the container
     return findPreviousElementWithinContainer(startElement, selector as string, container);
   },
-  
+
   validate(args: any[]): string | null {
     if (args.length < 2 || args.length > 3) {
       return 'previousWithin expression requires 2-3 arguments (selector, withinSelector, optional fromElement)';
@@ -395,20 +395,20 @@ export const previousWithinExpression: ExpressionImplementation = {
       return 'fromElement must be an Element';
     }
     return null;
-  }
+  },
 };
 
 function findNextElementWithinContainer(
-  startElement: Element, 
-  selector: string, 
+  startElement: Element,
+  selector: string,
   container: Element
 ): HTMLElement | null {
   // Get all matching elements within the container
   const matches = Array.from(container.querySelectorAll(selector));
-  
+
   // Find the current element's position in document order
   const startPosition = getElementPosition(startElement);
-  
+
   // Find the next element after the start position
   for (const element of matches) {
     const position = getElementPosition(element);
@@ -416,21 +416,21 @@ function findNextElementWithinContainer(
       return element as HTMLElement;
     }
   }
-  
+
   return null;
 }
 
 function findPreviousElementWithinContainer(
-  startElement: Element, 
-  selector: string, 
+  startElement: Element,
+  selector: string,
   container: Element
 ): HTMLElement | null {
   // Get all matching elements within the container
   const matches = Array.from(container.querySelectorAll(selector));
-  
+
   // Find the current element's position in document order
   const startPosition = getElementPosition(startElement);
-  
+
   // Find the previous element before the start position (search in reverse)
   for (let i = matches.length - 1; i >= 0; i--) {
     const element = matches[i];
@@ -439,7 +439,7 @@ function findPreviousElementWithinContainer(
       return element as HTMLElement;
     }
   }
-  
+
   return null;
 }
 
@@ -449,14 +449,14 @@ function getElementPosition(element: Element): number {
   // would do a proper depth-first traversal count
   let position = 0;
   let current: Element | null = element;
-  
+
   while (current && current.parentElement) {
     const siblings = Array.from(current.parentElement.children);
     position += siblings.indexOf(current);
     current = current.parentElement;
     position += 1000; // Weight for depth
   }
-  
+
   return position;
 }
 
@@ -477,10 +477,10 @@ export const positionalExpressions = {
 export type PositionalExpressionName = keyof typeof positionalExpressions;
 
 // Export helper functions for testing
-export { 
-  findNextElementInDOM, 
-  findPreviousElementInDOM, 
-  findNextElementWithinContainer, 
-  findPreviousElementWithinContainer, 
-  getElementPosition 
+export {
+  findNextElementInDOM,
+  findPreviousElementInDOM,
+  findNextElementWithinContainer,
+  findPreviousElementWithinContainer,
+  getElementPosition,
 };

@@ -55,8 +55,6 @@
   "exclude": [
     "node_modules",
     "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts",
     "src/legacy/**/*",
     "src/deno-mod.ts",
     "src/examples/deno-*.ts"

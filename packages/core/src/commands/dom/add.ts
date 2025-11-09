@@ -27,16 +27,18 @@ export interface AddCommandOptions {
  */
 const AddCommandInputSchema = v.tuple([
   v.union([
-    v.string(),                                    // Class names or attribute syntax
-    v.array(v.string()),                          // Array of class names
+    v.string(), // Class names or attribute syntax
+    v.array(v.string()), // Array of class names
   ]),
-  v.union([
-    v.custom((value: unknown) => value instanceof HTMLElement),
-    v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-    v.string(), // CSS selector
-    v.null(),   // Use implicit target (me)
-    v.undefined()
-  ]).optional()
+  v
+    .union([
+      v.custom((value: unknown) => value instanceof HTMLElement),
+      v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
+      v.string(), // CSS selector
+      v.null(), // Use implicit target (me)
+      v.undefined(),
+    ])
+    .optional(),
 ]);
 
 type AddCommandInput = any; // Inferred from RuntimeValidator
@@ -44,17 +46,20 @@ type AddCommandInput = any; // Inferred from RuntimeValidator
 /**
  * Enhanced Add Command with full type safety for LLM agents
  */
-export class AddCommand implements TypedCommandImplementation<
-  AddCommandInput,
-  HTMLElement[],  // Returns list of modified elements
-  TypedExecutionContext
-> {
+export class AddCommand
+  implements
+    TypedCommandImplementation<
+      AddCommandInput,
+      HTMLElement[], // Returns list of modified elements
+      TypedExecutionContext
+    >
+{
   public readonly name = 'add' as const;
   public readonly syntax = 'add <class-expression> [to <target-expression>]';
   public readonly description = 'Adds CSS classes or attributes to elements';
   public readonly inputSchema = AddCommandInputSchema;
   public readonly outputType = 'element-list' as const;
-  
+
   public readonly metadata: CommandMetadata = {
     category: 'DOM',
     complexity: 'medium',
@@ -63,20 +68,20 @@ export class AddCommand implements TypedCommandImplementation<
       {
         code: 'add .highlighted to me',
         description: 'Add highlighted class to current element',
-        expectedOutput: []
+        expectedOutput: [],
       },
       {
         code: 'add "active selected" to <.buttons/>',
         description: 'Add multiple classes to elements with buttons class',
-        expectedOutput: []
+        expectedOutput: [],
       },
       {
         code: 'add [@data-loaded="true"] to <#content/>',
         description: 'Add data attribute to content element',
-        expectedOutput: []
-      }
+        expectedOutput: [],
+      },
     ],
-    relatedCommands: ['remove', 'toggle', 'set']
+    relatedCommands: ['remove', 'toggle', 'set'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -87,45 +92,45 @@ export class AddCommand implements TypedCommandImplementation<
         type: 'string',
         description: 'CSS class names to add or attribute syntax [@name="value"]',
         optional: false,
-        examples: ['.active', 'highlighted', 'active selected', '[@data-state="loaded"]']
+        examples: ['.active', 'highlighted', 'active selected', '[@data-state="loaded"]'],
       },
       {
         name: 'target',
         type: 'element',
         description: 'Element(s) to modify. If omitted, uses the current element (me)',
         optional: true,
-        examples: ['me', '<#sidebar/>', '<.buttons/>']
-      }
+        examples: ['me', '<#sidebar/>', '<.buttons/>'],
+      },
     ],
     returns: {
       type: 'element-list',
       description: 'Array of elements that were modified',
-      examples: [[]]
+      examples: [[]],
     },
     examples: [
       {
         title: 'Add single class',
         code: 'on click add .active to me',
         explanation: 'When clicked, adds the "active" class to the element',
-        output: []
+        output: [],
       },
       {
         title: 'Add multiple classes',
         code: 'add "loading spinner" to <#submit-btn/>',
         explanation: 'Adds both "loading" and "spinner" classes to submit button',
-        output: []
+        output: [],
       },
       {
         title: 'Add data attribute',
         code: 'add [@data-processed="true"] to <.items/>',
         explanation: 'Sets data-processed attribute to "true" on all items',
-        output: []
-      }
+        output: [],
+      },
     ],
     seeAlso: ['remove', 'toggle', 'set-attribute'],
-    tags: ['dom', 'css', 'classes', 'attributes']
+    tags: ['dom', 'css', 'classes', 'attributes'],
   };
-  
+
   private readonly _options: AddCommandOptions; // Reserved for future enhancements - configuration storage
 
   constructor(options: AddCommandOptions = {}) {
@@ -146,7 +151,11 @@ export class AddCommand implements TypedCommandImplementation<
     const [classExpression, target] = args;
     try {
       // Check if first argument is an object literal (for inline styles)
-      if (classExpression && typeof classExpression === 'object' && !Array.isArray(classExpression)) {
+      if (
+        classExpression &&
+        typeof classExpression === 'object' &&
+        !Array.isArray(classExpression)
+      ) {
         debug.style('ADD: Detected object literal for inline styles:', classExpression);
         // This is an object of CSS properties - add them as inline styles
         const elements = this.resolveTargets(context, target);
@@ -159,9 +168,9 @@ export class AddCommand implements TypedCommandImplementation<
               type: 'missing-argument',
               message: 'No target elements found',
               code: 'NO_TARGET_ELEMENTS',
-              suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM']
+              suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM'],
             },
-            type: 'error'
+            type: 'error',
           };
         }
 
@@ -177,7 +186,7 @@ export class AddCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: modifiedElements,
-          type: 'element-list'
+          type: 'element-list',
         };
       }
 
@@ -187,13 +196,13 @@ export class AddCommand implements TypedCommandImplementation<
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'validation-error',
-                        message: validationResult.errors[0]?.message || 'Invalid input',
+            name: 'ValidationError',
+            type: 'validation-error',
+            message: validationResult.errors[0]?.message || 'Invalid input',
             code: 'ADD_VALIDATION_FAILED',
-            suggestions: validationResult.suggestions
+            suggestions: validationResult.suggestions,
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -204,13 +213,13 @@ export class AddCommand implements TypedCommandImplementation<
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'missing-argument',
-                        message: 'No target elements found',
+            name: 'ValidationError',
+            type: 'missing-argument',
+            message: 'No target elements found',
             code: 'NO_TARGET_ELEMENTS',
-            suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM']
+            suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -220,7 +229,11 @@ export class AddCommand implements TypedCommandImplementation<
       // Check if this is attribute syntax
       if (typeof classExpression === 'string' && this.isAttributeSyntax(classExpression)) {
         for (const element of elements) {
-          const attributeResult = await this.addAttributesToElement(element, classExpression, context);
+          const attributeResult = await this.addAttributesToElement(
+            element,
+            classExpression,
+            context
+          );
           if (attributeResult.success) {
             modifiedElements.push(element);
           }
@@ -232,13 +245,13 @@ export class AddCommand implements TypedCommandImplementation<
           return {
             success: false,
             error: {
-                            name: 'ValidationError',
-          type: 'missing-argument',
-                            message: 'No valid classes provided to add',
+              name: 'ValidationError',
+              type: 'missing-argument',
+              message: 'No valid classes provided to add',
               code: 'NO_VALID_CLASSES',
-              suggestions: ['Provide valid CSS class names', 'Check class name syntax']
+              suggestions: ['Provide valid CSS class names', 'Check class name syntax'],
             },
-            type: 'error'
+            type: 'error',
           };
         }
 
@@ -253,20 +266,19 @@ export class AddCommand implements TypedCommandImplementation<
       return {
         success: true,
         value: modifiedElements,
-        type: 'element-list'
+        type: 'element-list',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Unknown error',
+          message: error instanceof Error ? error.message : 'Unknown error',
           code: 'ADD_EXECUTION_FAILED',
-          suggestions: ['Check if elements exist', 'Verify class names are valid']
+          suggestions: ['Check if elements exist', 'Verify class names are valid'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -279,14 +291,14 @@ export class AddCommand implements TypedCommandImplementation<
     if (typeof classExpression === 'string') {
       // Handle hyperscript class syntax like '.class-name'
       const cleanExpression = classExpression.trim();
-      
+
       // Check if this is an attribute syntax like [@data-test="value"]
       if (cleanExpression.startsWith('[@') && cleanExpression.endsWith(']')) {
         // This is attribute syntax, not class syntax - return empty for now
         // TODO: Handle attribute syntax in a separate method
         return [];
       }
-      
+
       // Split by various delimiters and clean up class names
       return cleanExpression
         .split(/[\s,]+/)
@@ -341,7 +353,7 @@ export class AddCommand implements TypedCommandImplementation<
 
     // Handle Array of elements
     if (Array.isArray(target)) {
-      return target.filter(item => item instanceof HTMLElement) as HTMLElement[];
+      return target.filter(item => item instanceof HTMLElement);
     }
 
     // Handle CSS selector string
@@ -388,15 +400,14 @@ export class AddCommand implements TypedCommandImplementation<
         styles,
         timestamp: Date.now(),
         metadata: this.metadata,
-        result: 'success'
+        result: 'success',
       });
 
       return {
         success: true,
         value: element,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       console.error('🎨 ADD: Error adding styles:', error);
       return {
@@ -406,9 +417,12 @@ export class AddCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Failed to add styles',
           code: 'STYLE_ADD_FAILED',
-          suggestions: ['Check if element is still in DOM', 'Verify style property names are valid']
+          suggestions: [
+            'Check if element is still in DOM',
+            'Verify style property names are valid',
+          ],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -420,7 +434,7 @@ export class AddCommand implements TypedCommandImplementation<
   ): Promise<EvaluationResult<HTMLElement>> {
     try {
       const addedClasses: string[] = [];
-      
+
       // Add classes with validation
       for (const className of classes) {
         if (this.isValidClassName(className)) {
@@ -432,13 +446,13 @@ export class AddCommand implements TypedCommandImplementation<
           return {
             success: false,
             error: {
-                            name: 'ValidationError',
-          type: 'invalid-argument',
-                            message: `Invalid class name: "${className}"`,
+              name: 'ValidationError',
+              type: 'invalid-argument',
+              message: `Invalid class name: "${className}"`,
               code: 'INVALID_CLASS_NAME',
-              suggestions: ['Use valid CSS class names', 'Check for special characters']
+              suggestions: ['Use valid CSS class names', 'Check for special characters'],
             },
-            type: 'error'
+            type: 'error',
           };
         }
       }
@@ -454,27 +468,26 @@ export class AddCommand implements TypedCommandImplementation<
           allClasses: classes,
           timestamp: Date.now(),
           metadata: this.metadata,
-          result: 'success'
+          result: 'success',
         });
       }
 
       return {
         success: true,
         value: element,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Failed to add classes',
+          message: error instanceof Error ? error.message : 'Failed to add classes',
           code: 'CLASS_ADD_FAILED',
-          suggestions: ['Check if element is still in DOM', 'Verify class names are valid']
+          suggestions: ['Check if element is still in DOM', 'Verify class names are valid'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -485,30 +498,30 @@ export class AddCommand implements TypedCommandImplementation<
   }
 
   private async addAttributesToElement(
-    element: HTMLElement, 
-    attributeExpression: string, 
+    element: HTMLElement,
+    attributeExpression: string,
     context: TypedExecutionContext
   ): Promise<EvaluationResult<HTMLElement>> {
     try {
       const attributes = this.parseAttributes(attributeExpression);
-      
+
       for (const [name, value] of attributes) {
         if (!this.isValidAttributeName(name)) {
           return {
             success: false,
             error: {
-                            name: 'ValidationError',
-          type: 'invalid-argument',
-                            message: `Invalid attribute name: "${name}"`,
+              name: 'ValidationError',
+              type: 'invalid-argument',
+              message: `Invalid attribute name: "${name}"`,
               code: 'INVALID_ATTRIBUTE_NAME',
-              suggestions: ['Use valid HTML attribute names', 'Check attribute syntax']
+              suggestions: ['Use valid HTML attribute names', 'Check attribute syntax'],
             },
-            type: 'error'
+            type: 'error',
           };
         }
-        
+
         element.setAttribute(name, value);
-        
+
         // Dispatch enhanced add attribute event with rich metadata
         dispatchCustomEvent(element, 'hyperscript:add', {
           element,
@@ -518,27 +531,26 @@ export class AddCommand implements TypedCommandImplementation<
           attribute: { name, value },
           timestamp: Date.now(),
           metadata: this.metadata,
-          result: 'success'
+          result: 'success',
         });
       }
 
       return {
         success: true,
         value: element,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Failed to add attributes',
+          message: error instanceof Error ? error.message : 'Failed to add attributes',
           code: 'ATTRIBUTE_ADD_FAILED',
-          suggestions: ['Check attribute syntax', 'Verify element exists']
+          suggestions: ['Check attribute syntax', 'Verify element exists'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -546,26 +558,28 @@ export class AddCommand implements TypedCommandImplementation<
   private parseAttributes(attributeExpression: string): Array<[string, string]> {
     // Parse [@data-test="value"] or [@data-test=value] syntax
     const trimmed = attributeExpression.trim();
-    
+
     // Remove [@ and ] brackets
     const inner = trimmed.slice(2, -1);
-    
+
     // Split on = to get name and value
     const equalIndex = inner.indexOf('=');
     if (equalIndex === -1) {
       // No value, treat as boolean attribute
       return [[inner.trim(), '']];
     }
-    
+
     const name = inner.slice(0, equalIndex).trim();
     let value = inner.slice(equalIndex + 1).trim();
-    
+
     // Remove quotes if present
-    if ((value.startsWith('"') && value.endsWith('"')) || 
-        (value.startsWith("'") && value.endsWith("'"))) {
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       value = value.slice(1, -1);
     }
-    
+
     return [[name, value]];
   }
 
@@ -585,75 +599,87 @@ export class AddCommand implements TypedCommandImplementation<
     try {
       // Schema validation
       const parsed = AddCommandInputSchema.safeParse(args);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch' as const,
-            message: `Invalid argument: ${err.message}`,
-            suggestions: [this.getValidationSuggestion(err.code ?? 'unknown')]
-          })) ?? [],
-          suggestions: ['Use string or string array for classes, and valid target selector']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch' as const,
+              message: `Invalid argument: ${err.message}`,
+              suggestions: [this.getValidationSuggestion(err.code ?? 'unknown')],
+            })) ?? [],
+          suggestions: ['Use string or string array for classes, and valid target selector'],
         };
       }
 
       // Additional semantic validation
       const [classExpression, target] = parsed.data as [string | string[], unknown];
-      
+
       // Validate class expression is not empty
-      if (!classExpression || (typeof classExpression === 'string' && classExpression.trim().length === 0)) {
+      if (
+        !classExpression ||
+        (typeof classExpression === 'string' && classExpression.trim().length === 0)
+      ) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Class expression cannot be empty',
-            suggestions: ['Provide valid CSS class names or attribute syntax']
-          }],
-          suggestions: ['Use class names like "active"', 'Use attribute syntax like [@data-test="value"]']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Class expression cannot be empty',
+              suggestions: ['Provide valid CSS class names or attribute syntax'],
+            },
+          ],
+          suggestions: [
+            'Use class names like "active"',
+            'Use attribute syntax like [@data-test="value"]',
+          ],
         };
       }
-      
+
       // Validate target selector if provided
       if (typeof target === 'string' && !this.isValidCSSSelector(target)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: `Invalid CSS selector: "${target}"`,
-            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"']
-          }],
-          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: `Invalid CSS selector: "${target}"`,
+              suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"'],
+            },
+          ],
+          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: ['Check input types and values']
-        }],
-        suggestions: ['Ensure arguments match expected types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: ['Check input types and values'],
+          },
+        ],
+        suggestions: ['Ensure arguments match expected types'],
       };
     }
   }
 
   private getValidationSuggestion(errorCode: string, _path?: (string | number)[]): string {
     const suggestions: Record<string, string> = {
-      'invalid_type': 'Use string or string array for classes, HTMLElement or selector for target',
-      'invalid_union': 'Classes must be string or string array, target must be element or selector',
-      'too_small': 'Add command requires at least a class expression',
-      'too_big': 'Too many arguments - add command takes 1-2 arguments'
+      invalid_type: 'Use string or string array for classes, HTMLElement or selector for target',
+      invalid_union: 'Classes must be string or string array, target must be element or selector',
+      too_small: 'Add command requires at least a class expression',
+      too_big: 'Too many arguments - add command takes 1-2 arguments',
     };
-    
+
     return suggestions[errorCode] || 'Check argument types and syntax';
   }
 

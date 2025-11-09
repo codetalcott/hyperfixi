@@ -1,6 +1,6 @@
 /**
  * TDD Fix for Object Literal Expressions
- * 
+ *
  * Current issue: Object literals {} and {key: value} not being parsed properly
  * Expected: Support for empty objects, simple key-value pairs, and string keys
  */
@@ -21,7 +21,7 @@ const context: ExecutionContext = {
   returned: false,
   broke: false,
   continued: false,
-  async: false
+  async: false,
 };
 
 describe('Object Literal - TDD Fix', () => {
@@ -49,7 +49,10 @@ describe('Object Literal - TDD Fix', () => {
     });
 
     it('should handle mixed key types: {id: 1, "name": "test", active: true}', async () => {
-      const result = await parseAndEvaluateExpression('{id: 1, "name": "test", active: true}', context);
+      const result = await parseAndEvaluateExpression(
+        '{id: 1, "name": "test", active: true}',
+        context
+      );
       expect(result.id).toBe(1);
       expect(result.name).toBe('test');
       expect(result.active).toBe(true);
@@ -66,7 +69,10 @@ describe('Object Literal - TDD Fix', () => {
     });
 
     it('should handle computed values: {sum: 2 + 3, text: "Hello" + " World"}', async () => {
-      const result = await parseAndEvaluateExpression('{sum: 2 + 3, text: "Hello" + " World"}', context);
+      const result = await parseAndEvaluateExpression(
+        '{sum: 2 + 3, text: "Hello" + " World"}',
+        context
+      );
       expect(result.sum).toBe(5);
       expect(result.text).toBe('Hello World');
     });

@@ -8,7 +8,7 @@ import type {
   ExecutionContext,
   CommandNode,
   ExpressionNode,
-  EventHandlerNode
+  EventHandlerNode,
 } from '../types/base-types';
 import type { TypedExecutionContext } from '../types/command-types';
 
@@ -57,9 +57,7 @@ import { GoCommand } from '../commands/navigation/go';
 // All control flow commands now registered via ENHANCED_COMMAND_FACTORIES (Phase 5)
 
 // Animation commands
-import {
-  createTransitionCommand
-} from '../commands/animation/index';
+import { createTransitionCommand } from '../commands/animation/index';
 // MeasureCommand, SettleCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 7)
 // TakeCommand, TransitionCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 9)
 
@@ -118,13 +116,13 @@ export class Runtime {
       useEnhancedCommands: true,
       lazyLoad: true, // Default to lazy loading for optimal bundle size
       expressionPreload: 'core', // Default to core expressions for Phase 2 optimization
-      ...options
+      ...options,
     };
 
     // Phase 2 optimization: Use LazyExpressionEvaluator for lazy loading
     if (this.options.lazyLoad) {
       this.expressionEvaluator = new LazyExpressionEvaluator({
-        preload: this.options.expressionPreload || 'core'
+        preload: this.options.expressionPreload || 'core',
       });
     } else {
       // Legacy eager loading behavior
@@ -138,9 +136,13 @@ export class Runtime {
     this.behaviorAPI = {
       has: (name: string) => this.behaviorRegistry.has(name),
       get: (name: string) => this.behaviorRegistry.get(name),
-      install: async (behaviorName: string, element: HTMLElement, parameters: Record<string, any>) => {
+      install: async (
+        behaviorName: string,
+        element: HTMLElement,
+        parameters: Record<string, any>
+      ) => {
         return await this.installBehaviorOnElement(behaviorName, element, parameters);
-      }
+      },
     };
 
     // Initialize command registry based on loading strategy
@@ -179,11 +181,11 @@ export class Runtime {
       this.enhancedRegistry.register(createAddCommand());
       this.enhancedRegistry.register(createRemoveCommand());
       this.enhancedRegistry.register(createPutCommand());
-      
+
       // Register event commands
       this.enhancedRegistry.register(createSendCommand());
       this.enhancedRegistry.register(createTriggerCommand());
-      
+
       // Register data commands (enhanced)
       try {
         const setCommand = createSetCommand();
@@ -204,14 +206,14 @@ export class Runtime {
       } catch (e) {
         // console.error('❌ Failed to register Enhanced INCREMENT command:', e);
       }
-      
+
       try {
         const decrementCommand = createDecrementCommand();
         this.enhancedRegistry.register(decrementCommand);
       } catch (e) {
         // console.error('❌ Failed to register Enhanced DECREMENT command:', e);
       }
-      
+
       // Register utility commands (enhanced)
       try {
         const logCommand = createLogCommand();
@@ -219,7 +221,7 @@ export class Runtime {
       } catch (e) {
         // console.error('❌ Failed to register Enhanced LOG command:', e);
       }
-      
+
       // Register content/creation commands
       // MakeCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 8)
       // AppendCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 8)
@@ -236,14 +238,14 @@ export class Runtime {
 
       // Register navigation commands (has TypedCommandImplementation)
       this.enhancedRegistry.register(new GoCommand());
-      
+
       // Register control flow commands
       // Note: halt, break, continue migrated to enhanced pattern (Phase 2)
       // Note: return, throw migrated to enhanced pattern (Phase 4)
       // Note: if, unless migrated to enhanced pattern (Phase 5)
       // All control flow commands now registered via ENHANCED_COMMAND_FACTORIES
       // RepeatCommand is now registered as enhanced command via EnhancedCommandRegistry
-      
+
       // Register animation commands
       // MeasureCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 7)
       // SettleCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 7)
@@ -267,7 +269,7 @@ export class Runtime {
         console.error('❌ Error details:', {
           message: (e as any).message,
           stack: (e as any).stack,
-          error: e
+          error: e,
         });
         // Phase 9: Legacy fallback removed - all commands use enhanced pattern
         throw new Error(`Failed to register enhanced TransitionCommand: ${(e as any).message}`);
@@ -279,7 +281,7 @@ export class Runtime {
       // Register advanced commands
       this.enhancedRegistry.register(new BeepCommand());
       // AsyncCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 6)
-      
+
       // Register template commands (enhanced)
       try {
         const renderCommand = createRenderCommand();
@@ -289,7 +291,7 @@ export class Runtime {
         // Phase 9: Legacy fallback removed - all commands use enhanced pattern
         throw new Error(`Failed to register enhanced RenderCommand: ${(e as any).message}`);
       }
-      
+
       if (this.options.enableErrorReporting) {
       }
     } catch (error) {
@@ -331,7 +333,10 @@ export class Runtime {
           debug.runtime(`RUNTIME: *** PROGRAM NODE DETECTED *** with node type: ${node.type}`);
           // Execute a program containing multiple statements (commands + event handlers)
           const program = node as any;
-          debug.runtime(`RUNTIME: Program node statements check:`, program.statements ? `array with ${program.statements.length} items` : 'NO STATEMENTS');
+          debug.runtime(
+            `RUNTIME: Program node statements check:`,
+            program.statements ? `array with ${program.statements.length} items` : 'NO STATEMENTS'
+          );
 
           if (!program.statements || !Array.isArray(program.statements)) {
             console.warn('Program node has no statements array:', program);
@@ -340,7 +345,9 @@ export class Runtime {
 
           debug.runtime(`RUNTIME: Executing Program with ${program.statements.length} statements`);
           program.statements.forEach((stmt: any, idx: number) => {
-            debug.runtime(`  Statement ${idx + 1}: type=${stmt.type}, name=${stmt.name || stmt.event || 'N/A'}`);
+            debug.runtime(
+              `  Statement ${idx + 1}: type=${stmt.type}, name=${stmt.name || stmt.event || 'N/A'}`
+            );
           });
 
           let lastResult: unknown = undefined;
@@ -390,11 +397,17 @@ export class Runtime {
         }
 
         case 'CommandSequence': {
-          return await this.executeCommandSequence(node as unknown as { commands: ASTNode[] }, context);
+          return await this.executeCommandSequence(
+            node as unknown as { commands: ASTNode[] },
+            context
+          );
         }
 
         case 'objectLiteral': {
-          return await this.executeObjectLiteral(node as unknown as { properties: Array<{ key: ASTNode; value: ASTNode }> }, context);
+          return await this.executeObjectLiteral(
+            node as unknown as { properties: Array<{ key: ASTNode; value: ASTNode }> },
+            context
+          );
         }
 
         case 'templateLiteral': {
@@ -405,7 +418,9 @@ export class Runtime {
 
         default: {
           // For all other node types, use the expression evaluator
-          debug.runtime(`RUNTIME: DEFAULT CASE - About to call expression evaluator for node type '${node.type}'`);
+          debug.runtime(
+            `RUNTIME: DEFAULT CASE - About to call expression evaluator for node type '${node.type}'`
+          );
           const result = await this.expressionEvaluator.evaluate(node, context);
           debug.runtime(`RUNTIME: DEFAULT CASE - Expression evaluator returned:`, result);
 
@@ -428,14 +443,17 @@ export class Runtime {
   /**
    * Execute a command sequence (multiple commands in order)
    */
-  private async executeCommandSequence(node: { commands: ASTNode[] }, context: ExecutionContext): Promise<unknown> {
+  private async executeCommandSequence(
+    node: { commands: ASTNode[] },
+    context: ExecutionContext
+  ): Promise<unknown> {
     if (!node.commands || !Array.isArray(node.commands)) {
       console.warn('CommandSequence node has no commands array:', node);
       return;
     }
 
     let lastResult: unknown = undefined;
-    
+
     // Execute each command in sequence
     for (const command of node.commands) {
       try {
@@ -483,14 +501,17 @@ export class Runtime {
   /**
    * Execute an object literal node (convert to JavaScript object)
    */
-  private async executeObjectLiteral(node: { properties: Array<{ key: ASTNode; value: ASTNode }> }, context: ExecutionContext): Promise<Record<string, unknown>> {
+  private async executeObjectLiteral(
+    node: { properties: Array<{ key: ASTNode; value: ASTNode }> },
+    context: ExecutionContext
+  ): Promise<Record<string, unknown>> {
     if (!node.properties || !Array.isArray(node.properties)) {
       console.warn('ObjectLiteral node has no properties array:', node);
       return {};
     }
 
     const result: Record<string, unknown> = {};
-    
+
     // Evaluate each property
     for (const property of node.properties) {
       try {
@@ -509,10 +530,10 @@ export class Runtime {
           const evaluatedKey = await this.execute(property.key, context);
           key = String(evaluatedKey);
         }
-        
+
         // Evaluate the value
         const value = await this.execute(property.value, context);
-        
+
         // Add to result object
         result[key] = value;
       } catch (error) {
@@ -522,14 +543,18 @@ export class Runtime {
         throw error;
       }
     }
-    
+
     return result;
   }
 
   /**
    * Execute enhanced command with adapter
    */
-  private async executeEnhancedCommand(name: string, args: ExpressionNode[], context: ExecutionContext): Promise<unknown> {
+  private async executeEnhancedCommand(
+    name: string,
+    args: ExpressionNode[],
+    context: ExecutionContext
+  ): Promise<unknown> {
     const adapter = await this.enhancedRegistry.getAdapter(name);
     if (!adapter) {
       throw new Error(`Enhanced command not found: ${name}`);
@@ -539,18 +564,21 @@ export class Runtime {
     // (e.g., repeat, if, unless, etc.)
     // Takes (node, optionalContext) - if optionalContext is provided, use it; otherwise use current context
     if (!context.locals.has('_runtimeExecute')) {
-      context.locals.set('_runtimeExecute', (node: ASTNode, ctx?: any) => this.execute(node, ctx || context));
+      context.locals.set('_runtimeExecute', (node: ASTNode, ctx?: any) =>
+        this.execute(node, ctx || context)
+      );
     }
 
     let evaluatedArgs: unknown[];
-    
+
     // Special handling for commands with natural language syntax
     if (name === 'put' && args.length >= 3) {
       // For put command: evaluate content, extract position keyword, handle target specially
       const content = await this.execute(args[0], context);
       // Position is a keyword (identifier or literal) - extract the value, don't evaluate
       const positionArg: any = args[1];
-      const position = positionArg?.type === 'literal' ? positionArg.value : positionArg?.name || positionArg;
+      const position =
+        positionArg?.type === 'literal' ? positionArg.value : positionArg?.name || positionArg;
       let target: any = args[2];
 
       // Handle target resolution for enhanced put command
@@ -567,21 +595,25 @@ export class Runtime {
       } else {
         // Evaluate and extract first element if it's an array
         const evaluated = await this.execute(target, context);
-        if (Array.isArray(evaluated) && evaluated.length > 0 && evaluated[0] instanceof HTMLElement) {
+        if (
+          Array.isArray(evaluated) &&
+          evaluated.length > 0 &&
+          evaluated[0] instanceof HTMLElement
+        ) {
           target = evaluated[0];
         } else {
           target = evaluated;
         }
       }
-      
+
       evaluatedArgs = [content, position, target];
     } else if ((name === 'add' || name === 'remove') && args.length === 3) {
       // Handle "add .class to #target" and "remove .class from #target" patterns
-        // name,
-        // argsLength: args.length,
-        // args: args.map(arg => ({ type: arg.type, value: (arg as any).value || (arg as any).name }))
+      // name,
+      // argsLength: args.length,
+      // args: args.map(arg => ({ type: arg.type, value: (arg as any).value || (arg as any).name }))
       // });
-      
+
       // For add/remove, the first argument (class) should be treated as a literal value, not evaluated as selector
       let classArg: any = args[0];
       if (classArg?.type === 'selector' || classArg?.type === 'literal') {
@@ -595,9 +627,9 @@ export class Runtime {
       await this.execute(args[1], context); // 'to' or 'from' (evaluated for side effects)
       let target: any = args[2];
 
-        // classArg,
-        // keywordArg,
-        // targetNode: { type: target?.type, value: (target as any)?.value || (target as any)?.name }
+      // classArg,
+      // keywordArg,
+      // targetNode: { type: target?.type, value: (target as any)?.value || (target as any)?.name }
       // });
 
       // Extract target selector/element
@@ -616,17 +648,16 @@ export class Runtime {
         const evaluated = await this.execute(target, context);
         target = evaluated;
       }
-      
-      
+
       // Debug target resolution
       if (typeof target === 'string' && target.startsWith('#')) {
         document.querySelectorAll(target); // Query for validation
-          // selector: target,
-          // foundElements: elements.length,
-          // elements: Array.from(elements)
+        // selector: target,
+        // foundElements: elements.length,
+        // elements: Array.from(elements)
         // });
       }
-      
+
       // Enhanced commands expect [classExpression, target]
       evaluatedArgs = [classArg, target];
     } else if ((name === 'add' || name === 'remove') && args.length === 1) {
@@ -658,9 +689,7 @@ export class Runtime {
 
       if (toIndex === -1) {
         // No "to" found, fall back to normal evaluation
-        evaluatedArgs = await Promise.all(
-          args.map(arg => this.execute(arg, context))
-        );
+        evaluatedArgs = await Promise.all(args.map(arg => this.execute(arg, context)));
       } else {
         // Split into target (before "to") and value (after "to")
         const targetArgs = args.slice(0, toIndex);
@@ -681,7 +710,7 @@ export class Runtime {
               target = {
                 _isScoped: true,
                 name: nameValue,
-                scope: scopeValue
+                scope: scopeValue,
               };
             } else {
               target = (targetArg as any).name;
@@ -693,8 +722,7 @@ export class Runtime {
             const memberExpr = targetArg as any;
             const objectName = memberExpr.object?.name || memberExpr.object?.value;
             const propertyName = memberExpr.property?.name || memberExpr.property?.value;
-            
-            
+
             if (['my', 'me', 'its', 'it', 'your', 'you'].includes(objectName)) {
               target = `${objectName} ${propertyName}`;
             } else {
@@ -715,9 +743,9 @@ export class Runtime {
             const property = propOfExpr.property?.name || propOfExpr.property?.value;
             const selector = propOfExpr.target?.value || propOfExpr.target?.name;
 
-              // property,
-              // selector,
-              // fullObject: propOfExpr
+            // property,
+            // selector,
+            // fullObject: propOfExpr
             // });
 
             // Create the string format expected by Enhanced SET command
@@ -729,12 +757,18 @@ export class Runtime {
 
           // Safety check - ensure target is not undefined
           if (target === undefined || target === null) {
-            throw new Error(`Invalid target type: ${typeof target}. Target arg: ${JSON.stringify(targetArg)}`);
+            throw new Error(
+              `Invalid target type: ${typeof target}. Target arg: ${JSON.stringify(targetArg)}`
+            );
           }
-        } else if (targetArgs.length === 2 &&
-                   (nodeType(targetArgs[0]) === 'identifier' || nodeType(targetArgs[0]) === 'literal') &&
-                   ((targetArgs[0] as any).name === 'global' || (targetArgs[0] as any).value === 'global' ||
-                    (targetArgs[0] as any).name === 'local' || (targetArgs[0] as any).value === 'local')) {
+        } else if (
+          targetArgs.length === 2 &&
+          (nodeType(targetArgs[0]) === 'identifier' || nodeType(targetArgs[0]) === 'literal') &&
+          ((targetArgs[0] as any).name === 'global' ||
+            (targetArgs[0] as any).value === 'global' ||
+            (targetArgs[0] as any).name === 'local' ||
+            (targetArgs[0] as any).value === 'local')
+        ) {
           // Handle scoped variable syntax: "set global count to X" or "set local count to X"
           const scope = (targetArgs[0] as any).name || (targetArgs[0] as any).value;
           const variableName = (targetArgs[1] as any).name || (targetArgs[1] as any).value;
@@ -742,17 +776,24 @@ export class Runtime {
           target = variableName;
           // Store scope in a way that will be accessible later
           (context as any)._pendingSetScope = scope;
-        } else if (targetArgs.length === 2 &&
-                   (nodeType(targetArgs[0]) === 'identifier' || nodeType(targetArgs[0]) === 'context_var') &&
-                   ['my', 'me', 'its', 'it', 'your', 'you'].includes((targetArgs[0] as any).name || (targetArgs[0] as any).value)) {
+        } else if (
+          targetArgs.length === 2 &&
+          (nodeType(targetArgs[0]) === 'identifier' || nodeType(targetArgs[0]) === 'context_var') &&
+          ['my', 'me', 'its', 'it', 'your', 'you'].includes(
+            (targetArgs[0] as any).name || (targetArgs[0] as any).value
+          )
+        ) {
           // Handle possessive syntax: "my textContent", "its value", etc.
           const possessive = (targetArgs[0] as any).name;
           const property = (targetArgs[1] as any).name || (targetArgs[1] as any).value;
           target = `${possessive} ${property}`;
-        } else if (targetArgs.length === 3 &&
-                   nodeType(targetArgs[0]) === 'selector' &&
-                   nodeType(targetArgs[1]) === 'identifier' && (targetArgs[1] as any).name === "'s" &&
-                   nodeType(targetArgs[2]) === 'identifier') {
+        } else if (
+          targetArgs.length === 3 &&
+          nodeType(targetArgs[0]) === 'selector' &&
+          nodeType(targetArgs[1]) === 'identifier' &&
+          (targetArgs[1] as any).name === "'s" &&
+          nodeType(targetArgs[2]) === 'identifier'
+        ) {
           // Handle selector possessive syntax: "#element's property"
           const selector = (targetArgs[0] as any).value;
           const property = (targetArgs[2] as any).name;
@@ -760,11 +801,14 @@ export class Runtime {
         } else {
           // Complex case: "set the textContent of #element to X"
           // Parse: ["the", "textContent", "of", "#element"] -> { element: "#element", property: "textContent" }
-          console.log('🔧 SET ARGS: Complex case - targetArgs:', targetArgs.map(arg => ({
-            type: nodeType(arg),
-            name: (arg as any).name,
-            value: (arg as any).value
-          })));
+          debug.command(
+            'SET ARGS: Complex case - targetArgs:',
+            targetArgs.map(arg => ({
+              type: nodeType(arg),
+              name: (arg as any).name,
+              value: (arg as any).value,
+            }))
+          );
 
           let property = null;
           let element = null;
@@ -772,9 +816,13 @@ export class Runtime {
           // Look for property name (first identifier after "the")
           for (let i = 0; i < targetArgs.length; i++) {
             const arg = targetArgs[i];
-            if (nodeType(arg) === 'identifier' && (arg as any).name !== 'the' && (arg as any).name !== 'of') {
+            if (
+              nodeType(arg) === 'identifier' &&
+              (arg as any).name !== 'the' &&
+              (arg as any).name !== 'of'
+            ) {
               property = (arg as any).name;
-              console.log('🔧 SET ARGS: Found property at index', i, ':', property);
+              debug.command('SET ARGS: Found property at index', i, ':', property);
               break;
             }
           }
@@ -784,46 +832,48 @@ export class Runtime {
             const arg = targetArgs[i];
             if (nodeType(arg) === 'selector') {
               element = (arg as any).value;
-              console.log('🔧 SET ARGS: Found element selector at index', i, ':', element);
+              debug.command('SET ARGS: Found element selector at index', i, ':', element);
               break;
             }
           }
 
-          console.log('🔧 SET ARGS: After parsing - property:', property, 'element:', element);
+          debug.command('SET ARGS: After parsing - property:', property, 'element:', element);
 
           if (property && element) {
             // Create a structured target for property setting
             target = { element, property };
-            console.log('🔧 SET ARGS: Using structured target:', target);
+            debug.command('SET ARGS: Using structured target:', target);
           } else if (property && !element) {
             // Simple variable with "the" keyword: "set the dragHandle to X"
             // Just use the property name as the variable name
             target = property;
-            console.log('🔧 SET ARGS: Using property as variable name:', target);
+            debug.command('SET ARGS: Using property as variable name:', target);
           } else {
             // Fallback to simple concatenation
-            target = targetArgs.map(arg => {
-              if (nodeType(arg) === 'identifier') return (arg as any).name;
-              if (nodeType(arg) === 'selector') return (arg as any).value;
-              if (nodeType(arg) === 'literal') return (arg as any).value;
-              return arg;
-            }).join('.');
-            console.log('🔧 SET ARGS: Using fallback concatenation:', target);
+            target = targetArgs
+              .map(arg => {
+                if (nodeType(arg) === 'identifier') return (arg as any).name;
+                if (nodeType(arg) === 'selector') return (arg as any).value;
+                if (nodeType(arg) === 'literal') return (arg as any).value;
+                return arg;
+              })
+              .join('.');
+            debug.command('SET ARGS: Using fallback concatenation:', target);
           }
         }
-        
+
         // Evaluate value expression
         let value;
         // Debug: Check if this is a function call
         const isFunctionCall = this.isSimpleFunctionCall(valueArgs);
-          // count: valueArgs.length, 
-          // isFunctionCall,
-          // firstThreeTypes: valueArgs.slice(0, 3).map(arg => arg.type),
-          // firstThreeValues: valueArgs.slice(0, 3).map(arg => (arg as any).name || (arg as any).value)
+        // count: valueArgs.length,
+        // isFunctionCall,
+        // firstThreeTypes: valueArgs.slice(0, 3).map(arg => arg.type),
+        // firstThreeValues: valueArgs.slice(0, 3).map(arg => (arg as any).name || (arg as any).value)
         // });
         if (isFunctionCall) {
         }
-        
+
         if (valueArgs.length === 1) {
           value = await this.execute(valueArgs[0], context);
         } else if (this.isSimpleFunctionCall(valueArgs)) {
@@ -833,13 +883,12 @@ export class Runtime {
           // Check if this is a binary expression pattern: value + operator + value
           const operatorNode = valueArgs[1];
           const operator = (operatorNode as any).name || (operatorNode as any).value;
-          
+
           if (['+', '-', '*', '/', 'mod'].includes(operator)) {
             // Evaluate as binary expression
             const leftValue = await this.execute(valueArgs[0], context);
             const rightValue = await this.execute(valueArgs[2], context);
-            
-            
+
             // Perform the operation
             switch (operator) {
               case '+':
@@ -873,9 +922,7 @@ export class Runtime {
           }
         } else {
           // Multiple value args - evaluate each and join
-          const valueResults = await Promise.all(
-            valueArgs.map(arg => this.execute(arg, context))
-          );
+          const valueResults = await Promise.all(valueArgs.map(arg => this.execute(arg, context)));
           value = valueResults.join(' ');
         }
 
@@ -890,7 +937,11 @@ export class Runtime {
       // Extract target selector/element
       if (targetAny?.type === 'identifier' && targetAny.name === 'me') {
         target = context.me;
-      } else if (targetAny?.type === 'selector' || targetAny?.type === 'id_selector' || targetAny?.type === 'class_selector') {
+      } else if (
+        targetAny?.type === 'selector' ||
+        targetAny?.type === 'id_selector' ||
+        targetAny?.type === 'class_selector'
+      ) {
         // Keep as selector string
         target = targetAny.value;
       } else if (targetAny?.type === 'identifier') {
@@ -929,7 +980,7 @@ export class Runtime {
           target,
           property,
           targetType: typeof target,
-          targetTag: target instanceof HTMLElement ? target.tagName : 'not an element'
+          targetTag: target instanceof HTMLElement ? target.tagName : 'not an element',
         });
 
         // Create structured input for measure command
@@ -942,7 +993,7 @@ export class Runtime {
 
         debug.command('MEASURE: PropertyOf expression detected:', {
           target,
-          property
+          property,
         });
 
         evaluatedArgs = [{ target, property }];
@@ -951,17 +1002,20 @@ export class Runtime {
         const propertyName = (firstArg as any).name;
 
         debug.command('MEASURE: Simple identifier detected, treating as property name:', {
-          property: propertyName
+          property: propertyName,
         });
 
         evaluatedArgs = [propertyName];
       } else {
         // No special syntax, evaluate normally
-        evaluatedArgs = await Promise.all(
-          args.map(arg => this.execute(arg, context))
-        );
+        evaluatedArgs = await Promise.all(args.map(arg => this.execute(arg, context)));
       }
-    } else if (name === 'repeat' || name === 'transition' || name === 'install' || name === 'halt') {
+    } else if (
+      name === 'repeat' ||
+      name === 'transition' ||
+      name === 'install' ||
+      name === 'halt'
+    ) {
       // REPEAT, TRANSITION, INSTALL, and HALT commands need raw AST nodes for the adapter to extract metadata
       // INSTALL needs raw identifier nodes to extract behavior names (e.g., "Draggable", "Sortable")
       // HALT needs raw nodes to detect "halt the event" pattern
@@ -1015,7 +1069,7 @@ export class Runtime {
       // ADD/REMOVE: Don't evaluate selector nodes - extract their string values
 
       evaluatedArgs = await Promise.all(
-        args.map(async (arg) => {
+        args.map(async arg => {
           if (arg && (arg as any).type === 'selector') {
             // Extract selector string value instead of evaluating
             return (arg as any).value;
@@ -1026,26 +1080,24 @@ export class Runtime {
       );
     } else {
       // For other commands, evaluate all arguments normally
-      evaluatedArgs = await Promise.all(
-        args.map(arg => this.execute(arg, context))
-      );
+      evaluatedArgs = await Promise.all(args.map(arg => this.execute(arg, context)));
     }
 
     // Execute through enhanced adapter
-    
+
     // Debug for SET command to see what args we actually have
     if (name === 'set') {
-        // evaluatedArgsLength: evaluatedArgs.length,
-        // evaluatedArgs: evaluatedArgs,
-        // conditionCheck: evaluatedArgs.length >= 2,
-        // willUseStructuredPath: name === 'set' && evaluatedArgs.length >= 2
+      // evaluatedArgsLength: evaluatedArgs.length,
+      // evaluatedArgs: evaluatedArgs,
+      // conditionCheck: evaluatedArgs.length >= 2,
+      // willUseStructuredPath: name === 'set' && evaluatedArgs.length >= 2
       // });
     }
-    
+
     // Debug for add/remove commands to see class parsing
     if ((name === 'add' || name === 'remove') && evaluatedArgs.length >= 1) {
     }
-    
+
     let result;
     if (name === 'set' && evaluatedArgs.length >= 2) {
       // SET command expects input object format
@@ -1059,7 +1111,12 @@ export class Runtime {
         // Extract name and scope from scoped variable object
         inputTarget = (target as any).name;
         scope = (target as any).scope;
-      } else if (target && typeof target === 'object' && 'element' in target && 'property' in target) {
+      } else if (
+        target &&
+        typeof target === 'object' &&
+        'element' in target &&
+        'property' in target
+      ) {
         // Convert structured target to "the X of Y" string format
         inputTarget = `the ${target.property} of ${target.element}`;
       } else {
@@ -1086,7 +1143,12 @@ export class Runtime {
       let input: any = {};
 
       // Check if already structured from possessive expression handling above
-      if (firstArg && typeof firstArg === 'object' && 'target' in firstArg && 'property' in firstArg) {
+      if (
+        firstArg &&
+        typeof firstArg === 'object' &&
+        'target' in firstArg &&
+        'property' in firstArg
+      ) {
         // Already structured - pass through
         input = firstArg;
       } else if (typeof firstArg === 'string') {
@@ -1112,7 +1174,12 @@ export class Runtime {
 
       // Check if already structured by special INCREMENT/DECREMENT handling above
       let input: any;
-      if (firstArg && typeof firstArg === 'object' && 'target' in firstArg && 'amount' in firstArg) {
+      if (
+        firstArg &&
+        typeof firstArg === 'object' &&
+        'target' in firstArg &&
+        'amount' in firstArg
+      ) {
         // Already structured - pass through
         input = firstArg;
       } else {
@@ -1133,7 +1200,7 @@ export class Runtime {
         input.target = input.target.replace('global ', '');
         input.scope = 'global';
       }
-      
+
       result = await adapter.execute(context, input);
     } else {
       result = await adapter.execute(context, ...evaluatedArgs);
@@ -1145,9 +1212,13 @@ export class Runtime {
   /**
    * Execute a command from a command-selector pattern (e.g., "add .active")
    */
-  private async executeCommandFromPattern(command: string, selector: string, context: ExecutionContext): Promise<unknown> {
+  private async executeCommandFromPattern(
+    command: string,
+    selector: string,
+    context: ExecutionContext
+  ): Promise<unknown> {
     const commandName = command.toLowerCase();
-    
+
     // Try enhanced commands first if available
     if (this.options.useEnhancedCommands && this.enhancedRegistry.has(commandName)) {
       // For pattern-based execution, we need to handle different command types
@@ -1182,7 +1253,7 @@ export class Runtime {
         const commandNode: CommandNode = {
           type: 'command',
           name: command,
-          args: [{ type: 'literal', value: selector }]
+          args: [{ type: 'literal', value: selector }],
         };
         return await this.executeCommand(commandNode, context);
       }
@@ -1200,7 +1271,7 @@ export class Runtime {
       name,
       argsLength: args?.length,
       useEnhanced: this.options.useEnhancedCommands,
-      hasEnhanced: this.enhancedRegistry.has(name.toLowerCase())
+      hasEnhanced: this.enhancedRegistry.has(name.toLowerCase()),
     });
 
     // Debug logging for transition command
@@ -1209,13 +1280,17 @@ export class Runtime {
         name,
         useEnhancedCommands: this.options.useEnhancedCommands,
         hasInRegistry: this.enhancedRegistry.has(name.toLowerCase()),
-        availableCommands: this.enhancedRegistry.getCommandNames()
+        availableCommands: this.enhancedRegistry.getCommandNames(),
       });
     }
 
     // Try enhanced commands first if enabled
     if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
-      return await this.executeEnhancedCommand(name.toLowerCase(), (args || []) as ExpressionNode[], context);
+      return await this.executeEnhancedCommand(
+        name.toLowerCase(),
+        (args || []) as ExpressionNode[],
+        context
+      );
     }
 
     // For now, let commands handle their own argument evaluation
@@ -1225,20 +1300,26 @@ export class Runtime {
     switch (name.toLowerCase()) {
       case 'hide': {
         // These commands expect evaluated args
-        const hideArgs = await Promise.all((rawArgs as ASTNode[]).map((arg: ASTNode) => this.execute(arg, context)));
+        const hideArgs = await Promise.all(
+          rawArgs.map((arg: ASTNode) => this.execute(arg, context))
+        );
         return this.executeHideCommand(hideArgs, context);
       }
-      
+
       case 'show': {
-        const showArgs = await Promise.all((rawArgs as ASTNode[]).map((arg: ASTNode) => this.execute(arg, context)));
+        const showArgs = await Promise.all(
+          rawArgs.map((arg: ASTNode) => this.execute(arg, context))
+        );
         return this.executeShowCommand(showArgs, context);
       }
 
       case 'wait': {
-        const waitArgs = await Promise.all((rawArgs as ASTNode[]).map((arg: ASTNode) => this.execute(arg, context)));
+        const waitArgs = await Promise.all(
+          rawArgs.map((arg: ASTNode) => this.execute(arg, context))
+        );
         return this.executeWaitCommand(waitArgs, context);
       }
-      
+
       case 'add': {
         // For add command, extract class names from selector nodes (don't evaluate to elements)
         const addArgs = rawArgs.map((arg: any) => {
@@ -1260,26 +1341,28 @@ export class Runtime {
         });
         return this.executeRemoveCommand(removeArgs, context);
       }
-      
+
       case 'put': {
         // Put command should get mixed arguments - content evaluated, target as raw string/element
         return await this.executePutCommand(rawArgs as ExpressionNode[], context);
       }
-      
+
       case 'set': {
         // This should not be reached since SET command should go through enhanced registry
         throw new Error('SET command should be handled by enhanced registry');
       }
-      
+
       case 'log': {
         // This should not be reached since LOG command should go through enhanced registry
         throw new Error('LOG command should be handled by enhanced registry');
       }
-      
+
       case 'beep':
       case 'beep!': {
         // Beep command for debugging - evaluates all arguments and logs them
-        const beepArgs = await Promise.all((rawArgs as ASTNode[]).map((arg: ASTNode) => this.execute(arg, context)));
+        const beepArgs = await Promise.all(
+          rawArgs.map((arg: ASTNode) => this.execute(arg, context))
+        );
         return this.executeBeepCommand(beepArgs, context);
       }
 
@@ -1294,13 +1377,18 @@ export class Runtime {
     }
   }
 
-
   /**
    * Execute an event handler node (on click, on change, etc.)
    */
-  private async executeEventHandler(node: EventHandlerNode, context: ExecutionContext): Promise<void> {
+  private async executeEventHandler(
+    node: EventHandlerNode,
+    context: ExecutionContext
+  ): Promise<void> {
     const { event, commands, target, args } = node;
-    debug.runtime(`RUNTIME: executeEventHandler for event '${event}', target=${target}, args=${args}, context.me=`, context.me);
+    debug.runtime(
+      `RUNTIME: executeEventHandler for event '${event}', target=${target}, args=${args}, context.me=`,
+      context.me
+    );
 
     // Determine target element(s)
     let targets: HTMLElement[] = [];
@@ -1313,13 +1401,13 @@ export class Runtime {
 
         // If it's an HTMLElement, use it directly
         if (this.isElement(resolvedTarget)) {
-          targets = [resolvedTarget as HTMLElement];
+          targets = [resolvedTarget];
         } else if (typeof resolvedTarget === 'string') {
           // If it's a string, treat it as a CSS selector
           targets = this.queryElements(resolvedTarget, context);
         } else if (Array.isArray(resolvedTarget)) {
           // If it's an array, filter for HTMLElements
-          targets = resolvedTarget.filter(el => this.isElement(el)) as HTMLElement[];
+          targets = resolvedTarget.filter(el => this.isElement(el));
         }
       } else {
         // Not a variable, treat as CSS selector
@@ -1336,7 +1424,7 @@ export class Runtime {
       console.warn(`No elements found for event handler: ${event}`);
       return;
     }
-    
+
     // Create event handler function
     const eventHandler = async (domEvent: Event) => {
       debug.event(`EVENT FIRED: ${event} on`, domEvent.target, 'with', commands.length, 'commands');
@@ -1348,9 +1436,9 @@ export class Runtime {
 
       const eventContext: ExecutionContext = {
         ...context,
-        locals: eventLocals,  // Use NEW Map to isolate event-specific variables
+        locals: eventLocals, // Use NEW Map to isolate event-specific variables
         it: domEvent,
-        event: domEvent
+        event: domEvent,
       };
 
       // Make the event target available as 'target' variable
@@ -1366,7 +1454,12 @@ export class Runtime {
         }
       }
 
-      debug.event(`EVENT CONTEXT: me=`, eventContext.me, 'context.locals has:', Array.from(eventContext.locals.keys()));
+      debug.event(
+        `EVENT CONTEXT: me=`,
+        eventContext.me,
+        'context.locals has:',
+        Array.from(eventContext.locals.keys())
+      );
 
       // Execute all commands in sequence
       for (const command of commands) {
@@ -1389,7 +1482,10 @@ export class Runtime {
             if (errorAny.isReturn) {
               debug.command('Return command encountered, stopping event handler execution');
               if (errorAny.returnValue !== undefined) {
-                Object.assign(eventContext, { it: errorAny.returnValue, result: errorAny.returnValue });
+                Object.assign(eventContext, {
+                  it: errorAny.returnValue,
+                  result: errorAny.returnValue,
+                });
               }
               break; // Stop executing remaining commands in event handler
             }
@@ -1401,7 +1497,7 @@ export class Runtime {
       }
       debug.event(`EVENT HANDLER COMPLETE: ${event}`);
     };
-    
+
     // Bind event handlers to all target elements
     for (const target of targets) {
       debug.runtime(`RUNTIME: Adding event listener for '${event}' on element:`, target);
@@ -1425,7 +1521,6 @@ export class Runtime {
   private async executeBehaviorDefinition(node: any, _context: ExecutionContext): Promise<void> {
     const { name, parameters, eventHandlers, initBlock } = node;
 
-    console.log('🔧 BEHAVIOR: Registering behavior:', name);
     debug.runtime(`RUNTIME: Registering behavior: ${name}`);
 
     // Store the behavior definition in the registry
@@ -1433,13 +1528,12 @@ export class Runtime {
       name,
       parameters,
       eventHandlers,
-      initBlock
+      initBlock,
     });
 
-    console.log('🔧 BEHAVIOR: Behavior registered successfully:', name);
-    console.log('🔧 BEHAVIOR: Total behaviors in registry:', this.behaviorRegistry.size);
-    console.log('🔧 BEHAVIOR: Registry keys:', Array.from(this.behaviorRegistry.keys()));
     debug.runtime(`RUNTIME: Behavior registered: ${name} with ${eventHandlers.length} event handlers`);
+    debug.runtime('RUNTIME: Total behaviors in registry:', this.behaviorRegistry.size);
+    debug.runtime('RUNTIME: Registry keys:', Array.from(this.behaviorRegistry.keys()));
   }
 
   /**
@@ -1476,7 +1570,7 @@ export class Runtime {
       returned: false,
       broke: false,
       continued: false,
-      async: false
+      async: false,
     };
 
     // Add behavior parameters to context
@@ -1516,8 +1610,14 @@ export class Runtime {
 
     // Attach event handlers to the element
     if (behavior.eventHandlers && behavior.eventHandlers.length > 0) {
-      console.log('🔧 BEHAVIOR: About to attach event handlers. Current behaviorContext.locals:', Array.from(behaviorContext.locals.keys()));
-      console.log('🔧 BEHAVIOR: dragHandle value in context:', behaviorContext.locals.get('dragHandle'));
+      debug.runtime(
+        'RUNTIME: About to attach event handlers. Current behaviorContext.locals:',
+        Array.from(behaviorContext.locals.keys())
+      );
+      debug.runtime(
+        'RUNTIME: dragHandle value in context:',
+        behaviorContext.locals.get('dragHandle')
+      );
       debug.runtime(`RUNTIME: Attaching ${behavior.eventHandlers.length} event handlers`);
       for (const handler of behavior.eventHandlers) {
         await this.executeEventHandler(handler, behaviorContext);
@@ -1531,7 +1631,12 @@ export class Runtime {
    * Execute hide command
    */
   private executeHideCommand(args: unknown[], context: ExecutionContext): void {
-    debug.command('HIDE DEBUG:', { args, argsLength: args.length, firstArgType: typeof args[0], firstArg: args[0] });
+    debug.command('HIDE DEBUG:', {
+      args,
+      argsLength: args.length,
+      firstArgType: typeof args[0],
+      firstArg: args[0],
+    });
     // When we have args like "hide me", the first arg is the evaluated "me" identifier
     // When we have no args like "hide", use context.me directly
     const target = args.length > 0 ? args[0] : context.me;
@@ -1548,7 +1653,7 @@ export class Runtime {
       // Selector string - query and hide elements
       const elements = this.queryElements(target, context);
       debug.command('HIDE: found elements:', elements.length);
-      elements.forEach(el => el.style.display = 'none');
+      elements.forEach(el => (el.style.display = 'none'));
     } else {
       debug.command('HIDE: target is neither element nor string, type:', typeof target, target);
     }
@@ -1558,7 +1663,12 @@ export class Runtime {
    * Execute show command
    */
   private executeShowCommand(args: unknown[], context: ExecutionContext): void {
-    debug.command('SHOW DEBUG:', { args, argsLength: args.length, firstArgType: typeof args[0], firstArg: args[0] });
+    debug.command('SHOW DEBUG:', {
+      args,
+      argsLength: args.length,
+      firstArgType: typeof args[0],
+      firstArg: args[0],
+    });
     const target = args.length > 0 ? args[0] : context.me;
 
     if (!target) {
@@ -1573,7 +1683,7 @@ export class Runtime {
       // Selector string - query and show elements
       const elements = this.queryElements(target, context);
       debug.command('SHOW: found elements:', elements.length);
-      elements.forEach(el => el.style.display = 'block');
+      elements.forEach(el => (el.style.display = 'block'));
     } else {
       debug.command('SHOW: target is neither element nor string, type:', typeof target, target);
     }
@@ -1586,17 +1696,17 @@ export class Runtime {
     if (args.length === 0) {
       throw new Error('Wait command requires a time argument');
     }
-    
+
     const timeArg = args[0];
     let milliseconds = 0;
-    
+
     if (typeof timeArg === 'string') {
       // Parse time expressions like "500ms", "2s", "1.5s"
       const match = timeArg.match(/^(\d+(?:\.\d+)?)(ms|s|seconds?)$/i);
       if (match) {
         const value = parseFloat(match[1]);
         const unit = match[2].toLowerCase();
-        
+
         if (unit === 'ms') {
           milliseconds = value;
         } else if (unit === 's' || unit.startsWith('second')) {
@@ -1608,7 +1718,7 @@ export class Runtime {
     } else if (typeof timeArg === 'number') {
       milliseconds = timeArg;
     }
-    
+
     if (milliseconds > 0) {
       await new Promise(resolve => setTimeout(resolve, milliseconds));
     }
@@ -1622,7 +1732,7 @@ export class Runtime {
     if (!target) {
       throw new Error('Context element "me" is null');
     }
-    
+
     args.forEach(arg => {
       if (typeof arg === 'string') {
         // Remove leading dot if present
@@ -1645,7 +1755,7 @@ export class Runtime {
     if (!target) {
       throw new Error('Context element "me" is null');
     }
-    
+
     args.forEach(arg => {
       if (typeof arg === 'string') {
         // Remove leading dot if present
@@ -1658,15 +1768,18 @@ export class Runtime {
   /**
    * Execute put command (set content)
    */
-  private async executePutCommand(rawArgs: ExpressionNode[], context: ExecutionContext): Promise<unknown> {
+  private async executePutCommand(
+    rawArgs: ExpressionNode[],
+    context: ExecutionContext
+  ): Promise<unknown> {
     debug.runtime('RUNTIME: executePutCommand started', {
       argCount: rawArgs.length,
       rawArgs: rawArgs.map(arg => ({
         type: arg?.type,
         value: (arg as any)?.value || (arg as any)?.name,
-        raw: arg
+        raw: arg,
       })),
-      contextMe: context.me?.tagName || context.me?.constructor?.name
+      contextMe: context.me?.tagName || context.me?.constructor?.name,
     });
 
     // Process arguments: find content, preposition, and target
@@ -1681,8 +1794,10 @@ export class Runtime {
       const argType = nodeType(arg);
       const argValue = (argType === 'literal' ? arg.value : (arg as any).name) as string;
 
-      if ((argType === 'literal' || argType === 'identifier') &&
-          ['into', 'before', 'after', 'at', 'at start of', 'at end of'].includes(argValue)) {
+      if (
+        (argType === 'literal' || argType === 'identifier') &&
+        ['into', 'before', 'after', 'at', 'at start of', 'at end of'].includes(argValue)
+      ) {
         prepositionIndex = i;
         prepositionArg = argValue;
         break;
@@ -1716,7 +1831,7 @@ export class Runtime {
         target,
         type: target?.type,
         name: (target as any)?.name,
-        value: (target as any)?.value
+        value: (target as any)?.value,
       });
 
       // Handle target resolution - fix the [object Object] issue
@@ -1737,7 +1852,12 @@ export class Runtime {
       }
 
       debug.runtime('RUNTIME: calling putCommand.execute', { content, preposition, target });
-      const result = await this.putCommand.execute(context as TypedExecutionContext, content, preposition, target);
+      const result = await this.putCommand.execute(
+        context as TypedExecutionContext,
+        content,
+        preposition,
+        target
+      );
       debug.runtime('RUNTIME: putCommand.execute result', { result });
       return result.success ? result.value : undefined;
     }
@@ -1746,7 +1866,6 @@ export class Runtime {
     const result = await this.putCommand.execute(context as TypedExecutionContext, ...rawArgs);
     return result.success ? result.value : undefined;
   }
-
 
   /**
    * Execute LOG command - output values to console
@@ -1757,7 +1876,7 @@ export class Runtime {
     if (args.length === 0) {
       return;
     }
-    
+
     // Log all arguments
   }
 
@@ -1771,7 +1890,7 @@ export class Runtime {
       debugGroup.end();
       return;
     }
-    
+
     // Debug each argument with enhanced formatting
     args.forEach((_value, index) => {
       console.group(`🔔 Beep! Argument ${index + 1}`);
@@ -1793,7 +1912,7 @@ export class Runtime {
     debug.loop('RUNTIME: Executing repeat command', {
       argsCount: args.length,
       loopType: args[0]?.name || args[0]?.type,
-      args: args.map((arg: any) => ({ type: arg?.type, name: arg?.name, value: arg?.value }))
+      args: args.map((arg: any) => ({ type: arg?.type, name: arg?.name, value: arg?.value })),
     });
 
     // Find the loop type
@@ -1818,7 +1937,7 @@ export class Runtime {
     debug.loop('RUNTIME: Parsed repeat command', {
       eventName,
       hasEventTarget: !!eventTargetNode,
-      commandCount: commands.length
+      commandCount: commands.length,
     });
 
     // Evaluate the event target (e.g., "the document")
@@ -1839,18 +1958,18 @@ export class Runtime {
     debug.loop('RUNTIME: Repeat command will listen for', eventName, 'on', eventTarget);
 
     // Create a promise that resolves when the event fires
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       let shouldContinue = true;
 
       const eventHandler = () => {
         debug.loop('RUNTIME: Event', eventName, 'fired, stopping repeat loop');
         shouldContinue = false;
-        eventTarget!.removeEventListener(eventName!, eventHandler);
+        eventTarget.removeEventListener(eventName, eventHandler);
         resolve();
       };
 
       // Add event listener
-      eventTarget.addEventListener(eventName!, eventHandler);
+      eventTarget.addEventListener(eventName, eventHandler);
 
       // Start the repeat loop
       const executeLoop = async () => {
@@ -1870,7 +1989,7 @@ export class Runtime {
       };
 
       // Start loop (but don't await it - let it run in parallel with event listener)
-      executeLoop();
+      void executeLoop();
     });
   }
 
@@ -1881,13 +2000,13 @@ export class Runtime {
   private _getDetailedType(value: any): string {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
-    
+
     if (Array.isArray(value)) return 'array';
     if (value instanceof HTMLElement) return 'HTMLElement';
     if (value instanceof Date) return 'Date';
     if (value instanceof RegExp) return 'RegExp';
     if (value instanceof Error) return 'Error';
-    
+
     return typeof value;
   }
 
@@ -1898,34 +2017,34 @@ export class Runtime {
   private _getSourceRepresentation(value: any): string {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
-    
+
     if (typeof value === 'string') {
       return `"${value}"`;
     }
-    
+
     if (typeof value === 'number') {
       return value.toString();
     }
-    
+
     if (typeof value === 'boolean') {
       return value.toString();
     }
-    
+
     if (typeof value === 'function') {
       return `[Function: ${value.name || 'anonymous'}]`;
     }
-    
+
     if (value instanceof HTMLElement) {
       const tag = value.tagName.toLowerCase();
       const id = value.id ? `#${value.id}` : '';
       const classes = value.className ? `.${value.className.split(' ').join('.')}` : '';
       return `<${tag}${id}${classes}/>`;
     }
-    
+
     if (Array.isArray(value)) {
       return `[${value.length} items]`;
     }
-    
+
     if (typeof value === 'object') {
       try {
         const keys = Object.keys(value);
@@ -1934,13 +2053,9 @@ export class Runtime {
         return '[Object]';
       }
     }
-    
+
     return String(value);
   }
-
-
-
-
 
   /**
    * Query DOM elements by selector
@@ -1949,11 +2064,11 @@ export class Runtime {
     if (!context.me || typeof document === 'undefined') {
       return [];
     }
-    
+
     // Query from document or current element's context
     const root = document;
-    const elements = Array.from(root.querySelectorAll(selector)) as HTMLElement[];
-    
+    const elements = Array.from(root.querySelectorAll(selector));
+
     return elements;
   }
 
@@ -1965,14 +2080,16 @@ export class Runtime {
     if (typeof HTMLElement !== 'undefined' && obj instanceof HTMLElement) {
       return true;
     }
-    
+
     // Fallback: check for element-like properties (for mocks and Node.js)
     const objAny = obj as any;
-    return obj &&
-           typeof obj === 'object' &&
-           objAny.style &&
-           typeof objAny.style === 'object' &&
-           objAny.classList;
+    return (
+      obj &&
+      typeof obj === 'object' &&
+      objAny.style &&
+      typeof objAny.style === 'object' &&
+      objAny.classList
+    );
   }
 
   /**
@@ -1980,35 +2097,39 @@ export class Runtime {
    */
   private isSimpleFunctionCall(valueArgs: ASTNode[]): boolean {
     if (valueArgs.length < 2) return false;
-    
+
     // Pattern 1: identifier + opening parenthesis + closing parenthesis (e.g., Date())
-    if (valueArgs.length === 3 &&
-        valueArgs[0].type === 'identifier' &&
-        (valueArgs[1] as any).value === '(' &&
-        (valueArgs[2] as any).value === ')') {
+    if (
+      valueArgs.length === 3 &&
+      valueArgs[0].type === 'identifier' &&
+      (valueArgs[1] as any).value === '(' &&
+      (valueArgs[2] as any).value === ')'
+    ) {
       return true;
     }
-    
+
     // Pattern 2: identifier + combined parentheses (e.g., Date + "()")
-    if (valueArgs.length === 2 &&
-        valueArgs[0].type === 'identifier' &&
-        ((valueArgs[1] as any).value === ')' || (valueArgs[1] as any).name === ')')) {
-        // functionName: (valueArgs[0] as any).name,
-        // secondToken: (valueArgs[1] as any).value || (valueArgs[1] as any).name
+    if (
+      valueArgs.length === 2 &&
+      valueArgs[0].type === 'identifier' &&
+      ((valueArgs[1] as any).value === ')' || (valueArgs[1] as any).name === ')')
+    ) {
+      // functionName: (valueArgs[0] as any).name,
+      // secondToken: (valueArgs[1] as any).value || (valueArgs[1] as any).name
       // });
       return true;
     }
-    
+
     // Pattern 3: Constructor call with 'new' keyword (e.g., new Date())
     if (this.isConstructorCall(valueArgs)) {
       return true;
     }
-    
+
     // Pattern 4: Method call with arguments (e.g., Math.max(1, 5, 3))
     if (this.isMathMethodCall(valueArgs)) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -2017,27 +2138,30 @@ export class Runtime {
    */
   private isConstructorCall(valueArgs: ASTNode[]): boolean {
     if (valueArgs.length < 3) return false;
-    
+
     // Debug the first few tokens
-      // token0: { type: valueArgs[0].type, name: (valueArgs[0] as any).name, value: (valueArgs[0] as any).value },
-      // token1: { type: valueArgs[1].type, name: (valueArgs[1] as any).name, value: (valueArgs[1] as any).value },
-      // token2: { type: valueArgs[2].type, name: (valueArgs[2] as any).name, value: (valueArgs[2] as any).value }
+    // token0: { type: valueArgs[0].type, name: (valueArgs[0] as any).name, value: (valueArgs[0] as any).value },
+    // token1: { type: valueArgs[1].type, name: (valueArgs[1] as any).name, value: (valueArgs[1] as any).value },
+    // token2: { type: valueArgs[2].type, name: (valueArgs[2] as any).name, value: (valueArgs[2] as any).value }
     // });
-    
+
     // Pattern: new + identifier + ) (e.g., new Date())
     // Check for different ways 'new' might be tokenized
     const firstToken = valueArgs[0];
-    const isNewKeyword = (firstToken.type === 'keyword' && (firstToken as any).name === 'new') ||
-                        (firstToken.type === 'identifier' && (firstToken as any).name === 'new') ||
-                        ((firstToken as any).value === 'new');
-    
-    if (valueArgs.length === 3 &&
-        isNewKeyword &&
-        valueArgs[1].type === 'identifier' &&
-        ((valueArgs[2] as any).value === ')' || (valueArgs[2] as any).name === ')')) {
+    const isNewKeyword =
+      (firstToken.type === 'keyword' && (firstToken as any).name === 'new') ||
+      (firstToken.type === 'identifier' && (firstToken as any).name === 'new') ||
+      (firstToken as any).value === 'new';
+
+    if (
+      valueArgs.length === 3 &&
+      isNewKeyword &&
+      valueArgs[1].type === 'identifier' &&
+      ((valueArgs[2] as any).value === ')' || (valueArgs[2] as any).name === ')')
+    ) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -2046,23 +2170,27 @@ export class Runtime {
    */
   private isMathMethodCall(valueArgs: ASTNode[]): boolean {
     if (valueArgs.length < 4) return false;
-    
+
     // Debug the first few tokens
-      // token0: { type: valueArgs[0].type, name: (valueArgs[0] as any).name, value: (valueArgs[0] as any).value },
-      // token1: { type: valueArgs[1].type, name: (valueArgs[1] as any).name, value: (valueArgs[1] as any).value },
-      // token2: { type: valueArgs[2].type, name: (valueArgs[2] as any).name, value: (valueArgs[2] as any).value },
-      // lastToken: { type: valueArgs[valueArgs.length - 1].type, name: (valueArgs[valueArgs.length - 1] as any).name, value: (valueArgs[valueArgs.length - 1] as any).value }
+    // token0: { type: valueArgs[0].type, name: (valueArgs[0] as any).name, value: (valueArgs[0] as any).value },
+    // token1: { type: valueArgs[1].type, name: (valueArgs[1] as any).name, value: (valueArgs[1] as any).value },
+    // token2: { type: valueArgs[2].type, name: (valueArgs[2] as any).name, value: (valueArgs[2] as any).value },
+    // lastToken: { type: valueArgs[valueArgs.length - 1].type, name: (valueArgs[valueArgs.length - 1] as any).name, value: (valueArgs[valueArgs.length - 1] as any).value }
     // });
-    
+
     // Look for pattern: Math . methodName [args...] )
-    if (valueArgs.length >= 4 &&
-        valueArgs[0].type === 'identifier' && (valueArgs[0] as any).name === 'Math' &&
-        ((valueArgs[1] as any).value === '.' || (valueArgs[1] as any).name === '.') &&
-        valueArgs[2].type === 'identifier' &&
-        ((valueArgs[valueArgs.length - 1] as any).value === ')' || (valueArgs[valueArgs.length - 1] as any).name === ')')) {
+    if (
+      valueArgs.length >= 4 &&
+      valueArgs[0].type === 'identifier' &&
+      (valueArgs[0] as any).name === 'Math' &&
+      ((valueArgs[1] as any).value === '.' || (valueArgs[1] as any).name === '.') &&
+      valueArgs[2].type === 'identifier' &&
+      ((valueArgs[valueArgs.length - 1] as any).value === ')' ||
+        (valueArgs[valueArgs.length - 1] as any).name === ')')
+    ) {
       return true;
     }
-    
+
     return false;
   }
 
@@ -2073,28 +2201,33 @@ export class Runtime {
     try {
       // Pattern: Math . methodName [args...] )
       const methodName = (valueArgs[2] as any).name;
-      
+
       // Extract arguments (everything between methodName and closing parenthesis)
       const argTokens = valueArgs.slice(3, -1); // Skip Math, ., methodName, and closing )
       const args: number[] = [];
-      
-        // type: token.type,
-        // name: (token as any).name,
-        // value: (token as any).value
+
+      // type: token.type,
+      // name: (token as any).name,
+      // value: (token as any).value
       // })));
-      
+
       // Parse numeric arguments from tokens
       for (const token of argTokens) {
         const tokenValue = (token as any).name || (token as any).value;
-        
-        if (token.type === 'number' || token.type === 'literal' || (token.type === 'identifier' && !isNaN(Number(tokenValue)))) {
-          const value = (token.type === 'number' || token.type === 'literal') ? 
-                        (token as any).value : Number(tokenValue);
+
+        if (
+          token.type === 'number' ||
+          token.type === 'literal' ||
+          (token.type === 'identifier' && !isNaN(Number(tokenValue)))
+        ) {
+          const value =
+            token.type === 'number' || token.type === 'literal'
+              ? (token as any).value
+              : Number(tokenValue);
           args.push(value);
         }
       }
-      
-      
+
       // Call the Math method
       const mathMethod = (Math as any)[methodName];
       if (typeof mathMethod === 'function') {
@@ -2117,11 +2250,15 @@ export class Runtime {
     try {
       // Pattern: new + constructorName + ) (e.g., new Date())
       const constructorName = (valueArgs[1] as any).name;
-      
+
       // Try to resolve the constructor from global context
-      const globalObj = typeof globalThis !== 'undefined' ? globalThis : 
-                       (typeof window !== 'undefined' ? window : global);
-      
+      const globalObj =
+        typeof globalThis !== 'undefined'
+          ? globalThis
+          : typeof window !== 'undefined'
+            ? window
+            : global;
+
       const constructor = (globalObj as any)[constructorName];
       if (typeof constructor === 'function') {
         const result = new constructor();
@@ -2139,26 +2276,33 @@ export class Runtime {
   /**
    * Evaluate a function call from parsed tokens
    */
-  private async evaluateFunctionCall(valueArgs: ASTNode[], context: ExecutionContext): Promise<any> {
+  private async evaluateFunctionCall(
+    valueArgs: ASTNode[],
+    context: ExecutionContext
+  ): Promise<any> {
     // Handle constructor calls with 'new' keyword
     if (this.isConstructorCall(valueArgs)) {
       return this.evaluateConstructorCall(valueArgs);
     }
-    
+
     // Handle Math method calls
     if (this.isMathMethodCall(valueArgs)) {
       return this.evaluateMathMethodCall(valueArgs);
     }
-    
+
     if (valueArgs.length === 3 || valueArgs.length === 2) {
       // Simple function call: functionName() (either 3 tokens or 2 tokens)
       const functionName = (valueArgs[0] as any).name;
-      
+
       try {
         // Try to resolve the function from global context
-        const globalObj = typeof globalThis !== 'undefined' ? globalThis : 
-                         (typeof window !== 'undefined' ? window : global);
-        
+        const globalObj =
+          typeof globalThis !== 'undefined'
+            ? globalThis
+            : typeof window !== 'undefined'
+              ? window
+              : global;
+
         const func = (globalObj as any)[functionName];
         if (typeof func === 'function') {
           const result = func();
@@ -2172,11 +2316,9 @@ export class Runtime {
         return `${functionName}()`;
       }
     }
-    
+
     // Fallback to string concatenation
-    const results = await Promise.all(
-      valueArgs.map(arg => this.execute(arg, context))
-    );
+    const results = await Promise.all(valueArgs.map(arg => this.execute(arg, context)));
     return results.join(' ');
   }
 
@@ -2185,27 +2327,32 @@ export class Runtime {
    */
   getAvailableCommands(): string[] {
     const commands = new Set<string>();
-    
+
     // Add enhanced commands
     if (this.options.useEnhancedCommands) {
       this.enhancedRegistry.getCommandNames().forEach((name: string) => commands.add(name));
     }
-    
+
     // Add legacy commands
-    ['hide', 'show', 'wait', 'add', 'remove', 'put', 'set', 'log'].forEach(name => commands.add(name));
-    
+    ['hide', 'show', 'wait', 'add', 'remove', 'put', 'set', 'log'].forEach(name =>
+      commands.add(name)
+    );
+
     return Array.from(commands);
   }
 
   /**
    * Validate command before execution
    */
-  validateCommand(name: string, input: unknown): { valid: boolean; error?: string; suggestions?: string[] } {
+  validateCommand(
+    name: string,
+    input: unknown
+  ): { valid: boolean; error?: string; suggestions?: string[] } {
     // Try enhanced validation first
     if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
       const result = this.enhancedRegistry.validateCommand(name.toLowerCase(), input);
       const returnObj: { valid: boolean; error?: string; suggestions?: string[] } = {
-        valid: result.success ?? false
+        valid: result.success ?? false,
       };
       if (result.error?.message) {
         returnObj.error = result.error.message;
@@ -2215,17 +2362,17 @@ export class Runtime {
       }
       return returnObj;
     }
-    
+
     // Basic validation for legacy commands
     const availableCommands = this.getAvailableCommands();
     if (!availableCommands.includes(name.toLowerCase())) {
       return {
         valid: false,
         error: `Unknown command: ${name}`,
-        suggestions: [`Available commands: ${availableCommands.join(', ')}`]
+        suggestions: [`Available commands: ${availableCommands.join(', ')}`],
       };
     }
-    
+
     return { valid: true };
   }
 

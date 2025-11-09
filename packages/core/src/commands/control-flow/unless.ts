@@ -1,9 +1,9 @@
 /**
  * Enhanced Unless Command Implementation
  * Conditionally executes commands only if the condition is false (inverse of if)
- * 
+ *
  * Syntax: unless <condition> <command1> [<command2> ...]
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -28,23 +28,22 @@ export interface UnlessCommandOutput {
 /**
  * Enhanced Unless Command with full type safety and validation
  */
-export class UnlessCommand implements CommandImplementation<
-  UnlessCommandInput,
-  UnlessCommandOutput,
-  TypedExecutionContext
-> {
+export class UnlessCommand
+  implements CommandImplementation<UnlessCommandInput, UnlessCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'unless',
-    description: 'The unless command executes commands only if the condition is false. It provides inverse conditional logic to the if command.',
+    description:
+      'The unless command executes commands only if the condition is false. It provides inverse conditional logic to the if command.',
     examples: [
       'unless user.isLoggedIn showLoginForm',
       'unless data.isValid clearForm showError',
       'unless element.isVisible fadeIn',
-      'unless count > 10 increment'
+      'unless count > 10 increment',
     ],
     syntax: 'unless <condition> <command> [<command> ...]',
     category: 'flow' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -52,12 +51,14 @@ export class UnlessCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Unless command requires condition and commands',
-            suggestions: ['Provide condition and commands to execute']
-          }],
-          suggestions: ['Provide condition and commands to execute']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Unless command requires condition and commands',
+              suggestions: ['Provide condition and commands to execute'],
+            },
+          ],
+          suggestions: ['Provide condition and commands to execute'],
         };
       }
 
@@ -66,36 +67,42 @@ export class UnlessCommand implements CommandImplementation<
       if (inputObj.condition === undefined) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Unless command requires a condition',
-            suggestions: ['Provide a condition to evaluate']
-          }],
-          suggestions: ['Provide a condition to evaluate']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Unless command requires a condition',
+              suggestions: ['Provide a condition to evaluate'],
+            },
+          ],
+          suggestions: ['Provide a condition to evaluate'],
         };
       }
 
       if (!inputObj.commands || !Array.isArray(inputObj.commands)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Unless command requires commands to execute',
-            suggestions: ['Provide commands to execute when condition is false']
-          }],
-          suggestions: ['Provide commands to execute when condition is false']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Unless command requires commands to execute',
+              suggestions: ['Provide commands to execute when condition is false'],
+            },
+          ],
+          suggestions: ['Provide commands to execute when condition is false'],
         };
       }
 
       if (inputObj.commands.length === 0) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Unless command requires at least one command',
-            suggestions: ['Provide at least one command to execute']
-          }],
-          suggestions: ['Provide at least one command to execute']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Unless command requires at least one command',
+              suggestions: ['Provide at least one command to execute'],
+            },
+          ],
+          suggestions: ['Provide at least one command to execute'],
         };
       }
 
@@ -105,10 +112,10 @@ export class UnlessCommand implements CommandImplementation<
         suggestions: [],
         data: {
           condition: inputObj.condition,
-          commands: inputObj.commands
-        }
+          commands: inputObj.commands,
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -127,7 +134,7 @@ export class UnlessCommand implements CommandImplementation<
         conditionResult,
         executed: false,
         commandCount: commands.length,
-        results: []
+        results: [],
       };
     }
 
@@ -140,11 +147,13 @@ export class UnlessCommand implements CommandImplementation<
         const result = await this.executeCommand(command, context);
         results.push(result);
         lastResult = result;
-        
+
         // Update context for next command
         Object.assign(context, { it: result });
       } catch (error) {
-        throw new Error(`Command execution failed in unless block: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        throw new Error(
+          `Command execution failed in unless block: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
 
@@ -153,7 +162,7 @@ export class UnlessCommand implements CommandImplementation<
       executed: true,
       commandCount: commands.length,
       results,
-      lastResult
+      lastResult,
     };
   }
 
@@ -174,9 +183,10 @@ export class UnlessCommand implements CommandImplementation<
 
     // Handle string variable references
     if (typeof condition === 'string') {
-      const value = context.locals?.get(condition) || 
-                   context.globals?.get(condition) || 
-                   context.variables?.get(condition);
+      const value =
+        context.locals?.get(condition) ||
+        context.globals?.get(condition) ||
+        context.variables?.get(condition);
       return Boolean(value);
     }
 

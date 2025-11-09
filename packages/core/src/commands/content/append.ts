@@ -2,9 +2,9 @@
  * Enhanced Append Command Implementation
  * The append command adds a string value to the end of another string, array, or HTML Element.
  * If no target variable is defined, then the standard result variable is used by default.
- * 
+ *
  * Syntax: append <content> [to <target>]
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -18,7 +18,7 @@ export interface AppendCommandInput {
   toKeyword?: 'to'; // For syntax validation
 }
 
-// Output type definition  
+// Output type definition
 export interface AppendCommandOutput {
   result: unknown;
   targetType: 'result' | 'variable' | 'array' | 'element' | 'string';
@@ -28,24 +28,23 @@ export interface AppendCommandOutput {
 /**
  * Enhanced Append Command with full type safety and validation
  */
-export class AppendCommand implements CommandImplementation<
-  AppendCommandInput,
-  AppendCommandOutput,
-  TypedExecutionContext
-> {
+export class AppendCommand
+  implements CommandImplementation<AppendCommandInput, AppendCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'append',
-    description: 'The append command adds a string value to the end of another string, array, or HTML Element. If no target variable is defined, then the standard result variable is used by default.',
+    description:
+      'The append command adds a string value to the end of another string, array, or HTML Element. If no target variable is defined, then the standard result variable is used by default.',
     examples: [
       'append "Hello"',
       'append "World" to greeting',
       'append item to myArray',
       'append "<p>New paragraph</p>" to #content',
-      'append text to me'
+      'append text to me',
     ],
     syntax: 'append <content> [to <target>]',
     category: 'data' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -53,12 +52,14 @@ export class AppendCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Append command requires an object input',
-            suggestions: ['Provide an object with content property']
-          }],
-          suggestions: ['Provide an object with content property']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Append command requires an object input',
+              suggestions: ['Provide an object with content property'],
+            },
+          ],
+          suggestions: ['Provide an object with content property'],
         };
       }
 
@@ -68,29 +69,35 @@ export class AppendCommand implements CommandImplementation<
       if (inputObj.content === undefined) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Append command requires content to append',
-            suggestions: ['Provide content to append as the first argument']
-          }],
-          suggestions: ['Provide content to append as the first argument']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Append command requires content to append',
+              suggestions: ['Provide content to append as the first argument'],
+            },
+          ],
+          suggestions: ['Provide content to append as the first argument'],
         };
       }
 
       // If target is provided, validate it
       if (inputObj.target !== undefined) {
         const target = inputObj.target;
-        if (typeof target !== 'string' && 
-            !(target instanceof HTMLElement) && 
-            !Array.isArray(target)) {
+        if (
+          typeof target !== 'string' &&
+          !(target instanceof HTMLElement) &&
+          !Array.isArray(target)
+        ) {
           return {
             isValid: false,
-            errors: [{
-              type: 'type-mismatch',
-              message: 'Target must be a string (variable name/selector), HTMLElement, or Array',
-              suggestions: ['Use a variable name, CSS selector, element reference, or array']
-            }],
-            suggestions: ['Use a variable name, CSS selector, element reference, or array']
+            errors: [
+              {
+                type: 'type-mismatch',
+                message: 'Target must be a string (variable name/selector), HTMLElement, or Array',
+                suggestions: ['Use a variable name, CSS selector, element reference, or array'],
+              },
+            ],
+            suggestions: ['Use a variable name, CSS selector, element reference, or array'],
           };
         }
       }
@@ -102,10 +109,10 @@ export class AppendCommand implements CommandImplementation<
         data: {
           content: inputObj.content,
           target: inputObj.target,
-          toKeyword: inputObj.toKeyword
-        }
+          toKeyword: inputObj.toKeyword,
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -126,23 +133,23 @@ export class AppendCommand implements CommandImplementation<
       }
       return {
         result: context.it,
-        targetType: 'result'
+        targetType: 'result',
       };
     }
 
     // Handle different target types
     if (typeof target === 'string') {
-      // Check if this is a CSS selector  
+      // Check if this is a CSS selector
       if (target.startsWith('#') || target.startsWith('.') || target.includes('[')) {
         const element = this.resolveDOMElement(target, context);
         element.innerHTML += contentStr;
         return {
           result: element,
           targetType: 'element',
-          target: element
+          target: element,
         };
       }
-      
+
       // Check if this is a context reference
       if (target === 'me' || target === 'it' || target === 'you') {
         const contextTarget = this.resolveContextReference(target, context);
@@ -151,34 +158,34 @@ export class AppendCommand implements CommandImplementation<
           return {
             result: contextTarget,
             targetType: 'element',
-            target: contextTarget
+            target: contextTarget,
           };
         }
       }
-      
+
       // Handle variable operations
       const variableExists = this.variableExists(target, context);
-      
+
       if (variableExists) {
         const currentValue = this.getVariableValue(target, context);
-        
+
         // Special handling for arrays
         if (Array.isArray(currentValue)) {
           currentValue.push(content);
           return {
             result: currentValue,
             targetType: 'array',
-            target
+            target,
           };
         }
-        
+
         // Handle strings and other types
         const newValue = (currentValue == null ? '' : String(currentValue)) + contentStr;
         this.setVariableValue(target, newValue, context);
         return {
           result: newValue,
           targetType: 'variable',
-          target
+          target,
         };
       } else {
         // Create new variable
@@ -186,7 +193,7 @@ export class AppendCommand implements CommandImplementation<
         return {
           result: contentStr,
           targetType: 'variable',
-          target
+          target,
         };
       }
     } else if (Array.isArray(target)) {
@@ -194,7 +201,7 @@ export class AppendCommand implements CommandImplementation<
       target.push(content);
       return {
         result: target,
-        targetType: 'array'
+        targetType: 'array',
       };
     } else if (target instanceof HTMLElement) {
       // Direct element target
@@ -202,7 +209,7 @@ export class AppendCommand implements CommandImplementation<
       return {
         result: target,
         targetType: 'element',
-        target
+        target,
       };
     } else {
       // Handle other object types by converting to string
@@ -210,7 +217,7 @@ export class AppendCommand implements CommandImplementation<
       Object.assign(context, { it: newValue });
       return {
         result: newValue,
-        targetType: 'string'
+        targetType: 'string',
       };
     }
   }
@@ -224,7 +231,7 @@ export class AppendCommand implements CommandImplementation<
     if (!element) {
       throw new Error(`Element not found: ${selector}`);
     }
-    
+
     return element as HTMLElement;
   }
 
@@ -242,9 +249,11 @@ export class AppendCommand implements CommandImplementation<
   }
 
   private variableExists(name: string, context: TypedExecutionContext): boolean {
-    return !!(context.locals && context.locals.has(name)) ||
-           !!(context.globals && context.globals.has(name)) ||
-           !!(context.variables && context.variables.has(name));
+    return (
+      !!(context.locals && context.locals.has(name)) ||
+      !!(context.globals && context.globals.has(name)) ||
+      !!(context.variables && context.variables.has(name))
+    );
   }
 
   private getVariableValue(name: string, context: TypedExecutionContext): any {
@@ -252,17 +261,17 @@ export class AppendCommand implements CommandImplementation<
     if (context.locals && context.locals.has(name)) {
       return context.locals.get(name);
     }
-    
+
     // Check global variables
     if (context.globals && context.globals.has(name)) {
       return context.globals.get(name);
     }
-    
-    // Check general variables  
+
+    // Check general variables
     if (context.variables && context.variables.has(name)) {
       return context.variables.get(name);
     }
-    
+
     return undefined;
   }
 
@@ -272,19 +281,19 @@ export class AppendCommand implements CommandImplementation<
       context.locals.set(name, value);
       return;
     }
-    
+
     // If variable exists in global scope, update it
     if (context.globals && context.globals.has(name)) {
       context.globals.set(name, value);
       return;
     }
-    
+
     // If variable exists in general variables, update it
     if (context.variables && context.variables.has(name)) {
       context.variables.set(name, value);
       return;
     }
-    
+
     // Create new local variable
     context.locals.set(name, value);
   }

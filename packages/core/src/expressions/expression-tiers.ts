@@ -25,9 +25,9 @@ export const EXPRESSION_TIERS = {
    * Total size: ~35-40KB (unminified)
    */
   core: [
-    'references',  // me, you, it, querySelector, closest, parent
-    'logical',     // equals, and, or, not, contains, matches
-    'special'      // literals, numbers, strings, booleans
+    'references', // me, you, it, querySelector, closest, parent
+    'logical', // equals, and, or, not, contains, matches
+    'special', // literals, numbers, strings, booleans
   ] as const,
 
   /**
@@ -40,8 +40,8 @@ export const EXPRESSION_TIERS = {
    * Total size: ~25-30KB (unminified)
    */
   common: [
-    'properties',  // possessive syntax, attribute references
-    'conversion'   // 'as' keyword, type conversions
+    'properties', // possessive syntax, attribute references
+    'conversion', // 'as' keyword, type conversions
   ] as const,
 
   /**
@@ -57,8 +57,8 @@ export const EXPRESSION_TIERS = {
    * Total size: ~15-20KB (unminified)
    */
   optional: [
-    'positional'   // first, last, previous, next, array navigation
-  ] as const
+    'positional', // first, last, previous, next, array navigation
+  ] as const,
 } as const;
 
 /**
@@ -70,9 +70,9 @@ export type ExpressionTier = keyof typeof EXPRESSION_TIERS;
  * Type representing any expression category name
  */
 export type ExpressionCategory =
-  | typeof EXPRESSION_TIERS.core[number]
-  | typeof EXPRESSION_TIERS.common[number]
-  | typeof EXPRESSION_TIERS.optional[number];
+  | (typeof EXPRESSION_TIERS.core)[number]
+  | (typeof EXPRESSION_TIERS.common)[number]
+  | (typeof EXPRESSION_TIERS.optional)[number];
 
 /**
  * Map expression categories to their tiers
@@ -88,7 +88,7 @@ export const CATEGORY_TO_TIER: Record<ExpressionCategory, ExpressionTier> = {
   conversion: 'common',
 
   // Optional tier
-  positional: 'optional'
+  positional: 'optional',
 };
 
 /**
@@ -119,9 +119,5 @@ export function isCategoryInTier(category: string, tier: ExpressionTier): boolea
  * Get all expression categories (all tiers combined)
  */
 export function getAllCategories(): string[] {
-  return [
-    ...EXPRESSION_TIERS.core,
-    ...EXPRESSION_TIERS.common,
-    ...EXPRESSION_TIERS.optional
-  ];
+  return [...EXPRESSION_TIERS.core, ...EXPRESSION_TIERS.common, ...EXPRESSION_TIERS.optional];
 }

@@ -24,23 +24,22 @@ export interface ExitCommandOutput {
 /**
  * Exit Command - Early termination for event handlers
  */
-export class ExitCommand implements CommandImplementation<
-  ExitCommandInput,
-  ExitCommandOutput,
-  TypedExecutionContext
-> {
+export class ExitCommand
+  implements CommandImplementation<ExitCommandInput, ExitCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'exit',
-    description: 'The exit command immediately terminates execution of the current event handler or behavior, useful for early returns based on conditions.',
+    description:
+      'The exit command immediately terminates execution of the current event handler or behavior, useful for early returns based on conditions.',
     examples: [
       'exit',
       'if no draggedItem exit end',
       'if condition is false exit end',
-      'on click if disabled exit end'
+      'on click if disabled exit end',
     ],
     syntax: 'exit',
     category: 'flow' as const,
-    version: '1.0.0'
+    version: '1.0.0',
   };
 
   validation = {
@@ -50,9 +49,9 @@ export class ExitCommand implements CommandImplementation<
         isValid: true,
         errors: [],
         suggestions: [],
-        data: {}
+        data: {},
       };
-    }
+    },
   };
 
   async execute(

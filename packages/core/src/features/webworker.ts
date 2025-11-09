@@ -1,15 +1,10 @@
-
-
 /**
  * Enhanced WebWorker Feature Implementation
  * Type-safe Web Worker management feature with enhanced validation and LLM integration
  */
 
 import { v, z } from '../validation/lightweight-validators';
-import type {
-  ContextMetadata,
-  EvaluationResult
-} from '../types/context-types';
+import type { ContextMetadata, EvaluationResult } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
 
@@ -27,46 +22,62 @@ export const WebWorkerInputSchema = v.object({
     inline: v.boolean().default(false), // Whether script is inline code vs URL
   }),
   /** Message handling configuration */
-  messaging: v.object({
-    format: z.enum(['json', 'text', 'binary']).default('json'),
-    serialization: z.enum(['structured-clone', 'json']).default('structured-clone'),
-    transferables: v.array(v.string()).default([]), // Transferable object types
-    validation: z.object({
-      enabled: v.boolean().default(true),
-      schema: v.any().optional(), // JSON schema for message validation
-    }).default({}),
-    queue: v.object({
-      enabled: v.boolean().default(true),
-      maxSize: v.number().min(0).default(100), // 0 = unlimited
-      persistence: v.boolean().default(false),
-    }).default({}),
-  }).default({}),
+  messaging: v
+    .object({
+      format: z.enum(['json', 'text', 'binary']).default('json'),
+      serialization: z.enum(['structured-clone', 'json']).default('structured-clone'),
+      transferables: v.array(v.string()).default([]), // Transferable object types
+      validation: z
+        .object({
+          enabled: v.boolean().default(true),
+          schema: v.any().optional(), // JSON schema for message validation
+        })
+        .default({}),
+      queue: v
+        .object({
+          enabled: v.boolean().default(true),
+          maxSize: v.number().min(0).default(100), // 0 = unlimited
+          persistence: v.boolean().default(false),
+        })
+        .default({}),
+    })
+    .default({}),
   /** Event handlers */
-  eventHandlers: v.array(v.object({
-    event: z.enum(['message', 'error', 'messageerror']),
-    commands: v.array(v.any()).min(1),
-    filter: v.string().optional(), // Message filter expression
-    options: z.object({
-      throttle: v.number().optional(),
-      debounce: v.number().optional(),
-    }).optional(),
-  })).default([]),
+  eventHandlers: v
+    .array(
+      v.object({
+        event: z.enum(['message', 'error', 'messageerror']),
+        commands: v.array(v.any()).min(1),
+        filter: v.string().optional(), // Message filter expression
+        options: z
+          .object({
+            throttle: v.number().optional(),
+            debounce: v.number().optional(),
+          })
+          .optional(),
+      })
+    )
+    .default([]),
   /** Execution context */
-  context: v.object({
-    variables: z.record(v.string(), v.any()).default({}),
-    me: v.any().optional(),
-    it: v.any().optional(),
-    target: v.any().optional(),
-  }).default({}),
+  context: v
+    .object({
+      variables: z.record(v.string(), v.any()).default({}),
+      me: v.any().optional(),
+      it: v.any().optional(),
+      target: v.any().optional(),
+    })
+    .default({}),
   /** Feature options */
-  options: v.object({
-    enableAutoStart: v.boolean().default(true),
-    enableMessageQueue: v.boolean().default(true),
-    enableErrorHandling: v.boolean().default(true),
-    maxWorkers: v.number().default(4),
-    workerTimeout: v.number().default(30000), // 30 seconds
-    terminationTimeout: v.number().default(5000), // 5 seconds
-  }).default({}),
+  options: v
+    .object({
+      enableAutoStart: v.boolean().default(true),
+      enableMessageQueue: v.boolean().default(true),
+      enableErrorHandling: v.boolean().default(true),
+      maxWorkers: v.number().default(4),
+      workerTimeout: v.number().default(30000), // 30 seconds
+      terminationTimeout: v.number().default(5000), // 5 seconds
+    })
+    .default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
   debug: v.boolean().default(false),
@@ -79,7 +90,7 @@ export const WebWorkerOutputSchema = v.object({
   category: v.literal('Frontend'),
   capabilities: v.array(v.string()),
   state: z.enum(['ready', 'starting', 'running', 'terminating', 'terminated', 'error']),
-  
+
   /** Worker management */
   workers: z.object({
     create: v.any(),
@@ -89,7 +100,7 @@ export const WebWorkerOutputSchema = v.object({
     listWorkers: v.any(),
     getWorkerInfo: v.any(),
   }),
-  
+
   /** Message handling */
   messaging: v.object({
     send: v.any(),
@@ -100,7 +111,7 @@ export const WebWorkerOutputSchema = v.object({
     subscribe: v.any(),
     unsubscribe: v.any(),
   }),
-  
+
   /** Event management */
   events: v.object({
     addHandler: v.any(),
@@ -108,7 +119,7 @@ export const WebWorkerOutputSchema = v.object({
     getHandlers: v.any(),
     emit: v.any(),
   }),
-  
+
   /** Queue management */
   queue: v.object({
     add: v.any(),
@@ -117,7 +128,7 @@ export const WebWorkerOutputSchema = v.object({
     getPending: v.any(),
     clear: v.any(),
   }),
-  
+
   /** Error handling */
   errors: v.object({
     handle: v.any(),
@@ -182,7 +193,8 @@ export interface WorkerEventHandler {
 export class TypedWebWorkerFeatureImplementation {
   public readonly name = 'webworkerFeature';
   public readonly category = 'Frontend' as const;
-  public readonly description = 'Type-safe Web Worker management feature with message handling, event processing, and comprehensive error management';
+  public readonly description =
+    'Type-safe Web Worker management feature with message handling, event processing, and comprehensive error management';
   public readonly inputSchema = WebWorkerInputSchema;
   public readonly outputType: EvaluationType = 'Context';
 
@@ -212,18 +224,20 @@ export class TypedWebWorkerFeatureImplementation {
       {
         input: '{ worker: { script: "./worker.js" }, messaging: { format: "json" } }',
         description: 'Create a Web Worker for background JavaScript execution',
-        expectedOutput: 'TypedWebWorkerContext with worker management and message handling'
+        expectedOutput: 'TypedWebWorkerContext with worker management and message handling',
       },
       {
-        input: '{ worker: { script: "self.onmessage = e => self.postMessage(e.data * 2)", inline: true } }',
+        input:
+          '{ worker: { script: "self.onmessage = e => self.postMessage(e.data * 2)", inline: true } }',
         description: 'Create inline worker for simple calculations',
-        expectedOutput: 'Worker context with inline script execution'
+        expectedOutput: 'Worker context with inline script execution',
       },
       {
-        input: '{ worker: { script: "./data-processor.js", type: "module" }, messaging: { transferables: ["ArrayBuffer"] } }',
+        input:
+          '{ worker: { script: "./data-processor.js", type: "module" }, messaging: { transferables: ["ArrayBuffer"] } }',
         description: 'Module worker with transferable object support for large data processing',
-        expectedOutput: 'High-performance worker context with zero-copy data transfer'
-      }
+        expectedOutput: 'High-performance worker context with zero-copy data transfer',
+      },
     ],
     relatedExpressions: [],
     relatedContexts: ['socketsFeature', 'onFeature', 'executionContext'],
@@ -231,66 +245,77 @@ export class TypedWebWorkerFeatureImplementation {
     environmentRequirements: {
       browser: true,
       server: false,
-      nodejs: false
+      nodejs: false,
     },
     performance: {
       averageTime: 25.0,
-      complexity: 'O(n)' // n = number of workers managed
-    }
+      complexity: 'O(n)', // n = number of workers managed
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates and manages Web Workers for background JavaScript execution with type-safe message handling, event processing, and comprehensive error recovery',
+    summary:
+      'Creates and manages Web Workers for background JavaScript execution with type-safe message handling, event processing, and comprehensive error recovery',
     parameters: [
       {
         name: 'workerConfig',
         type: 'WebWorkerInput',
-        description: 'Web Worker configuration including script source, messaging format, event handlers, and performance options',
+        description:
+          'Web Worker configuration including script source, messaging format, event handlers, and performance options',
         optional: false,
         examples: [
           '{ worker: { script: "./worker.js" }, messaging: { format: "json" } }',
           '{ worker: { script: "worker-code", inline: true }, options: { maxWorkers: 2 } }',
-          '{ worker: { script: "./module-worker.js", type: "module" }, messaging: { transferables: ["ArrayBuffer"] } }'
-        ]
-      }
+          '{ worker: { script: "./module-worker.js", type: "module" }, messaging: { transferables: ["ArrayBuffer"] } }',
+        ],
+      },
     ],
     returns: {
       type: 'WebWorkerContext',
-      description: 'Web Worker management context with worker lifecycle, message handling, queue management, and error recovery capabilities',
+      description:
+        'Web Worker management context with worker lifecycle, message handling, queue management, and error recovery capabilities',
       examples: [
         'context.workers.create(config) → worker instance ID',
         'context.messaging.sendJSON(workerId, data) → send JSON message to worker',
         'context.queue.add(workerId, message) → queue message for worker',
-        'context.workers.terminate(workerId) → gracefully terminate worker'
-      ]
+        'context.workers.terminate(workerId) → gracefully terminate worker',
+      ],
     },
     examples: [
       {
         title: 'Basic worker creation',
         code: 'const workerContext = await createWebWorkerFeature({ worker: { script: "./calc-worker.js" } })',
         explanation: 'Create a Web Worker for background calculations',
-        output: 'Worker context with calculation worker ready'
+        output: 'Worker context with calculation worker ready',
       },
       {
         title: 'Message passing with transferables',
         code: 'await workerContext.messaging.sendBinary(workerId, arrayBuffer, ["ArrayBuffer"])',
-        explanation: 'Send large binary data to worker using transferable objects for zero-copy transfer',
-        output: 'High-performance message transfer without copying data'
+        explanation:
+          'Send large binary data to worker using transferable objects for zero-copy transfer',
+        output: 'High-performance message transfer without copying data',
       },
       {
         title: 'Worker event handling',
         code: 'await workerContext.events.addHandler(workerId, "message", { name: "processResult", args: [] })',
         explanation: 'Add event handler for worker messages with command execution',
-        output: 'Event-driven worker communication with hyperscript integration'
-      }
+        output: 'Event-driven worker communication with hyperscript integration',
+      },
     ],
     seeAlso: ['socketsFeature', 'onFeature', 'messagingSystem', 'backgroundExecution'],
-    tags: ['webworkers', 'background-execution', 'message-passing', 'transferables', 'type-safe', 'enhanced-pattern']
+    tags: [
+      'webworkers',
+      'background-execution',
+      'message-passing',
+      'transferables',
+      'type-safe',
+      'enhanced-pattern',
+    ],
   };
 
   async initialize(input: WebWorkerInput): Promise<EvaluationResult<WebWorkerOutput>> {
     const startTime = Date.now();
-    
+
     try {
       // Validate input using enhanced pattern
       const validation = this.validate(input);
@@ -298,21 +323,27 @@ export class TypedWebWorkerFeatureImplementation {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
       // Initialize worker system
       const config = await this.initializeConfig(input);
-      
+
       // Create enhanced webworker context
       const context: WebWorkerOutput = {
         contextId: `webworker-${Date.now()}`,
         timestamp: startTime,
         category: 'Frontend',
-        capabilities: ['worker-management', 'message-handling', 'background-execution', 'transferable-objects', 'error-recovery'],
+        capabilities: [
+          'worker-management',
+          'message-handling',
+          'background-execution',
+          'transferable-objects',
+          'error-recovery',
+        ],
         state: 'ready',
-        
+
         // Worker management
         workers: {
           create: this.createWorkerCreator(config),
@@ -322,7 +353,7 @@ export class TypedWebWorkerFeatureImplementation {
           listWorkers: this.createWorkerLister(),
           getWorkerInfo: this.createWorkerInfoGetter(),
         },
-        
+
         // Message handling
         messaging: {
           send: this.createMessageSender(),
@@ -333,7 +364,7 @@ export class TypedWebWorkerFeatureImplementation {
           subscribe: this.createMessageSubscriber(),
           unsubscribe: this.createMessageUnsubscriber(),
         },
-        
+
         // Event management
         events: {
           addHandler: this.createEventHandlerAdder(),
@@ -341,7 +372,7 @@ export class TypedWebWorkerFeatureImplementation {
           getHandlers: this.createEventHandlerGetter(),
           emit: this.createEventEmitter(),
         },
-        
+
         // Queue management
         queue: {
           add: this.createQueueAdder(),
@@ -350,14 +381,14 @@ export class TypedWebWorkerFeatureImplementation {
           getPending: this.createPendingGetter(),
           clear: this.createQueueClearer(),
         },
-        
+
         // Error handling
         errors: {
           handle: this.createErrorHandler(),
           getErrorHistory: this.createErrorHistoryGetter(),
           clearErrors: this.createErrorClearer(),
           setErrorHandler: this.createErrorHandlerSetter(),
-        }
+        },
       };
 
       // Create initial worker if script provided
@@ -367,28 +398,29 @@ export class TypedWebWorkerFeatureImplementation {
 
       // Track performance using enhanced pattern
       this.trackPerformance(startTime, true, context);
-      
+
       return {
         success: true,
         value: context,
-        type: 'Context'
+        type: 'Context',
       };
-
     } catch (error) {
       this.trackPerformance(startTime, false);
-      
+
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `WebWorker feature initialization failed: ${error instanceof Error ? error.message : String(error)}`
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `WebWorker feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
         suggestions: [
           'Verify worker script URL is accessible',
           'Check browser supports Web Workers',
           'Ensure script has valid JavaScript syntax',
-          'Validate worker configuration parameters'
-        ]
+          'Validate worker configuration parameters',
+        ],
       };
     }
   }
@@ -400,7 +432,7 @@ export class TypedWebWorkerFeatureImplementation {
         return {
           isValid: false,
           errors: [{ type: 'invalid-input', message: 'Input must be an object', suggestions: [] }],
-          suggestions: ['Provide a valid Web Worker configuration object']
+          suggestions: ['Provide a valid Web Worker configuration object'],
         };
       }
 
@@ -410,13 +442,16 @@ export class TypedWebWorkerFeatureImplementation {
       const suggestions: string[] = [];
 
       // Check for negative queue size before Zod validation
-      if (inputData.messaging?.queue?.maxSize !== undefined && inputData.messaging.queue.maxSize < 0) {
+      if (
+        inputData.messaging?.queue?.maxSize !== undefined &&
+        inputData.messaging.queue.maxSize < 0
+      ) {
         errors.push({
           type: 'invalid-input',
           code: 'invalid-queue-size',
           message: 'Queue size must be non-negative (0 = unlimited)',
           path: 'messaging.queue.maxSize',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Set queue maxSize to 0 for unlimited or positive number for limit');
       }
@@ -424,12 +459,17 @@ export class TypedWebWorkerFeatureImplementation {
       // Check for empty commands arrays before Zod validation
       if (inputData.eventHandlers && Array.isArray(inputData.eventHandlers)) {
         for (const handler of inputData.eventHandlers) {
-          if (handler.commands && Array.isArray(handler.commands) && handler.commands.length === 0) {
+          if (
+            handler.commands &&
+            Array.isArray(handler.commands) &&
+            handler.commands.length === 0
+          ) {
             errors.push({
-              type: 'empty-config', code: 'empty-commands-array',
+              type: 'empty-config',
+              code: 'empty-commands-array',
               message: 'Event handler commands array cannot be empty',
               path: 'eventHandlers.commands',
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Add at least one command to execute for event handler');
           }
@@ -441,7 +481,7 @@ export class TypedWebWorkerFeatureImplementation {
         return {
           isValid: false,
           errors,
-          suggestions
+          suggestions,
         };
       }
 
@@ -454,10 +494,11 @@ export class TypedWebWorkerFeatureImplementation {
       if (data.worker) {
         if (!data.worker.inline && !this.isValidWorkerScript(data.worker.script)) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-worker-script',
+            type: 'invalid-input',
+            code: 'invalid-worker-script',
             message: `Invalid worker script: "${data.worker.script}"`,
             path: 'worker.script',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Provide valid JavaScript file URL or inline script code');
         }
@@ -478,7 +519,7 @@ export class TypedWebWorkerFeatureImplementation {
               code: 'invalid-inline-script',
               message: `Invalid inline script syntax: ${data.worker.script}`,
               path: 'worker.script',
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Ensure inline script has valid JavaScript syntax');
           }
@@ -491,30 +532,33 @@ export class TypedWebWorkerFeatureImplementation {
       if (data.options) {
         if (data.options.maxWorkers < 1) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-max-workers',
+            type: 'invalid-input',
+            code: 'invalid-max-workers',
             message: 'maxWorkers must be at least 1',
             path: 'options.maxWorkers',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set maxWorkers to at least 1');
         }
 
         if (data.options.workerTimeout < 1000) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-worker-timeout',
+            type: 'invalid-input',
+            code: 'invalid-worker-timeout',
             message: 'Worker timeout must be at least 1000ms',
             path: 'options.workerTimeout',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set worker timeout to at least 1000ms for proper operation');
         }
 
         if (data.options.terminationTimeout < 1000) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-termination-timeout',
+            type: 'invalid-input',
+            code: 'invalid-termination-timeout',
             message: 'Termination timeout must be at least 1000ms',
             path: 'options.terminationTimeout',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set termination timeout to at least 1000ms for graceful shutdown');
         }
@@ -528,10 +572,11 @@ export class TypedWebWorkerFeatureImplementation {
           // Validate performance settings
           if (handler.options?.throttle && handler.options?.debounce) {
             errors.push({
-              type: 'schema-validation', code: 'conflicting-performance-options',
+              type: 'schema-validation',
+              code: 'conflicting-performance-options',
               message: 'Cannot use both throttle and debounce simultaneously',
               path: 'eventHandlers.options',
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Choose either throttle OR debounce, not both');
           }
@@ -542,10 +587,11 @@ export class TypedWebWorkerFeatureImplementation {
               new Function('message', `return ${handler.filter}`);
             } catch (filterError) {
               errors.push({
-                type: 'invalid-input', code: 'invalid-filter-expression',
+                type: 'invalid-input',
+                code: 'invalid-filter-expression',
                 message: `Invalid filter expression: ${handler.filter}`,
                 path: 'eventHandlers.filter',
-                suggestions: []
+                suggestions: [],
               });
               suggestions.push('Use valid JavaScript expression for message filtering');
             }
@@ -558,7 +604,7 @@ export class TypedWebWorkerFeatureImplementation {
         errors.push({
           type: 'runtime-error',
           message: 'Web Workers are not supported in this environment',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Web Workers require a browser environment');
       }
@@ -566,22 +612,23 @@ export class TypedWebWorkerFeatureImplementation {
       return {
         isValid: errors.length === 0,
         errors,
-        suggestions
+        suggestions,
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'schema-validation',
-          suggestions: [],
-          message: error instanceof Error ? error.message : 'Invalid input format'
-        }],
+        errors: [
+          {
+            type: 'schema-validation',
+            suggestions: [],
+            message: error instanceof Error ? error.message : 'Invalid input format',
+          },
+        ],
         suggestions: [
           'Ensure input matches WebWorkerInput schema',
           'Check worker configuration structure',
-          'Verify messaging and event handler configurations'
-        ]
+          'Verify messaging and event handler configurations',
+        ],
       };
     }
   }
@@ -595,22 +642,22 @@ export class TypedWebWorkerFeatureImplementation {
       ...input.options,
       environment: input.environment,
       debug: input.debug,
-      initialized: Date.now()
+      initialized: Date.now(),
     };
   }
 
   private async createWorker(workerConfig: any, _context: any): Promise<WorkerInstance> {
     const id = `worker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     let worker: Worker;
-    
+
     if (workerConfig.inline) {
       // Create worker from inline script
       const blob = new Blob([workerConfig.script], { type: 'application/javascript' });
       const url = URL.createObjectURL(blob);
-      worker = new Worker(url, { 
+      worker = new Worker(url, {
         type: workerConfig.type || 'classic',
-        name: workerConfig.name || id
+        name: workerConfig.name || id,
       });
       // Clean up blob URL after worker creation
       URL.revokeObjectURL(url);
@@ -618,7 +665,7 @@ export class TypedWebWorkerFeatureImplementation {
       // Create worker from script URL
       worker = new Worker(workerConfig.script, {
         type: workerConfig.type || 'classic',
-        name: workerConfig.name || id
+        name: workerConfig.name || id,
       });
     }
 
@@ -637,26 +684,26 @@ export class TypedWebWorkerFeatureImplementation {
     };
 
     // Set up event listeners
-    worker.onmessage = (event) => {
+    worker.onmessage = event => {
       instance.messageCount++;
       instance.lastMessageTime = Date.now();
       this.handleWorkerMessage(instance, event);
     };
 
-    worker.onerror = (event) => {
+    worker.onerror = event => {
       instance.errorCount++;
       instance.state = 'error';
       this.handleWorkerError(instance, event);
     };
 
-    worker.onmessageerror = (event) => {
+    worker.onmessageerror = event => {
       instance.errorCount++;
       this.handleWorkerMessageError(instance, event);
     };
 
     this.workers.set(id, instance);
     instance.state = 'running';
-    
+
     return instance;
   }
 
@@ -681,7 +728,7 @@ export class TypedWebWorkerFeatureImplementation {
     this.errorHistory.push({
       error,
       timestamp: Date.now(),
-      context: { worker, event }
+      context: { worker, event },
     });
 
     // Process error event handlers
@@ -693,7 +740,7 @@ export class TypedWebWorkerFeatureImplementation {
     this.errorHistory.push({
       error,
       timestamp: Date.now(),
-      context: { worker, event }
+      context: { worker, event },
     });
 
     // Process messageerror event handlers
@@ -701,11 +748,12 @@ export class TypedWebWorkerFeatureImplementation {
   }
 
   private processEventHandlers(workerId: string, eventType: string, event: Event): void {
-    const handlers = Array.from(this.eventHandlers.values())
-      .filter(h => h.workerId === workerId && h.eventType === eventType && h.isActive);
+    const handlers = Array.from(this.eventHandlers.values()).filter(
+      h => h.workerId === workerId && h.eventType === eventType && h.isActive
+    );
 
     for (const handler of handlers) {
-      this.executeEventHandler(handler, event);
+      void this.executeEventHandler(handler, event);
     }
   }
 
@@ -723,35 +771,34 @@ export class TypedWebWorkerFeatureImplementation {
 
       if (handler.options?.debounce) {
         this.applyDebounce(handler.id, handler.options.debounce, () => {
-          this.executeCommands(handler.commands, { event });
+          void this.executeCommands(handler.commands, { event });
         });
         return;
       }
 
       await this.executeCommands(handler.commands, { event });
-      
+
       handler.executionCount++;
       handler.lastExecutionTime = Date.now();
-
     } catch (error) {
       this.errorHistory.push({
         error: error as Error,
         timestamp: Date.now(),
-        context: { handler, event }
+        context: { handler, event },
       });
     }
   }
 
   private async executeCommands(commands: any[], context: any): Promise<any> {
     // Simplified command execution - would integrate with actual command executor
-    let result = { success: true, executed: commands.length };
-    
+    const result = { success: true, executed: commands.length };
+
     for (const command of commands) {
       if (typeof command === 'object' && command.name) {
         await this.executeBasicCommand(command, context);
       }
     }
-    
+
     return result;
   }
 
@@ -804,12 +851,12 @@ export class TypedWebWorkerFeatureImplementation {
   private isThrottled(handlerId: string, delay: number): boolean {
     const lastTime = this.throttleTimers.get(handlerId) || 0;
     const now = Date.now();
-    
+
     if (now - lastTime >= delay) {
       this.throttleTimers.set(handlerId, now);
       return false;
     }
-    
+
     return true;
   }
 
@@ -818,7 +865,7 @@ export class TypedWebWorkerFeatureImplementation {
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
-    
+
     const timer = setTimeout(callback, delay);
     this.debounceTimers.set(handlerId, timer as any);
   }
@@ -865,12 +912,15 @@ export class TypedWebWorkerFeatureImplementation {
       this.workers.delete(workerId);
 
       // Create new worker with same configuration
-      const newWorker = await this.createWorker({
-        script: worker.script,
-        type: worker.type,
-        name: worker.name,
-        inline: false,
-      }, {});
+      const newWorker = await this.createWorker(
+        {
+          script: worker.script,
+          type: worker.type,
+          name: worker.name,
+          inline: false,
+        },
+        {}
+      );
 
       return newWorker.id;
     };
@@ -912,7 +962,7 @@ export class TypedWebWorkerFeatureImplementation {
 
       try {
         worker.worker.postMessage(data, transferables || []);
-        
+
         const message: WorkerMessage = {
           id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           workerId,
@@ -929,7 +979,7 @@ export class TypedWebWorkerFeatureImplementation {
         this.errorHistory.push({
           error: error as Error,
           timestamp: Date.now(),
-          context: { workerId, data }
+          context: { workerId, data },
         });
         return false;
       }
@@ -963,15 +1013,15 @@ export class TypedWebWorkerFeatureImplementation {
   private createMessageHistoryGetter() {
     return (workerId?: string, limit?: number) => {
       let messages = this.messageHistory;
-      
+
       if (workerId) {
         messages = messages.filter(m => m.workerId === workerId);
       }
-      
+
       if (limit) {
         messages = messages.slice(-limit);
       }
-      
+
       return messages;
     };
   }
@@ -979,7 +1029,7 @@ export class TypedWebWorkerFeatureImplementation {
   private createMessageSubscriber() {
     return async (eventType: 'message' | 'error' | 'messageerror', command: any) => {
       const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const handler: WorkerEventHandler = {
         id: handlerId,
         workerId: '', // For all workers
@@ -1002,9 +1052,13 @@ export class TypedWebWorkerFeatureImplementation {
   }
 
   private createEventHandlerAdder() {
-    return async (workerId: string, eventType: 'message' | 'error' | 'messageerror', command: any) => {
+    return async (
+      workerId: string,
+      eventType: 'message' | 'error' | 'messageerror',
+      command: any
+    ) => {
       const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const handler: WorkerEventHandler = {
         id: handlerId,
         workerId,
@@ -1047,7 +1101,7 @@ export class TypedWebWorkerFeatureImplementation {
       if (!this.messageQueue.has(workerId)) {
         this.messageQueue.set(workerId, []);
       }
-      
+
       const queue = this.messageQueue.get(workerId)!;
       queue.push({
         id: `queued-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -1057,7 +1111,7 @@ export class TypedWebWorkerFeatureImplementation {
         timestamp: Date.now(),
         format: this.detectMessageFormat(message),
       });
-      
+
       return true;
     };
   }
@@ -1075,14 +1129,14 @@ export class TypedWebWorkerFeatureImplementation {
           worker.worker.postMessage(message.data);
           this.messageHistory.push(message);
         }
-        
+
         queue.length = 0; // Clear queue
         return true;
       } catch (error) {
         this.errorHistory.push({
           error: error as Error,
           timestamp: Date.now(),
-          context: { workerId, queueSize: queue.length }
+          context: { workerId, queueSize: queue.length },
         });
         return false;
       }
@@ -1119,7 +1173,7 @@ export class TypedWebWorkerFeatureImplementation {
       this.errorHistory.push({
         error,
         timestamp: Date.now(),
-        context
+        context,
       });
       return true;
     };
@@ -1155,22 +1209,29 @@ export class TypedWebWorkerFeatureImplementation {
       output,
       success,
       duration,
-      timestamp: startTime
+      timestamp: startTime,
     });
   }
 
   getPerformanceMetrics() {
     return {
       totalInitializations: this.evaluationHistory.length,
-      successRate: this.evaluationHistory.filter(h => h.success).length / Math.max(this.evaluationHistory.length, 1),
-      averageDuration: this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / Math.max(this.evaluationHistory.length, 1),
+      successRate:
+        this.evaluationHistory.filter(h => h.success).length /
+        Math.max(this.evaluationHistory.length, 1),
+      averageDuration:
+        this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) /
+        Math.max(this.evaluationHistory.length, 1),
       lastEvaluationTime: this.evaluationHistory[this.evaluationHistory.length - 1]?.timestamp || 0,
       evaluationHistory: this.evaluationHistory.slice(-10), // Last 10 evaluations
       totalWorkers: this.workers.size,
       totalMessages: this.messageHistory.length,
       totalErrors: this.errorHistory.length,
       totalEventHandlers: this.eventHandlers.size,
-      queuedMessages: Array.from(this.messageQueue.values()).reduce((sum, queue) => sum + queue.length, 0)
+      queuedMessages: Array.from(this.messageQueue.values()).reduce(
+        (sum, queue) => sum + queue.length,
+        0
+      ),
     };
   }
 }
@@ -1194,7 +1255,7 @@ export async function createWebWorker(
       type: 'classic',
       credentials: 'same-origin',
       inline: false,
-      ...worker
+      ...worker,
     },
     messaging: {
       format: 'json',
@@ -1217,7 +1278,7 @@ export async function createWebWorker(
     },
     environment: 'frontend',
     debug: false,
-    ...options
+    ...options,
   });
 }
 

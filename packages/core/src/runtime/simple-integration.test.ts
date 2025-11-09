@@ -1,5 +1,5 @@
 /**
- * Simple Integration Test 
+ * Simple Integration Test
  * Verifies basic enhanced command integration works
  */
 
@@ -24,7 +24,7 @@ describe('Simple Integration Test', () => {
       it: null,
       you: null,
       result: undefined,
-      event: undefined
+      event: undefined,
     };
 
     const typedContext = ContextBridge.toTyped(context);
@@ -40,7 +40,7 @@ describe('Simple Integration Test', () => {
   it('should provide available commands list', () => {
     const runtime = new Runtime({ useEnhancedCommands: true });
     const commands = runtime.getAvailableCommands();
-    
+
     // Should at least have basic legacy commands
     expect(commands).toContain('hide');
     expect(commands).toContain('show');

@@ -26,14 +26,14 @@ describe('Enhanced Expression Performance Benchmarks', () => {
       testValue: 42,
       testArray: [1, 2, 3, 4, 5],
       testString: 'hello world',
-      testObject: { name: 'test', value: 100 }
+      testObject: { name: 'test', value: 100 },
     });
   });
 
   describe('Reference Expressions', () => {
     test('MeExpression performance characteristics', async () => {
       const meExpression = new EnhancedMeExpression();
-      
+
       const result = await benchmark.benchmark(
         'MeExpression.evaluate',
         'expression',
@@ -42,7 +42,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 2000,
           complexity: 'low',
           operationType: 'context-reference',
-          inputSize: 0
+          inputSize: 0,
         }
       );
 
@@ -52,7 +52,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
 
     test('MeExpression validation performance', async () => {
       const meExpression = new EnhancedMeExpression();
-      
+
       const result = await benchmark.benchmark(
         'MeExpression.validate',
         'validation',
@@ -61,7 +61,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 5000,
           complexity: 'low',
           operationType: 'validation',
-          inputSize: 0
+          inputSize: 0,
         }
       );
 
@@ -73,7 +73,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
   describe('Logical Expressions', () => {
     test('EqualityExpression performance with simple values', async () => {
       const equalsExpression = new EnhancedEqualityExpression();
-      
+
       const result = await benchmark.benchmark(
         'EqualityExpression.evaluate.simple',
         'expression',
@@ -82,7 +82,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 1500,
           complexity: 'low',
           operationType: 'comparison',
-          inputSize: 2
+          inputSize: 2,
         }
       );
 
@@ -94,7 +94,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
       const equalsExpression = new EnhancedEqualityExpression();
       const complexObj1 = { a: 1, b: { c: 3, d: [1, 2, 3] } };
       const complexObj2 = { a: 1, b: { c: 3, d: [1, 2, 3] } };
-      
+
       const result = await benchmark.benchmark(
         'EqualityExpression.evaluate.complex',
         'expression',
@@ -103,7 +103,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 500,
           complexity: 'high',
           operationType: 'deep-comparison',
-          inputSize: 2
+          inputSize: 2,
         }
       );
 
@@ -113,7 +113,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
 
     test('AndExpression performance with multiple operands', async () => {
       const andExpression = new EnhancedAndExpression();
-      
+
       const result = await benchmark.benchmark(
         'AndExpression.evaluate',
         'expression',
@@ -122,7 +122,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 1000,
           complexity: 'medium',
           operationType: 'logical-operation',
-          inputSize: 4
+          inputSize: 4,
         }
       );
 
@@ -132,7 +132,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
 
     test('AndExpression short-circuit evaluation performance', async () => {
       const andExpression = new EnhancedAndExpression();
-      
+
       const result = await benchmark.benchmark(
         'AndExpression.evaluate.short-circuit',
         'expression',
@@ -141,7 +141,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 2000,
           complexity: 'low',
           operationType: 'short-circuit',
-          inputSize: 4
+          inputSize: 4,
         }
       );
 
@@ -153,7 +153,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
   describe('Conversion Expressions', () => {
     test('AsExpression performance with type conversion', async () => {
       const asExpression = new EnhancedAsExpression();
-      
+
       const result = await benchmark.benchmark(
         'AsExpression.evaluate.number',
         'expression',
@@ -162,7 +162,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 1000,
           complexity: 'medium',
           operationType: 'type-conversion',
-          inputSize: 2
+          inputSize: 2,
         }
       );
 
@@ -173,7 +173,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
     test('AsExpression performance with JSON parsing', async () => {
       const asExpression = new EnhancedAsExpression();
       const jsonString = '{"name": "test", "value": 42, "items": [1, 2, 3]}';
-      
+
       const result = await benchmark.benchmark(
         'AsExpression.evaluate.json',
         'expression',
@@ -182,7 +182,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 500,
           complexity: 'high',
           operationType: 'json-parsing',
-          inputSize: jsonString.length
+          inputSize: jsonString.length,
         }
       );
 
@@ -195,7 +195,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
     test('FirstExpression performance with arrays', async () => {
       const firstExpression = new EnhancedFirstExpression();
       const testArray = Array.from({ length: 1000 }, (_, i) => i);
-      
+
       const result = await benchmark.benchmark(
         'FirstExpression.evaluate.array',
         'expression',
@@ -204,7 +204,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 1000,
           complexity: 'low',
           operationType: 'array-access',
-          inputSize: testArray.length
+          inputSize: testArray.length,
         }
       );
 
@@ -218,14 +218,14 @@ describe('Enhanced Expression Performance Benchmarks', () => {
       const mockNodeList = {
         length: 100,
         0: { tagName: 'DIV' },
-        item: (index: number) => index === 0 ? { tagName: 'DIV' } : null,
+        item: (index: number) => (index === 0 ? { tagName: 'DIV' } : null),
         [Symbol.iterator]: function* () {
           for (let i = 0; i < this.length; i++) {
             yield this.item(i);
           }
-        }
+        },
       };
-      
+
       const result = await benchmark.benchmark(
         'FirstExpression.evaluate.dom',
         'expression',
@@ -234,7 +234,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 800,
           complexity: 'medium',
           operationType: 'dom-collection',
-          inputSize: mockNodeList.length
+          inputSize: mockNodeList.length,
         }
       );
 
@@ -246,7 +246,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
   describe('Property Access Expressions', () => {
     test('MyExpression performance with simple properties', async () => {
       const myExpression = new EnhancedMyExpression();
-      
+
       const result = await benchmark.benchmark(
         'MyExpression.evaluate.simple',
         'expression',
@@ -255,7 +255,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 1500,
           complexity: 'low',
           operationType: 'property-access',
-          inputSize: 1
+          inputSize: 1,
         }
       );
 
@@ -265,7 +265,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
 
     test('MyExpression performance with nested properties', async () => {
       const myExpression = new EnhancedMyExpression();
-      
+
       const result = await benchmark.benchmark(
         'MyExpression.evaluate.nested',
         'expression',
@@ -274,7 +274,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 1000,
           complexity: 'medium',
           operationType: 'nested-property',
-          inputSize: 1
+          inputSize: 1,
         }
       );
 
@@ -286,7 +286,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
   describe('Mathematical Expressions', () => {
     test('AdditionExpression performance with numbers', async () => {
       const addExpression = new EnhancedAdditionExpression();
-      
+
       const result = await benchmark.benchmark(
         'AdditionExpression.evaluate.numbers',
         'expression',
@@ -295,7 +295,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 2000,
           complexity: 'low',
           operationType: 'arithmetic',
-          inputSize: 3
+          inputSize: 3,
         }
       );
 
@@ -305,7 +305,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
 
     test('AdditionExpression performance with string concatenation', async () => {
       const addExpression = new EnhancedAdditionExpression();
-      
+
       const result = await benchmark.benchmark(
         'AdditionExpression.evaluate.strings',
         'expression',
@@ -314,7 +314,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 1500,
           complexity: 'low',
           operationType: 'string-concat',
-          inputSize: 4
+          inputSize: 4,
         }
       );
 
@@ -329,7 +329,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
       const myExpression = new EnhancedMyExpression();
       const equalsExpression = new EnhancedEqualityExpression();
       const addExpression = new EnhancedAdditionExpression();
-      
+
       const result = await benchmark.benchmark(
         'Expression.chain-evaluation',
         'integration',
@@ -337,16 +337,24 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           // Simulate complex expression chain: me.testValue + 10 == 52
           const meResult = await meExpression.evaluate(context);
           const valueResult = await myExpression.evaluate(context, 'testValue');
-          const addResult = await addExpression.evaluate(context, valueResult.success ? valueResult.value : 0, 10);
-          const finalResult = await equalsExpression.evaluate(context, addResult.success ? addResult.value : 0, 52);
-          
+          const addResult = await addExpression.evaluate(
+            context,
+            valueResult.success ? valueResult.value : 0,
+            10
+          );
+          const finalResult = await equalsExpression.evaluate(
+            context,
+            addResult.success ? addResult.value : 0,
+            52
+          );
+
           return finalResult;
         },
         {
           iterations: 300,
           complexity: 'high',
           operationType: 'expression-chain',
-          inputSize: 4
+          inputSize: 4,
         }
       );
 
@@ -357,7 +365,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
     test('Error handling in expression chains', async () => {
       const myExpression = new EnhancedMyExpression();
       const equalsExpression = new EnhancedEqualityExpression();
-      
+
       const result = await benchmark.benchmark(
         'Expression.error-handling',
         'integration',
@@ -365,18 +373,18 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           // Access non-existent property and handle gracefully
           const valueResult = await myExpression.evaluate(context, 'nonExistentProperty');
           const comparisonResult = await equalsExpression.evaluate(
-            context, 
-            valueResult.success ? valueResult.value : null, 
+            context,
+            valueResult.success ? valueResult.value : null,
             null
           );
-          
+
           return comparisonResult;
         },
         {
           iterations: 500,
           complexity: 'medium',
           operationType: 'error-handling',
-          inputSize: 2
+          inputSize: 2,
         }
       );
 
@@ -399,7 +407,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
             new EnhancedAsExpression(),
             new EnhancedFirstExpression(),
             new EnhancedMyExpression(),
-            new EnhancedAdditionExpression()
+            new EnhancedAdditionExpression(),
           ];
           return expressions.length;
         },
@@ -407,7 +415,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 200,
           complexity: 'medium',
           operationType: 'instantiation',
-          inputSize: 7
+          inputSize: 7,
         }
       );
 
@@ -418,7 +426,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
     test('Large dataset expression processing', async () => {
       const firstExpression = new EnhancedFirstExpression();
       const largeArray = Array.from({ length: 10000 }, (_, i) => ({ id: i, value: `item-${i}` }));
-      
+
       const result = await benchmark.benchmark(
         'Expression.large-dataset',
         'expression',
@@ -427,7 +435,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 100,
           complexity: 'high',
           operationType: 'large-dataset',
-          inputSize: largeArray.length
+          inputSize: largeArray.length,
         }
       );
 
@@ -439,7 +447,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
   describe('Validation Overhead', () => {
     test('Validation vs execution time ratio', async () => {
       const equalsExpression = new EnhancedEqualityExpression();
-      
+
       const validationResult = await benchmark.benchmark(
         'EqualityExpression.validate',
         'validation',
@@ -448,7 +456,7 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 3000,
           complexity: 'low',
           operationType: 'validation',
-          inputSize: 2
+          inputSize: 2,
         }
       );
 
@@ -460,14 +468,14 @@ describe('Enhanced Expression Performance Benchmarks', () => {
           iterations: 3000,
           complexity: 'low',
           operationType: 'execution',
-          inputSize: 2
+          inputSize: 2,
         }
       );
 
       // Validation should be fast for production use
       expect(validationResult.averageTime).toBeLessThan(5); // Under 5ms is acceptable
       // Note: Enhanced validation may occasionally be slower due to comprehensive checks
-      
+
       // Validation overhead should be reasonable compared to execution time
       const overheadRatio = validationResult.averageTime / executionResult.averageTime;
       expect(overheadRatio).toBeLessThan(2.0); // Allow up to 2x overhead for comprehensive validation
@@ -479,28 +487,40 @@ describe('Enhanced Expression Performance Benchmarks', () => {
     const meExpression = new EnhancedMeExpression();
     const equalsExpression = new EnhancedEqualityExpression();
     const asExpression = new EnhancedAsExpression();
-    
-    await benchmark.benchmark('MeExpression.report', 'expression',
-      () => meExpression.evaluate(context), { iterations: 500, operationType: 'reference' });
-      
-    await benchmark.benchmark('EqualityExpression.report', 'expression',
-      () => equalsExpression.evaluate(context, 1, 1), { iterations: 500, operationType: 'logical' });
-      
-    await benchmark.benchmark('AsExpression.report', 'expression',
-      () => asExpression.evaluate(context, '42', 'Int'), { iterations: 500, operationType: 'conversion' });
+
+    await benchmark.benchmark(
+      'MeExpression.report',
+      'expression',
+      () => meExpression.evaluate(context),
+      { iterations: 500, operationType: 'reference' }
+    );
+
+    await benchmark.benchmark(
+      'EqualityExpression.report',
+      'expression',
+      () => equalsExpression.evaluate(context, 1, 1),
+      { iterations: 500, operationType: 'logical' }
+    );
+
+    await benchmark.benchmark(
+      'AsExpression.report',
+      'expression',
+      () => asExpression.evaluate(context, '42', 'Int'),
+      { iterations: 500, operationType: 'conversion' }
+    );
 
     const suite = benchmark.generateSuite('Enhanced Expressions Performance Suite');
-    
+
     expect(suite.results.length).toBeGreaterThan(0);
     expect(suite.summary.totalTests).toBeGreaterThan(0);
     expect(suite.summary.fastestTest).not.toBe('none');
-    
+
     // Verify comprehensive metrics
     const report = benchmark.formatResults(suite);
     expect(report).toContain('Performance Benchmark');
     expect(report).toContain('EXPRESSION Performance');
     expect(report).toContain('Memory Efficient');
-    
+
     // Log report for manual inspection during development
     console.log(report);
   });

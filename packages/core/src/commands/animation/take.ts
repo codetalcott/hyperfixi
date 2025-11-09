@@ -9,7 +9,7 @@ import type {
   TypedExecutionContext,
   EvaluationResult,
   CommandMetadata,
-  LLMDocumentation
+  LLMDocumentation,
 } from '../../types/command-types';
 import type { RuntimeValidator } from '../../validation/lightweight-validators';
 import type { UnifiedValidationResult } from '../../types/unified-types';
@@ -17,7 +17,7 @@ import { dispatchCustomEvent } from '../../core/events';
 import {
   createTupleValidator,
   createStringValidator,
-  createUnionValidator
+  createUnionValidator,
 } from '../../validation/lightweight-validators';
 import { asHTMLElement } from '../../utils/dom-utils';
 
@@ -35,7 +35,7 @@ const TakeCommandInputSchema = createTupleValidator([
   createUnionValidator([
     createStringValidator({ description: 'CSS selector' }),
     // Note: HTMLElement validation handled at runtime
-  ])
+  ]),
 ]);
 
 type TakeCommandInput = [string, 'from', string | HTMLElement, ...unknown[]];
@@ -43,15 +43,20 @@ type TakeCommandInput = [string, 'from', string | HTMLElement, ...unknown[]];
 /**
  * Enhanced Take Command with full type safety for LLM agents
  */
-export class TakeCommand implements TypedCommandImplementation<
-  TakeCommandInput,
-  HTMLElement,  // Returns the target element that received the property
-  TypedExecutionContext
-> {
+export class TakeCommand
+  implements
+    TypedCommandImplementation<
+      TakeCommandInput,
+      HTMLElement, // Returns the target element that received the property
+      TypedExecutionContext
+    >
+{
   public readonly name = 'take' as const;
   public readonly syntax = 'take <property> from <source> [and put it on <target>]';
-  public readonly description = 'Moves classes, attributes, and properties from one element to another with validation';
-  public readonly inputSchema: RuntimeValidator<TakeCommandInput> = TakeCommandInputSchema as RuntimeValidator<TakeCommandInput>;
+  public readonly description =
+    'Moves classes, attributes, and properties from one element to another with validation';
+  public readonly inputSchema: RuntimeValidator<TakeCommandInput> =
+    TakeCommandInputSchema as RuntimeValidator<TakeCommandInput>;
   public readonly outputType = 'element' as const;
 
   public readonly metadata: CommandMetadata = {
@@ -62,20 +67,20 @@ export class TakeCommand implements TypedCommandImplementation<
       {
         code: 'take class from <#source/> and put it on me',
         description: 'Move all classes from source element to current element',
-        expectedOutput: 'HTMLElement'
+        expectedOutput: 'HTMLElement',
       },
       {
         code: 'take @data-value from <.source/> and put it on <#target/>',
         description: 'Move data attribute from source to target element',
-        expectedOutput: 'HTMLElement'
+        expectedOutput: 'HTMLElement',
       },
       {
         code: 'take title from <#old-button/>',
         description: 'Take title attribute from old button (put on current element)',
-        expectedOutput: 'HTMLElement'
-      }
+        expectedOutput: 'HTMLElement',
+      },
     ],
-    relatedCommands: ['put', 'add', 'remove', 'copy']
+    relatedCommands: ['put', 'add', 'remove', 'copy'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -86,58 +91,58 @@ export class TakeCommand implements TypedCommandImplementation<
         type: 'string',
         description: 'Property or attribute name to transfer (class, @attr, style properties)',
         optional: false,
-        examples: ['class', '@data-value', 'title', 'background-color', '.active']
+        examples: ['class', '@data-value', 'title', 'background-color', '.active'],
       },
       {
         name: 'source',
         type: 'element',
         description: 'Source element to take the property from',
         optional: false,
-        examples: ['<#source-element/>', '<.source-class/>', 'me']
+        examples: ['<#source-element/>', '<.source-class/>', 'me'],
       },
       {
         name: 'target',
         type: 'element',
         description: 'Target element to put the property on. If omitted, uses current element (me)',
         optional: true,
-        examples: ['me', '<#target-element/>', '<.target-class/>']
-      }
+        examples: ['me', '<#target-element/>', '<.target-class/>'],
+      },
     ],
     returns: {
       type: 'element',
       description: 'The target element that received the transferred property',
-      examples: ['HTMLElement']
+      examples: ['HTMLElement'],
     },
     examples: [
       {
         title: 'Transfer all classes',
         code: 'take class from <#old-element/> and put it on <#new-element/>',
         explanation: 'Moves all CSS classes from old element to new element',
-        output: 'HTMLElement'
+        output: 'HTMLElement',
       },
       {
         title: 'Transfer specific attribute',
         code: 'take @data-config from <.source/> and put it on me',
         explanation: 'Moves data-config attribute from source element to current element',
-        output: 'HTMLElement'
+        output: 'HTMLElement',
       },
       {
         title: 'Transfer to implicit target',
         code: 'take title from <#tooltip-source/>',
         explanation: 'Takes title attribute from source and puts it on current element',
-        output: 'HTMLElement'
+        output: 'HTMLElement',
       },
       {
         title: 'Transfer CSS property',
         code: 'take background-color from <.theme-source/> and put it on <.theme-target/>',
         explanation: 'Moves background-color style property between elements',
-        output: 'HTMLElement'
-      }
+        output: 'HTMLElement',
+      },
     ],
     seeAlso: ['put', 'add-class', 'remove-class', 'copy-attribute'],
-    tags: ['dom', 'transfer', 'properties', 'attributes', 'classes']
+    tags: ['dom', 'transfer', 'properties', 'attributes', 'classes'],
   };
-  
+
   private options: TakeCommandOptions;
 
   constructor(options: TakeCommandOptions = {}) {
@@ -163,8 +168,8 @@ export class TakeCommand implements TypedCommandImplementation<
             type: 'validation-error',
             message: validationResult.errors[0]?.message || 'Invalid input',
             code: 'TAKE_VALIDATION_FAILED',
-            suggestions: validationResult.suggestions
-          }
+            suggestions: validationResult.suggestions,
+          },
         };
       }
 
@@ -174,7 +179,7 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: false,
           ...(parseResult.error && { error: parseResult.error }),
-          type: 'error'
+          type: 'error',
         } as EvaluationResult<HTMLElement>;
       }
 
@@ -191,7 +196,7 @@ export class TakeCommand implements TypedCommandImplementation<
       // Put it on target
       const putResult = await this.putProperty(target, property, takenValue, context);
       if (!putResult.success) {
-        return putResult as EvaluationResult<HTMLElement>;
+        return putResult;
       }
 
       // Dispatch enhanced take event with rich metadata
@@ -205,15 +210,14 @@ export class TakeCommand implements TypedCommandImplementation<
         value: takenValue,
         timestamp: Date.now(),
         metadata: this.metadata,
-        result: 'success'
+        result: 'success',
       });
 
       return {
         success: true,
         value: target,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -222,8 +226,8 @@ export class TakeCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'TAKE_EXECUTION_FAILED',
-          suggestions: ['Check if elements exist and verify property names are valid']
-        }
+          suggestions: ['Check if elements exist and verify property names are valid'],
+        },
       };
     }
   }
@@ -232,16 +236,21 @@ export class TakeCommand implements TypedCommandImplementation<
     try {
       // Use lightweight validator for basic validation
       const validationResult = this.inputSchema.validate(args);
-      
+
       if (!validationResult.success) {
         return {
           isValid: false,
-          errors: [{
-            type: 'validation-error' as const,
-            message: validationResult.error!.message,
-            suggestions: ["Use: take <property> from <source> [and put it on <target>]"]
-          }],
-          suggestions: ['Use: take class from <element>', 'Use: take @attr from <element> and put it on <target>']
+          errors: [
+            {
+              type: 'validation-error' as const,
+              message: validationResult.error!.message,
+              suggestions: ['Use: take <property> from <source> [and put it on <target>]'],
+            },
+          ],
+          suggestions: [
+            'Use: take class from <element>',
+            'Use: take @attr from <element> and put it on <target>',
+          ],
         };
       }
 
@@ -249,12 +258,17 @@ export class TakeCommand implements TypedCommandImplementation<
       if (args.length < 3) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument' as const,
-            message: 'Take command requires property, "from", and source element',
-            suggestions: ["Use: take <property> from <source> [and put it on <target>]"]
-          }],
-          suggestions: ['Use: take class from <element>', 'Use: take @attr from <element> and put it on <target>']
+          errors: [
+            {
+              type: 'missing-argument' as const,
+              message: 'Take command requires property, "from", and source element',
+              suggestions: ['Use: take <property> from <source> [and put it on <target>]'],
+            },
+          ],
+          suggestions: [
+            'Use: take class from <element>',
+            'Use: take @attr from <element> and put it on <target>',
+          ],
         };
       }
 
@@ -263,12 +277,18 @@ export class TakeCommand implements TypedCommandImplementation<
       if (!this.isValidElementReference(source)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'invalid-argument' as const,
-            message: 'Source must be an HTMLElement or valid CSS selector',
-            suggestions: ['Use HTMLElement or CSS selector like "#id", ".class", "tag"']
-          }],
-          suggestions: ['Use: <#element-id/>', 'Use: <.class-name/>', 'Use: HTMLElement references']
+          errors: [
+            {
+              type: 'invalid-argument' as const,
+              message: 'Source must be an HTMLElement or valid CSS selector',
+              suggestions: ['Use HTMLElement or CSS selector like "#id", ".class", "tag"'],
+            },
+          ],
+          suggestions: [
+            'Use: <#element-id/>',
+            'Use: <.class-name/>',
+            'Use: HTMLElement references',
+          ],
         };
       }
 
@@ -284,7 +304,7 @@ export class TakeCommand implements TypedCommandImplementation<
           return {
             isValid: true,
             errors: [],
-            suggestions: []
+            suggestions: [],
           };
         }
 
@@ -293,18 +313,26 @@ export class TakeCommand implements TypedCommandImplementation<
           if (args[index] === expectedSequence[sequenceIndex]) {
             index++;
             sequenceIndex++;
-          } else if (sequenceIndex === expectedSequence.length && this.isValidElementReference(args[index])) {
+          } else if (
+            sequenceIndex === expectedSequence.length &&
+            this.isValidElementReference(args[index])
+          ) {
             // Target element after sequence
             break;
           } else {
             return {
               isValid: false,
-              errors: [{
-                type: 'syntax-error' as const,
-                message: `Invalid take syntax. Expected "${expectedSequence[sequenceIndex]}" but got "${args[index]}"`,
-                suggestions: ['Use: take <property> from <source> and put it on <target>']
-              }],
-              suggestions: ['Use full syntax: and put it on <target>', 'Or just provide target element directly']
+              errors: [
+                {
+                  type: 'syntax-error' as const,
+                  message: `Invalid take syntax. Expected "${expectedSequence[sequenceIndex]}" but got "${args[index]}"`,
+                  suggestions: ['Use: take <property> from <source> and put it on <target>'],
+                },
+              ],
+              suggestions: [
+                'Use full syntax: and put it on <target>',
+                'Or just provide target element directly',
+              ],
             };
           }
         }
@@ -315,12 +343,18 @@ export class TakeCommand implements TypedCommandImplementation<
           if (!this.isValidElementReference(target)) {
             return {
               isValid: false,
-              errors: [{
-                type: 'invalid-argument' as const,
-                message: 'Target must be an HTMLElement or valid CSS selector',
-                suggestions: ['Use HTMLElement or CSS selector like "#id", ".class", "tag"']
-              }],
-              suggestions: ['Use: <#element-id/>', 'Use: <.class-name/>', 'Use: HTMLElement references']
+              errors: [
+                {
+                  type: 'invalid-argument' as const,
+                  message: 'Target must be an HTMLElement or valid CSS selector',
+                  suggestions: ['Use HTMLElement or CSS selector like "#id", ".class", "tag"'],
+                },
+              ],
+              suggestions: [
+                'Use: <#element-id/>',
+                'Use: <.class-name/>',
+                'Use: HTMLElement references',
+              ],
             };
           }
         }
@@ -329,36 +363,39 @@ export class TakeCommand implements TypedCommandImplementation<
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error' as const,
-          message: 'Validation failed with exception',
-          suggestions: ['Check input types and values']
-        }],
-        suggestions: ['Ensure arguments match expected types']
+        errors: [
+          {
+            type: 'runtime-error' as const,
+            message: 'Validation failed with exception',
+            suggestions: ['Check input types and values'],
+          },
+        ],
+        suggestions: ['Ensure arguments match expected types'],
       };
     }
   }
 
   private isValidElementReference(value: unknown): boolean {
-    return value instanceof HTMLElement || 
-           (typeof value === 'string' && value.trim().length > 0) ||
-           value === null || 
-           value === undefined;
+    return (
+      value instanceof HTMLElement ||
+      (typeof value === 'string' && value.trim().length > 0) ||
+      value === null ||
+      value === undefined
+    );
   }
 
   private parseArguments(
-    args: unknown[], 
+    args: unknown[],
     context: TypedExecutionContext
   ): EvaluationResult<{ property: string; source: HTMLElement; target: HTMLElement }> {
     try {
       const property = String(args[0]);
-      
+
       // Resolve source element
       const sourceResult = this.resolveElement(args[2], context);
       if (!sourceResult.success) {
@@ -368,9 +405,9 @@ export class TakeCommand implements TypedCommandImplementation<
             type: 'runtime-error',
             message: `Cannot resolve source element: ${sourceResult.error?.message}`,
             code: 'SOURCE_RESOLUTION_FAILED',
-            suggestions: ['Check if source element exists in DOM', 'Verify selector syntax']
+            suggestions: ['Check if source element exists in DOM', 'Verify selector syntax'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -379,7 +416,7 @@ export class TakeCommand implements TypedCommandImplementation<
       if (args.length > 3) {
         // Look for target element - could be after "and put it on" or directly provided
         let targetArg: unknown;
-        
+
         if (args[3] === 'and' && args.length >= 7) {
           // Full "and put it on <target>" syntax
           targetArg = args[6];
@@ -399,9 +436,9 @@ export class TakeCommand implements TypedCommandImplementation<
               type: 'runtime-error',
               message: `Cannot resolve target element: ${targetResult.error?.message}`,
               code: 'TARGET_RESOLUTION_FAILED',
-              suggestions: ['Check if target element exists in DOM', 'Verify selector syntax']
+              suggestions: ['Check if target element exists in DOM', 'Verify selector syntax'],
             },
-            type: 'error'
+            type: 'error',
           };
         }
         targetElement = targetResult.value;
@@ -414,9 +451,12 @@ export class TakeCommand implements TypedCommandImplementation<
               type: 'context-error',
               message: 'No target element available - context.me is undefined',
               code: 'NO_TARGET_ELEMENT',
-              suggestions: ['Ensure command is called within element context', 'Provide explicit target element']
+              suggestions: [
+                'Ensure command is called within element context',
+                'Provide explicit target element',
+              ],
             },
-            type: 'error'
+            type: 'error',
           };
         }
         const htmlElement = asHTMLElement(context.me);
@@ -427,9 +467,9 @@ export class TakeCommand implements TypedCommandImplementation<
               type: 'type-mismatch',
               message: 'context.me is not an HTMLElement',
               code: 'INVALID_CONTEXT_ELEMENT',
-              suggestions: ['Ensure context.me is an HTMLElement']
+              suggestions: ['Ensure context.me is an HTMLElement'],
             },
-            type: 'error'
+            type: 'error',
           };
         }
         targetElement = htmlElement;
@@ -440,11 +480,10 @@ export class TakeCommand implements TypedCommandImplementation<
         value: {
           property,
           source: sourceResult.value!,
-          target: targetElement
+          target: targetElement,
         },
-        type: 'object'
+        type: 'object',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -452,15 +491,15 @@ export class TakeCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Failed to parse take arguments',
           code: 'PARSE_FAILED',
-          suggestions: ['Check argument syntax and types']
+          suggestions: ['Check argument syntax and types'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
 
   private resolveElement(
-    element: unknown, 
+    element: unknown,
     context: TypedExecutionContext
   ): EvaluationResult<HTMLElement> {
     try {
@@ -469,7 +508,7 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: element,
-          type: 'element'
+          type: 'element',
         };
       }
 
@@ -483,7 +522,7 @@ export class TakeCommand implements TypedCommandImplementation<
             return {
               success: true,
               value: htmlElement,
-              type: 'element'
+              type: 'element',
             };
           }
         }
@@ -491,7 +530,7 @@ export class TakeCommand implements TypedCommandImplementation<
           return {
             success: true,
             value: context.it,
-            type: 'element'
+            type: 'element',
           };
         }
         if (trimmed === 'you' && context.you) {
@@ -500,7 +539,7 @@ export class TakeCommand implements TypedCommandImplementation<
             return {
               success: true,
               value: htmlElement,
-              type: 'element'
+              type: 'element',
             };
           }
         }
@@ -513,7 +552,7 @@ export class TakeCommand implements TypedCommandImplementation<
               return {
                 success: true,
                 value: found,
-                type: 'element'
+                type: 'element',
               };
             }
           } catch (selectorError) {
@@ -523,9 +562,9 @@ export class TakeCommand implements TypedCommandImplementation<
                 type: 'syntax-error',
                 message: `Invalid CSS selector: "${trimmed}"`,
                 code: 'INVALID_SELECTOR',
-                suggestions: ['Use valid CSS selector syntax', 'Check for typos in selector']
+                suggestions: ['Use valid CSS selector syntax', 'Check for typos in selector'],
               },
-              type: 'error'
+              type: 'error',
             };
           }
         }
@@ -536,9 +575,12 @@ export class TakeCommand implements TypedCommandImplementation<
             type: 'runtime-error',
             message: `Element not found: "${trimmed}"`,
             code: 'ELEMENT_NOT_FOUND',
-            suggestions: ['Check if element exists in DOM', 'Verify selector matches existing elements']
+            suggestions: [
+              'Check if element exists in DOM',
+              'Verify selector matches existing elements',
+            ],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -548,11 +590,10 @@ export class TakeCommand implements TypedCommandImplementation<
           type: 'invalid-argument',
           message: `Invalid element reference: ${typeof element}`,
           code: 'INVALID_ELEMENT_REFERENCE',
-          suggestions: ['Use HTMLElement or CSS selector string']
+          suggestions: ['Use HTMLElement or CSS selector string'],
         },
-        type: 'error'
+        type: 'error',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -560,22 +601,22 @@ export class TakeCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Element resolution failed',
           code: 'RESOLUTION_FAILED',
-          suggestions: ['Check element reference validity']
+          suggestions: ['Check element reference validity'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
 
   private async takeProperty(
-    element: HTMLElement, 
-    property: string, 
+    element: HTMLElement,
+    property: string,
     _context: TypedExecutionContext
   ): Promise<EvaluationResult<unknown>> {
     try {
       const prop = property.trim();
       const lowerProp = prop.toLowerCase();
-      
+
       // Validate property if validation is enabled
       if (this.options.validateProperties && !this.isValidProperty(prop)) {
         return {
@@ -584,9 +625,9 @@ export class TakeCommand implements TypedCommandImplementation<
             type: 'invalid-argument',
             message: `Invalid property name: "${prop}"`,
             code: 'INVALID_PROPERTY',
-            suggestions: ['Use valid property names', 'Check property syntax']
+            suggestions: ['Use valid property names', 'Check property syntax'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -597,10 +638,10 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: classes,
-          type: 'array'
+          type: 'array',
         };
       }
-      
+
       // Handle specific class
       if (prop.startsWith('.')) {
         const className = prop.substring(1);
@@ -609,16 +650,16 @@ export class TakeCommand implements TypedCommandImplementation<
           return {
             success: true,
             value: className,
-            type: 'string'
+            type: 'string',
           };
         }
         return {
           success: true,
           value: null,
-          type: 'null'
+          type: 'null',
         };
       }
-      
+
       // Handle attributes
       if (prop.startsWith('@') || prop.startsWith('data-')) {
         const attrName = prop.startsWith('@') ? prop.substring(1) : prop;
@@ -627,10 +668,10 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: value,
-          type: 'string'
+          type: 'string',
         };
       }
-      
+
       // Handle common properties
       if (lowerProp === 'id') {
         const value = element.id;
@@ -638,37 +679,37 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: value,
-          type: 'string'
+          type: 'string',
         };
       }
-      
+
       if (lowerProp === 'title') {
         const value = element.title;
         element.title = '';
         return {
           success: true,
           value: value,
-          type: 'string'
+          type: 'string',
         };
       }
-      
+
       if (lowerProp === 'value' && 'value' in element) {
         const value = (element as HTMLInputElement).value;
         (element as HTMLInputElement).value = '';
         return {
           success: true,
           value: value,
-          type: 'string'
+          type: 'string',
         };
       }
-      
-      // Handle CSS properties  
+
+      // Handle CSS properties
       const camelProperty = prop.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
-      
+
       // Check if it's a CSS property
       if (prop.includes('-') || camelProperty in element.style || prop in element.style) {
         let value: string;
-        
+
         if (camelProperty in element.style) {
           value = (element.style as unknown as Record<string, string>)[camelProperty];
           (element.style as unknown as Record<string, string>)[camelProperty] = '';
@@ -679,14 +720,14 @@ export class TakeCommand implements TypedCommandImplementation<
           value = element.style.getPropertyValue(prop);
           element.style.removeProperty(prop);
         }
-        
+
         return {
           success: true,
           value: value,
-          type: 'string'
+          type: 'string',
         };
       }
-      
+
       // Handle generic attributes
       const value = element.getAttribute(property);
       if (value !== null) {
@@ -694,16 +735,15 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: value,
-          type: 'string'
+          type: 'string',
         };
       }
-      
+
       return {
         success: true,
         value: null,
-        type: 'null'
+        type: 'null',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -711,17 +751,17 @@ export class TakeCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Failed to take property',
           code: 'PROPERTY_TAKE_FAILED',
-          suggestions: ['Check if element supports the property', 'Verify property name is valid']
+          suggestions: ['Check if element supports the property', 'Verify property name is valid'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
 
   private async putProperty(
-    element: HTMLElement, 
-    property: string, 
-    value: unknown, 
+    element: HTMLElement,
+    property: string,
+    value: unknown,
     _context: TypedExecutionContext
   ): Promise<EvaluationResult<HTMLElement>> {
     try {
@@ -730,13 +770,13 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: element,
-          type: 'element'
+          type: 'element',
         };
       }
-      
+
       const prop = property.trim();
       const lowerProp = prop.toLowerCase();
-      
+
       // Handle CSS classes
       if (lowerProp === 'class' || lowerProp === 'classes') {
         if (Array.isArray(value)) {
@@ -751,10 +791,10 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: element,
-          type: 'element'
+          type: 'element',
         };
       }
-      
+
       // Handle specific class
       if (prop.startsWith('.')) {
         const className = prop.substring(1);
@@ -764,10 +804,10 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: element,
-          type: 'element'
+          type: 'element',
         };
       }
-      
+
       // Handle attributes
       if (prop.startsWith('@') || prop.startsWith('data-')) {
         const attrName = prop.startsWith('@') ? prop.substring(1) : prop;
@@ -777,38 +817,38 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: element,
-          type: 'element'
+          type: 'element',
         };
       }
-      
+
       // Handle common properties
       if (lowerProp === 'id') {
         element.id = String(value || '');
         return {
           success: true,
           value: element,
-          type: 'element'
+          type: 'element',
         };
       }
-      
+
       if (lowerProp === 'title') {
         element.title = String(value || '');
         return {
           success: true,
           value: element,
-          type: 'element'
+          type: 'element',
         };
       }
-      
+
       if (lowerProp === 'value' && 'value' in element) {
         (element as HTMLInputElement).value = String(value || '');
         return {
           success: true,
           value: element,
-          type: 'element'
+          type: 'element',
         };
       }
-      
+
       // Handle CSS properties
       const camelProperty = prop.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
       if (prop.includes('-') || camelProperty in element.style || prop in element.style) {
@@ -822,10 +862,10 @@ export class TakeCommand implements TypedCommandImplementation<
         return {
           success: true,
           value: element,
-          type: 'element'
+          type: 'element',
         };
       }
-      
+
       // Handle generic attributes
       if (value) {
         element.setAttribute(property, String(value));
@@ -834,9 +874,8 @@ export class TakeCommand implements TypedCommandImplementation<
       return {
         success: true,
         value: element,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -844,9 +883,9 @@ export class TakeCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Failed to put property',
           code: 'PROPERTY_PUT_FAILED',
-          suggestions: ['Check if element supports the property', 'Verify property value is valid']
+          suggestions: ['Check if element supports the property', 'Verify property value is valid'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }

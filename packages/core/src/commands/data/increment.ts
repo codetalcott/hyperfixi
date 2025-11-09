@@ -1,12 +1,13 @@
 /**
- * Enhanced Increment Command Implementation  
+ * Enhanced Increment Command Implementation
  * Increases the value of a variable or element property by a specified amount
- * 
+ *
  * Syntax: increment <target> [by <number>]
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
+import { debug } from '../../utils/debug';
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
 import type { UnifiedValidationResult } from '../../types/unified-types';
@@ -20,7 +21,7 @@ export interface IncrementCommandInput {
   byKeyword?: 'by'; // For syntax validation
 }
 
-// Output type definition  
+// Output type definition
 export interface IncrementCommandOutput {
   oldValue: number;
   newValue: number;
@@ -30,26 +31,26 @@ export interface IncrementCommandOutput {
 /**
  * Enhanced Increment Command with full type safety and validation
  */
-export class IncrementCommand implements CommandImplementation<
-  IncrementCommandInput,
-  IncrementCommandOutput,
-  TypedExecutionContext
-> {
+export class IncrementCommand
+  implements
+    CommandImplementation<IncrementCommandInput, IncrementCommandOutput, TypedExecutionContext>
+{
   name = 'increment';
-  
+
   metadata = {
     name: 'increment',
-    description: 'The increment command adds to an existing variable, property, or attribute. It defaults to adding the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then incremented by the specified amount.',
+    description:
+      'The increment command adds to an existing variable, property, or attribute. It defaults to adding the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then incremented by the specified amount.',
     examples: [
       'increment counter',
       'increment counter by 5',
       'increment global score by 10',
       'increment element.value by 2',
-      'increment me.scrollTop by 100'
+      'increment me.scrollTop by 100',
     ],
     syntax: 'increment <target> [by <number>]',
     category: 'data' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -57,12 +58,14 @@ export class IncrementCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Increment command requires an object input',
-            suggestions: ['Provide an object with target property']
-          }],
-          suggestions: ['Provide an object with target property']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Increment command requires an object input',
+              suggestions: ['Provide an object with target property'],
+            },
+          ],
+          suggestions: ['Provide an object with target property'],
         };
       }
 
@@ -72,58 +75,74 @@ export class IncrementCommand implements CommandImplementation<
       if (!inputObj.target) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Increment command requires a target',
-            suggestions: ['Provide a target variable, element, or property to increment']
-          }],
-          suggestions: ['Provide a target variable, element, or property to increment']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Increment command requires a target',
+              suggestions: ['Provide a target variable, element, or property to increment'],
+            },
+          ],
+          suggestions: ['Provide a target variable, element, or property to increment'],
         };
       }
 
       // Validate target type
       const target = inputObj.target;
-      if (typeof target !== 'string' && typeof target !== 'number' && 
-          !(target instanceof HTMLElement)) {
+      if (
+        typeof target !== 'string' &&
+        typeof target !== 'number' &&
+        !(target instanceof HTMLElement)
+      ) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Target must be a string (variable name), number, or HTMLElement',
-            suggestions: ['Use a variable name like "counter" or an element reference']
-          }],
-          suggestions: ['Use a variable name like "counter" or an element reference']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Target must be a string (variable name), number, or HTMLElement',
+              suggestions: ['Use a variable name like "counter" or an element reference'],
+            },
+          ],
+          suggestions: ['Use a variable name like "counter" or an element reference'],
         };
       }
 
       // Validate amount if provided
       if (inputObj.amount !== undefined) {
         const amount = inputObj.amount;
-        if (typeof amount !== 'number' && 
-            (typeof amount !== 'string' || isNaN(parseFloat(amount)))) {
+        if (
+          typeof amount !== 'number' &&
+          (typeof amount !== 'string' || isNaN(parseFloat(amount)))
+        ) {
           return {
             isValid: false,
-            errors: [{
-              type: 'type-mismatch',
-              message: 'Amount must be a number',
-              suggestions: ['Provide a numeric value like 1, 5, or 10.5']
-            }],
-            suggestions: ['Provide a numeric value like 1, 5, or 10.5']
+            errors: [
+              {
+                type: 'type-mismatch',
+                message: 'Amount must be a number',
+                suggestions: ['Provide a numeric value like 1, 5, or 10.5'],
+              },
+            ],
+            suggestions: ['Provide a numeric value like 1, 5, or 10.5'],
           };
         }
       }
 
       // Validate scope if provided
-      if (inputObj.scope !== undefined && 
-          inputObj.scope !== 'global' && inputObj.scope !== 'local') {
+      if (
+        inputObj.scope !== undefined &&
+        inputObj.scope !== 'global' &&
+        inputObj.scope !== 'local'
+      ) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Scope must be "global" or "local"',
-            suggestions: ['Use "global" or "local" scope, or omit for default behavior']
-          }],
-          suggestions: ['Use "global" or "local" scope, or omit for default behavior']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Scope must be "global" or "local"',
+              suggestions: ['Use "global" or "local" scope, or omit for default behavior'],
+            },
+          ],
+          suggestions: ['Use "global" or "local" scope, or omit for default behavior'],
         };
       }
 
@@ -136,54 +155,56 @@ export class IncrementCommand implements CommandImplementation<
           ...(inputObj.property !== undefined && { property: inputObj.property }),
           ...(inputObj.scope !== undefined && { scope: inputObj.scope }),
           amount: inputObj.amount || 1,
-          ...(inputObj.byKeyword !== undefined && { byKeyword: inputObj.byKeyword })
-        }
+          ...(inputObj.byKeyword !== undefined && { byKeyword: inputObj.byKeyword }),
+        },
       };
-    }
+    },
   };
 
   async execute(
-    input: IncrementCommandInput, 
+    input: IncrementCommandInput,
     context: TypedExecutionContext
   ): Promise<IncrementCommandOutput> {
     const { target, property, scope, amount = 1 } = input;
 
     // Get current value
     const currentValue = this.getCurrentValue(target, property, scope, context);
-    
+
     // Perform increment
     const newValue = this.performIncrement(currentValue, amount);
-    
+
     // Set the new value
     this.setTargetValue(target, property, scope, newValue, context);
-    
+
     // Update context
     Object.assign(context, { it: newValue });
-    
+
     return {
       oldValue: currentValue,
       newValue,
-      target: typeof target === 'number' ? String(target) : target
+      target: typeof target === 'number' ? String(target) : target,
     };
   }
 
   private getCurrentValue(
-    target: string | HTMLElement | number, 
-    property: string | undefined, 
-    scope: string | undefined, 
+    target: string | HTMLElement | number,
+    property: string | undefined,
+    scope: string | undefined,
     context: TypedExecutionContext
   ): number {
     // Handle direct numeric values
     if (typeof target === 'number') {
       return target;
     }
-    
+
     // Handle HTMLElement
     if (target instanceof HTMLElement) {
       if (property) {
         // Get element property or attribute
-        if (property.startsWith('data-') || 
-            ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)) {
+        if (
+          property.startsWith('data-') ||
+          ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)
+        ) {
           const value = target.getAttribute(property);
           return this.convertToNumber(value);
         } else {
@@ -196,7 +217,7 @@ export class IncrementCommand implements CommandImplementation<
         return this.convertToNumber(value);
       }
     }
-    
+
     // Handle string (variable name or element reference)
     if (typeof target === 'string') {
       // Handle scoped variables
@@ -204,12 +225,12 @@ export class IncrementCommand implements CommandImplementation<
         const value = this.getVariableValue(target, context, 'global');
         return this.convertToNumber(value);
       }
-      
+
       // Handle element property references (e.g., "me.value", "element.scrollTop")
       if (target.includes('.')) {
         return this.getElementProperty(target, context);
       }
-      
+
       // Handle context references
       if (target === 'me' && context.me) {
         return this.convertToNumber((context.me as any).value || 0);
@@ -218,12 +239,12 @@ export class IncrementCommand implements CommandImplementation<
       } else if (target === 'you' && context.you) {
         return this.convertToNumber((context.you as any).value || 0);
       }
-      
+
       // Get variable value
       const value = this.getVariableValue(target, context);
       return this.convertToNumber(value);
     }
-    
+
     return this.convertToNumber(target);
   }
 
@@ -232,28 +253,30 @@ export class IncrementCommand implements CommandImplementation<
     if (isNaN(currentValue)) {
       return NaN;
     }
-    
+
     // Handle special cases for incrementBy
     if (!isFinite(incrementBy)) {
       incrementBy = 1;
     }
-    
+
     return currentValue + incrementBy;
   }
 
   private setTargetValue(
-    target: string | HTMLElement | number, 
-    property: string | undefined, 
-    scope: string | undefined, 
-    newValue: number, 
+    target: string | HTMLElement | number,
+    property: string | undefined,
+    scope: string | undefined,
+    newValue: number,
     context: TypedExecutionContext
   ): void {
     // Handle HTMLElement
     if (target instanceof HTMLElement) {
       if (property) {
         // Set element property or attribute
-        if (property.startsWith('data-') || 
-            ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)) {
+        if (
+          property.startsWith('data-') ||
+          ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)
+        ) {
           target.setAttribute(property, String(newValue));
         } else {
           (target as any)[property] = newValue;
@@ -268,7 +291,7 @@ export class IncrementCommand implements CommandImplementation<
       }
       return;
     }
-    
+
     // Handle string (variable name or element reference)
     if (typeof target === 'string') {
       // Handle scoped variables
@@ -276,13 +299,13 @@ export class IncrementCommand implements CommandImplementation<
         this.setVariableValue(target, newValue, context, 'global');
         return;
       }
-      
+
       // Handle element property references
       if (target.includes('.')) {
         this.setElementProperty(target, newValue, context);
         return;
       }
-      
+
       // Handle context references
       if (target === 'me' && context.me) {
         (context.me as any).value = newValue;
@@ -294,7 +317,7 @@ export class IncrementCommand implements CommandImplementation<
         (context.you as any).value = newValue;
         return;
       }
-      
+
       // Set variable value
       this.setVariableValue(target, newValue, context);
     }
@@ -304,9 +327,9 @@ export class IncrementCommand implements CommandImplementation<
     const parts = propertyPath.split('.');
     const elementRef = parts[0];
     const property = parts[1];
-    
+
     let element: HTMLElement | unknown = null;
-    
+
     // Resolve element reference
     if (elementRef === 'me') {
       element = context.me;
@@ -318,23 +341,27 @@ export class IncrementCommand implements CommandImplementation<
       // Try to resolve as variable
       element = this.getVariableValue(elementRef, context);
     }
-    
+
     if (!element) {
       return 0;
     }
-    
+
     // Get property value
     const value = (element as Record<string, unknown>)[property];
     return this.convertToNumber(value);
   }
 
-  private setElementProperty(propertyPath: string, value: number, context: TypedExecutionContext): void {
+  private setElementProperty(
+    propertyPath: string,
+    value: number,
+    context: TypedExecutionContext
+  ): void {
     const parts = propertyPath.split('.');
     const elementRef = parts[0];
     const property = parts[1];
-    
+
     let element: HTMLElement | unknown = null;
-    
+
     // Resolve element reference
     if (elementRef === 'me') {
       element = context.me;
@@ -346,7 +373,7 @@ export class IncrementCommand implements CommandImplementation<
       // Try to resolve as variable
       element = this.getVariableValue(elementRef, context);
     }
-    
+
     if (element) {
       (element as Record<string, unknown>)[property] = value;
     }
@@ -356,24 +383,24 @@ export class IncrementCommand implements CommandImplementation<
     if (value === null || value === undefined) {
       return 0;
     }
-    
+
     if (typeof value === 'number') {
       return isFinite(value) ? value : 0;
     }
-    
+
     if (typeof value === 'string') {
       const parsed = parseFloat(value);
       return parsed; // Return NaN if invalid string to preserve test expectations
     }
-    
+
     if (typeof value === 'boolean') {
       return value ? 1 : 0;
     }
-    
+
     if (Array.isArray(value)) {
       return value.length;
     }
-    
+
     if (typeof value === 'object') {
       // Try to get length or valueOf
       if ('length' in value && typeof value.length === 'number') {
@@ -388,11 +415,15 @@ export class IncrementCommand implements CommandImplementation<
       // Return NaN for objects that can't be converted
       return NaN;
     }
-    
+
     return 0;
   }
 
-  private getVariableValue(name: string, context: TypedExecutionContext, preferredScope?: string): unknown {
+  private getVariableValue(
+    name: string,
+    context: TypedExecutionContext,
+    preferredScope?: string
+  ): unknown {
     // If preferred scope is specified, check that first
     if (preferredScope === 'global' && context.globals && context.globals.has(name)) {
       return context.globals.get(name);
@@ -430,12 +461,19 @@ export class IncrementCommand implements CommandImplementation<
     return undefined;
   }
 
-  private setVariableValue(name: string, value: number, context: TypedExecutionContext, preferredScope?: string): void {
-    console.log(`📝 INCREMENT setVariableValue: name='${name}', value=${value}, preferredScope='${preferredScope}'`);
+  private setVariableValue(
+    name: string,
+    value: number,
+    context: TypedExecutionContext,
+    preferredScope?: string
+  ): void {
+    debug.command(
+      `INCREMENT setVariableValue: name='${name}', value=${value}, preferredScope='${preferredScope}'`
+    );
 
     // If preferred scope is specified, handle it
     if (preferredScope === 'global') {
-      console.log(`  → Setting in globals AND window (preferred scope)`);
+      debug.command(`  → Setting in globals AND window (preferred scope)`);
       context.globals.set(name, value);
       // Also set on window for browser globals
       if (typeof window !== 'undefined') {
@@ -446,14 +484,14 @@ export class IncrementCommand implements CommandImplementation<
 
     // If variable exists in local scope, update it
     if (context.locals && context.locals.has(name)) {
-      console.log(`  → Updating existing local variable`);
+      debug.command(`  → Updating existing local variable`);
       context.locals.set(name, value);
       return;
     }
 
     // If variable exists in global scope, update it
     if (context.globals && context.globals.has(name)) {
-      console.log(`  → Updating existing global variable`);
+      debug.command(`  → Updating existing global variable`);
       context.globals.set(name, value);
       // Also update on window if it exists there
       if (typeof window !== 'undefined' && name in window) {
@@ -464,14 +502,14 @@ export class IncrementCommand implements CommandImplementation<
 
     // If variable exists in general variables, update it
     if (context.variables && context.variables.has(name)) {
-      console.log(`  → Updating existing variable in variables map`);
+      debug.command(`  → Updating existing variable in variables map`);
       context.variables.set(name, value);
       return;
     }
 
     // Check if variable exists on window (browser global)
     if (typeof window !== 'undefined' && name in window) {
-      console.log(`  → Updating existing window variable`);
+      debug.command(`  → Updating existing window variable`);
       (window as any)[name] = value;
       // Also store in globals for consistency
       context.globals.set(name, value);
@@ -479,7 +517,7 @@ export class IncrementCommand implements CommandImplementation<
     }
 
     // Create new local variable
-    console.log(`  → Creating NEW local variable`);
+    debug.command(`  → Creating NEW local variable`);
     context.locals.set(name, value);
   }
 }

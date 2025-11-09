@@ -13,7 +13,7 @@ describe('Template System Integration', () => {
   let compiler: TemplateCompiler;
   let executor: OptimizedTemplateExecutor;
   let renderCommand: RenderCommand;
-  
+
   beforeEach(() => {
     compiler = new TemplateCompiler();
     executor = new OptimizedTemplateExecutor();
@@ -40,23 +40,25 @@ describe('Template System Integration', () => {
         result: null,
         locals: new Map([['name', 'Integration Test']]),
         globals: new Map(),
-        meta: undefined
+        meta: undefined,
       };
 
       try {
-        const result = await renderCommand.execute(context, template, 'with', { name: 'Integration Test' });
-        
+        const result = await renderCommand.execute(context, template, 'with', {
+          name: 'Integration Test',
+        });
+
         // Check that result is a DocumentFragment-like object with the expected structure
         expect(result).toBeDefined();
         expect(result.nodeType).toBe(11); // DocumentFragment nodeType
         expect(typeof result.appendChild).toBe('function');
         expect(typeof result.cloneNode).toBe('function');
-        
+
         // Convert to HTML to check content
         const div = document.createElement('div');
         div.appendChild(result.cloneNode(true));
         const html = div.innerHTML;
-        
+
         expect(html).toContain('Hello Integration Test!');
       } finally {
         document.body.removeChild(template);
@@ -88,22 +90,24 @@ describe('Template System Integration', () => {
         result: null,
         locals: new Map([['colors', ['red', 'blue', 'green']]]),
         globals: new Map([['getContrastingColor', getContrastingColor]]),
-        meta: undefined
+        meta: undefined,
       };
 
       try {
-        const result = await renderCommand.execute(context, template, 'with', { colors: ['red', 'blue', 'green'] });
-        
+        const result = await renderCommand.execute(context, template, 'with', {
+          colors: ['red', 'blue', 'green'],
+        });
+
         // Check that result is a DocumentFragment-like object with the expected structure
         expect(result).toBeDefined();
         expect(result.nodeType).toBe(11); // DocumentFragment nodeType
         expect(typeof result.appendChild).toBe('function');
         expect(typeof result.cloneNode).toBe('function');
-        
+
         const div = document.createElement('div');
         div.appendChild(result.cloneNode(true));
         const html = div.innerHTML;
-        
+
         expect(html).toContain('<ul>');
         expect(html).toContain('style="background: red; color: white"');
         expect(html).toContain('style="background: blue; color: black"');
@@ -131,16 +135,18 @@ describe('Template System Integration', () => {
         result: null,
         locals: new Map([['items', ['alpha', 'beta', 'gamma']]]),
         globals: new Map(),
-        meta: undefined
+        meta: undefined,
       };
 
       try {
-        const result = await renderCommand.execute(context, template, 'with', { items: ['alpha', 'beta', 'gamma'] });
-        
+        const result = await renderCommand.execute(context, template, 'with', {
+          items: ['alpha', 'beta', 'gamma'],
+        });
+
         const div = document.createElement('div');
         div.appendChild(result.cloneNode(true));
         const html = div.innerHTML;
-        
+
         expect(html).toContain('<div class="item">alpha</div>');
         expect(html).toContain('<div class="item">beta</div>');
         expect(html).toContain('<div class="item">gamma</div>');
@@ -155,7 +161,7 @@ describe('Template System Integration', () => {
       const largeDataset = Array.from({ length: 50 }, (_, i) => ({
         id: i,
         name: `Item ${i}`,
-        active: i % 2 === 0
+        active: i % 2 === 0,
       }));
 
       const template = document.createElement('template');
@@ -180,12 +186,14 @@ describe('Template System Integration', () => {
         result: null,
         locals: new Map([['items', largeDataset]]),
         globals: new Map(),
-        meta: undefined
+        meta: undefined,
       };
 
       try {
         const startTime = Date.now();
-        const result = await renderCommand.execute(context, template, 'with', { items: largeDataset });
+        const result = await renderCommand.execute(context, template, 'with', {
+          items: largeDataset,
+        });
         const endTime = Date.now();
 
         // Should complete in reasonable time
@@ -226,13 +234,13 @@ describe('Template System Integration', () => {
         result: null,
         locals: new Map(),
         globals: new Map(),
-        meta: undefined
+        meta: undefined,
       };
 
       try {
         // Should not throw
         const result = await renderCommand.execute(context, template);
-        
+
         const div = document.createElement('div');
         div.appendChild(result.cloneNode(true));
         const html = div.innerHTML;
@@ -249,7 +257,7 @@ describe('Template System Integration', () => {
     it('should work with rebuilt components', async () => {
       // This test verifies that the template system works after builds
       // and addresses the "blocked by build/browser cache" issue
-      
+
       const template = document.createElement('template');
       template.innerHTML = `
         @set cached_value to "Fresh Build " + timestamp
@@ -265,12 +273,14 @@ describe('Template System Integration', () => {
         result: null,
         locals: new Map([['timestamp', Date.now().toString()]]),
         globals: new Map(),
-        meta: undefined
+        meta: undefined,
       };
 
       try {
-        const result = await renderCommand.execute(context, template, 'with', { timestamp: Date.now().toString() });
-        
+        const result = await renderCommand.execute(context, template, 'with', {
+          timestamp: Date.now().toString(),
+        });
+
         const div = document.createElement('div');
         div.appendChild(result.cloneNode(true));
         const html = div.innerHTML;

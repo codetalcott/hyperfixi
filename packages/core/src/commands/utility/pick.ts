@@ -1,9 +1,9 @@
 /**
  * Enhanced Pick Command Implementation
  * Selects a random element from a collection or choice from options
- * 
+ *
  * Syntax: pick <item1>, <item2>, ... | pick from <array>
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -18,7 +18,7 @@ export interface PickCommandInput {
   fromKeyword?: 'from'; // For syntax validation
 }
 
-// Output type definition  
+// Output type definition
 export interface PickCommandOutput {
   selectedItem: any;
   selectedIndex: number;
@@ -29,24 +29,23 @@ export interface PickCommandOutput {
 /**
  * Enhanced Pick Command with full type safety and validation
  */
-export class PickCommand implements CommandImplementation<
-  PickCommandInput,
-  PickCommandOutput,
-  TypedExecutionContext
-> {
+export class PickCommand
+  implements CommandImplementation<PickCommandInput, PickCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'pick',
-    description: 'The pick command selects a random element from a collection of items or from an array. It sets the selected item to the "it" context variable.',
+    description:
+      'The pick command selects a random element from a collection of items or from an array. It sets the selected item to the "it" context variable.',
     examples: [
       'pick "red", "green", "blue"',
       'pick from colors',
       'pick 1, 2, 3, 4, 5',
       'pick from document.querySelectorAll(".option")',
-      'pick "heads", "tails"'
+      'pick "heads", "tails"',
     ],
     syntax: 'pick <item1>, <item2>, ... | pick from <array>',
     category: 'utility' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -54,12 +53,14 @@ export class PickCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Pick command requires an object input',
-            suggestions: ['Provide an object with items array or array property']
-          }],
-          suggestions: ['Provide an object with items array or array property']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Pick command requires an object input',
+              suggestions: ['Provide an object with items array or array property'],
+            },
+          ],
+          suggestions: ['Provide an object with items array or array property'],
         };
       }
 
@@ -69,12 +70,14 @@ export class PickCommand implements CommandImplementation<
       if (!inputObj.items && !inputObj.array) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Pick command requires items to choose from',
-            suggestions: ['Provide an items array or use "from" with an array']
-          }],
-          suggestions: ['Provide an items array or use "from" with an array']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Pick command requires items to choose from',
+              suggestions: ['Provide an items array or use "from" with an array'],
+            },
+          ],
+          suggestions: ['Provide an items array or use "from" with an array'],
         };
       }
 
@@ -82,12 +85,14 @@ export class PickCommand implements CommandImplementation<
       if (inputObj.items && inputObj.array) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Pick command cannot have both direct items and array',
-            suggestions: ['Use either direct items or "from" array syntax, not both']
-          }],
-          suggestions: ['Use either direct items or "from" array syntax, not both']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Pick command cannot have both direct items and array',
+              suggestions: ['Use either direct items or "from" array syntax, not both'],
+            },
+          ],
+          suggestions: ['Use either direct items or "from" array syntax, not both'],
         };
       }
 
@@ -95,12 +100,14 @@ export class PickCommand implements CommandImplementation<
       if (inputObj.items && !Array.isArray(inputObj.items)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Items must be an array',
-            suggestions: ['Provide an array of items to pick from']
-          }],
-          suggestions: ['Provide an array of items to pick from']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Items must be an array',
+              suggestions: ['Provide an array of items to pick from'],
+            },
+          ],
+          suggestions: ['Provide an array of items to pick from'],
         };
       }
 
@@ -108,12 +115,14 @@ export class PickCommand implements CommandImplementation<
       if (inputObj.array && !Array.isArray(inputObj.array)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Array must be an array type',
-            suggestions: ['Provide a valid array to pick from']
-          }],
-          suggestions: ['Provide a valid array to pick from']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Array must be an array type',
+              suggestions: ['Provide a valid array to pick from'],
+            },
+          ],
+          suggestions: ['Provide a valid array to pick from'],
         };
       }
 
@@ -122,12 +131,14 @@ export class PickCommand implements CommandImplementation<
       if (sourceArray.length === 0) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Cannot pick from empty collection',
-            suggestions: ['Provide at least one item to pick from']
-          }],
-          suggestions: ['Provide at least one item to pick from']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Cannot pick from empty collection',
+              suggestions: ['Provide at least one item to pick from'],
+            },
+          ],
+          suggestions: ['Provide at least one item to pick from'],
         };
       }
 
@@ -138,10 +149,10 @@ export class PickCommand implements CommandImplementation<
         data: {
           items: inputObj.items,
           array: inputObj.array,
-          fromKeyword: inputObj.fromKeyword
-        }
+          fromKeyword: inputObj.fromKeyword,
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -169,7 +180,7 @@ export class PickCommand implements CommandImplementation<
       selectedItem,
       selectedIndex,
       sourceLength: sourceArray.length,
-      sourceType
+      sourceType,
     };
   }
 }

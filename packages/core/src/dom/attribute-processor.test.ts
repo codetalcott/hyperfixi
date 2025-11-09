@@ -19,7 +19,7 @@ describe('AttributeProcessor System Events', () => {
 
     // Create processor without auto-initialization
     processor = new AttributeProcessor({
-      autoScan: false // We'll manually control scanning for tests
+      autoScan: false, // We'll manually control scanning for tests
     });
   });
 
@@ -43,19 +43,23 @@ describe('AttributeProcessor System Events', () => {
       let eventFired = false;
       let processedCount = 0;
 
-      const readyPromise = new Promise<void>((resolve) => {
-        document.addEventListener('hyperscript:ready', (event: Event) => {
-          eventFired = true;
-          const customEvent = event as CustomEvent;
-          processedCount = customEvent.detail.processedElements;
+      const readyPromise = new Promise<void>(resolve => {
+        document.addEventListener(
+          'hyperscript:ready',
+          (event: Event) => {
+            eventFired = true;
+            const customEvent = event as CustomEvent;
+            processedCount = customEvent.detail.processedElements;
 
-          // Verify event properties
-          expect(customEvent.bubbles).toBe(true);
-          expect(customEvent.detail.processedElements).toBeGreaterThan(0);
-          expect(customEvent.detail.timestamp).toBeTypeOf('number');
+            // Verify event properties
+            expect(customEvent.bubbles).toBe(true);
+            expect(customEvent.detail.processedElements).toBeGreaterThan(0);
+            expect(customEvent.detail.timestamp).toBeTypeOf('number');
 
-          resolve();
-        }, { once: true });
+            resolve();
+          },
+          { once: true }
+        );
       });
 
       // Process all elements (this should trigger the ready event)
@@ -78,12 +82,16 @@ describe('AttributeProcessor System Events', () => {
         <div _="on click log 'three'"></div>
       `;
 
-      const eventPromise = new Promise<void>((resolve) => {
-        document.addEventListener('hyperscript:ready', (event: Event) => {
-          const customEvent = event as CustomEvent;
-          expect(customEvent.detail.processedElements).toBe(3);
-          resolve();
-        }, { once: true });
+      const eventPromise = new Promise<void>(resolve => {
+        document.addEventListener(
+          'hyperscript:ready',
+          (event: Event) => {
+            const customEvent = event as CustomEvent;
+            expect(customEvent.detail.processedElements).toBe(3);
+            resolve();
+          },
+          { once: true }
+        );
       });
 
       processor.scanAndProcessAll();
@@ -96,7 +104,7 @@ describe('AttributeProcessor System Events', () => {
       testContainer.innerHTML = `<div _="on click log 'test'"></div>`;
 
       let eventCount = 0;
-      const eventPromise = new Promise<void>((resolve) => {
+      const eventPromise = new Promise<void>(resolve => {
         document.addEventListener('hyperscript:ready', () => {
           eventCount++;
           // Resolve after a small delay to ensure all duplicate attempts complete
@@ -120,12 +128,16 @@ describe('AttributeProcessor System Events', () => {
         <p>Regular content</p>
       `;
 
-      const eventPromise = new Promise<void>((resolve) => {
-        document.addEventListener('hyperscript:ready', (event: Event) => {
-          const customEvent = event as CustomEvent;
-          expect(customEvent.detail.processedElements).toBe(0);
-          resolve();
-        }, { once: true });
+      const eventPromise = new Promise<void>(resolve => {
+        document.addEventListener(
+          'hyperscript:ready',
+          (event: Event) => {
+            const customEvent = event as CustomEvent;
+            expect(customEvent.detail.processedElements).toBe(0);
+            resolve();
+          },
+          { once: true }
+        );
       });
 
       processor.scanAndProcessAll();
@@ -137,17 +149,21 @@ describe('AttributeProcessor System Events', () => {
     it('should include timestamp in event detail', async () => {
       testContainer.innerHTML = `<div _="on click log 'test'"></div>`;
 
-      const eventPromise = new Promise<void>((resolve) => {
-        document.addEventListener('hyperscript:ready', (event: Event) => {
-          const customEvent = event as CustomEvent;
-          const timestamp = customEvent.detail.timestamp;
+      const eventPromise = new Promise<void>(resolve => {
+        document.addEventListener(
+          'hyperscript:ready',
+          (event: Event) => {
+            const customEvent = event as CustomEvent;
+            const timestamp = customEvent.detail.timestamp;
 
-          expect(timestamp).toBeTypeOf('number');
-          expect(timestamp).toBeGreaterThan(0);
-          expect(timestamp).toBeLessThanOrEqual(Date.now());
+            expect(timestamp).toBeTypeOf('number');
+            expect(timestamp).toBeGreaterThan(0);
+            expect(timestamp).toBeLessThanOrEqual(Date.now());
 
-          resolve();
-        }, { once: true });
+            resolve();
+          },
+          { once: true }
+        );
       });
 
       processor.scanAndProcessAll();
@@ -218,7 +234,7 @@ describe('AttributeProcessor System Events', () => {
         parentGotEvent = true;
       });
 
-      const loadPromise = new Promise<void>((resolve) => {
+      const loadPromise = new Promise<void>(resolve => {
         child.addEventListener('load', () => {
           // Give time for potential bubbling
           setTimeout(() => {
@@ -348,14 +364,18 @@ describe('AttributeProcessor System Events', () => {
         loadOrder.push('load-elem2');
       });
 
-      const eventPromise = new Promise<void>((resolve) => {
-        document.addEventListener('hyperscript:ready', () => {
-          loadOrder.push('hyperscript:ready');
+      const eventPromise = new Promise<void>(resolve => {
+        document.addEventListener(
+          'hyperscript:ready',
+          () => {
+            loadOrder.push('hyperscript:ready');
 
-          // Verify load events happened first
-          expect(loadOrder).toEqual(['load-elem1', 'load-elem2', 'hyperscript:ready']);
-          resolve();
-        }, { once: true });
+            // Verify load events happened first
+            expect(loadOrder).toEqual(['load-elem1', 'load-elem2', 'hyperscript:ready']);
+            resolve();
+          },
+          { once: true }
+        );
       });
 
       processor.scanAndProcessAll();
@@ -379,17 +399,21 @@ describe('AttributeProcessor System Events', () => {
         });
       });
 
-      const eventPromise = new Promise<void>((resolve) => {
-        document.addEventListener('hyperscript:ready', (event: Event) => {
-          const customEvent = event as CustomEvent;
+      const eventPromise = new Promise<void>(resolve => {
+        document.addEventListener(
+          'hyperscript:ready',
+          (event: Event) => {
+            const customEvent = event as CustomEvent;
 
-          // All load events should have fired
-          expect(loadEventCount).toBe(3);
-          // Ready event should report same count
-          expect(customEvent.detail.processedElements).toBe(3);
+            // All load events should have fired
+            expect(loadEventCount).toBe(3);
+            // Ready event should report same count
+            expect(customEvent.detail.processedElements).toBe(3);
 
-          resolve();
-        }, { once: true });
+            resolve();
+          },
+          { once: true }
+        );
       });
 
       processor.scanAndProcessAll();
@@ -411,12 +435,16 @@ describe('AttributeProcessor System Events', () => {
         expect(pageReady).toBe(false); // Ready should not have fired yet
       });
 
-      const eventPromise = new Promise<void>((resolve) => {
-        document.addEventListener('hyperscript:ready', () => {
-          pageReady = true;
-          expect(elementLoaded).toBe(true); // Element should be loaded
-          resolve();
-        }, { once: true });
+      const eventPromise = new Promise<void>(resolve => {
+        document.addEventListener(
+          'hyperscript:ready',
+          () => {
+            pageReady = true;
+            expect(elementLoaded).toBe(true); // Element should be loaded
+            resolve();
+          },
+          { once: true }
+        );
       });
 
       processor.scanAndProcessAll();

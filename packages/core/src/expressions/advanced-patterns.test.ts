@@ -33,24 +33,25 @@ describe('Advanced Pattern Coverage', () => {
       locals: new Map([
         ['appName', 'TestApp'],
         ['version', '1.2.3'],
-        ['config', { 
-          theme: 'dark', 
-          features: { search: true, notifications: false },
-          users: [
-            { name: 'Alice', role: 'admin' },
-            { name: 'Bob', role: 'user' }
-          ]
-        }]
+        [
+          'config',
+          {
+            theme: 'dark',
+            features: { search: true, notifications: false },
+            users: [
+              { name: 'Alice', role: 'admin' },
+              { name: 'Bob', role: 'user' },
+            ],
+          },
+        ],
       ]),
-      globals: new Map([
-        ['window', { location: { href: 'http://localhost:3000' } }]
-      ]),
+      globals: new Map([['window', { location: { href: 'http://localhost:3000' } }]]),
       parent: null,
       halted: false,
       returned: false,
       broke: false,
       continued: false,
-      async: false
+      async: false,
     };
   });
 
@@ -67,12 +68,18 @@ describe('Advanced Pattern Coverage', () => {
     });
 
     it('should handle template literals with complex expressions', async () => {
-      const result = await parseAndEvaluateExpression('`Version: ${version} - Theme: ${config.theme}`', context);
+      const result = await parseAndEvaluateExpression(
+        '`Version: ${version} - Theme: ${config.theme}`',
+        context
+      );
       expect(result).toBe('Version: 1.2.3 - Theme: dark');
     });
 
     it('should handle nested template literals', async () => {
-      const result = await parseAndEvaluateExpression('`App: ${`${appName} v${version}`}`', context);
+      const result = await parseAndEvaluateExpression(
+        '`App: ${`${appName} v${version}`}`',
+        context
+      );
       expect(result).toBe('App: TestApp v1.2.3');
     });
 
@@ -87,7 +94,9 @@ describe('Advanced Pattern Coverage', () => {
     it('should handle nested object property access', async () => {
       expect(await parseAndEvaluateExpression('config.theme', context)).toBe('dark');
       expect(await parseAndEvaluateExpression('config.features.search', context)).toBe(true);
-      expect(await parseAndEvaluateExpression('config.features.notifications', context)).toBe(false);
+      expect(await parseAndEvaluateExpression('config.features.notifications', context)).toBe(
+        false
+      );
     });
 
     it('should handle array access with object properties', async () => {
@@ -179,7 +188,8 @@ describe('Advanced Pattern Coverage', () => {
 
   describe('Performance and Complex Scenarios', () => {
     it('should handle deeply nested expressions efficiently', async () => {
-      const complexExpr = 'config.features.search and config.users.length > 0 and appName.length > 3';
+      const complexExpr =
+        'config.features.search and config.users.length > 0 and appName.length > 3';
       const result = await parseAndEvaluateExpression(complexExpr, context);
       expect(result).toBe(true);
     });
@@ -191,7 +201,8 @@ describe('Advanced Pattern Coverage', () => {
     });
 
     it('should handle large template literals', async () => {
-      const largeTemplate = '`App: ${appName}, Version: ${version}, Theme: ${config.theme}, Users: ${config.users.length}, Search: ${config.features.search}`';
+      const largeTemplate =
+        '`App: ${appName}, Version: ${version}, Theme: ${config.theme}, Users: ${config.users.length}, Search: ${config.features.search}`';
       const result = await parseAndEvaluateExpression(largeTemplate, context);
       expect(result).toBe('App: TestApp, Version: 1.2.3, Theme: dark, Users: 2, Search: true');
     });
@@ -214,7 +225,10 @@ describe('Advanced Pattern Coverage', () => {
     });
 
     it('should handle multiple comparison operators', async () => {
-      const result = await parseAndEvaluateExpression('config.users.length > 1 and config.users.length < 5', context);
+      const result = await parseAndEvaluateExpression(
+        'config.users.length > 1 and config.users.length < 5',
+        context
+      );
       expect(result).toBe(true);
     });
   });

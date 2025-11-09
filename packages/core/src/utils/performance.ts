@@ -46,11 +46,7 @@ export class ObjectPool<T extends object> {
    * @param reset Optional function to reset objects before reuse
    * @param initialSize Optional initial pool size
    */
-  constructor(
-    factory: () => T,
-    reset?: (obj: T) => void,
-    initialSize = 0
-  ) {
+  constructor(factory: () => T, reset?: (obj: T) => void, initialSize = 0) {
     this.factory = factory;
     this.reset = reset;
 
@@ -110,7 +106,7 @@ export class ObjectPool<T extends object> {
 
     return {
       ...this.metrics,
-      hitRate
+      hitRate,
     };
   }
 
@@ -149,13 +145,14 @@ export class StyleBatcher {
 
   // Object pool for style objects - reduces GC pressure during animations
   private stylePool = new ObjectPool<Record<string, string>>(
-    () => ({}),  // Factory: create empty object
-    (obj) => {    // Reset: clear all properties
+    () => ({}), // Factory: create empty object
+    obj => {
+      // Reset: clear all properties
       for (const key of Object.keys(obj)) {
         delete obj[key];
       }
     },
-    10  // Pre-allocate 10 objects
+    10 // Pre-allocate 10 objects
   );
 
   /**
@@ -194,7 +191,7 @@ export class StyleBatcher {
           element.style.setProperty(property, value);
         } else {
           // Convert hyphenated property names to camelCase
-          const camelProperty = property.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+          const camelProperty = property.replace(/-([a-z])/g, g => g[1].toUpperCase());
           (element.style as any)[camelProperty] = value;
         }
       }
@@ -254,20 +251,20 @@ export const styleBatcher = new StyleBatcher();
  * With EventQueue: 66 drag moves = 1 addEventListener (persistent) = 1 operation
  */
 export class EventQueue {
-  private listeners = new Map<string, {
-    queue: Event[];
-    waiters: Array<(event: Event) => void>;
-    listener: EventListener;
-  }>();
+  private listeners = new Map<
+    string,
+    {
+      queue: Event[];
+      waiters: Array<(event: Event) => void>;
+      listener: EventListener;
+    }
+  >();
 
   /**
    * Wait for an event on a target
    * Reuses persistent listeners instead of creating new ones
    */
-  async wait(
-    eventName: string,
-    target: EventTarget
-  ): Promise<Event> {
+  async wait(eventName: string, target: EventTarget): Promise<Event> {
     // Generate unique key for this target+event combination
     const key = this.getKey(target, eventName);
 
@@ -284,7 +281,7 @@ export class EventQueue {
     }
 
     // Otherwise, wait for the next event
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       entry.waiters.push(resolve);
     });
   }
@@ -312,7 +309,7 @@ export class EventQueue {
     this.listeners.set(key, {
       queue: [],
       waiters: [],
-      listener
+      listener,
     });
   }
 
@@ -321,10 +318,9 @@ export class EventQueue {
    */
   private getKey(target: EventTarget, eventName: string): string {
     // Use WeakMap-style ID or default identifier
-    const targetId = (target as any)._eventQueueId ||
-                    (target === window ? 'window' :
-                     target === document ? 'document' :
-                     'default');
+    const targetId =
+      (target as any)._eventQueueId ||
+      (target === window ? 'window' : target === document ? 'document' : 'default');
     return `${targetId}:${eventName}`;
   }
 

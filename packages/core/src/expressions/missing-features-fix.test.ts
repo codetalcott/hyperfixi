@@ -1,6 +1,6 @@
 /**
  * TDD Fix for Missing Expression Features (Issue #2 from todo list)
- * 
+ *
  * Based on official test suite failures:
  * ❌ converts value as Date (asExpression.js)
  * ❌ simple async expression works (async.js)
@@ -8,7 +8,7 @@
  * ❌ last works (positionalExpression.js)
  * ❌ first works w/ array-like (positionalExpression.js)
  * ❌ last works w/ array-like (positionalExpression.js)
- * 
+ *
  * These are important expression features for complete hyperscript compatibility
  */
 
@@ -26,7 +26,7 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
       it: null,
       result: null,
       locals: new Map(),
-      globals: new Map()
+      globals: new Map(),
     };
   });
 
@@ -63,10 +63,10 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
     beforeEach(() => {
       // Set up DOM elements for positional tests
       document.body.innerHTML = '';
-      
+
       const container = document.createElement('div');
       container.id = 'test-container';
-      
+
       // Create multiple test elements
       for (let i = 1; i <= 5; i++) {
         const item = document.createElement('div');
@@ -75,7 +75,7 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
         item.setAttribute('data-index', i.toString());
         container.appendChild(item);
       }
-      
+
       document.body.appendChild(container);
     });
 
@@ -152,7 +152,7 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
     it('should handle simple async expressions', async () => {
       // From official async.js test
       // This tests async function calls or Promise-based expressions
-      
+
       // Create an async function in the context
       context.globals.set('asyncFunction', async () => {
         return new Promise(resolve => {
@@ -167,7 +167,7 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
     it('should handle async argument evaluation', async () => {
       // Test that arguments are properly awaited in async contexts
       context.globals.set('asyncValue', Promise.resolve('promised-value'));
-      context.globals.set('processValue', (value) => `processed-${value}`);
+      context.globals.set('processValue', value => `processed-${value}`);
 
       const result = await parseAndEvaluateExpression('processValue(asyncValue)', context);
       expect(result).toBe('processed-promised-value');
@@ -175,8 +175,8 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
 
     it('should work with non-async values in async context', async () => {
       // From official async.js test - async argument works w/ non-async value
-      context.globals.set('syncFunction', (value) => `sync-${value}`);
-      
+      context.globals.set('syncFunction', value => `sync-${value}`);
+
       const result = await parseAndEvaluateExpression('syncFunction("test")', context);
       expect(result).toBe('sync-test');
     });
@@ -186,10 +186,10 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
     beforeEach(() => {
       // Set up DOM elements for integration tests (same as positional tests)
       document.body.innerHTML = '';
-      
+
       const container = document.createElement('div');
       container.id = 'test-container';
-      
+
       // Create multiple test elements
       for (let i = 1; i <= 5; i++) {
         const item = document.createElement('div');
@@ -198,17 +198,17 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
         item.setAttribute('data-index', i.toString());
         container.appendChild(item);
       }
-      
+
       document.body.appendChild(container);
     });
 
     it('should combine positional expressions with conversions', async () => {
       // Test combining first/last with "as" conversions
       context.locals.set('numberStrings', ['1', '2', '3', '4', '5']);
-      
+
       const firstAsInt = await parseAndEvaluateExpression('first numberStrings as Int', context);
       expect(firstAsInt).toBe(1);
-      
+
       const lastAsInt = await parseAndEvaluateExpression('last numberStrings as Int', context);
       expect(lastAsInt).toBe(5);
     });
@@ -225,9 +225,9 @@ describe('Missing Expression Features Fix - Official Test Patterns', () => {
       const element = await parseAndEvaluateExpression('first .test-item', context);
       expect(element).toBeInstanceOf(HTMLElement);
       expect(element.textContent).toBe('Item 1');
-      
+
       // Then test possessive syntax
-      const result = await parseAndEvaluateExpression('first .test-item\'s textContent', context);
+      const result = await parseAndEvaluateExpression("first .test-item's textContent", context);
       expect(result).toBe('Item 1');
     });
   });

@@ -4,7 +4,11 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { createEnhancedIncrementCommand, createEnhancedSetCommand, createEnhancedCallCommand } from './command-registry';
+import {
+  createEnhancedIncrementCommand,
+  createEnhancedSetCommand,
+  createEnhancedCallCommand,
+} from './command-registry';
 import { createTypedExecutionContext } from '../test-utilities';
 
 describe('Enhanced Commands', () => {
@@ -15,7 +19,7 @@ describe('Enhanced Commands', () => {
       context.variables = new Map([['counter', 5]]);
 
       const input = {
-        target: 'counter'
+        target: 'counter',
       };
 
       const result = await command.execute(input, context);
@@ -33,7 +37,7 @@ describe('Enhanced Commands', () => {
 
       const input = {
         target: 'score',
-        amount: 5
+        amount: 5,
       };
 
       const result = await command.execute(input, context);
@@ -49,13 +53,13 @@ describe('Enhanced Commands', () => {
       // Valid input
       const validResult = command.validation.validate({
         target: 'counter',
-        amount: 5
+        amount: 5,
       });
       expect(validResult.success).toBe(true);
 
       // Invalid input - missing target
       const invalidResult = command.validation.validate({
-        amount: 5
+        amount: 5,
       });
       expect(invalidResult.success).toBe(false);
       expect(invalidResult.error?.type).toBe('missing-argument');
@@ -69,7 +73,7 @@ describe('Enhanced Commands', () => {
 
       const input = {
         target: 'username',
-        value: 'john_doe'
+        value: 'john_doe',
       };
 
       const result = await command.execute(input, context);
@@ -85,7 +89,7 @@ describe('Enhanced Commands', () => {
 
       const input = {
         target: 'it',
-        value: 'test_result'
+        value: 'test_result',
       };
 
       const result = await command.execute(input, context);
@@ -103,7 +107,7 @@ describe('Enhanced Commands', () => {
 
       const testFunction = () => 'function_result';
       const input = {
-        expression: testFunction
+        expression: testFunction,
       };
 
       const result = await command.execute(input, context);
@@ -119,7 +123,7 @@ describe('Enhanced Commands', () => {
       const context = createTypedExecutionContext();
 
       const input = {
-        expression: 'literal_value'
+        expression: 'literal_value',
       };
 
       const result = await command.execute(input, context);
@@ -136,7 +140,7 @@ describe('Enhanced Commands', () => {
 
       const asyncFunction = async () => 'async_result';
       const input = {
-        expression: asyncFunction
+        expression: asyncFunction,
       };
 
       const result = await command.execute(input, context);

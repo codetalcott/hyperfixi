@@ -1,14 +1,14 @@
 /**
  * TDD Fix for CSS Reference Issues (Issue #3 from todo list)
- * 
+ *
  * Based on official test suite failures:
- * ❌ basic classRef works  
+ * ❌ basic classRef works
  * ❌ basic queryRef works
  * ❌ basic id ref works
- * 
+ *
  * The issue: hyperscript expects specific return formats:
  * - .class → returns collection (iterable with Array.from())
- * - <selector/> → returns collection (iterable with Array.from())  
+ * - <selector/> → returns collection (iterable with Array.from())
  * - #id → returns single element
  */
 
@@ -23,7 +23,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
   beforeEach(() => {
     // Clear any existing test elements
     document.body.innerHTML = '';
-    
+
     // Create test element
     testDiv = document.createElement('div');
     testDiv.className = 'c1';
@@ -37,7 +37,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
       it: null,
       result: null,
       locals: new Map(),
-      globals: new Map()
+      globals: new Map(),
     };
   });
 
@@ -45,15 +45,15 @@ describe('CSS References Fix - Official Test Patterns', () => {
     it('should work like official test: .c1 returns iterable collection', async () => {
       // From official classRef.js test:
       // var div = make("<div class='c1'></div>");
-      // var value = evalHyperScript(".c1"); 
+      // var value = evalHyperScript(".c1");
       // Array.from(value)[0].should.equal(div);
-      
+
       const result = await parseAndEvaluateExpression('.c1', context);
-      
+
       // Should be iterable with Array.from()
       expect(result).toBeDefined();
       expect(typeof result).toBe('object');
-      
+
       // Should be able to convert to array and get first element
       const arrayResult = Array.from(result);
       expect(arrayResult).toHaveLength(1);
@@ -62,7 +62,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
 
     it('should return empty collection for non-existent class', async () => {
       const result = await parseAndEvaluateExpression('.nonexistent', context);
-      
+
       const arrayResult = Array.from(result);
       expect(arrayResult).toHaveLength(0);
     });
@@ -71,12 +71,12 @@ describe('CSS References Fix - Official Test Patterns', () => {
   describe('ID References (#id)', () => {
     it('should work like official test: #d1 returns single element', async () => {
       // From official idRef.js test:
-      // var div = make("<div id='d1'></div>");  
+      // var div = make("<div id='d1'></div>");
       // var value = evalHyperScript("#d1");
       // value.should.equal(div);
-      
+
       const result = await parseAndEvaluateExpression('#d1', context);
-      
+
       // Should return the element directly (not a collection)
       expect(result).toBe(testDiv);
     });
@@ -93,13 +93,13 @@ describe('CSS References Fix - Official Test Patterns', () => {
       // var div = make("<div class='c1'></div>");
       // var value = evalHyperScript("<.c1/>");
       // Array.from(value)[0].should.equal(div);
-      
+
       const result = await parseAndEvaluateExpression('<.c1/>', context);
-      
+
       // Should be iterable with Array.from()
       expect(result).toBeDefined();
       expect(typeof result).toBe('object');
-      
+
       // Should be able to convert to array and get first element
       const arrayResult = Array.from(result);
       expect(arrayResult).toHaveLength(1);
@@ -108,7 +108,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
 
     it('should work with ID query: <#d1/>', async () => {
       const result = await parseAndEvaluateExpression('<#d1/>', context);
-      
+
       // Query references always return collections, even for IDs
       const arrayResult = Array.from(result);
       expect(arrayResult).toHaveLength(1);
@@ -117,7 +117,7 @@ describe('CSS References Fix - Official Test Patterns', () => {
 
     it('should work with element query: <div/>', async () => {
       const result = await parseAndEvaluateExpression('<div/>', context);
-      
+
       const arrayResult = Array.from(result);
       expect(arrayResult).toHaveLength(1);
       expect(arrayResult[0]).toBe(testDiv);

@@ -4,7 +4,11 @@
  * Usage: deno run --allow-read src/validation/validate-cli.ts [command-name]
  */
 
-import { CommandPatternValidator, CommandSuiteValidator, ValidationReporter } from './command-pattern-validator';
+import {
+  CommandPatternValidator,
+  CommandSuiteValidator,
+  ValidationReporter,
+} from './command-pattern-validator';
 
 // Import all commands for validation
 import { HideCommand, createHideCommand } from '../commands/dom/hide';
@@ -20,55 +24,56 @@ const COMMAND_REGISTRY = [
     filePath: './src/commands/dom/hide.ts',
     CommandClass: HideCommand,
     factoryFunction: createHideCommand,
-    category: 'dom'
+    category: 'dom',
   },
   {
-    name: 'ShowCommand', 
+    name: 'ShowCommand',
     filePath: './src/commands/dom/show.ts',
     CommandClass: ShowCommand,
     factoryFunction: createShowCommand,
-    category: 'dom'
+    category: 'dom',
   },
   {
     name: 'ToggleCommand',
     filePath: './src/commands/dom/toggle.ts',
     CommandClass: ToggleCommand,
     factoryFunction: createToggleCommand,
-    category: 'dom'
+    category: 'dom',
   },
   {
     name: 'AddCommand',
     filePath: './src/commands/dom/add.ts',
     CommandClass: AddCommand,
     factoryFunction: createAddCommand,
-    category: 'dom'
+    category: 'dom',
   },
   {
     name: 'RemoveCommand',
     filePath: './src/commands/dom/remove.ts',
     CommandClass: RemoveCommand,
     factoryFunction: createRemoveCommand,
-    category: 'dom'
-  }
+    category: 'dom',
+  },
 ];
 
 /**
  * Validate a specific command by name
  */
 async function validateSingleCommand(commandName: string): Promise<void> {
-  const command = COMMAND_REGISTRY.find(cmd => 
-    cmd.name.toLowerCase() === commandName.toLowerCase() ||
-    cmd.name.toLowerCase().replace('command', '') === commandName.toLowerCase()
+  const command = COMMAND_REGISTRY.find(
+    cmd =>
+      cmd.name.toLowerCase() === commandName.toLowerCase() ||
+      cmd.name.toLowerCase().replace('command', '') === commandName.toLowerCase()
   );
-  
+
   if (!command) {
     console.error(`❌ Command "${commandName}" not found in registry`);
     console.log('Available commands:', COMMAND_REGISTRY.map(c => c.name).join(', '));
     return;
   }
-  
+
   console.log(`🔍 Validating ${command.name}...`);
-  
+
   let sourceCode: string | undefined;
   try {
     const fs = await import('fs');
@@ -76,22 +81,22 @@ async function validateSingleCommand(commandName: string): Promise<void> {
   } catch (error) {
     console.warn(`⚠️  Could not read source code: ${error}`);
   }
-  
+
   const result = CommandPatternValidator.validateCommand(
     command.CommandClass,
     command.factoryFunction,
     sourceCode
   );
-  
+
   const analysis = {
     commandName: command.name,
     filePath: command.filePath,
     validation: result,
-    recommendations: result.suggestions.slice(0, 3)
+    recommendations: result.suggestions.slice(0, 3),
   };
-  
+
   ValidationReporter.printCommandValidation(analysis);
-  
+
   if (!result.isEnhanced) {
     console.log(`\n⚠️  ${command.name} needs enhancement work!`);
     process.exit(1);
@@ -105,23 +110,26 @@ async function validateSingleCommand(commandName: string): Promise<void> {
  */
 async function validateCommandSuite(category?: string): Promise<void> {
   let commandsToValidate = COMMAND_REGISTRY;
-  
+
   if (category) {
     commandsToValidate = COMMAND_REGISTRY.filter(cmd => cmd.category === category);
     if (commandsToValidate.length === 0) {
       console.error(`❌ No commands found in category "${category}"`);
-      console.log('Available categories:', [...new Set(COMMAND_REGISTRY.map(c => c.category))].join(', '));
+      console.log(
+        'Available categories:',
+        [...new Set(COMMAND_REGISTRY.map(c => c.category))].join(', ')
+      );
       return;
     }
     console.log(`🔍 Validating ${category} commands...`);
   } else {
     console.log('🔍 Validating all commands...');
   }
-  
+
   const suiteResult = await CommandSuiteValidator.validateCommandSuite(commandsToValidate);
-  
+
   ValidationReporter.printSuiteValidation(suiteResult);
-  
+
   // Show individual command details if any need work
   const needsWork = suiteResult.commands.filter(cmd => !cmd.validation.isEnhanced);
   if (needsWork.length > 0) {
@@ -132,7 +140,7 @@ async function validateCommandSuite(category?: string): Promise<void> {
       console.log(`   Top Issues: ${cmd.validation.failed.slice(0, 2).join(', ')}`);
       console.log(`   Priority: ${cmd.recommendations[0] || 'See full analysis'}`);
     });
-    
+
     process.exit(1);
   } else {
     console.log('\n🎉 All commands meet enhanced pattern standards!');
@@ -173,17 +181,17 @@ Available Commands:
  */
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  
+
   if (args.length === 0 || args.includes('--all')) {
     await validateCommandSuite();
     return;
   }
-  
+
   if (args.includes('--help') || args.includes('-h')) {
     showHelp();
     return;
   }
-  
+
   if (args.includes('--category')) {
     const categoryIndex = args.indexOf('--category');
     const category = args[categoryIndex + 1];
@@ -195,7 +203,7 @@ async function main(): Promise<void> {
     await validateCommandSuite(category);
     return;
   }
-  
+
   // Assume first argument is a command name
   const commandName = args[0];
   await validateSingleCommand(commandName);

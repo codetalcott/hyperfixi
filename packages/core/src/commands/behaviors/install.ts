@@ -42,26 +42,26 @@ export interface InstallCommandOutput {
  * Install Command with full type safety and validation
  * Connects hyperscript syntax to programmatic behaviors API
  */
-export class InstallCommand implements CommandImplementation<
-  InstallCommandInput,
-  InstallCommandOutput,
-  TypedExecutionContext
-> {
+export class InstallCommand
+  implements CommandImplementation<InstallCommandInput, InstallCommandOutput, TypedExecutionContext>
+{
   name = 'install';
 
   metadata = {
     name: 'install',
-    description: 'Installs a behavior on an element. Behaviors are reusable bundles of hyperscript code that can be attached to elements.',
+    description:
+      'Installs a behavior on an element. Behaviors are reusable bundles of hyperscript code that can be attached to elements.',
     examples: [
       'install Removable',
       'install Draggable on #box',
       'install Tooltip(text: "Help", position: "top")',
       'install Sortable(axis: "y") on .list',
-      'install MyBehavior(foo: 42) on the first <div/>'
+      'install MyBehavior(foo: 42) on the first <div/>',
     ],
-    syntax: 'install <BehaviorName> | install <BehaviorName>(<params>) | install <BehaviorName> on <element> | install <BehaviorName>(<params>) on <element>',
+    syntax:
+      'install <BehaviorName> | install <BehaviorName>(<params>) | install <BehaviorName> on <element> | install <BehaviorName>(<params>) on <element>',
     category: 'behaviors' as const,
-    version: '1.0.0'
+    version: '1.0.0',
   };
 
   validation = {
@@ -71,12 +71,14 @@ export class InstallCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Install command requires an object input',
-            suggestions: ['Provide an object with behaviorName and optional parameters/target']
-          }],
-          suggestions: ['Provide an object with behaviorName and optional parameters/target']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Install command requires an object input',
+              suggestions: ['Provide an object with behaviorName and optional parameters/target'],
+            },
+          ],
+          suggestions: ['Provide an object with behaviorName and optional parameters/target'],
         };
       }
 
@@ -87,32 +89,37 @@ export class InstallCommand implements CommandImplementation<
         errors.push({
           type: 'missing-argument',
           message: 'Install command requires a behavior name',
-          suggestions: ['Provide the name of a behavior to install']
+          suggestions: ['Provide the name of a behavior to install'],
         });
       } else if (typeof inputObj.behaviorName !== 'string') {
         errors.push({
           type: 'type-mismatch',
           message: 'Behavior name must be a string',
-          suggestions: ['Provide a valid behavior name as a string']
+          suggestions: ['Provide a valid behavior name as a string'],
         });
       } else if (!/^[A-Z][a-zA-Z0-9_]*$/.test(inputObj.behaviorName)) {
         errors.push({
           type: 'validation-error',
-          message: 'Behavior name must start with uppercase letter and contain only letters, numbers, and underscores',
+          message:
+            'Behavior name must start with uppercase letter and contain only letters, numbers, and underscores',
           suggestions: [
             'Use PascalCase for behavior names (e.g., "Removable", "MyBehavior")',
-            'Behavior names should start with a capital letter'
-          ]
+            'Behavior names should start with a capital letter',
+          ],
         });
       }
 
       // Validate parameters if provided
       if (inputObj.parameters !== undefined) {
-        if (typeof inputObj.parameters !== 'object' || inputObj.parameters === null || Array.isArray(inputObj.parameters)) {
+        if (
+          typeof inputObj.parameters !== 'object' ||
+          inputObj.parameters === null ||
+          Array.isArray(inputObj.parameters)
+        ) {
           errors.push({
             type: 'type-mismatch',
             message: 'Parameters must be an object with key-value pairs',
-            suggestions: ['Provide parameters as { key: value, ... }']
+            suggestions: ['Provide parameters as { key: value, ... }'],
           });
         } else {
           // Validate parameter names are valid identifiers
@@ -121,7 +128,7 @@ export class InstallCommand implements CommandImplementation<
               errors.push({
                 type: 'validation-error',
                 message: `Invalid parameter name: "${paramName}"`,
-                suggestions: ['Parameter names must be valid JavaScript identifiers']
+                suggestions: ['Parameter names must be valid JavaScript identifiers'],
               });
             }
           }
@@ -135,7 +142,7 @@ export class InstallCommand implements CommandImplementation<
         return {
           isValid: false,
           errors,
-          suggestions: errors.flatMap(e => e.suggestions || [])
+          suggestions: errors.flatMap(e => e.suggestions || []),
         };
       }
 
@@ -143,12 +150,15 @@ export class InstallCommand implements CommandImplementation<
         isValid: true,
         data: inputObj as InstallCommandInput,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-    }
+    },
   };
 
-  async execute(input: InstallCommandInput, context: TypedExecutionContext): Promise<InstallCommandOutput> {
+  async execute(
+    input: InstallCommandInput,
+    context: TypedExecutionContext
+  ): Promise<InstallCommandOutput> {
     const { behaviorName, parameters = {}, target } = input;
 
     try {
@@ -160,8 +170,12 @@ export class InstallCommand implements CommandImplementation<
       }
 
       // Check if behavior is defined
-      if (!this.behaviorExists(behaviorName, context)) {
-        throw new Error(`Behavior "${behaviorName}" is not defined. Define it using the 'behavior' keyword before installing.`);
+      const exists = this.behaviorExists(behaviorName, context);
+
+      if (!exists) {
+        throw new Error(
+          `Behavior "${behaviorName}" is not defined. Define it using the 'behavior' keyword before installing.`
+        );
       }
 
       // Install behavior on each target element
@@ -175,9 +189,8 @@ export class InstallCommand implements CommandImplementation<
         success: true,
         behaviorName,
         installedCount: instances.length,
-        instances
+        instances,
       };
-
     } catch (error) {
       throw new Error(
         `Failed to install behavior "${behaviorName}": ${error instanceof Error ? error.message : String(error)}`
@@ -189,7 +202,10 @@ export class InstallCommand implements CommandImplementation<
    * Resolve the target element(s) for installation
    * Returns array of HTMLElements
    */
-  private async resolveTarget(target: unknown, context: TypedExecutionContext): Promise<HTMLElement[]> {
+  private async resolveTarget(
+    target: unknown,
+    context: TypedExecutionContext
+  ): Promise<HTMLElement[]> {
     // If no target specified, use 'me' (current element)
     if (target === undefined || target === null) {
       // Check context.me first (primary location), then fall back to locals
@@ -211,7 +227,7 @@ export class InstallCommand implements CommandImplementation<
       if (elements.length === 0) {
         throw new Error('Target array contains no valid HTMLElements');
       }
-      return elements as HTMLElement[];
+      return elements;
     }
 
     // If string (CSS selector)
@@ -228,7 +244,7 @@ export class InstallCommand implements CommandImplementation<
       // Query document for selector
       if (typeof document !== 'undefined') {
         const elements = document.querySelectorAll(target);
-        const htmlElements = Array.from(elements).filter(el => el instanceof HTMLElement) as HTMLElement[];
+        const htmlElements = Array.from(elements).filter(el => el instanceof HTMLElement);
         if (htmlElements.length === 0) {
           throw new Error(`No elements found matching selector: "${target}"`);
         }

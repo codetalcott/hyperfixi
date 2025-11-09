@@ -3,7 +3,11 @@
  * Enables gradual migration from legacy to enhanced expressions while maintaining compatibility
  */
 
-import type { ExecutionContext, TypedExpressionContext, ExpressionEvaluationOptions } from '../../../types/base-types';
+import type {
+  ExecutionContext,
+  TypedExpressionContext,
+  ExpressionEvaluationOptions,
+} from '../../../types/base-types';
 import { positionalExpressions } from './index';
 
 /**
@@ -22,12 +26,12 @@ export function createTypedExpressionContext(
     locals: context.locals || new Map(),
     globals: context.globals || new Map(),
     event: context.event || null,
-    
+
     // Enhanced expression context properties
     expressionStack: [],
     evaluationDepth: 0,
     validationMode: options.validationMode || 'strict',
-    evaluationHistory: []
+    evaluationHistory: [],
   };
 }
 
@@ -47,7 +51,7 @@ export function updateExecutionContext(
     result: typedContext.result,
     locals: typedContext.locals,
     globals: typedContext.globals,
-    event: typedContext.event
+    event: typedContext.event,
   };
 }
 
@@ -62,7 +66,7 @@ export class EnhancedPositionalAdapter {
     const typedContext = createTypedExpressionContext(context);
     const input = { collection };
     const result = await positionalExpressions.first.evaluate(typedContext, input);
-    
+
     if (result.success) {
       return result.value;
     } else {
@@ -79,7 +83,7 @@ export class EnhancedPositionalAdapter {
     const typedContext = createTypedExpressionContext(context);
     const input = { collection };
     const result = await positionalExpressions.last.evaluate(typedContext, input);
-    
+
     if (result.success) {
       return result.value;
     } else {
@@ -96,11 +100,15 @@ export class EnhancedPositionalAdapter {
   /**
    * Evaluate enhanced 'at' expression with legacy context
    */
-  static async evaluateAt(context: ExecutionContext, index: number, collection?: unknown): Promise<unknown> {
+  static async evaluateAt(
+    context: ExecutionContext,
+    index: number,
+    collection?: unknown
+  ): Promise<unknown> {
     const typedContext = createTypedExpressionContext(context);
     const input = { index, collection };
     const result = await positionalExpressions.at.evaluate(typedContext, input);
-    
+
     if (result.success) {
       return result.value;
     } else {
@@ -151,17 +159,17 @@ export class LegacyCompatibilityLayer {
     name: 'first',
     category: 'Reference' as const,
     evaluatesTo: 'Any' as const,
-    
+
     async evaluate(context: ExecutionContext, collection?: unknown): Promise<unknown> {
       return EnhancedPositionalAdapter.evaluateFirst(context, collection);
     },
-    
+
     validate(args: unknown[]): string | null {
       if (args.length > 1) {
         return 'first expression takes at most one argument (collection)';
       }
       return null;
-    }
+    },
   };
 
   /**
@@ -171,17 +179,17 @@ export class LegacyCompatibilityLayer {
     name: 'last',
     category: 'Reference' as const,
     evaluatesTo: 'Any' as const,
-    
+
     async evaluate(context: ExecutionContext, collection?: unknown): Promise<unknown> {
       return EnhancedPositionalAdapter.evaluateLast(context, collection);
     },
-    
+
     validate(args: unknown[]): string | null {
       if (args.length > 1) {
         return 'last expression takes at most one argument (collection)';
       }
       return null;
-    }
+    },
   };
 
   /**
@@ -191,11 +199,15 @@ export class LegacyCompatibilityLayer {
     name: 'at',
     category: 'Reference' as const,
     evaluatesTo: 'Any' as const,
-    
-    async evaluate(context: ExecutionContext, index: number, collection?: unknown): Promise<unknown> {
+
+    async evaluate(
+      context: ExecutionContext,
+      index: number,
+      collection?: unknown
+    ): Promise<unknown> {
       return EnhancedPositionalAdapter.evaluateAt(context, index, collection);
     },
-    
+
     validate(args: unknown[]): string | null {
       if (args.length < 1 || args.length > 2) {
         return 'at expression requires 1-2 arguments (index, optional collection)';
@@ -204,7 +216,7 @@ export class LegacyCompatibilityLayer {
         return 'index must be a number';
       }
       return null;
-    }
+    },
   };
 }
 
@@ -277,14 +289,14 @@ export class PositionalUtilities {
       const typedContext = createTypedExpressionContext(context);
       const input = { collection };
       const result = await positionalExpressions.first.evaluate(typedContext, input);
-      
+
       if (result.success) {
         return { success: true, value: result.value };
       } else {
         return {
           success: false,
           value: fallback !== undefined ? fallback : null,
-          error: result.error
+          error: result.error,
         };
       }
     } catch (error) {
@@ -294,8 +306,8 @@ export class PositionalUtilities {
         error: {
           type: 'runtime-error',
           message: error instanceof Error ? error.message : String(error),
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -312,14 +324,14 @@ export class PositionalUtilities {
       const typedContext = createTypedExpressionContext(context);
       const input = { collection };
       const result = await positionalExpressions.last.evaluate(typedContext, input);
-      
+
       if (result.success) {
         return { success: true, value: result.value };
       } else {
         return {
           success: false,
           value: fallback !== undefined ? fallback : null,
-          error: result.error
+          error: result.error,
         };
       }
     } catch (error) {
@@ -329,8 +341,8 @@ export class PositionalUtilities {
         error: {
           type: 'runtime-error',
           message: error instanceof Error ? error.message : String(error),
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -348,14 +360,14 @@ export class PositionalUtilities {
       const typedContext = createTypedExpressionContext(context);
       const input = { index, collection };
       const result = await positionalExpressions.at.evaluate(typedContext, input);
-      
+
       if (result.success) {
         return { success: true, value: result.value };
       } else {
         return {
           success: false,
           value: fallback !== undefined ? fallback : null,
-          error: result.error
+          error: result.error,
         };
       }
     } catch (error) {
@@ -365,8 +377,8 @@ export class PositionalUtilities {
         error: {
           type: 'runtime-error',
           message: error instanceof Error ? error.message : String(error),
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -376,11 +388,11 @@ export class PositionalUtilities {
    */
   static async batchPositionalOperations(
     context: ExecutionContext,
-    operations: Array<{ 
-      type: 'first' | 'last' | 'at'; 
-      collection: unknown; 
-      index?: number; 
-      key?: string 
+    operations: Array<{
+      type: 'first' | 'last' | 'at';
+      collection: unknown;
+      index?: number;
+      key?: string;
     }>
   ): Promise<{ success: boolean; results: Record<string, unknown>; errors: Array<unknown> }> {
     const results: Record<string, unknown> = {};
@@ -406,8 +418,8 @@ export class PositionalUtilities {
               error: {
                 type: 'missing-argument',
                 message: 'Index required for at operation',
-                suggestions: []
-              }
+                suggestions: [],
+              },
             };
           } else {
             operationResult = await this.safeAt(context, index, collection);
@@ -420,8 +432,8 @@ export class PositionalUtilities {
             error: {
               type: 'invalid-argument',
               message: `Unknown operation type: ${type}`,
-              suggestions: []
-            }
+              suggestions: [],
+            },
           };
       }
 
@@ -435,7 +447,7 @@ export class PositionalUtilities {
           type,
           collection,
           index,
-          error: operationResult.error
+          error: operationResult.error,
         });
       }
     }
@@ -448,9 +460,12 @@ export class PositionalUtilities {
    */
   static getAvailableOperations() {
     return {
-      'first': { description: 'Get first element from collection', complexity: 'simple' },
-      'last': { description: 'Get last element from collection', complexity: 'simple' },
-      'at': { description: 'Get element at specific index (supports negative indexing)', complexity: 'simple' }
+      first: { description: 'Get first element from collection', complexity: 'simple' },
+      last: { description: 'Get last element from collection', complexity: 'simple' },
+      at: {
+        description: 'Get element at specific index (supports negative indexing)',
+        complexity: 'simple',
+      },
     };
   }
 
@@ -470,7 +485,7 @@ export class PositionalUtilities {
         length: 0,
         isIndexable: false,
         supportsNegativeIndexing: false,
-        metadata: {}
+        metadata: {},
       };
     }
 
@@ -480,7 +495,7 @@ export class PositionalUtilities {
         length: collection.length,
         isIndexable: true,
         supportsNegativeIndexing: true,
-        metadata: { elementTypes: [...new Set(collection.map(item => typeof item))] }
+        metadata: { elementTypes: [...new Set(collection.map(item => typeof item))] },
       };
     }
 
@@ -490,7 +505,7 @@ export class PositionalUtilities {
         length: collection.length,
         isIndexable: true,
         supportsNegativeIndexing: true,
-        metadata: { nodeTypes: [...new Set(Array.from(collection).map(node => node.nodeName))] }
+        metadata: { nodeTypes: [...new Set(Array.from(collection).map(node => node.nodeName))] },
       };
     }
 
@@ -500,7 +515,7 @@ export class PositionalUtilities {
         length: collection.length,
         isIndexable: true,
         supportsNegativeIndexing: true,
-        metadata: { tagNames: [...new Set(Array.from(collection).map(el => el.tagName))] }
+        metadata: { tagNames: [...new Set(Array.from(collection).map(el => el.tagName))] },
       };
     }
 
@@ -510,7 +525,7 @@ export class PositionalUtilities {
         length: collection.children.length,
         isIndexable: true,
         supportsNegativeIndexing: true,
-        metadata: { tagName: collection.tagName, childCount: collection.children.length }
+        metadata: { tagName: collection.tagName, childCount: collection.children.length },
       };
     }
 
@@ -520,17 +535,21 @@ export class PositionalUtilities {
         length: collection.length,
         isIndexable: true,
         supportsNegativeIndexing: true,
-        metadata: { encoding: 'UTF-16', isEmpty: collection.length === 0 }
+        metadata: { encoding: 'UTF-16', isEmpty: collection.length === 0 },
       };
     }
 
-    if (typeof collection === 'object' && 'length' in collection && typeof (collection as { length: number }).length === 'number') {
+    if (
+      typeof collection === 'object' &&
+      'length' in collection &&
+      typeof (collection as { length: number }).length === 'number'
+    ) {
       return {
         type: 'array-like',
         length: (collection as { length: number }).length,
         isIndexable: true,
         supportsNegativeIndexing: true,
-        metadata: { hasNumericKeys: true }
+        metadata: { hasNumericKeys: true },
       };
     }
 
@@ -539,7 +558,7 @@ export class PositionalUtilities {
       length: 0,
       isIndexable: false,
       supportsNegativeIndexing: false,
-      metadata: { unsupported: true }
+      metadata: { unsupported: true },
     };
   }
 }
@@ -550,5 +569,5 @@ export default {
   EnhancedPositionalAdapter,
   LegacyCompatibilityLayer,
   ExpressionMigrationUtility,
-  PositionalUtilities
+  PositionalUtilities,
 };

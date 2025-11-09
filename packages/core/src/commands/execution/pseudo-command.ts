@@ -36,27 +36,26 @@ export interface PseudoCommandOutput {
  * Pseudo-Command with full type safety and validation
  * Implements official _hyperscript pseudo-command behavior
  */
-export class PseudoCommand implements CommandImplementation<
-  PseudoCommandInput,
-  PseudoCommandOutput,
-  TypedExecutionContext
-> {
+export class PseudoCommand
+  implements CommandImplementation<PseudoCommandInput, PseudoCommandOutput, TypedExecutionContext>
+{
   name = 'pseudo-command';
 
   metadata = {
     name: 'pseudo-command',
-    description: 'Pseudo-commands allow you to treat a method on an object as a top level command. The method name must be followed by an argument list, then optional prepositional syntax to clarify the code, then an expression.',
+    description:
+      'Pseudo-commands allow you to treat a method on an object as a top level command. The method name must be followed by an argument list, then optional prepositional syntax to clarify the code, then an expression.',
     examples: [
       'getElementById("d1") from the document',
       'reload() the location of the window',
       'setAttribute("foo", "bar") on me',
       'foo() on me',
       'bar.foo() me',
-      'getValue() with myObject'
+      'getValue() with myObject',
     ],
     syntax: '<method name>(<arg list>) [(to | on | with | into | from | at)] <expression>',
     category: 'execution' as const,
-    version: '1.0.0'
+    version: '1.0.0',
   };
 
   validation = {
@@ -66,12 +65,14 @@ export class PseudoCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Pseudo-command requires an object input',
-            suggestions: ['Provide an object with methodName, methodArgs, and targetExpression']
-          }],
-          suggestions: ['Provide an object with methodName, methodArgs, and targetExpression']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Pseudo-command requires an object input',
+              suggestions: ['Provide an object with methodName, methodArgs, and targetExpression'],
+            },
+          ],
+          suggestions: ['Provide an object with methodName, methodArgs, and targetExpression'],
         };
       }
 
@@ -82,13 +83,13 @@ export class PseudoCommand implements CommandImplementation<
         errors.push({
           type: 'missing-argument',
           message: 'Pseudo-command requires a method name',
-          suggestions: ['Provide a method name to call on the target object']
+          suggestions: ['Provide a method name to call on the target object'],
         });
       } else if (typeof inputObj.methodName !== 'string') {
         errors.push({
           type: 'type-mismatch',
           message: 'Method name must be a string',
-          suggestions: ['Provide a valid method name as a string']
+          suggestions: ['Provide a valid method name as a string'],
         });
       }
 
@@ -97,7 +98,7 @@ export class PseudoCommand implements CommandImplementation<
         errors.push({
           type: 'type-mismatch',
           message: 'Method arguments must be an array',
-          suggestions: ['Provide method arguments as an array, or omit for no arguments']
+          suggestions: ['Provide method arguments as an array, or omit for no arguments'],
         });
       }
 
@@ -108,7 +109,7 @@ export class PseudoCommand implements CommandImplementation<
           errors.push({
             type: 'syntax-error',
             message: `Invalid preposition "${inputObj.preposition}"`,
-            suggestions: ['Use one of: from, on, with, into, at, to']
+            suggestions: ['Use one of: from, on, with, into, at, to'],
           });
         }
       }
@@ -118,7 +119,7 @@ export class PseudoCommand implements CommandImplementation<
         errors.push({
           type: 'missing-argument',
           message: 'Pseudo-command requires a target expression',
-          suggestions: ['Provide an object to call the method on']
+          suggestions: ['Provide an object to call the method on'],
         });
       }
 
@@ -129,8 +130,8 @@ export class PseudoCommand implements CommandImplementation<
           suggestions: [
             'Pseudo-commands must be function calls',
             'Provide a target expression after the optional preposition',
-            'Example: getElementById("test") from the document'
-          ]
+            'Example: getElementById("test") from the document',
+          ],
         };
       }
 
@@ -139,21 +140,26 @@ export class PseudoCommand implements CommandImplementation<
         methodName: inputObj.methodName as string,
         methodArgs: (inputObj.methodArgs as unknown[]) || [],
         targetExpression: inputObj.targetExpression,
-        ...(inputObj.preposition !== undefined ? {
-          preposition: inputObj.preposition as 'from' | 'on' | 'with' | 'into' | 'at' | 'to'
-        } : {})
+        ...(inputObj.preposition !== undefined
+          ? {
+              preposition: inputObj.preposition as 'from' | 'on' | 'with' | 'into' | 'at' | 'to',
+            }
+          : {}),
       };
 
       return {
         isValid: true,
         errors: [],
         suggestions: [],
-        data
+        data,
       };
-    }
+    },
   };
 
-  async execute(input: PseudoCommandInput, context: TypedExecutionContext): Promise<PseudoCommandOutput> {
+  async execute(
+    input: PseudoCommandInput,
+    context: TypedExecutionContext
+  ): Promise<PseudoCommandOutput> {
     const { methodName, methodArgs, targetExpression } = input;
 
     try {
@@ -187,7 +193,7 @@ export class PseudoCommand implements CommandImplementation<
       return {
         result,
         methodName,
-        target
+        target,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -198,7 +204,10 @@ export class PseudoCommand implements CommandImplementation<
   /**
    * Resolve the target expression to an object
    */
-  private async resolveTarget(targetExpression: unknown, context: TypedExecutionContext): Promise<unknown> {
+  private async resolveTarget(
+    targetExpression: unknown,
+    context: TypedExecutionContext
+  ): Promise<unknown> {
     // If already an object, return it
     if (typeof targetExpression === 'object' && targetExpression !== null) {
       return targetExpression;
@@ -233,7 +242,11 @@ export class PseudoCommand implements CommandImplementation<
       }
 
       if (targetExpression === 'window') {
-        return typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : null);
+        return typeof window !== 'undefined'
+          ? window
+          : typeof globalThis !== 'undefined'
+            ? globalThis
+            : null;
       }
 
       // Try to evaluate as a property path
@@ -251,8 +264,12 @@ export class PseudoCommand implements CommandImplementation<
     const parts = path.split('.');
 
     // Start with global context
-    let current: any = typeof window !== 'undefined' ? window :
-      (typeof globalThis !== 'undefined' ? globalThis : null);
+    let current: any =
+      typeof window !== 'undefined'
+        ? window
+        : typeof globalThis !== 'undefined'
+          ? globalThis
+          : null;
 
     // Also check context variables as starting point
     if (context.locals.has(parts[0])) {

@@ -55,7 +55,7 @@ function wrapEventHandler(
       handler.call(element, event);
     } catch (error) {
       console.error(`Error in hyperscript event handler for ${eventType}:`, error);
-      
+
       // Dispatch error event
       const errorEvent = createHyperscriptEvent('error', {
         element,
@@ -63,7 +63,7 @@ function wrapEventHandler(
         error: error as Error,
         originalEvent: event,
       });
-      
+
       element.dispatchEvent(errorEvent);
     }
   };
@@ -81,7 +81,7 @@ export function registerEventListener(
 ): string {
   const listenerId = generateListenerId();
   const wrappedHandler = wrapEventHandler(handler, element, eventType);
-  
+
   // Store listener info
   const listenerInfo: ListenerInfo = {
     element,
@@ -90,9 +90,9 @@ export function registerEventListener(
     ...(options && { options }),
     wrappedHandler,
   };
-  
+
   manager.listeners.set(listenerId, listenerInfo);
-  
+
   // Handle delegated vs direct listeners
   if (options?.delegated) {
     // Register for delegation
@@ -100,7 +100,7 @@ export function registerEventListener(
       manager.delegatedListeners.set(eventType, new Set());
     }
     manager.delegatedListeners.get(eventType)!.add(listenerId);
-    
+
     // Ensure delegation is set up for this event type
     ensureEventDelegation(eventType);
   } else {
@@ -109,10 +109,10 @@ export function registerEventListener(
     if (listenerOptions) {
       delete (listenerOptions as any).delegated;
     }
-    
+
     element.addEventListener(eventType, wrappedHandler, listenerOptions);
   }
-  
+
   return listenerId;
 }
 
@@ -127,12 +127,12 @@ export function unregisterEventListener(
   if (!listenerInfo) {
     return false;
   }
-  
+
   const { element, eventType, wrappedHandler, options } = listenerInfo;
-  
+
   // Remove from manager
   manager.listeners.delete(listenerId);
-  
+
   // Handle delegated vs direct listeners
   if (options?.delegated) {
     // Remove from delegation tracking
@@ -149,10 +149,10 @@ export function unregisterEventListener(
     if (listenerOptions) {
       delete (listenerOptions as any).delegated;
     }
-    
+
     element.removeEventListener(eventType, wrappedHandler, listenerOptions);
   }
-  
+
   return true;
 }
 
@@ -171,7 +171,7 @@ export function dispatchCustomEvent(
     cancelable: true,
     ...options,
   });
-  
+
   return element.dispatchEvent(event);
 }
 
@@ -189,10 +189,8 @@ export function createHyperscriptEvent(
     originalEvent?: Event;
   }
 ): HyperscriptEvent {
-  const eventType = eventName.startsWith('hyperscript:') 
-    ? eventName 
-    : `hyperscript:${eventName}`;
-  
+  const eventType = eventName.startsWith('hyperscript:') ? eventName : `hyperscript:${eventName}`;
+
   return new CustomEvent(eventType, {
     detail: data,
     bubbles: true,
@@ -207,12 +205,12 @@ export function setupEventDelegation(): void {
   if (delegationSetup) {
     return;
   }
-  
+
   delegationSetup = true;
-  
+
   // Set up delegation for common events
   const commonEvents = ['click', 'change', 'input', 'submit', 'focus', 'blur'];
-  
+
   commonEvents.forEach(eventType => {
     ensureEventDelegation(eventType);
   });
@@ -225,12 +223,12 @@ function ensureEventDelegation(eventType: string): void {
   if (delegatedEvents.has(eventType)) {
     return;
   }
-  
+
   delegatedEvents.add(eventType);
-  
+
   const delegationHandler = createDelegationHandler(eventType);
   delegationHandlers.set(eventType, delegationHandler);
-  
+
   document.addEventListener(eventType, delegationHandler, { capture: true });
 }
 
@@ -241,24 +239,24 @@ function createDelegationHandler(eventType: string): EventListener {
   return function delegationHandler(event: Event) {
     const target = event.target as HTMLElement;
     if (!target) return;
-    
+
     // Find all managers that have delegated listeners for this event type
     // Note: In a real implementation, you'd need a way to access all active managers
     // For now, we'll implement a basic pattern that works with the test
-    
+
     // This is a simplified implementation for testing
     // In practice, you'd maintain a global registry of managers
     if ((window as any).__hyperscriptEventManagers) {
       const managers = (window as any).__hyperscriptEventManagers as HyperscriptEventManager[];
-      
+
       for (const manager of managers) {
         const delegatedSet = manager.delegatedListeners.get(eventType);
         if (!delegatedSet) continue;
-        
+
         delegatedSet.forEach(listenerId => {
           const listenerInfo = manager.listeners.get(listenerId);
           if (!listenerInfo) return;
-          
+
           // Check if the target matches the listener element
           if (target === listenerInfo.element || listenerInfo.element.contains(target)) {
             listenerInfo.wrappedHandler(event);
@@ -276,11 +274,11 @@ export function cleanupEventDelegation(): void {
   if (!delegationSetup) {
     return;
   }
-  
+
   delegationHandlers.forEach((handler, eventType) => {
     document.removeEventListener(eventType, handler, { capture: true });
   });
-  
+
   delegatedEvents.clear();
   delegationHandlers.clear();
   delegationSetup = false;
@@ -293,7 +291,7 @@ export function registerManagerForDelegation(manager: HyperscriptEventManager): 
   if (!(window as any).__hyperscriptEventManagers) {
     (window as any).__hyperscriptEventManagers = [];
   }
-  
+
   (window as any).__hyperscriptEventManagers.push(manager);
 }
 
@@ -327,17 +325,14 @@ export function getListenerCount(manager: HyperscriptEventManager): number {
 /**
  * Creates a debounced event handler
  */
-export function createDebouncedHandler(
-  handler: EventListener,
-  delay: number
-): EventListener {
+export function createDebouncedHandler(handler: EventListener, delay: number): EventListener {
   let timeoutId: number | undefined;
-  
+
   return function debouncedHandler(event: Event) {
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId);
     }
-    
+
     timeoutId = window.setTimeout(() => {
       handler(event);
       timeoutId = undefined;
@@ -348,12 +343,9 @@ export function createDebouncedHandler(
 /**
  * Creates a throttled event handler
  */
-export function createThrottledHandler(
-  handler: EventListener,
-  limit: number
-): EventListener {
+export function createThrottledHandler(handler: EventListener, limit: number): EventListener {
   let inThrottle = false;
-  
+
   return function throttledHandler(event: Event) {
     if (!inThrottle) {
       handler(event);
@@ -370,7 +362,7 @@ export function createThrottledHandler(
  */
 export function createOnceHandler(handler: EventListener): EventListener {
   let called = false;
-  
+
   return function onceHandler(event: Event) {
     if (!called) {
       called = true;
@@ -392,13 +384,13 @@ export function waitForEvent(
       element.removeEventListener(eventType, handler);
       reject(new Error(`Event ${eventType} not received within ${timeout}ms`));
     }, timeout);
-    
+
     const handler = (event: Event) => {
       clearTimeout(timeoutId);
       element.removeEventListener(eventType, handler);
       resolve(event);
     };
-    
+
     element.addEventListener(eventType, handler, { once: true });
   });
 }
@@ -413,9 +405,9 @@ export function emitConfigEvent(element: HTMLElement, cfg: any): boolean {
     bubbles: true,
     cancelable: true,
   });
-  
+
   element.dispatchEvent(event);
-  
+
   // Return false if event was cancelled (preventDefault called)
   return !event.defaultPrevented;
 }
@@ -430,9 +422,9 @@ export function emitBeforeEvent(element: HTMLElement, cfg: any): boolean {
     bubbles: true,
     cancelable: true,
   });
-  
+
   element.dispatchEvent(event);
-  
+
   // Return false if event was cancelled (preventDefault called)
   return !event.defaultPrevented;
 }
@@ -447,9 +439,9 @@ export function emitAfterEvent(element: HTMLElement, cfg: any): boolean {
     bubbles: true,
     cancelable: true,
   });
-  
+
   element.dispatchEvent(event);
-  
+
   // Return false if event was cancelled (preventDefault called)
   return !event.defaultPrevented;
 }
@@ -460,15 +452,15 @@ export function emitAfterEvent(element: HTMLElement, cfg: any): boolean {
  */
 export function emitErrorEvent(element: HTMLElement, error: Error, cfg: any, command: any): void {
   const event = new CustomEvent('fx:error', {
-    detail: { 
-      error, 
-      config: cfg, 
-      command 
+    detail: {
+      error,
+      config: cfg,
+      command,
     },
     bubbles: true,
     cancelable: false, // Error events are not cancelable
   });
-  
+
   element.dispatchEvent(event);
 }
 
@@ -482,7 +474,7 @@ export function emitFinallyEvent(element: HTMLElement, cfg: any): void {
     bubbles: true,
     cancelable: false, // Finally events are not cancelable
   });
-  
+
   element.dispatchEvent(event);
 }
 
@@ -496,6 +488,6 @@ export function emitSwappedEvent(element: HTMLElement, cfg: any): void {
     bubbles: true,
     cancelable: false, // Swapped events are not cancelable (already done)
   });
-  
+
   element.dispatchEvent(event);
 }

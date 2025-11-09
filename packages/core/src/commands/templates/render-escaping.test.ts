@@ -28,13 +28,13 @@ describe('Template HTML Escaping', () => {
       // Template: "render ${x}"
       const template = document.createElement('template');
       template.innerHTML = 'render ${x}';
-      
+
       const result = await renderCommand.execute(context, template, 'with', { x: '<br>' });
-      
+
       // Should escape the HTML - the text content should contain the literal < and > characters
       const textContent = result.textContent || '';
       expect(textContent).toContain('render <br>'); // Text should show literal characters
-      
+
       // But the innerHTML should NOT contain an actual <br> element - no HTML parsing should occur
       const innerHTML = result.innerHTML || '';
       expect(innerHTML).not.toMatch(/<br\s*\/?>/); // No actual br element should exist
@@ -44,19 +44,18 @@ describe('Template HTML Escaping', () => {
       // Template: "render ${unescaped x}"
       const template = document.createElement('template');
       template.innerHTML = 'render ${unescaped x}';
-      
+
       const result = await renderCommand.execute(context, template, 'with', { x: '<br>' });
-      
+
       // Should not escape the HTML - should create actual HTML elements
       // Convert fragment to HTML by creating a temporary container
       const tempDiv = document.createElement('div');
       tempDiv.appendChild(result.cloneNode(true));
       const actualHTML = tempDiv.innerHTML;
-      
-      
+
       expect(actualHTML).toMatch(/<br\s*\/?>/); // Should contain actual br element
-      
-      // The text content should be empty for br elements  
+
+      // The text content should be empty for br elements
       const textContent = result.textContent || '';
       expect(textContent).toBe('render '); // br creates no text content
     });
@@ -65,20 +64,20 @@ describe('Template HTML Escaping', () => {
       // Template: "render ${x} ${unescaped x}"
       const template = document.createElement('template');
       template.innerHTML = 'render ${x} ${unescaped x}';
-      
+
       const result = await renderCommand.execute(context, template, 'with', { x: '<br>' });
-      
+
       // Should have both escaped text and unescaped HTML
       const textContent = result.textContent || '';
-      
+
       // Convert fragment to HTML for checking unescaped elements
       const tempDiv = document.createElement('div');
       tempDiv.appendChild(result.cloneNode(true));
       const actualHTML = tempDiv.innerHTML;
-      
+
       // The text content should show the escaped version as literal text
       expect(textContent).toContain('render <br>'); // Escaped shows as text
-      
+
       // The innerHTML should contain an actual br element from the unescaped version
       expect(actualHTML).toMatch(/<br\s*\/?>/); // Unescaped creates HTML element
     });
@@ -88,15 +87,15 @@ describe('Template HTML Escaping', () => {
     it('should escape multiple HTML entities', async () => {
       const template = document.createElement('template');
       template.innerHTML = 'Content: ${html}';
-      
+
       const htmlContent = '<script>alert("xss")</script><p>Hello & "World"</p>';
-      
+
       const result = await renderCommand.execute(context, template, 'with', { html: htmlContent });
-      
+
       // The dangerous HTML should be escaped - visible as text, not executed as HTML
       const textContent = result.textContent || '';
       expect(textContent).toContain('Content: <script>alert("xss")</script><p>Hello & "World"</p>');
-      
+
       // The innerHTML should NOT contain actual script or p elements
       const innerHTML = result.innerHTML || '';
       expect(innerHTML).not.toMatch(/<script/);
@@ -112,16 +111,16 @@ describe('Template HTML Escaping', () => {
           @end
         </div>
       `;
-      
+
       const items = ['<b>Bold</b>', '<i>Italic</i>'];
-      
+
       const result = await renderCommand.execute(context, template, 'with', { items });
-      
+
       // The HTML in items should be escaped and show as text
       const textContent = result.textContent || '';
       expect(textContent).toContain('Item: <b>Bold</b>');
       expect(textContent).toContain('Item: <i>Italic</i>');
-      
+
       // No actual b or i elements should be created
       const innerHTML = result.innerHTML || '';
       expect(innerHTML).not.toMatch(/<b>/);
@@ -133,21 +132,21 @@ describe('Template HTML Escaping', () => {
     it('should handle empty values', async () => {
       const template = document.createElement('template');
       template.innerHTML = 'Value: ${empty}';
-      
+
       const result = await renderCommand.execute(context, template, 'with', { empty: '' });
-      
+
       expect(result.textContent || result.innerHTML).toBe('Value: ');
     });
 
     it('should handle null/undefined values', async () => {
       const template = document.createElement('template');
       template.innerHTML = 'Null: ${nullVal}, Undefined: ${undefinedVal}';
-      
-      const result = await renderCommand.execute(context, template, 'with', { 
-        nullVal: null, 
-        undefinedVal: undefined 
+
+      const result = await renderCommand.execute(context, template, 'with', {
+        nullVal: null,
+        undefinedVal: undefined,
       });
-      
+
       const content = result.textContent || result.innerHTML || '';
       expect(content).toContain('Null: null');
       expect(content).toContain('Undefined: undefined');
@@ -156,9 +155,9 @@ describe('Template HTML Escaping', () => {
     it('should handle numeric values', async () => {
       const template = document.createElement('template');
       template.innerHTML = 'Number: ${num}';
-      
+
       const result = await renderCommand.execute(context, template, 'with', { num: 42 });
-      
+
       expect(result.textContent || result.innerHTML).toBe('Number: 42');
     });
   });
@@ -173,31 +172,31 @@ describe('Template HTML Escaping', () => {
           <div class="raw-html">\${unescaped rawHtml}</div>
         </div>
       `;
-      
+
       const data = {
         author: '<script>malicious()</script>',
         content: 'Hello & goodbye "world"',
-        rawHtml: '<em>Safe HTML</em>'
+        rawHtml: '<em>Safe HTML</em>',
       };
-      
+
       const result = await renderCommand.execute(context, template, 'with', data);
-      
+
       const textContent = result.textContent || '';
-      
+
       // Convert fragment to HTML for checking unescaped elements
       const tempDiv = document.createElement('div');
       tempDiv.appendChild(result.cloneNode(true));
       const actualHTML = tempDiv.innerHTML;
-      
+
       // Author should be escaped - visible as text
       expect(textContent).toContain('<script>malicious()</script>');
-      
+
       // Content should be escaped - visible as text
       expect(textContent).toContain('Hello & goodbye "world"');
-      
+
       // Raw HTML should not be escaped - should create actual HTML
       expect(actualHTML).toMatch(/<em>Safe HTML<\/em>/);
-      
+
       // The key security test: the script should not be executable
       // Check that it's contained within text content, not as executable elements
       const h4Element = tempDiv.querySelector('h4');

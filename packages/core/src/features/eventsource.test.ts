@@ -10,7 +10,7 @@ import {
   createEventSource,
   enhancedEventSourceImplementation,
   type EventSourceInput,
-  type EventSourceOutput
+  type EventSourceOutput,
 } from './eventsource';
 
 // Mock EventSource for testing
@@ -29,7 +29,7 @@ class MockEventSource {
   constructor(url: string, eventSourceInitDict?: EventSourceInit) {
     this.url = url;
     this.withCredentials = eventSourceInitDict?.withCredentials || false;
-    
+
     // Simulate successful connection after a brief delay
     setTimeout(() => {
       this.readyState = MockEventSource.OPEN;
@@ -74,7 +74,7 @@ class MockEventSource {
       const event = new MessageEvent('message', {
         data,
         lastEventId,
-        origin: window.location.origin
+        origin: window.location.origin,
       });
       this.onmessage(event);
     }
@@ -119,13 +119,13 @@ class MockEventSource {
 (globalThis as any).window = {
   location: {
     href: 'https://example.com',
-    origin: 'https://example.com'
-  }
+    origin: 'https://example.com',
+  },
 };
 
 describe('Enhanced EventSource Feature Implementation', () => {
   let eventsourceFeature: TypedEventSourceFeatureImplementation;
-  
+
   beforeEach(() => {
     eventsourceFeature = createEventSourceFeature();
     vi.clearAllMocks();
@@ -139,7 +139,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
           withCredentials: false,
         },
         eventHandlers: [
-          { event: 'message', commands: [{ type: 'command', name: 'processMessage', args: [] }] }
+          { event: 'message', commands: [{ type: 'command', name: 'processMessage', args: [] }] },
         ],
         context: {
           variables: {},
@@ -150,10 +150,10 @@ describe('Enhanced EventSource Feature Implementation', () => {
       };
 
       const result = await eventsourceFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
       expect(result.value).toBeDefined();
-      
+
       if (result.success && result.value) {
         expect(result.value.category).toBe('Frontend');
         expect(result.value.capabilities).toContain('sse-connection');
@@ -168,7 +168,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
         source: {
           url: 'https://stream.example.com/updates',
           withCredentials: true,
-          headers: { 'Authorization': 'Bearer token123' },
+          headers: { Authorization: 'Bearer token123' },
           retry: {
             enabled: true,
             maxAttempts: 10,
@@ -195,7 +195,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
           {
             event: 'open',
             commands: [{ type: 'command', name: 'onConnect', args: [] }],
-          }
+          },
         ],
         messageProcessing: {
           format: 'json',
@@ -224,9 +224,9 @@ describe('Enhanced EventSource Feature Implementation', () => {
       };
 
       const result = await eventsourceFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('sse-connection');
         expect(result.value.capabilities).toContain('error-recovery');
@@ -255,9 +255,9 @@ describe('Enhanced EventSource Feature Implementation', () => {
       };
 
       const result = await eventsourceFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('message-processing');
         expect(result.value.state).toBe('ready');
@@ -277,7 +277,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test connection establishment
         const connected = await result.value.connection.connect();
@@ -304,7 +304,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test connection info getter
         const info = result.value.connection.getConnectionInfo('test-connection');
@@ -323,7 +323,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test disconnection
         const disconnected = await result.value.connection.disconnect('test-connection');
@@ -348,7 +348,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test reconnection
         const reconnected = await result.value.connection.reconnect('test-connection');
@@ -369,12 +369,12 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test adding event handler
         const handler = await result.value.events.addHandler('test-connection', 'message', {
           name: 'processMessage',
-          args: []
+          args: [],
         });
         expect(handler).toBeDefined();
 
@@ -399,10 +399,12 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test event emission
-        const emitted = await result.value.events.emit('test-connection', 'customEvent', { data: 'test' });
+        const emitted = await result.value.events.emit('test-connection', 'customEvent', {
+          data: 'test',
+        });
         expect(emitted).toBe(true);
       }
     });
@@ -423,7 +425,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test message history
         const history = result.value.messages.getHistory('test-connection', 10);
@@ -453,7 +455,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test buffer operations
         const buffer = result.value.messages.getBuffer('test-connection');
@@ -476,12 +478,12 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test message subscription
         const subscribed = await result.value.messages.subscribe('message', {
           name: 'handleSubscribedMessage',
-          args: []
+          args: [],
         });
         expect(subscribed).toBeDefined();
 
@@ -505,7 +507,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test error handling
         const error = new Error('Test EventSource error');
@@ -524,7 +526,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
         const customHandler = (error: Error, context: any) => {
           console.warn('Custom error handler:', error.message);
         };
-        
+
         const handlerSet = result.value.errors.setErrorHandler(customHandler);
         expect(handlerSet).toBe(true);
       }
@@ -541,7 +543,9 @@ describe('Enhanced EventSource Feature Implementation', () => {
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'invalid-eventsource-url')).toBe(true);
-      expect(validationResult.suggestions).toContain('Use valid HTTP/HTTPS URL for EventSource connection');
+      expect(validationResult.suggestions).toContain(
+        'Use valid HTTP/HTTPS URL for EventSource connection'
+      );
     });
 
     it('should validate retry settings', () => {
@@ -575,7 +579,9 @@ describe('Enhanced EventSource Feature Implementation', () => {
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'invalid-timeout-duration')).toBe(true);
-      expect(validationResult.suggestions).toContain('Set timeout duration to at least 1000ms for proper operation');
+      expect(validationResult.suggestions).toContain(
+        'Set timeout duration to at least 1000ms for proper operation'
+      );
     });
 
     it('should validate connection limits', () => {
@@ -603,14 +609,16 @@ describe('Enhanced EventSource Feature Implementation', () => {
           {
             event: 'message',
             filter: 'invalid javascript syntax [[[',
-            commands: [{ name: 'process', args: [] }]
-          }
+            commands: [{ name: 'process', args: [] }],
+          },
         ],
       });
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'invalid-filter-expression')).toBe(true);
-      expect(validationResult.suggestions).toContain('Use valid JavaScript expression for event filtering');
+      expect(validationResult.suggestions).toContain(
+        'Use valid JavaScript expression for event filtering'
+      );
     });
 
     it('should validate conflicting performance options', () => {
@@ -625,14 +633,18 @@ describe('Enhanced EventSource Feature Implementation', () => {
             options: {
               throttle: 100,
               debounce: 200, // Cannot have both
-            }
-          }
+            },
+          },
         ],
       });
 
       expect(validationResult.isValid).toBe(false);
-      expect(validationResult.errors.some(e => e.type === 'conflicting-performance-options')).toBe(true);
-      expect(validationResult.suggestions).toContain('Choose either throttle OR debounce, not both');
+      expect(validationResult.errors.some(e => e.type === 'conflicting-performance-options')).toBe(
+        true
+      );
+      expect(validationResult.suggestions).toContain(
+        'Choose either throttle OR debounce, not both'
+      );
     });
 
     it('should validate empty commands arrays', () => {
@@ -643,14 +655,16 @@ describe('Enhanced EventSource Feature Implementation', () => {
         eventHandlers: [
           {
             event: 'message',
-            commands: [] // Empty commands
-          }
+            commands: [], // Empty commands
+          },
         ],
       });
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'empty-commands-array')).toBe(true);
-      expect(validationResult.suggestions).toContain('Add at least one command to execute for event handler');
+      expect(validationResult.suggestions).toContain(
+        'Add at least one command to execute for event handler'
+      );
     });
 
     it('should validate message buffer settings', () => {
@@ -668,7 +682,9 @@ describe('Enhanced EventSource Feature Implementation', () => {
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'invalid-buffer-size')).toBe(true);
-      expect(validationResult.suggestions).toContain('Set buffer maxSize to 0 for unlimited or positive number for limit');
+      expect(validationResult.suggestions).toContain(
+        'Set buffer maxSize to 0 for unlimited or positive number for limit'
+      );
     });
 
     it('should handle initialization failures gracefully', async () => {
@@ -697,7 +713,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
       }
 
       const metrics = eventsourceFeature.getPerformanceMetrics();
-      
+
       expect(metrics.totalInitializations).toBeGreaterThanOrEqual(3);
       expect(typeof metrics.successRate).toBe('number');
       expect(typeof metrics.averageDuration).toBe('number');
@@ -750,7 +766,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
 
     it('should have comprehensive metadata', () => {
       const { metadata } = eventsourceFeature;
-      
+
       expect(metadata.category).toBe('Frontend');
       expect(metadata.complexity).toBe('complex');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
@@ -763,7 +779,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
 
     it('should have LLM-compatible documentation', () => {
       const { documentation } = eventsourceFeature;
-      
+
       expect(documentation.summary).toBeDefined();
       expect(Array.isArray(documentation.parameters)).toBe(true);
       expect(documentation.returns).toBeDefined();
@@ -798,7 +814,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
             event: 'message',
             commands: [
               { type: 'command', name: 'showNotification', args: [] },
-              { type: 'command', name: 'updateBadge', args: [] }
+              { type: 'command', name: 'updateBadge', args: [] },
             ],
             filter: 'JSON.parse(event.data).type === "notification"',
             options: { debounce: 100 },
@@ -812,9 +828,9 @@ describe('Enhanced EventSource Feature Implementation', () => {
             event: 'error',
             commands: [
               { type: 'command', name: 'showConnectionError', args: [] },
-              { type: 'command', name: 'attemptReconnect', args: [] }
+              { type: 'command', name: 'attemptReconnect', args: [] },
             ],
-          }
+          },
         ],
         messageProcessing: {
           format: 'json',
@@ -825,9 +841,9 @@ describe('Enhanced EventSource Feature Implementation', () => {
               properties: {
                 type: { type: 'string' },
                 data: { type: 'object' },
-                timestamp: { type: 'number' }
+                timestamp: { type: 'number' },
               },
-              required: ['type']
+              required: ['type'],
             },
           },
           buffer: {
@@ -854,7 +870,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Verify connection capabilities
         expect(result.value.capabilities).toContain('sse-connection');
@@ -878,21 +894,21 @@ describe('Enhanced EventSource Feature Implementation', () => {
       const result = await eventsourceFeature.initialize({
         source: {
           url: 'https://analytics.example.com/metrics',
-          headers: { 'Authorization': 'Bearer analytics-token' },
+          headers: { Authorization: 'Bearer analytics-token' },
         },
         eventHandlers: [
           {
             event: 'metric-update',
             commands: [
               { type: 'command', name: 'updateChart', args: [] },
-              { type: 'command', name: 'recalculateStats', args: [] }
+              { type: 'command', name: 'recalculateStats', args: [] },
             ],
             options: { throttle: 16 }, // ~60fps
           },
           {
             event: 'alert',
             commands: [{ type: 'command', name: 'triggerAlert', args: [] }],
-          }
+          },
         ],
         messageProcessing: {
           format: 'json',
@@ -912,7 +928,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Verify real-time optimizations
         expect(result.value.capabilities).toContain('message-processing');
@@ -941,7 +957,7 @@ describe('Enhanced EventSource Feature Implementation', () => {
             event: 'system-alert',
             commands: [
               { type: 'command', name: 'escalateAlert', args: [] },
-              { type: 'command', name: 'notifyOncall', args: [] }
+              { type: 'command', name: 'notifyOncall', args: [] },
             ],
           },
           {
@@ -953,9 +969,9 @@ describe('Enhanced EventSource Feature Implementation', () => {
             event: 'error',
             commands: [
               { type: 'command', name: 'logSystemError', args: [] },
-              { type: 'command', name: 'switchToBackupStream', args: [] }
+              { type: 'command', name: 'switchToBackupStream', args: [] },
             ],
-          }
+          },
         ],
         messageProcessing: {
           format: 'json',
@@ -977,12 +993,12 @@ describe('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Verify high-availability features
         expect(result.value.capabilities).toContain('automatic-reconnection');
         expect(result.value.capabilities).toContain('error-recovery');
-        
+
         // Verify reliability features
         expect(typeof result.value.messages.getBuffer).toBe('function');
         expect(typeof result.value.connection.getConnectionInfo).toBe('function');

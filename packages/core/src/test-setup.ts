@@ -11,14 +11,14 @@ const consoleMethods = ['log', 'error', 'info'] as const;
 beforeEach(() => {
   // Reset all mocks before each test
   vi.clearAllMocks();
-  
+
   // Mock console methods unless explicitly testing them
   consoleMethods.forEach(method => {
     if (method in console) {
       vi.spyOn(console, method).mockImplementation(() => {});
     }
   });
-  
+
   // Reset DOM state safely
   if (document.head) {
     document.head.innerHTML = '';
@@ -26,7 +26,7 @@ beforeEach(() => {
   if (document.body) {
     document.body.innerHTML = '';
   }
-  
+
   // Clear any global hyperscript state if it exists
   if (typeof globalThis !== 'undefined') {
     // Reset any global state that might affect tests
@@ -45,16 +45,16 @@ afterEach(() => {
       }
     }
   });
-  
+
   // Clean up any event listeners or timers
   vi.clearAllTimers();
-  
+
   // Clean up DOM safely
   if (document.head) {
     document.head.innerHTML = '';
   }
   if (document.body) {
-    document.body.innerHTML = '';  
+    document.body.innerHTML = '';
   }
 });
 
@@ -79,7 +79,7 @@ expect.extend({
       pass,
     };
   },
-  
+
   toExecuteSuccessfully(received) {
     const pass = received instanceof Promise || typeof received === 'object';
     return {
@@ -106,13 +106,13 @@ export const waitForEvent = (
       target.removeEventListener(eventName, handler);
       reject(new Error(`Event ${eventName} not fired within ${timeout}ms`));
     }, timeout);
-    
+
     const handler = (event: Event) => {
       clearTimeout(timer);
       target.removeEventListener(eventName, handler);
       resolve(event);
     };
-    
+
     target.addEventListener(eventName, handler);
   });
 };

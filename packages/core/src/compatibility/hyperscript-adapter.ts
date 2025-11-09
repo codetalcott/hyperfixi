@@ -11,15 +11,15 @@ export function make(htmlString: string): HTMLElement {
   const template = document.createElement('template');
   template.innerHTML = htmlString.trim();
   const element = template.content.firstChild as HTMLElement;
-  
+
   if (!element) {
     throw new Error(`Invalid HTML: ${htmlString}`);
   }
-  
+
   // Add to work area for testing
   const workArea = getWorkArea();
   workArea.appendChild(element);
-  
+
   return element;
 }
 
@@ -43,7 +43,7 @@ function getWorkArea(): HTMLElement {
 
 // Core compatibility function - evaluate hyperscript expressions
 export async function evalHyperScript(
-  expressionSource: string, 
+  expressionSource: string,
   contextOptions?: {
     me?: HTMLElement;
     locals?: Record<string, any>;
@@ -64,36 +64,50 @@ export async function evalHyperScript(
     returned: false,
     broke: false,
     continued: false,
-    async: false
+    async: false,
   };
-  
+
   // Set up context variables (avoid readonly mutations)
   if (contextOptions?.locals) {
     Object.assign(context, { locals: new Map(Object.entries(contextOptions.locals)) });
   }
-  
+
   if (contextOptions?.globals) {
     Object.assign(context, { globals: new Map(Object.entries(contextOptions.globals)) });
   }
-  
+
   if (contextOptions?.it !== undefined) {
     Object.assign(context, { it: contextOptions.it });
   }
-  
+
   if (contextOptions?.you) {
     context.you = contextOptions.you;
   }
-  
+
   try {
     // Check if this is a command (starts with command keywords)
-    const commandKeywords = ['set', 'put', 'add', 'remove', 'hide', 'show', 'toggle', 'render', 'increment', 'decrement', 'log'];
+    const commandKeywords = [
+      'set',
+      'put',
+      'add',
+      'remove',
+      'hide',
+      'show',
+      'toggle',
+      'render',
+      'increment',
+      'decrement',
+      'log',
+    ];
     const trimmedSource = expressionSource.trim();
-    const isCommand = commandKeywords.some(keyword => trimmedSource.toLowerCase().startsWith(keyword + ' '));
-    
+    const isCommand = commandKeywords.some(keyword =>
+      trimmedSource.toLowerCase().startsWith(keyword + ' ')
+    );
+
     if (isCommand) {
       // Use the command execution system
       const { hyperscript } = await import('../api/hyperscript-api');
-      
+
       // Parse and execute as a command using the full hyperscript system
       const result = await hyperscript.run(expressionSource, context);
       return result;
@@ -126,7 +140,7 @@ export function evalHyperScriptSync(
   let result: any;
   let error: any;
   let completed = false;
-  
+
   evalHyperScript(expressionSource, contextOptions)
     .then(value => {
       result = value;
@@ -136,21 +150,21 @@ export function evalHyperScriptSync(
       error = err;
       completed = true;
     });
-  
+
   // Simple spin wait for testing (not recommended for production)
   const start = Date.now();
   while (!completed && Date.now() - start < 5000) {
     // Wait for async completion
   }
-  
+
   if (error) {
     throw error;
   }
-  
+
   if (!completed) {
     throw new Error('Expression evaluation timeout');
   }
-  
+
   return result;
 }
 
@@ -170,7 +184,7 @@ export const testUtils = {
   clearWorkArea,
   evalHyperScript,
   evalHyperScriptSync,
-  getParseErrorFor
+  getParseErrorFor,
 };
 
 // Create global _hyperscript-style function for compatibility
@@ -178,24 +192,24 @@ export function createHyperscriptCompat() {
   return {
     // Main evaluation function
     evaluate: evalHyperScript,
-    
+
     // DOM utilities
     make,
     clearWorkArea,
-    
+
     // Error handling
     getParseErrorFor,
-    
+
     // Version info
     version: '1.0.0-hyperfixi',
-    
+
     // Feature detection
     features: {
       expressions: true,
       commands: false, // Not yet implemented
-      parser: false,   // Not yet implemented
-      events: false    // Not yet implemented
-    }
+      parser: false, // Not yet implemented
+      events: false, // Not yet implemented
+    },
   };
 }
 
@@ -207,5 +221,5 @@ export default {
   clearWorkArea,
   getParseErrorFor,
   testUtils,
-  createHyperscriptCompat
+  createHyperscriptCompat,
 };

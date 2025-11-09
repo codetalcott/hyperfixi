@@ -10,7 +10,7 @@ import {
   createSockets,
   enhancedSocketsImplementation,
   type SocketsInput,
-  type SocketsOutput
+  type SocketsOutput,
 } from './sockets';
 
 // Mock WebSocket for testing
@@ -31,7 +31,7 @@ class MockWebSocket {
   constructor(url: string, protocols: string[] = []) {
     this.url = url;
     this.protocols = protocols;
-    
+
     // Simulate successful connection after a brief delay
     setTimeout(() => {
       this.readyState = MockWebSocket.OPEN;
@@ -78,7 +78,7 @@ class MockWebSocket {
 
 describe('Enhanced Sockets Feature Implementation', () => {
   let socketsFeature: TypedSocketsFeatureImplementation;
-  
+
   beforeEach(() => {
     socketsFeature = createSocketsFeature();
     vi.clearAllMocks();
@@ -96,7 +96,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
           binaryType: 'blob',
         },
         eventHandlers: [
-          { event: 'message', commands: [{ type: 'command', name: 'processMessage', args: [] }] }
+          { event: 'message', commands: [{ type: 'command', name: 'processMessage', args: [] }] },
         ],
         context: {
           variables: {},
@@ -107,10 +107,10 @@ describe('Enhanced Sockets Feature Implementation', () => {
       };
 
       const result = await socketsFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
       expect(result.value).toBeDefined();
-      
+
       if (result.success && result.value) {
         expect(result.value.category).toBe('Frontend');
         expect(result.value.capabilities).toContain('websocket-connection');
@@ -159,7 +159,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
           {
             event: 'close',
             commands: [{ type: 'command', name: 'onDisconnect', args: [] }],
-          }
+          },
         ],
         messageHandling: {
           format: 'json',
@@ -188,9 +188,9 @@ describe('Enhanced Sockets Feature Implementation', () => {
       };
 
       const result = await socketsFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('websocket-connection');
         expect(result.value.capabilities).toContain('reconnection-management');
@@ -210,7 +210,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
             event: 'message',
             filter: 'message instanceof ArrayBuffer',
             commands: [{ type: 'command', name: 'processBinaryData', args: [] }],
-          }
+          },
         ],
         messageHandling: {
           format: 'binary',
@@ -221,9 +221,9 @@ describe('Enhanced Sockets Feature Implementation', () => {
       };
 
       const result = await socketsFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('message-handling');
         expect(result.value.state).toBe('ready');
@@ -243,7 +243,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test connection establishment
         const connected = await result.value.connection.connect();
@@ -276,7 +276,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test reconnection
         const reconnected = await result.value.connection.reconnect('test-connection');
@@ -295,7 +295,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test disconnection
         const disconnected = await result.value.connection.disconnect('test-connection');
@@ -314,7 +314,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test connection info getter
         const info = result.value.connection.getConnectionInfo('test-connection');
@@ -338,7 +338,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test text message sending
         const sent = await result.value.messaging.send('test-connection', 'Hello, World!', 'text');
@@ -367,7 +367,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test JSON message sending
         const jsonData = { type: 'test', message: 'Hello', timestamp: Date.now() };
@@ -391,7 +391,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test binary message sending
         const binaryData = new ArrayBuffer(8);
@@ -411,12 +411,12 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test message subscription
         const subscribed = await result.value.messaging.subscribe('message', {
           name: 'handleSubscribedMessage',
-          args: []
+          args: [],
         });
         expect(subscribed).toBeDefined();
 
@@ -439,12 +439,12 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test adding event handler
         const handler = await result.value.events.addHandler('test-connection', 'open', {
           name: 'onConnectionOpen',
-          args: []
+          args: [],
         });
         expect(handler).toBeDefined();
 
@@ -469,10 +469,12 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test event emission
-        const emitted = await result.value.events.emit('test-connection', 'customEvent', { data: 'test' });
+        const emitted = await result.value.events.emit('test-connection', 'customEvent', {
+          data: 'test',
+        });
         expect(emitted).toBe(true);
       }
     });
@@ -497,7 +499,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test adding to queue
         const added = await result.value.queue.add('test-connection', { message: 'queued' });
@@ -535,7 +537,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test error handling
         const error = new Error('Test WebSocket error');
@@ -554,7 +556,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
         const customHandler = (error: Error, context: any) => {
           console.warn('Custom error handler:', error.message);
         };
-        
+
         const handlerSet = result.value.errors.setErrorHandler(customHandler);
         expect(handlerSet).toBe(true);
       }
@@ -572,7 +574,9 @@ describe('Enhanced Sockets Feature Implementation', () => {
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors).toHaveLength(1);
       expect(validationResult.errors[0].type).toBe('invalid-websocket-protocol');
-      expect(validationResult.suggestions).toContain('Use ws:// for local development or wss:// for secure connections');
+      expect(validationResult.suggestions).toContain(
+        'Use ws:// for local development or wss:// for secure connections'
+      );
     });
 
     it('should validate WebSocket URL format', () => {
@@ -584,7 +588,11 @@ describe('Enhanced Sockets Feature Implementation', () => {
 
       expect(validationResult.isValid).toBe(false);
       // The error might be schema-validation instead of invalid-websocket-url because Zod validates URL format first
-      expect(validationResult.errors.some(e => e.type === 'schema-validation' || e.type === 'invalid-websocket-url')).toBe(true);
+      expect(
+        validationResult.errors.some(
+          e => e.type === 'schema-validation' || e.type === 'invalid-websocket-url'
+        )
+      ).toBe(true);
     });
 
     it('should validate reconnection settings', () => {
@@ -630,8 +638,8 @@ describe('Enhanced Sockets Feature Implementation', () => {
           {
             event: 'message',
             filter: 'invalid javascript syntax [[[',
-            commands: [{ name: 'process', args: [] }]
-          }
+            commands: [{ name: 'process', args: [] }],
+          },
         ],
       });
 
@@ -651,13 +659,15 @@ describe('Enhanced Sockets Feature Implementation', () => {
             options: {
               throttle: 100,
               debounce: 200, // Cannot have both
-            }
-          }
+            },
+          },
         ],
       });
 
       expect(validationResult.isValid).toBe(false);
-      expect(validationResult.errors.some(e => e.type === 'conflicting-performance-options')).toBe(true);
+      expect(validationResult.errors.some(e => e.type === 'conflicting-performance-options')).toBe(
+        true
+      );
     });
 
     it('should validate empty commands arrays', () => {
@@ -668,8 +678,8 @@ describe('Enhanced Sockets Feature Implementation', () => {
         eventHandlers: [
           {
             event: 'message',
-            commands: [] // Empty commands
-          }
+            commands: [], // Empty commands
+          },
         ],
       });
 
@@ -736,7 +746,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       }
 
       const metrics = socketsFeature.getPerformanceMetrics();
-      
+
       expect(metrics.totalInitializations).toBeGreaterThanOrEqual(3);
       expect(typeof metrics.successRate).toBe('number');
       expect(typeof metrics.averageDuration).toBe('number');
@@ -788,7 +798,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
 
     it('should have comprehensive metadata', () => {
       const { metadata } = socketsFeature;
-      
+
       expect(metadata.category).toBe('Frontend');
       expect(metadata.complexity).toBe('complex');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
@@ -801,7 +811,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
 
     it('should have LLM-compatible documentation', () => {
       const { documentation } = socketsFeature;
-      
+
       expect(documentation.summary).toBeDefined();
       expect(Array.isArray(documentation.parameters)).toBe(true);
       expect(documentation.returns).toBeDefined();
@@ -838,7 +848,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
             event: 'open',
             commands: [
               { type: 'command', name: 'authenticate', args: [] },
-              { type: 'command', name: 'joinRoom', args: ['general'] }
+              { type: 'command', name: 'joinRoom', args: ['general'] },
             ],
           },
           {
@@ -846,7 +856,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
             filter: 'JSON.parse(message.data).type === "chat"',
             commands: [
               { type: 'command', name: 'displayMessage', args: [] },
-              { type: 'command', name: 'updateLastSeen', args: [] }
+              { type: 'command', name: 'updateLastSeen', args: [] },
             ],
             options: { debounce: 50 },
           },
@@ -860,13 +870,13 @@ describe('Enhanced Sockets Feature Implementation', () => {
             event: 'close',
             commands: [
               { type: 'command', name: 'showDisconnectedStatus', args: [] },
-              { type: 'command', name: 'clearUserList', args: [] }
+              { type: 'command', name: 'clearUserList', args: [] },
             ],
           },
           {
             event: 'error',
             commands: [{ type: 'command', name: 'showErrorMessage', args: [] }],
-          }
+          },
         ],
         messageHandling: {
           format: 'json',
@@ -877,9 +887,9 @@ describe('Enhanced Sockets Feature Implementation', () => {
               properties: {
                 type: { type: 'string' },
                 data: { type: 'object' },
-                timestamp: { type: 'number' }
+                timestamp: { type: 'number' },
               },
-              required: ['type']
+              required: ['type'],
             },
           },
           queue: {
@@ -893,7 +903,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
             userId: 12345,
             username: 'testuser',
             roomId: 'general',
-            authToken: 'jwt-token-here'
+            authToken: 'jwt-token-here',
           },
         },
         options: {
@@ -908,7 +918,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Verify connection capabilities
         expect(result.value.capabilities).toContain('websocket-connection');
@@ -950,15 +960,16 @@ describe('Enhanced Sockets Feature Implementation', () => {
             filter: 'message.data instanceof ArrayBuffer',
             commands: [
               { type: 'command', name: 'parseBinaryData', args: [] },
-              { type: 'command', name: 'updateChart', args: [] }
+              { type: 'command', name: 'updateChart', args: [] },
             ],
             options: { throttle: 16 }, // ~60fps
           },
           {
             event: 'message',
-            filter: 'typeof message.data === "string" && JSON.parse(message.data).type === "metadata"',
+            filter:
+              'typeof message.data === "string" && JSON.parse(message.data).type === "metadata"',
             commands: [{ type: 'command', name: 'updateMetadata', args: [] }],
-          }
+          },
         ],
         messageHandling: {
           format: 'binary',
@@ -978,11 +989,11 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Verify binary message support
         expect(typeof result.value.messaging.sendBinary).toBe('function');
-        
+
         // Verify real-time optimizations
         expect(result.value.capabilities).toContain('message-handling');
       }
@@ -1012,7 +1023,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
             event: 'open',
             commands: [
               { type: 'command', name: 'registerDevice', args: [] },
-              { type: 'command', name: 'syncConfiguration', args: [] }
+              { type: 'command', name: 'syncConfiguration', args: [] },
             ],
           },
           {
@@ -1020,7 +1031,7 @@ describe('Enhanced Sockets Feature Implementation', () => {
             filter: 'JSON.parse(message.data).type === "command"',
             commands: [
               { type: 'command', name: 'executeDeviceCommand', args: [] },
-              { type: 'command', name: 'sendAcknowledgment', args: [] }
+              { type: 'command', name: 'sendAcknowledgment', args: [] },
             ],
           },
           {
@@ -1032,9 +1043,9 @@ describe('Enhanced Sockets Feature Implementation', () => {
             event: 'close',
             commands: [
               { type: 'command', name: 'enterOfflineMode', args: [] },
-              { type: 'command', name: 'cacheCommands', args: [] }
+              { type: 'command', name: 'cacheCommands', args: [] },
             ],
-          }
+          },
         ],
         messageHandling: {
           format: 'json',
@@ -1056,12 +1067,12 @@ describe('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Verify IoT-specific features
         expect(result.value.capabilities).toContain('reconnection-management');
         expect(result.value.capabilities).toContain('queue-management');
-        
+
         // Verify persistence and reliability features
         expect(typeof result.value.queue.getPending).toBe('function');
         expect(typeof result.value.connection.getConnectionInfo).toBe('function');

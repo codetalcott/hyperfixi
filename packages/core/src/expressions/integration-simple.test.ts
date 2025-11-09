@@ -21,7 +21,7 @@ describe('Expression Integration Tests - Core Combinations', () => {
 
   beforeEach(() => {
     context = createMockHyperscriptContext();
-    
+
     // Create test DOM structure
     document.body.innerHTML = `
       <div id="container" class="test-container">
@@ -57,7 +57,11 @@ describe('Expression Integration Tests - Core Combinations', () => {
 
     it('should handle "#container\'s children length"', async () => {
       const container = await propertiesExpressions.idReference.evaluate(context, 'container');
-      const children = await propertiesExpressions.possessive.evaluate(context, container, 'children');
+      const children = await propertiesExpressions.possessive.evaluate(
+        context,
+        container,
+        'children'
+      );
       const length = await propertiesExpressions.possessive.evaluate(context, children, 'length');
       expect(length).toBeGreaterThan(0);
     });
@@ -67,7 +71,7 @@ describe('Expression Integration Tests - Core Combinations', () => {
     it('should handle form as Values', async () => {
       const form = await propertiesExpressions.idReference.evaluate(context, 'test-form');
       const formValues = await conversionExpressions.as.evaluate(context, form, 'Values');
-      
+
       expect(formValues.username).toBe('john');
       expect(formValues.age).toBe(25);
       expect(formValues.active).toBe(true);
@@ -76,7 +80,7 @@ describe('Expression Integration Tests - Core Combinations', () => {
     it('should handle form as Values:JSON', async () => {
       const form = await propertiesExpressions.idReference.evaluate(context, 'test-form');
       const jsonValues = await conversionExpressions.as.evaluate(context, form, 'Values:JSON');
-      
+
       const parsed = JSON.parse(jsonValues);
       expect(parsed.username).toBe('john');
       expect(parsed.age).toBe(25);
@@ -86,8 +90,12 @@ describe('Expression Integration Tests - Core Combinations', () => {
     it('should check if form values contain username', async () => {
       const form = await propertiesExpressions.idReference.evaluate(context, 'test-form');
       const formValues = await conversionExpressions.as.evaluate(context, form, 'Values');
-      const hasUsername = await logicalExpressions.contains.evaluate(context, formValues, 'username');
-      
+      const hasUsername = await logicalExpressions.contains.evaluate(
+        context,
+        formValues,
+        'username'
+      );
+
       expect(hasUsername).toBe(true);
     });
   });
@@ -123,7 +131,10 @@ describe('Expression Integration Tests - Core Combinations', () => {
     });
 
     it('should handle "buttons with primary class"', async () => {
-      const primaryButtons = await referencesExpressions.elementWithSelector.evaluate(context, 'button.primary');
+      const primaryButtons = await referencesExpressions.elementWithSelector.evaluate(
+        context,
+        'button.primary'
+      );
       expect(primaryButtons).toHaveLength(1);
       expect(primaryButtons[0].id).toBe('btn1');
     });
@@ -131,7 +142,11 @@ describe('Expression Integration Tests - Core Combinations', () => {
     it('should handle "first button text content"', async () => {
       const buttons = await referencesExpressions.elementWithSelector.evaluate(context, 'button');
       const firstButton = await positionalExpressions.first.evaluate(context, buttons);
-      const textContent = await propertiesExpressions.possessive.evaluate(context, firstButton, 'textContent');
+      const textContent = await propertiesExpressions.possessive.evaluate(
+        context,
+        firstButton,
+        'textContent'
+      );
       expect(textContent).toBe('Button 1');
     });
   });
@@ -159,11 +174,11 @@ describe('Expression Integration Tests - Core Combinations', () => {
       const dataValue = await propertiesExpressions.my.evaluate(context, 'data-value');
       const intValue = await conversionExpressions.as.evaluate(context, dataValue, 'Int');
       const greaterThan5 = await logicalExpressions.greaterThan.evaluate(context, intValue, 5);
-      
+
       // Check className contains 'primary'
       const className = await propertiesExpressions.my.evaluate(context, 'className');
       const hasPrimary = await logicalExpressions.contains.evaluate(context, className, 'primary');
-      
+
       // Combine with AND
       const result = await logicalExpressions.and.evaluate(context, greaterThan5, hasPrimary);
       expect(result).toBe(true);
@@ -202,11 +217,15 @@ describe('Expression Integration Tests - Core Combinations', () => {
     it('should access window and document', async () => {
       const windowObj = await referencesExpressions.window.evaluate(context);
       const documentObj = await referencesExpressions.document.evaluate(context);
-      
+
       expect(windowObj).toBe(window);
       expect(documentObj).toBe(document);
-      
-      const location = await propertiesExpressions.possessive.evaluate(context, windowObj, 'location');
+
+      const location = await propertiesExpressions.possessive.evaluate(
+        context,
+        windowObj,
+        'location'
+      );
       expect(location).toBe(window.location);
     });
   });
@@ -216,25 +235,35 @@ describe('Expression Integration Tests - Core Combinations', () => {
       // Get form and convert to values
       const form = await propertiesExpressions.idReference.evaluate(context, 'test-form');
       const formValues = await conversionExpressions.as.evaluate(context, form, 'Values');
-      
+
       // Check multiple conditions
-      const hasUsername = await logicalExpressions.contains.evaluate(context, formValues, 'username');
-      const usernameNotEmpty = await logicalExpressions.not.evaluate(context, formValues.username === '');
+      const hasUsername = await logicalExpressions.contains.evaluate(
+        context,
+        formValues,
+        'username'
+      );
+      const usernameNotEmpty = await logicalExpressions.not.evaluate(
+        context,
+        formValues.username === ''
+      );
       const ageValid = await logicalExpressions.greaterThan.evaluate(context, formValues.age, 0);
       const isActive = formValues.active;
-      
+
       // Combine all conditions
       const step1 = await logicalExpressions.and.evaluate(context, hasUsername, usernameNotEmpty);
       const step2 = await logicalExpressions.and.evaluate(context, step1, ageValid);
       const result = await logicalExpressions.and.evaluate(context, step2, isActive);
-      
+
       expect(result).toBe(true);
     });
 
     it('should filter content by criteria', async () => {
       // Get all content elements
-      const contentElements = await referencesExpressions.elementWithSelector.evaluate(context, '.content');
-      
+      const contentElements = await referencesExpressions.elementWithSelector.evaluate(
+        context,
+        '.content'
+      );
+
       // Filter for visible elements (not .hidden)
       let visibleCount = 0;
       for (const element of contentElements) {
@@ -242,7 +271,7 @@ describe('Expression Integration Tests - Core Combinations', () => {
         const isVisible = await logicalExpressions.not.evaluate(context, hasHidden);
         if (isVisible) visibleCount++;
       }
-      
+
       expect(visibleCount).toBe(1); // Only text1 is visible
     });
 
@@ -250,19 +279,26 @@ describe('Expression Integration Tests - Core Combinations', () => {
       // Get next button from current context
       const nextButton = await positionalExpressions.next.evaluate(context, 'button');
       expect(nextButton?.id).toBe('btn2');
-      
+
       // Get previous button from btn2
       const btn2 = await propertiesExpressions.idReference.evaluate(context, 'btn2');
-      const prevButton = await positionalExpressions.previous.evaluate(context, 'button', btn2 as HTMLElement);
+      const prevButton = await positionalExpressions.previous.evaluate(
+        context,
+        'button',
+        btn2 as HTMLElement
+      );
       expect(prevButton?.id).toBe('btn1');
     });
   });
 
   describe('Error Handling and Edge Cases', () => {
     it('should handle missing elements gracefully', async () => {
-      const missing = await referencesExpressions.elementWithSelector.evaluate(context, '.nonexistent');
+      const missing = await referencesExpressions.elementWithSelector.evaluate(
+        context,
+        '.nonexistent'
+      );
       expect(missing).toEqual([]);
-      
+
       const first = await positionalExpressions.first.evaluate(context, missing);
       expect(first).toBeNull();
     });
@@ -281,7 +317,7 @@ describe('Expression Integration Tests - Core Combinations', () => {
       const emptyArray: any[] = [];
       const first = await positionalExpressions.first.evaluate(context, emptyArray);
       const last = await positionalExpressions.last.evaluate(context, emptyArray);
-      
+
       expect(first).toBeNull();
       expect(last).toBeNull();
     });
@@ -291,12 +327,12 @@ describe('Expression Integration Tests - Core Combinations', () => {
     it('should handle large arrays efficiently', async () => {
       const largeArray = Array.from({ length: 1000 }, (_, i) => i);
       context.it = { values: largeArray };
-      
+
       const values = await propertiesExpressions.its.evaluate(context, 'values');
       const first = await positionalExpressions.first.evaluate(context, values);
       const last = await positionalExpressions.last.evaluate(context, values);
       const middle = await positionalExpressions.at.evaluate(context, 500, values);
-      
+
       expect(first).toBe(0);
       expect(last).toBe(999);
       expect(middle).toBe(500);

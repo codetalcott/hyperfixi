@@ -8,7 +8,7 @@ import type {
   TypedExpressionImplementation,
   TypedExecutionContext,
   EvaluationResult,
-  LLMDocumentation
+  LLMDocumentation,
 } from '../../types/command-types';
 
 // ============================================================================
@@ -18,7 +18,9 @@ import type {
 /**
  * Enhanced form values extraction with comprehensive validation
  */
-export class EnhancedFormValuesExpression implements TypedExpressionImplementation<Record<string, unknown>> {
+export class EnhancedFormValuesExpression
+  implements TypedExpressionImplementation<Record<string, unknown>>
+{
   public readonly name = 'form-values';
   public readonly category = 'object' as const;
   public readonly precedence = 1;
@@ -29,7 +31,7 @@ export class EnhancedFormValuesExpression implements TypedExpressionImplementati
     isPure: false, // DOM queries are not pure
     canThrow: false,
     complexity: 'O(n)' as const,
-    dependencies: ['DOM']
+    dependencies: ['DOM'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -40,39 +42,42 @@ export class EnhancedFormValuesExpression implements TypedExpressionImplementati
         type: 'element',
         description: 'Form element or container with form fields',
         optional: false,
-        examples: ['<form>', '<div>', 'document.querySelector("form")']
-      }
+        examples: ['<form>', '<div>', 'document.querySelector("form")'],
+      },
     ],
     returns: {
       type: 'object',
       description: 'Object containing all form field values',
-      examples: ['{"name": "John", "email": "john@example.com"}', '{"checked": true}']
+      examples: ['{"name": "John", "email": "john@example.com"}', '{"checked": true}'],
     },
     examples: [
       {
         title: 'Basic form extraction',
         code: 'formValues(myForm)',
         explanation: 'Extract all field values from a form',
-        output: '{"username": "john", "password": "***"}'
+        output: '{"username": "john", "password": "***"}',
       },
       {
         title: 'Checkbox handling',
         code: 'formValues(form)',
         explanation: 'Properly handles checked/unchecked states',
-        output: '{"notifications": true, "marketing": false}'
+        output: '{"notifications": true, "marketing": false}',
       },
       {
         title: 'Complex form',
         code: 'formValues(#signupForm)',
         explanation: 'Handle various input types in one form',
-        output: '{"name": "Jane", "age": 25, "country": "US"}'
-      }
+        output: '{"name": "Jane", "age": 25, "country": "US"}',
+      },
     ],
     seeAlso: ['form-data', 'form-validate', 'serialize'],
-    tags: ['form', 'extraction', 'values', 'fields']
+    tags: ['form', 'extraction', 'values', 'fields'],
   };
 
-  async evaluate(_context: TypedExecutionContext, formElement: HTMLElement): Promise<EvaluationResult<Record<string, unknown>>> {
+  async evaluate(
+    _context: TypedExecutionContext,
+    formElement: HTMLElement
+  ): Promise<EvaluationResult<Record<string, unknown>>> {
     try {
       if (!formElement) {
         return {
@@ -82,9 +87,9 @@ export class EnhancedFormValuesExpression implements TypedExpressionImplementati
             type: 'missing-argument',
             message: 'Form element is required',
             code: 'MISSING_FORM_ELEMENT',
-            suggestions: ['Provide a valid form element', 'Ensure element exists in DOM']
+            suggestions: ['Provide a valid form element', 'Ensure element exists in DOM'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -96,27 +101,28 @@ export class EnhancedFormValuesExpression implements TypedExpressionImplementati
             type: 'invalid-argument',
             message: 'Provided element is not a valid HTML element',
             code: 'INVALID_ELEMENT_TYPE',
-            suggestions: ['Ensure element is an HTMLElement', 'Check element selection']
+            suggestions: ['Ensure element is an HTMLElement', 'Check element selection'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
       const result: Record<string, unknown> = {};
-      
+
       // Get all form fields from the element
       const selector = 'input, textarea, select, [role="checkbox"], [role="radio"]';
-      const elements = formElement.tagName === 'FORM' 
-        ? formElement.querySelectorAll(selector)
-        : formElement.querySelectorAll(selector);
+      const elements =
+        formElement.tagName === 'FORM'
+          ? formElement.querySelectorAll(selector)
+          : formElement.querySelectorAll(selector);
 
       for (const element of elements) {
         const htmlElement = element as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-        
+
         if (htmlElement.name || htmlElement.id) {
           const fieldName = htmlElement.name || htmlElement.id;
           const fieldValue = this.extractFieldValue(htmlElement);
-          
+
           if (fieldValue !== undefined) {
             result[fieldName] = fieldValue;
           }
@@ -126,9 +132,8 @@ export class EnhancedFormValuesExpression implements TypedExpressionImplementati
       return {
         success: true,
         value: result,
-        type: 'object'
+        type: 'object',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -140,49 +145,51 @@ export class EnhancedFormValuesExpression implements TypedExpressionImplementati
           suggestions: [
             'Check if form element is valid',
             'Ensure form fields have proper name or id attributes',
-            'Verify form is in the DOM'
-          ]
+            'Verify form is in the DOM',
+          ],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
 
-  private extractFieldValue(element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement): unknown {
+  private extractFieldValue(
+    element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+  ): unknown {
     const type = element.getAttribute('type')?.toLowerCase() || element.tagName.toLowerCase();
-    
+
     switch (type) {
       case 'checkbox':
         const checkbox = element as HTMLInputElement;
-        return checkbox.checked ? (checkbox.value || true) : false;
-        
+        return checkbox.checked ? checkbox.value || true : false;
+
       case 'radio':
         const radio = element as HTMLInputElement;
         return radio.checked ? radio.value : undefined;
-        
+
       case 'number':
       case 'range':
         const numberInput = element as HTMLInputElement;
         const numValue = parseFloat(numberInput.value);
         return isNaN(numValue) ? null : numValue;
-        
+
       case 'date':
       case 'datetime-local':
       case 'time':
         const dateInput = element as HTMLInputElement;
         return dateInput.value ? new Date(dateInput.value) : null;
-        
+
       case 'file':
         const fileInput = element as HTMLInputElement;
         return fileInput.files ? Array.from(fileInput.files) : [];
-        
+
       case 'select':
         const select = element as HTMLSelectElement;
         if (select.multiple) {
           return Array.from(select.selectedOptions).map(option => option.value);
         }
         return select.value;
-        
+
       default:
         return element.value || '';
     }
@@ -207,7 +214,7 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
     isPure: false, // DOM queries and validation are not pure
     canThrow: false,
     complexity: 'O(n)' as const,
-    dependencies: ['DOM']
+    dependencies: ['DOM'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -218,46 +225,50 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
         type: 'element',
         description: 'Form element to validate',
         optional: false,
-        examples: ['<form>', 'document.querySelector("#myForm")']
+        examples: ['<form>', 'document.querySelector("#myForm")'],
       },
       {
         name: 'customRules',
         type: 'object',
         description: 'Custom validation rules (optional)',
         optional: true,
-        examples: ['{"email": "required|email", "age": "min:18"}']
-      }
+        examples: ['{"email": "required|email", "age": "min:18"}'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if form is valid, false otherwise',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'HTML5 validation',
         code: 'formValidate(myForm)',
         explanation: 'Use built-in HTML5 validation',
-        output: true
+        output: true,
       },
       {
         title: 'Custom validation rules',
         code: 'formValidate(form, {"password": "min:8"})',
         explanation: 'Add custom validation rules',
-        output: false
+        output: false,
       },
       {
         title: 'Required field check',
         code: 'formValidate(#signupForm)',
         explanation: 'Check all required fields are filled',
-        output: true
-      }
+        output: true,
+      },
     ],
     seeAlso: ['form-values', 'form-errors'],
-    tags: ['form', 'validation', 'rules', 'html5']
+    tags: ['form', 'validation', 'rules', 'html5'],
   };
 
-  async evaluate(_context: TypedExecutionContext, formElement: HTMLElement, customRules?: Record<string, string>): Promise<EvaluationResult<boolean>> {
+  async evaluate(
+    _context: TypedExecutionContext,
+    formElement: HTMLElement,
+    customRules?: Record<string, string>
+  ): Promise<EvaluationResult<boolean>> {
     try {
       if (!formElement || !(formElement instanceof HTMLElement)) {
         return {
@@ -267,19 +278,19 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
             type: 'invalid-argument',
             message: 'Valid form element is required',
             code: 'INVALID_FORM_ELEMENT',
-            suggestions: ['Provide a valid HTMLElement', 'Ensure form exists in DOM']
+            suggestions: ['Provide a valid HTMLElement', 'Ensure form exists in DOM'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
       // Check HTML5 validation first
-      const form = formElement.tagName === 'FORM' ? formElement as HTMLFormElement : null;
+      const form = formElement.tagName === 'FORM' ? (formElement as HTMLFormElement) : null;
       if (form && !form.checkValidity()) {
         return {
           success: true,
           value: false,
-          type: 'boolean'
+          type: 'boolean',
         };
       }
 
@@ -287,11 +298,11 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
       if (customRules) {
         const formValues = await this.getFormValues(formElement);
         const isCustomValid = this.validateCustomRules(formValues, customRules);
-        
+
         return {
           success: true,
           value: isCustomValid,
-          type: 'boolean'
+          type: 'boolean',
         };
       }
 
@@ -299,9 +310,8 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
       return {
         success: true,
         value: true,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       return {
         success: false,
@@ -310,9 +320,12 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
           type: 'validation-error',
           message: error instanceof Error ? error.message : 'Form validation failed',
           code: 'FORM_VALIDATION_FAILED',
-          suggestions: ['Check form element and validation rules', 'Ensure form is properly structured']
+          suggestions: [
+            'Check form element and validation rules',
+            'Ensure form is properly structured',
+          ],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -323,11 +336,14 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
     return result.success ? (result.value ?? {}) : {};
   }
 
-  private validateCustomRules(values: Record<string, unknown>, rules: Record<string, string>): boolean {
+  private validateCustomRules(
+    values: Record<string, unknown>,
+    rules: Record<string, string>
+  ): boolean {
     for (const [fieldName, ruleString] of Object.entries(rules)) {
       const fieldValue = values[fieldName];
       const ruleList = ruleString.split('|');
-      
+
       for (const rule of ruleList) {
         if (!this.validateRule(fieldValue, rule.trim())) {
           return false;
@@ -341,7 +357,7 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
     if (rule === 'required') {
       return value !== null && value !== undefined && value !== '';
     }
-    
+
     if (rule.startsWith('min:')) {
       const minValue = parseInt(rule.split(':')[1]);
       if (typeof value === 'string') {
@@ -351,7 +367,7 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
         return value >= minValue;
       }
     }
-    
+
     if (rule.startsWith('max:')) {
       const maxValue = parseInt(rule.split(':')[1]);
       if (typeof value === 'string') {
@@ -361,12 +377,12 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
         return value <= maxValue;
       }
     }
-    
+
     if (rule === 'email') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       return typeof value === 'string' && emailRegex.test(value);
     }
-    
+
     return true; // Unknown rules pass by default
   }
 }
@@ -389,7 +405,7 @@ export class EnhancedFormSerializationExpression implements TypedExpressionImple
     isPure: false, // DOM queries are not pure
     canThrow: false,
     complexity: 'O(n)' as const,
-    dependencies: ['DOM']
+    dependencies: ['DOM'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -400,7 +416,7 @@ export class EnhancedFormSerializationExpression implements TypedExpressionImple
         type: 'element',
         description: 'Form element to serialize',
         optional: false,
-        examples: ['<form>', 'document.querySelector("form")']
+        examples: ['<form>', 'document.querySelector("form")'],
       },
       {
         name: 'format',
@@ -408,33 +424,37 @@ export class EnhancedFormSerializationExpression implements TypedExpressionImple
         description: 'Serialization format',
         optional: true,
         defaultValue: 'urlencoded',
-        examples: ['urlencoded', 'json']
-      }
+        examples: ['urlencoded', 'json'],
+      },
     ],
     returns: {
       type: 'string',
       description: 'Serialized form data',
-      examples: ['name=John&email=john@example.com', '{"name":"John","email":"john@example.com"}']
+      examples: ['name=John&email=john@example.com', '{"name":"John","email":"john@example.com"}'],
     },
     examples: [
       {
         title: 'URL encoding',
         code: 'formSerialize(myForm)',
         explanation: 'Serialize as URL-encoded string',
-        output: 'name=John&email=john%40example.com'
+        output: 'name=John&email=john%40example.com',
       },
       {
         title: 'JSON format',
         code: 'formSerialize(myForm, "json")',
         explanation: 'Serialize as JSON string',
-        output: '{"name":"John","email":"john@example.com"}'
-      }
+        output: '{"name":"John","email":"john@example.com"}',
+      },
     ],
     seeAlso: ['form-values', 'form-data'],
-    tags: ['form', 'serialization', 'json', 'urlencoded']
+    tags: ['form', 'serialization', 'json', 'urlencoded'],
   };
 
-  async evaluate(context: TypedExecutionContext, formElement: HTMLElement, format: string = 'urlencoded'): Promise<EvaluationResult<string>> {
+  async evaluate(
+    context: TypedExecutionContext,
+    formElement: HTMLElement,
+    format: string = 'urlencoded'
+  ): Promise<EvaluationResult<string>> {
     try {
       if (!formElement || !(formElement instanceof HTMLElement)) {
         return {
@@ -444,16 +464,16 @@ export class EnhancedFormSerializationExpression implements TypedExpressionImple
             type: 'invalid-argument',
             message: 'Valid form element is required',
             code: 'INVALID_FORM_ELEMENT',
-            suggestions: ['Provide a valid HTMLElement', 'Ensure form exists in DOM']
+            suggestions: ['Provide a valid HTMLElement', 'Ensure form exists in DOM'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
       // Get form values
       const valuesExpr = new EnhancedFormValuesExpression();
       const valuesResult = await valuesExpr.evaluate(context, formElement);
-      
+
       if (!valuesResult.success) {
         return valuesResult as unknown as EvaluationResult<string>;
       }
@@ -465,7 +485,7 @@ export class EnhancedFormSerializationExpression implements TypedExpressionImple
         return {
           success: true,
           value: JSON.stringify(values),
-          type: 'string'
+          type: 'string',
         };
       } else {
         // URL encoding
@@ -475,14 +495,13 @@ export class EnhancedFormSerializationExpression implements TypedExpressionImple
             params.append(key, String(value));
           }
         }
-        
+
         return {
           success: true,
           value: params.toString(),
-          type: 'string'
+          type: 'string',
         };
       }
-
     } catch (error) {
       return {
         success: false,
@@ -491,9 +510,9 @@ export class EnhancedFormSerializationExpression implements TypedExpressionImple
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Form serialization failed',
           code: 'FORM_SERIALIZATION_FAILED',
-          suggestions: ['Check form element and format parameter', 'Ensure form has valid fields']
+          suggestions: ['Check form element and format parameter', 'Ensure form has valid fields'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -509,7 +528,7 @@ export class EnhancedFormSerializationExpression implements TypedExpressionImple
 export const enhancedFormExpressions = {
   'form-values': new EnhancedFormValuesExpression(),
   'form-validate': new EnhancedFormValidationExpression(),
-  'form-serialize': new EnhancedFormSerializationExpression()
+  'form-serialize': new EnhancedFormSerializationExpression(),
 } as const;
 
 /**
@@ -530,17 +549,28 @@ export function createEnhancedFormSerialization(): EnhancedFormSerializationExpr
 /**
  * Utility functions for form operations
  */
-export async function extractFormValues(formElement: HTMLElement, context: TypedExecutionContext): Promise<EvaluationResult<Record<string, unknown>>> {
+export async function extractFormValues(
+  formElement: HTMLElement,
+  context: TypedExecutionContext
+): Promise<EvaluationResult<Record<string, unknown>>> {
   const expr = new EnhancedFormValuesExpression();
   return expr.evaluate(context, formElement);
 }
 
-export async function validateForm(formElement: HTMLElement, context: TypedExecutionContext, customRules?: Record<string, string>): Promise<EvaluationResult<boolean>> {
+export async function validateForm(
+  formElement: HTMLElement,
+  context: TypedExecutionContext,
+  customRules?: Record<string, string>
+): Promise<EvaluationResult<boolean>> {
   const expr = new EnhancedFormValidationExpression();
   return expr.evaluate(context, formElement, customRules);
 }
 
-export async function serializeForm(formElement: HTMLElement, context: TypedExecutionContext, format: string = 'urlencoded'): Promise<EvaluationResult<string>> {
+export async function serializeForm(
+  formElement: HTMLElement,
+  context: TypedExecutionContext,
+  format: string = 'urlencoded'
+): Promise<EvaluationResult<string>> {
   const expr = new EnhancedFormSerializationExpression();
   return expr.evaluate(context, formElement, format);
 }

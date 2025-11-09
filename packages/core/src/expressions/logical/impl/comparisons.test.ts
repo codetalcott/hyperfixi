@@ -13,7 +13,7 @@ import {
   EnhancedLessThanExpression,
   EnhancedGreaterThanOrEqualExpression,
   EnhancedLessThanOrEqualExpression,
-  comparisonExpressions
+  comparisonExpressions,
 } from './comparisons';
 
 describe('Enhanced Comparison Expressions', () => {
@@ -42,9 +42,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 5,
         operator: '==',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -56,9 +56,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 5,
         operator: '==',
-        right: 3
+        right: 3,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -70,9 +70,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 5,
         operator: '==',
-        right: '5'
+        right: '5',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -84,9 +84,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 'hello',
         operator: '==',
-        right: 'hello'
+        right: 'hello',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -98,9 +98,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: true,
         operator: '==',
-        right: true
+        right: true,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -112,9 +112,9 @@ describe('Enhanced Comparison Expressions', () => {
       const validResult = expression.validate({
         left: 5,
         operator: '==',
-        right: 5
+        right: 5,
       });
-      
+
       expect(validResult.isValid).toBe(true);
       expect(validResult.errors).toHaveLength(0);
     });
@@ -123,9 +123,9 @@ describe('Enhanced Comparison Expressions', () => {
       const invalidResult = expression.validate({
         left: 5,
         operator: '!=',
-        right: 5
+        right: 5,
       });
-      
+
       expect(invalidResult.isValid).toBe(false);
       expect(invalidResult.errors).toHaveLength(1);
       expect(invalidResult.errors[0].message).toContain('expects == operator');
@@ -133,15 +133,15 @@ describe('Enhanced Comparison Expressions', () => {
 
     it('should track performance', async () => {
       const initialHistoryLength = context.evaluationHistory.length;
-      
+
       await expression.evaluate(context, {
         left: 5,
         operator: '==',
-        right: 5
+        right: 5,
       });
-      
+
       expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
-      
+
       const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
       expect(evaluation.expressionName).toBe('equals');
       expect(evaluation.category).toBe('Logical');
@@ -169,9 +169,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 5,
         operator: '!=',
-        right: 3
+        right: 3,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -183,9 +183,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 5,
         operator: '!=',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -197,9 +197,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 5,
         operator: '!=',
-        right: '3'
+        right: '3',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -219,9 +219,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 10,
         operator: '>',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -233,9 +233,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 3,
         operator: '>',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -247,9 +247,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 5,
         operator: '>',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -261,9 +261,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 'banana',
         operator: '>',
-        right: 'apple'
+        right: 'apple',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -275,9 +275,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: '10',
         operator: '>',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -297,9 +297,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 3,
         operator: '<',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -311,9 +311,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 10,
         operator: '<',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -333,9 +333,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 10,
         operator: '>=',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -347,9 +347,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 5,
         operator: '>=',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -361,9 +361,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 3,
         operator: '>=',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -383,9 +383,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 3,
         operator: '<=',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -397,9 +397,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 5,
         operator: '<=',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -411,9 +411,9 @@ describe('Enhanced Comparison Expressions', () => {
       const result = await expression.evaluate(context, {
         left: 10,
         operator: '<=',
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(false);
@@ -428,8 +428,12 @@ describe('Enhanced Comparison Expressions', () => {
       expect(comparisonExpressions.notEquals).toBeInstanceOf(EnhancedNotEqualsExpression);
       expect(comparisonExpressions.greaterThan).toBeInstanceOf(EnhancedGreaterThanExpression);
       expect(comparisonExpressions.lessThan).toBeInstanceOf(EnhancedLessThanExpression);
-      expect(comparisonExpressions.greaterThanOrEqual).toBeInstanceOf(EnhancedGreaterThanOrEqualExpression);
-      expect(comparisonExpressions.lessThanOrEqual).toBeInstanceOf(EnhancedLessThanOrEqualExpression);
+      expect(comparisonExpressions.greaterThanOrEqual).toBeInstanceOf(
+        EnhancedGreaterThanOrEqualExpression
+      );
+      expect(comparisonExpressions.lessThanOrEqual).toBeInstanceOf(
+        EnhancedLessThanOrEqualExpression
+      );
     });
 
     it('should have consistent metadata across all expressions', () => {
@@ -449,7 +453,7 @@ describe('Enhanced Comparison Expressions', () => {
   describe('Performance and Error Handling', () => {
     it('should handle mixed type comparisons gracefully', async () => {
       const expression = new EnhancedEqualsExpression();
-      
+
       // Test various mixed type scenarios
       const testCases = [
         { left: null, right: undefined, expected: true }, // null == undefined
@@ -463,7 +467,7 @@ describe('Enhanced Comparison Expressions', () => {
         const result = await expression.evaluate(context, {
           left: testCase.left,
           operator: '==',
-          right: testCase.right
+          right: testCase.right,
         });
 
         expect(result.success).toBe(true);
@@ -475,18 +479,18 @@ describe('Enhanced Comparison Expressions', () => {
 
     it('should validate input structure correctly', () => {
       const expression = new EnhancedEqualsExpression();
-      
+
       // Valid input
       const validResult = expression.validate({
         left: 5,
         operator: '==',
-        right: 5
+        right: 5,
       });
       expect(validResult.isValid).toBe(true);
 
       // Missing properties
       const missingResult = expression.validate({
-        left: 5
+        left: 5,
         // missing operator and right
       });
       expect(missingResult.isValid).toBe(false);
@@ -495,21 +499,21 @@ describe('Enhanced Comparison Expressions', () => {
       const invalidOpResult = expression.validate({
         left: 5,
         operator: 'invalid',
-        right: 5
+        right: 5,
       });
       expect(invalidOpResult.isValid).toBe(false);
     });
 
     it('should provide helpful error messages', async () => {
       const expression = new EnhancedEqualsExpression();
-      
+
       // Test invalid input
       const result = await expression.evaluate(context, {
         left: 5,
         operator: '!=', // Wrong operator for equals expression
-        right: 5
+        right: 5,
       });
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.suggestions.length).toBeGreaterThan(0);
@@ -518,15 +522,15 @@ describe('Enhanced Comparison Expressions', () => {
 
     it('should complete evaluations quickly', async () => {
       const expression = new EnhancedGreaterThanExpression();
-      
+
       const startTime = Date.now();
       await expression.evaluate(context, {
         left: 100,
         operator: '>',
-        right: 50
+        right: 50,
       });
       const duration = Date.now() - startTime;
-      
+
       // Should complete very quickly (less than 10ms)
       expect(duration).toBeLessThan(10);
     });
@@ -535,13 +539,13 @@ describe('Enhanced Comparison Expressions', () => {
   describe('Edge Cases', () => {
     it('should handle NaN comparisons', async () => {
       const expression = new EnhancedEqualsExpression();
-      
+
       const result = await expression.evaluate(context, {
         left: NaN,
         operator: '==',
-        right: NaN
+        right: NaN,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         // NaN == NaN is false in JavaScript
@@ -551,13 +555,13 @@ describe('Enhanced Comparison Expressions', () => {
 
     it('should handle infinity comparisons', async () => {
       const expression = new EnhancedGreaterThanExpression();
-      
+
       const result = await expression.evaluate(context, {
         left: Infinity,
         operator: '>',
-        right: 1000000
+        right: 1000000,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(true);
@@ -566,16 +570,16 @@ describe('Enhanced Comparison Expressions', () => {
 
     it('should handle object comparisons', async () => {
       const expression = new EnhancedEqualsExpression();
-      
+
       const obj1 = { a: 1 };
       const obj2 = { a: 1 };
-      
+
       const result = await expression.evaluate(context, {
         left: obj1,
         operator: '==',
-        right: obj2
+        right: obj2,
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         // Objects are compared by reference, not value

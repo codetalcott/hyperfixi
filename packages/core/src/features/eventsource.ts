@@ -1,15 +1,10 @@
-
-
 /**
  * Enhanced EventSource Feature Implementation
  * Type-safe Server-Sent Events management feature with enhanced validation and LLM integration
  */
 
 import { v, z } from '../validation/lightweight-validators';
-import type {
-  ContextMetadata,
-  EvaluationResult
-} from '../types/context-types';
+import type { ContextMetadata, EvaluationResult } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
 
@@ -23,56 +18,76 @@ export const EventSourceInputSchema = v.object({
     url: v.string().min(1),
     withCredentials: v.boolean().default(false),
     headers: z.record(v.string(), v.string()).default({}),
-    retry: v.object({
-      enabled: v.boolean().default(true),
-      maxAttempts: v.number().default(5),
-      delay: v.number().default(3000), // 3 seconds
-      backoff: z.enum(['linear', 'exponential']).default('exponential'),
-      maxDelay: v.number().default(30000), // 30 seconds
-    }).default({}),
-    timeout: v.object({
-      enabled: v.boolean().default(true),
-      duration: v.number().default(60000), // 60 seconds
-    }).default({}),
+    retry: v
+      .object({
+        enabled: v.boolean().default(true),
+        maxAttempts: v.number().default(5),
+        delay: v.number().default(3000), // 3 seconds
+        backoff: z.enum(['linear', 'exponential']).default('exponential'),
+        maxDelay: v.number().default(30000), // 30 seconds
+      })
+      .default({}),
+    timeout: v
+      .object({
+        enabled: v.boolean().default(true),
+        duration: v.number().default(60000), // 60 seconds
+      })
+      .default({}),
   }),
   /** Event handling configuration */
-  eventHandlers: v.array(v.object({
-    event: v.string().min(1), // Event type (message, open, error, or custom)
-    commands: v.array(v.any()).min(1),
-    filter: v.string().optional(), // Event filter expression
-    options: z.object({
-      throttle: v.number().optional(),
-      debounce: v.number().optional(),
-    }).optional(),
-  })).default([]),
+  eventHandlers: v
+    .array(
+      v.object({
+        event: v.string().min(1), // Event type (message, open, error, or custom)
+        commands: v.array(v.any()).min(1),
+        filter: v.string().optional(), // Event filter expression
+        options: z
+          .object({
+            throttle: v.number().optional(),
+            debounce: v.number().optional(),
+          })
+          .optional(),
+      })
+    )
+    .default([]),
   /** Message processing */
-  messageProcessing: v.object({
-    format: z.enum(['text', 'json', 'raw']).default('text'),
-    validation: z.object({
-      enabled: v.boolean().default(true),
-      schema: v.any().optional(), // JSON schema for message validation
-    }).default({}),
-    buffer: v.object({
-      enabled: v.boolean().default(true),
-      maxSize: v.number().min(0).default(100), // 0 = unlimited
-      flushInterval: v.number().default(1000), // 1 second
-    }).default({}),
-  }).default({}),
+  messageProcessing: v
+    .object({
+      format: z.enum(['text', 'json', 'raw']).default('text'),
+      validation: z
+        .object({
+          enabled: v.boolean().default(true),
+          schema: v.any().optional(), // JSON schema for message validation
+        })
+        .default({}),
+      buffer: v
+        .object({
+          enabled: v.boolean().default(true),
+          maxSize: v.number().min(0).default(100), // 0 = unlimited
+          flushInterval: v.number().default(1000), // 1 second
+        })
+        .default({}),
+    })
+    .default({}),
   /** Execution context */
-  context: v.object({
-    variables: z.record(v.string(), v.any()).default({}),
-    me: v.any().optional(),
-    it: v.any().optional(),
-    target: v.any().optional(),
-  }).default({}),
+  context: v
+    .object({
+      variables: z.record(v.string(), v.any()).default({}),
+      me: v.any().optional(),
+      it: v.any().optional(),
+      target: v.any().optional(),
+    })
+    .default({}),
   /** Feature options */
-  options: v.object({
-    enableAutoConnect: v.boolean().default(true),
-    enableMessageBuffer: v.boolean().default(true),
-    enableErrorHandling: v.boolean().default(true),
-    maxConnections: v.number().default(1),
-    connectionTimeout: v.number().default(30000), // 30 seconds
-  }).default({}),
+  options: v
+    .object({
+      enableAutoConnect: v.boolean().default(true),
+      enableMessageBuffer: v.boolean().default(true),
+      enableErrorHandling: v.boolean().default(true),
+      maxConnections: v.number().default(1),
+      connectionTimeout: v.number().default(30000), // 30 seconds
+    })
+    .default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
   debug: v.boolean().default(false),
@@ -85,7 +100,7 @@ export const EventSourceOutputSchema = v.object({
   category: v.literal('Frontend'),
   capabilities: v.array(v.string()),
   state: z.enum(['ready', 'connecting', 'connected', 'disconnecting', 'disconnected', 'error']),
-  
+
   /** Connection management */
   connection: z.object({
     connect: v.any(),
@@ -95,7 +110,7 @@ export const EventSourceOutputSchema = v.object({
     getConnectionInfo: v.any(),
     isConnected: v.any(),
   }),
-  
+
   /** Event management */
   events: v.object({
     addHandler: v.any(),
@@ -103,7 +118,7 @@ export const EventSourceOutputSchema = v.object({
     getHandlers: v.any(),
     emit: v.any(),
   }),
-  
+
   /** Message handling */
   messages: v.object({
     getHistory: v.any(),
@@ -113,7 +128,7 @@ export const EventSourceOutputSchema = v.object({
     subscribe: v.any(),
     unsubscribe: v.any(),
   }),
-  
+
   /** Error handling */
   errors: v.object({
     handle: v.any(),
@@ -188,7 +203,8 @@ export interface MessageBuffer {
 export class TypedEventSourceFeatureImplementation {
   public readonly name = 'eventsourceFeature';
   public readonly category = 'Frontend' as const;
-  public readonly description = 'Type-safe Server-Sent Events management feature with connection handling, message processing, and comprehensive error recovery';
+  public readonly description =
+    'Type-safe Server-Sent Events management feature with connection handling, message processing, and comprehensive error recovery';
   public readonly inputSchema = EventSourceInputSchema;
   public readonly outputType: EvaluationType = 'Context';
 
@@ -216,20 +232,23 @@ export class TypedEventSourceFeatureImplementation {
     returnTypes: ['Context'],
     examples: [
       {
-        input: '{ source: { url: "/api/events" }, eventHandlers: [{ event: "message", commands: [{ name: "processUpdate" }] }] }',
+        input:
+          '{ source: { url: "/api/events" }, eventHandlers: [{ event: "message", commands: [{ name: "processUpdate" }] }] }',
         description: 'Create Server-Sent Events connection for real-time updates',
-        expectedOutput: 'TypedEventSourceContext with SSE connection and message handling'
+        expectedOutput: 'TypedEventSourceContext with SSE connection and message handling',
       },
       {
-        input: '{ source: { url: "/api/notifications", retry: { maxAttempts: 10 } }, messageProcessing: { format: "json" } }',
+        input:
+          '{ source: { url: "/api/notifications", retry: { maxAttempts: 10 } }, messageProcessing: { format: "json" } }',
         description: 'SSE connection with automatic retry and JSON message processing',
-        expectedOutput: 'Event source context with robust reconnection and data parsing'
+        expectedOutput: 'Event source context with robust reconnection and data parsing',
       },
       {
-        input: '{ source: { url: "/api/metrics" }, messageProcessing: { buffer: { enabled: true, maxSize: 500 } } }',
+        input:
+          '{ source: { url: "/api/metrics" }, messageProcessing: { buffer: { enabled: true, maxSize: 500 } } }',
         description: 'High-volume SSE with message buffering for performance',
-        expectedOutput: 'Buffered event source for handling high-frequency updates'
-      }
+        expectedOutput: 'Buffered event source for handling high-frequency updates',
+      },
     ],
     relatedExpressions: [],
     relatedContexts: ['socketsFeature', 'onFeature', 'executionContext'],
@@ -237,66 +256,77 @@ export class TypedEventSourceFeatureImplementation {
     environmentRequirements: {
       browser: true,
       server: false,
-      nodejs: false
+      nodejs: false,
     },
     performance: {
       averageTime: 15.0,
-      complexity: 'O(n)' // n = number of event handlers
-    }
+      complexity: 'O(n)', // n = number of event handlers
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates and manages Server-Sent Events connections for real-time data streaming with type-safe message handling, automatic reconnection, and comprehensive error recovery',
+    summary:
+      'Creates and manages Server-Sent Events connections for real-time data streaming with type-safe message handling, automatic reconnection, and comprehensive error recovery',
     parameters: [
       {
         name: 'sourceConfig',
         type: 'EventSourceInput',
-        description: 'SSE configuration including server URL, event handlers, message processing options, and connection settings',
+        description:
+          'SSE configuration including server URL, event handlers, message processing options, and connection settings',
         optional: false,
         examples: [
           '{ source: { url: "/api/events" }, eventHandlers: [{ event: "message", commands: [{ name: "update" }] }] }',
           '{ source: { url: "/api/stream", withCredentials: true }, messageProcessing: { format: "json" } }',
-          '{ source: { url: "/api/feed" }, messageProcessing: { buffer: { enabled: true, maxSize: 100 } } }'
-        ]
-      }
+          '{ source: { url: "/api/feed" }, messageProcessing: { buffer: { enabled: true, maxSize: 100 } } }',
+        ],
+      },
     ],
     returns: {
       type: 'EventSourceContext',
-      description: 'Server-Sent Events management context with connection lifecycle, message processing, buffer management, and error recovery capabilities',
+      description:
+        'Server-Sent Events management context with connection lifecycle, message processing, buffer management, and error recovery capabilities',
       examples: [
         'context.connection.connect() → establish SSE connection',
         'context.messages.getHistory(50) → get last 50 messages',
         'context.connection.reconnect() → reconnect after failure',
-        'context.messages.flushBuffer() → process buffered messages'
-      ]
+        'context.messages.flushBuffer() → process buffered messages',
+      ],
     },
     examples: [
       {
         title: 'Basic SSE connection',
         code: 'const sseContext = await createEventSourceFeature({ source: { url: "/api/updates" } })',
         explanation: 'Create Server-Sent Events connection for real-time updates',
-        output: 'SSE context ready for receiving server events'
+        output: 'SSE context ready for receiving server events',
       },
       {
         title: 'JSON message processing',
         code: 'await sseContext.events.addHandler("user-update", { name: "updateUserInterface", args: [] })',
         explanation: 'Add handler for specific event types with JSON parsing',
-        output: 'Event-driven SSE with structured data processing'
+        output: 'Event-driven SSE with structured data processing',
       },
       {
         title: 'Buffered high-frequency events',
         code: 'await sseContext.messages.flushBuffer() // Process accumulated messages',
         explanation: 'Batch process high-frequency events for performance',
-        output: 'Efficient handling of rapid event streams'
-      }
+        output: 'Efficient handling of rapid event streams',
+      },
     ],
     seeAlso: ['socketsFeature', 'onFeature', 'streamProcessing', 'realTimeUpdates'],
-    tags: ['server-sent-events', 'real-time', 'streaming', 'events', 'connection-management', 'type-safe', 'enhanced-pattern']
+    tags: [
+      'server-sent-events',
+      'real-time',
+      'streaming',
+      'events',
+      'connection-management',
+      'type-safe',
+      'enhanced-pattern',
+    ],
   };
 
   async initialize(input: EventSourceInput): Promise<EvaluationResult<EventSourceOutput>> {
     const startTime = Date.now();
-    
+
     try {
       // Validate input using enhanced pattern
       const validation = this.validate(input);
@@ -304,21 +334,27 @@ export class TypedEventSourceFeatureImplementation {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
       // Initialize event source system
       const config = await this.initializeConfig(input);
-      
+
       // Create enhanced eventsource context
       const context: EventSourceOutput = {
         contextId: `eventsource-${Date.now()}`,
         timestamp: startTime,
         category: 'Frontend',
-        capabilities: ['sse-connection', 'message-processing', 'event-handling', 'automatic-reconnection', 'error-recovery'],
+        capabilities: [
+          'sse-connection',
+          'message-processing',
+          'event-handling',
+          'automatic-reconnection',
+          'error-recovery',
+        ],
         state: 'ready',
-        
+
         // Connection management
         connection: {
           connect: this.createConnectionEstablisher(config),
@@ -328,7 +364,7 @@ export class TypedEventSourceFeatureImplementation {
           getConnectionInfo: this.createConnectionInfoGetter(),
           isConnected: this.createConnectionChecker(),
         },
-        
+
         // Event management
         events: {
           addHandler: this.createEventHandlerAdder(),
@@ -336,7 +372,7 @@ export class TypedEventSourceFeatureImplementation {
           getHandlers: this.createEventHandlerGetter(),
           emit: this.createEventEmitter(),
         },
-        
+
         // Message handling
         messages: {
           getHistory: this.createMessageHistoryGetter(),
@@ -346,14 +382,14 @@ export class TypedEventSourceFeatureImplementation {
           subscribe: this.createMessageSubscriber(),
           unsubscribe: this.createMessageUnsubscriber(),
         },
-        
+
         // Error handling
         errors: {
           handle: this.createErrorHandler(),
           getErrorHistory: this.createErrorHistoryGetter(),
           clearErrors: this.createErrorClearer(),
           setErrorHandler: this.createErrorHandlerSetter(),
-        }
+        },
       };
 
       // Create initial connection if auto-connect enabled
@@ -363,28 +399,29 @@ export class TypedEventSourceFeatureImplementation {
 
       // Track performance using enhanced pattern
       this.trackPerformance(startTime, true, context);
-      
+
       return {
         success: true,
         value: context,
-        type: 'Context'
+        type: 'Context',
       };
-
     } catch (error) {
       this.trackPerformance(startTime, false);
-      
+
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `EventSource feature initialization failed: ${error instanceof Error ? error.message : String(error)}`
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `EventSource feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
         suggestions: [
           'Verify EventSource URL is accessible',
           'Check browser supports Server-Sent Events',
           'Ensure server supports SSE with proper headers',
-          'Validate event configuration parameters'
-        ]
+          'Validate event configuration parameters',
+        ],
       };
     }
   }
@@ -396,7 +433,7 @@ export class TypedEventSourceFeatureImplementation {
         return {
           isValid: false,
           errors: [{ type: 'invalid-input', message: 'Input must be an object', suggestions: [] }],
-          suggestions: ['Provide a valid EventSource configuration object']
+          suggestions: ['Provide a valid EventSource configuration object'],
         };
       }
 
@@ -406,12 +443,16 @@ export class TypedEventSourceFeatureImplementation {
       const suggestions: string[] = [];
 
       // Check for negative buffer size before Zod validation
-      if (inputData.messageProcessing?.buffer?.maxSize !== undefined && inputData.messageProcessing.buffer.maxSize < 0) {
+      if (
+        inputData.messageProcessing?.buffer?.maxSize !== undefined &&
+        inputData.messageProcessing.buffer.maxSize < 0
+      ) {
         errors.push({
-          type: 'invalid-input', code: 'invalid-buffer-size',
+          type: 'invalid-input',
+          code: 'invalid-buffer-size',
           message: 'Buffer size must be non-negative (0 = unlimited)',
           path: 'messageProcessing.buffer.maxSize',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Set buffer maxSize to 0 for unlimited or positive number for limit');
       }
@@ -419,12 +460,17 @@ export class TypedEventSourceFeatureImplementation {
       // Check for empty commands arrays before Zod validation
       if (inputData.eventHandlers && Array.isArray(inputData.eventHandlers)) {
         for (const handler of inputData.eventHandlers) {
-          if (handler.commands && Array.isArray(handler.commands) && handler.commands.length === 0) {
+          if (
+            handler.commands &&
+            Array.isArray(handler.commands) &&
+            handler.commands.length === 0
+          ) {
             errors.push({
-              type: 'empty-config', code: 'empty-commands-array',
+              type: 'empty-config',
+              code: 'empty-commands-array',
               message: 'Event handler commands array cannot be empty',
               path: 'eventHandlers.commands',
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Add at least one command to execute for event handler');
           }
@@ -436,7 +482,7 @@ export class TypedEventSourceFeatureImplementation {
         return {
           isValid: false,
           errors,
-          suggestions
+          suggestions,
         };
       }
 
@@ -449,10 +495,11 @@ export class TypedEventSourceFeatureImplementation {
       if (data.source) {
         if (!this.isValidEventSourceURL(data.source.url)) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-eventsource-url',
+            type: 'invalid-input',
+            code: 'invalid-eventsource-url',
             message: `Invalid EventSource URL: "${data.source.url}"`,
             path: 'source.url',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Use valid HTTP/HTTPS URL for EventSource connection');
         }
@@ -461,20 +508,24 @@ export class TypedEventSourceFeatureImplementation {
         if (data.source.retry) {
           if (data.source.retry.maxAttempts < 0) {
             errors.push({
-              type: 'invalid-input', code: 'invalid-retry-attempts',
+              type: 'invalid-input',
+              code: 'invalid-retry-attempts',
               message: 'Retry max attempts must be non-negative',
               path: 'source.retry.maxAttempts',
-              suggestions: []
+              suggestions: [],
             });
-            suggestions.push('Set maxAttempts to 0 for no retry or positive number for retry limit');
+            suggestions.push(
+              'Set maxAttempts to 0 for no retry or positive number for retry limit'
+            );
           }
 
           if (data.source.retry.delay < 0) {
             errors.push({
-              type: 'invalid-input', code: 'invalid-retry-delay',
+              type: 'invalid-input',
+              code: 'invalid-retry-delay',
               message: 'Retry delay must be non-negative',
               path: 'source.retry.delay',
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Set retry delay to positive number in milliseconds');
           }
@@ -484,7 +535,7 @@ export class TypedEventSourceFeatureImplementation {
               type: 'validation-error',
               message: 'Max delay must be greater than or equal to delay',
               path: 'source.retry.maxDelay',
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Set maxDelay to be greater than or equal to delay');
           }
@@ -493,10 +544,11 @@ export class TypedEventSourceFeatureImplementation {
         // Validate timeout settings
         if (data.source.timeout && data.source.timeout.duration < 1000) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-timeout-duration',
+            type: 'invalid-input',
+            code: 'invalid-timeout-duration',
             message: 'Timeout duration must be at least 1000ms',
             path: 'source.timeout.duration',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set timeout duration to at least 1000ms for proper operation');
         }
@@ -506,10 +558,11 @@ export class TypedEventSourceFeatureImplementation {
       if (data.options) {
         if (data.options.maxConnections < 1) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-max-connections',
+            type: 'invalid-input',
+            code: 'invalid-max-connections',
             message: 'maxConnections must be at least 1',
             path: 'options.maxConnections',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set maxConnections to at least 1');
         }
@@ -520,7 +573,7 @@ export class TypedEventSourceFeatureImplementation {
             code: 'invalid-connection-timeout',
             message: 'Connection timeout must be at least 1000ms',
             path: 'options.connectionTimeout',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set connection timeout to at least 1000ms for proper operation');
         }
@@ -532,10 +585,11 @@ export class TypedEventSourceFeatureImplementation {
           // Validate performance settings
           if (handler.options?.throttle && handler.options?.debounce) {
             errors.push({
-              type: 'schema-validation', code: 'conflicting-performance-options',
+              type: 'schema-validation',
+              code: 'conflicting-performance-options',
               message: 'Cannot use both throttle and debounce simultaneously',
               path: 'eventHandlers.options',
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Choose either throttle OR debounce, not both');
           }
@@ -546,10 +600,11 @@ export class TypedEventSourceFeatureImplementation {
               new Function('event', `return ${handler.filter}`);
             } catch (filterError) {
               errors.push({
-                type: 'invalid-input', code: 'invalid-filter-expression',
+                type: 'invalid-input',
+                code: 'invalid-filter-expression',
                 message: `Invalid filter expression: ${handler.filter}`,
                 path: 'eventHandlers.filter',
-                suggestions: []
+                suggestions: [],
               });
               suggestions.push('Use valid JavaScript expression for event filtering');
             }
@@ -562,7 +617,7 @@ export class TypedEventSourceFeatureImplementation {
         errors.push({
           type: 'runtime-error',
           message: 'Server-Sent Events are not supported in this environment',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('EventSource requires a browser environment');
       }
@@ -570,22 +625,23 @@ export class TypedEventSourceFeatureImplementation {
       return {
         isValid: errors.length === 0,
         errors,
-        suggestions
+        suggestions,
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'schema-validation',
-          suggestions: [],
-          message: error instanceof Error ? error.message : 'Invalid input format'
-        }],
+        errors: [
+          {
+            type: 'schema-validation',
+            suggestions: [],
+            message: error instanceof Error ? error.message : 'Invalid input format',
+          },
+        ],
         suggestions: [
           'Ensure input matches EventSourceInput schema',
           'Check source configuration structure',
-          'Verify event handlers and message processing configurations'
-        ]
+          'Verify event handlers and message processing configurations',
+        ],
       };
     }
   }
@@ -599,13 +655,13 @@ export class TypedEventSourceFeatureImplementation {
       ...input.options,
       environment: input.environment,
       debug: input.debug,
-      initialized: Date.now()
+      initialized: Date.now(),
     };
   }
 
   private async createConnection(sourceConfig: any, _context: any): Promise<EventSourceConnection> {
     const id = `connection-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const connection: EventSourceConnection = {
       id,
       url: sourceConfig.url,
@@ -622,42 +678,41 @@ export class TypedEventSourceFeatureImplementation {
     try {
       // Create EventSource with configuration
       const eventSourceInit: EventSourceInit = {
-        withCredentials: sourceConfig.withCredentials || false
+        withCredentials: sourceConfig.withCredentials || false,
       };
 
       connection.eventSource = new EventSource(sourceConfig.url, eventSourceInit);
-      
+
       // Set up event listeners
-      connection.eventSource.onopen = (event) => {
+      connection.eventSource.onopen = event => {
         connection.state = 'connected';
         connection.connectedAt = Date.now();
         connection.retryAttempts = 0;
         this.handleConnectionOpen(connection, event);
       };
 
-      connection.eventSource.onmessage = (event) => {
+      connection.eventSource.onmessage = event => {
         connection.messageCount++;
         connection.lastMessageTime = Date.now();
         this.handleMessage(connection, event);
       };
 
-      connection.eventSource.onerror = (event) => {
+      connection.eventSource.onerror = event => {
         connection.errorCount++;
         connection.state = 'error';
         this.handleConnectionError(connection, event);
       };
 
       this.connections.set(id, connection);
-      
-      return connection;
 
+      return connection;
     } catch (error) {
       connection.state = 'error';
       connection.errorCount++;
       this.errorHistory.push({
         error: error as Error,
         timestamp: Date.now(),
-        context: { connection, sourceConfig }
+        context: { connection, sourceConfig },
       });
       throw error;
     }
@@ -699,7 +754,7 @@ export class TypedEventSourceFeatureImplementation {
     this.errorHistory.push({
       error: new Error('EventSource connection error'),
       timestamp: Date.now(),
-      context: { connection, event }
+      context: { connection, event },
     });
 
     // Process error event handlers
@@ -713,13 +768,13 @@ export class TypedEventSourceFeatureImplementation {
 
   private scheduleReconnection(connection: EventSourceConnection): void {
     connection.retryAttempts++;
-    
+
     // Calculate delay with backoff
     const baseDelay = 3000; // 3 seconds
     const delay = connection.retryAttempts * baseDelay;
-    
+
     setTimeout(() => {
-      this.attemptReconnection(connection);
+      void this.attemptReconnection(connection);
     }, delay);
   }
 
@@ -728,47 +783,47 @@ export class TypedEventSourceFeatureImplementation {
       if (connection.eventSource) {
         connection.eventSource.close();
       }
-      
+
       connection.state = 'connecting';
-      
+
       // Recreate EventSource
       connection.eventSource = new EventSource(connection.url);
-      
+
       // Reattach event listeners
-      connection.eventSource.onopen = (event) => {
+      connection.eventSource.onopen = event => {
         connection.state = 'connected';
         connection.connectedAt = Date.now();
         connection.retryAttempts = 0;
         this.handleConnectionOpen(connection, event);
       };
 
-      connection.eventSource.onmessage = (event) => {
+      connection.eventSource.onmessage = event => {
         connection.messageCount++;
         connection.lastMessageTime = Date.now();
         this.handleMessage(connection, event);
       };
 
-      connection.eventSource.onerror = (event) => {
+      connection.eventSource.onerror = event => {
         connection.errorCount++;
         connection.state = 'error';
         this.handleConnectionError(connection, event);
       };
-
     } catch (error) {
       this.errorHistory.push({
         error: error as Error,
         timestamp: Date.now(),
-        context: { connection, reconnectAttempt: connection.retryAttempts }
+        context: { connection, reconnectAttempt: connection.retryAttempts },
       });
     }
   }
 
   private processEventHandlers(connectionId: string, eventType: string, event: Event): void {
-    const handlers = Array.from(this.eventHandlers.values())
-      .filter(h => h.connectionId === connectionId && h.eventType === eventType && h.isActive);
+    const handlers = Array.from(this.eventHandlers.values()).filter(
+      h => h.connectionId === connectionId && h.eventType === eventType && h.isActive
+    );
 
     for (const handler of handlers) {
-      this.executeEventHandler(handler, event);
+      void this.executeEventHandler(handler, event);
     }
   }
 
@@ -786,35 +841,34 @@ export class TypedEventSourceFeatureImplementation {
 
       if (handler.options?.debounce) {
         this.applyDebounce(handler.id, handler.options.debounce, () => {
-          this.executeCommands(handler.commands, { event });
+          void this.executeCommands(handler.commands, { event });
         });
         return;
       }
 
       await this.executeCommands(handler.commands, { event });
-      
+
       handler.executionCount++;
       handler.lastExecutionTime = Date.now();
-
     } catch (error) {
       this.errorHistory.push({
         error: error as Error,
         timestamp: Date.now(),
-        context: { handler, event }
+        context: { handler, event },
       });
     }
   }
 
   private async executeCommands(commands: any[], context: any): Promise<any> {
     // Simplified command execution - would integrate with actual command executor
-    let result = { success: true, executed: commands.length };
-    
+    const result = { success: true, executed: commands.length };
+
     for (const command of commands) {
       if (typeof command === 'object' && command.name) {
         await this.executeBasicCommand(command, context);
       }
     }
-    
+
     return result;
   }
 
@@ -870,12 +924,12 @@ export class TypedEventSourceFeatureImplementation {
   private isThrottled(handlerId: string, delay: number): boolean {
     const lastTime = this.throttleTimers.get(handlerId) || 0;
     const now = Date.now();
-    
+
     if (now - lastTime >= delay) {
       this.throttleTimers.set(handlerId, now);
       return false;
     }
-    
+
     return true;
   }
 
@@ -884,7 +938,7 @@ export class TypedEventSourceFeatureImplementation {
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
-    
+
     const timer = setTimeout(callback, delay);
     this.debounceTimers.set(handlerId, timer as any);
   }
@@ -903,15 +957,15 @@ export class TypedEventSourceFeatureImplementation {
       if (!connection) return false;
 
       connection.state = 'disconnecting';
-      
+
       if (connection.eventSource) {
         connection.eventSource.close();
         connection.eventSource = null;
       }
-      
+
       connection.state = 'disconnected';
       connection.disconnectedAt = Date.now();
-      
+
       return true;
     };
   }
@@ -961,7 +1015,7 @@ export class TypedEventSourceFeatureImplementation {
   private createEventHandlerAdder() {
     return async (connectionId: string, eventType: string, command: any) => {
       const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const handler: SSEEventHandler = {
         id: handlerId,
         connectionId,
@@ -1002,15 +1056,15 @@ export class TypedEventSourceFeatureImplementation {
   private createMessageHistoryGetter() {
     return (connectionId?: string, limit?: number) => {
       let messages = this.messageHistory;
-      
+
       if (connectionId) {
         messages = messages.filter(m => m.connectionId === connectionId);
       }
-      
+
       if (limit) {
         messages = messages.slice(-limit);
       }
-      
+
       return messages;
     };
   }
@@ -1030,7 +1084,7 @@ export class TypedEventSourceFeatureImplementation {
       const messages = buffer.messages.slice();
       buffer.messages.length = 0; // Clear buffer
       buffer.lastFlushTime = Date.now();
-      
+
       return messages;
     };
   }
@@ -1049,7 +1103,7 @@ export class TypedEventSourceFeatureImplementation {
   private createMessageSubscriber() {
     return async (eventType: string, command: any) => {
       const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      
+
       const handler: SSEEventHandler = {
         id: handlerId,
         connectionId: '', // For all connections
@@ -1076,7 +1130,7 @@ export class TypedEventSourceFeatureImplementation {
       this.errorHistory.push({
         error,
         timestamp: Date.now(),
-        context
+        context,
       });
       return true;
     };
@@ -1112,22 +1166,29 @@ export class TypedEventSourceFeatureImplementation {
       output,
       success,
       duration,
-      timestamp: startTime
+      timestamp: startTime,
     });
   }
 
   getPerformanceMetrics() {
     return {
       totalInitializations: this.evaluationHistory.length,
-      successRate: this.evaluationHistory.filter(h => h.success).length / Math.max(this.evaluationHistory.length, 1),
-      averageDuration: this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / Math.max(this.evaluationHistory.length, 1),
+      successRate:
+        this.evaluationHistory.filter(h => h.success).length /
+        Math.max(this.evaluationHistory.length, 1),
+      averageDuration:
+        this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) /
+        Math.max(this.evaluationHistory.length, 1),
       lastEvaluationTime: this.evaluationHistory[this.evaluationHistory.length - 1]?.timestamp || 0,
       evaluationHistory: this.evaluationHistory.slice(-10), // Last 10 evaluations
       totalConnections: this.connections.size,
       totalMessages: this.messageHistory.length,
       totalErrors: this.errorHistory.length,
       totalEventHandlers: this.eventHandlers.size,
-      bufferedMessages: Array.from(this.messageBuffers.values()).reduce((sum, buffer) => sum + buffer.messages.length, 0)
+      bufferedMessages: Array.from(this.messageBuffers.values()).reduce(
+        (sum, buffer) => sum + buffer.messages.length,
+        0
+      ),
     };
   }
 }
@@ -1150,9 +1211,15 @@ export async function createEventSource(
       url: '',
       withCredentials: false,
       headers: {},
-      retry: { enabled: true, maxAttempts: 5, delay: 3000, backoff: 'exponential', maxDelay: 30000 },
+      retry: {
+        enabled: true,
+        maxAttempts: 5,
+        delay: 3000,
+        backoff: 'exponential',
+        maxDelay: 30000,
+      },
       timeout: { enabled: true, duration: 60000 },
-      ...source
+      ...source,
     },
     eventHandlers: [],
     messageProcessing: {
@@ -1172,7 +1239,7 @@ export async function createEventSource(
     },
     environment: 'frontend',
     debug: false,
-    ...options
+    ...options,
   });
 }
 

@@ -127,10 +127,7 @@ export { createWebWorkerFeature } from './features/webworker';
 // Extensions
 // ============================================================================
 
-export {
-  TailwindExtension,
-  type TailwindStrategy,
-} from './extensions/tailwind';
+export { TailwindExtension, type TailwindStrategy } from './extensions/tailwind';
 
 // ============================================================================
 // Core Runtime and Utilities
@@ -163,7 +160,7 @@ export function getEnvironmentInfo() {
   const isDeno = typeof Deno !== 'undefined';
   const isNode = typeof process !== 'undefined' && process.versions?.node;
   const isBrowser = typeof window !== 'undefined';
-  
+
   return {
     runtime: isDeno ? 'deno' : isNode ? 'node' : isBrowser ? 'browser' : 'unknown',
     hasDOM: typeof document !== 'undefined',
@@ -188,17 +185,17 @@ export function createMinimalRuntime() {
     expressions: new Map(),
     features: new Map(),
     extensions: new Map(),
-    
+
     addCommand(command: any) {
       this.commands.set(command.name, command);
       return this;
     },
-    
+
     addExpression(expression: any) {
       this.expressions.set(expression.name, expression);
       return this;
     },
-    
+
     environment: getEnvironmentInfo(),
   };
 }
@@ -210,12 +207,12 @@ export function createMinimalRuntime() {
  */
 export function createFullRuntime() {
   const runtime = createMinimalRuntime();
-  
+
   // Add all commands
   runtime.addCommand(new HideCommand());
   runtime.addCommand(new ShowCommand());
   runtime.addCommand(new ToggleCommand());
   // ... etc
-  
+
   return runtime;
 }

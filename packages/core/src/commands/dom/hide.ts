@@ -26,13 +26,15 @@ export interface HideCommandOptions {
  * Input validation schema for LLM understanding
  */
 const HideCommandInputSchema = v.tuple([
-  v.union([
-    v.custom((value: unknown) => value instanceof HTMLElement),
-    v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-    v.string(), // CSS selector
-    v.null(),   // Use implicit target (me)
-    v.undefined()
-  ]).optional()
+  v
+    .union([
+      v.custom((value: unknown) => value instanceof HTMLElement),
+      v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
+      v.string(), // CSS selector
+      v.null(), // Use implicit target (me)
+      v.undefined(),
+    ])
+    .optional(),
 ]);
 
 type HideCommandInput = any; // Inferred from RuntimeValidator
@@ -40,14 +42,18 @@ type HideCommandInput = any; // Inferred from RuntimeValidator
 /**
  * Enhanced Hide Command with full type safety for LLM agents
  */
-export class HideCommand implements TypedCommandImplementation<
-  HideCommandInput,
-  HTMLElement[],  // Returns list of hidden elements
-  TypedExecutionContext
-> {
+export class HideCommand
+  implements
+    TypedCommandImplementation<
+      HideCommandInput,
+      HTMLElement[], // Returns list of hidden elements
+      TypedExecutionContext
+    >
+{
   public readonly name = 'hide' as const;
   public readonly syntax = 'hide [<target-expression>]';
-  public readonly description = 'Hides one or more elements by setting display: none or adding CSS classes';
+  public readonly description =
+    'Hides one or more elements by setting display: none or adding CSS classes';
   public readonly inputSchema = HideCommandInputSchema;
   public readonly outputType = 'element-list' as const;
 
@@ -59,15 +65,15 @@ export class HideCommand implements TypedCommandImplementation<
       {
         code: 'hide me',
         description: 'Hide the current element',
-        expectedOutput: []
+        expectedOutput: [],
       },
       {
         code: 'hide <.modal/>',
         description: 'Hide all elements with modal class',
-        expectedOutput: []
-      }
+        expectedOutput: [],
+      },
     ],
-    relatedCommands: ['show', 'toggle']
+    relatedCommands: ['show', 'toggle'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -78,32 +84,32 @@ export class HideCommand implements TypedCommandImplementation<
         type: 'element',
         description: 'Element(s) to hide. If omitted, hides the current element (me)',
         optional: true,
-        examples: ['me', '<#modal/>', '<.button/>']
-      }
+        examples: ['me', '<#modal/>', '<.button/>'],
+      },
     ],
     returns: {
       type: 'element-list',
       description: 'Array of elements that were hidden',
-      examples: [[]]
+      examples: [[]],
     },
     examples: [
       {
         title: 'Hide current element',
         code: 'on click hide me',
         explanation: 'When clicked, the button hides itself',
-        output: []
+        output: [],
       },
       {
         title: 'Hide modal dialog',
         code: 'on escape hide <#modal/>',
         explanation: 'Press escape to hide modal with id "modal"',
-        output: []
-      }
+        output: [],
+      },
     ],
     seeAlso: ['show', 'toggle', 'add-class'],
-    tags: ['dom', 'visibility', 'css']
+    tags: ['dom', 'visibility', 'css'],
   };
-  
+
   private options: HideCommandOptions;
 
   constructor(options: HideCommandOptions = {}) {
@@ -136,9 +142,8 @@ export class HideCommand implements TypedCommandImplementation<
       return {
         success: true,
         value: hiddenElements,
-        type: 'element-list'
+        type: 'element-list',
       };
-
     } catch (error) {
       // Re-throw critical context errors instead of wrapping them
       if (error instanceof Error && error.message.includes('Context element')) {
@@ -148,13 +153,13 @@ export class HideCommand implements TypedCommandImplementation<
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Unknown error',
+          message: error instanceof Error ? error.message : 'Unknown error',
           code: 'HIDE_EXECUTION_FAILED',
-          suggestions: ['Check if element exists', 'Verify element is not null']
+          suggestions: ['Check if element exists', 'Verify element is not null'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -198,7 +203,10 @@ export class HideCommand implements TypedCommandImplementation<
     return [];
   }
 
-  private hideElement(element: HTMLElement, context: TypedExecutionContext): EvaluationResult<HTMLElement> {
+  private hideElement(
+    element: HTMLElement,
+    context: TypedExecutionContext
+  ): EvaluationResult<HTMLElement> {
     try {
       if (this.options.useClass) {
         this.hideWithClass(element);
@@ -213,26 +221,25 @@ export class HideCommand implements TypedCommandImplementation<
         command: this.name,
         timestamp: Date.now(),
         metadata: this.metadata,
-        result: 'success'
+        result: 'success',
       });
 
       return {
         success: true,
         value: element,
-        type: 'element'
+        type: 'element',
       };
-
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Failed to hide element',
+          message: error instanceof Error ? error.message : 'Failed to hide element',
           code: 'ELEMENT_HIDE_FAILED',
-          suggestions: ['Check if element is still in DOM', 'Verify element is not null']
+          suggestions: ['Check if element is still in DOM', 'Verify element is not null'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -258,60 +265,64 @@ export class HideCommand implements TypedCommandImplementation<
     try {
       // Schema validation
       const parsed = HideCommandInputSchema.safeParse(args);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch' as const,
-            message: `Invalid argument: ${err.message}`,
-            suggestions: [this.getValidationSuggestion(err.code ?? "unknown")]
-          })) ?? [],
-          suggestions: ['Use HTMLElement, CSS selector string, or omit for implicit target']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch' as const,
+              message: `Invalid argument: ${err.message}`,
+              suggestions: [this.getValidationSuggestion(err.code ?? 'unknown')],
+            })) ?? [],
+          suggestions: ['Use HTMLElement, CSS selector string, or omit for implicit target'],
         };
       }
 
       // Additional semantic validation
       const [target] = parsed.data as [unknown];
-      
+
       if (typeof target === 'string' && !this.isValidCSSSelector(target)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: `Invalid CSS selector: "${target}"`,
-            suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"']
-          }],
-          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: `Invalid CSS selector: "${target}"`,
+              suggestions: ['Use valid CSS selector syntax like "#id", ".class", or "element"'],
+            },
+          ],
+          suggestions: ['Check CSS selector syntax', 'Use document.querySelector() test'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: [] 
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: ['Check input types and values']
-        }],
-        suggestions: ['Ensure arguments match expected types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: ['Check input types and values'],
+          },
+        ],
+        suggestions: ['Ensure arguments match expected types'],
       };
     }
   }
 
   private getValidationSuggestion(errorCode: string): string {
     const suggestions: Record<string, string> = {
-      'invalid_type': 'Use HTMLElement, string (CSS selector), or omit argument',
-      'invalid_union': 'Target must be an element, CSS selector, or null',
-      'too_big': 'Too many arguments - hide command takes 0-1 arguments'
+      invalid_type: 'Use HTMLElement, string (CSS selector), or omit argument',
+      invalid_union: 'Target must be an element, CSS selector, or null',
+      too_big: 'Too many arguments - hide command takes 0-1 arguments',
     };
-    
+
     return suggestions[errorCode] || 'Check argument types and syntax';
   }
 

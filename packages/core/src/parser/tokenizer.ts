@@ -15,42 +15,42 @@ export enum TokenType {
   COMMAND = 'command',
   EXPRESSION = 'expression',
   FEATURE = 'feature',
-  
+
   // Literals
   STRING = 'string',
   NUMBER = 'number',
   BOOLEAN = 'boolean',
   TEMPLATE_LITERAL = 'template_literal',
-  
+
   // Selectors and references
   CSS_SELECTOR = 'css_selector',
   ID_SELECTOR = 'id_selector',
   CLASS_SELECTOR = 'class_selector',
   QUERY_REFERENCE = 'query_reference',
-  
+
   // Context variables
   CONTEXT_VAR = 'context_var',
   PROPERTY_ACCESS = 'property_access',
-  
+
   // Events
   EVENT = 'event',
-  
+
   // Operators
   OPERATOR = 'operator',
   LOGICAL_OPERATOR = 'logical_operator',
   COMPARISON_OPERATOR = 'comparison_operator',
-  
+
   // Special constructs
   TIME_EXPRESSION = 'time_expression',
   OBJECT_LITERAL = 'object_literal',
   ARRAY_LITERAL = 'array_literal',
   SYMBOL = 'symbol',
-  
+
   // Structural
   WHITESPACE = 'whitespace',
   NEWLINE = 'newline',
   COMMENT = 'comment',
-  
+
   // Unknown
   IDENTIFIER = 'identifier',
   UNKNOWN = 'unknown',
@@ -58,41 +58,135 @@ export enum TokenType {
 
 // Hyperscript language element sets (based on LSP database)
 const KEYWORDS = new Set([
-  'on', 'init', 'behavior', 'def', 'if', 'else', 'unless', 'for',
-  'while', 'until', 'end', 'and', 'or', 'not', 'in', 'to', 'from', 'into',
-  'with', 'as', 'then', 'when', 'where', 'after', 'before', 'by', 'at', 'async', 'no',
+  'on',
+  'init',
+  'behavior',
+  'def',
+  'if',
+  'else',
+  'unless',
+  'for',
+  'while',
+  'until',
+  'end',
+  'and',
+  'or',
+  'not',
+  'in',
+  'to',
+  'from',
+  'into',
+  'with',
+  'as',
+  'then',
+  'when',
+  'where',
+  'after',
+  'before',
+  'by',
+  'at',
+  'async',
+  'no',
   // Compound syntax keywords
-  'start', 'of', 'the',
+  'start',
+  'of',
+  'the',
   // Constructor keyword
   'new',
   // Scope keywords
-  'global', 'local',
+  'global',
+  'local',
   // Additional keywords for English-style operators
-  'equal', 'equals', 'greater', 'less', 'than', 'really'
+  'equal',
+  'equals',
+  'greater',
+  'less',
+  'than',
+  'really',
 ]);
 
 const COMMANDS = new Set([
-  'add', 'append', 'async', 'beep', 'break', 'call', 'continue', 'decrement',
-  'default', 'exit', 'fetch', 'get', 'go', 'halt', 'hide', 'if', 'increment', 'install', 'js', 'log',
-  'make', 'measure', 'pick', 'put', 'remove', 'render', 'repeat', 'return',
-  'send', 'set', 'settle', 'show', 'take', 'tell', 'throw', 'toggle',
-  'transition', 'trigger', 'unless', 'wait'
+  'add',
+  'append',
+  'async',
+  'beep',
+  'break',
+  'call',
+  'continue',
+  'decrement',
+  'default',
+  'exit',
+  'fetch',
+  'get',
+  'go',
+  'halt',
+  'hide',
+  'if',
+  'increment',
+  'install',
+  'js',
+  'log',
+  'make',
+  'measure',
+  'pick',
+  'put',
+  'remove',
+  'render',
+  'repeat',
+  'return',
+  'send',
+  'set',
+  'settle',
+  'show',
+  'take',
+  'tell',
+  'throw',
+  'toggle',
+  'transition',
+  'trigger',
+  'unless',
+  'wait',
 ]);
 
-const CONTEXT_VARS = new Set([
-  'me', 'it', 'you', 'result', 'my', 'its', 'your'
-]);
+const CONTEXT_VARS = new Set(['me', 'it', 'you', 'result', 'my', 'its', 'your']);
 
 const LOGICAL_OPERATORS = new Set(['and', 'or', 'not', 'no']);
 
 const COMPARISON_OPERATORS = new Set([
-  '==', '!=', '===', '!==', '<', '>', '<=', '>=', 'is', 'is not',
-  'contains', 'does not contain', 'include', 'includes', 'does not include', 'matches', 'exists', 'does not exist', 'is empty', 'is not empty',
-  'is in', 'is not in', 'equals', 'in',
+  '==',
+  '!=',
+  '===',
+  '!==',
+  '<',
+  '>',
+  '<=',
+  '>=',
+  'is',
+  'is not',
+  'contains',
+  'does not contain',
+  'include',
+  'includes',
+  'does not include',
+  'matches',
+  'exists',
+  'does not exist',
+  'is empty',
+  'is not empty',
+  'is in',
+  'is not in',
+  'equals',
+  'in',
   // English-style comparison operators
-  'is equal to', 'is really equal to', 'is not equal to', 'is not really equal to',
-  'is greater than', 'is less than', 'is greater than or equal to', 'is less than or equal to',
-  'really equals'
+  'is equal to',
+  'is really equal to',
+  'is not equal to',
+  'is not really equal to',
+  'is greater than',
+  'is less than',
+  'is greater than or equal to',
+  'is less than or equal to',
+  'really equals',
 ]);
 
 const MATHEMATICAL_OPERATORS = new Set(['+', '-', '*', '/', 'mod']);
@@ -113,12 +207,41 @@ const TIME_UNITS = new Set(['ms', 's', 'seconds', 'minutes', 'hours', 'days']);
 
 // Common DOM events
 const DOM_EVENTS = new Set([
-  'click', 'dblclick', 'mousedown', 'mouseup', 'mouseover', 'mouseout',
-  'mousemove', 'mouseenter', 'mouseleave', 'focus', 'blur', 'change',
-  'input', 'submit', 'reset', 'select', 'load', 'unload', 'resize',
-  'scroll', 'keydown', 'keyup', 'keypress', 'touchstart', 'touchend',
-  'touchmove', 'touchcancel', 'drag', 'drop', 'dragover', 'dragenter',
-  'dragleave', 'cut', 'copy', 'paste'
+  'click',
+  'dblclick',
+  'mousedown',
+  'mouseup',
+  'mouseover',
+  'mouseout',
+  'mousemove',
+  'mouseenter',
+  'mouseleave',
+  'focus',
+  'blur',
+  'change',
+  'input',
+  'submit',
+  'reset',
+  'select',
+  'load',
+  'unload',
+  'resize',
+  'scroll',
+  'keydown',
+  'keyup',
+  'keypress',
+  'touchstart',
+  'touchend',
+  'touchmove',
+  'touchcancel',
+  'drag',
+  'drop',
+  'dragover',
+  'dragenter',
+  'dragleave',
+  'cut',
+  'copy',
+  'paste',
 ]);
 
 export interface Tokenizer {
@@ -140,39 +263,42 @@ export function createTokenizer(): Tokenizer {
 }
 
 export function tokenize(input: string): Token[] {
-  
   const tokenizer = createTokenizer();
   tokenizer.input = input;
-  
+
   const inputLength = input.length; // Cache length for performance
-  
+
   while (tokenizer.position < inputLength) {
     skipWhitespace(tokenizer);
-    
+
     if (tokenizer.position >= inputLength) break;
-    
+
     const char = input[tokenizer.position];
-    
+
     // Handle comments
     if (char === '-' && peek(tokenizer, 1) === '-') {
       tokenizeComment(tokenizer);
       continue;
     }
-    
+
     // Handle strings, but check for possessive syntax first
     if (char === '"') {
       tokenizeString(tokenizer);
       continue;
     }
-    
+
     if (char === "'" || char === "'") {
       // Check if this is possessive syntax (apostrophe followed by 's')
       const nextChar = peek(tokenizer, 1);
       const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
-      const isPossessive = nextChar === 's' && prevToken && 
-        (prevToken.type === TokenType.IDENTIFIER || prevToken.type === TokenType.CONTEXT_VAR || 
-         prevToken.type === TokenType.ID_SELECTOR || prevToken.type === TokenType.CLASS_SELECTOR);
-      
+      const isPossessive =
+        nextChar === 's' &&
+        prevToken &&
+        (prevToken.type === TokenType.IDENTIFIER ||
+          prevToken.type === TokenType.CONTEXT_VAR ||
+          prevToken.type === TokenType.ID_SELECTOR ||
+          prevToken.type === TokenType.CLASS_SELECTOR);
+
       if (isPossessive) {
         // Directly create the "'s" token without compound operator interference
         const start = tokenizer.position;
@@ -185,13 +311,13 @@ export function tokenize(input: string): Token[] {
       }
       continue;
     }
-    
+
     // Handle template literals (backticks)
     if (char === '`') {
       tokenizeTemplateLiteral(tokenizer);
       continue;
     }
-    
+
     // Handle query reference syntax (<selector/>) vs comparison operators
     if (char === '<') {
       // Look ahead to see if this is actually a query reference (ends with />)
@@ -204,76 +330,80 @@ export function tokenize(input: string): Token[] {
       }
       continue;
     }
-    
+
     // Handle CSS selectors (but only when not preceded by an identifier/expression)
     if (char === '#') {
       tokenizeCSSSelector(tokenizer);
       continue;
     }
-    
+
     if (char === '.') {
       // Check if this is a CSS selector or a member access operator
       // It's a CSS selector if it's at the start or follows whitespace/operators
       const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
-      const isCSSSelectorContext = !prevToken || 
-        prevToken.type === 'whitespace' || 
-        (prevToken.type === 'operator' && 
-         // Exclude closing parens and brackets which indicate method calls or array access
-         prevToken.value !== ')' && prevToken.value !== ']') ||
+      const isCSSSelectorContext =
+        !prevToken ||
+        prevToken.type === 'whitespace' ||
+        (prevToken.type === 'operator' &&
+          // Exclude closing parens and brackets which indicate method calls or array access
+          prevToken.value !== ')' &&
+          prevToken.value !== ']') ||
         prevToken.type === 'keyword' ||
-        prevToken.type === 'command' ||  // Commands like "add .active" in conditionals
+        prevToken.type === 'command' || // Commands like "add .active" in conditionals
         prevToken.type === 'comparison_operator' || // Comparison operators like "is not in"
-        prevToken.value === '(' || 
+        prevToken.value === '(' ||
         prevToken.value === '[' ||
         prevToken.value === '{' ||
         prevToken.value === ',' ||
         prevToken.value === ';';
-        
+
       if (isCSSSelectorContext && isAlpha(peek(tokenizer))) {
         tokenizeCSSSelector(tokenizer);
         continue;
       }
       // Otherwise, fall through to operator handling
     }
-    
+
     // Handle symbols
     if (char === '@') {
       tokenizeSymbol(tokenizer);
       continue;
     }
-    
+
     // Handle object literals - emit individual tokens for proper parsing
     if (char === '{') {
       addToken(tokenizer, TokenType.OPERATOR, '{');
       advance(tokenizer);
       continue;
     }
-    
+
     // Handle closing brace for objects
     if (char === '}') {
       addToken(tokenizer, TokenType.OPERATOR, '}');
       advance(tokenizer);
       continue;
     }
-    
+
     if (char === '[') {
       // Determine if this is array literal, member access, or event condition
       const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
-      
+
       // Check for event handler condition syntax
-      const isEventCondition = prevToken && 
-        (prevToken.type === TokenType.EVENT || 
-         (prevToken.type === TokenType.IDENTIFIER && DOM_EVENTS.has(prevToken.value))) &&
+      const isEventCondition =
+        prevToken &&
+        (prevToken.type === TokenType.EVENT ||
+          (prevToken.type === TokenType.IDENTIFIER && DOM_EVENTS.has(prevToken.value))) &&
         tokenizer.tokens.length >= 2 &&
         tokenizer.tokens[tokenizer.tokens.length - 2]?.value === 'on';
-      
-      const isMemberAccess = prevToken && 
-        (prevToken.type === TokenType.IDENTIFIER || 
-         prevToken.type === TokenType.CONTEXT_VAR ||
-         prevToken.value === ')' ||
-         prevToken.value === ']') &&
+
+      const isMemberAccess =
+        prevToken &&
+        (prevToken.type === TokenType.IDENTIFIER ||
+          prevToken.type === TokenType.CONTEXT_VAR ||
+          prevToken.value === ')' ||
+          prevToken.value === ']') &&
         !isEventCondition; // Don't treat as member access if it's an event condition
-      
+
       if (isMemberAccess) {
         // Treat as member access operator
         addToken(tokenizer, TokenType.OPERATOR, '[');
@@ -293,41 +423,42 @@ export function tokenize(input: string): Token[] {
       }
       continue;
     }
-    
+
     // Handle closing bracket for arrays
     if (char === ']') {
       addToken(tokenizer, TokenType.OPERATOR, ']');
       advance(tokenizer);
       continue;
     }
-    
+
     // Handle operators
     if (isOperatorChar(char)) {
       tokenizeOperator(tokenizer);
       continue;
     }
-    
+
     // Handle numbers and time expressions - optimized path
-    if (char >= '0' && char <= '9') { // Faster than isDigit
+    if (char >= '0' && char <= '9') {
+      // Faster than isDigit
       tokenizeNumberOrTime(tokenizer);
       continue;
     }
-    
+
     // Handle identifiers, keywords, commands, etc. - optimized path
     if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === '_') {
       tokenizeIdentifier(tokenizer);
       continue;
     }
-    
+
     // Unknown character - consume it
     addToken(tokenizer, TokenType.UNKNOWN, char);
     advance(tokenizer);
   }
-  
+
   //   tokenCount: tokenizer.tokens.length,
   //   tokens: tokenizer.tokens.map(t => ({ type: t.type, value: t.value }))
   // });
-  
+
   return tokenizer.tokens;
 }
 
@@ -339,13 +470,14 @@ function peek(tokenizer: Tokenizer, offset: number = 1): string {
 function advance(tokenizer: Tokenizer): string {
   const char = tokenizer.input[tokenizer.position];
   tokenizer.position++;
-  
+
   if (char === '\n') {
     tokenizer.line++;
     tokenizer.column = 1;
   } else if (char === '\r') {
     // Handle \r\n and standalone \r
-    const nextChar = tokenizer.position < tokenizer.input.length ? tokenizer.input[tokenizer.position] : '';
+    const nextChar =
+      tokenizer.position < tokenizer.input.length ? tokenizer.input[tokenizer.position] : '';
     if (nextChar === '\n') {
       // \r\n - advance past the \n as well
       tokenizer.position++;
@@ -355,14 +487,14 @@ function advance(tokenizer: Tokenizer): string {
   } else {
     tokenizer.column++;
   }
-  
+
   return char;
 }
 
 function skipWhitespace(tokenizer: Tokenizer): void {
   const input = tokenizer.input;
   const inputLength = input.length;
-  
+
   while (tokenizer.position < inputLength) {
     const char = input[tokenizer.position];
     // Optimized whitespace check - most common first
@@ -383,7 +515,7 @@ function addToken(
 ): void {
   const tokenStart = start ?? tokenizer.position - value.length;
   const tokenEnd = end ?? tokenizer.position;
-  
+
   // Calculate the column at the start of the token
   let tokenColumn = tokenizer.column - value.length;
   if (start !== undefined) {
@@ -397,7 +529,7 @@ function addToken(
     }
     tokenColumn = start - lastNewlinePos;
   }
-  
+
   tokenizer.tokens.push({
     type: type as string,
     value,
@@ -428,18 +560,18 @@ function getLineAtPosition(tokenizer: Tokenizer, position: number): number {
 function tokenizeComment(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
   let value = '';
-  
+
   // Skip '--'
   advance(tokenizer);
   advance(tokenizer);
-  
+
   // Read until end of line
   while (tokenizer.position < tokenizer.input.length) {
     const char = tokenizer.input[tokenizer.position];
     if (char === '\n') break;
     value += advance(tokenizer);
   }
-  
+
   addToken(tokenizer, TokenType.COMMENT, '--' + value, start);
 }
 
@@ -447,11 +579,11 @@ function tokenizeString(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
   const quote = advance(tokenizer); // consume opening quote
   let value = quote;
-  
+
   while (tokenizer.position < tokenizer.input.length) {
     const char = advance(tokenizer);
     value += char;
-    
+
     if (char === quote) break; // closing quote
     if (char === '\\') {
       // Handle escape sequences
@@ -460,7 +592,7 @@ function tokenizeString(tokenizer: Tokenizer): void {
       }
     }
   }
-  
+
   addToken(tokenizer, TokenType.STRING, value, start);
 }
 
@@ -468,15 +600,15 @@ function tokenizeTemplateLiteral(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
   advance(tokenizer); // consume opening backtick
   let value = '';
-  
+
   while (tokenizer.position < tokenizer.input.length) {
     const char = tokenizer.input[tokenizer.position];
-    
+
     if (char === '`') {
       advance(tokenizer); // consume closing backtick
       break;
     }
-    
+
     if (char === '\\') {
       // Handle escape sequences
       advance(tokenizer); // consume backslash
@@ -484,12 +616,22 @@ function tokenizeTemplateLiteral(tokenizer: Tokenizer): void {
         const escaped = advance(tokenizer);
         // Handle common escape sequences
         switch (escaped) {
-          case 'n': value += '\n'; break;
-          case 't': value += '\t'; break;
-          case 'r': value += '\r'; break;
-          case '\\': value += '\\'; break;
-          case '`': value += '`'; break;
-          default: 
+          case 'n':
+            value += '\n';
+            break;
+          case 't':
+            value += '\t';
+            break;
+          case 'r':
+            value += '\r';
+            break;
+          case '\\':
+            value += '\\';
+            break;
+          case '`':
+            value += '`';
+            break;
+          default:
             value += escaped;
         }
       }
@@ -497,12 +639,14 @@ function tokenizeTemplateLiteral(tokenizer: Tokenizer): void {
       value += advance(tokenizer);
     }
   }
-  
+
   // Check if we reached EOF without closing backtick
   if (tokenizer.position >= tokenizer.input.length && !tokenizer.input.endsWith('`')) {
-    throw new Error(`Unterminated template literal at line ${tokenizer.line}, column ${tokenizer.column - value.length}`);
+    throw new Error(
+      `Unterminated template literal at line ${tokenizer.line}, column ${tokenizer.column - value.length}`
+    );
   }
-  
+
   addToken(tokenizer, TokenType.TEMPLATE_LITERAL, value, start);
 }
 
@@ -510,7 +654,7 @@ function tokenizeCSSSelector(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
   const prefix = advance(tokenizer); // # or .
   let value = prefix;
-  
+
   while (tokenizer.position < tokenizer.input.length) {
     const char = tokenizer.input[tokenizer.position];
     if (isAlphaNumeric(char) || char === '-' || char === '_') {
@@ -519,7 +663,7 @@ function tokenizeCSSSelector(tokenizer: Tokenizer): void {
       break;
     }
   }
-  
+
   const type = prefix === '#' ? TokenType.ID_SELECTOR : TokenType.CLASS_SELECTOR;
   addToken(tokenizer, type, value, start);
 }
@@ -527,31 +671,31 @@ function tokenizeCSSSelector(tokenizer: Tokenizer): void {
 function tokenizeQueryReference(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
   let value = '';
-  
+
   // Consume opening '<'
   value += advance(tokenizer);
-  
+
   // Read until closing '/>'
   while (tokenizer.position < tokenizer.input.length - 1) {
     const char = tokenizer.input[tokenizer.position];
     const nextChar = tokenizer.input[tokenizer.position + 1];
-    
+
     value += advance(tokenizer);
-    
+
     // Check for closing '/>'
     if (char === '/' && nextChar === '>') {
       value += advance(tokenizer); // consume '>'
       break;
     }
   }
-  
+
   addToken(tokenizer, TokenType.QUERY_REFERENCE, value, start);
 }
 
 function tokenizeSymbol(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
   let value = advance(tokenizer); // consume @
-  
+
   while (tokenizer.position < tokenizer.input.length) {
     const char = tokenizer.input[tokenizer.position];
     if (isAlphaNumeric(char) || char === '_' || char === '-') {
@@ -560,7 +704,7 @@ function tokenizeSymbol(tokenizer: Tokenizer): void {
       break;
     }
   }
-  
+
   addToken(tokenizer, TokenType.SYMBOL, value, start);
 }
 
@@ -599,7 +743,7 @@ function tokenizeSymbol(tokenizer: Tokenizer): void {
 function tokenizeOperator(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
   let value = '';
-  
+
   // Handle possessive operator first ('s)
   const char = tokenizer.input[tokenizer.position];
   if ((char === "'" || char === "'") && peek(tokenizer, 1) === 's') {
@@ -609,24 +753,26 @@ function tokenizeOperator(tokenizer: Tokenizer): void {
     addToken(tokenizer, TokenType.OPERATOR, value, start);
     return;
   }
-  
+
   // Handle multi-character operators
   const twoChar = tokenizer.input.substring(tokenizer.position, tokenizer.position + 2);
   const threeChar = tokenizer.input.substring(tokenizer.position, tokenizer.position + 3);
-  
+
   if (['===', '!=='].includes(threeChar)) {
     value = threeChar;
     advance(tokenizer);
     advance(tokenizer);
     advance(tokenizer);
-  } else if (['==', '!=', '<=', '>=', '&&', '||', '**', '~=', '|=', '^=', '$=', '*='].includes(twoChar)) {
+  } else if (
+    ['==', '!=', '<=', '>=', '&&', '||', '**', '~=', '|=', '^=', '$=', '*='].includes(twoChar)
+  ) {
     value = twoChar;
     advance(tokenizer);
     advance(tokenizer);
   } else {
     value = advance(tokenizer);
   }
-  
+
   // Determine the correct token type
   let type = TokenType.OPERATOR;
   if (COMPARISON_OPERATORS.has(value)) {
@@ -636,7 +782,7 @@ function tokenizeOperator(tokenizer: Tokenizer): void {
   } else if (MATHEMATICAL_OPERATORS.has(value)) {
     type = TokenType.OPERATOR;
   }
-    
+
   addToken(tokenizer, type, value, start);
 }
 
@@ -645,7 +791,7 @@ function tokenizeNumberOrTime(tokenizer: Tokenizer): void {
   const input = tokenizer.input;
   const inputLength = input.length;
   let value = '';
-  
+
   // Read digits - optimized
   while (tokenizer.position < inputLength) {
     const char = input[tokenizer.position];
@@ -655,7 +801,7 @@ function tokenizeNumberOrTime(tokenizer: Tokenizer): void {
       break;
     }
   }
-  
+
   // Handle decimal
   if (tokenizer.position < inputLength && input[tokenizer.position] === '.') {
     value += advance(tokenizer);
@@ -668,7 +814,7 @@ function tokenizeNumberOrTime(tokenizer: Tokenizer): void {
       }
     }
   }
-  
+
   // Check for time unit - optimized
   const unitStart = tokenizer.position;
   let unit = '';
@@ -680,7 +826,7 @@ function tokenizeNumberOrTime(tokenizer: Tokenizer): void {
       break;
     }
   }
-  
+
   if (TIME_UNITS.has(unit)) {
     addToken(tokenizer, TokenType.TIME_EXPRESSION, value + unit, start);
   } else {
@@ -695,52 +841,65 @@ function tokenizeIdentifier(tokenizer: Tokenizer): void {
   const input = tokenizer.input;
   const inputLength = input.length;
   let value = '';
-  
+
   while (tokenizer.position < inputLength) {
     const char = input[tokenizer.position];
     // Optimized character checking - avoid function calls
-    if ((char >= 'a' && char <= 'z') || 
-        (char >= 'A' && char <= 'Z') || 
-        (char >= '0' && char <= '9') || 
-        char === '_' || char === '-') {
+    if (
+      (char >= 'a' && char <= 'z') ||
+      (char >= 'A' && char <= 'Z') ||
+      (char >= '0' && char <= '9') ||
+      char === '_' ||
+      char === '-'
+    ) {
       value += advance(tokenizer);
     } else {
       break;
     }
   }
-  
+
   // Check for multi-word operators starting with this identifier
   const compound = tryTokenizeCompoundOperator(tokenizer, value, start);
   if (compound) {
     return; // Compound operator was handled
   }
-  
+
   // Classify the identifier
   const type = classifyIdentifier(value);
   addToken(tokenizer, type, value, start);
 }
 
-function tryTokenizeCompoundOperator(tokenizer: Tokenizer, firstWord: string, start: number): boolean {
+function tryTokenizeCompoundOperator(
+  tokenizer: Tokenizer,
+  firstWord: string,
+  start: number
+): boolean {
   const lowerFirst = firstWord.toLowerCase();
   const originalPosition = tokenizer.position;
-  
+
   // Never treat 's as part of a compound operator - it's possessive syntax
   if (firstWord === "'s" || firstWord === "'s") {
     return false;
   }
-  
+
   // Don't create compound operators that would interfere with possessive syntax
   // Check if we just tokenized something that could be followed by 's (possessive)
   const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
-  if (prevToken && (prevToken.type === 'identifier' || prevToken.type === 'id_selector' || 
-                    prevToken.type === 'class_selector' || prevToken.type === 'context_var')) {
-    const nextChar = tokenizer.position < tokenizer.input.length ? tokenizer.input[tokenizer.position] : '';
+  if (
+    prevToken &&
+    (prevToken.type === 'identifier' ||
+      prevToken.type === 'id_selector' ||
+      prevToken.type === 'class_selector' ||
+      prevToken.type === 'context_var')
+  ) {
+    const nextChar =
+      tokenizer.position < tokenizer.input.length ? tokenizer.input[tokenizer.position] : '';
     if (nextChar === "'" || nextChar === "'") {
       // This might be possessive syntax, don't create compound operators
       return false;
     }
   }
-  
+
   // Skip whitespace to find next word
   skipWhitespace(tokenizer);
 
@@ -748,17 +907,22 @@ function tryTokenizeCompoundOperator(tokenizer: Tokenizer, firstWord: string, st
   let nextWord = '';
   while (tokenizer.position < tokenizer.input.length) {
     const char = tokenizer.input[tokenizer.position];
-    if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || 
-        (char >= '0' && char <= '9') || char === '_' || char === '-') {
+    if (
+      (char >= 'a' && char <= 'z') ||
+      (char >= 'A' && char <= 'Z') ||
+      (char >= '0' && char <= '9') ||
+      char === '_' ||
+      char === '-'
+    ) {
       nextWord += advance(tokenizer);
     } else {
       break;
     }
   }
-  
+
   if (nextWord) {
     const lowerNext = nextWord.toLowerCase();
-    let compound = `${lowerFirst} ${lowerNext}`;
+    const compound = `${lowerFirst} ${lowerNext}`;
 
     // Check for compound prepositions (e.g., "at start of", "at the start of")
     const compoundPrep = tryBuildCompoundPreposition(tokenizer, lowerFirst, lowerNext, start);
@@ -779,14 +943,14 @@ function tryTokenizeCompoundOperator(tokenizer: Tokenizer, firstWord: string, st
       return true;
     }
   }
-  
+
   // Check single-word operators
   if (COMPARISON_OPERATORS.has(lowerFirst)) {
     tokenizer.position = originalPosition; // Reset position
     addToken(tokenizer, TokenType.COMPARISON_OPERATOR, firstWord, start);
     return true;
   }
-  
+
   // No compound operator found, reset position
   tokenizer.position = originalPosition;
   return false;
@@ -812,8 +976,13 @@ function tryBuildCompoundPreposition(
       let thirdWord = '';
       while (tokenizer.position < tokenizer.input.length) {
         const char = tokenizer.input[tokenizer.position];
-        if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
-            (char >= '0' && char <= '9') || char === '_' || char === '-') {
+        if (
+          (char >= 'a' && char <= 'z') ||
+          (char >= 'A' && char <= 'Z') ||
+          (char >= '0' && char <= '9') ||
+          char === '_' ||
+          char === '-'
+        ) {
           thirdWord += advance(tokenizer);
         } else {
           break;
@@ -827,8 +996,13 @@ function tryBuildCompoundPreposition(
         let fourthWord = '';
         while (tokenizer.position < tokenizer.input.length) {
           const char = tokenizer.input[tokenizer.position];
-          if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
-              (char >= '0' && char <= '9') || char === '_' || char === '-') {
+          if (
+            (char >= 'a' && char <= 'z') ||
+            (char >= 'A' && char <= 'Z') ||
+            (char >= '0' && char <= '9') ||
+            char === '_' ||
+            char === '-'
+          ) {
             fourthWord += advance(tokenizer);
           } else {
             break;
@@ -853,8 +1027,13 @@ function tryBuildCompoundPreposition(
       let thirdWord = '';
       while (tokenizer.position < tokenizer.input.length) {
         const char = tokenizer.input[tokenizer.position];
-        if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
-            (char >= '0' && char <= '9') || char === '_' || char === '-') {
+        if (
+          (char >= 'a' && char <= 'z') ||
+          (char >= 'A' && char <= 'Z') ||
+          (char >= '0' && char <= '9') ||
+          char === '_' ||
+          char === '-'
+        ) {
           thirdWord += advance(tokenizer);
         } else {
           break;
@@ -878,7 +1057,7 @@ function tryBuildCompoundPreposition(
 
 function classifyIdentifier(value: string): TokenType {
   const lowerValue = value.toLowerCase();
-  
+
   // Special case for include/includes to ensure they're treated as comparison operators
   if (lowerValue === 'include' || lowerValue === 'includes') {
     return TokenType.COMPARISON_OPERATOR;
@@ -916,7 +1095,7 @@ function classifyIdentifier(value: string): TokenType {
   if (KEYWORDS.has(lowerValue)) {
     return TokenType.KEYWORD;
   }
-  
+
   return TokenType.IDENTIFIER;
 }
 
@@ -939,19 +1118,32 @@ function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
   // A query reference should contain valid selector characters and end with />
   let pos = tokenizer.position + 1; // Start after <
   let foundValidContent = false;
-  
+
   while (pos < tokenizer.input.length) {
     const char = tokenizer.input[pos];
-    
+
     // If we find />, this is likely a query reference
     if (char === '/' && pos + 1 < tokenizer.input.length && tokenizer.input[pos + 1] === '>') {
       return foundValidContent; // Only return true if we found some content between < and />
     }
-    
+
     // If we find content that looks like selector syntax
-    if (isAlphaNumeric(char) || char === '.' || char === '#' || char === '[' || char === ']' || 
-        char === ':' || char === '-' || char === '_' || char === ' ' || char === '=' || 
-        char === '"' || char === "'" || char === '(' || char === ')') {
+    if (
+      isAlphaNumeric(char) ||
+      char === '.' ||
+      char === '#' ||
+      char === '[' ||
+      char === ']' ||
+      char === ':' ||
+      char === '-' ||
+      char === '_' ||
+      char === ' ' ||
+      char === '=' ||
+      char === '"' ||
+      char === "'" ||
+      char === '(' ||
+      char === ')'
+    ) {
       foundValidContent = true;
       pos++;
     } else if (char === ' ' || char === '\t') {
@@ -961,13 +1153,13 @@ function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
       // Found invalid character for query reference, probably comparison
       return false;
     }
-    
+
     // If we've gone too far without finding />, it's probably not a query reference
     if (pos - tokenizer.position > 50) {
       return false;
     }
   }
-  
+
   // Reached end without finding />, not a query reference
   return false;
 }
@@ -976,18 +1168,22 @@ function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
  * Try to build the longest possible compound operator starting with two given words
  * Returns the compound operator string if found, null otherwise
  */
-function tryBuildLongestCompound(tokenizer: Tokenizer, firstWord: string, secondWord: string): string | null {
+function tryBuildLongestCompound(
+  tokenizer: Tokenizer,
+  firstWord: string,
+  secondWord: string
+): string | null {
   const originalPosition = tokenizer.position;
   let compound = `${firstWord} ${secondWord}`;
   const words = [firstWord, secondWord];
-  
+
   // Keep adding words until we can't find any more or reach a reasonable limit
   const maxWords = 8; // Reasonable upper bound
-  
+
   while (words.length < maxWords) {
     // Skip whitespace and try to read next word
     skipWhitespace(tokenizer);
-    
+
     if (tokenizer.position >= tokenizer.input.length) {
       break;
     }
@@ -1004,15 +1200,15 @@ function tryBuildLongestCompound(tokenizer: Tokenizer, firstWord: string, second
         break;
       }
     }
-    
+
     if (!nextWord) {
       break;
     }
-    
+
     // Add the word and check if this compound exists
     words.push(nextWord.toLowerCase());
     const newCompound = words.join(' ');
-    
+
     // If this compound exists, update our candidate
     if (COMPARISON_OPERATORS.has(newCompound)) {
       compound = newCompound;
@@ -1023,18 +1219,18 @@ function tryBuildLongestCompound(tokenizer: Tokenizer, firstWord: string, second
       // where "is greater than" exists but we want the longer form
     }
   }
-  
+
   // Check if we found a valid compound
   if (COMPARISON_OPERATORS.has(compound) && compound !== `${firstWord} ${secondWord}`) {
     // Found a compound longer than 2 words
     return compound;
   }
-  
+
   // Reset position and return null
   tokenizer.position = originalPosition;
   return null;
 }
 
 function isOperatorChar(char: string): boolean {
-  return '+-*/^%=!<>&|(){}[],.;:?\'\'~$'.includes(char);
+  return "+-*/^%=!<>&|(){}[],.;:?''~$".includes(char);
 }

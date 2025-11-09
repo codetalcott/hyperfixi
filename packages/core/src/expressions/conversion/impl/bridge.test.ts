@@ -11,7 +11,7 @@ import {
   EnhancedConversionAdapter,
   LegacyCompatibilityLayer,
   ExpressionMigrationUtility,
-  ConversionUtilities
+  ConversionUtilities,
 } from './bridge.ts';
 import type { ExecutionContext } from '../../../types/core.ts';
 import type { TypedExpressionContext } from '../../../types/enhanced-expressions.ts';
@@ -41,7 +41,7 @@ describe('Enhanced Conversion Bridge', () => {
       result: { data: 'test-result' },
       locals: new Map(),
       globals: new Map(),
-      event: null
+      event: null,
     };
 
     // Clear DOM
@@ -77,7 +77,7 @@ describe('Enhanced Conversion Bridge', () => {
         ...mockExecutionContext,
         locals: undefined,
         globals: undefined,
-        event: undefined
+        event: undefined,
       };
 
       const typedContext = createTypedExpressionContext(contextWithNulls as any);
@@ -99,7 +99,7 @@ describe('Enhanced Conversion Bridge', () => {
         expressionStack: [],
         evaluationDepth: 1,
         validationMode: 'strict',
-        evaluationHistory: []
+        evaluationHistory: [],
       };
 
       const updatedContext = updateExecutionContext(mockExecutionContext, typedContext);
@@ -124,7 +124,11 @@ describe('Enhanced Conversion Bridge', () => {
       const result = await EnhancedConversionAdapter.evaluateIs(mockExecutionContext, 42, 'number');
       expect(result).toBe(true);
 
-      const result2 = await EnhancedConversionAdapter.evaluateIs(mockExecutionContext, 'hello', 'number');
+      const result2 = await EnhancedConversionAdapter.evaluateIs(
+        mockExecutionContext,
+        'hello',
+        'number'
+      );
       expect(result2).toBe(false);
     });
 
@@ -134,7 +138,11 @@ describe('Enhanced Conversion Bridge', () => {
       console.warn = () => {};
 
       try {
-        const result = await EnhancedConversionAdapter.evaluateAs(mockExecutionContext, 'invalid', 'Number');
+        const result = await EnhancedConversionAdapter.evaluateAs(
+          mockExecutionContext,
+          'invalid',
+          'Number'
+        );
         // Should fallback to original value when conversion fails
         expect(result).toBe('invalid');
       } finally {
@@ -157,10 +165,15 @@ describe('Enhanced Conversion Bridge', () => {
     });
 
     it('should validate expression input', () => {
-      const validation = EnhancedConversionAdapter.validateExpressionInput('as', { value: 'test', type: 'String' });
+      const validation = EnhancedConversionAdapter.validateExpressionInput('as', {
+        value: 'test',
+        type: 'String',
+      });
       expect(validation?.isValid).toBe(true);
 
-      const invalidValidation = EnhancedConversionAdapter.validateExpressionInput('as', { value: 'test' });
+      const invalidValidation = EnhancedConversionAdapter.validateExpressionInput('as', {
+        value: 'test',
+      });
       expect(invalidValidation?.isValid).toBe(false);
     });
   });
@@ -188,13 +201,13 @@ describe('Enhanced Conversion Bridge', () => {
 
     it('should validate inputs in legacy format', () => {
       const asExpr = LegacyCompatibilityLayer.asExpression;
-      
+
       expect(asExpr.validate(['value', 'String'])).toBe(null);
       expect(asExpr.validate(['value'])).toContain('exactly two arguments');
       expect(asExpr.validate(['value', 123])).toContain('must be a string');
 
       const isExpr = LegacyCompatibilityLayer.isExpression;
-      
+
       expect(isExpr.validate(['value', 'string'])).toBe(null);
       expect(isExpr.validate(['value'])).toContain('exactly two arguments');
     });
@@ -240,14 +253,23 @@ describe('Enhanced Conversion Bridge', () => {
     });
 
     it('should handle conversion failures with fallback', async () => {
-      const result = await ConversionUtilities.safeConvert(mockExecutionContext, 'invalid', 'Number', 0);
+      const result = await ConversionUtilities.safeConvert(
+        mockExecutionContext,
+        'invalid',
+        'Number',
+        0
+      );
       expect(result.success).toBe(false);
       expect(result.value).toBe(0); // Fallback value
       expect(result.error).toBeDefined();
     });
 
     it('should handle conversion failures without fallback', async () => {
-      const result = await ConversionUtilities.safeConvert(mockExecutionContext, 'invalid', 'Number');
+      const result = await ConversionUtilities.safeConvert(
+        mockExecutionContext,
+        'invalid',
+        'Number'
+      );
       expect(result.success).toBe(false);
       expect(result.value).toBe('invalid'); // Original value
       expect(result.error).toBeDefined();
@@ -257,11 +279,11 @@ describe('Enhanced Conversion Bridge', () => {
       const conversions = [
         { value: '123', type: 'Int', key: 'number' },
         { value: 'hello', type: 'String', key: 'text' },
-        { value: 'true', type: 'Boolean', key: 'flag' }
+        { value: 'true', type: 'Boolean', key: 'flag' },
       ];
 
       const result = await ConversionUtilities.batchConvert(mockExecutionContext, conversions);
-      
+
       expect(result.success).toBe(true);
       expect(result.results.number).toBe(123);
       expect(result.results.text).toBe('hello');
@@ -272,11 +294,11 @@ describe('Enhanced Conversion Bridge', () => {
     it('should handle batch conversion failures', async () => {
       const conversions = [
         { value: '123', type: 'Int', key: 'valid' },
-        { value: 'invalid', type: 'Number', key: 'invalid' }
+        { value: 'invalid', type: 'Number', key: 'invalid' },
       ];
 
       const result = await ConversionUtilities.batchConvert(mockExecutionContext, conversions);
-      
+
       expect(result.success).toBe(false);
       expect(result.results.valid).toBe(123);
       expect(result.results.invalid).toBe('invalid'); // Original value on failure
@@ -286,7 +308,7 @@ describe('Enhanced Conversion Bridge', () => {
 
     it('should provide available conversion types', () => {
       const conversions = ConversionUtilities.getAvailableConversions();
-      
+
       expect(conversions).toHaveProperty('String');
       expect(conversions).toHaveProperty('Number');
       expect(conversions).toHaveProperty('Boolean');
@@ -306,34 +328,42 @@ describe('Enhanced Conversion Bridge', () => {
     it('should extract form values through bridge', async () => {
       // Create a form with inputs
       const form = document.createElement('form');
-      
+
       const textInput = document.createElement('input');
       textInput.type = 'text';
       textInput.name = 'name';
       textInput.value = 'John Doe';
-      
+
       const numberInput = document.createElement('input');
       numberInput.type = 'number';
       numberInput.name = 'age';
       numberInput.value = '25';
-      
+
       form.appendChild(textInput);
       form.appendChild(numberInput);
       document.body.appendChild(form);
 
-      const result = await EnhancedConversionAdapter.evaluateAs(mockExecutionContext, form, 'Values');
-      
+      const result = await EnhancedConversionAdapter.evaluateAs(
+        mockExecutionContext,
+        form,
+        'Values'
+      );
+
       expect(result).toEqual({
         name: 'John Doe',
-        age: 25
+        age: 25,
       });
     });
   });
 
   describe('Error Handling Integration', () => {
     it('should provide detailed error information through bridge', async () => {
-      const result = await ConversionUtilities.safeConvert(mockExecutionContext, 'not-a-date', 'Date');
-      
+      const result = await ConversionUtilities.safeConvert(
+        mockExecutionContext,
+        'not-a-date',
+        'Date'
+      );
+
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
       expect(result.error.name).toBe('DateConversionError');
@@ -345,7 +375,7 @@ describe('Enhanced Conversion Bridge', () => {
     it('should handle unexpected errors gracefully', async () => {
       // Mock a context that might cause issues
       const badContext = null as any;
-      
+
       const result = await ConversionUtilities.safeConvert(badContext, 'test', 'String');
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
@@ -357,7 +387,7 @@ describe('Enhanced Conversion Bridge', () => {
       const startTime = Date.now();
       await EnhancedConversionAdapter.evaluateAs(mockExecutionContext, '123', 'Int');
       const duration = Date.now() - startTime;
-      
+
       expect(duration).toBeLessThan(10); // Should be very fast
     });
 
@@ -365,7 +395,7 @@ describe('Enhanced Conversion Bridge', () => {
       const conversions = Array.from({ length: 100 }, (_, i) => ({
         value: String(i),
         type: 'Int',
-        key: `num_${i}`
+        key: `num_${i}`,
       }));
 
       const startTime = Date.now();
@@ -401,7 +431,7 @@ describe('Enhanced Conversion Bridge', () => {
       // Simulate how existing code might use expressions
       const expressions = {
         as: LegacyCompatibilityLayer.asExpression,
-        is: LegacyCompatibilityLayer.isExpression
+        is: LegacyCompatibilityLayer.isExpression,
       };
 
       // Use them like regular expressions

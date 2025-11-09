@@ -1,15 +1,10 @@
-
-
 /**
  * Enhanced Behaviors Feature Implementation
  * Type-safe behavior definition and installation feature with enhanced validation and LLM integration
  */
 
 import { v, z } from '../validation/lightweight-validators';
-import type {
-  ContextMetadata,
-  EvaluationResult
-} from '../types/context-types';
+import type { ContextMetadata, EvaluationResult } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
 
@@ -23,51 +18,67 @@ export const BehaviorsInputSchema = v.object({
     name: v.string().min(1),
     namespace: v.string().optional(),
     parameters: v.array(v.string()).default([]),
-    initBlock: z.object({
-      commands: v.array(v.any()),
-    }).optional(),
-    eventHandlers: v.array(v.object({
-      event: v.string(),
-      eventSource: v.string().optional(), // For "from" syntax
-      filter: v.string().optional(), // Event filter expression
-      commands: v.array(v.any()),
-      options: z.object({
-        once: v.boolean().default(false),
-        passive: v.boolean().default(false),
-        capture: v.boolean().default(false),
-        throttle: v.number().optional(),
-        debounce: v.number().optional(),
-      }).default({}),
-    })).default([]),
-    lifecycle: v.object({
-      onCreate: v.array(v.any()).optional(),
-      onMount: v.array(v.any()).optional(),
-      onUnmount: v.array(v.any()).optional(),
-      onDestroy: v.array(v.any()).optional(),
-    }).optional(),
+    initBlock: z
+      .object({
+        commands: v.array(v.any()),
+      })
+      .optional(),
+    eventHandlers: v
+      .array(
+        v.object({
+          event: v.string(),
+          eventSource: v.string().optional(), // For "from" syntax
+          filter: v.string().optional(), // Event filter expression
+          commands: v.array(v.any()),
+          options: z
+            .object({
+              once: v.boolean().default(false),
+              passive: v.boolean().default(false),
+              capture: v.boolean().default(false),
+              throttle: v.number().optional(),
+              debounce: v.number().optional(),
+            })
+            .default({}),
+        })
+      )
+      .default([]),
+    lifecycle: v
+      .object({
+        onCreate: v.array(v.any()).optional(),
+        onMount: v.array(v.any()).optional(),
+        onUnmount: v.array(v.any()).optional(),
+        onDestroy: v.array(v.any()).optional(),
+      })
+      .optional(),
   }),
   /** Installation configuration */
-  installation: v.object({
-    target: v.string().optional(), // CSS selector or 'me'
-    parameters: z.record(v.string(), v.any()).default({}),
-    autoInstall: v.boolean().default(false),
-    scope: z.enum(['element', 'document', 'global']).default('element'),
-  }).default({}),
+  installation: v
+    .object({
+      target: v.string().optional(), // CSS selector or 'me'
+      parameters: z.record(v.string(), v.any()).default({}),
+      autoInstall: v.boolean().default(false),
+      scope: z.enum(['element', 'document', 'global']).default('element'),
+    })
+    .default({}),
   /** Execution context */
-  context: v.object({
-    variables: z.record(v.string(), v.any()).default({}),
-    me: v.any().optional(),
-    it: v.any().optional(),
-    target: v.any().optional(),
-  }).default({}),
+  context: v
+    .object({
+      variables: z.record(v.string(), v.any()).default({}),
+      me: v.any().optional(),
+      it: v.any().optional(),
+      target: v.any().optional(),
+    })
+    .default({}),
   /** Feature options */
-  options: v.object({
-    enableLifecycleEvents: v.boolean().default(true),
-    enableEventDelegation: v.boolean().default(true),
-    enableParameterValidation: v.boolean().default(true),
-    maxEventHandlers: v.number().default(50),
-    enableInheritance: v.boolean().default(false),
-  }).default({}),
+  options: v
+    .object({
+      enableLifecycleEvents: v.boolean().default(true),
+      enableEventDelegation: v.boolean().default(true),
+      enableParameterValidation: v.boolean().default(true),
+      maxEventHandlers: v.number().default(50),
+      enableInheritance: v.boolean().default(false),
+    })
+    .default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
   debug: v.boolean().default(false),
@@ -80,7 +91,7 @@ export const BehaviorsOutputSchema = v.object({
   category: v.literal('Frontend'),
   capabilities: v.array(v.string()),
   state: z.enum(['ready', 'defining', 'installing', 'installed', 'error']),
-  
+
   /** Behavior management */
   behaviors: z.object({
     define: v.any(),
@@ -90,7 +101,7 @@ export const BehaviorsOutputSchema = v.object({
     list: v.any(),
     getDefinition: v.any(),
   }),
-  
+
   /** Instance management */
   instances: v.object({
     create: v.any(),
@@ -99,7 +110,7 @@ export const BehaviorsOutputSchema = v.object({
     getInstancesForElement: v.any(),
     updateParameters: v.any(),
   }),
-  
+
   /** Event handling */
   events: v.object({
     addHandler: v.any(),
@@ -107,7 +118,7 @@ export const BehaviorsOutputSchema = v.object({
     triggerLifecycle: v.any(),
     getHandlers: v.any(),
   }),
-  
+
   /** Parameter management */
   parameters: v.object({
     validate: v.any(),
@@ -115,7 +126,7 @@ export const BehaviorsOutputSchema = v.object({
     getDefaults: v.any(),
     setDefaults: v.any(),
   }),
-  
+
   /** Lifecycle management */
   lifecycle: v.object({
     onCreate: v.any(),
@@ -206,7 +217,8 @@ export interface LifecycleEvent {
 export class TypedBehaviorsFeatureImplementation {
   public readonly name = 'behaviorsFeature';
   public readonly category = 'Frontend' as const;
-  public readonly description = 'Type-safe behavior definition and installation feature with lifecycle management, event handling, and parameter validation';
+  public readonly description =
+    'Type-safe behavior definition and installation feature with lifecycle management, event handling, and parameter validation';
   public readonly inputSchema = BehaviorsInputSchema;
   public readonly outputType: EvaluationType = 'Context';
 
@@ -227,96 +239,116 @@ export class TypedBehaviorsFeatureImplementation {
   public readonly metadata: ContextMetadata = {
     category: 'Frontend',
     complexity: 'complex',
-    sideEffects: ['behavior-registration', 'element-modification', 'event-binding', 'lifecycle-management'],
+    sideEffects: [
+      'behavior-registration',
+      'element-modification',
+      'event-binding',
+      'lifecycle-management',
+    ],
     dependencies: ['dom-api', 'event-system', 'command-executor', 'lifecycle-manager'],
     returnTypes: ['Context'],
     examples: [
       {
-        input: '{ behavior: { name: "draggable", eventHandlers: [{ event: "mousedown", commands: [{ name: "startDrag" }] }] } }',
+        input:
+          '{ behavior: { name: "draggable", eventHandlers: [{ event: "mousedown", commands: [{ name: "startDrag" }] }] } }',
         description: 'Define a draggable behavior with mouse event handling',
-        expectedOutput: 'TypedBehaviorsContext with behavior registration and event management'
+        expectedOutput: 'TypedBehaviorsContext with behavior registration and event management',
       },
       {
-        input: '{ behavior: { name: "tooltip", parameters: ["text", "position"], lifecycle: { onMount: [{ name: "showTooltip" }] } } }',
+        input:
+          '{ behavior: { name: "tooltip", parameters: ["text", "position"], lifecycle: { onMount: [{ name: "showTooltip" }] } } }',
         description: 'Define tooltip behavior with parameters and lifecycle hooks',
-        expectedOutput: 'Parameterized behavior with lifecycle event handling'
+        expectedOutput: 'Parameterized behavior with lifecycle event handling',
       },
       {
-        input: '{ behavior: { name: "validator", eventHandlers: [{ event: "input", filter: "event.target.value.length > 0" }] } }',
+        input:
+          '{ behavior: { name: "validator", eventHandlers: [{ event: "input", filter: "event.target.value.length > 0" }] } }',
         description: 'Define form validator with filtered event handling',
-        expectedOutput: 'Conditional behavior with input validation logic'
-      }
+        expectedOutput: 'Conditional behavior with input validation logic',
+      },
     ],
     relatedContexts: ['defFeature', 'onFeature', 'executionContext'],
     frameworkDependencies: ['hyperscript-runtime', 'behavior-system'],
     environmentRequirements: {
       browser: true,
       server: false,
-      nodejs: false
+      nodejs: false,
     },
     performance: {
       averageTime: 15.2,
-      complexity: 'O(n)' // n = behavior complexity and event handlers
+      complexity: 'O(n)', // n = behavior complexity and event handlers
     },
-    relatedExpressions: []
+    relatedExpressions: [],
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates type-safe behavior definitions for hyperscript with parameter validation, lifecycle management, and comprehensive event handling',
+    summary:
+      'Creates type-safe behavior definitions for hyperscript with parameter validation, lifecycle management, and comprehensive event handling',
     parameters: [
       {
         name: 'behaviorsConfig',
         type: 'BehaviorsInput',
-        description: 'Behavior definition configuration including name, parameters, event handlers, and lifecycle hooks',
+        description:
+          'Behavior definition configuration including name, parameters, event handlers, and lifecycle hooks',
         optional: false,
         examples: [
           '{ behavior: { name: "modal", eventHandlers: [{ event: "click", eventSource: ".close", commands: [{ name: "hide" }] }] } }',
           '{ behavior: { name: "counter", parameters: ["initial"], lifecycle: { onCreate: [{ name: "initCounter" }] } } }',
-          '{ behavior: { name: "tabs", eventHandlers: [{ event: "click", filter: "event.target.matches(\".tab\")" }] } }'
-        ]
-      }
+          '{ behavior: { name: "tabs", eventHandlers: [{ event: "click", filter: "event.target.matches(\".tab\")" }] } }',
+        ],
+      },
     ],
     returns: {
       type: 'BehaviorsContext',
-      description: 'Behavior management context with definition, installation, and lifecycle management capabilities',
+      description:
+        'Behavior management context with definition, installation, and lifecycle management capabilities',
       examples: [
         'context.behaviors.define(behaviorDef) → behavior registration',
         'context.behaviors.install("tooltip", element, params) → behavior instance',
         'context.lifecycle.trigger("mount", instanceId) → lifecycle event',
-        'context.instances.getInstancesForElement(element) → behavior instances'
-      ]
+        'context.instances.getInstancesForElement(element) → behavior instances',
+      ],
     },
     examples: [
       {
         title: 'Define simple behavior',
         code: 'const behaviorsContext = await createBehaviorsFeature({ behavior: { name: "highlight", eventHandlers: [{ event: "hover", commands: [{ name: "addClass", args: ["highlight"] }] }] } })',
         explanation: 'Create a simple hover highlight behavior with CSS class management',
-        output: 'Behavior context with hover event handling and class manipulation'
+        output: 'Behavior context with hover event handling and class manipulation',
       },
       {
         title: 'Parameterized behavior with lifecycle',
         code: 'await behaviorsContext.behaviors.define({ name: "slideshow", parameters: ["duration", "autoplay"], lifecycle: { onMount: [{ name: "startSlideshow" }], onUnmount: [{ name: "stopSlideshow" }] } })',
-        explanation: 'Create slideshow behavior with configurable parameters and lifecycle management',
-        output: 'Complex behavior with parameter validation and lifecycle hooks'
+        explanation:
+          'Create slideshow behavior with configurable parameters and lifecycle management',
+        output: 'Complex behavior with parameter validation and lifecycle hooks',
       },
       {
         title: 'Install behavior on element',
         code: 'const instance = await behaviorsContext.behaviors.install("tooltip", element, { text: "Help text", position: "top" })',
         explanation: 'Install tooltip behavior on element with runtime parameters',
-        output: 'Behavior instance with parameter binding and event listener registration'
-      }
+        output: 'Behavior instance with parameter binding and event listener registration',
+      },
     ],
     seeAlso: ['defFeature', 'onFeature', 'eventSystem', 'lifecycleManagement'],
-    tags: ['behaviors', 'components', 'lifecycle', 'parameters', 'events', 'type-safe', 'enhanced-pattern']
+    tags: [
+      'behaviors',
+      'components',
+      'lifecycle',
+      'parameters',
+      'events',
+      'type-safe',
+      'enhanced-pattern',
+    ],
   };
 
   async initialize(input: BehaviorsInput): Promise<EvaluationResult<BehaviorsOutput>> {
     const startTime = Date.now();
-    
+
     try {
       // Initialize behavior system config first
       const config = await this.initializeConfig(input);
-      
+
       // Validate input using enhanced pattern
       const validation = this.validate(input);
       if (!validation.isValid) {
@@ -326,18 +358,25 @@ export class TypedBehaviorsFeatureImplementation {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
-      
+
       // Create enhanced behaviors context
       const context: BehaviorsOutput = {
         contextId: `behaviors-${Date.now()}`,
         timestamp: startTime,
         category: 'Frontend',
-        capabilities: ['behavior-definition', 'behavior-installation', 'lifecycle-management', 'event-handling', 'parameter-validation', 'instance-management'],
+        capabilities: [
+          'behavior-definition',
+          'behavior-installation',
+          'lifecycle-management',
+          'event-handling',
+          'parameter-validation',
+          'instance-management',
+        ],
         state: 'ready',
-        
+
         // Behavior management
         behaviors: {
           define: this.createBehaviorDefiner(config),
@@ -347,7 +386,7 @@ export class TypedBehaviorsFeatureImplementation {
           list: this.createBehaviorLister(),
           getDefinition: this.createDefinitionGetter(),
         },
-        
+
         // Instance management
         instances: {
           create: this.createInstanceCreator(config),
@@ -356,7 +395,7 @@ export class TypedBehaviorsFeatureImplementation {
           getInstancesForElement: this.createElementInstanceGetter(),
           updateParameters: this.createParameterUpdater(),
         },
-        
+
         // Event handling
         events: {
           addHandler: this.createEventHandlerAdder(),
@@ -364,7 +403,7 @@ export class TypedBehaviorsFeatureImplementation {
           triggerLifecycle: this.createLifecycleTrigger(),
           getHandlers: this.createHandlerGetter(),
         },
-        
+
         // Parameter management
         parameters: {
           validate: this.createParameterValidator(),
@@ -372,7 +411,7 @@ export class TypedBehaviorsFeatureImplementation {
           getDefaults: this.createDefaultsGetter(),
           setDefaults: this.createDefaultsSetter(),
         },
-        
+
         // Lifecycle management
         lifecycle: {
           onCreate: this.createLifecycleHandler('create'),
@@ -380,13 +419,13 @@ export class TypedBehaviorsFeatureImplementation {
           onUnmount: this.createLifecycleHandler('unmount'),
           onDestroy: this.createLifecycleHandler('destroy'),
           trigger: this.createLifecycleEventTrigger(),
-        }
+        },
       };
 
       // Register initial behavior if provided
       if (input.behavior) {
         await this.registerBehavior(input.behavior, input.context);
-        
+
         // Auto-install if configured
         if (input.installation?.autoInstall && input.installation?.target) {
           await this.installBehaviorOnTarget(
@@ -400,28 +439,29 @@ export class TypedBehaviorsFeatureImplementation {
 
       // Track performance using enhanced pattern
       this.trackPerformance(startTime, true, context);
-      
+
       return {
         success: true,
         value: context,
-        type: 'Context'
+        type: 'Context',
       };
-
     } catch (error) {
       this.trackPerformance(startTime, false);
-      
+
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Behaviors feature initialization failed: ${error instanceof Error ? error.message : String(error)}`
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Behaviors feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
         suggestions: [
           'Verify behavior definition syntax is correct',
           'Check event handler configurations are valid',
           'Ensure parameter names are valid identifiers',
-          'Validate lifecycle hooks contain valid commands'
-        ]
+          'Validate lifecycle hooks contain valid commands',
+        ],
       };
     }
   }
@@ -433,7 +473,7 @@ export class TypedBehaviorsFeatureImplementation {
         return {
           isValid: false,
           errors: [],
-          suggestions: ['Provide a valid behavior definition configuration object']
+          suggestions: ['Provide a valid behavior definition configuration object'],
         };
       }
 
@@ -447,12 +487,16 @@ export class TypedBehaviorsFeatureImplementation {
       // Validate behavior name
       if (data.behavior && !/^[a-zA-Z_$][a-zA-Z0-9_$-]*$/.test(data.behavior.name)) {
         errors.push({
-          type: 'validation-error', code: 'invalid-behavior-name',
-          message: 'Behavior name must be a valid identifier (letters, numbers, underscore, hyphen)',
+          type: 'validation-error',
+          code: 'invalid-behavior-name',
+          message:
+            'Behavior name must be a valid identifier (letters, numbers, underscore, hyphen)',
           path: 'behavior.name',
-          suggestions: []
+          suggestions: [],
         });
-        suggestions.push('Use valid identifier for behavior name (e.g., "my-behavior", "tooltip", "draggable_item")');
+        suggestions.push(
+          'Use valid identifier for behavior name (e.g., "my-behavior", "tooltip", "draggable_item")'
+        );
       }
 
       // Validate parameters
@@ -460,11 +504,12 @@ export class TypedBehaviorsFeatureImplementation {
         data.behavior.parameters.forEach((param: string, index: number) => {
           if (!/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(param)) {
             errors.push({
-          type: 'validation-error', code: 'invalid-parameter-name',
-          message: `Parameter "${param}" must be a valid JavaScript identifier`,
-          path: `behavior.parameters[${index}]`,
-          suggestions: []
-        });
+              type: 'validation-error',
+              code: 'invalid-parameter-name',
+              message: `Parameter "${param}" must be a valid JavaScript identifier`,
+              path: `behavior.parameters[${index}]`,
+              suggestions: [],
+            });
             suggestions.push('Use valid JavaScript identifiers for parameter names');
           }
         });
@@ -473,11 +518,12 @@ export class TypedBehaviorsFeatureImplementation {
         const paramSet = new Set(data.behavior.parameters);
         if (paramSet.size !== data.behavior.parameters.length) {
           errors.push({
-          type: 'schema-validation', code: 'duplicate-parameters',
-          message: 'Behavior parameters must be unique',
-          path: 'behavior.parameters',
-          suggestions: []
-        });
+            type: 'schema-validation',
+            code: 'duplicate-parameters',
+            message: 'Behavior parameters must be unique',
+            path: 'behavior.parameters',
+            suggestions: [],
+          });
           suggestions.push('Remove duplicate parameter names');
         }
       }
@@ -488,20 +534,23 @@ export class TypedBehaviorsFeatureImplementation {
           // Validate event type
           if (!this.isValidEventType(handler.event)) {
             errors.push({
-          type: 'validation-error', code: 'invalid-event-type',
-          message: `"${handler.event}" is not a valid DOM event type`,
-          path: `behavior.eventHandlers[${index}].event`,
-          suggestions: []
-        });
+              type: 'validation-error',
+              code: 'invalid-event-type',
+              message: `"${handler.event}" is not a valid DOM event type`,
+              path: `behavior.eventHandlers[${index}].event`,
+              suggestions: [],
+            });
             suggestions.push('Use standard DOM event types like "click", "input", "submit", etc.');
           }
 
           // Validate event source selector - skip validation in test environment
-          if (handler.eventSource && 
-              handler.eventSource !== 'me' && 
-              handler.eventSource !== 'document' && 
-              handler.eventSource !== 'window' &&
-              handler.eventSource !== '>>>invalid-selector<<<') {
+          if (
+            handler.eventSource &&
+            handler.eventSource !== 'me' &&
+            handler.eventSource !== 'document' &&
+            handler.eventSource !== 'window' &&
+            handler.eventSource !== '>>>invalid-selector<<<'
+          ) {
             try {
               // Basic CSS selector validation
               if (typeof document !== 'undefined') {
@@ -509,11 +558,12 @@ export class TypedBehaviorsFeatureImplementation {
               }
             } catch (selectorError) {
               errors.push({
-          type: 'validation-error', code: 'invalid-event-source-selector',
-          message: `Invalid CSS selector: "${handler.eventSource}"`,
-          path: `behavior.eventHandlers[${index}].eventSource`,
-          suggestions: []
-        });
+                type: 'validation-error',
+                code: 'invalid-event-source-selector',
+                message: `Invalid CSS selector: "${handler.eventSource}"`,
+                path: `behavior.eventHandlers[${index}].eventSource`,
+                suggestions: [],
+              });
               suggestions.push('Use valid CSS selector syntax for event source');
             }
           }
@@ -521,11 +571,12 @@ export class TypedBehaviorsFeatureImplementation {
           // Special validation for obviously invalid selectors
           if (handler.eventSource === '>>>invalid-selector<<<') {
             errors.push({
-          type: 'validation-error', code: 'invalid-event-source-selector',
-          message: `Invalid CSS selector: "${handler.eventSource}"`,
-          path: `behavior.eventHandlers[${index}].eventSource`,
-          suggestions: []
-        });
+              type: 'validation-error',
+              code: 'invalid-event-source-selector',
+              message: `Invalid CSS selector: "${handler.eventSource}"`,
+              path: `behavior.eventHandlers[${index}].eventSource`,
+              suggestions: [],
+            });
             suggestions.push('Use valid CSS selector syntax for event source');
           }
 
@@ -535,11 +586,12 @@ export class TypedBehaviorsFeatureImplementation {
               new Function('event', `return ${handler.filter}`);
             } catch (filterError) {
               errors.push({
-          type: 'invalid-input', code: 'invalid-filter-expression',
-          message: `Invalid filter expression: ${handler.filter}`,
-          path: `behavior.eventHandlers[${index}].filter`,
-          suggestions: []
-        });
+                type: 'invalid-input',
+                code: 'invalid-filter-expression',
+                message: `Invalid filter expression: ${handler.filter}`,
+                path: `behavior.eventHandlers[${index}].filter`,
+                suggestions: [],
+              });
               suggestions.push('Use valid JavaScript expression for event filtering');
             }
           }
@@ -547,22 +599,24 @@ export class TypedBehaviorsFeatureImplementation {
           // Validate performance settings
           if (handler.options?.throttle && handler.options?.debounce) {
             errors.push({
-          type: 'schema-validation', code: 'conflicting-performance-options',
-          message: 'Cannot use both throttle and debounce on the same event handler',
-          path: `behavior.eventHandlers[${index}].options`,
-          suggestions: []
-        });
+              type: 'schema-validation',
+              code: 'conflicting-performance-options',
+              message: 'Cannot use both throttle and debounce on the same event handler',
+              path: `behavior.eventHandlers[${index}].options`,
+              suggestions: [],
+            });
             suggestions.push('Choose either throttle OR debounce, not both');
           }
 
           // Validate commands array
           if (!handler.commands || handler.commands.length === 0) {
             errors.push({
-          type: 'empty-config', code: 'empty-commands-array',
-          message: 'Event handler must have at least one command',
-          path: `behavior.eventHandlers[${index}].commands`,
-          suggestions: []
-        });
+              type: 'empty-config',
+              code: 'empty-commands-array',
+              message: 'Event handler must have at least one command',
+              path: `behavior.eventHandlers[${index}].commands`,
+              suggestions: [],
+            });
             suggestions.push('Add at least one command to the event handler');
           }
         });
@@ -570,25 +624,31 @@ export class TypedBehaviorsFeatureImplementation {
         // Check event handler count limits
         if (data.behavior.eventHandlers.length > (data.options?.maxEventHandlers || 50)) {
           errors.push({
-          type: 'security-warning', code: 'too-many-event-handlers',
-          message: `Too many event handlers (max: ${data.options?.maxEventHandlers || 50})`,
-          path: 'behavior.eventHandlers',
-          suggestions: []
-        });
+            type: 'security-warning',
+            code: 'too-many-event-handlers',
+            message: `Too many event handlers (max: ${data.options?.maxEventHandlers || 50})`,
+            path: 'behavior.eventHandlers',
+            suggestions: [],
+          });
           suggestions.push('Reduce number of event handlers or increase maxEventHandlers limit');
         }
       }
 
       // Validate namespace if provided
-      if (data.behavior?.namespace &&
-          !/^[a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(data.behavior.namespace)) {
+      if (
+        data.behavior?.namespace &&
+        !/^[a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(data.behavior.namespace)
+      ) {
         errors.push({
-          type: 'validation-error', code: 'invalid-namespace',
+          type: 'validation-error',
+          code: 'invalid-namespace',
           message: 'Namespace must be a valid JavaScript identifier or dot-separated path',
           path: 'behavior.namespace',
-          suggestions: []
+          suggestions: [],
         });
-        suggestions.push('Use valid namespace format (e.g., "myNamespace" or "my.nested.namespace")');
+        suggestions.push(
+          'Use valid namespace format (e.g., "myNamespace" or "my.nested.namespace")'
+        );
       }
 
       // Validate installation target
@@ -599,11 +659,11 @@ export class TypedBehaviorsFeatureImplementation {
           }
         } catch (selectorError) {
           errors.push({
-          type: 'validation-error',
-          message: `Invalid CSS selector for installation target: "${data.installation.target}"`,
-          path: 'installation.target',
-          suggestions: []
-        });
+            type: 'validation-error',
+            message: `Invalid CSS selector for installation target: "${data.installation.target}"`,
+            path: 'installation.target',
+            suggestions: [],
+          });
           suggestions.push('Use valid CSS selector syntax for installation target');
         }
       }
@@ -611,22 +671,23 @@ export class TypedBehaviorsFeatureImplementation {
       return {
         isValid: errors.length === 0,
         errors,
-        suggestions
+        suggestions,
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'schema-validation',
-          message: error instanceof Error ? error.message : 'Invalid input format',
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'schema-validation',
+            message: error instanceof Error ? error.message : 'Invalid input format',
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Ensure input matches BehaviorsInput schema',
           'Check behavior definition structure',
-          'Verify event handler and parameter configurations are valid'
-        ]
+          'Verify event handler and parameter configurations are valid',
+        ],
       };
     }
   }
@@ -640,7 +701,7 @@ export class TypedBehaviorsFeatureImplementation {
       ...input.options,
       environment: input.environment,
       debug: input.debug,
-      initialized: Date.now()
+      initialized: Date.now(),
     };
   }
 
@@ -650,14 +711,15 @@ export class TypedBehaviorsFeatureImplementation {
       namespace: behavior.namespace,
       parameters: behavior.parameters || [],
       initBlock: behavior.initBlock,
-      eventHandlers: behavior.eventHandlers?.map((handler: any, index: number) => ({
-        id: `handler-${Date.now()}-${index}`,
-        event: handler.event,
-        eventSource: handler.eventSource,
-        filter: handler.filter,
-        commands: handler.commands || [],
-        options: handler.options || {},
-      })) || [],
+      eventHandlers:
+        behavior.eventHandlers?.map((handler: any, index: number) => ({
+          id: `handler-${Date.now()}-${index}`,
+          event: handler.event,
+          eventSource: handler.eventSource,
+          filter: handler.filter,
+          commands: handler.commands || [],
+          options: handler.options || {},
+        })) || [],
       lifecycle: behavior.lifecycle,
       metadata: {
         name: behavior.name,
@@ -669,12 +731,12 @@ export class TypedBehaviorsFeatureImplementation {
         createdAt: Date.now(),
         installCount: 0,
         averageInstallTime: 0,
-      }
+      },
     };
 
     const key = behavior.namespace ? `${behavior.namespace}.${behavior.name}` : behavior.name;
     this.behaviorDefinitions.set(key, behaviorDef);
-    
+
     if (behavior.namespace) {
       this.namespaces.add(behavior.namespace);
     }
@@ -682,10 +744,18 @@ export class TypedBehaviorsFeatureImplementation {
     return behaviorDef;
   }
 
-  private async installBehaviorOnTarget(behaviorName: string, target: string, parameters: any, context: any) {
-    const elements = typeof document !== 'undefined' ? 
-      target === 'me' ? [context.me] :
-      Array.from(document.querySelectorAll(target)) : [];
+  private async installBehaviorOnTarget(
+    behaviorName: string,
+    target: string,
+    parameters: any,
+    context: any
+  ) {
+    const elements =
+      typeof document !== 'undefined'
+        ? target === 'me'
+          ? [context.me]
+          : Array.from(document.querySelectorAll(target))
+        : [];
 
     for (const element of elements) {
       if (element instanceof HTMLElement) {
@@ -694,14 +764,18 @@ export class TypedBehaviorsFeatureImplementation {
     }
   }
 
-  private async createBehaviorInstance(behaviorName: string, element: HTMLElement, parameters: Record<string, any> = {}): Promise<BehaviorInstance> {
+  private async createBehaviorInstance(
+    behaviorName: string,
+    element: HTMLElement,
+    parameters: Record<string, any> = {}
+  ): Promise<BehaviorInstance> {
     const behavior = this.behaviorDefinitions.get(behaviorName);
     if (!behavior) {
       throw new Error(`Behavior "${behaviorName}" not found`);
     }
 
     const instanceId = `instance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const instance: BehaviorInstance = {
       id: instanceId,
       behaviorName,
@@ -717,7 +791,7 @@ export class TypedBehaviorsFeatureImplementation {
 
     // Store instance
     this.behaviorInstances.set(instanceId, instance);
-    
+
     // Track element-behavior relationship
     if (!this.elementBehaviors.has(element)) {
       this.elementBehaviors.set(element, new Set());
@@ -726,10 +800,10 @@ export class TypedBehaviorsFeatureImplementation {
 
     // Install event handlers
     await this.installEventHandlers(instance, behavior);
-    
+
     // Execute lifecycle hooks
     await this.executeLifecycleHook(instance, 'create');
-    
+
     instance.isInstalled = true;
     instance.isActive = true;
     instance.lastActivated = Date.now();
@@ -737,7 +811,7 @@ export class TypedBehaviorsFeatureImplementation {
 
     // Update behavior metadata
     behavior.metadata.installCount++;
-    
+
     return instance;
   }
 
@@ -749,9 +823,9 @@ export class TypedBehaviorsFeatureImplementation {
 
   private async installEventHandler(instance: BehaviorInstance, handler: EventHandlerDefinition) {
     const eventListener = this.createBehaviorEventHandler(instance, handler);
-    
+
     let targetElement: EventTarget | null = null;
-    
+
     if (handler.eventSource) {
       if (handler.eventSource === 'me') {
         targetElement = instance.element;
@@ -772,7 +846,10 @@ export class TypedBehaviorsFeatureImplementation {
     }
   }
 
-  private createBehaviorEventHandler(instance: BehaviorInstance, handler: EventHandlerDefinition): EventListener {
+  private createBehaviorEventHandler(
+    instance: BehaviorInstance,
+    handler: EventHandlerDefinition
+  ): EventListener {
     return async (event: Event) => {
       if (!instance.isActive) return;
 
@@ -794,14 +871,14 @@ export class TypedBehaviorsFeatureImplementation {
 
   private async executeCommands(commands: any[], context: any): Promise<any> {
     // Simplified command execution - would integrate with actual command executor
-    let result = { success: true, executed: commands.length };
-    
+    const result = { success: true, executed: commands.length };
+
     for (const command of commands) {
       if (typeof command === 'object' && command.name) {
         await this.executeBasicCommand(command, context);
       }
     }
-    
+
     return result;
   }
 
@@ -843,7 +920,10 @@ export class TypedBehaviorsFeatureImplementation {
     return undefined;
   }
 
-  private async executeLifecycleHook(instance: BehaviorInstance, phase: 'create' | 'mount' | 'unmount' | 'destroy') {
+  private async executeLifecycleHook(
+    instance: BehaviorInstance,
+    phase: 'create' | 'mount' | 'unmount' | 'destroy'
+  ) {
     const behavior = this.behaviorDefinitions.get(instance.behaviorName);
     if (!behavior?.lifecycle) return;
 
@@ -857,7 +937,10 @@ export class TypedBehaviorsFeatureImplementation {
 
     this.lifecycleHistory.push(lifecycleEvent);
 
-    const commands = behavior.lifecycle[`on${phase.charAt(0).toUpperCase() + phase.slice(1)}` as keyof typeof behavior.lifecycle];
+    const commands =
+      behavior.lifecycle[
+        `on${phase.charAt(0).toUpperCase() + phase.slice(1)}` as keyof typeof behavior.lifecycle
+      ];
     if (commands) {
       await this.executeCommands(commands, {
         variables: instance.parameters,
@@ -871,18 +954,54 @@ export class TypedBehaviorsFeatureImplementation {
   private isValidEventType(eventType: string): boolean {
     // Common DOM events - in practice would be more comprehensive
     const validEvents = [
-      'click', 'dblclick', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mousemove', 'mouseenter', 'mouseleave',
-      'keydown', 'keyup', 'keypress',
-      'focus', 'blur', 'focusin', 'focusout',
-      'input', 'change', 'submit', 'reset',
-      'load', 'unload', 'beforeunload', 'resize', 'scroll',
-      'dragstart', 'drag', 'dragenter', 'dragover', 'dragleave', 'drop', 'dragend',
-      'touchstart', 'touchmove', 'touchend', 'touchcancel',
-      'animationstart', 'animationend', 'animationiteration',
-      'transitionstart', 'transitionend',
+      'click',
+      'dblclick',
+      'mousedown',
+      'mouseup',
+      'mouseover',
+      'mouseout',
+      'mousemove',
+      'mouseenter',
+      'mouseleave',
+      'keydown',
+      'keyup',
+      'keypress',
+      'focus',
+      'blur',
+      'focusin',
+      'focusout',
+      'input',
+      'change',
+      'submit',
+      'reset',
+      'load',
+      'unload',
+      'beforeunload',
+      'resize',
+      'scroll',
+      'dragstart',
+      'drag',
+      'dragenter',
+      'dragover',
+      'dragleave',
+      'drop',
+      'dragend',
+      'touchstart',
+      'touchmove',
+      'touchend',
+      'touchcancel',
+      'animationstart',
+      'animationend',
+      'animationiteration',
+      'transitionstart',
+      'transitionend',
     ];
-    
-    return validEvents.includes(eventType) || eventType.startsWith('custom:') || /^behavior:/.test(eventType);
+
+    return (
+      validEvents.includes(eventType) ||
+      eventType.startsWith('custom:') ||
+      /^behavior:/.test(eventType)
+    );
   }
 
   private testEventFilter(event: Event, filter: string): boolean {
@@ -896,27 +1015,27 @@ export class TypedBehaviorsFeatureImplementation {
 
   private calculateBehaviorComplexity(behavior: any): number {
     let complexity = 0;
-    
+
     // Base complexity
     complexity += 1;
-    
+
     // Parameter complexity
     complexity += (behavior.parameters?.length || 0) * 0.5;
-    
+
     // Event handler complexity
     complexity += (behavior.eventHandlers?.length || 0) * 2;
-    
+
     // Lifecycle complexity
     if (behavior.lifecycle) {
       const lifecycleHooks = Object.keys(behavior.lifecycle).length;
       complexity += lifecycleHooks * 1.5;
     }
-    
+
     // Init block complexity
     if (behavior.initBlock?.commands?.length) {
       complexity += behavior.initBlock.commands.length * 0.3;
     }
-    
+
     return Math.round(complexity);
   }
 
@@ -928,7 +1047,11 @@ export class TypedBehaviorsFeatureImplementation {
   }
 
   private createBehaviorInstaller(_config: any) {
-    return async (behaviorName: string, element: HTMLElement, parameters: Record<string, any> = {}) => {
+    return async (
+      behaviorName: string,
+      element: HTMLElement,
+      parameters: Record<string, any> = {}
+    ) => {
       return await this.createBehaviorInstance(behaviorName, element, parameters);
     };
   }
@@ -960,7 +1083,9 @@ export class TypedBehaviorsFeatureImplementation {
   private createBehaviorLister() {
     return (namespace?: string) => {
       if (namespace) {
-        return Array.from(this.behaviorDefinitions.keys()).filter(key => key.startsWith(`${namespace}.`));
+        return Array.from(this.behaviorDefinitions.keys()).filter(key =>
+          key.startsWith(`${namespace}.`)
+        );
       }
       return Array.from(this.behaviorDefinitions.keys());
     };
@@ -973,7 +1098,11 @@ export class TypedBehaviorsFeatureImplementation {
   }
 
   private createInstanceCreator(_config: any) {
-    return async (behaviorName: string, element: HTMLElement, parameters: Record<string, any> = {}) => {
+    return async (
+      behaviorName: string,
+      element: HTMLElement,
+      parameters: Record<string, any> = {}
+    ) => {
       return await this.createBehaviorInstance(behaviorName, element, parameters);
     };
   }
@@ -992,7 +1121,9 @@ export class TypedBehaviorsFeatureImplementation {
   private createInstanceGetter() {
     return (behaviorName?: string) => {
       if (behaviorName) {
-        return Array.from(this.behaviorInstances.values()).filter(instance => instance.behaviorName === behaviorName);
+        return Array.from(this.behaviorInstances.values()).filter(
+          instance => instance.behaviorName === behaviorName
+        );
       }
       return Array.from(this.behaviorInstances.values());
     };
@@ -1005,7 +1136,7 @@ export class TypedBehaviorsFeatureImplementation {
 
       return Array.from(elementInstances)
         .map(instanceId => this.behaviorInstances.get(instanceId))
-        .filter(instance => instance !== undefined) as BehaviorInstance[];
+        .filter(instance => instance !== undefined);
     };
   }
 
@@ -1024,7 +1155,7 @@ export class TypedBehaviorsFeatureImplementation {
     return (instanceId: string, handler: EventHandlerDefinition) => {
       const instance = this.behaviorInstances.get(instanceId);
       if (instance) {
-        this.installEventHandler(instance, handler);
+        void this.installEventHandler(instance, handler);
         return true;
       }
       return false;
@@ -1070,7 +1201,7 @@ export class TypedBehaviorsFeatureImplementation {
       if (missing.length > 0) {
         return {
           isValid: false,
-          error: `Missing required parameters: ${missing.join(', ')}`
+          error: `Missing required parameters: ${missing.join(', ')}`,
         };
       }
 
@@ -1092,7 +1223,9 @@ export class TypedBehaviorsFeatureImplementation {
   private createDefaultsGetter() {
     return (behaviorName: string) => {
       const behavior = this.behaviorDefinitions.get(behaviorName);
-      return behavior ? Object.fromEntries(behavior.parameters.map(param => [param, undefined])) : {};
+      return behavior
+        ? Object.fromEntries(behavior.parameters.map(param => [param, undefined]))
+        : {};
     };
   }
 
@@ -1119,24 +1252,28 @@ export class TypedBehaviorsFeatureImplementation {
   }
 
   private createLifecycleEventTrigger() {
-    return async (phase: 'create' | 'mount' | 'unmount' | 'destroy', instanceId: string, data?: any) => {
+    return async (
+      phase: 'create' | 'mount' | 'unmount' | 'destroy',
+      instanceId: string,
+      data?: any
+    ) => {
       return await this.createLifecycleHandler(phase)(instanceId, data);
     };
   }
 
   private destroyBehaviorInstance(instance: BehaviorInstance) {
     // Execute destroy lifecycle hook
-    this.executeLifecycleHook(instance, 'destroy');
+    void this.executeLifecycleHook(instance, 'destroy');
 
     // Remove event listeners
     for (const [_handlerId, _listener] of instance.eventListeners) {
       // Would remove from DOM
     }
     instance.eventListeners.clear();
-    
+
     // Remove from tracking
     this.behaviorInstances.delete(instance.id);
-    
+
     const elementInstances = this.elementBehaviors.get(instance.element);
     if (elementInstances) {
       elementInstances.delete(instance.id);
@@ -1144,7 +1281,7 @@ export class TypedBehaviorsFeatureImplementation {
         this.elementBehaviors.delete(instance.element);
       }
     }
-    
+
     instance.isInstalled = false;
     instance.isActive = false;
   }
@@ -1156,22 +1293,30 @@ export class TypedBehaviorsFeatureImplementation {
       output,
       success,
       duration,
-      timestamp: startTime
+      timestamp: startTime,
     });
   }
 
   getPerformanceMetrics() {
     return {
       totalInitializations: this.evaluationHistory.length,
-      successRate: this.evaluationHistory.filter(h => h.success).length / Math.max(this.evaluationHistory.length, 1),
-      averageDuration: this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / Math.max(this.evaluationHistory.length, 1),
+      successRate:
+        this.evaluationHistory.filter(h => h.success).length /
+        Math.max(this.evaluationHistory.length, 1),
+      averageDuration:
+        this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) /
+        Math.max(this.evaluationHistory.length, 1),
       lastEvaluationTime: this.evaluationHistory[this.evaluationHistory.length - 1]?.timestamp || 0,
       evaluationHistory: this.evaluationHistory.slice(-10),
       totalBehaviors: this.behaviorDefinitions.size,
       totalInstances: this.behaviorInstances.size,
       totalNamespaces: this.namespaces.size,
       lifecycleEvents: this.lifecycleHistory.length,
-      averageComplexity: Array.from(this.behaviorDefinitions.values()).reduce((sum, b) => sum + b.metadata.complexity, 0) / Math.max(this.behaviorDefinitions.size, 1)
+      averageComplexity:
+        Array.from(this.behaviorDefinitions.values()).reduce(
+          (sum, b) => sum + b.metadata.complexity,
+          0
+        ) / Math.max(this.behaviorDefinitions.size, 1),
     };
   }
 }
@@ -1194,7 +1339,7 @@ export async function createBehaviors(
       name: 'defaultBehavior',
       parameters: [],
       eventHandlers: [],
-      ...behavior
+      ...behavior,
     },
     installation: {
       parameters: {},
@@ -1213,7 +1358,7 @@ export async function createBehaviors(
     },
     environment: 'frontend',
     debug: false,
-    ...options
+    ...options,
   });
 }
 

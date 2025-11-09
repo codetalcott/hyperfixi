@@ -23,7 +23,7 @@ describe('Expression Parser Integration', () => {
       returned: false,
       broke: false,
       continued: false,
-      async: false
+      async: false,
     };
   });
 
@@ -41,7 +41,7 @@ describe('Expression Parser Integration', () => {
     it('should parse and evaluate boolean literals', async () => {
       const trueResult = await parseAndEvaluateExpression('true', context);
       expect(trueResult).toBe(true);
-      
+
       const falseResult = await parseAndEvaluateExpression('false', context);
       expect(falseResult).toBe(false);
     });
@@ -50,14 +50,14 @@ describe('Expression Parser Integration', () => {
   describe('Variable References', () => {
     it('should parse and evaluate local variables', async () => {
       context.locals.set('testVar', 'local value');
-      
+
       const result = await parseAndEvaluateExpression('testVar', context);
       expect(result).toBe('local value');
     });
 
     it('should parse and evaluate context references', async () => {
       context.it = 'context value';
-      
+
       const result = await parseAndEvaluateExpression('it', context);
       expect(result).toBe('context value');
     });
@@ -67,14 +67,14 @@ describe('Expression Parser Integration', () => {
     it('should parse and evaluate possessive expressions', async () => {
       const obj = { name: 'test', value: 42 };
       context.locals.set('obj', obj);
-      
+
       const result = await parseAndEvaluateExpression("obj's name", context);
       expect(result).toBe('test');
     });
 
     it('should handle null safety in property access', async () => {
       context.locals.set('nullObj', null);
-      
+
       const result = await parseAndEvaluateExpression("nullObj's property", context);
       expect(result).toBeUndefined();
     });
@@ -89,7 +89,7 @@ describe('Expression Parser Integration', () => {
     it('should handle complex as expressions', async () => {
       const obj = { foo: 'bar' };
       context.locals.set('obj', obj);
-      
+
       const result = await parseAndEvaluateExpression('obj as JSON', context);
       expect(result).toBe('{"foo":"bar"}');
     });
@@ -121,8 +121,7 @@ describe('Expression Parser Integration', () => {
 
   describe('Error Handling', () => {
     it('should throw meaningful errors for invalid syntax', async () => {
-      await expect(parseAndEvaluateExpression('invalid + + syntax', context))
-        .rejects.toThrow();
+      await expect(parseAndEvaluateExpression('invalid + + syntax', context)).rejects.toThrow();
     });
 
     it('should handle undefined variables gracefully', async () => {
@@ -136,12 +135,12 @@ describe('Expression Parser Integration', () => {
       const nested = {
         level1: {
           level2: {
-            value: 'deep'
-          }
-        }
+            value: 'deep',
+          },
+        },
       };
       context.locals.set('nested', nested);
-      
+
       const result = await parseAndEvaluateExpression("nested's level1's level2's value", context);
       expect(result).toBe('deep');
     });
@@ -149,7 +148,7 @@ describe('Expression Parser Integration', () => {
     it('should handle mixed expression types', async () => {
       context.locals.set('num', 10);
       context.locals.set('str', 'value: ');
-      
+
       const result = await parseAndEvaluateExpression('str + (num as String)', context);
       expect(result).toBe('value: 10');
     });

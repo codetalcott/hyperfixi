@@ -1,6 +1,6 @@
 /**
  * TDD Fix for 'in' Operator
- * 
+ *
  * Current issue: 'in' operator not being recognized/parsed properly
  * Expected: Support for membership testing like "2 in items" and "prop in obj"
  */
@@ -18,7 +18,7 @@ const context: ExecutionContext = {
     ['items', [1, 2, 3, 4, 5]],
     ['obj', { name: 'test', value: 42, active: true }],
     ['emptyArray', []],
-    ['emptyObj', {}]
+    ['emptyObj', {}],
   ]),
   globals: new Map(),
   parent: null,
@@ -26,7 +26,7 @@ const context: ExecutionContext = {
   returned: false,
   broke: false,
   continued: false,
-  async: false
+  async: false,
 };
 
 describe('In Operator - TDD Fix', () => {

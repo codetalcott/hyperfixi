@@ -1,4 +1,3 @@
-
 /**
  * Enhanced Def Feature Implementation
  * Type-safe function definition feature with enhanced validation and LLM integration
@@ -10,7 +9,7 @@ import type {
   ValidationError,
   LLMDocumentation,
   EvaluationType,
-  ExecutionContext
+  ExecutionContext,
 } from '../types/base-types';
 import type { ContextMetadata } from '../types/context-types';
 import type { EvaluationResult } from '../types/command-types';
@@ -27,28 +26,34 @@ export const DefInputSchema = v.object({
     namespace: v.string().optional(),
     parameters: v.array(v.string()).default([]),
     body: v.array(v.any()), // Parsed command nodes
-    catchBlock: z.object({
-      parameter: v.string(),
-      body: v.array(v.any()),
-    }).optional(),
+    catchBlock: z
+      .object({
+        parameter: v.string(),
+        body: v.array(v.any()),
+      })
+      .optional(),
     finallyBlock: v.array(v.any()).optional(),
     isAsync: v.boolean().default(false),
     returnType: v.string().optional(),
   }),
   /** Execution context */
-  context: v.object({
-    variables: z.record(v.string(), v.any()).default({}),
-    me: v.any().optional(),
-    it: v.any().optional(),
-    target: v.any().optional(),
-  }).default({}),
+  context: v
+    .object({
+      variables: z.record(v.string(), v.any()).default({}),
+      me: v.any().optional(),
+      it: v.any().optional(),
+      target: v.any().optional(),
+    })
+    .default({}),
   /** Feature options */
-  options: v.object({
-    enableClosures: v.boolean().default(true),
-    enableTypeChecking: v.boolean().default(true),
-    maxParameterCount: v.number().default(20),
-    allowDynamicParameters: v.boolean().default(false),
-  }).default({}),
+  options: v
+    .object({
+      enableClosures: v.boolean().default(true),
+      enableTypeChecking: v.boolean().default(true),
+      maxParameterCount: v.number().default(20),
+      allowDynamicParameters: v.boolean().default(false),
+    })
+    .default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('universal'),
   debug: v.boolean().default(false),
@@ -61,7 +66,7 @@ export const DefOutputSchema = v.object({
   category: v.literal('Universal'),
   capabilities: v.array(v.string()),
   state: z.enum(['ready', 'defining', 'executing', 'error']),
-  
+
   /** Function management */
   functions: z.object({
     define: z.function(),
@@ -71,14 +76,14 @@ export const DefOutputSchema = v.object({
     list: z.function(),
     getMetadata: z.function(),
   }),
-  
+
   /** Parameter management */
   parameters: v.object({
     validate: z.function(),
     bind: z.function(),
     getSignature: z.function(),
   }),
-  
+
   /** Execution management */
   execution: v.object({
     invoke: z.function(),
@@ -86,7 +91,7 @@ export const DefOutputSchema = v.object({
     createClosure: z.function(),
     getCallStack: z.function(),
   }),
-  
+
   /** Type management */
   types: v.object({
     check: z.function(),
@@ -94,7 +99,7 @@ export const DefOutputSchema = v.object({
     validate: z.function(),
     annotate: z.function(),
   }),
-  
+
   /** Error handling */
   errors: v.object({
     handle: z.function(),
@@ -155,7 +160,8 @@ export interface FunctionCall {
 export class TypedDefFeatureImplementation {
   public readonly name = 'defFeature';
   public readonly category = 'Universal' as const;
-  public readonly description = 'Type-safe function definition feature with parameter validation, closure support, and async execution';
+  public readonly description =
+    'Type-safe function definition feature with parameter validation, closure support, and async execution';
   public readonly inputSchema = DefInputSchema;
   public readonly outputType: EvaluationType = 'Context';
 
@@ -181,18 +187,20 @@ export class TypedDefFeatureImplementation {
       {
         input: '{ definition: { name: "add", parameters: ["a", "b"], body: ["return a + b"] } }',
         description: 'Define a simple addition function with parameters',
-        expectedOutput: 'TypedDefContext with function registration and type validation'
+        expectedOutput: 'TypedDefContext with function registration and type validation',
       },
       {
-        input: '{ definition: { name: "asyncProcess", isAsync: true, body: ["wait 100ms", "return success"] } }',
+        input:
+          '{ definition: { name: "asyncProcess", isAsync: true, body: ["wait 100ms", "return success"] } }',
         description: 'Define an async function with delay and return',
-        expectedOutput: 'Async function with proper promise handling and execution'
+        expectedOutput: 'Async function with proper promise handling and execution',
       },
       {
-        input: '{ definition: { name: "safeDivide", catchBlock: { parameter: "err", body: ["return 0"] } } }',
+        input:
+          '{ definition: { name: "safeDivide", catchBlock: { parameter: "err", body: ["return 0"] } } }',
         description: 'Define function with error handling and fallback',
-        expectedOutput: 'Function with try-catch pattern and error recovery'
-      }
+        expectedOutput: 'Function with try-catch pattern and error recovery',
+      },
     ],
     relatedExpressions: [],
     relatedContexts: ['onFeature', 'behaviorFeature', 'executionContext'],
@@ -200,66 +208,77 @@ export class TypedDefFeatureImplementation {
     environmentRequirements: {
       browser: true,
       server: true,
-      nodejs: true
+      nodejs: true,
     },
     performance: {
       averageTime: 12.8,
-      complexity: 'O(n)' // n = function complexity, m = parameter count
-    }
+      complexity: 'O(n)', // n = function complexity, m = parameter count
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates type-safe function definitions for hyperscript with parameter validation, closure support, and comprehensive error handling',
+    summary:
+      'Creates type-safe function definitions for hyperscript with parameter validation, closure support, and comprehensive error handling',
     parameters: [
       {
         name: 'defConfig',
         type: 'DefInput',
-        description: 'Function definition configuration including name, parameters, body, and execution options',
+        description:
+          'Function definition configuration including name, parameters, body, and execution options',
         optional: false,
         examples: [
           '{ definition: { name: "myFunc", parameters: ["x"], body: ["return x * 2"] } }',
           '{ definition: { name: "validator", body: ["if x > 0", "return true", "else", "return false"] } }',
-          '{ definition: { isAsync: true, catchBlock: { parameter: "e", body: ["log e"] } } }'
-        ]
-      }
+          '{ definition: { isAsync: true, catchBlock: { parameter: "e", body: ["log e"] } } }',
+        ],
+      },
     ],
     returns: {
       type: 'DefContext',
-      description: 'Function management context with registration, execution, and type validation capabilities',
+      description:
+        'Function management context with registration, execution, and type validation capabilities',
       examples: [
         'context.functions.define(functionDef) → registered function',
         'context.functions.call("myFunc", [args]) → function result',
         'context.execution.invoke("asyncFunc") → Promise<result>',
-        'context.types.validate(params, signature) → validation result'
-      ]
+        'context.types.validate(params, signature) → validation result',
+      ],
     },
     examples: [
       {
         title: 'Define simple function',
         code: 'const defContext = await createDefFeature({ definition: { name: "double", parameters: ["x"], body: ["return x * 2"] } })',
         explanation: 'Create a simple function that doubles its input with type validation',
-        output: 'Function context with type-safe parameter handling'
+        output: 'Function context with type-safe parameter handling',
       },
       {
         title: 'Define async function with error handling',
         code: 'await defContext.functions.define({ name: "fetchData", isAsync: true, catchBlock: { parameter: "error", body: ["return null"] } })',
         explanation: 'Create async function with built-in error handling and fallback',
-        output: 'Async function with promise-based execution and error recovery'
+        output: 'Async function with promise-based execution and error recovery',
       },
       {
         title: 'Call function with validation',
         code: 'const result = await defContext.functions.call("double", [5])',
         explanation: 'Execute function with automatic parameter validation',
-        output: 'Type-validated function execution with result: 10'
-      }
+        output: 'Type-validated function execution with result: 10',
+      },
     ],
     seeAlso: ['onFeature', 'behaviorFeature', 'executionContext', 'typeValidation'],
-    tags: ['functions', 'definitions', 'parameters', 'async', 'closures', 'type-safe', 'enhanced-pattern']
+    tags: [
+      'functions',
+      'definitions',
+      'parameters',
+      'async',
+      'closures',
+      'type-safe',
+      'enhanced-pattern',
+    ],
   };
 
   async initialize(input: DefInput): Promise<EvaluationResult<DefOutput>> {
     const startTime = Date.now();
-    
+
     try {
       // Validate input using enhanced pattern
       const validation = this.validate(input);
@@ -271,22 +290,29 @@ export class TypedDefFeatureImplementation {
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+            suggestions: validation.suggestions,
+          },
         };
       }
 
       // Initialize function registry
       const config = await this.initializeConfig(input);
-      
+
       // Create enhanced def context
       const context: DefOutput = {
         contextId: `def-${Date.now()}`,
         timestamp: startTime,
         category: 'Universal',
-        capabilities: ['function-definition', 'parameter-validation', 'closure-support', 'async-execution', 'type-checking', 'error-handling'],
+        capabilities: [
+          'function-definition',
+          'parameter-validation',
+          'closure-support',
+          'async-execution',
+          'type-checking',
+          'error-handling',
+        ],
         state: 'ready',
-        
+
         // Function management
         functions: {
           define: this.createFunctionDefiner(config),
@@ -296,14 +322,14 @@ export class TypedDefFeatureImplementation {
           list: this.createFunctionLister(),
           getMetadata: this.createMetadataGetter(),
         },
-        
+
         // Parameter management
         parameters: {
           validate: this.createParameterValidator(),
           bind: this.createParameterBinder(),
           getSignature: this.createSignatureGetter(),
         },
-        
+
         // Execution management
         execution: {
           invoke: this.createFunctionInvoker(config),
@@ -311,7 +337,7 @@ export class TypedDefFeatureImplementation {
           createClosure: this.createClosureCreator(config),
           getCallStack: this.createCallStackGetter(),
         },
-        
+
         // Type management
         types: {
           check: this.createTypeChecker(),
@@ -319,13 +345,13 @@ export class TypedDefFeatureImplementation {
           validate: this.createTypeValidator(),
           annotate: this.createTypeAnnotator(),
         },
-        
+
         // Error handling
         errors: {
           handle: this.createErrorHandler(),
           getCatchBlock: this.createCatchBlockGetter(),
           getFinallyBlock: this.createFinallyBlockGetter(),
-        }
+        },
       };
 
       // Register initial function if provided
@@ -335,23 +361,22 @@ export class TypedDefFeatureImplementation {
 
       // Track performance using enhanced pattern
       this.trackPerformance(startTime, true, context);
-      
+
       return {
         success: true,
         value: context,
-        type: 'object'
+        type: 'object',
       };
-
     } catch (error) {
       this.trackPerformance(startTime, false);
-      
+
       return {
         success: false,
         error: {
           type: 'runtime-error',
           message: `Def feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -364,7 +389,7 @@ export class TypedDefFeatureImplementation {
           isValid: false,
           error: { type: 'invalid-input', message: 'Input must be an object', suggestions: [] },
           suggestions: ['Provide a valid function definition configuration object'],
-          errors: []
+          errors: [],
         };
       }
 
@@ -381,7 +406,7 @@ export class TypedDefFeatureImplementation {
           type: 'validation-error',
           message: 'Function name must be a valid JavaScript identifier',
           path: 'definition.name',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Use valid JavaScript identifier for function name');
       }
@@ -394,7 +419,7 @@ export class TypedDefFeatureImplementation {
               type: 'validation-error',
               message: `Parameter "${param}" must be a valid JavaScript identifier`,
               path: `definition.parameters[${index}]`,
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Use valid JavaScript identifiers for parameter names');
           }
@@ -407,7 +432,7 @@ export class TypedDefFeatureImplementation {
             type: 'validation-error',
             message: 'Function parameters must be unique',
             path: 'definition.parameters',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Remove duplicate parameter names');
         }
@@ -418,7 +443,7 @@ export class TypedDefFeatureImplementation {
             type: 'validation-error',
             message: `Function has too many parameters (max: ${data.options?.maxParameterCount || 20})`,
             path: 'definition.parameters',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Reduce number of parameters or increase maxParameterCount limit');
         }
@@ -430,55 +455,60 @@ export class TypedDefFeatureImplementation {
           type: 'validation-error',
           message: 'Function body cannot be empty',
           path: 'definition.body',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Add at least one command to the function body');
       }
 
       // Validate catch block parameter
-      if (data.definition?.catchBlock &&
-          !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(data.definition.catchBlock.parameter)) {
+      if (
+        data.definition?.catchBlock &&
+        !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(data.definition.catchBlock.parameter)
+      ) {
         errors.push({
           type: 'validation-error',
           message: 'Catch block parameter must be a valid JavaScript identifier',
           path: 'definition.catchBlock.parameter',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Use valid JavaScript identifier for catch parameter');
       }
 
       // Validate namespace if provided
-      if (data.definition?.namespace &&
-          !/^[a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(data.definition.namespace)) {
+      if (
+        data.definition?.namespace &&
+        !/^[a-zA-Z_$][a-zA-Z0-9_$.]*$/.test(data.definition.namespace)
+      ) {
         errors.push({
           type: 'validation-error',
           message: 'Namespace must be a valid JavaScript identifier or dot-separated path',
           path: 'definition.namespace',
-          suggestions: []
+          suggestions: [],
         });
-        suggestions.push('Use valid namespace format (e.g., "myNamespace" or "my.nested.namespace")');
+        suggestions.push(
+          'Use valid namespace format (e.g., "myNamespace" or "my.nested.namespace")'
+        );
       }
 
       return {
         isValid: errors.length === 0,
         errors,
-        suggestions
+        suggestions,
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'schema-validation',
           message: error instanceof Error ? error.message : 'Invalid input format',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: [
           'Ensure input matches DefInput schema',
           'Check function definition structure',
-          'Verify parameter and body configurations are valid'
+          'Verify parameter and body configurations are valid',
         ],
-        errors: []
+        errors: [],
       };
     }
   }
@@ -492,7 +522,7 @@ export class TypedDefFeatureImplementation {
       ...input.options,
       environment: input.environment,
       debug: input.debug,
-      initialized: Date.now()
+      initialized: Date.now(),
     };
   }
 
@@ -503,7 +533,7 @@ export class TypedDefFeatureImplementation {
       me: context?.me || null,
       it: context?.it || null,
       target: context?.target || null,
-      ...context
+      ...context,
     };
 
     const functionDef: FunctionDefinition = {
@@ -526,12 +556,14 @@ export class TypedDefFeatureImplementation {
         createdAt: Date.now(),
         callCount: 0,
         averageExecutionTime: 0,
-      }
+      },
     };
 
-    const key = definition.namespace ? `${definition.namespace}.${definition.name}` : definition.name;
+    const key = definition.namespace
+      ? `${definition.namespace}.${definition.name}`
+      : definition.name;
     this.functions.set(key, functionDef);
-    
+
     if (definition.namespace) {
       this.namespaces.add(definition.namespace);
     }
@@ -553,11 +585,13 @@ export class TypedDefFeatureImplementation {
       }
 
       const startTime = Date.now();
-      
+
       try {
         // Validate parameters
         if (parameters.length !== func.parameters.length) {
-          throw new Error(`Function "${name}" expects ${func.parameters.length} parameters, got ${parameters.length}`);
+          throw new Error(
+            `Function "${name}" expects ${func.parameters.length} parameters, got ${parameters.length}`
+          );
         }
 
         // Create execution context with parameters
@@ -565,13 +599,13 @@ export class TypedDefFeatureImplementation {
           ...func.context,
           variables: {
             ...func.context.variables,
-            ...Object.fromEntries(func.parameters.map((param, i) => [param, parameters[i]]))
-          }
+            ...Object.fromEntries(func.parameters.map((param, i) => [param, parameters[i]])),
+          },
         } as ExecutionContext;
 
         // Execute function body (simplified - would use actual command executor)
         let result = undefined;
-        
+
         // Handle async functions
         if (func.isAsync) {
           result = await this.executeAsyncFunction(func, executionContext);
@@ -588,14 +622,15 @@ export class TypedDefFeatureImplementation {
           result,
           executionTime: Date.now() - startTime,
         };
-        
+
         this.callHistory.push(call);
         func.metadata.callCount++;
-        func.metadata.averageExecutionTime = 
-          (func.metadata.averageExecutionTime * (func.metadata.callCount - 1) + call.executionTime) / func.metadata.callCount;
+        func.metadata.averageExecutionTime =
+          (func.metadata.averageExecutionTime * (func.metadata.callCount - 1) +
+            call.executionTime) /
+          func.metadata.callCount;
 
         return result;
-
       } catch (error) {
         const call: FunctionCall = {
           functionName: name,
@@ -605,7 +640,7 @@ export class TypedDefFeatureImplementation {
           error: error as Error,
           executionTime: Date.now() - startTime,
         };
-        
+
         this.callHistory.push(call);
 
         // Handle catch block
@@ -654,7 +689,7 @@ export class TypedDefFeatureImplementation {
       if (parameters.length !== func.parameters.length) {
         return {
           isValid: false,
-          error: `Expected ${func.parameters.length} parameters, got ${parameters.length}`
+          error: `Expected ${func.parameters.length} parameters, got ${parameters.length}`,
         };
       }
 
@@ -720,8 +755,8 @@ export class TypedDefFeatureImplementation {
             ...func.context,
             variables: {
               ...func.context.variables,
-              ...capturedVariables
-            }
+              ...capturedVariables,
+            },
           } as ExecutionContext;
 
           // Temporarily update function context
@@ -733,7 +768,7 @@ export class TypedDefFeatureImplementation {
           } finally {
             func.context = originalContext;
           }
-        }
+        },
       };
     };
   }
@@ -748,13 +783,20 @@ export class TypedDefFeatureImplementation {
     return (value: any, expectedType: string) => {
       // Basic type checking implementation
       switch (expectedType.toLowerCase()) {
-        case 'string': return typeof value === 'string';
-        case 'number': return typeof value === 'number';
-        case 'boolean': return typeof value === 'boolean';
-        case 'object': return typeof value === 'object' && value !== null;
-        case 'array': return Array.isArray(value);
-        case 'function': return typeof value === 'function';
-        default: return true; // Unknown types pass
+        case 'string':
+          return typeof value === 'string';
+        case 'number':
+          return typeof value === 'number';
+        case 'boolean':
+          return typeof value === 'boolean';
+        case 'object':
+          return typeof value === 'object' && value !== null;
+        case 'array':
+          return Array.isArray(value);
+        case 'function':
+          return typeof value === 'function';
+        default:
+          return true; // Unknown types pass
       }
     };
   }
@@ -810,7 +852,10 @@ export class TypedDefFeatureImplementation {
     };
   }
 
-  private async executeFunction(func: FunctionDefinition, _context: ExecutionContext): Promise<any> {
+  private async executeFunction(
+    func: FunctionDefinition,
+    _context: ExecutionContext
+  ): Promise<any> {
     // Simplified function execution - would integrate with actual command executor
     let result = undefined;
 
@@ -837,7 +882,10 @@ export class TypedDefFeatureImplementation {
     return result;
   }
 
-  private async executeAsyncFunction(func: FunctionDefinition, context: ExecutionContext): Promise<any> {
+  private async executeAsyncFunction(
+    func: FunctionDefinition,
+    context: ExecutionContext
+  ): Promise<any> {
     // Add async delay simulation
     await new Promise(resolve => setTimeout(resolve, 1));
     return await this.executeFunction(func, context);
@@ -852,8 +900,8 @@ export class TypedDefFeatureImplementation {
       ...func.context,
       variables: {
         ...func.context.variables,
-        [func.catchBlock.parameter]: error
-      }
+        [func.catchBlock.parameter]: error,
+      },
     };
 
     // Simplified catch block execution - return a default handled value
@@ -862,7 +910,7 @@ export class TypedDefFeatureImplementation {
 
   private async executeFinallyBlock(func: FunctionDefinition): Promise<void> {
     if (!func.finallyBlock) return;
-    
+
     // Simplified finally block execution
     return;
   }
@@ -879,21 +927,27 @@ export class TypedDefFeatureImplementation {
       output,
       success,
       duration,
-      timestamp: startTime
+      timestamp: startTime,
     });
   }
 
   getPerformanceMetrics() {
     return {
       totalInitializations: this.evaluationHistory.length,
-      successRate: this.evaluationHistory.filter(h => h.success).length / Math.max(this.evaluationHistory.length, 1),
-      averageDuration: this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / Math.max(this.evaluationHistory.length, 1),
+      successRate:
+        this.evaluationHistory.filter(h => h.success).length /
+        Math.max(this.evaluationHistory.length, 1),
+      averageDuration:
+        this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) /
+        Math.max(this.evaluationHistory.length, 1),
       lastEvaluationTime: this.evaluationHistory[this.evaluationHistory.length - 1]?.timestamp || 0,
       evaluationHistory: this.evaluationHistory.slice(-10), // Last 10 evaluations
       totalFunctions: this.functions.size,
       totalNamespaces: this.namespaces.size,
       totalCalls: this.callHistory.length,
-      averageCallTime: this.callHistory.reduce((sum, call) => sum + call.executionTime, 0) / Math.max(this.callHistory.length, 1)
+      averageCallTime:
+        this.callHistory.reduce((sum, call) => sum + call.executionTime, 0) /
+        Math.max(this.callHistory.length, 1),
     };
   }
 }
@@ -917,7 +971,7 @@ export async function createDef(
       parameters: [],
       body: ['return undefined'],
       isAsync: false,
-      ...definition
+      ...definition,
     },
     context: {
       variables: {},
@@ -930,7 +984,7 @@ export async function createDef(
     },
     environment: 'universal',
     debug: false,
-    ...options
+    ...options,
   });
 }
 
@@ -1015,10 +1069,13 @@ export class DefFeature {
 
     // Auto-detect async by scanning body for async commands
     const asyncCommands = ['wait', 'fetch', 'async'];
-    const isAsync = body.some(cmd =>
-      cmd && typeof cmd === 'object' && cmd.name &&
-      (asyncCommands.includes(cmd.name) ||
-       (cmd.name === 'call' && this.functions.get(cmd.args?.[0])?.isAsync))
+    const isAsync = body.some(
+      cmd =>
+        cmd &&
+        typeof cmd === 'object' &&
+        cmd.name &&
+        (asyncCommands.includes(cmd.name) ||
+          (cmd.name === 'call' && this.functions.get(cmd.args?.[0])?.isAsync))
     );
 
     const funcDef: FunctionDefinition = {
@@ -1038,8 +1095,8 @@ export class DefFeature {
         complexity: body.length,
         createdAt: Date.now(),
         callCount: 0,
-        averageExecutionTime: 0
-      }
+        averageExecutionTime: 0,
+      },
     };
 
     // Store with full qualified name as key
@@ -1083,11 +1140,7 @@ export class DefFeature {
   /**
    * Execute a function
    */
-  async executeFunction(
-    name: string,
-    args: any[],
-    context: ExecutionContext
-  ): Promise<any> {
+  async executeFunction(name: string, args: any[], context: ExecutionContext): Promise<any> {
     const func = this.functions.get(name);
     if (!func) {
       throw new Error(`Function "${name}" not found`);
@@ -1098,7 +1151,7 @@ export class DefFeature {
       ...context,
       locals: new Map(context.locals || []),
       // Preserve the injected flag if it exists
-      __functionsInjected: (context as any).__functionsInjected
+      __functionsInjected: (context as any).__functionsInjected,
     };
 
     // Bind parameters
@@ -1312,7 +1365,10 @@ export class DefFeature {
             // Use word boundaries to avoid false matches like 'e' in 'handled'
             if (typeof returnValue === 'string') {
               const paramPattern = new RegExp(`\\b${func.catchBlock.parameter}\\b`, 'g');
-              const paramMessagePattern = new RegExp(`\\b${func.catchBlock.parameter}\\.message\\b`, 'g');
+              const paramMessagePattern = new RegExp(
+                `\\b${func.catchBlock.parameter}\\.message\\b`,
+                'g'
+              );
 
               if (paramMessagePattern.test(returnValue) || paramPattern.test(returnValue)) {
                 // Simple string interpolation for error messages
@@ -1439,8 +1495,8 @@ export class DefFeature {
         complexity: body.length,
         createdAt: Date.now(),
         callCount: 0,
-        averageExecutionTime: 0
-      }
+        averageExecutionTime: 0,
+      },
     };
 
     this.functions.set(name, funcDef);
@@ -1470,7 +1526,7 @@ export class DefFeature {
       const wrappedContext = {
         ...executionContext,
         locals: executionContext.locals || new Map(),
-        globals: executionContext.globals || new Map()
+        globals: executionContext.globals || new Map(),
       };
       return this.executeFunction(name, args, wrappedContext);
     };

@@ -10,26 +10,30 @@ import type {
   EvaluationType,
   ValidationResult,
   LLMDocumentation,
-  EvaluationResult
+  EvaluationResult,
 } from '../../../types/base-types';
 import type {
   TypedExpressionImplementation,
   ExpressionMetadata,
-  ExpressionCategory
+  ExpressionCategory,
 } from '../../../types/expression-types';
 
 // ============================================================================
 // Input Schemas
 // ============================================================================
 
-const BinaryLogicalInputSchema = v.object({
-  left: v.unknown().describe('Left operand value'),
-  right: v.unknown().describe('Right operand value')
-}).strict();
+const BinaryLogicalInputSchema = v
+  .object({
+    left: v.unknown().describe('Left operand value'),
+    right: v.unknown().describe('Right operand value'),
+  })
+  .strict();
 
-const UnaryLogicalInputSchema = v.object({
-  operand: v.unknown().describe('Operand value to negate')
-}).strict();
+const UnaryLogicalInputSchema = v
+  .object({
+    operand: v.unknown().describe('Operand value to negate'),
+  })
+  .strict();
 
 type BinaryLogicalInput = any; // Inferred from RuntimeValidator
 type UnaryLogicalInput = any; // Inferred from RuntimeValidator
@@ -38,7 +42,9 @@ type UnaryLogicalInput = any; // Inferred from RuntimeValidator
 // Enhanced And Expression
 // ============================================================================
 
-export class EnhancedAndExpression implements TypedExpressionImplementation<BinaryLogicalInput, boolean> {
+export class EnhancedAndExpression
+  implements TypedExpressionImplementation<BinaryLogicalInput, boolean>
+{
   public readonly name = 'and';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left and right';
@@ -56,85 +62,87 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
       {
         input: 'true and false',
         description: 'Basic boolean AND operation',
-        expectedOutput: false
+        expectedOutput: false,
       },
       {
         input: 'value > 0 and value < 100',
         description: 'Range validation with logical AND',
         expectedOutput: true,
-        context: { locals: new Map([['value', 50]]) }
+        context: { locals: new Map([['value', 50]]) },
       },
       {
         input: 'user.isActive and user.hasPermission',
         description: 'Object property AND evaluation',
         expectedOutput: true,
-        context: { locals: new Map([['user', { isActive: true, hasPermission: true }]]) }
-      }
+        context: { locals: new Map([['user', { isActive: true, hasPermission: true }]]) },
+      },
     ],
     relatedExpressions: ['or', 'not', 'equals', 'greaterThan'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Performs logical AND operation with short-circuit evaluation and comprehensive type coercion',
+    summary:
+      'Performs logical AND operation with short-circuit evaluation and comprehensive type coercion',
     parameters: [
       {
         name: 'left',
         type: 'any',
         description: 'Left operand - any value that can be coerced to boolean',
         optional: false,
-        examples: ['true', '1', '"hello"', 'user.isActive', 'count > 0']
+        examples: ['true', '1', '"hello"', 'user.isActive', 'count > 0'],
       },
       {
         name: 'right',
         type: 'any',
-        description: 'Right operand - any value that can be coerced to boolean (only evaluated if left is truthy)',
+        description:
+          'Right operand - any value that can be coerced to boolean (only evaluated if left is truthy)',
         optional: false,
-        examples: ['false', '0', '""', 'user.hasPermission', 'status == "active"']
-      }
+        examples: ['false', '0', '""', 'user.hasPermission', 'status == "active"'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if both operands are truthy, false otherwise',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Basic boolean AND',
         code: 'true and false',
         explanation: 'Returns false because the second operand is false',
-        output: 'false'
+        output: 'false',
       },
       {
         title: 'Truthy value coercion',
         code: '"hello" and 42',
         explanation: 'Non-empty string and non-zero number are both truthy',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Short-circuit evaluation',
         code: 'false and someExpensiveFunction()',
         explanation: 'Right operand is not evaluated when left is falsy',
-        output: 'false'
+        output: 'false',
       },
       {
         title: 'Range validation',
         code: 'age >= 18 and age <= 65',
         explanation: 'Check if age is within valid range',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Object property validation',
         code: 'user and user.isActive',
         explanation: 'Check if user exists and is active',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['or', 'not', 'boolean coercion', 'conditional logic'],
-    tags: ['logical', 'boolean', 'and', 'conditional', 'short-circuit']
+    tags: ['logical', 'boolean', 'and', 'conditional', 'short-circuit'],
   };
 
   async evaluate(
@@ -149,7 +157,7 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0]
+          error: validation.errors[0],
         };
       }
 
@@ -162,7 +170,7 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
         return {
           success: true,
           value: false,
-          type: 'boolean'
+          type: 'boolean',
         };
       }
 
@@ -176,9 +184,8 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -187,8 +194,8 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
         error: {
           type: 'runtime-error',
           message: `Logical AND operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -196,38 +203,35 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid AND operation input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide both left and right operands',
-            'Ensure operands are valid values'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid AND operation input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide both left and right operands', 'Ensure operands are valid values'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: ['Check input structure and types'],
-        errors: []
+        errors: [],
       };
     }
   }
@@ -238,15 +242,21 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
   private toBoolean(value: unknown): boolean {
     // JavaScript falsy values: false, 0, -0, 0n, "", null, undefined, NaN
     // Note: -0 === 0 in JavaScript, so checking value === 0 covers both 0 and -0
-    if (value === false || value === 0 || value === 0n ||
-        value === "" || value === null || value === undefined) {
+    if (
+      value === false ||
+      value === 0 ||
+      value === 0n ||
+      value === '' ||
+      value === null ||
+      value === undefined
+    ) {
       return false;
     }
-    
+
     if (typeof value === 'number' && isNaN(value)) {
       return false;
     }
-    
+
     // All other values are truthy
     return true;
   }
@@ -254,7 +264,11 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
   /**
    * Track performance for debugging and optimization
    */
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -263,7 +277,7 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
         output: success ? 'boolean' : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -273,7 +287,9 @@ export class EnhancedAndExpression implements TypedExpressionImplementation<Bina
 // Enhanced Or Expression
 // ============================================================================
 
-export class EnhancedOrExpression implements TypedExpressionImplementation<BinaryLogicalInput, boolean> {
+export class EnhancedOrExpression
+  implements TypedExpressionImplementation<BinaryLogicalInput, boolean>
+{
   public readonly name = 'or';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left or right';
@@ -291,85 +307,87 @@ export class EnhancedOrExpression implements TypedExpressionImplementation<Binar
       {
         input: 'false or true',
         description: 'Basic boolean OR operation',
-        expectedOutput: true
+        expectedOutput: true,
       },
       {
         input: 'user.isGuest or user.isAdmin',
         description: 'User permission check with OR',
         expectedOutput: true,
-        context: { locals: new Map([['user', { isGuest: false, isAdmin: true }]]) }
+        context: { locals: new Map([['user', { isGuest: false, isAdmin: true }]]) },
       },
       {
         input: 'value < 0 or value > 100',
         description: 'Range exclusion validation',
         expectedOutput: false,
-        context: { locals: new Map([['value', 50]]) }
-      }
+        context: { locals: new Map([['value', 50]]) },
+      },
     ],
     relatedExpressions: ['and', 'not', 'equals', 'greaterThan'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Performs logical OR operation with short-circuit evaluation and comprehensive type coercion',
+    summary:
+      'Performs logical OR operation with short-circuit evaluation and comprehensive type coercion',
     parameters: [
       {
         name: 'left',
         type: 'any',
         description: 'Left operand - any value that can be coerced to boolean',
         optional: false,
-        examples: ['false', '0', '""', 'user.isGuest', 'count <= 0']
+        examples: ['false', '0', '""', 'user.isGuest', 'count <= 0'],
       },
       {
         name: 'right',
         type: 'any',
-        description: 'Right operand - any value that can be coerced to boolean (only evaluated if left is falsy)',
+        description:
+          'Right operand - any value that can be coerced to boolean (only evaluated if left is falsy)',
         optional: false,
-        examples: ['true', '1', '"fallback"', 'user.isAdmin', 'hasDefault']
-      }
+        examples: ['true', '1', '"fallback"', 'user.isAdmin', 'hasDefault'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if either operand is truthy, false if both are falsy',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Basic boolean OR',
         code: 'false or true',
         explanation: 'Returns true because the second operand is true',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Falsy value coercion',
         code: '0 or ""',
         explanation: 'Both operands are falsy, so result is false',
-        output: 'false'
+        output: 'false',
       },
       {
         title: 'Short-circuit evaluation',
         code: 'true or someExpensiveFunction()',
         explanation: 'Right operand is not evaluated when left is truthy',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Default value pattern',
         code: 'userInput or "default"',
         explanation: 'Use default value when user input is empty',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Permission check',
         code: 'user.isOwner or user.isAdmin',
         explanation: 'Check if user has either owner or admin permissions',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['and', 'not', 'boolean coercion', 'default values'],
-    tags: ['logical', 'boolean', 'or', 'conditional', 'short-circuit', 'fallback']
+    tags: ['logical', 'boolean', 'or', 'conditional', 'short-circuit', 'fallback'],
   };
 
   async evaluate(
@@ -384,7 +402,7 @@ export class EnhancedOrExpression implements TypedExpressionImplementation<Binar
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0]
+          error: validation.errors[0],
         };
       }
 
@@ -397,7 +415,7 @@ export class EnhancedOrExpression implements TypedExpressionImplementation<Binar
         return {
           success: true,
           value: true,
-          type: 'boolean'
+          type: 'boolean',
         };
       }
 
@@ -411,9 +429,8 @@ export class EnhancedOrExpression implements TypedExpressionImplementation<Binar
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -422,8 +439,8 @@ export class EnhancedOrExpression implements TypedExpressionImplementation<Binar
         error: {
           type: 'runtime-error',
           message: `Logical OR operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -440,7 +457,11 @@ export class EnhancedOrExpression implements TypedExpressionImplementation<Binar
     return andExpr['toBoolean'](value);
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -449,7 +470,7 @@ export class EnhancedOrExpression implements TypedExpressionImplementation<Binar
         output: success ? 'boolean' : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -459,7 +480,9 @@ export class EnhancedOrExpression implements TypedExpressionImplementation<Binar
 // Enhanced Not Expression
 // ============================================================================
 
-export class EnhancedNotExpression implements TypedExpressionImplementation<UnaryLogicalInput, boolean> {
+export class EnhancedNotExpression
+  implements TypedExpressionImplementation<UnaryLogicalInput, boolean>
+{
   public readonly name = 'not';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'not operand';
@@ -477,26 +500,26 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
       {
         input: 'not true',
         description: 'Basic boolean NOT operation',
-        expectedOutput: false
+        expectedOutput: false,
       },
       {
         input: 'not user.isBlocked',
         description: 'Negate user blocked status',
         expectedOutput: true,
-        context: { locals: new Map([['user', { isBlocked: false }]]) }
+        context: { locals: new Map([['user', { isBlocked: false }]]) },
       },
       {
         input: 'not (value > 100)',
         description: 'Negate comparison result',
         expectedOutput: true,
-        context: { locals: new Map([['value', 50]]) }
-      }
+        context: { locals: new Map([['value', 50]]) },
+      },
     ],
     relatedExpressions: ['and', 'or', 'equals', 'greaterThan'],
     performance: {
       averageTime: 0.05,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -507,48 +530,48 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
         type: 'any',
         description: 'Operand to negate - any value that can be coerced to boolean',
         optional: false,
-        examples: ['true', 'false', '0', '""', 'user.isActive', 'count > 0']
-      }
+        examples: ['true', 'false', '0', '""', 'user.isActive', 'count > 0'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'True if operand is falsy, false if operand is truthy',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'Basic negation',
         code: 'not true',
         explanation: 'Negates true to false',
-        output: 'false'
+        output: 'false',
       },
       {
         title: 'Falsy value negation',
         code: 'not 0',
         explanation: 'Zero is falsy, so its negation is true',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'String negation',
         code: 'not ""',
         explanation: 'Empty string is falsy, so its negation is true',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Complex expression negation',
         code: 'not (age < 18)',
         explanation: 'Negate the result of age comparison',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'Property access negation',
         code: 'not user.isBlocked',
         explanation: 'Check if user is not blocked',
-        output: 'true'
-      }
+        output: 'true',
+      },
     ],
     seeAlso: ['and', 'or', 'boolean coercion', 'negation'],
-    tags: ['logical', 'boolean', 'not', 'negation', 'inverse']
+    tags: ['logical', 'boolean', 'not', 'negation', 'inverse'],
   };
 
   async evaluate(
@@ -563,7 +586,7 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
       if (!validation.isValid) {
         return {
           success: false,
-          error: validation.errors[0]
+          error: validation.errors[0],
         };
       }
 
@@ -577,9 +600,8 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
       return {
         success: true,
         value: result,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -588,8 +610,8 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
         error: {
           type: 'runtime-error',
           message: `Logical NOT operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -597,38 +619,35 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid NOT operation input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide a single operand',
-            'Ensure operand is a valid value'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid NOT operation input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide a single operand', 'Ensure operand is a valid value'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'runtime-error',
           message: 'Validation failed with exception',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: ['Check input structure and types'],
-        errors: []
+        errors: [],
       };
     }
   }
@@ -639,7 +658,11 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
     return andExpr['toBoolean'](value);
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -648,7 +671,7 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<Unar
         output: success ? 'boolean' : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -677,5 +700,5 @@ export function createEnhancedNotExpression(): EnhancedNotExpression {
 export const logicalExpressions = {
   and: createEnhancedAndExpression(),
   or: createEnhancedOrExpression(),
-  not: createEnhancedNotExpression()
+  not: createEnhancedNotExpression(),
 } as const;

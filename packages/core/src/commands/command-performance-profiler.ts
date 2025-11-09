@@ -4,9 +4,7 @@
  * Provides detailed performance metrics and bottleneck identification
  */
 
-import type {
-  CommandExecutionResult
-} from './unified-command-system';
+import type { CommandExecutionResult } from './unified-command-system';
 import type { TypedExecutionContext } from '../types/core';
 
 /**
@@ -108,10 +106,10 @@ export class CommandPerformanceProfiler {
     if (!this.enabled) return '';
 
     const profileId = this.generateProfileId(commandName);
-    
+
     // Record start time
     this.startTimes.set(profileId, performance.now());
-    
+
     // Take memory snapshot if available
     if (typeof process !== 'undefined' && process.memoryUsage) {
       this.memorySnapshots.set(profileId, process.memoryUsage().heapUsed);
@@ -119,17 +117,17 @@ export class CommandPerformanceProfiler {
 
     // Record context size
     const contextSize = this.calculateContextSize(context);
-    
+
     // Store initial metric
     const metric: Partial<CommandPerformanceMetrics> = {
       commandName,
       args,
       contextSize,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
-    
+
     this.storePartialMetric(profileId, metric);
-    
+
     return profileId;
   }
 
@@ -137,7 +135,7 @@ export class CommandPerformanceProfiler {
    * End profiling and record metrics
    */
   endProfiling(
-    profileId: string, 
+    profileId: string,
     result: CommandExecutionResult
   ): CommandPerformanceMetrics | null {
     if (!this.enabled || !profileId) return null;
@@ -146,7 +144,7 @@ export class CommandPerformanceProfiler {
     if (!startTime) return null;
 
     const executionTime = performance.now() - startTime;
-    
+
     // Calculate memory usage
     let memoryUsed = 0;
     const startMemory = this.memorySnapshots.get(profileId);
@@ -165,7 +163,7 @@ export class CommandPerformanceProfiler {
       memoryUsed,
       cpuTime: executionTime, // Approximation
       success: result.success,
-      error: result.error?.message
+      error: result.error?.message,
     } as CommandPerformanceMetrics;
 
     // Store complete metric
@@ -189,7 +187,7 @@ export class CommandPerformanceProfiler {
     const times = metrics.map(m => m.executionTime).sort((a, b) => a - b);
     const totalTime = times.reduce((sum, time) => sum + time, 0);
     const errorCount = metrics.filter(m => !m.success).length;
-    
+
     // Calculate percentiles
     const p50Index = Math.floor(times.length * 0.5);
     const p95Index = Math.floor(times.length * 0.95);
@@ -214,7 +212,7 @@ export class CommandPerformanceProfiler {
       p99Time: times[p99Index] || 0,
       errorRate: errorCount / metrics.length,
       throughput,
-      memoryImpact
+      memoryImpact,
     };
   }
 
@@ -223,14 +221,14 @@ export class CommandPerformanceProfiler {
    */
   getAllStats(): CommandPerformanceStats[] {
     const stats: CommandPerformanceStats[] = [];
-    
+
     for (const commandName of this.metrics.keys()) {
       const stat = this.getStats(commandName);
       if (stat) {
         stats.push(stat);
       }
     }
-    
+
     return stats.sort((a, b) => b.averageTime - a.averageTime);
   }
 
@@ -255,13 +253,13 @@ export class CommandPerformanceProfiler {
             'Consider caching frequently accessed data',
             'Optimize algorithm complexity',
             'Use async execution for non-blocking operations',
-            'Profile specific code paths for optimization'
+            'Profile specific code paths for optimization',
           ],
           metrics: {
             averageTime: stat.averageTime,
             p99Time: stat.p99Time,
-            errorRate: stat.errorRate
-          }
+            errorRate: stat.errorRate,
+          },
         });
       }
 
@@ -276,18 +274,19 @@ export class CommandPerformanceProfiler {
             'Add better input validation',
             'Improve error handling and recovery',
             'Add retry logic for transient failures',
-            'Review error logs for patterns'
+            'Review error logs for patterns',
           ],
           metrics: {
             averageTime: stat.averageTime,
             p99Time: stat.p99Time,
-            errorRate: stat.errorRate
-          }
+            errorRate: stat.errorRate,
+          },
         });
       }
 
       // Check for high memory usage
-      if (stat.memoryImpact > 10 * 1024 * 1024) { // 10MB
+      if (stat.memoryImpact > 10 * 1024 * 1024) {
+        // 10MB
         issues.push({
           commandName: stat.commandName,
           severity: stat.memoryImpact > 50 * 1024 * 1024 ? 'high' : 'medium',
@@ -297,13 +296,13 @@ export class CommandPerformanceProfiler {
             'Optimize data structures',
             'Implement object pooling',
             'Stream large data instead of loading into memory',
-            'Clear unused references promptly'
+            'Clear unused references promptly',
           ],
           metrics: {
             averageTime: stat.averageTime,
             p99Time: stat.p99Time,
-            errorRate: stat.errorRate
-          }
+            errorRate: stat.errorRate,
+          },
         });
       }
 
@@ -319,13 +318,13 @@ export class CommandPerformanceProfiler {
             'Identify edge cases causing slowdowns',
             'Add request throttling or rate limiting',
             'Implement timeout mechanisms',
-            'Consider splitting into smaller operations'
+            'Consider splitting into smaller operations',
           ],
           metrics: {
             averageTime: stat.averageTime,
             p99Time: stat.p99Time,
-            errorRate: stat.errorRate
-          }
+            errorRate: stat.errorRate,
+          },
         });
       }
 
@@ -355,7 +354,7 @@ export class CommandPerformanceProfiler {
           description: 'Implement result caching for frequently executed command',
           expectedImprovement: '50-80% reduction in average execution time',
           implementation: 'Use LRU cache with TTL for deterministic operations',
-          priority: stat.averageTime > 50 ? 'high' : 'medium'
+          priority: stat.averageTime > 50 ? 'high' : 'medium',
         });
       }
 
@@ -367,7 +366,7 @@ export class CommandPerformanceProfiler {
           description: 'Batch multiple command executions together',
           expectedImprovement: '30-50% reduction in overhead',
           implementation: 'Collect commands and execute in batches with debouncing',
-          priority: stat.throughput > 50 ? 'high' : 'low'
+          priority: stat.throughput > 50 ? 'high' : 'low',
         });
       }
 
@@ -379,7 +378,7 @@ export class CommandPerformanceProfiler {
           description: 'Convert to async execution to prevent blocking',
           expectedImprovement: 'Non-blocking execution, better UI responsiveness',
           implementation: 'Use async/await pattern with progress indicators',
-          priority: stat.averageTime > 100 ? 'high' : 'medium'
+          priority: stat.averageTime > 100 ? 'high' : 'medium',
         });
       }
 
@@ -392,19 +391,20 @@ export class CommandPerformanceProfiler {
           description: `Optimize algorithm to address: ${bottleneck.issue}`,
           expectedImprovement: '40-60% performance improvement',
           implementation: bottleneck.recommendations[0],
-          priority: bottleneck.severity === 'critical' ? 'high' : 'medium'
+          priority: bottleneck.severity === 'critical' ? 'high' : 'medium',
         });
       }
 
       // Suggest memory optimization for high memory usage
-      if (stat.memoryImpact > 5 * 1024 * 1024) { // 5MB
+      if (stat.memoryImpact > 5 * 1024 * 1024) {
+        // 5MB
         suggestions.push({
           commandName: stat.commandName,
           type: 'memory',
           description: 'Optimize memory usage patterns',
           expectedImprovement: '30-50% reduction in memory footprint',
           implementation: 'Use weak references, implement disposal patterns',
-          priority: stat.memoryImpact > 20 * 1024 * 1024 ? 'high' : 'low'
+          priority: stat.memoryImpact > 20 * 1024 * 1024 ? 'high' : 'low',
         });
       }
     }
@@ -540,19 +540,19 @@ ${stat.commandName}:
   private calculateContextSize(context: TypedExecutionContext): number {
     // Rough estimation of context size
     let size = 0;
-    
+
     if (context.locals) {
       size += context.locals.size * 100; // Rough estimate per local variable
     }
-    
+
     if (context.globals) {
       size += context.globals.size * 100;
     }
-    
+
     if (context.evaluationHistory) {
       size += context.evaluationHistory.length * 50;
     }
-    
+
     return size;
   }
 
@@ -561,12 +561,12 @@ ${stat.commandName}:
   private storeMetric(metric: CommandPerformanceMetrics): void {
     const metrics = this.metrics.get(metric.commandName) || [];
     metrics.push(metric);
-    
+
     // Limit stored metrics
     if (metrics.length > this.maxMetricsPerCommand) {
       metrics.shift();
     }
-    
+
     this.metrics.set(metric.commandName, metrics);
   }
 

@@ -1,9 +1,9 @@
 /**
  * Enhanced Make Command Implementation
  * The make command can be used to create class instances or DOM elements.
- * 
+ *
  * Syntax: make (a|an) <expression> [from <arg-list>] [called <identifier>]
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -18,7 +18,7 @@ export interface MakeCommandInput {
   variableName?: string;
 }
 
-// Output type definition  
+// Output type definition
 export interface MakeCommandOutput {
   instance: any;
   type: 'dom-element' | 'class-instance';
@@ -28,24 +28,23 @@ export interface MakeCommandOutput {
 /**
  * Enhanced Make Command with full type safety and validation
  */
-export class MakeCommand implements CommandImplementation<
-  MakeCommandInput,
-  MakeCommandOutput,
-  TypedExecutionContext
-> {
+export class MakeCommand
+  implements CommandImplementation<MakeCommandInput, MakeCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'make',
-    description: 'The make command can be used to create class instances or DOM elements. In the first form: make a URL from "/path/", "https://origin.example.com" is equal to the JavaScript new URL("/path/", "https://origin.example.com"). In the second form: make an <a.navlink/> will create an <a> element and add the class "navlink" to it.',
+    description:
+      'The make command can be used to create class instances or DOM elements. In the first form: make a URL from "/path/", "https://origin.example.com" is equal to the JavaScript new URL("/path/", "https://origin.example.com"). In the second form: make an <a.navlink/> will create an <a> element and add the class "navlink" to it.',
     examples: [
       'make a URL from "/path/", "https://origin.example.com"',
       'make an <a.navlink/> called linkElement',
       'make a Date from "2023-01-01"',
       'make an <div#content.container/>',
-      'make a Map called myMap'
+      'make a Map called myMap',
     ],
     syntax: 'make (a|an) <expression> [from <arg-list>] [called <identifier>]',
     category: 'utility' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -53,12 +52,14 @@ export class MakeCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Make command requires an object input',
-            suggestions: ['Provide an object with article and expression properties']
-          }],
-          suggestions: ['Provide an object with article and expression properties']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Make command requires an object input',
+              suggestions: ['Provide an object with article and expression properties'],
+            },
+          ],
+          suggestions: ['Provide an object with article and expression properties'],
         };
       }
 
@@ -68,24 +69,28 @@ export class MakeCommand implements CommandImplementation<
       if (!inputObj.article) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Make command requires "a" or "an" article',
-            suggestions: ['Use "a" before consonant sounds, "an" before vowel sounds']
-          }],
-          suggestions: ['Use "a" before consonant sounds, "an" before vowel sounds']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Make command requires "a" or "an" article',
+              suggestions: ['Use "a" before consonant sounds, "an" before vowel sounds'],
+            },
+          ],
+          suggestions: ['Use "a" before consonant sounds, "an" before vowel sounds'],
         };
       }
 
       if (inputObj.article !== 'a' && inputObj.article !== 'an') {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Make command requires "a" or "an" article',
-            suggestions: ['Use "a" or "an" as the article']
-          }],
-          suggestions: ['Use "a" or "an" as the article']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Make command requires "a" or "an" article',
+              suggestions: ['Use "a" or "an" as the article'],
+            },
+          ],
+          suggestions: ['Use "a" or "an" as the article'],
         };
       }
 
@@ -93,24 +98,31 @@ export class MakeCommand implements CommandImplementation<
       if (!inputObj.expression) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Make command requires class name or DOM element expression',
-            suggestions: ['Provide a class name like "URL" or DOM element like "<div/>"']
-          }],
-          suggestions: ['Provide a class name like "URL" or DOM element like "<div/>"']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Make command requires class name or DOM element expression',
+              suggestions: ['Provide a class name like "URL" or DOM element like "<div/>"'],
+            },
+          ],
+          suggestions: ['Provide a class name like "URL" or DOM element like "<div/>"'],
         };
       }
 
-      if (typeof inputObj.expression !== 'string' && !(inputObj.expression instanceof HTMLElement)) {
+      if (
+        typeof inputObj.expression !== 'string' &&
+        !(inputObj.expression instanceof HTMLElement)
+      ) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Expression must be a string (class name or DOM element) or HTMLElement',
-            suggestions: ['Use a string like "URL" or "<div/>"']
-          }],
-          suggestions: ['Use a string like "URL" or "<div/>"']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Expression must be a string (class name or DOM element) or HTMLElement',
+              suggestions: ['Use a string like "URL" or "<div/>"'],
+            },
+          ],
+          suggestions: ['Use a string like "URL" or "<div/>"'],
         };
       }
 
@@ -118,12 +130,14 @@ export class MakeCommand implements CommandImplementation<
       if (inputObj.constructorArgs !== undefined && !Array.isArray(inputObj.constructorArgs)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Constructor arguments must be an array',
-            suggestions: ['Provide an array of constructor arguments']
-          }],
-          suggestions: ['Provide an array of constructor arguments']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Constructor arguments must be an array',
+              suggestions: ['Provide an array of constructor arguments'],
+            },
+          ],
+          suggestions: ['Provide an array of constructor arguments'],
         };
       }
 
@@ -131,12 +145,14 @@ export class MakeCommand implements CommandImplementation<
       if (inputObj.variableName !== undefined && typeof inputObj.variableName !== 'string') {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Variable name must be a string',
-            suggestions: ['Provide a valid identifier string']
-          }],
-          suggestions: ['Provide a valid identifier string']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Variable name must be a string',
+              suggestions: ['Provide a valid identifier string'],
+            },
+          ],
+          suggestions: ['Provide a valid identifier string'],
         };
       }
 
@@ -148,10 +164,10 @@ export class MakeCommand implements CommandImplementation<
           article: inputObj.article,
           expression: inputObj.expression,
           constructorArgs: inputObj.constructorArgs || [],
-          variableName: inputObj.variableName
-        }
+          variableName: inputObj.variableName,
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -184,31 +200,34 @@ export class MakeCommand implements CommandImplementation<
     return {
       instance: result,
       type,
-      ...(variableName !== undefined && { variableName })
+      ...(variableName !== undefined && { variableName }),
     };
   }
 
-  private createDOMElement(elementExpression: string, _context: TypedExecutionContext): HTMLElement {
+  private createDOMElement(
+    elementExpression: string,
+    _context: TypedExecutionContext
+  ): HTMLElement {
     // Parse the element expression: <tag#id.class1.class2/>
     const content = elementExpression.slice(1, -2); // Remove < and />
-    
+
     // Extract tag name
     let tagName = 'div'; // default
     let remainder = content;
-    
+
     // Find where tag name ends (at first . or # or end)
     const tagMatch = content.match(/^([a-zA-Z][a-zA-Z0-9]*)/);
     if (tagMatch) {
       tagName = tagMatch[1];
       remainder = content.slice(tagMatch[0].length);
     }
-    
+
     // Create the element
     const element = document.createElement(tagName);
-    
+
     // Parse classes and ID
     const parts = remainder.split(/(?=[.#])/); // Split on . or # but keep the delimiter
-    
+
     for (const part of parts) {
       if (part.startsWith('#')) {
         // Set ID
@@ -224,40 +243,44 @@ export class MakeCommand implements CommandImplementation<
         }
       }
     }
-    
+
     return element;
   }
 
-  private createClassInstance(className: string | HTMLElement, constructorArgs: any[], context: TypedExecutionContext): any {
+  private createClassInstance(
+    className: string | HTMLElement,
+    constructorArgs: any[],
+    context: TypedExecutionContext
+  ): any {
     if (className instanceof HTMLElement) {
       return className;
     }
 
     const classNameStr = String(className);
-    
+
     try {
       // Try to resolve the class constructor
       let Constructor: any;
-      
+
       // Check common global constructors
       if (typeof window !== 'undefined') {
         Constructor = (window as any)[classNameStr];
       }
-      
+
       // Fallback to global object
       if (!Constructor && typeof global !== 'undefined') {
         Constructor = (global as any)[classNameStr];
       }
-      
+
       // Check context variables for custom classes
       if (!Constructor && context.variables && context.variables.has(classNameStr)) {
         Constructor = context.variables.get(classNameStr);
       }
-      
+
       if (!Constructor || typeof Constructor !== 'function') {
         throw new Error(`Constructor '${classNameStr}' not found or is not a function`);
       }
-      
+
       // Create the instance with constructor arguments
       if (constructorArgs.length === 0) {
         return new Constructor();
@@ -265,7 +288,9 @@ export class MakeCommand implements CommandImplementation<
         return new Constructor(...constructorArgs);
       }
     } catch (error) {
-      throw new Error(`Failed to create instance of '${classNameStr}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `Failed to create instance of '${classNameStr}': ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 

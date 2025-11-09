@@ -39,7 +39,7 @@ export interface RuntimeInfo {
 export function getRuntimeInfo(): RuntimeInfo {
   const hasDOM = typeof document !== 'undefined';
   const hasWebAPIs = typeof fetch !== 'undefined';
-  
+
   if (isDeno) {
     return {
       name: 'deno',
@@ -53,7 +53,7 @@ export function getRuntimeInfo(): RuntimeInfo {
       supportsWorkers: true,
     };
   }
-  
+
   if (isNode) {
     return {
       name: 'node',
@@ -67,7 +67,7 @@ export function getRuntimeInfo(): RuntimeInfo {
       supportsWorkers: true,
     };
   }
-  
+
   if (isBrowser) {
     return {
       name: 'browser',
@@ -81,7 +81,7 @@ export function getRuntimeInfo(): RuntimeInfo {
       supportsWorkers: true,
     };
   }
-  
+
   return {
     name: 'unknown',
     version: 'unknown',
@@ -106,15 +106,15 @@ export const logger = {
   info: (message: string, ...args: unknown[]) => {
     console.log(`[HyperFixi] ${message}`, ...args);
   },
-  
+
   warn: (message: string, ...args: unknown[]) => {
     console.warn(`[HyperFixi] ${message}`, ...args);
   },
-  
+
   error: (message: string, ...args: unknown[]) => {
     console.error(`[HyperFixi] ${message}`, ...args);
   },
-  
+
   debug: (message: string, ...args: unknown[]) => {
     if (isDeno && Deno.env.get('DEBUG') === 'hyperfixi') {
       console.log(`[HyperFixi Debug] ${message}`, ...args);
@@ -137,13 +137,13 @@ export const performance = {
     }
     return Date.now();
   },
-  
+
   mark: (name: string): void => {
     if (globalThis.performance?.mark) {
       globalThis.performance.mark(name);
     }
   },
-  
+
   measure: (name: string, startMark?: string, endMark?: string): void => {
     if (globalThis.performance?.measure) {
       globalThis.performance.measure(name, startMark, endMark);
@@ -156,21 +156,21 @@ export const performance = {
  */
 export class UniversalEventTarget {
   private listeners = new Map<string, Set<(event: any) => void>>();
-  
+
   addEventListener(type: string, listener: (event: any) => void): void {
     if (!this.listeners.has(type)) {
       this.listeners.set(type, new Set());
     }
     this.listeners.get(type)!.add(listener);
   }
-  
+
   removeEventListener(type: string, listener: (event: any) => void): void {
     const typeListeners = this.listeners.get(type);
     if (typeListeners) {
       typeListeners.delete(listener);
     }
   }
-  
+
   dispatchEvent(event: { type: string; [key: string]: any }): boolean {
     const typeListeners = this.listeners.get(event.type);
     if (typeListeners) {
@@ -196,13 +196,13 @@ export class UniversalEventTarget {
  */
 export function getLLMRuntimeInfo() {
   const info = getRuntimeInfo();
-  
+
   return {
     // Basic runtime info
     runtime: info.name,
     version: info.version,
     typescript: info.typescript,
-    
+
     // Capabilities
     capabilities: {
       dom: info.hasDOM,
@@ -212,7 +212,7 @@ export function getLLMRuntimeInfo() {
       workers: info.supportsWorkers,
       esm: info.supportsESM,
     },
-    
+
     // Environment-specific features
     features: {
       // Deno-specific
@@ -223,7 +223,7 @@ export function getLLMRuntimeInfo() {
         jsr: true,
         denoDeploy: true,
       }),
-      
+
       // Node.js-specific
       ...(isNode && {
         npm: true,
@@ -231,7 +231,7 @@ export function getLLMRuntimeInfo() {
         nodeModules: true,
         builtinModules: true,
       }),
-      
+
       // Browser-specific
       ...(isBrowser && {
         dom: true,
@@ -240,7 +240,7 @@ export function getLLMRuntimeInfo() {
         webAssembly: typeof WebAssembly !== 'undefined',
       }),
     },
-    
+
     // Recommended patterns for this environment
     patterns: {
       imports: isDeno ? 'url-based' : isNode ? 'npm-based' : 'esm-based',
@@ -266,18 +266,18 @@ export async function importForEnvironment<T>(imports: {
   if (isDeno && imports.deno) {
     return imports.deno();
   }
-  
+
   if (isNode && imports.node) {
     return imports.node();
   }
-  
+
   if (isBrowser && imports.browser) {
     return imports.browser();
   }
-  
+
   if (imports.fallback) {
     return imports.fallback();
   }
-  
+
   throw new Error('No suitable import found for current environment');
 }

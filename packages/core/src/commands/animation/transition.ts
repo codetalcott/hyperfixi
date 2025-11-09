@@ -1,9 +1,9 @@
 /**
  * Enhanced Transition Command Implementation
  * Animates CSS properties with transitions
- * 
+ *
  * Syntax: transition [<target>] <property> to <value> [over <duration>] [with <timing-function>]
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -36,23 +36,24 @@ export interface TransitionCommandOutput {
 /**
  * Enhanced Transition Command with full type safety and validation
  */
-export class TransitionCommand implements CommandImplementation<
-  TransitionCommandInput,
-  TransitionCommandOutput,
-  TypedExecutionContext
-> {
+export class TransitionCommand
+  implements
+    CommandImplementation<TransitionCommandInput, TransitionCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'transition',
-    description: 'The transition command animates CSS properties using CSS transitions. It smoothly changes a property from its current value to a new value over a specified duration.',
+    description:
+      'The transition command animates CSS properties using CSS transitions. It smoothly changes a property from its current value to a new value over a specified duration.',
     examples: [
       'transition opacity to 0.5',
       'transition <#box/> left to 100px over 500ms',
       'transition background-color to red over 1s with ease-in-out',
-      'transition width to 200px'
+      'transition width to 200px',
     ],
-    syntax: 'transition [<target>] <property> to <value> [over <duration>] [with <timing-function>]',
+    syntax:
+      'transition [<target>] <property> to <value> [over <duration>] [with <timing-function>]',
     category: 'animation' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -60,12 +61,14 @@ export class TransitionCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Transition command requires property and value',
-            suggestions: ['Provide CSS property and target value']
-          }],
-          suggestions: ['Provide CSS property and target value']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Transition command requires property and value',
+              suggestions: ['Provide CSS property and target value'],
+            },
+          ],
+          suggestions: ['Provide CSS property and target value'],
         };
       }
 
@@ -74,24 +77,28 @@ export class TransitionCommand implements CommandImplementation<
       if (!inputObj.property || typeof inputObj.property !== 'string') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Transition command requires a CSS property',
-            suggestions: ['Provide a CSS property name like "opacity", "width", "left"']
-          }],
-          suggestions: ['Provide a CSS property name like "opacity", "width", "left"']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Transition command requires a CSS property',
+              suggestions: ['Provide a CSS property name like "opacity", "width", "left"'],
+            },
+          ],
+          suggestions: ['Provide a CSS property name like "opacity", "width", "left"'],
         };
       }
 
       if (inputObj.value === undefined) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Transition command requires a target value',
-            suggestions: ['Provide a target value for the CSS property']
-          }],
-          suggestions: ['Provide a target value for the CSS property']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Transition command requires a target value',
+              suggestions: ['Provide a target value for the CSS property'],
+            },
+          ],
+          suggestions: ['Provide a target value for the CSS property'],
         };
       }
 
@@ -107,10 +114,10 @@ export class TransitionCommand implements CommandImplementation<
           timingFunction: inputObj.timingFunction,
           toKeyword: inputObj.toKeyword,
           overKeyword: inputObj.overKeyword,
-          withKeyword: inputObj.withKeyword
-        }
+          withKeyword: inputObj.withKeyword,
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -122,7 +129,9 @@ export class TransitionCommand implements CommandImplementation<
 
     // Validate that we have a property and value
     if (!property || typeof property !== 'string') {
-      console.warn('⚠️ Transition command called without property argument - this may be due to parser limitations with multiline syntax. Skipping transition.');
+      console.warn(
+        '⚠️ Transition command called without property argument - this may be due to parser limitations with multiline syntax. Skipping transition.'
+      );
       // Return a dummy result to avoid breaking execution
       return {
         element: context.me as HTMLElement,
@@ -130,19 +139,21 @@ export class TransitionCommand implements CommandImplementation<
         fromValue: '',
         toValue: '',
         duration: 0,
-        completed: false
+        completed: false,
       };
     }
 
     if (value === undefined || value === null) {
-      console.warn(`⚠️ Transition command for property "${property}" called without target value - skipping transition.`);
+      console.warn(
+        `⚠️ Transition command for property "${property}" called without target value - skipping transition.`
+      );
       return {
         element: context.me as HTMLElement,
         property,
         fromValue: '',
         toValue: '',
         duration: 0,
-        completed: false
+        completed: false,
       };
     }
 
@@ -165,7 +176,9 @@ export class TransitionCommand implements CommandImplementation<
       targetElement = resolved;
     } else {
       if (!context.me) {
-        throw new Error('No target element available - provide explicit target or ensure context.me is available');
+        throw new Error(
+          'No target element available - provide explicit target or ensure context.me is available'
+        );
       }
       const htmlElement = asHTMLElement(context.me);
       if (!htmlElement) {
@@ -183,7 +196,7 @@ export class TransitionCommand implements CommandImplementation<
     // Set up transition
     const originalTransition = targetElement.style.transition;
     const transitionProperty = `${property} ${duration}ms ${timingFunction || 'ease'}`;
-    targetElement.style.transition = originalTransition 
+    targetElement.style.transition = originalTransition
       ? `${originalTransition}, ${transitionProperty}`
       : transitionProperty;
 
@@ -206,7 +219,7 @@ export class TransitionCommand implements CommandImplementation<
       fromValue,
       toValue,
       duration,
-      completed
+      completed,
     };
   }
 
@@ -220,7 +233,7 @@ export class TransitionCommand implements CommandImplementation<
 
     if (typeof element === 'string') {
       const trimmed = element.trim();
-      
+
       // Handle context references
       if (trimmed === 'me' && context.me) return asHTMLElement(context.me);
       if (trimmed === 'it' && context.it instanceof HTMLElement) return context.it;
@@ -247,18 +260,18 @@ export class TransitionCommand implements CommandImplementation<
 
     if (typeof value === 'string') {
       const trimmed = value.trim();
-      
+
       // Parse numeric milliseconds
       if (/^\d+$/.test(trimmed)) {
         return parseInt(trimmed, 10);
       }
-      
+
       // Parse with time units
       const match = trimmed.match(/^(\d*\.?\d+)(s|ms)?$/i);
       if (match) {
         const [, numberStr, unit] = match;
         const number = parseFloat(numberStr);
-        
+
         if (!isNaN(number)) {
           return unit === 's' ? number * 1000 : number;
         }
@@ -269,19 +282,19 @@ export class TransitionCommand implements CommandImplementation<
   }
 
   private async waitForTransition(
-    element: HTMLElement, 
-    property: string, 
+    element: HTMLElement,
+    property: string,
     duration: number
   ): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
+    return new Promise<boolean>(resolve => {
       let completed = false;
-      
+
       const cleanup = () => {
         element.removeEventListener('transitionend', onTransitionEnd);
         element.removeEventListener('transitioncancel', onTransitionCancel);
         clearTimeout(timeoutId);
       };
-      
+
       const finish = (wasCompleted: boolean) => {
         if (!completed) {
           completed = true;
@@ -289,23 +302,23 @@ export class TransitionCommand implements CommandImplementation<
           resolve(wasCompleted);
         }
       };
-      
+
       const onTransitionEnd = (event: TransitionEvent) => {
         if (event.target === element && event.propertyName === property) {
           finish(true);
         }
       };
-      
+
       const onTransitionCancel = (event: TransitionEvent) => {
         if (event.target === element && event.propertyName === property) {
           finish(false);
         }
       };
-      
+
       // Listen for transition events
       element.addEventListener('transitionend', onTransitionEnd);
       element.addEventListener('transitioncancel', onTransitionCancel);
-      
+
       // Set timeout as fallback
       const timeoutId = setTimeout(() => finish(true), duration + 50);
     });

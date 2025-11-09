@@ -1,12 +1,10 @@
 /**
  * Unified Command System for HyperFixi
- * Consolidates all enhanced commands with async execution, 
+ * Consolidates all enhanced commands with async execution,
  * context management, and comprehensive error handling
  */
 
-import type {
-  TypedExecutionContext
-} from '../types/core';
+import type { TypedExecutionContext } from '../types/core';
 
 // Import all enhanced commands
 import { createAllEnhancedCommands } from './command-registry';
@@ -21,15 +19,15 @@ import { performanceProfiler } from './command-performance-profiler';
  * Command execution options for advanced control
  */
 export interface CommandExecutionOptions {
-  async?: boolean;              // Execute command asynchronously
-  timeout?: number;              // Execution timeout in milliseconds
-  retryCount?: number;          // Number of retry attempts on failure
-  retryDelay?: number;          // Delay between retries in milliseconds
-  onProgress?: (progress: number) => void;  // Progress callback
-  onError?: (error: Error) => void;         // Error callback
-  debug?: boolean;              // Enable debug logging
-  trace?: boolean;              // Enable execution tracing
-  profile?: boolean;            // Enable performance profiling
+  async?: boolean; // Execute command asynchronously
+  timeout?: number; // Execution timeout in milliseconds
+  retryCount?: number; // Number of retry attempts on failure
+  retryDelay?: number; // Delay between retries in milliseconds
+  onProgress?: (progress: number) => void; // Progress callback
+  onError?: (error: Error) => void; // Error callback
+  debug?: boolean; // Enable debug logging
+  trace?: boolean; // Enable execution tracing
+  profile?: boolean; // Enable performance profiling
 }
 
 /**
@@ -123,7 +121,7 @@ export class CommandContextManager {
       expressionStack: [],
       evaluationDepth: 0,
       validationMode: 'strict',
-      evaluationHistory: []
+      evaluationHistory: [],
     };
   }
 }
@@ -133,7 +131,7 @@ export class CommandContextManager {
  */
 export class AsyncCommandExecutor {
   private activeCommands: Map<string, AbortController> = new Map();
-  
+
   /**
    * Execute a command asynchronously with advanced control
    */
@@ -145,7 +143,7 @@ export class AsyncCommandExecutor {
   ): Promise<CommandExecutionResult<T>> {
     const startTime = performance.now();
     const traceId = options.trace ? this.generateTraceId() : undefined;
-    
+
     if (options.debug) {
       console.log(`[Command Debug] Executing: ${commandName}`, { args, traceId });
     }
@@ -158,7 +156,7 @@ export class AsyncCommandExecutor {
       );
 
       const executionTime = performance.now() - startTime;
-      
+
       return {
         success: true,
         value: result as T,
@@ -168,12 +166,12 @@ export class AsyncCommandExecutor {
           commandName,
           args,
           timestamp: Date.now(),
-          ...(traceId !== undefined && { traceId })
-        }
+          ...(traceId !== undefined && { traceId }),
+        },
       };
     } catch (error) {
       const executionTime = performance.now() - startTime;
-      
+
       if (options.onError) {
         options.onError(error as Error);
       }
@@ -186,8 +184,8 @@ export class AsyncCommandExecutor {
           commandName,
           args,
           timestamp: Date.now(),
-          ...(traceId !== undefined && { traceId })
-        }
+          ...(traceId !== undefined && { traceId }),
+        },
       };
     }
   }
@@ -203,9 +201,9 @@ export class AsyncCommandExecutor {
   ): Promise<T> {
     const maxRetries = options.retryCount || 0;
     const retryDelay = options.retryDelay || 1000;
-    
+
     let lastError: Error | undefined;
-    
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         if (attempt > 0 && options.debug) {
@@ -228,7 +226,7 @@ export class AsyncCommandExecutor {
         return result as T;
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt < maxRetries) {
           await this.delay(retryDelay);
         }
@@ -241,10 +239,7 @@ export class AsyncCommandExecutor {
   /**
    * Execute with timeout
    */
-  private async executeWithTimeout<T>(
-    fn: () => Promise<T>,
-    timeout?: number
-  ): Promise<T> {
+  private async executeWithTimeout<T>(fn: () => Promise<T>, timeout?: number): Promise<T> {
     if (!timeout) {
       return fn();
     }
@@ -252,8 +247,11 @@ export class AsyncCommandExecutor {
     return Promise.race([
       fn(),
       new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error(`Command execution timed out after ${timeout}ms`)), timeout);
-      })
+        setTimeout(
+          () => reject(new Error(`Command execution timed out after ${timeout}ms`)),
+          timeout
+        );
+      }),
     ]);
   }
 
@@ -422,28 +420,23 @@ export class UnifiedCommandSystem {
     options: CommandExecutionOptions & { contextId?: string } = {}
   ): Promise<CommandExecutionResult<T>> {
     const context = this.contextManager.getContext(options.contextId);
-    
+
     // Start performance profiling if enabled
     let profileId = '';
     if (options.profile) {
       profileId = performanceProfiler.startProfiling(commandName, args, context);
     }
-    
+
     // Debug support
     if (this.debugger.shouldBreak(commandName)) {
       debugger; // Actual debugger breakpoint
     }
-    
+
     this.debugger.logIfWatched(commandName, 'start', { args, context });
 
     try {
       // Execute the command
-      const result = await this.asyncExecutor.executeAsync<T>(
-        commandName,
-        args,
-        context,
-        options
-      );
+      const result = await this.asyncExecutor.executeAsync<T>(commandName, args, context, options);
 
       // End performance profiling
       if (options.profile && profileId) {
@@ -452,20 +445,20 @@ export class UnifiedCommandSystem {
 
       // Record in history
       this.contextManager.recordExecution(result);
-      
+
       // Update context with result
       if (result.success && result.value !== undefined) {
         this.contextManager.updateContext(options.contextId || 'default', {
-          result: result.value
+          result: result.value,
         });
       }
 
       this.debugger.logIfWatched(commandName, 'end', result);
-      
+
       return result;
     } catch (error) {
       this.debugger.logIfWatched(commandName, 'error', error);
-      
+
       const result: CommandExecutionResult<T> = {
         success: false,
         error: error as Error,
@@ -473,18 +466,18 @@ export class UnifiedCommandSystem {
         context: {
           commandName,
           args,
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       };
-      
+
       // End performance profiling for errors too
       if (options.profile && profileId) {
         performanceProfiler.endProfiling(profileId, result);
       }
-      
+
       this.errorHandler.handleError(error as Error, commandName, context);
       this.contextManager.recordExecution(result);
-      
+
       return result;
     }
   }
@@ -497,17 +490,17 @@ export class UnifiedCommandSystem {
     options: CommandExecutionOptions & { contextId?: string } = {}
   ): Promise<CommandExecutionResult[]> {
     const results: CommandExecutionResult[] = [];
-    
+
     for (const command of commands) {
       const result = await this.execute(command.name, command.args, options);
       results.push(result);
-      
+
       // Stop on error unless specified otherwise
       if (!result.success && !options.onError) {
         break;
       }
     }
-    
+
     return results;
   }
 
@@ -518,10 +511,8 @@ export class UnifiedCommandSystem {
     commands: Array<{ name: string; args: any[] }>,
     options: CommandExecutionOptions & { contextId?: string } = {}
   ): Promise<CommandExecutionResult[]> {
-    const promises = commands.map(command => 
-      this.execute(command.name, command.args, options)
-    );
-    
+    const promises = commands.map(command => this.execute(command.name, command.args, options));
+
     return Promise.all(promises);
   }
 
@@ -549,7 +540,10 @@ export class UnifiedCommandSystem {
   /**
    * Register error handler
    */
-  onError(commandName: string | ((error: Error, context: any) => void), handler?: (error: Error, context: any) => void): void {
+  onError(
+    commandName: string | ((error: Error, context: any) => void),
+    handler?: (error: Error, context: any) => void
+  ): void {
     if (typeof commandName === 'string' && handler) {
       this.errorHandler.registerErrorHandler(commandName, handler);
     } else if (typeof commandName === 'function') {
@@ -564,7 +558,7 @@ export class UnifiedCommandSystem {
     setBreakpoint: (cmd: string) => this.debugger.setBreakpoint(cmd),
     removeBreakpoint: (cmd: string) => this.debugger.removeBreakpoint(cmd),
     watch: (cmd: string) => this.debugger.watchCommand(cmd),
-    stepMode: (enabled: boolean) => this.debugger.setStepMode(enabled)
+    stepMode: (enabled: boolean) => this.debugger.setStepMode(enabled),
   };
 
   /**
@@ -573,16 +567,15 @@ export class UnifiedCommandSystem {
   performance = {
     enable: () => performanceProfiler.enable(),
     disable: () => performanceProfiler.disable(),
-    getStats: (commandName?: string) => commandName ? 
-      performanceProfiler.getStats(commandName) : 
-      performanceProfiler.getAllStats(),
+    getStats: (commandName?: string) =>
+      commandName ? performanceProfiler.getStats(commandName) : performanceProfiler.getAllStats(),
     identifyBottlenecks: () => performanceProfiler.identifyBottlenecks(),
     generateOptimizations: () => performanceProfiler.generateOptimizations(),
     generateReport: () => performanceProfiler.generateReport(),
     clearMetrics: () => performanceProfiler.clearMetrics(),
     enableAutoReporting: (interval?: number) => performanceProfiler.enableAutoReporting(interval),
     exportMetrics: () => performanceProfiler.exportMetrics(),
-    importMetrics: (metrics: any) => performanceProfiler.importMetrics(metrics)
+    importMetrics: (metrics: any) => performanceProfiler.importMetrics(metrics),
   };
 }
 

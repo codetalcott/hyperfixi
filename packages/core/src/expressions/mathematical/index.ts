@@ -12,7 +12,7 @@ import type {
   UnifiedExpressionMetadata as ExpressionMetadata,
   UnifiedTypedResult as TypedResult,
   UnifiedLLMDocumentation as LLMDocumentation,
-  UnifiedExpressionCategory as ExpressionCategory
+  UnifiedExpressionCategory as ExpressionCategory,
 } from '../../types/index';
 
 // Define BaseTypedExpression locally for now
@@ -34,7 +34,7 @@ interface BaseTypedExpression<T> {
 
 const BinaryOperationInputSchema = v.object({
   left: v.unknown().describe('Left operand value'),
-  right: v.unknown().describe('Right operand value')
+  right: v.unknown().describe('Right operand value'),
 });
 
 type BinaryOperationInput = any; // Inferred from RuntimeValidator
@@ -61,25 +61,30 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       {
         input: '5 + 3',
         description: 'Add two numbers',
-        expectedOutput: 8
+        expectedOutput: 8,
       },
       {
         input: '"10" + "20"',
         description: 'Add numeric strings (auto-converted)',
-        expectedOutput: 30
+        expectedOutput: 30,
       },
       {
         input: 'price + tax',
         description: 'Add variables containing numbers',
-        expectedOutput: 125.50,
-        context: { locals: new Map([['price', 100], ['tax', 25.50]]) }
-      }
+        expectedOutput: 125.5,
+        context: {
+          locals: new Map([
+            ['price', 100],
+            ['tax', 25.5],
+          ]),
+        },
+      },
     ],
     relatedExpressions: ['subtraction', 'multiplication', 'division', 'modulo'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -90,49 +95,49 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         type: 'number',
         description: 'Left operand - number or numeric string',
         optional: false,
-        examples: ['5', '"10"', 'price', 'count + 1']
+        examples: ['5', '"10"', 'price', 'count + 1'],
       },
       {
         name: 'right',
         type: 'number',
         description: 'Right operand - number or numeric string',
         optional: false,
-        examples: ['3', '"20"', 'tax', 'increment']
-      }
+        examples: ['3', '"20"', 'tax', 'increment'],
+      },
     ],
     returns: {
       type: 'number',
       description: 'Sum of left and right operands',
-      examples: ['8', '30', '125.50']
+      examples: ['8', '30', '125.50'],
     },
     examples: [
       {
         title: 'Basic addition',
         code: '5 + 3',
         explanation: 'Adds two literal numbers',
-        output: '8'
+        output: '8',
       },
       {
         title: 'String number addition',
         code: '"10" + "5"',
         explanation: 'Automatically converts string numbers and adds them',
-        output: '15'
+        output: '15',
       },
       {
         title: 'Variable addition',
         code: 'basePrice + shipping',
         explanation: 'Adds values from context variables',
-        output: '134.99'
+        output: '134.99',
       },
       {
         title: 'Complex expression',
         code: '(price * quantity) + tax',
         explanation: 'Addition as part of larger mathematical expression',
-        output: '108.50'
-      }
+        output: '108.50',
+      },
     ],
     seeAlso: ['subtraction', 'multiplication', 'division', 'modulo', 'number conversion'],
-    tags: ['mathematical', 'arithmetic', 'addition', 'numbers', 'calculation']
+    tags: ['mathematical', 'arithmetic', 'addition', 'numbers', 'calculation'],
   };
 
   async evaluate(
@@ -148,7 +153,7 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -163,16 +168,18 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       if (!Number.isFinite(result)) {
         return {
           success: false,
-          errors: [{
-            type: 'runtime-error',
-            message: `Addition resulted in non-finite value: ${leftNum} + ${rightNum} = ${result}`,
-            suggestions: []
-          }],
+          errors: [
+            {
+              type: 'runtime-error',
+              message: `Addition resulted in non-finite value: ${leftNum} + ${rightNum} = ${result}`,
+              suggestions: [],
+            },
+          ],
           suggestions: [
             'Check for numeric overflow',
             'Ensure operands are within valid number range',
-            'Verify input values are not causing mathematical errors'
-          ]
+            'Verify input values are not causing mathematical errors',
+          ],
         };
       }
 
@@ -182,25 +189,26 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       return {
         success: true,
         value: result,
-        type: 'number'
+        type: 'number',
       };
-
     } catch (error) {
       // Track performance for failed operations
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Addition failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Addition failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Ensure both operands are numeric or convertible to numbers',
           'Check for null or undefined values',
-          'Verify operands are within valid ranges'
-        ]
+          'Verify operands are within valid ranges',
+        ],
       };
     }
   }
@@ -208,19 +216,20 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid addition input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid addition input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
           suggestions: [
             'Provide both left and right operands',
-            'Ensure operands are numbers or convertible to numbers'
-          ]
+            'Ensure operands are numbers or convertible to numbers',
+          ],
         };
       }
 
@@ -230,42 +239,47 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       if (!this.isNumericValue(left)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: `Left operand cannot be converted to number: ${String(left)}`,
-            suggestions: []
-          }],
-          suggestions: ['Provide a numeric value or string for left operand']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: `Left operand cannot be converted to number: ${String(left)}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Provide a numeric value or string for left operand'],
         };
       }
 
       if (!this.isNumericValue(right)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: `Right operand cannot be converted to number: ${String(right)}`,
-            suggestions: []
-          }],
-          suggestions: ['Provide a numeric value or string for right operand']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: `Right operand cannot be converted to number: ${String(right)}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Provide a numeric value or string for right operand'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
@@ -310,7 +324,7 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
     if (typeof value === 'number') {
       return Number.isFinite(value);
     }
-    
+
     if (typeof value === 'string') {
       const num = Number(value);
       return Number.isFinite(num);
@@ -326,7 +340,11 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
   /**
    * Track performance for debugging and optimization
    */
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -335,7 +353,7 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         output: success ? 'number' : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -363,20 +381,25 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<number
       {
         input: '10 - 3',
         description: 'Subtract two numbers',
-        expectedOutput: 7
+        expectedOutput: 7,
       },
       {
         input: 'total - discount',
         description: 'Calculate final price with discount',
         expectedOutput: 85,
-        context: { locals: new Map([['total', 100], ['discount', 15]]) }
-      }
+        context: {
+          locals: new Map([
+            ['total', 100],
+            ['discount', 15],
+          ]),
+        },
+      },
     ],
     relatedExpressions: ['addition', 'multiplication', 'division', 'modulo'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -387,43 +410,43 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<number
         type: 'number',
         description: 'Left operand (minuend) - number or numeric string',
         optional: false,
-        examples: ['10', '"100"', 'total', 'balance']
+        examples: ['10', '"100"', 'total', 'balance'],
       },
       {
         name: 'right',
         type: 'number',
         description: 'Right operand (subtrahend) - number or numeric string',
         optional: false,
-        examples: ['3', '"15"', 'discount', 'deduction']
-      }
+        examples: ['3', '"15"', 'discount', 'deduction'],
+      },
     ],
     returns: {
       type: 'number',
       description: 'Difference of left minus right operands',
-      examples: ['7', '85', '-5']
+      examples: ['7', '85', '-5'],
     },
     examples: [
       {
         title: 'Basic subtraction',
         code: '10 - 3',
         explanation: 'Subtracts 3 from 10',
-        output: '7'
+        output: '7',
       },
       {
         title: 'Price calculation',
         code: 'originalPrice - discount',
         explanation: 'Calculate discounted price',
-        output: '85'
+        output: '85',
       },
       {
         title: 'Negative result',
         code: '5 - 8',
         explanation: 'Subtraction can result in negative numbers',
-        output: '-3'
-      }
+        output: '-3',
+      },
     ],
     seeAlso: ['addition', 'multiplication', 'division', 'modulo'],
-    tags: ['mathematical', 'arithmetic', 'subtraction', 'numbers', 'calculation']
+    tags: ['mathematical', 'arithmetic', 'subtraction', 'numbers', 'calculation'],
   };
 
   async evaluate(
@@ -432,7 +455,7 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<number
   ): Promise<TypedResult<number>> {
     // Reuse the same logic as addition but with subtraction operation
     const additionExpr = new EnhancedAdditionExpression();
-    
+
     try {
       // Validate using the same validation logic
       const validation = this.validate(input);
@@ -440,7 +463,7 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<number
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -452,33 +475,33 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<number
       if (!Number.isFinite(result)) {
         return {
           success: false,
-          errors: [{
-            type: 'runtime-error',
-            message: `Subtraction resulted in non-finite value: ${leftNum} - ${rightNum} = ${result}`,
-            suggestions: []
-          }],
-          suggestions: ['Check for numeric overflow/underflow', 'Verify input ranges']
+          errors: [
+            {
+              type: 'runtime-error',
+              message: `Subtraction resulted in non-finite value: ${leftNum} - ${rightNum} = ${result}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Check for numeric overflow/underflow', 'Verify input ranges'],
         };
       }
 
       return {
         success: true,
         value: result,
-        type: 'number'
+        type: 'number',
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Subtraction failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
-        suggestions: [
-          'Ensure both operands are numeric',
-          'Check for null or undefined values'
-        ]
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Subtraction failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Ensure both operands are numeric', 'Check for null or undefined values'],
       };
     }
   }
@@ -512,20 +535,25 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
       {
         input: '6 * 7',
         description: 'Multiply two numbers',
-        expectedOutput: 42
+        expectedOutput: 42,
       },
       {
         input: 'price * quantity',
         description: 'Calculate total cost',
         expectedOutput: 150,
-        context: { locals: new Map([['price', 25], ['quantity', 6]]) }
-      }
+        context: {
+          locals: new Map([
+            ['price', 25],
+            ['quantity', 6],
+          ]),
+        },
+      },
     ],
     relatedExpressions: ['addition', 'subtraction', 'division', 'modulo'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -536,43 +564,43 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
         type: 'number',
         description: 'Left operand (multiplicand) - number or numeric string',
         optional: false,
-        examples: ['6', '"25"', 'price', 'rate']
+        examples: ['6', '"25"', 'price', 'rate'],
       },
       {
         name: 'right',
         type: 'number',
         description: 'Right operand (multiplier) - number or numeric string',
         optional: false,
-        examples: ['7', '"6"', 'quantity', 'factor']
-      }
+        examples: ['7', '"6"', 'quantity', 'factor'],
+      },
     ],
     returns: {
       type: 'number',
       description: 'Product of left and right operands',
-      examples: ['42', '150', '0']
+      examples: ['42', '150', '0'],
     },
     examples: [
       {
         title: 'Basic multiplication',
         code: '6 * 7',
         explanation: 'Multiplies 6 by 7',
-        output: '42'
+        output: '42',
       },
       {
         title: 'Price calculation',
         code: 'unitPrice * quantity',
         explanation: 'Calculate total price for multiple items',
-        output: '150'
+        output: '150',
       },
       {
         title: 'Zero result',
         code: '5 * 0',
         explanation: 'Multiplication by zero results in zero',
-        output: '0'
-      }
+        output: '0',
+      },
     ],
     seeAlso: ['addition', 'subtraction', 'division', 'modulo'],
-    tags: ['mathematical', 'arithmetic', 'multiplication', 'numbers', 'calculation']
+    tags: ['mathematical', 'arithmetic', 'multiplication', 'numbers', 'calculation'],
   };
 
   async evaluate(
@@ -587,7 +615,7 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -598,30 +626,33 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
       if (!Number.isFinite(result)) {
         return {
           success: false,
-          errors: [{
-            type: 'runtime-error',
-            message: `Multiplication resulted in non-finite value: ${leftNum} * ${rightNum} = ${result}`,
-            suggestions: []
-          }],
-          suggestions: ['Check for numeric overflow', 'Verify input ranges']
+          errors: [
+            {
+              type: 'runtime-error',
+              message: `Multiplication resulted in non-finite value: ${leftNum} * ${rightNum} = ${result}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Check for numeric overflow', 'Verify input ranges'],
         };
       }
 
       return {
         success: true,
         value: result,
-        type: 'number'
+        type: 'number',
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
-        suggestions: ['Ensure both operands are numeric']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Ensure both operands are numeric'],
       };
     }
   }
@@ -640,7 +671,8 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
   public readonly name = 'division';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left / right';
-  public readonly description = 'Divides left operand by right operand with zero-division protection';
+  public readonly description =
+    'Divides left operand by right operand with zero-division protection';
   public readonly inputSchema = BinaryOperationInputSchema;
   public readonly outputType: EvaluationType = 'number';
 
@@ -654,20 +686,25 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
       {
         input: '15 / 3',
         description: 'Divide two numbers',
-        expectedOutput: 5
+        expectedOutput: 5,
       },
       {
         input: 'total / count',
         description: 'Calculate average',
         expectedOutput: 25,
-        context: { locals: new Map([['total', 100], ['count', 4]]) }
-      }
+        context: {
+          locals: new Map([
+            ['total', 100],
+            ['count', 4],
+          ]),
+        },
+      },
     ],
     relatedExpressions: ['addition', 'subtraction', 'multiplication', 'modulo'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -678,43 +715,43 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
         type: 'number',
         description: 'Left operand (dividend) - number or numeric string',
         optional: false,
-        examples: ['15', '"100"', 'total', 'numerator']
+        examples: ['15', '"100"', 'total', 'numerator'],
       },
       {
         name: 'right',
         type: 'number',
         description: 'Right operand (divisor) - number or numeric string, must not be zero',
         optional: false,
-        examples: ['3', '"4"', 'count', 'denominator']
-      }
+        examples: ['3', '"4"', 'count', 'denominator'],
+      },
     ],
     returns: {
       type: 'number',
       description: 'Quotient of left divided by right operands',
-      examples: ['5', '25', '2.5']
+      examples: ['5', '25', '2.5'],
     },
     examples: [
       {
         title: 'Basic division',
         code: '15 / 3',
         explanation: 'Divides 15 by 3',
-        output: '5'
+        output: '5',
       },
       {
         title: 'Average calculation',
         code: 'totalScore / numberOfTests',
         explanation: 'Calculate average score',
-        output: '87.5'
+        output: '87.5',
       },
       {
         title: 'Decimal result',
         code: '10 / 4',
         explanation: 'Division can result in decimal numbers',
-        output: '2.5'
-      }
+        output: '2.5',
+      },
     ],
     seeAlso: ['addition', 'subtraction', 'multiplication', 'modulo'],
-    tags: ['mathematical', 'arithmetic', 'division', 'numbers', 'calculation']
+    tags: ['mathematical', 'arithmetic', 'division', 'numbers', 'calculation'],
   };
 
   async evaluate(
@@ -729,7 +766,7 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -740,16 +777,18 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
       if (rightNum === 0) {
         return {
           success: false,
-          errors: [{
-            type: 'runtime-error',
-            message: 'Division by zero is not allowed',
-            suggestions: []
-          }],
+          errors: [
+            {
+              type: 'runtime-error',
+              message: 'Division by zero is not allowed',
+              suggestions: [],
+            },
+          ],
           suggestions: [
             'Ensure the divisor (right operand) is not zero',
             'Add a condition to check for zero before division',
-            'Use a default value when divisor might be zero'
-          ]
+            'Use a default value when divisor might be zero',
+          ],
         };
       }
 
@@ -758,30 +797,33 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
       if (!Number.isFinite(result)) {
         return {
           success: false,
-          errors: [{
-            type: 'runtime-error',
-            message: `Division resulted in non-finite value: ${leftNum} / ${rightNum} = ${result}`,
-            suggestions: []
-          }],
-          suggestions: ['Check for numeric overflow/underflow']
+          errors: [
+            {
+              type: 'runtime-error',
+              message: `Division resulted in non-finite value: ${leftNum} / ${rightNum} = ${result}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Check for numeric overflow/underflow'],
         };
       }
 
       return {
         success: true,
         value: result,
-        type: 'number'
+        type: 'number',
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Division failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
-        suggestions: ['Ensure both operands are numeric and divisor is not zero']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Division failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Ensure both operands are numeric and divisor is not zero'],
       };
     }
   }
@@ -814,20 +856,25 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
       {
         input: '10 mod 3',
         description: 'Calculate remainder of 10 divided by 3',
-        expectedOutput: 1
+        expectedOutput: 1,
       },
       {
         input: 'index mod batchSize',
         description: 'Check if index is at batch boundary',
         expectedOutput: 2,
-        context: { locals: new Map([['index', 17], ['batchSize', 5]]) }
-      }
+        context: {
+          locals: new Map([
+            ['index', 17],
+            ['batchSize', 5],
+          ]),
+        },
+      },
     ],
     relatedExpressions: ['addition', 'subtraction', 'multiplication', 'division'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -838,43 +885,43 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
         type: 'number',
         description: 'Left operand (dividend) - number or numeric string',
         optional: false,
-        examples: ['10', '"17"', 'index', 'value']
+        examples: ['10', '"17"', 'index', 'value'],
       },
       {
         name: 'right',
         type: 'number',
         description: 'Right operand (divisor) - number or numeric string, must not be zero',
         optional: false,
-        examples: ['3', '"5"', 'batchSize', 'modulus']
-      }
+        examples: ['3', '"5"', 'batchSize', 'modulus'],
+      },
     ],
     returns: {
       type: 'number',
       description: 'Remainder of left divided by right operands',
-      examples: ['1', '2', '0']
+      examples: ['1', '2', '0'],
     },
     examples: [
       {
         title: 'Basic modulo',
         code: '10 mod 3',
         explanation: 'Calculate remainder: 10 ÷ 3 = 3 remainder 1',
-        output: '1'
+        output: '1',
       },
       {
         title: 'Even/odd check',
         code: 'number mod 2',
         explanation: 'Check if number is even (remainder 0) or odd (remainder 1)',
-        output: '1'
+        output: '1',
       },
       {
         title: 'Batch processing',
         code: 'index mod batchSize',
         explanation: 'Determine position within current batch',
-        output: '2'
-      }
+        output: '2',
+      },
     ],
     seeAlso: ['addition', 'subtraction', 'multiplication', 'division'],
-    tags: ['mathematical', 'arithmetic', 'modulo', 'remainder', 'calculation']
+    tags: ['mathematical', 'arithmetic', 'modulo', 'remainder', 'calculation'],
   };
 
   async evaluate(
@@ -889,7 +936,7 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -900,15 +947,17 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
       if (rightNum === 0) {
         return {
           success: false,
-          errors: [{
-            type: 'runtime-error',
-            message: 'Modulo by zero is not allowed',
-            suggestions: []
-          }],
+          errors: [
+            {
+              type: 'runtime-error',
+              message: 'Modulo by zero is not allowed',
+              suggestions: [],
+            },
+          ],
           suggestions: [
             'Ensure the divisor (right operand) is not zero',
-            'Add a condition to check for zero before modulo operation'
-          ]
+            'Add a condition to check for zero before modulo operation',
+          ],
         };
       }
 
@@ -917,30 +966,33 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
       if (!Number.isFinite(result)) {
         return {
           success: false,
-          errors: [{
-            type: 'runtime-error',
-            message: `Modulo resulted in non-finite value: ${leftNum} % ${rightNum} = ${result}`,
-            suggestions: []
-          }],
-          suggestions: ['Check for numeric overflow issues']
+          errors: [
+            {
+              type: 'runtime-error',
+              message: `Modulo resulted in non-finite value: ${leftNum} % ${rightNum} = ${result}`,
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Check for numeric overflow issues'],
         };
       }
 
       return {
         success: true,
         value: result,
-        type: 'number'
+        type: 'number',
       };
-
     } catch (error) {
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Modulo failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }],
-        suggestions: ['Ensure both operands are numeric and divisor is not zero']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Modulo failed: ${error instanceof Error ? error.message : String(error)}`,
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Ensure both operands are numeric and divisor is not zero'],
       };
     }
   }
@@ -984,5 +1036,5 @@ export const mathematicalExpressions = {
   subtraction: createEnhancedSubtractionExpression(),
   multiplication: createEnhancedMultiplicationExpression(),
   division: createEnhancedDivisionExpression(),
-  modulo: createEnhancedModuloExpression()
+  modulo: createEnhancedModuloExpression(),
 } as const;

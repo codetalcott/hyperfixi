@@ -10,7 +10,7 @@ import type {
   ValidationResult,
   ValidationError,
   EvaluationResult,
-  ExecutionContext
+  ExecutionContext,
 } from './base-types';
 
 // ============================================================================
@@ -33,13 +33,13 @@ export type {
   UnifiedExpressionMetadata,
   UnifiedASTNode,
   UnifiedParseError,
-  UnifiedLLMDocumentation
+  UnifiedLLMDocumentation,
 } from './unified-types';
 
 export {
   UnifiedValidator,
   isUnifiedValidationResult,
-  isUnifiedExecutionContext
+  isUnifiedExecutionContext,
 } from './unified-types';
 
 // ============================================================================
@@ -64,7 +64,7 @@ export type {
   EvaluationType,
   ASTNode,
   ParseError,
-  LLMDocumentation
+  LLMDocumentation,
 } from './base-types';
 
 // ============================================================================

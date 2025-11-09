@@ -9,7 +9,11 @@ import type { TypedExecutionContext, ValidationResult } from '../../types/core';
  * Enhanced command implementation interface
  * All enhanced commands must implement this interface for consistent behavior
  */
-export interface TypedCommandImplementation<TInput, TOutput, TContext extends TypedExecutionContext> {
+export interface TypedCommandImplementation<
+  TInput,
+  TOutput,
+  TContext extends TypedExecutionContext,
+> {
   /**
    * Command metadata for documentation and introspection
    */
@@ -126,10 +130,7 @@ export class CommandValidationError extends EnhancedCommandError {
  * Execution timeout error
  */
 export class CommandTimeoutError extends EnhancedCommandError {
-  constructor(
-    commandName: string,
-    timeout: number
-  ) {
+  constructor(commandName: string, timeout: number) {
     const message = `Command ${commandName} timed out after ${timeout}ms`;
     super(message, commandName);
     this.name = 'CommandTimeoutError';
@@ -139,33 +140,48 @@ export class CommandTimeoutError extends EnhancedCommandError {
 /**
  * Utility type for extracting input type from command implementation
  */
-export type ExtractCommandInput<T> = T extends TypedCommandImplementation<infer U, any, any> ? U : never;
+export type ExtractCommandInput<T> =
+  T extends TypedCommandImplementation<infer U, any, any> ? U : never;
 
 /**
  * Utility type for extracting output type from command implementation
  */
-export type ExtractCommandOutput<T> = T extends TypedCommandImplementation<any, infer U, any> ? U : never;
+export type ExtractCommandOutput<T> =
+  T extends TypedCommandImplementation<any, infer U, any> ? U : never;
 
 /**
  * Utility type for extracting context type from command implementation
  */
-export type ExtractCommandContext<T> = T extends TypedCommandImplementation<any, any, infer U> ? U : never;
+export type ExtractCommandContext<T> =
+  T extends TypedCommandImplementation<any, any, infer U> ? U : never;
 
 /**
  * Type-safe command builder helper
  */
 export interface CommandBuilder<TInput, TOutput, TContext extends TypedExecutionContext> {
-  withMetadata(metadata: TypedCommandImplementation<TInput, TOutput, TContext>['metadata']): CommandBuilder<TInput, TOutput, TContext>;
-  withValidation(validation: TypedCommandImplementation<TInput, TOutput, TContext>['validation']): CommandBuilder<TInput, TOutput, TContext>;
-  withExecutor(executor: TypedCommandImplementation<TInput, TOutput, TContext>['execute']): CommandBuilder<TInput, TOutput, TContext>;
-  withCleanup(cleanup: TypedCommandImplementation<TInput, TOutput, TContext>['cleanup']): CommandBuilder<TInput, TOutput, TContext>;
+  withMetadata(
+    metadata: TypedCommandImplementation<TInput, TOutput, TContext>['metadata']
+  ): CommandBuilder<TInput, TOutput, TContext>;
+  withValidation(
+    validation: TypedCommandImplementation<TInput, TOutput, TContext>['validation']
+  ): CommandBuilder<TInput, TOutput, TContext>;
+  withExecutor(
+    executor: TypedCommandImplementation<TInput, TOutput, TContext>['execute']
+  ): CommandBuilder<TInput, TOutput, TContext>;
+  withCleanup(
+    cleanup: TypedCommandImplementation<TInput, TOutput, TContext>['cleanup']
+  ): CommandBuilder<TInput, TOutput, TContext>;
   build(): TypedCommandImplementation<TInput, TOutput, TContext>;
 }
 
 /**
  * Creates a command builder for type-safe command construction
  */
-export function createCommandBuilder<TInput, TOutput, TContext extends TypedExecutionContext>(): CommandBuilder<TInput, TOutput, TContext> {
+export function createCommandBuilder<
+  TInput,
+  TOutput,
+  TContext extends TypedExecutionContext,
+>(): CommandBuilder<TInput, TOutput, TContext> {
   let metadata: TypedCommandImplementation<TInput, TOutput, TContext>['metadata'] | undefined;
   let validation: TypedCommandImplementation<TInput, TOutput, TContext>['validation'] | undefined;
   let executor: TypedCommandImplementation<TInput, TOutput, TContext>['execute'] | undefined;
@@ -203,11 +219,11 @@ export function createCommandBuilder<TInput, TOutput, TContext extends TypedExec
         metadata,
         validation,
         execute: executor,
-        ...(cleanup && { cleanup })
+        ...(cleanup && { cleanup }),
       };
 
       return implementation;
-    }
+    },
   };
 
   return builder;
@@ -221,11 +237,11 @@ export interface IEnhancedCommandRegistry {
   register<TInput, TOutput, TContext extends TypedExecutionContext>(
     impl: TypedCommandImplementation<TInput, TOutput, TContext>
   ): void;
-  
+
   get<TInput, TOutput, TContext extends TypedExecutionContext>(
     name: string
   ): TypedCommandImplementation<TInput, TOutput, TContext> | undefined;
-  
+
   has(name: string): boolean;
   getCommandNames(): string[];
   getStats(name: string): CommandStats | undefined;

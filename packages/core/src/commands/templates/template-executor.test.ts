@@ -11,7 +11,7 @@ import '../../test-setup.js'; // Import DOM setup
 describe('Template Execution Phase', () => {
   let executor: TemplateExecutor;
   let compiler: TemplateCompiler;
-  
+
   beforeEach(() => {
     executor = new TemplateExecutor();
     compiler = new TemplateCompiler();
@@ -21,7 +21,7 @@ describe('Template Execution Phase', () => {
     it('should execute simple templates with variable interpolation', async () => {
       const template = `<div>Hello \${name}!</div>`;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -29,18 +29,18 @@ describe('Template Execution Phase', () => {
         result: null,
         locals: new Map([['name', 'World']]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toBe('<div>Hello World!</div>');
     });
 
     it('should execute templates with HTML escaping', async () => {
       const template = `<div>\${userInput}</div><div>\${unescaped htmlContent}</div>`;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -48,14 +48,14 @@ describe('Template Execution Phase', () => {
         result: null,
         locals: new Map([
           ['userInput', '<script>alert("xss")</script>'],
-          ['htmlContent', '<strong>Bold</strong>']
+          ['htmlContent', '<strong>Bold</strong>'],
         ]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       // userInput should be escaped, htmlContent should not be
       expect(result).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
       expect(result).toContain('<strong>Bold</strong>');
@@ -70,7 +70,7 @@ describe('Template Execution Phase', () => {
         <div>\${greeting} \${target}!</div>
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -78,11 +78,11 @@ describe('Template Execution Phase', () => {
         result: null,
         locals: new Map(),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toContain('Hello World!');
       // Variables should be set in context
       expect(context.locals.get('greeting')).toBe('Hello');
@@ -99,7 +99,7 @@ describe('Template Execution Phase', () => {
         </ul>
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -107,11 +107,11 @@ describe('Template Execution Phase', () => {
         result: null,
         locals: new Map([['items', ['apple', 'banana', 'cherry']]]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toContain('<ul>');
       expect(result).toContain('<li>apple</li>');
       expect(result).toContain('<li>banana</li>');
@@ -130,24 +130,27 @@ describe('Template Execution Phase', () => {
         @end
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
         you: null,
         result: null,
         locals: new Map([
-          ['users', [
-            { name: 'Alice', active: true },
-            { name: 'Bob', active: false }
-          ]]
+          [
+            'users',
+            [
+              { name: 'Alice', active: true },
+              { name: 'Bob', active: false },
+            ],
+          ],
         ]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toContain('<div class="active">Alice</div>');
       expect(result).toContain('<div class="inactive">Bob</div>');
     });
@@ -162,7 +165,7 @@ describe('Template Execution Phase', () => {
         @end
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const mockGetContrastingColor = (color: string) => {
         return color === 'red' ? 'white' : 'black';
       };
@@ -174,11 +177,11 @@ describe('Template Execution Phase', () => {
         result: null,
         locals: new Map([['colors', ['red', 'blue']]]),
         globals: new Map([['getContrastingColor', mockGetContrastingColor]]),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toContain('style="background: red; color: white"');
       expect(result).toContain('style="background: blue; color: black"');
     });
@@ -189,7 +192,7 @@ describe('Template Execution Phase', () => {
         <h1>\${processed}</h1>
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
       const transform = (str: string) => `*** ${str} ***`;
 
@@ -201,13 +204,13 @@ describe('Template Execution Phase', () => {
         locals: new Map([['name', 'john']]),
         globals: new Map([
           ['capitalize', capitalize],
-          ['transform', transform]
+          ['transform', transform],
         ]),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toContain('<h1>*** John ***</h1>');
     });
   });
@@ -222,7 +225,7 @@ describe('Template Execution Phase', () => {
         <footer>End</footer>
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -230,14 +233,16 @@ describe('Template Execution Phase', () => {
         result: null,
         locals: new Map([['items', ['A', 'B']]]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       // Should contain all parts in order
-      expect(result).toMatch(/<header>Start<\/header>.*<div>A<\/div>.*<div>B<\/div>.*<footer>End<\/footer>/s);
-      
+      expect(result).toMatch(
+        /<header>Start<\/header>.*<div>A<\/div>.*<div>B<\/div>.*<footer>End<\/footer>/s
+      );
+
       // Buffer should be consumed (implementation detail)
       expect(context.meta.__ht_template_result).toBeInstanceOf(Array);
     });
@@ -245,7 +250,7 @@ describe('Template Execution Phase', () => {
     it('should handle empty templates gracefully', async () => {
       const template = ``;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -253,11 +258,11 @@ describe('Template Execution Phase', () => {
         result: null,
         locals: new Map(),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toBe('');
     });
   });
@@ -266,7 +271,7 @@ describe('Template Execution Phase', () => {
     it('should handle undefined variables gracefully', async () => {
       const template = `<div>\${undefined_var}</div>`;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -274,11 +279,11 @@ describe('Template Execution Phase', () => {
         result: null,
         locals: new Map(),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       const result = await executor.executeTemplate(compiled, context);
-      
+
       // Should render empty string for undefined variables
       expect(result).toBe('<div></div>');
     });
@@ -289,7 +294,7 @@ describe('Template Execution Phase', () => {
         <div>\${result}</div>
       `;
       const compiled = compiler.compileTemplate(template);
-      
+
       const context = {
         me: null,
         it: null,
@@ -297,12 +302,12 @@ describe('Template Execution Phase', () => {
         result: null,
         locals: new Map([['value', 'test']]),
         globals: new Map(),
-        meta: { __ht_template_result: [] }
+        meta: { __ht_template_result: [] },
       };
 
       // Should not throw, but handle gracefully
       const result = await executor.executeTemplate(compiled, context);
-      
+
       expect(result).toContain('<div>');
       expect(result).toContain('</div>');
     });

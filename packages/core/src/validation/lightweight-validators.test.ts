@@ -11,39 +11,39 @@ import {
   createTupleValidator,
   createUnionValidator,
   ValidationResult,
-  RuntimeValidator
+  RuntimeValidator,
 } from './lightweight-validators';
 
 describe('Lightweight Validators', () => {
   describe('String Validator', () => {
     it('should validate strings correctly', () => {
       const validator = createStringValidator({ minLength: 3, maxLength: 10 });
-      
+
       expect(validator.validate('hello')).toEqual({
         success: true,
-        data: 'hello'
+        data: 'hello',
       });
-      
+
       expect(validator.validate('hi')).toEqual({
         success: false,
         error: {
           message: 'String must be at least 3 characters long',
-          path: []
-        }
+          path: [],
+        },
       });
     });
 
     it('should handle optional strings', () => {
       const validator = createStringValidator({ optional: true });
-      
+
       expect(validator.validate(undefined)).toEqual({
         success: true,
-        data: undefined
+        data: undefined,
       });
-      
+
       expect(validator.validate('test')).toEqual({
         success: true,
-        data: 'test'
+        data: 'test',
       });
     });
   });
@@ -52,20 +52,20 @@ describe('Lightweight Validators', () => {
     it('should validate objects with required fields', () => {
       const validator = createObjectValidator({
         name: createStringValidator({}),
-        age: createStringValidator({ pattern: /^\d+$/ })
+        age: createStringValidator({ pattern: /^\d+$/ }),
       });
 
       expect(validator.validate({ name: 'John', age: '25' })).toEqual({
         success: true,
-        data: { name: 'John', age: '25' }
+        data: { name: 'John', age: '25' },
       });
 
       expect(validator.validate({ name: 'John' })).toEqual({
         success: false,
         error: {
           message: 'Required field "age" is missing',
-          path: ['age']
-        }
+          path: ['age'],
+        },
       });
     });
   });
@@ -76,15 +76,15 @@ describe('Lightweight Validators', () => {
 
       expect(validator.validate(['a', 'b', 'c'])).toEqual({
         success: true,
-        data: ['a', 'b', 'c']
+        data: ['a', 'b', 'c'],
       });
 
       expect(validator.validate(['a', 123, 'c'])).toEqual({
         success: false,
         error: {
           message: 'Expected string, received number',
-          path: [1]
-        }
+          path: [1],
+        },
       });
     });
   });
@@ -94,20 +94,20 @@ describe('Lightweight Validators', () => {
       const validator = createTupleValidator([
         createStringValidator({}),
         createStringValidator({ pattern: /^from$/ }),
-        createStringValidator({})
+        createStringValidator({}),
       ]);
 
       expect(validator.validate(['property', 'from', 'element'])).toEqual({
         success: true,
-        data: ['property', 'from', 'element']
+        data: ['property', 'from', 'element'],
       });
 
       expect(validator.validate(['property', 'to', 'element'])).toEqual({
         success: false,
         error: {
           message: 'Expected "from", received "to"',
-          path: [1]
-        }
+          path: [1],
+        },
       });
     });
   });
@@ -116,25 +116,25 @@ describe('Lightweight Validators', () => {
     it('should validate union types', () => {
       const validator = createUnionValidator([
         createStringValidator({}),
-        createStringValidator({ pattern: /^\d+$/ })
+        createStringValidator({ pattern: /^\d+$/ }),
       ]);
 
       expect(validator.validate('hello')).toEqual({
         success: true,
-        data: 'hello'
+        data: 'hello',
       });
 
       expect(validator.validate('123')).toEqual({
         success: true,
-        data: '123'
+        data: '123',
       });
 
       expect(validator.validate(123)).toEqual({
         success: false,
         error: {
           message: 'Value does not match any union type',
-          path: []
-        }
+          path: [],
+        },
       });
     });
   });
@@ -147,7 +147,7 @@ describe('Lightweight Validators', () => {
       // In production, validation should pass through without checking
       expect(validator.validate('short')).toEqual({
         success: true,
-        data: 'short'
+        data: 'short',
       });
     });
 
@@ -159,8 +159,8 @@ describe('Lightweight Validators', () => {
         success: false,
         error: {
           message: 'String must be at least 10 characters long',
-          path: []
-        }
+          path: [],
+        },
       });
     });
   });
@@ -174,21 +174,21 @@ describe('Integration with HyperScript Commands', () => {
       createStringValidator({ pattern: /^from$/, description: 'Keyword: from' }),
       createUnionValidator([
         createStringValidator({ description: 'CSS selector' }),
-        createStringValidator({ pattern: /^HTMLElement$/, description: 'HTMLElement' })
-      ])
+        createStringValidator({ pattern: /^HTMLElement$/, description: 'HTMLElement' }),
+      ]),
     ]);
 
     expect(takeCommandValidator.validate(['class', 'from', '#element'])).toEqual({
       success: true,
-      data: ['class', 'from', '#element']
+      data: ['class', 'from', '#element'],
     });
 
     expect(takeCommandValidator.validate(['class', 'to', '#element'])).toEqual({
       success: false,
       error: {
         message: 'Expected "from", received "to"',
-        path: [1]
-      }
+        path: [1],
+      },
     });
   });
 });

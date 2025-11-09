@@ -4,20 +4,15 @@
  * Converts TypedCommandImplementation to runtime-compatible format
  */
 
-import type {
-  ExecutionContext,
-  TypedExecutionContext,
-  ValidationResult
-} from '../types/core';
+import type { ExecutionContext, TypedExecutionContext, ValidationResult } from '../types/core';
 import type { ASTNode } from '../types/base-types';
 import {
   createAllEnhancedCommands,
   ENHANCED_COMMAND_FACTORIES,
-  getEnhancedCommandNames
+  getEnhancedCommandNames,
 } from '../commands/command-registry';
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { debug } from '../utils/debug';
-
 
 /**
  * Runtime-compatible command interface
@@ -62,14 +57,17 @@ export class ContextBridge {
       expressionStack: [],
       evaluationDepth: 0,
       validationMode: 'strict',
-      evaluationHistory: []
+      evaluationHistory: [],
     };
   }
 
   /**
    * Update ExecutionContext from TypedExecutionContext
    */
-  static fromTyped(typedContext: TypedExecutionContext, originalContext: ExecutionContext): ExecutionContext {
+  static fromTyped(
+    typedContext: TypedExecutionContext,
+    originalContext: ExecutionContext
+  ): ExecutionContext {
     return {
       ...originalContext,
       me: typedContext.me,
@@ -81,7 +79,7 @@ export class ContextBridge {
       locals: typedContext.locals,
       globals: typedContext.globals,
       ...(typedContext.events !== undefined && { events: typedContext.events }),
-      ...(typedContext.meta !== undefined && { meta: typedContext.meta })
+      ...(typedContext.meta !== undefined && { meta: typedContext.meta }),
     };
   }
 }
@@ -101,7 +99,7 @@ export class CommandAdapter implements RuntimeCommand {
     return {
       description: this.impl.description,
       examples: this.impl.metadata?.examples || [],
-      syntax: this.impl.syntax
+      syntax: this.impl.syntax,
     };
   }
 
@@ -127,11 +125,20 @@ export class CommandAdapter implements RuntimeCommand {
         // SET command argument processing - handle context confusion
         if (this.impl.name === 'set') {
           // Check if we received the context object by mistake (has all context properties)
-          if (args.length === 1 && args[0] && typeof args[0] === 'object' &&
-              'me' in args[0] && 'locals' in args[0] && 'globals' in args[0] && 'result' in args[0]) {
-            throw new Error('SET command received context object instead of parsed arguments. Check runtime command adapter routing.');
+          if (
+            args.length === 1 &&
+            args[0] &&
+            typeof args[0] === 'object' &&
+            'me' in args[0] &&
+            'locals' in args[0] &&
+            'globals' in args[0] &&
+            'result' in args[0]
+          ) {
+            throw new Error(
+              'SET command received context object instead of parsed arguments. Check runtime command adapter routing.'
+            );
           }
-          
+
           // Simple approach: create input object from raw arguments
           if (Array.isArray(args) && args.length >= 2) {
             // Assume format: [targetNode, valueNode] for "set target to value"
@@ -144,7 +151,11 @@ export class CommandAdapter implements RuntimeCommand {
             if (typeof targetNode === 'string') {
               // Simple string target
               target = targetNode;
-            } else if (targetNode && typeof targetNode === 'object' && (targetNode as any)._isScoped) {
+            } else if (
+              targetNode &&
+              typeof targetNode === 'object' &&
+              (targetNode as any)._isScoped
+            ) {
               // Scoped variable object from runtime (e.g., {_isScoped: true, name: "count", scope: "global"})
               target = (targetNode as any).name;
               scope = (targetNode as any).scope;
@@ -178,9 +189,14 @@ export class CommandAdapter implements RuntimeCommand {
               target: target,
               value: value,
               toKeyword: 'to' as const,
-              scope: scope  // Use extracted scope (global/local) or undefined
+              scope: scope, // Use extracted scope (global/local) or undefined
             };
-          } else if (args.length === 1 && args[0] && typeof args[0] === 'object' && 'target' in args[0]) {
+          } else if (
+            args.length === 1 &&
+            args[0] &&
+            typeof args[0] === 'object' &&
+            'target' in args[0]
+          ) {
             // Pre-processed input object from runtime
             input = args[0];
           } else if (args.length === 1) {
@@ -189,7 +205,7 @@ export class CommandAdapter implements RuntimeCommand {
               target: args[0],
               value: undefined,
               toKeyword: 'to' as const,
-              scope: undefined
+              scope: undefined,
             };
           } else {
             // Multiple arguments fallback: create input from first two arguments
@@ -197,7 +213,7 @@ export class CommandAdapter implements RuntimeCommand {
               target: args[0],
               value: args[1],
               toKeyword: 'to' as const,
-              scope: undefined
+              scope: undefined,
             };
           }
         } else if ((implName === 'if' || implName === 'unless') && Array.isArray(args)) {
@@ -208,20 +224,25 @@ export class CommandAdapter implements RuntimeCommand {
           //   args[2]: elseBlock (block AST node, optional)
           input = {
             condition: args[0],
-            thenCommands: args[1],  // Block node, will be handled by IfCommand
-            elseCommands: args[2]   // Block node or undefined
+            thenCommands: args[1], // Block node, will be handled by IfCommand
+            elseCommands: args[2], // Block node or undefined
           };
-        } else if (this.impl.name === 'render' && Array.isArray(args) && args.length >= 3 && args[1] === 'with') {
+        } else if (
+          this.impl.name === 'render' &&
+          Array.isArray(args) &&
+          args.length >= 3 &&
+          args[1] === 'with'
+        ) {
           // Convert ['template', 'with', 'data'] to structured input
           input = {
             template: args[0],
             variables: args[2],
-            withKeyword: 'with' as const
+            withKeyword: 'with' as const,
           };
         } else if (this.impl.name === 'log') {
           // LOG command - all arguments are values to log
           input = {
-            values: Array.isArray(args) ? args : [args]
+            values: Array.isArray(args) ? args : [args],
           };
         } else if (this.impl.name === 'install') {
           // INSTALL command - convert [behaviorNameNode, paramsNode?, targetNode?] to structured input
@@ -272,7 +293,7 @@ export class CommandAdapter implements RuntimeCommand {
           input = {
             behaviorName,
             parameters,
-            target
+            target,
           };
         } else if (this.impl.name === 'transition' || this.impl.metadata?.name === 'transition') {
           // TRANSITION command - receives raw AST nodes, extract metadata then evaluate values
@@ -282,7 +303,11 @@ export class CommandAdapter implements RuntimeCommand {
           //   args[2]: Duration expression node (optional, needs evaluation)
           //   args[3]: Timing function expression node (optional, needs evaluation)
 
-          const property = args[0] ? (typeof args[0] === 'string' ? args[0] : (args[0] as any).value || (args[0] as any).content) : undefined;
+          const property = args[0]
+            ? typeof args[0] === 'string'
+              ? args[0]
+              : (args[0] as any).value || (args[0] as any).content
+            : undefined;
 
           // CSS keyword values that should not be evaluated as variables
           const cssKeywords = ['initial', 'inherit', 'unset', 'revert', 'auto', 'none'];
@@ -306,14 +331,20 @@ export class CommandAdapter implements RuntimeCommand {
 
           // Evaluate duration and timing function
           const evaluator = new ExpressionEvaluator();
-          const duration = args.length > 2 && args[2] && typeof args[2] === 'object' && 'type' in args[2] ? await evaluator.evaluate(args[2] as ASTNode, context) : args[2];
-          const timingFunction = args.length > 3 && args[3] && typeof args[3] === 'object' && 'type' in args[3] ? await evaluator.evaluate(args[3] as ASTNode, context) : args[3];
+          const duration =
+            args.length > 2 && args[2] && typeof args[2] === 'object' && 'type' in args[2]
+              ? await evaluator.evaluate(args[2] as ASTNode, context)
+              : args[2];
+          const timingFunction =
+            args.length > 3 && args[3] && typeof args[3] === 'object' && 'type' in args[3]
+              ? await evaluator.evaluate(args[3] as ASTNode, context)
+              : args[3];
 
           input = {
             property,
             value,
             duration,
-            timingFunction
+            timingFunction,
           };
         } else if (this.impl.name === 'repeat' || this.impl.metadata?.name === 'repeat') {
           // REPEAT command - receives raw AST nodes, extract loop type then evaluate as needed
@@ -324,7 +355,11 @@ export class CommandAdapter implements RuntimeCommand {
           //   args[3]: (for until-event with from) event target
           //   args[...]: Commands block (last arg with type 'block' containing commands array)
 
-          const loopType = args[0] ? (typeof args[0] === 'string' ? args[0] : (args[0] as any).name || (args[0] as any).value) : undefined;
+          const loopType = args[0]
+            ? typeof args[0] === 'string'
+              ? args[0]
+              : (args[0] as any).name || (args[0] as any).value
+            : undefined;
 
           debug.loop('REPEAT: Received args:', {
             argsLength: args.length,
@@ -338,8 +373,8 @@ export class CommandAdapter implements RuntimeCommand {
               type: arg?.type,
               name: arg?.name,
               value: arg?.value,
-              keys: arg && typeof arg === 'object' ? Object.keys(arg) : []
-            }))
+              keys: arg && typeof arg === 'object' ? Object.keys(arg) : [],
+            })),
           });
 
           let variable: string | undefined;
@@ -356,24 +391,43 @@ export class CommandAdapter implements RuntimeCommand {
 
           // Parse based on loop type
           if (loopType === 'for') {
-            variable = args[1] ? (typeof args[1] === 'string' ? args[1] : (args[1] as any).value) : undefined;
-            collection = args[2] && typeof args[2] === 'object' && 'type' in args[2] ? await evaluator.evaluate(args[2] as ASTNode, context) : args[2];
+            variable = args[1]
+              ? typeof args[1] === 'string'
+                ? args[1]
+                : (args[1] as any).value
+              : undefined;
+            collection =
+              args[2] && typeof args[2] === 'object' && 'type' in args[2]
+                ? await evaluator.evaluate(args[2] as ASTNode, context)
+                : args[2];
             // Check for optional indexVariable in args[3] (from "with index" clause)
             if (args[3] && typeof args[3] === 'object' && (args[3] as any).type === 'string') {
               indexVariable = (args[3] as any).value;
             }
           } else if (loopType === 'times') {
-            const timesArg = args[1] && typeof args[1] === 'object' && 'type' in args[1] ? await evaluator.evaluate(args[1] as ASTNode, context) : args[1];
+            const timesArg =
+              args[1] && typeof args[1] === 'object' && 'type' in args[1]
+                ? await evaluator.evaluate(args[1] as ASTNode, context)
+                : args[1];
             count = typeof timesArg === 'number' ? timesArg : undefined;
           } else if (loopType === 'while' || loopType === 'until') {
             condition = args[1]; // Keep as AST node for later evaluation
           } else if (loopType === 'until-event') {
-            eventName = args[1] ? (typeof args[1] === 'string' ? args[1] : (args[1] as any).value) : undefined;
-            eventTarget = args[2] && typeof args[2] === 'object' && 'type' in args[2] ? await evaluator.evaluate(args[2] as ASTNode, context) : args[2];
+            eventName = args[1]
+              ? typeof args[1] === 'string'
+                ? args[1]
+                : (args[1] as any).value
+              : undefined;
+            eventTarget =
+              args[2] && typeof args[2] === 'object' && 'type' in args[2]
+                ? await evaluator.evaluate(args[2] as ASTNode, context)
+                : args[2];
           }
 
           // Extract command block - look for arg with type 'block' containing commands array
-          const blockArg = args.find((arg: any) => arg && typeof arg === 'object' && arg.type === 'block');
+          const blockArg = args.find(
+            (arg: any) => arg && typeof arg === 'object' && arg.type === 'block'
+          );
           if (blockArg && Array.isArray((blockArg as any).commands)) {
             // Get the runtime execute function from context
             const runtimeExecute = context.locals.get('_runtimeExecute');
@@ -390,7 +444,12 @@ export class CommandAdapter implements RuntimeCommand {
               console.warn('REPEAT: _runtimeExecute not found in context, commands will be empty');
             }
           } else {
-            console.warn('REPEAT: No block arg found with commands array', { args: args.map((a: any) => ({ type: a?.type, keys: a && typeof a === 'object' ? Object.keys(a) : [] })) });
+            console.warn('REPEAT: No block arg found with commands array', {
+              args: args.map((a: any) => ({
+                type: a?.type,
+                keys: a && typeof a === 'object' ? Object.keys(a) : [],
+              })),
+            });
           }
 
           debug.loop('REPEAT: Parsed values:', {
@@ -402,7 +461,7 @@ export class CommandAdapter implements RuntimeCommand {
             eventName,
             eventTarget,
             indexVariable,
-            commandsLength: commands.length
+            commandsLength: commands.length,
           });
 
           input = {
@@ -414,7 +473,7 @@ export class CommandAdapter implements RuntimeCommand {
             eventName,
             eventTarget,
             indexVariable,
-            commands
+            commands,
           };
 
           debug.loop('REPEAT: Created input object:', input);
@@ -445,7 +504,7 @@ export class CommandAdapter implements RuntimeCommand {
             const timeValue = await evaluateIfNeeded(args[0]);
             input = {
               type: 'time',
-              value: typeof timeValue === 'number' ? timeValue : 1000
+              value: typeof timeValue === 'number' ? timeValue : 1000,
             };
           } else {
             // Event-based wait: wait for event(args) or event from target
@@ -455,7 +514,7 @@ export class CommandAdapter implements RuntimeCommand {
             input = {
               type: 'event',
               events: Array.isArray(eventsArray) ? eventsArray : [],
-              source: sourceTarget
+              source: sourceTarget,
             };
 
             debug.async('WAIT: Prepared event input:', input);
@@ -478,8 +537,16 @@ export class CommandAdapter implements RuntimeCommand {
             const secondArg = args[1];
 
             // Check for "the event" pattern
-            if (firstArg && typeof firstArg === 'object' && 'name' in firstArg && (firstArg as any).name === 'the' &&
-                secondArg && typeof secondArg === 'object' && 'name' in secondArg && (secondArg as any).name === 'event') {
+            if (
+              firstArg &&
+              typeof firstArg === 'object' &&
+              'name' in firstArg &&
+              (firstArg as any).name === 'the' &&
+              secondArg &&
+              typeof secondArg === 'object' &&
+              'name' in secondArg &&
+              (secondArg as any).name === 'event'
+            ) {
               // This is "halt the event" - pass 'the' string so halt command uses context.event
               input = { target: 'the' };
             } else {
@@ -495,28 +562,33 @@ export class CommandAdapter implements RuntimeCommand {
           // Default input handling for other commands
           input = args.length === 1 ? args[0] : args;
         }
-        
+
         result = await this.impl.execute(input, typedContext);
       } else {
         // Legacy command adapter expects (context, ...args) signature
         result = await this.impl.execute(typedContext, ...args);
       }
-      
+
       // Update original context with changes
       Object.assign(context, ContextBridge.fromTyped(typedContext, context));
-      
+
       // Extract value from EvaluationResult if needed
       if (result && typeof result === 'object' && 'success' in result) {
         return result.success ? result.value : result;
       }
-      
+
       return result;
-      
     } catch (error) {
       // Check for control flow errors - don't wrap, just rethrow
       if (error instanceof Error) {
         const errorAny = error as any;
-        if (errorAny.isHalt || errorAny.isExit || errorAny.isReturn || errorAny.isBreak || errorAny.isContinue) {
+        if (
+          errorAny.isHalt ||
+          errorAny.isExit ||
+          errorAny.isReturn ||
+          errorAny.isBreak ||
+          errorAny.isContinue
+        ) {
           throw error;
         }
       }
@@ -545,11 +617,9 @@ export class CommandAdapter implements RuntimeCommand {
    */
   validate(input: unknown): ValidationResult<unknown> {
     if (!this.impl.validate) {
-      return { isValid: true,
-        errors: [],
-        suggestions: [], data: input };
+      return { isValid: true, errors: [], suggestions: [], data: input };
     }
-    
+
     // Use the command's validate method - pass input directly since commands expect tuple format
     const result = this.impl.validate(input);
     return {
@@ -557,34 +627,33 @@ export class CommandAdapter implements RuntimeCommand {
       errors: result.errors || [],
       suggestions: result.suggestions || [],
       data: input,
-      error: result.errors?.[0]
+      error: result.errors?.[0],
     };
   }
-
 
   /**
    * Generate helpful suggestions for command usage
    */
   private generateSuggestions(args: unknown[]): string[] {
     const suggestions: string[] = [];
-    
+
     // Add basic syntax suggestion
     if (this.impl.syntax) {
       suggestions.push(`Correct syntax: ${this.impl.syntax}`);
     }
-    
+
     // Add example usage
     if (this.impl.metadata?.examples?.length > 0) {
       const firstExample = this.impl.metadata.examples[0];
       const exampleCode = typeof firstExample === 'object' ? firstExample.code : firstExample;
       suggestions.push(`Example: ${exampleCode}`);
     }
-    
+
     // Add argument count suggestion
     if (args.length === 0) {
       suggestions.push('This command requires arguments');
     }
-    
+
     return suggestions;
   }
 }
@@ -707,12 +776,14 @@ export class LazyCommandRegistry {
       const commandNames = await this.getCommandNames();
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Unknown command: ${name}`,
-          suggestions: [`Available commands: ${commandNames.join(', ')}`]
-        }],
-        suggestions: [`Available commands: ${commandNames.join(', ')}`]
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Unknown command: ${name}`,
+            suggestions: [`Available commands: ${commandNames.join(', ')}`],
+          },
+        ],
+        suggestions: [`Available commands: ${commandNames.join(', ')}`],
       };
     }
 
@@ -724,9 +795,7 @@ export class LazyCommandRegistry {
    * Phase 2: Now async to support dynamic imports
    */
   async warmup(commandNames: string[]): Promise<void> {
-    await Promise.all(
-      commandNames.map(name => this.getAdapter(name))
-    );
+    await Promise.all(commandNames.map(name => this.getAdapter(name)));
   }
 }
 
@@ -741,9 +810,7 @@ export class EnhancedCommandRegistry {
   /**
    * Register an enhanced command
    */
-  register(
-    impl: any
-  ): void {
+  register(impl: any): void {
     const adapter = new CommandAdapter(impl);
     const name = adapter.name; // Use adapter.name which handles both impl.name and impl.metadata.name
 
@@ -754,7 +821,7 @@ export class EnhancedCommandRegistry {
         implName: impl?.name,
         implMetadata: impl?.metadata,
         implMetadataName: impl?.metadata?.name,
-        adapterName: adapter.name
+        adapterName: adapter.name,
       });
     }
 
@@ -805,12 +872,14 @@ export class EnhancedCommandRegistry {
     if (!adapter) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Unknown command: ${name}`,
-          suggestions: [`Available commands: ${this.getCommandNames().join(', ')}`]
-        }],
-        suggestions: [`Available commands: ${this.getCommandNames().join(', ')}`]
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Unknown command: ${name}`,
+            suggestions: [`Available commands: ${this.getCommandNames().join(', ')}`],
+          },
+        ],
+        suggestions: [`Available commands: ${this.getCommandNames().join(', ')}`],
       };
     }
 

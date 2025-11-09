@@ -1,6 +1,6 @@
 /**
  * Unified Type System - Single Source of Truth
- * 
+ *
  * This file consolidates all core type definitions to resolve architectural
  * conflicts and establish consistent types across the HyperFixi codebase.
  */
@@ -71,24 +71,29 @@ export type UnifiedHyperScriptValueType =
 /**
  * Unified evaluation type - consolidates EvaluationType definitions
  */
-export type UnifiedEvaluationType = UnifiedHyperScriptValueType | 'Any' | 'Context' | 'Command' | 'Expression';
+export type UnifiedEvaluationType =
+  | UnifiedHyperScriptValueType
+  | 'Any'
+  | 'Context'
+  | 'Command'
+  | 'Expression';
 
 /**
  * Unified HyperScript value - actual value container
  */
-export type UnifiedHyperScriptValue = 
-  | string 
-  | number 
-  | boolean 
-  | HTMLElement 
-  | HTMLElement[] 
-  | unknown[] 
-  | Record<string, unknown> 
-  | Promise<unknown> 
-  | DocumentFragment 
-  | null 
-  | undefined 
-  | Function 
+export type UnifiedHyperScriptValue =
+  | string
+  | number
+  | boolean
+  | HTMLElement
+  | HTMLElement[]
+  | unknown[]
+  | Record<string, unknown>
+  | Promise<unknown>
+  | DocumentFragment
+  | null
+  | undefined
+  | Function
   | Event;
 
 // ============================================================================
@@ -159,14 +164,14 @@ export interface UnifiedTypedResult<T = unknown> extends UnifiedResult<T> {
 /**
  * Unified command category - consolidates all command categories
  */
-export type UnifiedCommandCategory = 
-  | 'dom-manipulation' 
-  | 'event-handling' 
-  | 'data-processing' 
-  | 'control-flow' 
-  | 'animation' 
-  | 'network' 
-  | 'utility' 
+export type UnifiedCommandCategory =
+  | 'dom-manipulation'
+  | 'event-handling'
+  | 'data-processing'
+  | 'control-flow'
+  | 'animation'
+  | 'network'
+  | 'utility'
   | 'navigation'
   | 'templates'
   | 'advanced';
@@ -174,15 +179,15 @@ export type UnifiedCommandCategory =
 /**
  * Unified side effect types
  */
-export type UnifiedSideEffect = 
-  | 'dom-mutation' 
-  | 'network-request' 
-  | 'local-storage' 
-  | 'global-state' 
-  | 'event-emission' 
-  | 'timer-creation' 
-  | 'navigation' 
-  | 'dom-query' 
+export type UnifiedSideEffect =
+  | 'dom-mutation'
+  | 'network-request'
+  | 'local-storage'
+  | 'global-state'
+  | 'event-emission'
+  | 'timer-creation'
+  | 'navigation'
+  | 'dom-query'
   | 'history'
   | 'async'
   | 'attribute-transfer';
@@ -194,13 +199,13 @@ export type UnifiedSideEffect =
 /**
  * Unified expression category
  */
-export type UnifiedExpressionCategory = 
-  | 'Reference' 
-  | 'Property' 
-  | 'Logical' 
-  | 'Mathematical' 
-  | 'Conversion' 
-  | 'Positional' 
+export type UnifiedExpressionCategory =
+  | 'Reference'
+  | 'Property'
+  | 'Logical'
+  | 'Mathematical'
+  | 'Conversion'
+  | 'Positional'
   | 'Special';
 
 /**
@@ -295,27 +300,25 @@ export class UnifiedValidator {
   /**
    * Validate input against a Zod schema with unified error formatting
    */
-  static validateInput<T>(
-    input: unknown,
-    schema: RuntimeValidator<T>
-  ): UnifiedValidationResult<T> {
+  static validateInput<T>(input: unknown, schema: RuntimeValidator<T>): UnifiedValidationResult<T> {
     try {
       const parsed = schema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch' as const,
-            message: `Invalid input: ${err.message}`,
-            suggestions: [
-              'Check input structure',
-              'Verify all required properties are provided',
-              'Ensure property types match schema'
-            ],
-            path: Array.isArray(err.path) ? err.path.join('.') : String(err.path)
-          })) || [],
-          suggestions: ['Review input format and try again']
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch' as const,
+              message: `Invalid input: ${err.message}`,
+              suggestions: [
+                'Check input structure',
+                'Verify all required properties are provided',
+                'Ensure property types match schema',
+              ],
+              path: Array.isArray(err.path) ? err.path.join('.') : String(err.path),
+            })) || [],
+          suggestions: ['Review input format and try again'],
         };
       }
 
@@ -323,17 +326,19 @@ export class UnifiedValidator {
         isValid: true,
         errors: [],
         suggestions: [],
-        ...(parsed.data !== undefined && { data: parsed.data })
+        ...(parsed.data !== undefined && { data: parsed.data }),
       };
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error' as const,
-          message: 'Validation failed with exception',
-          suggestions: ['Check input structure and types']
-        }],
-        suggestions: ['Verify input is in correct format']
+        errors: [
+          {
+            type: 'runtime-error' as const,
+            message: 'Validation failed with exception',
+            suggestions: ['Check input structure and types'],
+          },
+        ],
+        suggestions: ['Verify input is in correct format'],
       };
     }
   }
@@ -353,7 +358,7 @@ export class UnifiedValidator {
       message,
       suggestions,
       ...(path !== undefined && { path }),
-      ...(code !== undefined && { code })
+      ...(code !== undefined && { code }),
     };
   }
 
@@ -365,7 +370,7 @@ export class UnifiedValidator {
       isValid: true,
       errors: [],
       suggestions: [],
-      data
+      data,
     };
   }
 
@@ -379,7 +384,7 @@ export class UnifiedValidator {
     return {
       isValid: false,
       errors,
-      suggestions
+      suggestions,
     };
   }
 }
@@ -391,9 +396,7 @@ export class UnifiedValidator {
 /**
  * Type guard for UnifiedValidationResult
  */
-export function isUnifiedValidationResult<T>(
-  value: unknown
-): value is UnifiedValidationResult<T> {
+export function isUnifiedValidationResult<T>(value: unknown): value is UnifiedValidationResult<T> {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -409,9 +412,7 @@ export function isUnifiedValidationResult<T>(
 /**
  * Type guard for UnifiedExecutionContext
  */
-export function isUnifiedExecutionContext(
-  value: unknown
-): value is UnifiedExecutionContext {
+export function isUnifiedExecutionContext(value: unknown): value is UnifiedExecutionContext {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -431,5 +432,5 @@ export function isUnifiedExecutionContext(
 export default {
   UnifiedValidator,
   isUnifiedValidationResult,
-  isUnifiedExecutionContext
+  isUnifiedExecutionContext,
 };

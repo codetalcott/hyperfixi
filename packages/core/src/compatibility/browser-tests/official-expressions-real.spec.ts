@@ -19,11 +19,11 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
     const results = await page.evaluate(async () => {
       const tests = [
         // From official strings.js test file
-        { expr: '"foo"', expected: "foo" },
+        { expr: '"foo"', expected: 'foo' },
         { expr: '"fo\'o"', expected: "fo'o" },
-        { expr: "'foo'", expected: "foo" },
-        { expr: "'hello world'", expected: "hello world" },
-        { expr: '"hello world"', expected: "hello world" }
+        { expr: "'foo'", expected: 'foo' },
+        { expr: "'hello world'", expected: 'hello world' },
+        { expr: '"hello world"', expected: 'hello world' },
       ];
 
       const results = [];
@@ -35,7 +35,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: result,
             success: result === test.expected,
-            error: null
+            error: null,
           });
         } catch (error) {
           results.push({
@@ -43,7 +43,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: null,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
@@ -57,12 +57,16 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
         console.log(`  ✅ ${result.expression} = ${JSON.stringify(result.actual)}`);
         passed++;
       } else {
-        console.log(`  ❌ ${result.expression}: Expected ${JSON.stringify(result.expected)}, got ${JSON.stringify(result.actual)}`);
+        console.log(
+          `  ❌ ${result.expression}: Expected ${JSON.stringify(result.expected)}, got ${JSON.stringify(result.actual)}`
+        );
         if (result.error) console.log(`     Error: ${result.error}`);
       }
     }
-    console.log(`  📊 String Tests: ${passed}/${results.length} passed (${Math.round(passed/results.length*100)}%)`);
-    
+    console.log(
+      `  📊 String Tests: ${passed}/${results.length} passed (${Math.round((passed / results.length) * 100)}%)`
+    );
+
     expect(passed).toBeGreaterThan(results.length * 0.8); // 80%+ success rate
   });
 
@@ -77,7 +81,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
         { expr: '5 mod 3', expected: 2 },
         { expr: '1 + 2 + 3', expected: 6 },
         { expr: "'a' + 'b'", expected: 'ab' },
-        { expr: '(2 + 3) * 4', expected: 20 }
+        { expr: '(2 + 3) * 4', expected: 20 },
       ];
 
       const results = [];
@@ -89,7 +93,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: result,
             success: result === test.expected,
-            error: null
+            error: null,
           });
         } catch (error) {
           results.push({
@@ -97,7 +101,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: null,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
@@ -115,8 +119,10 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
         if (result.error) console.log(`     Error: ${result.error}`);
       }
     }
-    console.log(`  📊 Math Tests: ${passed}/${results.length} passed (${Math.round(passed/results.length*100)}%)`);
-    
+    console.log(
+      `  📊 Math Tests: ${passed}/${results.length} passed (${Math.round((passed / results.length) * 100)}%)`
+    );
+
     expect(passed).toBeGreaterThan(results.length * 0.7); // 70%+ success rate
   });
 
@@ -132,7 +138,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
         { expr: 'false or false', expected: false },
         { expr: 'not true', expected: false },
         { expr: 'not false', expected: true },
-        { expr: '(true and false) or true', expected: true }
+        { expr: '(true and false) or true', expected: true },
       ];
 
       const results = [];
@@ -144,7 +150,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: result,
             success: result === test.expected,
-            error: null
+            error: null,
           });
         } catch (error) {
           results.push({
@@ -152,7 +158,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: null,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
@@ -170,8 +176,10 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
         if (result.error) console.log(`     Error: ${result.error}`);
       }
     }
-    console.log(`  📊 Boolean/Logical Tests: ${passed}/${results.length} passed (${Math.round(passed/results.length*100)}%)`);
-    
+    console.log(
+      `  📊 Boolean/Logical Tests: ${passed}/${results.length} passed (${Math.round((passed / results.length) * 100)}%)`
+    );
+
     expect(passed).toBeGreaterThan(results.length * 0.8); // 80%+ success rate
   });
 
@@ -187,7 +195,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
         { expr: '5 == 5', expected: true },
         { expr: '5 != 3', expected: true },
         { expr: '5 is 5', expected: true },
-        { expr: '5 is not 3', expected: true }
+        { expr: '5 is not 3', expected: true },
       ];
 
       const results = [];
@@ -199,7 +207,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: result,
             success: result === test.expected,
-            error: null
+            error: null,
           });
         } catch (error) {
           results.push({
@@ -207,7 +215,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: null,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
@@ -225,8 +233,10 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
         if (result.error) console.log(`     Error: ${result.error}`);
       }
     }
-    console.log(`  📊 Comparison Tests: ${passed}/${results.length} passed (${Math.round(passed/results.length*100)}%)`);
-    
+    console.log(
+      `  📊 Comparison Tests: ${passed}/${results.length} passed (${Math.round((passed / results.length) * 100)}%)`
+    );
+
     expect(passed).toBeGreaterThan(results.length * 0.8); // 80%+ success rate
   });
 
@@ -236,7 +246,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
         // From official possessiveExpression.js
         { expr: 'its result', context: { result: { result: 'success' } }, expected: 'success' },
         { expr: 'my value', context: { me: { value: 42 } }, expected: 42 },
-        { expr: 'your data', context: { you: { data: 'test' } }, expected: 'test' }
+        { expr: 'your data', context: { you: { data: 'test' } }, expected: 'test' },
       ];
 
       const results = [];
@@ -248,7 +258,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: result,
             success: result === test.expected,
-            error: null
+            error: null,
           });
         } catch (error) {
           results.push({
@@ -256,7 +266,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: null,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
@@ -270,12 +280,16 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
         console.log(`  ✅ ${result.expression} = ${JSON.stringify(result.actual)}`);
         passed++;
       } else {
-        console.log(`  ❌ ${result.expression}: Expected ${JSON.stringify(result.expected)}, got ${JSON.stringify(result.actual)}`);
+        console.log(
+          `  ❌ ${result.expression}: Expected ${JSON.stringify(result.expected)}, got ${JSON.stringify(result.actual)}`
+        );
         if (result.error) console.log(`     Error: ${result.error}`);
       }
     }
-    console.log(`  📊 Possessive Tests: ${passed}/${results.length} passed (${Math.round(passed/results.length*100)}%)`);
-    
+    console.log(
+      `  📊 Possessive Tests: ${passed}/${results.length} passed (${Math.round((passed / results.length) * 100)}%)`
+    );
+
     expect(passed).toBeGreaterThan(results.length * 0.8); // 80%+ success rate
   });
 

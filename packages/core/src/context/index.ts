@@ -7,9 +7,7 @@
 // Core Context Types and Base Classes
 // ============================================================================
 
-import type {
-  TypedContextImplementation
-} from '../types/context-types';
+import type { TypedContextImplementation } from '../types/context-types';
 
 import type { ValidationResult } from '../types/base-types';
 
@@ -21,7 +19,7 @@ export type {
   ContextFilter,
   BaseContextInput,
   BaseContextOutput,
-  EnhancedTypedExpressionContext
+  EnhancedTypedExpressionContext,
 } from '../types/context-types';
 
 export type { ValidationResult } from '../types/base-types';
@@ -29,7 +27,7 @@ export type { ValidationResult } from '../types/base-types';
 export {
   EnhancedContextBase,
   BaseContextInputSchema,
-  BaseContextOutputSchema
+  BaseContextOutputSchema,
 } from '../types/context-types';
 
 // ============================================================================
@@ -40,34 +38,28 @@ export {
   ContextRegistry,
   defaultContextRegistry,
   createContextRegistry,
-  registerContexts
+  registerContexts,
 } from './context-registry';
 
 // ============================================================================
 // Frontend Context Implementation
 // ============================================================================
 
-export type {
-  FrontendContextInput,
-  FrontendContextOutput
-} from './frontend-context';
+export type { FrontendContextInput, FrontendContextOutput } from './frontend-context';
 
 export {
   TypedFrontendContextImplementation,
   FrontendContextInputSchema,
   FrontendContextOutputSchema,
   createFrontendContext,
-  frontendContextImplementation
+  frontendContextImplementation,
 } from './frontend-context';
 
 // ============================================================================
 // Backend Context Implementation
 // ============================================================================
 
-export type {
-  BackendContextInput,
-  BackendContextOutput
-} from './backend-context';
+export type { BackendContextInput, BackendContextOutput } from './backend-context';
 
 export {
   TypedBackendContextImplementation,
@@ -77,17 +69,14 @@ export {
   createDjangoContext,
   createExpressContext,
   createFlaskContext,
-  backendContextImplementation
+  backendContextImplementation,
 } from './backend-context';
 
 // ============================================================================
 // LLM Generation Context Implementation
 // ============================================================================
 
-export type {
-  LLMGenerationInput,
-  LLMGenerationOutput
-} from './llm-generation-context';
+export type { LLMGenerationInput, LLMGenerationOutput } from './llm-generation-context';
 
 export {
   TypedLLMGenerationContextImplementation,
@@ -95,7 +84,7 @@ export {
   LLMGenerationOutputSchema,
   createLLMGenerationContext,
   generateHyperscript,
-  llmGenerationContextImplementation
+  llmGenerationContextImplementation,
 } from './llm-generation-context';
 
 // ============================================================================
@@ -103,9 +92,21 @@ export {
 // ============================================================================
 
 import { defaultContextRegistry } from './context-registry';
-import { frontendContextImplementation, TypedFrontendContextImplementation, type FrontendContextInput } from './frontend-context';
-import { backendContextImplementation, TypedBackendContextImplementation, type BackendContextInput } from './backend-context';
-import { llmGenerationContextImplementation, TypedLLMGenerationContextImplementation, type LLMGenerationInput } from './llm-generation-context';
+import {
+  frontendContextImplementation,
+  TypedFrontendContextImplementation,
+  type FrontendContextInput,
+} from './frontend-context';
+import {
+  backendContextImplementation,
+  TypedBackendContextImplementation,
+  type BackendContextInput,
+} from './backend-context';
+import {
+  llmGenerationContextImplementation,
+  TypedLLMGenerationContextImplementation,
+  type LLMGenerationInput,
+} from './llm-generation-context';
 
 /**
  * Initialize the complete enhanced context system with all implementations
@@ -115,15 +116,15 @@ export function initializeEnhancedContextSystem() {
   defaultContextRegistry.register(frontendContextImplementation);
   defaultContextRegistry.register(backendContextImplementation);
   defaultContextRegistry.register(llmGenerationContextImplementation);
-  
+
   return {
     registry: defaultContextRegistry,
     stats: defaultContextRegistry.getStats(),
     implementations: {
       frontend: frontendContextImplementation,
       backend: backendContextImplementation,
-      llmGeneration: llmGenerationContextImplementation
-    }
+      llmGeneration: llmGenerationContextImplementation,
+    },
   };
 }
 
@@ -146,16 +147,18 @@ export async function createContextForEnvironment(
   switch (environment) {
     case 'frontend':
       const frontendContext = new TypedFrontendContextImplementation();
-      return input ? await frontendContext.initialize(input as FrontendContextInput) : frontendContext;
-      
+      return input
+        ? await frontendContext.initialize(input as FrontendContextInput)
+        : frontendContext;
+
     case 'backend':
       const backendContext = new TypedBackendContextImplementation();
       return input ? await backendContext.initialize(input as BackendContextInput) : backendContext;
-      
+
     case 'llm-generation':
       const llmContext = new TypedLLMGenerationContextImplementation();
       return input ? await llmContext.initialize(input as LLMGenerationInput) : llmContext;
-      
+
     default:
       throw new Error(`Unknown environment: ${environment}`);
   }
@@ -179,9 +182,9 @@ export function getContextSystemStats() {
   const implementations = [
     frontendContextImplementation,
     backendContextImplementation,
-    llmGenerationContextImplementation
+    llmGenerationContextImplementation,
   ];
-  
+
   return {
     ...stats,
     implementations: implementations.map(impl => ({
@@ -190,13 +193,13 @@ export function getContextSystemStats() {
       description: impl.description,
       complexity: impl.metadata.complexity,
       environmentRequirements: impl.metadata.environmentRequirements,
-      performance: impl.getPerformanceMetrics()
+      performance: impl.getPerformanceMetrics(),
     })),
     systemHealth: {
       allRegistered: stats.totalContexts === 3,
       typeConsistency: true, // All follow enhanced pattern
-      validationPassing: true
-    }
+      validationPassing: true,
+    },
   };
 }
 

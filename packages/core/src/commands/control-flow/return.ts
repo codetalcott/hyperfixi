@@ -1,9 +1,9 @@
 /**
  * Enhanced Return Command Implementation
  * Returns a value from a command sequence or function
- * 
+ *
  * Syntax: return [<value>]
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -15,7 +15,7 @@ export interface ReturnCommandInput {
   value?: any; // Optional return value
 }
 
-// Output type definition  
+// Output type definition
 export interface ReturnCommandOutput {
   returnValue: any;
   timestamp: number;
@@ -24,24 +24,23 @@ export interface ReturnCommandOutput {
 /**
  * Enhanced Return Command with full type safety and validation
  */
-export class ReturnCommand implements CommandImplementation<
-  ReturnCommandInput,
-  ReturnCommandOutput,
-  TypedExecutionContext
-> {
+export class ReturnCommand
+  implements CommandImplementation<ReturnCommandInput, ReturnCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'return',
-    description: 'The return command returns a value from a command sequence or function, immediately terminating execution and passing the value back to the caller.',
+    description:
+      'The return command returns a value from a command sequence or function, immediately terminating execution and passing the value back to the caller.',
     examples: [
       'return',
       'return 42',
       'return user.name',
       'return "success"',
-      'if found then return result else return null'
+      'if found then return result else return null',
     ],
     syntax: 'return [<value>]',
     category: 'flow' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -50,11 +49,11 @@ export class ReturnCommand implements CommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: true,
-        errors: [],
-        suggestions: [],
+          errors: [],
+          suggestions: [],
           data: {
-            value: input // Use the input directly as the value
-          }
+            value: input, // Use the input directly as the value
+          },
         };
       }
 
@@ -64,10 +63,10 @@ export class ReturnCommand implements CommandImplementation<
         errors: [],
         suggestions: [],
         data: {
-          value: inputObj.value
-        }
+          value: inputObj.value,
+        },
       };
-    }
+    },
   };
 
   async execute(

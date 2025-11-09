@@ -19,7 +19,7 @@ import type {
   TypedExecutionContext,
   EvaluationResult,
   CommandMetadata,
-  LLMDocumentation
+  LLMDocumentation,
 } from '../../types/command-types';
 import { debug } from '../../utils/debug';
 
@@ -57,25 +57,28 @@ export interface WaitCommandOutput {
 
 const WaitTimeInputSchema = v.object({
   type: v.literal('time'),
-  value: v.number().min(0).describe('Time to wait in milliseconds')
+  value: v.number().min(0).describe('Time to wait in milliseconds'),
 });
 
 const WaitEventInputSchema = v.object({
   type: v.literal('event'),
-  events: v.array(v.object({
-    name: v.string().optional().describe('Event name'),
-    time: v.number().optional().describe('Timeout in milliseconds'),
-    args: v.array(v.string()).optional().describe('Event properties to destructure')
-  })).min(1).describe('List of events to wait for'),
-  source: v.custom((value: unknown) =>
-    value === undefined || value instanceof EventTarget
-  ).optional().describe('Event source element')
+  events: v
+    .array(
+      v.object({
+        name: v.string().optional().describe('Event name'),
+        time: v.number().optional().describe('Timeout in milliseconds'),
+        args: v.array(v.string()).optional().describe('Event properties to destructure'),
+      })
+    )
+    .min(1)
+    .describe('List of events to wait for'),
+  source: v
+    .custom((value: unknown) => value === undefined || value instanceof EventTarget)
+    .optional()
+    .describe('Event source element'),
 });
 
-const WaitCommandInputSchema = z.union([
-  WaitTimeInputSchema,
-  WaitEventInputSchema
-]);
+const WaitCommandInputSchema = z.union([WaitTimeInputSchema, WaitEventInputSchema]);
 
 // ============================================================================
 // Wait Command Implementation
@@ -90,11 +93,9 @@ const WaitCommandInputSchema = z.union([
  * - Race conditions (multiple events/timeouts)
  * - Event property destructuring
  */
-export class WaitCommand implements TypedCommandImplementation<
-  WaitCommandInput,
-  WaitCommandOutput,
-  TypedExecutionContext
-> {
+export class WaitCommand
+  implements TypedCommandImplementation<WaitCommandInput, WaitCommandOutput, TypedExecutionContext>
+{
   public readonly name = 'wait' as const;
   public readonly syntax = 'wait <time> | wait for <event> [or ...] [from <source>]';
   public readonly description = 'Waits for a specified time or event before continuing execution';
@@ -109,25 +110,25 @@ export class WaitCommand implements TypedCommandImplementation<
       {
         code: 'wait 2s',
         description: 'Wait 2 seconds',
-        expectedOutput: '2000'
+        expectedOutput: '2000',
       },
       {
         code: 'wait for click',
         description: 'Wait for click event on current element',
-        expectedOutput: 'Event'
+        expectedOutput: 'Event',
       },
       {
         code: 'wait for load or 1s',
         description: 'Wait for load event or 1 second timeout',
-        expectedOutput: 'Event | 1000'
+        expectedOutput: 'Event | 1000',
       },
       {
         code: 'wait for mousemove(clientX, clientY)',
         description: 'Wait for mousemove and destructure event properties',
-        expectedOutput: 'Event'
-      }
+        expectedOutput: 'Event',
+      },
     ],
-    relatedCommands: ['async', 'fetch', 'settle']
+    relatedCommands: ['async', 'fetch', 'settle'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -137,20 +138,20 @@ export class WaitCommand implements TypedCommandImplementation<
         title: 'Time delay',
         code: 'wait 2s',
         explanation: 'Wait for 2 seconds before continuing',
-        output: '2000'
+        output: '2000',
       },
       {
         title: 'Event waiting',
         code: 'wait for click',
         explanation: 'Wait for a click event on the current element',
-        output: 'Event'
+        output: 'Event',
       },
       {
         title: 'Event with timeout',
         code: 'wait for click or 1s',
         explanation: 'Wait for click event, but timeout after 1 second',
-        output: 'Event | 1000'
-      }
+        output: 'Event | 1000',
+      },
     ],
     parameters: [
       {
@@ -158,30 +159,30 @@ export class WaitCommand implements TypedCommandImplementation<
         type: 'number | string',
         description: 'Time to wait (e.g., "2s", "500ms", 100)',
         optional: false,
-        examples: ['2s', '500ms', '1000', '1 second']
+        examples: ['2s', '500ms', '1000', '1 second'],
       },
       {
         name: 'event',
         type: 'string',
         description: 'Event name to wait for',
         optional: false,
-        examples: ['click', 'load', 'transitionend', 'custom:event']
+        examples: ['click', 'load', 'transitionend', 'custom:event'],
       },
       {
         name: 'source',
         type: 'EventTarget',
         description: 'Element to listen for events on (defaults to current element)',
         optional: true,
-        examples: ['document', 'window', '#myElement']
-      }
+        examples: ['document', 'window', '#myElement'],
+      },
     ],
     returns: {
       type: 'Promise<Event | number>',
       description: 'Resolves with event object or timeout duration',
-      examples: ['Event', '2000']
+      examples: ['Event', '2000'],
     },
     seeAlso: ['on', 'trigger', 'send'],
-    tags: ['async', 'events', 'timing', 'delay']
+    tags: ['async', 'events', 'timing', 'delay'],
   };
 
   /**
@@ -193,7 +194,7 @@ export class WaitCommand implements TypedCommandImplementation<
     return {
       isValid: true,
       errors: [],
-      suggestions: []
+      suggestions: [],
     };
   }
 
@@ -218,14 +219,18 @@ export class WaitCommand implements TypedCommandImplementation<
           value: {
             type: 'time',
             result: input.value,
-            duration
+            duration,
           },
-          type: 'object'
+          type: 'object',
         };
       }
 
       // Event-based wait
-      const event = await this.waitForEvent(input.events, input.source || context.me || undefined, context);
+      const event = await this.waitForEvent(
+        input.events,
+        input.source || context.me || undefined,
+        context
+      );
       const duration = Date.now() - startTime;
 
       return {
@@ -233,9 +238,9 @@ export class WaitCommand implements TypedCommandImplementation<
         value: {
           type: 'event',
           result: event,
-          duration
+          duration,
         },
-        type: 'object'
+        type: 'object',
       };
     } catch (error) {
       return {
@@ -245,9 +250,9 @@ export class WaitCommand implements TypedCommandImplementation<
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Wait command failed',
           code: 'WAIT_FAILED',
-          suggestions: ['Check event names', 'Verify target elements exist']
+          suggestions: ['Check event names', 'Verify target elements exist'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -256,7 +261,7 @@ export class WaitCommand implements TypedCommandImplementation<
    * Wait for a specified amount of time
    */
   private waitForTime(milliseconds: number): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setTimeout(resolve, milliseconds);
     });
   }
@@ -271,7 +276,7 @@ export class WaitCommand implements TypedCommandImplementation<
     target: EventTarget | undefined,
     context: TypedExecutionContext
   ): Promise<Event> {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       let resolved = false;
 
       // Helper to resolve once
@@ -287,9 +292,7 @@ export class WaitCommand implements TypedCommandImplementation<
           // Event - destructure properties into locals
           if (eventInfo?.args && context.locals) {
             for (const arg of eventInfo.args) {
-              const value = (event as any)[arg] ||
-                           (event as any).detail?.[arg] ||
-                           null;
+              const value = (event as any)[arg] || (event as any).detail?.[arg] || null;
               context.locals.set(arg, value);
             }
           }

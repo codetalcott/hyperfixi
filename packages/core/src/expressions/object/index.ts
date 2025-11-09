@@ -10,12 +10,9 @@ import type {
   HyperScriptValueType,
   EvaluationResult,
   LLMDocumentation,
-  ValidationResult
+  ValidationResult,
 } from '../../types/command-types';
-import type {
-  ValidationError,
-  TypedExpressionContext
-} from '../../types/base-types';
+import type { ValidationError, TypedExpressionContext } from '../../types/base-types';
 import type { TypedExpressionImplementation } from '../../types/expression-types';
 
 // ============================================================================
@@ -26,12 +23,14 @@ import type { TypedExpressionImplementation } from '../../types/expression-types
  * Schema for object field definition
  */
 export const ObjectFieldSchema = v.object({
-  key: v.union([
-    v.string().describe('Static field name'),
-    v.unknown().describe('Dynamic expression for field name')
-  ]).describe('Field key (string or expression)'),
+  key: v
+    .union([
+      v.string().describe('Static field name'),
+      v.unknown().describe('Dynamic expression for field name'),
+    ])
+    .describe('Field key (string or expression)'),
   value: v.unknown().describe('Field value'),
-  isDynamic: v.boolean().default(false).describe('Whether the key is computed from an expression')
+  isDynamic: v.boolean().default(false).describe('Whether the key is computed from an expression'),
 });
 
 export type ObjectField = any; // Inferred from RuntimeValidator
@@ -39,7 +38,9 @@ export type ObjectField = any; // Inferred from RuntimeValidator
 /**
  * Schema for object literal expression input validation
  */
-export const ObjectLiteralInputSchema = v.array(ObjectFieldSchema).describe('Object field definitions');
+export const ObjectLiteralInputSchema = v
+  .array(ObjectFieldSchema)
+  .describe('Object field definitions');
 
 export type ObjectLiteralInput = any; // Inferred from RuntimeValidator
 
@@ -51,14 +52,15 @@ export type ObjectLiteralInput = any; // Inferred from RuntimeValidator
  * Enhanced object literal expression for object creation
  * Provides comprehensive object literal creation with dynamic field names and type safety
  */
-export class EnhancedObjectLiteralExpression implements TypedExpressionImplementation<
-  Record<string, HyperScriptValue>
-> {
+export class EnhancedObjectLiteralExpression
+  implements TypedExpressionImplementation<Record<string, HyperScriptValue>>
+{
   public readonly name = 'ObjectLiteral';
   public readonly category = 'Special' as const;
   public readonly syntax = '{ key1: value1, key2: value2, ... }';
   public readonly description = 'Creates an object literal with specified key-value pairs';
-  public readonly inputSchema: RuntimeValidator<Record<string, HyperScriptValue>> = ObjectLiteralInputSchema as RuntimeValidator<Record<string, HyperScriptValue>>;
+  public readonly inputSchema: RuntimeValidator<Record<string, HyperScriptValue>> =
+    ObjectLiteralInputSchema as RuntimeValidator<Record<string, HyperScriptValue>>;
   public readonly outputType = 'Object' as const;
   public readonly metadata = {
     category: 'Special' as const,
@@ -69,14 +71,19 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
     examples: [
       { input: '{}', description: 'Empty object', expectedOutput: {} },
       { input: '{x: 1}', description: 'Single property', expectedOutput: { x: 1 } },
-      { input: '{name: "Alice", age: 30}', description: 'Multiple properties', expectedOutput: { name: 'Alice', age: 30 } }
+      {
+        input: '{name: "Alice", age: 30}',
+        description: 'Multiple properties',
+        expectedOutput: { name: 'Alice', age: 30 },
+      },
     ],
     relatedExpressions: ['Property', 'Possessive'],
-    performance: { averageTime: 0.2, complexity: 'O(n)' as const }
+    performance: { averageTime: 0.2, complexity: 'O(n)' as const },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates object literals with comprehensive field handling, dynamic keys, and type safety',
+    summary:
+      'Creates object literals with comprehensive field handling, dynamic keys, and type safety',
     parameters: [
       {
         name: 'fields',
@@ -84,36 +91,40 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
         description: 'Array of field definitions with keys and values',
         optional: false,
         defaultValue: [],
-        examples: ['[]', '[{key: "foo", value: true}]', '[{key: "name", value: "John", isDynamic: false}]']
-      }
+        examples: [
+          '[]',
+          '[{key: "foo", value: true}]',
+          '[{key: "name", value: "John", isDynamic: false}]',
+        ],
+      },
     ],
     returns: {
       type: 'object',
       description: 'A new object containing the specified fields',
-      examples: [{}, { foo: true }, { name: 'John', age: 30 }]
+      examples: [{}, { foo: true }, { name: 'John', age: 30 }],
     },
     examples: [
       {
         title: 'Empty object literal',
         code: '{}',
         explanation: 'Creates an empty object',
-        output: {}
+        output: {},
       },
       {
         title: 'Simple object literal',
         code: '{foo: true, bar: false}',
         explanation: 'Creates an object with static field names',
-        output: { foo: true, bar: false }
+        output: { foo: true, bar: false },
       },
       {
         title: 'Dynamic field names',
         code: '{[expression]: value}',
         explanation: 'Creates an object with computed field names',
-        output: { computedKey: 'value' }
-      }
+        output: { computedKey: 'value' },
+      },
     ],
     seeAlso: ['property access', 'object methods', 'dynamic property access'],
-    tags: ['object', 'literal', 'creation', 'dynamic', 'fields']
+    tags: ['object', 'literal', 'creation', 'dynamic', 'fields'],
   };
 
   /**
@@ -122,7 +133,7 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
   validate(args: unknown): ValidationResult {
     try {
       const validatedArgs = this.inputSchema.parse(args);
-      
+
       const issues: ValidationError[] = [];
 
       // Check for extremely large objects
@@ -130,7 +141,7 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
         issues.push({
           type: 'validation-error',
           message: `Object literal with ${(validatedArgs as unknown as any[]).length} fields may impact performance`,
-          suggestions: []
+          suggestions: [],
         });
       }
 
@@ -139,22 +150,24 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
         .filter((field: any) => !field.isDynamic && typeof field.key === 'string')
         .map((field: any) => field.key as string);
 
-      const duplicateKeys = staticKeys.filter((key: string, index: number) => staticKeys.indexOf(key) !== index);
+      const duplicateKeys = staticKeys.filter(
+        (key: string, index: number) => staticKeys.indexOf(key) !== index
+      );
       if (duplicateKeys.length > 0) {
         issues.push({
           type: 'validation-error',
           message: `Duplicate field names detected: ${[...new Set(duplicateKeys)].join(', ')}`,
-          suggestions: []
+          suggestions: [],
         });
       }
 
       // Validate field key types
-      for (const field of (validatedArgs as unknown as any[])) {
+      for (const field of validatedArgs as unknown as any[]) {
         if (!field.isDynamic && typeof field.key !== 'string') {
           issues.push({
             type: 'validation-error',
             message: `Static field key must be a string, got ${typeof field.key}`,
-            suggestions: []
+            suggestions: [],
           });
         }
       }
@@ -162,24 +175,29 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
       return {
         isValid: issues.length === 0,
         errors: issues,
-        suggestions: issues.length > 0 ? [
-          'Consider breaking large objects into smaller structures',
-          'Ensure field names are unique within the object',
-          'Use consistent field naming conventions'
-        ] : []
+        suggestions:
+          issues.length > 0
+            ? [
+                'Consider breaking large objects into smaller structures',
+                'Ensure field names are unique within the object',
+                'Use consistent field naming conventions',
+              ]
+            : [],
       };
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'syntax-error',
-          message: error instanceof Error ? error.message : 'Invalid object literal arguments',
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'syntax-error',
+            message: error instanceof Error ? error.message : 'Invalid object literal arguments',
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Provide fields as an array of field definitions',
-          'Ensure each field has a valid key and value'
-        ]
+          'Ensure each field has a valid key and value',
+        ],
       };
     }
   }
@@ -203,9 +221,9 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
             message: `Object literal validation failed: ${validationResult.errors.join(', ')}`,
             code: 'OBJECT_LITERAL_VALIDATION_ERROR',
             severity: 'error',
-          suggestions: []
+            suggestions: [],
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
@@ -213,12 +231,12 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
       const resultObject: Record<string, HyperScriptValue> = {};
 
       // Process each field
-      for (const field of (fields as unknown as any[])) {
+      for (const field of fields as unknown as any[]) {
         const keyResult = await this.resolveFieldKey(field, context);
         if (!keyResult.success) {
           return keyResult as unknown as EvaluationResult<Record<string, HyperScriptValue>>;
         }
-        
+
         const resolvedValue = await this.resolveFieldValue(field.value, context);
         if (!resolvedValue.success) {
           return resolvedValue as EvaluationResult<Record<string, HyperScriptValue>>;
@@ -232,7 +250,7 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
       return {
         success: true,
         value: resultObject,
-        type: 'object'
+        type: 'object',
       };
     } catch (error) {
       return {
@@ -243,9 +261,9 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
           message: `Failed to evaluate object literal: ${error instanceof Error ? error.message : String(error)}`,
           code: 'OBJECT_LITERAL_EVALUATION_ERROR',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -263,10 +281,10 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
         return {
           success: true,
           value: field.key as string,
-          type: 'string'
+          type: 'string',
         };
       }
-      
+
       // Dynamic field name - evaluate the expression
       const keyValue = await this.resolveFieldValue(field.key, context);
       if (!keyValue.success) {
@@ -278,18 +296,18 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
             message: `Failed to resolve dynamic field key: ${keyValue.error?.message}`,
             code: 'DYNAMIC_FIELD_KEY_ERROR',
             severity: 'error',
-          suggestions: []
+            suggestions: [],
           },
-          type: 'error'
+          type: 'error',
         };
       }
-      
+
       // Convert the result to a string key
       const stringKey = String(keyValue.value);
       return {
         success: true,
         value: stringKey,
-        type: 'string'
+        type: 'string',
       };
     } catch (error) {
       return {
@@ -300,9 +318,9 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
           message: `Failed to resolve field key: ${error instanceof Error ? error.message : String(error)}`,
           code: 'FIELD_KEY_RESOLUTION_ERROR',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -321,10 +339,10 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
         return {
           success: true,
           value: resolvedValue as HyperScriptValue,
-          type: this.inferType(resolvedValue)
+          type: this.inferType(resolvedValue),
         };
       }
-      
+
       // Handle function calls for dynamic evaluation
       if (typeof value === 'function') {
         try {
@@ -332,7 +350,7 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
           return {
             success: true,
             value: result as HyperScriptValue,
-            type: this.inferType(result)
+            type: this.inferType(result),
           };
         } catch (functionError) {
           return {
@@ -343,18 +361,18 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
               message: `Field value function evaluation failed: ${functionError instanceof Error ? functionError.message : String(functionError)}`,
               code: 'FIELD_VALUE_FUNCTION_ERROR',
               severity: 'error',
-          suggestions: []
+              suggestions: [],
             },
-            type: 'error'
+            type: 'error',
           };
         }
       }
-      
+
       // Direct value
       return {
         success: true,
-        value: value as HyperScriptValue,
-        type: this.inferType(value)
+        value: value,
+        type: this.inferType(value),
       };
     } catch (error) {
       return {
@@ -365,9 +383,9 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
           message: `Failed to resolve field value: ${error instanceof Error ? error.message : String(error)}`,
           code: 'FIELD_VALUE_RESOLUTION_ERROR',
           severity: 'error',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -406,19 +424,19 @@ export class EnhancedObjectLiteralExpression implements TypedExpressionImplement
         'async field values',
         'duplicate key detection',
         'hyphenated field names',
-        'string field names'
+        'string field names',
       ],
       performance: {
         complexity: 'low',
         averageExecutionTime: '< 3ms',
-        memoryUsage: 'proportional to field count'
+        memoryUsage: 'proportional to field count',
       },
       capabilities: {
         contextAware: true,
         supportsAsync: true,
         sideEffects: false,
-        cacheable: true
-      }
+        cacheable: true,
+      },
     };
   }
 }
@@ -457,7 +475,7 @@ export function createField(
   return {
     key,
     value,
-    isDynamic
+    isDynamic,
   };
 }
 

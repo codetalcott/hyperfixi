@@ -1,5 +1,5 @@
 /**
- * Type Conversion ('as' keyword) Fix Test  
+ * Type Conversion ('as' keyword) Fix Test
  * TDD approach: Write failing tests, then implement missing functionality
  * Target: Fix 'as' keyword for 100% type conversion compatibility
  */
@@ -27,12 +27,12 @@ describe('Type Conversion Fix', () => {
         { expr: '"123.45" as Float', expected: 123.45 },
         { expr: '"123.45" as Number', expected: 123.45 },
         { expr: '"0" as Int', expected: 0 },
-        { expr: '"-42" as Int', expected: -42 }
+        { expr: '"-42" as Int', expected: -42 },
       ];
 
       let passed = 0;
       console.log('\n🔢 Testing string to number conversions:');
-      
+
       for (const test of tests) {
         try {
           const result = await evalHyperScript(test.expr, context);
@@ -40,14 +40,18 @@ describe('Type Conversion Fix', () => {
             console.log(`  ✅ ${test.expr} = ${result}`);
             passed++;
           } else {
-            console.log(`  ❌ ${test.expr}: Expected ${test.expected}, got ${result} (${typeof result})`);
+            console.log(
+              `  ❌ ${test.expr}: Expected ${test.expected}, got ${result} (${typeof result})`
+            );
           }
         } catch (error) {
           console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
         }
       }
-      
-      console.log(`  📊 Number Conversion Tests: ${passed}/${tests.length} passed (${Math.round(passed/tests.length*100)}%)`);
+
+      console.log(
+        `  📊 Number Conversion Tests: ${passed}/${tests.length} passed (${Math.round((passed / tests.length) * 100)}%)`
+      );
       expect(passed).toBe(tests.length); // All must pass
     });
   });
@@ -58,12 +62,12 @@ describe('Type Conversion Fix', () => {
         { expr: '123 as String', expected: '123' },
         { expr: '123.45 as String', expected: '123.45' },
         { expr: '0 as String', expected: '0' },
-        { expr: '-42 as String', expected: '-42' }
+        { expr: '-42 as String', expected: '-42' },
       ];
 
       let passed = 0;
       console.log('\n📝 Testing number to string conversions:');
-      
+
       for (const test of tests) {
         try {
           const result = await evalHyperScript(test.expr, context);
@@ -71,14 +75,18 @@ describe('Type Conversion Fix', () => {
             console.log(`  ✅ ${test.expr} = "${result}"`);
             passed++;
           } else {
-            console.log(`  ❌ ${test.expr}: Expected "${test.expected}", got "${result}" (${typeof result})`);
+            console.log(
+              `  ❌ ${test.expr}: Expected "${test.expected}", got "${result}" (${typeof result})`
+            );
           }
         } catch (error) {
           console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
         }
       }
-      
-      console.log(`  📊 String Conversion Tests: ${passed}/${tests.length} passed (${Math.round(passed/tests.length*100)}%)`);
+
+      console.log(
+        `  📊 String Conversion Tests: ${passed}/${tests.length} passed (${Math.round((passed / tests.length) * 100)}%)`
+      );
       expect(passed).toBe(tests.length); // All must pass
     });
   });
@@ -91,12 +99,12 @@ describe('Type Conversion Fix', () => {
         { expr: 'true as String', expected: 'true' },
         { expr: 'false as String', expected: 'false' },
         { expr: '1 as Boolean', expected: true },
-        { expr: '0 as Boolean', expected: false }
+        { expr: '0 as Boolean', expected: false },
       ];
 
       let passed = 0;
       console.log('\n🔄 Testing boolean conversions:');
-      
+
       for (const test of tests) {
         try {
           const result = await evalHyperScript(test.expr, context);
@@ -104,14 +112,18 @@ describe('Type Conversion Fix', () => {
             console.log(`  ✅ ${test.expr} = ${result} (${typeof result})`);
             passed++;
           } else {
-            console.log(`  ❌ ${test.expr}: Expected ${test.expected} (${typeof test.expected}), got ${result} (${typeof result})`);
+            console.log(
+              `  ❌ ${test.expr}: Expected ${test.expected} (${typeof test.expected}), got ${result} (${typeof result})`
+            );
           }
         } catch (error) {
           console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
         }
       }
-      
-      console.log(`  📊 Boolean Conversion Tests: ${passed}/${tests.length} passed (${Math.round(passed/tests.length*100)}%)`);
+
+      console.log(
+        `  📊 Boolean Conversion Tests: ${passed}/${tests.length} passed (${Math.round((passed / tests.length) * 100)}%)`
+      );
       expect(passed).toBe(tests.length); // All must pass
     });
   });
@@ -121,12 +133,12 @@ describe('Type Conversion Fix', () => {
       const tests = [
         { expr: '"[1,2,3]" as JSON', expected: [1, 2, 3] },
         { expr: '\'{"name":"test"}\' as JSON', expected: { name: 'test' } },
-        { expr: '"" as Array', expected: [] }
+        { expr: '"" as Array', expected: [] },
       ];
 
       let passed = 0;
       console.log('\n🗃️ Testing array/object conversions:');
-      
+
       for (const test of tests) {
         try {
           const result = await evalHyperScript(test.expr, context);
@@ -135,14 +147,18 @@ describe('Type Conversion Fix', () => {
             console.log(`  ✅ ${test.expr} = ${JSON.stringify(result)}`);
             passed++;
           } else {
-            console.log(`  ❌ ${test.expr}: Expected ${JSON.stringify(test.expected)}, got ${JSON.stringify(result)}`);
+            console.log(
+              `  ❌ ${test.expr}: Expected ${JSON.stringify(test.expected)}, got ${JSON.stringify(result)}`
+            );
           }
         } catch (error) {
           console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
         }
       }
-      
-      console.log(`  📊 Array/Object Conversion Tests: ${passed}/${tests.length} passed (${Math.round(passed/tests.length*100)}%)`);
+
+      console.log(
+        `  📊 Array/Object Conversion Tests: ${passed}/${tests.length} passed (${Math.round((passed / tests.length) * 100)}%)`
+      );
       expect(passed).toBe(tests.length); // All must pass
     });
   });
@@ -153,7 +169,7 @@ describe('Type Conversion Fix', () => {
       console.log('  This test identifies specific failures in "as" keyword conversions');
       console.log('  Once implemented, these tests should achieve 100% pass rate');
       console.log('  Expected after fix: Type conversion compatibility 100% (was 0%)');
-      
+
       expect(true).toBe(true);
     });
   });

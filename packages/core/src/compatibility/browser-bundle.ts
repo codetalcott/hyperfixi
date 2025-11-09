@@ -75,9 +75,8 @@ const hyperfixi = {
 
     // For compatibility with _hyperscript, throw an error if compilation fails
     if (!result.success) {
-      const errorMessage = result.errors && result.errors.length > 0
-        ? result.errors[0].message
-        : 'Compilation failed';
+      const errorMessage =
+        result.errors && result.errors.length > 0 ? result.errors[0].message : 'Compilation failed';
       throw new Error(errorMessage);
     }
 
@@ -118,7 +117,7 @@ const hyperfixi = {
   debug,
 
   // Version info
-  version: '1.0.0-full'
+  version: '1.0.0-full',
 };
 
 // Export to global for browser testing

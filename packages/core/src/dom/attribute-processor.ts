@@ -25,7 +25,7 @@ export class AttributeProcessor {
       attributeName: '_',
       autoScan: true,
       processOnlyNewElements: true,
-      ...options
+      ...options,
     };
   }
 
@@ -84,7 +84,10 @@ export class AttributeProcessor {
     }
 
     try {
-      debug.parse('SCRIPT: Compiling hyperscript code from script tag:', hyperscriptCode.substring(0, 100));
+      debug.parse(
+        'SCRIPT: Compiling hyperscript code from script tag:',
+        hyperscriptCode.substring(0, 100)
+      );
 
       // Create execution context (no specific element for global behavior definitions)
       const context = createContext(null);
@@ -95,9 +98,16 @@ export class AttributeProcessor {
       if (!compilationResult.success) {
         console.error(`🔧 SCRIPT: Hyperscript compilation failed for script tag`);
         console.error(`🔧 SCRIPT: Code that failed:`, hyperscriptCode);
-        console.error(`🔧 SCRIPT: Compilation errors:`, JSON.stringify(compilationResult.errors, null, 2));
+        console.error(
+          `🔧 SCRIPT: Compilation errors:`,
+          JSON.stringify(compilationResult.errors, null, 2)
+        );
         compilationResult.errors?.forEach((error: any, i: number) => {
-          console.error(`🔧 SCRIPT: Error ${i + 1}:`, error.message, `at line ${error.line}, column ${error.column}`);
+          console.error(
+            `🔧 SCRIPT: Error ${i + 1}:`,
+            error.message,
+            `at line ${error.line}, column ${error.column}`
+          );
         });
         return;
       }
@@ -105,7 +115,7 @@ export class AttributeProcessor {
       debug.parse('SCRIPT: Compilation succeeded, executing...');
 
       // Execute the compiled code (this will register behaviors)
-      hyperscript.execute(compilationResult.ast!, context);
+      void hyperscript.execute(compilationResult.ast!, context);
 
       debug.parse('SCRIPT: Script tag processing complete');
     } catch (error) {
@@ -127,7 +137,7 @@ export class AttributeProcessor {
 
     const hyperscriptCode = element.getAttribute(this.options.attributeName);
     debug.parse('ATTR: Found hyperscript code:', hyperscriptCode);
-    
+
     if (!hyperscriptCode) {
       debug.parse('ATTR: No hyperscript code found on element');
       return;
@@ -144,13 +154,20 @@ export class AttributeProcessor {
       debug.parse('ATTR: About to compile hyperscript code');
       const compilationResult = hyperscript.compile(hyperscriptCode);
       debug.parse('ATTR: Compilation result:', compilationResult);
-      
+
       if (!compilationResult.success) {
         console.error(`🔧 ATTR: Hyperscript compilation failed for element:`, element);
         console.error(`🔧 ATTR: Code that failed:`, hyperscriptCode);
-        console.error(`🔧 ATTR: Compilation errors:`, JSON.stringify(compilationResult.errors, null, 2));
+        console.error(
+          `🔧 ATTR: Compilation errors:`,
+          JSON.stringify(compilationResult.errors, null, 2)
+        );
         compilationResult.errors.forEach((error, i) => {
-          console.error(`🔧 ATTR: Error ${i + 1}:`, error.message, `at line ${error.line}, column ${error.column}`);
+          console.error(
+            `🔧 ATTR: Error ${i + 1}:`,
+            error.message,
+            `at line ${error.line}, column ${error.column}`
+          );
         });
         return;
       }
@@ -160,7 +177,7 @@ export class AttributeProcessor {
       // Execute the compiled AST regardless of whether it's an event handler or immediate execution
       // The runtime will handle event handlers properly by registering them
       debug.parse('ATTR: Executing compiled AST');
-      hyperscript.execute(compilationResult.ast!, context);
+      void hyperscript.execute(compilationResult.ast!, context);
 
       // Mark as processed
       this.processedElements.add(element);
@@ -180,7 +197,7 @@ export class AttributeProcessor {
     try {
       const loadEvent = new Event('load', {
         bubbles: false, // Element-specific event
-        cancelable: false
+        cancelable: false,
       });
       element.dispatchEvent(loadEvent);
     } catch (error) {
@@ -203,8 +220,8 @@ export class AttributeProcessor {
         cancelable: false,
         detail: {
           processedElements: this.processedCount,
-          timestamp: Date.now()
-        }
+          timestamp: Date.now(),
+        },
       });
       document.dispatchEvent(readyEvent);
       this.readyEventDispatched = true;
@@ -221,18 +238,18 @@ export class AttributeProcessor {
       return; // Skip in environments without MutationObserver
     }
 
-    this.observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
+    this.observer = new MutationObserver(mutations => {
+      mutations.forEach(mutation => {
         // Process added nodes
-        mutation.addedNodes.forEach((node) => {
+        mutation.addedNodes.forEach(node => {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as HTMLElement;
-            
+
             // Process the element itself if it has hyperscript attribute
             if (element.getAttribute && element.getAttribute(this.options.attributeName)) {
               this.processElement(element);
             }
-            
+
             // Process any descendant elements with hyperscript attributes
             const descendants = element.querySelectorAll?.(`[${this.options.attributeName}]`);
             descendants?.forEach(descendant => {
@@ -248,7 +265,7 @@ export class AttributeProcessor {
     // Start observing
     this.observer.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   }
 

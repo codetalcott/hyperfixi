@@ -1,6 +1,6 @@
 /**
  * TDD Fix for Dot Notation Property Access
- * 
+ *
  * Current issue: me.className throws "Unexpected token: . at position 1"
  * Expected: Should access properties using standard JavaScript dot notation
  */
@@ -24,7 +24,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         returned: false,
         broke: false,
         continued: false,
-        async: false
+        async: false,
       };
 
       const result = await parseAndEvaluateExpression('obj.prop', context);
@@ -32,10 +32,10 @@ describe('Dot Notation Property Access - TDD Fix', () => {
     });
 
     it('should handle me.property access', async () => {
-      const mockElement = { 
+      const mockElement = {
         className: 'test-class',
         tagName: 'DIV',
-        textContent: 'test content'
+        textContent: 'test content',
       };
 
       const context = {
@@ -50,7 +50,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         returned: false,
         broke: false,
         continued: false,
-        async: false
+        async: false,
       };
 
       const result = await parseAndEvaluateExpression('me.className', context);
@@ -70,7 +70,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         returned: false,
         broke: false,
         continued: false,
-        async: false
+        async: false,
       };
 
       const result = await parseAndEvaluateExpression('obj.nested.prop', context);
@@ -94,7 +94,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         returned: false,
         broke: false,
         continued: false,
-        async: false
+        async: false,
       };
 
       // Test dot notation
@@ -121,7 +121,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         returned: false,
         broke: false,
         continued: false,
-        async: false
+        async: false,
       };
 
       // Test string length property
@@ -142,13 +142,13 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         returned: false,
         broke: false,
         continued: false,
-        async: false
+        async: false,
       };
 
       // Should throw error for null property access
-      await expect(parseAndEvaluateExpression('nullObj.prop', context))
-        .rejects
-        .toThrow(/null|undefined/i);
+      await expect(parseAndEvaluateExpression('nullObj.prop', context)).rejects.toThrow(
+        /null|undefined/i
+      );
     });
   });
 
@@ -166,7 +166,7 @@ describe('Dot Notation Property Access - TDD Fix', () => {
         returned: false,
         broke: false,
         continued: false,
-        async: false
+        async: false,
       };
 
       // Fixed: dot notation now works correctly

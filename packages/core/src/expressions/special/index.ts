@@ -1,5 +1,3 @@
-
-
 /**
  * Enhanced Special Expressions for HyperScript
  * Provides deep TypeScript integration for literals and mathematical operations
@@ -13,7 +11,7 @@ import type {
   ExpressionMetadata,
   ValidationResult,
   EvaluationResult,
-  LLMDocumentation
+  LLMDocumentation,
 } from '../../types/base-types';
 import type { ExpressionCategory } from '../../types/expression-types';
 
@@ -21,22 +19,30 @@ import type { ExpressionCategory } from '../../types/expression-types';
 // Input Schemas
 // ============================================================================
 
-const StringLiteralInputSchema = v.object({
-  value: v.string().describe('String literal value')
-}).strict();
+const StringLiteralInputSchema = v
+  .object({
+    value: v.string().describe('String literal value'),
+  })
+  .strict();
 
-const NumberLiteralInputSchema = v.object({
-  value: v.number().describe('Number literal value')
-}).strict();
+const NumberLiteralInputSchema = v
+  .object({
+    value: v.number().describe('Number literal value'),
+  })
+  .strict();
 
-const BooleanLiteralInputSchema = v.object({
-  value: v.boolean().describe('Boolean literal value')
-}).strict();
+const BooleanLiteralInputSchema = v
+  .object({
+    value: v.boolean().describe('Boolean literal value'),
+  })
+  .strict();
 
-const BinaryOperationInputSchema = v.object({
-  left: v.unknown().describe('Left operand'),
-  right: v.unknown().describe('Right operand')
-}).strict();
+const BinaryOperationInputSchema = v
+  .object({
+    left: v.unknown().describe('Left operand'),
+    right: v.unknown().describe('Right operand'),
+  })
+  .strict();
 
 type StringLiteralInput = any; // Inferred from RuntimeValidator
 type NumberLiteralInput = any; // Inferred from RuntimeValidator
@@ -64,19 +70,19 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
       {
         input: '"hello world"',
         description: 'Simple string literal',
-        expectedOutput: 'hello world'
+        expectedOutput: 'hello world',
       },
       {
         input: '"Hello ${name}!"',
         description: 'Template string with interpolation',
-        expectedOutput: 'Hello John!'
-      }
+        expectedOutput: 'Hello John!',
+      },
     ],
     relatedExpressions: ['numberLiteral', 'booleanLiteral'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(n)'
-    }
+      complexity: 'O(n)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -87,36 +93,36 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
         type: 'string',
         description: 'The string literal value',
         optional: false,
-        examples: ['"hello"', '"world"', '"Hello ${name}!"', '"Value: ${count}"']
-      }
+        examples: ['"hello"', '"world"', '"Hello ${name}!"', '"Value: ${count}"'],
+      },
     ],
     returns: {
       type: 'string',
       description: 'The string value, with any template interpolation resolved',
-      examples: ['"hello"', '"Hello John!"', '"Value: 42"']
+      examples: ['"hello"', '"Hello John!"', '"Value: 42"'],
     },
     examples: [
       {
         title: 'Simple string',
         code: '"hello world"',
         explanation: 'Create a simple string literal',
-        output: '"hello world"'
+        output: '"hello world"',
       },
       {
         title: 'Template interpolation',
         code: '"Hello ${user.name}!"',
         explanation: 'String with variable interpolation',
-        output: '"Hello John!"'
+        output: '"Hello John!"',
       },
       {
         title: 'Numeric interpolation',
         code: '"Count: ${items.length}"',
         explanation: 'String with numeric value interpolation',
-        output: '"Count: 5"'
-      }
+        output: '"Count: 5"',
+      },
     ],
     seeAlso: ['numberLiteral', 'booleanLiteral', 'objectLiteral'],
-    tags: ['literal', 'string', 'template', 'interpolation']
+    tags: ['literal', 'string', 'template', 'interpolation'],
   };
 
   async evaluate(
@@ -135,8 +141,8 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+            suggestions: validation.suggestions,
+          },
         };
       }
 
@@ -152,9 +158,8 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
       return {
         success: true,
         value: result,
-        type: 'string'
+        type: 'string',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -165,8 +170,8 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
           type: 'runtime-error',
           code: 'STRING_EVALUATION_FAILED',
           message: `String literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -174,37 +179,36 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid string literal input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide a value parameter',
-            'Ensure value is a string'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid string literal input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide a value parameter', 'Ensure value is a string'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
@@ -238,14 +242,14 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
     if (expression.includes('.')) {
       const parts = expression.split('.');
       let value = this.resolveVariable(parts[0], context);
-      
+
       for (let i = 1; i < parts.length && value != null; i++) {
         value = (value as any)[parts[i]];
       }
-      
+
       return value;
     }
-    
+
     return this.resolveVariable(expression, context);
   }
 
@@ -255,21 +259,26 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
     if (varName === 'you' && context.you) return context.you;
     if (varName === 'it' && context.it) return context.it;
     if (varName === 'result' && context.result) return context.result;
-    
+
     // Check locals
     if (context.locals?.has(varName)) {
       return context.locals.get(varName);
     }
-    
+
     // Check globals
     if (context.globals?.has(varName)) {
       return context.globals.get(varName);
     }
-    
+
     return undefined;
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -278,7 +287,7 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -306,19 +315,19 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
       {
         input: '42',
         description: 'Integer literal',
-        expectedOutput: 42
+        expectedOutput: 42,
       },
       {
         input: '3.14159',
         description: 'Decimal literal',
-        expectedOutput: 3.14159
-      }
+        expectedOutput: 3.14159,
+      },
     ],
     relatedExpressions: ['stringLiteral', 'booleanLiteral'],
     performance: {
       averageTime: 0.05,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -329,36 +338,36 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
         type: 'number',
         description: 'The numeric literal value',
         optional: false,
-        examples: ['42', '3.14', '-17', '0']
-      }
+        examples: ['42', '3.14', '-17', '0'],
+      },
     ],
     returns: {
       type: 'number',
       description: 'The numeric value',
-      examples: ['42', '3.14', '-17', '0']
+      examples: ['42', '3.14', '-17', '0'],
     },
     examples: [
       {
         title: 'Integer literal',
         code: '42',
         explanation: 'Create an integer literal',
-        output: '42'
+        output: '42',
       },
       {
         title: 'Decimal literal',
         code: '3.14159',
         explanation: 'Create a decimal literal',
-        output: '3.14159'
+        output: '3.14159',
       },
       {
         title: 'Negative number',
         code: '-17',
         explanation: 'Create a negative number literal',
-        output: '-17'
-      }
+        output: '-17',
+      },
     ],
     seeAlso: ['stringLiteral', 'addition', 'multiplication'],
-    tags: ['literal', 'number', 'numeric', 'integer', 'decimal']
+    tags: ['literal', 'number', 'numeric', 'integer', 'decimal'],
   };
 
   async evaluate(
@@ -377,8 +386,8 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+            suggestions: validation.suggestions,
+          },
         };
       }
 
@@ -390,8 +399,8 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
             type: 'invalid-argument',
             code: 'NUMBER_NOT_FINITE',
             message: 'Number literal must be finite',
-            suggestions: []
-          }
+            suggestions: [],
+          },
         };
       }
 
@@ -400,9 +409,8 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
       return {
         success: true,
         value: input.value,
-        type: 'number'
+        type: 'number',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -413,8 +421,8 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
           type: 'runtime-error',
           code: 'NUMBER_EVALUATION_FAILED',
           message: `Number literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -422,57 +430,60 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid number literal input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide a value parameter',
-            'Ensure value is a number'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid number literal input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide a value parameter', 'Ensure value is a number'],
         };
       }
 
       if (!isFinite((parsed.data as any).value)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'invalid-argument',
-            message: 'Number literal value must be finite',
-            suggestions: []
-          }],
-          suggestions: [
-            'Use finite numbers only',
-            'Avoid Infinity and NaN values'
-          ]
+          errors: [
+            {
+              type: 'invalid-argument',
+              message: 'Number literal value must be finite',
+              suggestions: [],
+            },
+          ],
+          suggestions: ['Use finite numbers only', 'Avoid Infinity and NaN values'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -481,7 +492,7 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -509,19 +520,19 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
       {
         input: 'true',
         description: 'True boolean literal',
-        expectedOutput: true
+        expectedOutput: true,
       },
       {
         input: 'false',
         description: 'False boolean literal',
-        expectedOutput: false
-      }
+        expectedOutput: false,
+      },
     ],
     relatedExpressions: ['stringLiteral', 'numberLiteral'],
     performance: {
       averageTime: 0.05,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -532,30 +543,30 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
         type: 'boolean',
         description: 'The boolean literal value',
         optional: false,
-        examples: ['true', 'false']
-      }
+        examples: ['true', 'false'],
+      },
     ],
     returns: {
       type: 'boolean',
       description: 'The boolean value',
-      examples: ['true', 'false']
+      examples: ['true', 'false'],
     },
     examples: [
       {
         title: 'True literal',
         code: 'true',
         explanation: 'Create a true boolean literal',
-        output: 'true'
+        output: 'true',
       },
       {
         title: 'False literal',
         code: 'false',
         explanation: 'Create a false boolean literal',
-        output: 'false'
-      }
+        output: 'false',
+      },
     ],
     seeAlso: ['and', 'or', 'not', 'equals'],
-    tags: ['literal', 'boolean', 'true', 'false', 'logic']
+    tags: ['literal', 'boolean', 'true', 'false', 'logic'],
   };
 
   async evaluate(
@@ -574,8 +585,8 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+            suggestions: validation.suggestions,
+          },
         };
       }
 
@@ -584,9 +595,8 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
       return {
         success: true,
         value: input.value,
-        type: 'boolean'
+        type: 'boolean',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -597,8 +607,8 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
           type: 'runtime-error',
           code: 'BOOLEAN_EVALUATION_FAILED',
           message: `Boolean literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -606,42 +616,46 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid boolean literal input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide a value parameter',
-            'Ensure value is a boolean'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid boolean literal input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide a value parameter', 'Ensure value is a boolean'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -650,7 +664,7 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -678,20 +692,20 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       {
         input: '5 + 3',
         description: 'Add two numbers',
-        expectedOutput: 8
+        expectedOutput: 8,
       },
       {
         input: 'age + 1',
         description: 'Add variable and literal',
         expectedOutput: 31,
-        context: { locals: new Map([['age', 30]]) }
-      }
+        context: { locals: new Map([['age', 30]]) },
+      },
     ],
     relatedExpressions: ['subtraction', 'multiplication', 'division'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -702,43 +716,43 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         type: 'any',
         description: 'Left operand (converted to number)',
         optional: false,
-        examples: ['5', 'age', '"10"', 'true']
+        examples: ['5', 'age', '"10"', 'true'],
       },
       {
         name: 'right',
         type: 'any',
         description: 'Right operand (converted to number)',
         optional: false,
-        examples: ['3', '1', '"5"', 'false']
-      }
+        examples: ['3', '1', '"5"', 'false'],
+      },
     ],
     returns: {
       type: 'number',
       description: 'Sum of the two operands',
-      examples: ['8', '31', '15']
+      examples: ['8', '31', '15'],
     },
     examples: [
       {
         title: 'Integer addition',
         code: '5 + 3',
         explanation: 'Add two integers',
-        output: '8'
+        output: '8',
       },
       {
         title: 'Decimal addition',
         code: '3.14 + 2.86',
         explanation: 'Add two decimal numbers',
-        output: '6'
+        output: '6',
       },
       {
         title: 'Mixed types',
         code: '5 + "3"',
         explanation: 'Add number and string (converted to number)',
-        output: '8'
-      }
+        output: '8',
+      },
     ],
     seeAlso: ['-', '*', '/', 'mod'],
-    tags: ['arithmetic', 'addition', 'math', 'binary', 'operator']
+    tags: ['arithmetic', 'addition', 'math', 'binary', 'operator'],
   };
 
   async evaluate(
@@ -757,14 +771,14 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+            suggestions: validation.suggestions,
+          },
         };
       }
 
       const leftNum = this.ensureNumber(input.left, 'Left operand');
       const rightNum = this.ensureNumber(input.right, 'Right operand');
-      
+
       const result = leftNum + rightNum;
 
       this.trackPerformance(context, startTime, true, result);
@@ -772,9 +786,8 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       return {
         success: true,
         value: result,
-        type: 'number'
+        type: 'number',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -785,8 +798,8 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
           type: 'runtime-error',
           code: 'ADDITION_FAILED',
           message: `Addition failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -794,36 +807,36 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid addition input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide left and right operands'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid addition input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide left and right operands'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
@@ -835,7 +848,7 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       }
       return value;
     }
-    
+
     if (typeof value === 'string') {
       const num = parseFloat(value);
       if (isNaN(num)) {
@@ -843,19 +856,24 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       }
       return num;
     }
-    
+
     if (typeof value === 'boolean') {
       return value ? 1 : 0;
     }
-    
+
     if (value === null || value === undefined) {
       return 0;
     }
-    
+
     throw new Error(`${context} cannot be converted to number`);
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -864,7 +882,7 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -892,24 +910,24 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
       {
         input: '"Hello " + "World"',
         description: 'Concatenate two strings',
-        expectedOutput: 'Hello World'
+        expectedOutput: 'Hello World',
       },
       {
         input: '"Count: " + 42',
         description: 'Concatenate string and number',
-        expectedOutput: 'Count: 42'
+        expectedOutput: 'Count: 42',
       },
       {
         input: '"Time: " + (new Date()).toLocaleTimeString()',
         description: 'Concatenate string and function result',
-        expectedOutput: 'Time: 3:45:30 PM'
-      }
+        expectedOutput: 'Time: 3:45:30 PM',
+      },
     ],
     relatedExpressions: ['stringLiteral', 'addition'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(n)'
-    }
+      complexity: 'O(n)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -920,43 +938,43 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
         type: 'any',
         description: 'Left operand (converted to string)',
         optional: false,
-        examples: ['"Hello"', '42', 'true', 'new Date()']
+        examples: ['"Hello"', '42', 'true', 'new Date()'],
       },
       {
         name: 'right',
         type: 'any',
         description: 'Right operand (converted to string)',
         optional: false,
-        examples: ['"World"', '123', 'false', 'variable']
-      }
+        examples: ['"World"', '123', 'false', 'variable'],
+      },
     ],
     returns: {
       type: 'string',
       description: 'Concatenated string result',
-      examples: ['"Hello World"', '"Count: 42"', '"Time: 3:45:30 PM"']
+      examples: ['"Hello World"', '"Count: 42"', '"Time: 3:45:30 PM"'],
     },
     examples: [
       {
         title: 'Basic string concatenation',
         code: '"Hello " + "World"',
         explanation: 'Concatenate two string literals',
-        output: '"Hello World"'
+        output: '"Hello World"',
       },
       {
         title: 'String and number',
         code: '"Count: " + count',
         explanation: 'Concatenate string with variable',
-        output: '"Count: 5"'
+        output: '"Count: 5"',
       },
       {
         title: 'Function result concatenation',
         code: '"Time: " + (new Date()).toLocaleTimeString()',
         explanation: 'Concatenate string with function call result',
-        output: '"Time: 3:45:30 PM"'
-      }
+        output: '"Time: 3:45:30 PM"',
+      },
     ],
     seeAlso: ['stringLiteral', 'addition', 'templateString'],
-    tags: ['string', 'concatenation', 'join', 'binary', 'operator']
+    tags: ['string', 'concatenation', 'join', 'binary', 'operator'],
   };
 
   async evaluate(
@@ -975,29 +993,28 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
             type: 'validation-error',
             message: validation.errors[0]?.message || 'Invalid input',
             code: 'STRING_CONCATENATION_VALIDATION_FAILED',
-            suggestions: validation.suggestions
+            suggestions: validation.suggestions,
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
       // Convert both operands to strings
       const leftStr = this.convertToString(input.left);
       const rightStr = this.convertToString(input.right);
-      
+
       const result = leftStr + rightStr;
-      
+
       this.trackPerformance(context, startTime, true, result);
 
       return {
         success: true,
         value: result,
-        type: 'string'
+        type: 'string',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
-      
+
       return {
         success: false,
         error: {
@@ -1005,27 +1022,26 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'String concatenation failed',
           code: 'STRING_CONCATENATION_ERROR',
-          suggestions: ['Check that operands can be converted to strings']
+          suggestions: ['Check that operands can be converted to strings'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
 
   validate(input: unknown): ValidationResult<BinaryOperationInput> {
     const parsed = BinaryOperationInputSchema.safeParse(input);
-    
+
     if (!parsed.success) {
       return {
         isValid: false,
-        errors: parsed.error?.errors.map(err => ({
-          type: 'type-mismatch',
-          message: `Invalid string concatenation input: ${err.message}`,
-          suggestions: []
-        })) ?? [],
-        suggestions: [
-          'Provide left and right operands for concatenation'
-        ]
+        errors:
+          parsed.error?.errors.map(err => ({
+            type: 'type-mismatch',
+            message: `Invalid string concatenation input: ${err.message}`,
+            suggestions: [],
+          })) ?? [],
+        suggestions: ['Provide left and right operands for concatenation'],
       };
     }
 
@@ -1033,7 +1049,7 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
       isValid: true,
       errors: [],
       suggestions: [],
-      data: parsed.data
+      data: parsed.data,
     };
   }
 
@@ -1044,7 +1060,7 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
     if (typeof value === 'number') return value.toString();
     if (typeof value === 'boolean') return value.toString();
     if (value instanceof Date) return value.toString();
-    
+
     try {
       return String(value);
     } catch {
@@ -1052,7 +1068,12 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
     }
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -1061,7 +1082,7 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -1089,20 +1110,25 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
       {
         input: '5 * 3',
         description: 'Multiply two numbers',
-        expectedOutput: 15
+        expectedOutput: 15,
       },
       {
         input: 'width * height',
         description: 'Multiply variables',
         expectedOutput: 100,
-        context: { locals: new Map([['width', 10], ['height', 10]]) }
-      }
+        context: {
+          locals: new Map([
+            ['width', 10],
+            ['height', 10],
+          ]),
+        },
+      },
     ],
     relatedExpressions: ['addition', 'subtraction', 'division'],
     performance: {
       averageTime: 0.1,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -1113,43 +1139,43 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
         type: 'any',
         description: 'Left operand (converted to number)',
         optional: false,
-        examples: ['5', 'width', '"10"', 'true']
+        examples: ['5', 'width', '"10"', 'true'],
       },
       {
         name: 'right',
         type: 'any',
         description: 'Right operand (converted to number)',
         optional: false,
-        examples: ['3', 'height', '"5"', 'false']
-      }
+        examples: ['3', 'height', '"5"', 'false'],
+      },
     ],
     returns: {
       type: 'number',
       description: 'Product of the two operands',
-      examples: ['15', '100', '50']
+      examples: ['15', '100', '50'],
     },
     examples: [
       {
         title: 'Integer multiplication',
         code: '5 * 3',
         explanation: 'Multiply two integers',
-        output: '15'
+        output: '15',
       },
       {
         title: 'Decimal multiplication',
         code: '3.14 * 2',
         explanation: 'Multiply decimal and integer',
-        output: '6.28'
+        output: '6.28',
       },
       {
         title: 'Boolean multiplication',
         code: '5 * true',
         explanation: 'Multiply number and boolean (true = 1)',
-        output: '5'
-      }
+        output: '5',
+      },
     ],
     seeAlso: ['+', '-', '/', 'mod', '^'],
-    tags: ['arithmetic', 'multiplication', 'math', 'binary', 'operator']
+    tags: ['arithmetic', 'multiplication', 'math', 'binary', 'operator'],
   };
 
   async evaluate(
@@ -1168,14 +1194,14 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+            suggestions: validation.suggestions,
+          },
         };
       }
 
       const leftNum = this.ensureNumber(input.left, 'Left operand');
       const rightNum = this.ensureNumber(input.right, 'Right operand');
-      
+
       const result = leftNum * rightNum;
 
       this.trackPerformance(context, startTime, true, result);
@@ -1183,9 +1209,8 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
       return {
         success: true,
         value: result,
-        type: 'number'
+        type: 'number',
       };
-
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
@@ -1196,8 +1221,8 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
           type: 'runtime-error',
           code: 'MULTIPLICATION_FAILED',
           message: `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -1205,36 +1230,36 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-      
+
       if (!parsed.success) {
         return {
           isValid: false,
-          errors: parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid multiplication input: ${err.message}`,
-            suggestions: []
-          })) ?? [],
-          suggestions: [
-            'Provide left and right operands'
-          ]
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch',
+              message: `Invalid multiplication input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide left and right operands'],
         };
       }
 
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: []
-        }],
-        suggestions: ['Check input structure and types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: [],
+          },
+        ],
+        suggestions: ['Check input structure and types'],
       };
     }
   }
@@ -1246,7 +1271,7 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
       }
       return value;
     }
-    
+
     if (typeof value === 'string') {
       const num = parseFloat(value);
       if (isNaN(num)) {
@@ -1254,19 +1279,24 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
       }
       return num;
     }
-    
+
     if (typeof value === 'boolean') {
       return value ? 1 : 0;
     }
-    
+
     if (value === null || value === undefined) {
       return 0;
     }
-    
+
     throw new Error(`${context} cannot be converted to number`);
   }
 
-  private trackPerformance(context: TypedExpressionContext, startTime: number, success: boolean, output?: any): void {
+  private trackPerformance(
+    context: TypedExpressionContext,
+    startTime: number,
+    success: boolean,
+    output?: any
+  ): void {
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
         expressionName: this.name,
@@ -1275,7 +1305,7 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
         output: success ? output : 'error',
         timestamp: startTime,
         duration: Date.now() - startTime,
-        success
+        success,
       });
     }
   }
@@ -1319,7 +1349,7 @@ export const specialExpressions = {
   booleanLiteral: createEnhancedBooleanLiteralExpression(),
   addition: createEnhancedAdditionExpression(),
   stringConcatenation: createEnhancedStringConcatenationExpression(),
-  multiplication: createEnhancedMultiplicationExpression()
+  multiplication: createEnhancedMultiplicationExpression(),
 } as const;
 
 // specialExpressions already exported above

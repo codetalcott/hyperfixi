@@ -14,7 +14,9 @@ import { EnhancedRepeatDirective } from './enhanced-repeat.ts';
 // Test Helpers
 // ============================================================================
 
-function createTestContext(overrides: Partial<TemplateExecutionContext> = {}): TemplateExecutionContext {
+function createTestContext(
+  overrides: Partial<TemplateExecutionContext> = {}
+): TemplateExecutionContext {
   return {
     me: undefined,
     it: undefined,
@@ -23,27 +25,27 @@ function createTestContext(overrides: Partial<TemplateExecutionContext> = {}): T
     locals: new Map(),
     globals: new Map(),
     event: undefined,
-    
+
     // Enhanced expression context properties
     expressionStack: [],
     evaluationDepth: 0,
     validationMode: 'strict',
     evaluationHistory: [],
-    
+
     // Template-specific properties
     templateBuffer: [],
     templateDepth: 0,
     iterationContext: undefined,
     conditionalContext: undefined,
-    
+
     templateMeta: {
       templateName: 'test-template',
       compiledAt: Date.now(),
       executionStartTime: Date.now(),
-      directiveStack: []
+      directiveStack: [],
     },
-    
-    ...overrides
+
+    ...overrides,
   };
 }
 
@@ -64,7 +66,7 @@ describe('EnhancedIfDirective', () => {
     it('should render content when condition is true', async () => {
       const input = {
         condition: true,
-        templateContent: 'Hello World!'
+        templateContent: 'Hello World!',
       };
 
       const result = await ifDirective.executeTemplate(context, input, input.templateContent);
@@ -77,7 +79,7 @@ describe('EnhancedIfDirective', () => {
     it('should not render content when condition is false', async () => {
       const input = {
         condition: false,
-        templateContent: 'Hidden content'
+        templateContent: 'Hidden content',
       };
 
       const result = await ifDirective.executeTemplate(context, input, input.templateContent);
@@ -92,17 +94,17 @@ describe('EnhancedIfDirective', () => {
         { condition: 'non-empty string', expected: true },
         { condition: 42, expected: true },
         { condition: [1, 2, 3], expected: true },
-        { condition: { key: 'value' }, expected: true }
+        { condition: { key: 'value' }, expected: true },
       ];
 
       for (const testCase of testCases) {
         const input = {
           condition: testCase.condition,
-          templateContent: 'Content'
+          templateContent: 'Content',
         };
 
         const result = await ifDirective.executeTemplate(context, input, input.templateContent);
-        
+
         expect(result.success).toBe(true);
         if (testCase.expected) {
           expect(result.value).toBe('Content');
@@ -119,17 +121,17 @@ describe('EnhancedIfDirective', () => {
         { condition: null, expected: false },
         { condition: undefined, expected: false },
         { condition: [], expected: false },
-        { condition: {}, expected: false }
+        { condition: {}, expected: false },
       ];
 
       for (const testCase of testCases) {
         const input = {
           condition: testCase.condition,
-          templateContent: 'Content'
+          templateContent: 'Content',
         };
 
         const result = await ifDirective.executeTemplate(context, input, input.templateContent);
-        
+
         expect(result.success).toBe(true);
         expect(result.value).toBe('');
       }
@@ -141,13 +143,13 @@ describe('EnhancedIfDirective', () => {
       const testContext = createTestContext({
         locals: new Map([
           ['name', 'Alice'],
-          ['age', 30]
-        ])
+          ['age', 30],
+        ]),
       });
 
       const input = {
         condition: true,
-        templateContent: 'Hello ${name}, you are ${age} years old!'
+        templateContent: 'Hello ${name}, you are ${age} years old!',
       };
 
       const result = await ifDirective.executeTemplate(testContext, input, input.templateContent);
@@ -158,14 +160,12 @@ describe('EnhancedIfDirective', () => {
 
     it('should handle property access in interpolation', async () => {
       const testContext = createTestContext({
-        locals: new Map([
-          ['user', { name: 'Bob', profile: { email: 'bob@example.com' } }]
-        ])
+        locals: new Map([['user', { name: 'Bob', profile: { email: 'bob@example.com' } }]]),
       });
 
       const input = {
         condition: true,
-        templateContent: 'User: ${user.name}, Email: ${user.profile.email}'
+        templateContent: 'User: ${user.name}, Email: ${user.profile.email}',
       };
 
       const result = await ifDirective.executeTemplate(testContext, input, input.templateContent);
@@ -176,14 +176,12 @@ describe('EnhancedIfDirective', () => {
 
     it('should handle array length in interpolation', async () => {
       const testContext = createTestContext({
-        locals: new Map([
-          ['items', ['a', 'b', 'c']]
-        ])
+        locals: new Map([['items', ['a', 'b', 'c']]]),
       });
 
       const input = {
         condition: true,
-        templateContent: 'You have ${items.length} items'
+        templateContent: 'You have ${items.length} items',
       };
 
       const result = await ifDirective.executeTemplate(testContext, input, input.templateContent);
@@ -196,7 +194,7 @@ describe('EnhancedIfDirective', () => {
   describe('Validation', () => {
     it('should validate input schema', async () => {
       const invalidInput = {
-        condition: true
+        condition: true,
         // missing templateContent
       };
 
@@ -210,7 +208,7 @@ describe('EnhancedIfDirective', () => {
     it('should reject empty template content', async () => {
       const input = {
         condition: true,
-        templateContent: '   '
+        templateContent: '   ',
       };
 
       const result = await ifDirective.executeTemplate(context, input, input.templateContent);
@@ -221,15 +219,19 @@ describe('EnhancedIfDirective', () => {
 
     it('should validate template context', async () => {
       const invalidContext = createTestContext({
-        templateBuffer: null as any
+        templateBuffer: null as any,
       });
 
       const input = {
         condition: true,
-        templateContent: 'Content'
+        templateContent: 'Content',
       };
 
-      const result = await ifDirective.executeTemplate(invalidContext, input, input.templateContent);
+      const result = await ifDirective.executeTemplate(
+        invalidContext,
+        input,
+        input.templateContent
+      );
 
       expect(result.success).toBe(false);
       expect(result.error?.name).toBe('IfDirectiveContextError');
@@ -240,7 +242,7 @@ describe('EnhancedIfDirective', () => {
     it('should create proper conditional context when condition is true', async () => {
       const input = {
         condition: true,
-        templateContent: 'Content'
+        templateContent: 'Content',
       };
 
       const result = await ifDirective.executeTemplate(context, input, input.templateContent);
@@ -253,7 +255,7 @@ describe('EnhancedIfDirective', () => {
     it('should create proper conditional context when condition is false', async () => {
       const input = {
         condition: false,
-        templateContent: 'Content'
+        templateContent: 'Content',
       };
 
       const result = await ifDirective.executeTemplate(context, input, input.templateContent);
@@ -283,15 +285,19 @@ describe('EnhancedElseDirective', () => {
         conditionalContext: {
           conditionMet: false,
           elseAllowed: true,
-          branchExecuted: false
-        }
+          branchExecuted: false,
+        },
       });
 
       const input = {
-        templateContent: 'Else content'
+        templateContent: 'Else content',
       };
 
-      const result = await elseDirective.executeTemplate(contextWithFalseCondition, input, input.templateContent);
+      const result = await elseDirective.executeTemplate(
+        contextWithFalseCondition,
+        input,
+        input.templateContent
+      );
 
       expect(result.success).toBe(true);
       expect(result.value).toBe('Else content');
@@ -302,15 +308,19 @@ describe('EnhancedElseDirective', () => {
         conditionalContext: {
           conditionMet: true,
           elseAllowed: false,
-          branchExecuted: true
-        }
+          branchExecuted: true,
+        },
       });
 
       const input = {
-        templateContent: 'Else content'
+        templateContent: 'Else content',
       };
 
-      const result = await elseDirective.executeTemplate(contextWithTrueCondition, input, input.templateContent);
+      const result = await elseDirective.executeTemplate(
+        contextWithTrueCondition,
+        input,
+        input.templateContent
+      );
 
       expect(result.success).toBe(true);
       expect(result.value).toBe('');
@@ -321,15 +331,19 @@ describe('EnhancedElseDirective', () => {
         conditionalContext: {
           conditionMet: false,
           elseAllowed: true,
-          branchExecuted: true
-        }
+          branchExecuted: true,
+        },
       });
 
       const input = {
-        templateContent: 'Else content'
+        templateContent: 'Else content',
       };
 
-      const result = await elseDirective.executeTemplate(contextWithExecutedBranch, input, input.templateContent);
+      const result = await elseDirective.executeTemplate(
+        contextWithExecutedBranch,
+        input,
+        input.templateContent
+      );
 
       expect(result.success).toBe(true);
       expect(result.value).toBe('');
@@ -342,18 +356,20 @@ describe('EnhancedElseDirective', () => {
         conditionalContext: {
           conditionMet: false,
           elseAllowed: true,
-          branchExecuted: false
+          branchExecuted: false,
         },
-        locals: new Map([
-          ['fallbackMessage', 'Please try again']
-        ])
+        locals: new Map([['fallbackMessage', 'Please try again']]),
       });
 
       const input = {
-        templateContent: 'Error: ${fallbackMessage}'
+        templateContent: 'Error: ${fallbackMessage}',
       };
 
-      const result = await elseDirective.executeTemplate(contextWithFalseCondition, input, input.templateContent);
+      const result = await elseDirective.executeTemplate(
+        contextWithFalseCondition,
+        input,
+        input.templateContent
+      );
 
       expect(result.success).toBe(true);
       expect(result.value).toBe('Error: Please try again');
@@ -363,14 +379,18 @@ describe('EnhancedElseDirective', () => {
   describe('Validation', () => {
     it('should require conditional context', async () => {
       const contextWithoutConditional = createTestContext({
-        conditionalContext: undefined
+        conditionalContext: undefined,
       });
 
       const input = {
-        templateContent: 'Else content'
+        templateContent: 'Else content',
       };
 
-      const result = await elseDirective.executeTemplate(contextWithoutConditional, input, input.templateContent);
+      const result = await elseDirective.executeTemplate(
+        contextWithoutConditional,
+        input,
+        input.templateContent
+      );
 
       expect(result.success).toBe(false);
       expect(result.error?.message).toContain('requires preceding @if directive');
@@ -378,7 +398,7 @@ describe('EnhancedElseDirective', () => {
 
     it('should reject empty template content', async () => {
       const input = {
-        templateContent: '   '
+        templateContent: '   ',
       };
 
       const result = await elseDirective.executeTemplate(context, input, input.templateContent);
@@ -406,7 +426,7 @@ describe('EnhancedRepeatDirective', () => {
     it('should iterate over array and render content for each item', async () => {
       const input = {
         collection: ['apple', 'banana', 'cherry'],
-        templateContent: '${it}, '
+        templateContent: '${it}, ',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -418,7 +438,7 @@ describe('EnhancedRepeatDirective', () => {
     it('should handle empty collections', async () => {
       const input = {
         collection: [],
-        templateContent: '${it}'
+        templateContent: '${it}',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -431,9 +451,9 @@ describe('EnhancedRepeatDirective', () => {
       const input = {
         collection: [
           { name: 'Alice', age: 30 },
-          { name: 'Bob', age: 25 }
+          { name: 'Bob', age: 25 },
         ],
-        templateContent: '${it.name}(${it.age}), '
+        templateContent: '${it.name}(${it.age}), ',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -447,19 +467,21 @@ describe('EnhancedRepeatDirective', () => {
     it('should provide iteration variables', async () => {
       const input = {
         collection: ['a', 'b', 'c'],
-        templateContent: '${index}: ${it} (first: ${first}, last: ${last}), '
+        templateContent: '${index}: ${it} (first: ${first}, last: ${last}), ',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
 
       expect(result.success).toBe(true);
-      expect(result.value).toBe('0: a (first: true, last: false), 1: b (first: false, last: false), 2: c (first: false, last: true), ');
+      expect(result.value).toBe(
+        '0: a (first: true, last: false), 1: b (first: false, last: false), 2: c (first: false, last: true), '
+      );
     });
 
     it('should provide collection length', async () => {
       const input = {
         collection: ['x', 'y'],
-        templateContent: '${it} (${index + 1}/${length}), '
+        templateContent: '${it} (${index + 1}/${length}), ',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -472,7 +494,7 @@ describe('EnhancedRepeatDirective', () => {
       const input = {
         collection: ['red', 'green', 'blue'],
         iteratorVariable: 'color',
-        templateContent: 'Color: ${color}, '
+        templateContent: 'Color: ${color}, ',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -487,12 +509,12 @@ describe('EnhancedRepeatDirective', () => {
       const arrayLike = {
         0: 'first',
         1: 'second',
-        length: 2
+        length: 2,
       };
 
       const input = {
         collection: arrayLike,
-        templateContent: '${it}, '
+        templateContent: '${it}, ',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -504,7 +526,7 @@ describe('EnhancedRepeatDirective', () => {
     it('should reject null/undefined collections', async () => {
       const input = {
         collection: null,
-        templateContent: '${it}'
+        templateContent: '${it}',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -516,7 +538,7 @@ describe('EnhancedRepeatDirective', () => {
     it('should reject non-iterable collections', async () => {
       const input = {
         collection: 'not-iterable',
-        templateContent: '${it}'
+        templateContent: '${it}',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -531,9 +553,9 @@ describe('EnhancedRepeatDirective', () => {
       const input = {
         collection: [
           { user: { profile: { name: 'Alice' } } },
-          { user: { profile: { name: 'Bob' } } }
+          { user: { profile: { name: 'Bob' } } },
         ],
-        templateContent: 'User: ${it.user.profile.name}, '
+        templateContent: 'User: ${it.user.profile.name}, ',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -545,7 +567,7 @@ describe('EnhancedRepeatDirective', () => {
     it('should handle arithmetic in interpolation', async () => {
       const input = {
         collection: ['a', 'b', 'c'],
-        templateContent: '${index + 1}. ${it}, '
+        templateContent: '${index + 1}. ${it}, ',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -558,7 +580,7 @@ describe('EnhancedRepeatDirective', () => {
   describe('Validation', () => {
     it('should validate input schema', async () => {
       const invalidInput = {
-        collection: ['item']
+        collection: ['item'],
         // missing templateContent
       };
 
@@ -571,7 +593,7 @@ describe('EnhancedRepeatDirective', () => {
     it('should reject empty template content', async () => {
       const input = {
         collection: ['item'],
-        templateContent: '   '
+        templateContent: '   ',
       };
 
       const result = await repeatDirective.executeTemplate(context, input, input.templateContent);
@@ -600,15 +622,13 @@ describe('Template Directives Integration', () => {
   describe('If-Else chains', () => {
     it('should simulate if-else execution pattern', async () => {
       const context = createTestContext({
-        locals: new Map([
-          ['user', { isLoggedIn: false }]
-        ])
+        locals: new Map([['user', { isLoggedIn: false }]]),
       });
 
       // Simulate @if user.isLoggedIn
       const ifInput = {
         condition: false, // user.isLoggedIn evaluated to false
-        templateContent: 'Welcome back!'
+        templateContent: 'Welcome back!',
       };
 
       const ifResult = await ifDirective.executeTemplate(context, ifInput, ifInput.templateContent);
@@ -621,15 +641,19 @@ describe('Template Directives Integration', () => {
         conditionalContext: {
           conditionMet: false,
           elseAllowed: true,
-          branchExecuted: false
-        }
+          branchExecuted: false,
+        },
       });
 
       const elseInput = {
-        templateContent: 'Please log in'
+        templateContent: 'Please log in',
       };
 
-      const elseResult = await elseDirective.executeTemplate(elseContext, elseInput, elseInput.templateContent);
+      const elseResult = await elseDirective.executeTemplate(
+        elseContext,
+        elseInput,
+        elseInput.templateContent
+      );
       expect(elseResult.success).toBe(true);
       expect(elseResult.value).toBe('Please log in');
     });
@@ -639,17 +663,30 @@ describe('Template Directives Integration', () => {
     it('should handle conditional list rendering', async () => {
       const context = createTestContext({
         locals: new Map([
-          ['items', [{ name: 'Item 1', visible: true }, { name: 'Item 2', visible: false }]]
-        ])
+          [
+            'items',
+            [
+              { name: 'Item 1', visible: true },
+              { name: 'Item 2', visible: false },
+            ],
+          ],
+        ]),
       });
 
       // Simulate @repeat with conditional content
       const repeatInput = {
-        collection: [{ name: 'Item 1', visible: true }, { name: 'Item 2', visible: false }],
-        templateContent: '${it.name}'  // In real use, this would have nested @if for it.visible
+        collection: [
+          { name: 'Item 1', visible: true },
+          { name: 'Item 2', visible: false },
+        ],
+        templateContent: '${it.name}', // In real use, this would have nested @if for it.visible
       };
 
-      const result = await repeatDirective.executeTemplate(context, repeatInput, repeatInput.templateContent);
+      const result = await repeatDirective.executeTemplate(
+        context,
+        repeatInput,
+        repeatInput.templateContent
+      );
       expect(result.success).toBe(true);
       expect(result.value).toBe('Item 1Item 2');
     });
@@ -658,20 +695,20 @@ describe('Template Directives Integration', () => {
   describe('Performance tracking', () => {
     it('should track evaluation history', async () => {
       const context = createTestContext({
-        evaluationHistory: []
+        evaluationHistory: [],
       });
 
       const input = {
         condition: true,
-        templateContent: 'Test content'
+        templateContent: 'Test content',
       };
 
       await ifDirective.executeTemplate(context, input, input.templateContent);
 
       expect(context.evaluationHistory).toHaveLength(1);
-      expect(context.evaluationHistory![0].expressionName).toBe('@if');
-      expect(context.evaluationHistory![0].success).toBe(true);
-      expect(context.evaluationHistory![0].duration).toBeGreaterThanOrEqual(0);
+      expect(context.evaluationHistory[0].expressionName).toBe('@if');
+      expect(context.evaluationHistory[0].success).toBe(true);
+      expect(context.evaluationHistory[0].duration).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -679,17 +716,21 @@ describe('Template Directives Integration', () => {
     it('should provide comprehensive error information', async () => {
       const invalidInput = {
         condition: true,
-        templateContent: ''
+        templateContent: '',
       };
 
-      const result = await ifDirective.executeTemplate(createTestContext(), invalidInput, invalidInput.templateContent);
+      const result = await ifDirective.executeTemplate(
+        createTestContext(),
+        invalidInput,
+        invalidInput.templateContent
+      );
 
       expect(result.success).toBe(false);
       expect(result.error).toMatchObject({
         name: expect.stringContaining('Error'),
         message: expect.any(String),
         code: expect.any(String),
-        suggestions: expect.arrayContaining([expect.any(String)])
+        suggestions: expect.arrayContaining([expect.any(String)]),
       });
     });
   });

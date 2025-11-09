@@ -27,12 +27,12 @@ test.describe('Simple Expression Tests', () => {
           subtraction: subResult,
           additionCorrect: addResult === 2,
           stringCorrect: strResult === 'hello world',
-          subtractionCorrect: subResult === 2
+          subtractionCorrect: subResult === 2,
         };
       } catch (error) {
         return {
           success: false,
-          error: error.message
+          error: error.message,
         };
       }
     });
@@ -65,12 +65,12 @@ test.describe('Simple Expression Tests', () => {
           trueCorrect: trueResult === true,
           falseCorrect: falseResult === false,
           andCorrect: andResult === true,
-          orCorrect: orResult === true
+          orCorrect: orResult === true,
         };
       } catch (error) {
         return {
           success: false,
-          error: error.message
+          error: error.message,
         };
       }
     });
@@ -102,12 +102,12 @@ test.describe('Simple Expression Tests', () => {
           gtCorrect: gtResult === true,
           ltCorrect: ltResult === true,
           eqCorrect: eqResult === true,
-          neqCorrect: neqResult === true
+          neqCorrect: neqResult === true,
         };
       } catch (error) {
         return {
           success: false,
-          error: error.message
+          error: error.message,
         };
       }
     });

@@ -10,12 +10,9 @@ import type {
   HyperScriptValueType,
   EvaluationResult,
   LLMDocumentation,
-  ValidationResult
+  ValidationResult,
 } from '../../types/command-types';
-import type {
-  ValidationError,
-  TypedExpressionContext
-} from '../../types/base-types';
+import type { ValidationError, TypedExpressionContext } from '../../types/base-types';
 import type { TypedExpressionImplementation } from '../../types/expression-types';
 
 // ============================================================================
@@ -27,7 +24,7 @@ import type { TypedExpressionImplementation } from '../../types/expression-types
  */
 export const InExpressionInputSchema = v.tuple([
   v.unknown().describe('Value(s) to search for (can be single value or array)'),
-  v.unknown().describe('Container to search in (array, NodeList, or DOM element)')
+  v.unknown().describe('Container to search in (array, NodeList, or DOM element)'),
 ]);
 
 export type InExpressionInput = any; // Inferred from RuntimeValidator
@@ -40,14 +37,13 @@ export type InExpressionInput = any; // Inferred from RuntimeValidator
  * Enhanced 'in' expression for membership testing and DOM queries
  * Provides comprehensive search functionality for arrays and DOM elements
  */
-export class EnhancedInExpression implements TypedExpressionImplementation<
-  HyperScriptValue[]
-> {
+export class EnhancedInExpression implements TypedExpressionImplementation<HyperScriptValue[]> {
   public readonly name = 'InExpression';
   public readonly category = 'Logical' as const;
   public readonly syntax = '<value> in <collection>';
   public readonly description = 'Tests membership in collections and performs DOM queries';
-  public readonly inputSchema: RuntimeValidator<HyperScriptValue[]> = InExpressionInputSchema as RuntimeValidator<HyperScriptValue[]>;
+  public readonly inputSchema: RuntimeValidator<HyperScriptValue[]> =
+    InExpressionInputSchema as RuntimeValidator<HyperScriptValue[]>;
   public readonly outputType = 'Array' as const;
   public readonly metadata = {
     category: 'Logical' as const,
@@ -58,57 +54,58 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
     examples: [
       { input: 'x in [1,2,3]', description: 'Check value in array', expectedOutput: [] },
       { input: '"foo" in obj', description: 'Check property in object', expectedOutput: [] },
-      { input: '<div/> in body', description: 'Query elements in DOM', expectedOutput: [] }
+      { input: '<div/> in body', description: 'Query elements in DOM', expectedOutput: [] },
     ],
     relatedExpressions: ['Matches', 'Contains'],
-    performance: { averageTime: 0.5, complexity: 'O(n)' as const }
+    performance: { averageTime: 0.5, complexity: 'O(n)' as const },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Tests membership in collections and performs DOM queries with comprehensive filtering',
+    summary:
+      'Tests membership in collections and performs DOM queries with comprehensive filtering',
     parameters: [
       {
         name: 'searchValue',
         type: 'any',
         description: 'Value or array of values to search for',
         optional: false,
-        examples: ['1', '[1, 3]', '<p.foo/>', '#myId']
+        examples: ['1', '[1, 3]', '<p.foo/>', '#myId'],
       },
       {
         name: 'container',
         type: 'any',
         description: 'Container to search in (array, NodeList, or DOM element)',
         optional: false,
-        examples: ['[1, 2, 3]', 'document', '#container', '<div/>']
-      }
+        examples: ['[1, 2, 3]', 'document', '#container', '<div/>'],
+      },
     ],
     returns: {
       type: 'array',
       description: 'Array of found values/elements, empty array if nothing found',
-      examples: [[1], [1, 3], [], ['<p class="foo"></p>']]
+      examples: [[1], [1, 3], [], ['<p class="foo"></p>']],
     },
     examples: [
       {
         title: 'Array membership test',
         code: '1 in [1, 2, 3]',
         explanation: 'Returns [1] if 1 is found in the array',
-        output: [1]
+        output: [1],
       },
       {
         title: 'Multiple value search',
         code: '[1, 3] in [1, 2, 3]',
         explanation: 'Returns [1, 3] for values found in the array',
-        output: [1, 3]
+        output: [1, 3],
       },
       {
         title: 'DOM query',
         code: '<p/> in #container',
         explanation: 'Returns array of matching <p> elements within #container',
-        output: ['<p elements>']
-      }
+        output: ['<p elements>'],
+      },
     ],
     seeAlso: ['CSS selectors', 'DOM queries', 'array methods'],
-    tags: ['membership', 'search', 'dom', 'query', 'filter']
+    tags: ['membership', 'search', 'dom', 'query', 'filter'],
   };
 
   /**
@@ -126,7 +123,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
         issues.push({
           type: 'validation-error',
           message: 'Search value cannot be undefined',
-          suggestions: []
+          suggestions: [],
         });
       }
 
@@ -134,7 +131,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
         issues.push({
           type: 'validation-error',
           message: 'Container cannot be null or undefined',
-          suggestions: []
+          suggestions: [],
         });
       }
 
@@ -143,31 +140,36 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
         issues.push({
           type: 'validation-error',
           message: `Searching for ${searchValue.length} values may impact performance`,
-          suggestions: []
+          suggestions: [],
         });
       }
 
       return {
         isValid: issues.length === 0,
         errors: issues,
-        suggestions: issues.length > 0 ? [
-          'Ensure search value and container are valid',
-          'Consider breaking large searches into smaller chunks',
-          'Use specific CSS selectors for DOM queries'
-        ] : []
+        suggestions:
+          issues.length > 0
+            ? [
+                'Ensure search value and container are valid',
+                'Consider breaking large searches into smaller chunks',
+                'Use specific CSS selectors for DOM queries',
+              ]
+            : [],
       };
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'syntax-error',
-          message: error instanceof Error ? error.message : 'Invalid in expression arguments',
-          suggestions: []
-        }],
+        errors: [
+          {
+            type: 'syntax-error',
+            message: error instanceof Error ? error.message : 'Invalid in expression arguments',
+            suggestions: [],
+          },
+        ],
         suggestions: [
           'Provide a search value as the first argument',
-          'Provide a container (array, NodeList, or DOM element) as the second argument'
-        ]
+          'Provide a container (array, NodeList, or DOM element) as the second argument',
+        ],
       };
     }
   }
@@ -188,14 +190,14 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
           error: {
             type: 'validation-error',
             message: `In expression validation failed: ${validationResult.errors.map(e => e.message).join(', ')}`,
-            suggestions: validationResult.suggestions
+            suggestions: validationResult.suggestions,
           },
-          type: 'error'
+          type: 'error',
         };
       }
 
       const [searchValue, container] = this.inputSchema.parse(args) as [unknown, unknown];
-      
+
       // Handle different container types
       if (this.isArrayLike(container)) {
         return this.searchInArray(searchValue, container);
@@ -209,9 +211,9 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
             type: 'type-mismatch',
             message: `Unsupported container type: ${typeof container}`,
             code: 'INVALID_CONTAINER_TYPE',
-            suggestions: ['Use an array, object, or DOM element as container']
+            suggestions: ['Use an array, object, or DOM element as container'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
     } catch (error) {
@@ -222,9 +224,9 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
           type: 'runtime-error',
           message: `Failed to evaluate in expression: ${error instanceof Error ? error.message : String(error)}`,
           code: 'IN_EXPRESSION_EVALUATION_ERROR',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -239,19 +241,19 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
     try {
       const containerArray = Array.from(container as ArrayLike<unknown>);
       const searchValues = Array.isArray(searchValue) ? searchValue : [searchValue];
-      
+
       const found: HyperScriptValue[] = [];
-      
+
       for (const value of searchValues) {
         if (containerArray.includes(value)) {
           found.push(value as HyperScriptValue);
         }
       }
-      
+
       return {
         success: true,
         value: found,
-        type: 'array'
+        type: 'array',
       };
     } catch (error) {
       return {
@@ -261,9 +263,9 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
           type: 'runtime-error',
           message: `Failed to search in array: ${error instanceof Error ? error.message : String(error)}`,
           code: 'ARRAY_SEARCH_ERROR',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -292,7 +294,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
         return {
           success: true,
           value: [],
-          type: 'array'
+          type: 'array',
         };
       }
     } catch (error) {
@@ -303,9 +305,9 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
           type: 'runtime-error',
           message: `Failed to search in DOM: ${error instanceof Error ? error.message : String(error)}`,
           code: 'DOM_SEARCH_ERROR',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -320,7 +322,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
     if (container instanceof HTMLElement) {
       return { success: true, value: container, type: 'element' };
     }
-    
+
     if (typeof container === 'string') {
       // Handle CSS selector
       if (container.startsWith('#')) {
@@ -342,12 +344,12 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
         }
       }
     }
-    
+
     // Try to resolve from context
     if (container === 'me' && context.me instanceof HTMLElement) {
       return { success: true, value: context.me, type: 'element' };
     }
-    
+
     // Default to document if no specific container found
     return { success: true, value: document.documentElement, type: 'element' };
   }
@@ -361,17 +363,17 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
   ): EvaluationResult<HyperScriptValue[]> {
     try {
       let cssSelector = selector;
-      
+
       // Convert hyperscript selector to CSS selector
       if (selector.startsWith('<') && selector.endsWith('/>')) {
         cssSelector = this.convertHyperscriptSelector(selector);
       }
-      
+
       const elements = Array.from(container.querySelectorAll(cssSelector));
       return {
         success: true,
         value: elements as HyperScriptValue[],
-        type: 'array'
+        type: 'array',
       };
     } catch (error) {
       return {
@@ -381,9 +383,9 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
           type: 'runtime-error',
           message: `Failed to query selector '${selector}': ${error instanceof Error ? error.message : String(error)}`,
           code: 'QUERY_SELECTOR_ERROR',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -397,7 +399,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
   ): EvaluationResult<HyperScriptValue[]> {
     try {
       const allElements: HTMLElement[] = [];
-      
+
       for (const selector of selectors) {
         if (typeof selector === 'string') {
           const result = this.querySelectorInContainer(selector, container);
@@ -406,14 +408,14 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
           }
         }
       }
-      
+
       // Remove duplicates
       const uniqueElements = Array.from(new Set(allElements));
-      
+
       return {
         success: true,
         value: uniqueElements as HyperScriptValue[],
-        type: 'array'
+        type: 'array',
       };
     } catch (error) {
       return {
@@ -423,9 +425,9 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
           type: 'runtime-error',
           message: `Failed to perform multi-query: ${error instanceof Error ? error.message : String(error)}`,
           code: 'MULTI_QUERY_ERROR',
-          suggestions: []
+          suggestions: [],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -435,12 +437,12 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
    */
   private convertHyperscriptSelector(selector: string): string {
     // Remove < and />
-    let cssSelector = selector.slice(1, -2);
-    
+    const cssSelector = selector.slice(1, -2);
+
     // Handle class selectors: p.foo -> p.foo
     // Handle ID selectors: div#myId -> div#myId
     // These are already valid CSS selectors
-    
+
     return cssSelector;
   }
 
@@ -509,19 +511,19 @@ export class EnhancedInExpression implements TypedExpressionImplementation<
         'CSS selector support',
         'hyperscript selector conversion',
         'context-aware element resolution',
-        'duplicate removal in results'
+        'duplicate removal in results',
       ],
       performance: {
         complexity: 'medium',
         averageExecutionTime: '< 5ms',
-        memoryUsage: 'proportional to result set size'
+        memoryUsage: 'proportional to result set size',
       },
       capabilities: {
         contextAware: true,
         supportsAsync: true,
         sideEffects: false,
-        cacheable: false // DOM queries shouldn't be cached
-      }
+        cacheable: false, // DOM queries shouldn't be cached
+      },
     };
   }
 }

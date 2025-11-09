@@ -111,6 +111,9 @@ packages/*/html/
 **/manual-test.html
 **/test-global-functions.html
 **/test-parse-debug.js
+**/test-css-property.html
+**/test-draggable-*.html
+**/test-sortable-*.html
 
 # MCP server files
 mcp-server-hyperscript/dist/

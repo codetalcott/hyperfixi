@@ -18,7 +18,7 @@ describe('PUT Command Implementation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     runtime = new CommandRuntime();
-    
+
     mockElement = {
       innerHTML: '',
       textContent: '',
@@ -63,9 +63,9 @@ describe('PUT Command Implementation', () => {
         name: 'put',
         args: [
           { type: 'expression', value: 'Hello World' },
-          { type: 'expression', value: 'me' }
+          { type: 'expression', value: 'me' },
         ],
-        source: 'put "Hello World" into me'
+        source: 'put "Hello World" into me',
       };
 
       await runtime.executeCommand(command, context);
@@ -80,9 +80,9 @@ describe('PUT Command Implementation', () => {
         name: 'put',
         args: [
           { type: 'expression', value: 'test value' },
-          { type: 'expression', value: 'myVar' }
+          { type: 'expression', value: 'myVar' },
         ],
-        source: 'put "test value" into myVar'
+        source: 'put "test value" into myVar',
       };
 
       await runtime.executeCommand(command, context);
@@ -101,11 +101,11 @@ describe('PUT Command Implementation', () => {
             operator: 'possessive',
             operands: [
               { type: 'expression', value: 'me' },
-              { type: 'expression', value: 'innerHTML' }
-            ]
-          }
+              { type: 'expression', value: 'innerHTML' },
+            ],
+          },
         ],
-        source: 'put "test content" into my innerHTML'
+        source: 'put "test content" into my innerHTML',
       };
 
       await runtime.executeCommand(command, context);
@@ -119,9 +119,9 @@ describe('PUT Command Implementation', () => {
         name: 'put',
         args: [
           { type: 'expression', value: 'test-value' },
-          { type: 'expression', value: '@data-test' }
+          { type: 'expression', value: '@data-test' },
         ],
-        source: 'put "test-value" into @data-test'
+        source: 'put "test-value" into @data-test',
       };
 
       await runtime.executeCommand(command, context);
@@ -135,9 +135,9 @@ describe('PUT Command Implementation', () => {
         name: 'put',
         args: [
           { type: 'expression', value: 'red' },
-          { type: 'expression', value: '*color' }
+          { type: 'expression', value: '*color' },
         ],
-        source: 'put "red" into *color'
+        source: 'put "red" into *color',
       };
 
       await runtime.executeCommand(command, context);
@@ -153,9 +153,9 @@ describe('PUT Command Implementation', () => {
         name: 'put',
         args: [
           { type: 'expression', value: 'Hello' },
-          { type: 'expression', value: 'me' }
+          { type: 'expression', value: 'me' },
         ],
-        source: 'put "Hello" before me'
+        source: 'put "Hello" before me',
       };
 
       // Mock hasKeyword to return true for 'before'
@@ -174,9 +174,9 @@ describe('PUT Command Implementation', () => {
         name: 'put',
         args: [
           { type: 'expression', value: 'Hello' },
-          { type: 'expression', value: 'me' }
+          { type: 'expression', value: 'me' },
         ],
-        source: 'put "Hello" after me'
+        source: 'put "Hello" after me',
       };
 
       // Mock hasKeyword to return true for 'after'
@@ -195,14 +195,14 @@ describe('PUT Command Implementation', () => {
         name: 'put',
         args: [
           { type: 'expression', value: 'Hello' },
-          { type: 'expression', value: 'me' }
+          { type: 'expression', value: 'me' },
         ],
-        source: 'put "Hello" at start of me'
+        source: 'put "Hello" at start of me',
       };
 
       // Mock hasKeyword to return true for 'at' and 'start'
-      (runtime as any).hasKeyword = vi.fn((cmd, keyword) => 
-        keyword === 'at' || keyword === 'start'
+      (runtime as any).hasKeyword = vi.fn(
+        (cmd, keyword) => keyword === 'at' || keyword === 'start'
       );
 
       await runtime.executeCommand(command, context);
@@ -216,15 +216,13 @@ describe('PUT Command Implementation', () => {
         name: 'put',
         args: [
           { type: 'expression', value: 'Hello' },
-          { type: 'expression', value: 'me' }
+          { type: 'expression', value: 'me' },
         ],
-        source: 'put "Hello" at end of me'
+        source: 'put "Hello" at end of me',
       };
 
       // Mock hasKeyword to return true for 'at' and 'end'
-      (runtime as any).hasKeyword = vi.fn((cmd, keyword) => 
-        keyword === 'at' || keyword === 'end'
-      );
+      (runtime as any).hasKeyword = vi.fn((cmd, keyword) => keyword === 'at' || keyword === 'end');
 
       await runtime.executeCommand(command, context);
 
@@ -241,14 +239,13 @@ describe('PUT Command Implementation', () => {
         name: 'put',
         args: [
           { type: 'expression', value: 'Hello' },
-          { type: 'expression', value: '#nonexistent' }
+          { type: 'expression', value: '#nonexistent' },
         ],
-        source: 'put "Hello" into #nonexistent'
+        source: 'put "Hello" into #nonexistent',
       };
 
       // Should not throw
-      await expect(runtime.executeCommand(command, context))
-        .resolves.toBeUndefined();
+      await expect(runtime.executeCommand(command, context)).resolves.toBeUndefined();
     });
   });
 });

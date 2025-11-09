@@ -39,23 +39,22 @@ export interface MeasureCommandOutput {
 /**
  * Enhanced Measure Command with full type safety and validation
  */
-export class MeasureCommand implements CommandImplementation<
-  MeasureCommandInput,
-  MeasureCommandOutput,
-  TypedExecutionContext
-> {
+export class MeasureCommand
+  implements CommandImplementation<MeasureCommandInput, MeasureCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'measure',
-    description: 'The measure command measures DOM element dimensions, positions, and properties. It can measure width, height, positions, and store the result in a variable.',
+    description:
+      'The measure command measures DOM element dimensions, positions, and properties. It can measure width, height, positions, and store the result in a variable.',
     examples: [
       'measure',
       'measure <#element/> width',
       'measure height and set elementHeight',
-      'measure <.box/> scrollTop and set scrollPosition'
+      'measure <.box/> scrollTop and set scrollPosition',
     ],
     syntax: 'measure [<target>] [<property>] [and set <variable>]',
     category: 'animation' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -65,7 +64,7 @@ export class MeasureCommand implements CommandImplementation<
           isValid: true,
           errors: [],
           suggestions: [],
-          data: {} // Measure can work with no arguments
+          data: {}, // Measure can work with no arguments
         };
       }
 
@@ -75,12 +74,14 @@ export class MeasureCommand implements CommandImplementation<
       if (inputObj.property && typeof inputObj.property !== 'string') {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Property must be a string',
-            suggestions: ['Use property names like "width", "height", "top", "left"']
-          }],
-          suggestions: ['Use property names like "width", "height", "top", "left"']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Property must be a string',
+              suggestions: ['Use property names like "width", "height", "top", "left"'],
+            },
+          ],
+          suggestions: ['Use property names like "width", "height", "top", "left"'],
         };
       }
 
@@ -88,12 +89,14 @@ export class MeasureCommand implements CommandImplementation<
       if (inputObj.variable && typeof inputObj.variable !== 'string') {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Variable name must be a string',
-            suggestions: ['Use valid variable names']
-          }],
-          suggestions: ['Use valid variable names']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Variable name must be a string',
+              suggestions: ['Use valid variable names'],
+            },
+          ],
+          suggestions: ['Use valid variable names'],
         };
       }
 
@@ -106,10 +109,10 @@ export class MeasureCommand implements CommandImplementation<
           property: inputObj.property,
           variable: inputObj.variable,
           andKeyword: inputObj.andKeyword,
-          setKeyword: inputObj.setKeyword
-        }
+          setKeyword: inputObj.setKeyword,
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -128,7 +131,9 @@ export class MeasureCommand implements CommandImplementation<
       targetElement = resolved;
     } else {
       if (!context.me) {
-        throw new Error('No target element available - provide explicit target or ensure context.me is available');
+        throw new Error(
+          'No target element available - provide explicit target or ensure context.me is available'
+        );
       }
       const htmlElement = asHTMLElement(context.me);
       if (!htmlElement) {
@@ -158,7 +163,7 @@ export class MeasureCommand implements CommandImplementation<
       property: measureProperty,
       value: measurementResult.value,
       unit: measurementResult.unit,
-      stored: !!variable
+      stored: !!variable,
     };
   }
 
@@ -172,7 +177,7 @@ export class MeasureCommand implements CommandImplementation<
 
     if (typeof element === 'string') {
       const trimmed = element.trim();
-      
+
       // Handle context references
       if (trimmed === 'me' && context.me) return asHTMLElement(context.me);
       if (trimmed === 'it' && context.it instanceof HTMLElement) return context.it;
@@ -194,7 +199,7 @@ export class MeasureCommand implements CommandImplementation<
 
   private getMeasurement(element: HTMLElement, property: string): { value: number; unit: string } {
     const prop = property.toLowerCase();
-    
+
     // Get bounding rect for position/size measurements
     const rect = element.getBoundingClientRect();
     const computedStyle = getComputedStyle(element);
@@ -202,22 +207,22 @@ export class MeasureCommand implements CommandImplementation<
     switch (prop) {
       case 'width':
         return { value: rect.width, unit: 'px' };
-      
+
       case 'height':
         return { value: rect.height, unit: 'px' };
-      
+
       case 'top':
         return { value: rect.top, unit: 'px' };
-      
+
       case 'left':
         return { value: rect.left, unit: 'px' };
-      
+
       case 'right':
         return { value: rect.right, unit: 'px' };
-      
+
       case 'bottom':
         return { value: rect.bottom, unit: 'px' };
-      
+
       case 'x':
         // For draggable/positioning use cases, return offsetLeft (position relative to offsetParent)
         // not rect.x (position relative to viewport)
@@ -227,43 +232,43 @@ export class MeasureCommand implements CommandImplementation<
         // For draggable/positioning use cases, return offsetTop (position relative to offsetParent)
         // not rect.y (position relative to viewport)
         return { value: element.offsetTop, unit: 'px' };
-      
+
       case 'clientwidth':
       case 'client-width':
         return { value: element.clientWidth, unit: 'px' };
-      
+
       case 'clientheight':
       case 'client-height':
         return { value: element.clientHeight, unit: 'px' };
-      
+
       case 'offsetwidth':
       case 'offset-width':
         return { value: element.offsetWidth, unit: 'px' };
-      
+
       case 'offsetheight':
       case 'offset-height':
         return { value: element.offsetHeight, unit: 'px' };
-      
+
       case 'scrollwidth':
       case 'scroll-width':
         return { value: element.scrollWidth, unit: 'px' };
-      
+
       case 'scrollheight':
       case 'scroll-height':
         return { value: element.scrollHeight, unit: 'px' };
-      
+
       case 'scrolltop':
       case 'scroll-top':
         return { value: element.scrollTop, unit: 'px' };
-      
+
       case 'scrollleft':
       case 'scroll-left':
         return { value: element.scrollLeft, unit: 'px' };
-      
+
       case 'offsettop':
       case 'offset-top':
         return { value: element.offsetTop, unit: 'px' };
-      
+
       case 'offsetleft':
       case 'offset-left':
         return { value: element.offsetLeft, unit: 'px' };
@@ -272,14 +277,14 @@ export class MeasureCommand implements CommandImplementation<
       default:
         const cssValue = computedStyle.getPropertyValue(property);
         const numericValue = parseFloat(cssValue);
-        
+
         if (!isNaN(numericValue)) {
           // Extract unit from CSS value
           const unitMatch = cssValue.match(/([a-zA-Z%]+)$/);
           const unit = unitMatch ? unitMatch[1] : 'px';
           return { value: numericValue, unit };
         }
-        
+
         // Return 0 if cannot parse
         return { value: 0, unit: 'px' };
     }

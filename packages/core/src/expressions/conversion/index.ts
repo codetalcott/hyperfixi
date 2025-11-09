@@ -55,11 +55,11 @@ export const defaultConversions: Record<string, ConversionFunction> = {
   Math: (value: unknown) => {
     if (typeof value === 'number') return value;
     if (value == null) return 0;
-    
+
     // Convert to string for expression evaluation
     const expression = String(value).trim();
     if (!expression) return 0;
-    
+
     try {
       // Simple mathematical expression evaluator
       // Handle basic arithmetic with proper precedence
@@ -82,8 +82,8 @@ export const defaultConversions: Record<string, ConversionFunction> = {
 
   Date: (value: unknown) => {
     if (value instanceof Date) return value;
-    if (value == null) return new Date(NaN); // Returns Invalid Date 
-    
+    if (value == null) return new Date(NaN); // Returns Invalid Date
+
     // Try to parse various date formats
     // Handle the common case where date strings are interpreted as UTC but we want local time
     if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)) {
@@ -123,7 +123,7 @@ export const defaultConversions: Record<string, ConversionFunction> = {
     if (typeof value !== 'string') {
       value = defaultConversions.String(value);
     }
-    
+
     const template = document.createElement('template');
     template.innerHTML = String(value);
     return template.content;
@@ -132,14 +132,14 @@ export const defaultConversions: Record<string, ConversionFunction> = {
   HTML: (value: unknown) => {
     if (typeof value === 'string') return value;
     if (value instanceof NodeList) {
-      return Array.from(value).map(node => 
-        node instanceof Element ? node.outerHTML : node.textContent || ''
-      ).join('');
+      return Array.from(value)
+        .map(node => (node instanceof Element ? node.outerHTML : node.textContent || ''))
+        .join('');
     }
     if (Array.isArray(value)) {
-      return value.map(item => 
-        item instanceof Element ? item.outerHTML : defaultConversions.String(item)
-      ).join('');
+      return value
+        .map(item => (item instanceof Element ? item.outerHTML : defaultConversions.String(item)))
+        .join('');
     }
     if (value instanceof Element) {
       return value.outerHTML;
@@ -189,32 +189,34 @@ export const defaultConversions: Record<string, ConversionFunction> = {
 function evaluateMathExpression(expression: string): number {
   // Remove whitespace
   expression = expression.replace(/\s/g, '');
-  
+
   // Basic security check - only allow numbers, operators, parentheses, and decimal points
   if (!/^[0-9+\-*/().]+$/.test(expression)) {
     throw new Error('Invalid characters in math expression');
   }
-  
+
   // Use Function constructor for safe evaluation (safer than eval)
   // This creates a function that returns the expression result
   try {
     const result = new Function(`"use strict"; return (${expression})`)();
-    
+
     // Ensure result is a finite number
     if (typeof result !== 'number' || !isFinite(result)) {
       throw new Error('Expression did not evaluate to a finite number');
     }
-    
+
     return result;
   } catch (error) {
-    throw new Error(`Math expression evaluation failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Math expression evaluation failed: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 }
 
 function getFormValues(form: HTMLFormElement): Record<string, unknown> {
   const formData = new FormData(form);
   const values: Record<string, unknown> = {};
-  
+
   for (const [key, value] of formData.entries()) {
     if (values[key] !== undefined) {
       // Multiple values for same key - convert to array
@@ -226,15 +228,15 @@ function getFormValues(form: HTMLFormElement): Record<string, unknown> {
       values[key] = value;
     }
   }
-  
+
   return values;
 }
 
 function getFormValuesProcessed(form: HTMLFormElement): Record<string, unknown> {
   const values: Record<string, unknown> = {};
   const elements = form.querySelectorAll('input, select, textarea');
-  
-  elements.forEach((element) => {
+
+  elements.forEach(element => {
     const input = element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
     if (input.name) {
       const value = getInputValue(input);
@@ -251,7 +253,7 @@ function getFormValuesProcessed(form: HTMLFormElement): Record<string, unknown> 
       }
     }
   });
-  
+
   return values;
 }
 
@@ -274,14 +276,14 @@ function getInputValue(input: HTMLInputElement | HTMLSelectElement | HTMLTextAre
         return input.value;
     }
   }
-  
+
   if (input instanceof HTMLSelectElement) {
     if (input.multiple) {
       return Array.from(input.selectedOptions).map(option => option.value);
     }
     return input.value;
   }
-  
+
   return input.value;
 }
 
@@ -304,45 +306,45 @@ export const asExpression: ExpressionImplementation = {
   precedence: 20,
   associativity: 'Left',
   operators: ['as'],
-  
+
   async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const [value, type] = args;
     if (typeof type !== 'string') {
       throw new Error('Conversion type must be a string');
     }
-    
+
     // Handle Fixed:<precision> conversion
     if (type.startsWith('Fixed')) {
       const { precision } = parseFixedPrecision(type);
       const num = defaultConversions.Number(value) as number;
       return num.toFixed(precision || 2);
     }
-    
+
     // Check for built-in conversion (case-sensitive first)
     let converter = defaultConversions[type];
     if (converter) {
       return converter(value, context);
     }
-    
+
     // Check for case-insensitive matches and common aliases
     const lowerType = type.toLowerCase();
     const typeAliases: Record<string, string> = {
-      'boolean': 'Boolean',
-      'bool': 'Boolean', 
-      'string': 'String',
-      'str': 'String',
-      'number': 'Number',
-      'num': 'Number',
-      'int': 'Int',
-      'integer': 'Int',
-      'float': 'Float',
-      'array': 'Array',
-      'object': 'Object',
-      'obj': 'Object',
-      'date': 'Date',
-      'json': 'JSON'
+      boolean: 'Boolean',
+      bool: 'Boolean',
+      string: 'String',
+      str: 'String',
+      number: 'Number',
+      num: 'Number',
+      int: 'Int',
+      integer: 'Int',
+      float: 'Float',
+      array: 'Array',
+      object: 'Object',
+      obj: 'Object',
+      date: 'Date',
+      json: 'JSON',
     };
-    
+
     const aliasedType = typeAliases[lowerType];
     if (aliasedType) {
       converter = defaultConversions[aliasedType];
@@ -350,15 +352,15 @@ export const asExpression: ExpressionImplementation = {
         return converter(value, context);
       }
     }
-    
+
     // Check for custom conversions in global config
     // This would be extended later to support _hyperscript.config.conversions
-    
+
     // Fallback: return original value
     console.warn(`Unknown conversion type: ${type}`);
     return value;
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 2) {
       return 'as expression requires exactly two arguments (value, type)';
@@ -367,7 +369,7 @@ export const asExpression: ExpressionImplementation = {
       return 'conversion type must be a string';
     }
     return null;
-  }
+  },
 };
 
 // ============================================================================
@@ -381,13 +383,13 @@ export const isExpression: ExpressionImplementation = {
   precedence: 10,
   associativity: 'Left',
   operators: ['is a', 'is an'],
-  
+
   async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<boolean> {
     const [value, type] = args;
     if (typeof type !== 'string') {
       throw new Error('Type check requires a string type');
     }
-    
+
     switch (type.toLowerCase()) {
       case 'null':
         return value === null;
@@ -414,15 +416,18 @@ export const isExpression: ExpressionImplementation = {
       case 'nodelist':
         return value instanceof NodeList;
       case 'empty':
-        return value == null || value === '' || 
-               (Array.isArray(value) && value.length === 0) ||
-               (typeof value === 'object' && Object.keys(value).length === 0);
+        return (
+          value == null ||
+          value === '' ||
+          (Array.isArray(value) && value.length === 0) ||
+          (typeof value === 'object' && Object.keys(value).length === 0)
+        );
       default:
         // Check constructor name for custom types
         return value?.constructor?.name?.toLowerCase() === type.toLowerCase();
     }
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 2) {
       return 'is expression requires exactly two arguments (value, type)';
@@ -431,7 +436,7 @@ export const isExpression: ExpressionImplementation = {
       return 'type must be a string';
     }
     return null;
-  }
+  },
 };
 
 // ============================================================================
@@ -445,19 +450,19 @@ export const asyncExpression: ExpressionImplementation = {
   precedence: 25,
   associativity: 'Right',
   operators: ['async'],
-  
+
   async evaluate(_context: ExecutionContext, expression: unknown): Promise<unknown> {
     // In hyperscript, async prevents automatic promise synchronization
     // Here we just return the value without awaiting if it's a promise
     return expression;
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 1) {
       return 'async requires exactly one argument (expression)';
     }
     return null;
-  }
+  },
 };
 
 // ============================================================================

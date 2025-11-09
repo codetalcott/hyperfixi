@@ -13,7 +13,9 @@ export class TemplateExecutor {
   async executeTemplate(compiled: CompiledTemplate, context: ExecutionContext): Promise<string> {
     // Ensure we have a result buffer
     if (!context.meta || !Array.isArray(context.meta.__ht_template_result)) {
-      throw new Error('Template execution requires a context with meta.__ht_template_result buffer');
+      throw new Error(
+        'Template execution requires a context with meta.__ht_template_result buffer'
+      );
     }
 
     const buffer = context.meta.__ht_template_result;
@@ -22,7 +24,7 @@ export class TemplateExecutor {
     try {
       // Execute the compiled template using a simplified command interpreter
       await this.executeCommands(compiled.commands, compiled.content, context);
-      
+
       // Return the joined buffer contents
       return buffer.join('');
     } catch (error) {
@@ -34,7 +36,11 @@ export class TemplateExecutor {
   /**
    * Execute template commands in sequence with integrated content processing
    */
-  private async executeCommands(commands: string[], content: string, context: ExecutionContext): Promise<void> {
+  private async executeCommands(
+    commands: string[],
+    content: string,
+    context: ExecutionContext
+  ): Promise<void> {
     const buffer = context.meta?.__ht_template_result;
     if (!Array.isArray(buffer)) return;
 
@@ -49,7 +55,7 @@ export class TemplateExecutor {
 
     // For templates with commands, we need to interleave command execution with content processing
     // This is a simplified approach - in a full implementation, we'd need the original template structure
-    
+
     // First, execute all standalone commands (like @set)
     for (const command of commands) {
       if (command.startsWith('set ')) {
@@ -64,25 +70,37 @@ export class TemplateExecutor {
   /**
    * Execute block commands with proper content integration
    */
-  private async executeBlockCommands(commands: string[], content: string, context: ExecutionContext): Promise<void> {
+  private async executeBlockCommands(
+    commands: string[],
+    content: string,
+    context: ExecutionContext
+  ): Promise<void> {
     const buffer = context.meta?.__ht_template_result;
     if (!Array.isArray(buffer)) return;
 
     let commandIndex = 0;
-    
+
     while (commandIndex < commands.length) {
       const command = commands[commandIndex];
-      
+
       if (command.startsWith('repeat in ')) {
         // Handle repeat command with content integration
         const { nextIndex } = await this.executeRepeatWithContent(
-          command, commands, commandIndex, content, context
+          command,
+          commands,
+          commandIndex,
+          content,
+          context
         );
         commandIndex = nextIndex;
       } else if (command.startsWith('if ')) {
-        // Handle if command with content integration  
+        // Handle if command with content integration
         const { nextIndex } = await this.executeIfWithContent(
-          command, commands, commandIndex, content, context
+          command,
+          commands,
+          commandIndex,
+          content,
+          context
         );
         commandIndex = nextIndex;
       } else {
@@ -113,7 +131,7 @@ export class TemplateExecutor {
   ): Promise<{ nextIndex: number }> {
     const arrayExpr = command.substring('repeat in '.length).trim();
     const array = this.resolveVariable(arrayExpr, context);
-    
+
     if (!Array.isArray(array)) {
       console.warn('Repeat expression did not evaluate to array:', arrayExpr);
       return this.skipToMatchingEnd(commands, startIndex);
@@ -133,7 +151,7 @@ export class TemplateExecutor {
       const iterContext = {
         ...context,
         locals: new Map(context.locals),
-        it: item
+        it: item,
       };
       iterContext.locals?.set('it', item);
 
@@ -147,7 +165,10 @@ export class TemplateExecutor {
 
       // Process the template content with the iteration context
       if (templateContent.trim()) {
-        const processedContent = await this.processContentInterpolation(templateContent, iterContext);
+        const processedContent = await this.processContentInterpolation(
+          templateContent,
+          iterContext
+        );
         if (processedContent.trim()) {
           buffer.push(processedContent);
         }
@@ -184,7 +205,7 @@ export class TemplateExecutor {
           await this.executeSetCommand(blockCommand, context);
         }
       }
-      
+
       // Process content with if branch context
       if (templateContent.trim()) {
         const processedContent = await this.processContentInterpolation(templateContent, context);
@@ -199,7 +220,7 @@ export class TemplateExecutor {
           await this.executeSetCommand(elseCommand, context);
         }
       }
-      
+
       // Process content with else branch context
       if (templateContent.trim()) {
         const processedContent = await this.processContentInterpolation(templateContent, context);
@@ -224,7 +245,7 @@ export class TemplateExecutor {
 
     const [, varName, expression] = match;
     const value = await this.evaluateExpression(expression, context);
-    
+
     // Set the variable in locals (create new context to avoid readonly issues)
     const newLocals = new Map(context.locals);
     newLocals.set(varName, value);
@@ -234,7 +255,10 @@ export class TemplateExecutor {
   /**
    * Extract block commands between current position and matching @end
    */
-  private extractBlock(commands: string[], startIndex: number): {
+  private extractBlock(
+    commands: string[],
+    startIndex: number
+  ): {
     nextIndex: number;
     blockCommands: string[];
     blockContent: string;
@@ -245,7 +269,7 @@ export class TemplateExecutor {
 
     while (currentIndex < commands.length && nestLevel > 0) {
       const command = commands[currentIndex];
-      
+
       if (command.startsWith('repeat ') || command.startsWith('if ')) {
         nestLevel++;
         blockCommands.push(command);
@@ -257,21 +281,24 @@ export class TemplateExecutor {
       } else {
         blockCommands.push(command);
       }
-      
+
       currentIndex++;
     }
 
     return {
       nextIndex: currentIndex,
       blockCommands,
-      blockContent: '' // Content extraction would be more complex
+      blockContent: '', // Content extraction would be more complex
     };
   }
 
   /**
    * Extract if/else block commands
    */
-  private extractIfBlock(commands: string[], startIndex: number): {
+  private extractIfBlock(
+    commands: string[],
+    startIndex: number
+  ): {
     nextIndex: number;
     blockCommands: string[];
     elseCommands: string[];
@@ -286,7 +313,7 @@ export class TemplateExecutor {
 
     while (currentIndex < commands.length && nestLevel > 0) {
       const command = commands[currentIndex];
-      
+
       if (command.startsWith('if ')) {
         nestLevel++;
       } else if (command === 'else' && nestLevel === 1) {
@@ -297,13 +324,13 @@ export class TemplateExecutor {
         nestLevel--;
         if (nestLevel === 0) break;
       }
-      
+
       if (inElse) {
         elseCommands.push(command);
       } else {
         blockCommands.push(command);
       }
-      
+
       currentIndex++;
     }
 
@@ -312,7 +339,7 @@ export class TemplateExecutor {
       blockCommands,
       elseCommands,
       blockContent: '',
-      elseContent: ''
+      elseContent: '',
     };
   }
 
@@ -325,13 +352,13 @@ export class TemplateExecutor {
 
     while (currentIndex < commands.length && nestLevel > 0) {
       const command = commands[currentIndex];
-      
+
       if (command.startsWith('repeat ') || command.startsWith('if ')) {
         nestLevel++;
       } else if (command === 'end') {
         nestLevel--;
       }
-      
+
       currentIndex++;
     }
 
@@ -341,10 +368,13 @@ export class TemplateExecutor {
   /**
    * Process content interpolation (${variable} expressions)
    */
-  private async processContentInterpolation(content: string, context: ExecutionContext): Promise<string> {
+  private async processContentInterpolation(
+    content: string,
+    context: ExecutionContext
+  ): Promise<string> {
     return content.replace(/\$\{([^}]+)\}/g, (_match, expression) => {
       const trimmedExpr = expression.trim();
-      
+
       try {
         if (trimmedExpr.startsWith('escape html ')) {
           // HTML escaped expression
@@ -373,7 +403,7 @@ export class TemplateExecutor {
         // Property access like 'it.active'
         const parts = condition.split('.');
         let value = this.resolveVariable(parts[0], context);
-        
+
         for (let i = 1; i < parts.length; i++) {
           if (value && typeof value === 'object') {
             value = value[parts[i]];
@@ -382,7 +412,7 @@ export class TemplateExecutor {
             break;
           }
         }
-        
+
         return Boolean(value);
       } else {
         // Simple variable
@@ -404,7 +434,7 @@ export class TemplateExecutor {
       if (expression.startsWith('"') && expression.endsWith('"')) {
         return expression.slice(1, -1);
       }
-      
+
       // Function call
       if (expression.includes('(')) {
         const match = expression.match(/^(\w+)\((.+)\)$/);
@@ -417,13 +447,13 @@ export class TemplateExecutor {
           }
         }
       }
-      
+
       // Nested function calls
       if (expression.includes('(') && expression.split('(').length > 2) {
         // Handle nested calls like transform(capitalize(name))
         return await this.evaluateNestedFunctionCall(expression, context);
       }
-      
+
       // Simple variable
       return this.resolveVariable(expression, context);
     } catch (error) {
@@ -435,31 +465,34 @@ export class TemplateExecutor {
   /**
    * Evaluate nested function calls
    */
-  private async evaluateNestedFunctionCall(expression: string, context: ExecutionContext): Promise<any> {
+  private async evaluateNestedFunctionCall(
+    expression: string,
+    context: ExecutionContext
+  ): Promise<any> {
     // Simple recursive evaluation for nested function calls
     // This is a simplified implementation for testing
-    
+
     // Find innermost function call first
     const innerMatch = expression.match(/(\w+)\(([^()]+)\)/);
     if (innerMatch) {
       const [fullMatch, funcName, argExpr] = innerMatch;
       const func = context.globals?.get(funcName);
-      
+
       if (typeof func === 'function') {
         const arg = await this.evaluateExpression(argExpr, context);
         const result = func(arg);
-        
+
         // Replace the inner call with its result and continue
         const remainingExpr = expression.replace(fullMatch, JSON.stringify(result));
-        
+
         if (remainingExpr !== expression) {
           return await this.evaluateExpression(remainingExpr, context);
         }
-        
+
         return result;
       }
     }
-    
+
     return this.resolveVariable(expression, context);
   }
 
@@ -471,18 +504,18 @@ export class TemplateExecutor {
     if (context.locals?.has(name)) {
       return context.locals.get(name);
     }
-    
+
     // Check context variables
     if (name === 'me') return context.me;
     if (name === 'it') return context.it;
     if (name === 'you') return context.you;
     if (name === 'result') return context.result;
-    
+
     // Check globals
     if (context.globals?.has(name)) {
       return context.globals.get(name);
     }
-    
+
     return undefined;
   }
 

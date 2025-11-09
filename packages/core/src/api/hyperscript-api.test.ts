@@ -38,7 +38,7 @@ describe('Hyperscript Public API', () => {
   describe('compile() method', () => {
     it('should compile valid hyperscript code', () => {
       const result = hyperscript.compile('42');
-      
+
       expect(result.success).toBe(true);
       expect(result.ast).toBeDefined();
       expect(result.ast?.type).toBe('literal');
@@ -47,7 +47,7 @@ describe('Hyperscript Public API', () => {
 
     it('should handle compilation errors gracefully', () => {
       const result = hyperscript.compile('invalid @@ syntax');
-      
+
       expect(result.success).toBe(false);
       expect(result.ast).toBeUndefined();
       expect(result.errors).toHaveLength(1);
@@ -56,7 +56,7 @@ describe('Hyperscript Public API', () => {
 
     it('should return compilation metadata', () => {
       const result = hyperscript.compile('5 + 3');
-      
+
       expect(result.tokens).toBeDefined();
       expect(result.tokens.length).toBeGreaterThan(0);
       expect(result.compilationTime).toBeTypeOf('number');
@@ -67,17 +67,17 @@ describe('Hyperscript Public API', () => {
     it('should execute a compiled AST with context', async () => {
       const compiled = hyperscript.compile('42');
       expect(compiled.success).toBe(true);
-      
+
       const context = hyperscript.createContext(mockElement);
       const result = await hyperscript.execute(compiled.ast!, context);
-      
+
       expect(result).toBe(42);
     });
 
     it('should execute with default context if none provided', async () => {
       const compiled = hyperscript.compile('5 + 3');
       expect(compiled.success).toBe(true);
-      
+
       const result = await hyperscript.execute(compiled.ast!);
       expect(result).toBe(8);
     });
@@ -85,11 +85,10 @@ describe('Hyperscript Public API', () => {
     it('should handle execution errors gracefully', async () => {
       const compiled = hyperscript.compile('me.nonExistentMethod()');
       expect(compiled.success).toBe(true);
-      
+
       const context = hyperscript.createContext(mockElement);
-      
-      await expect(hyperscript.execute(compiled.ast!, context))
-        .rejects.toThrow();
+
+      await expect(hyperscript.execute(compiled.ast!, context)).rejects.toThrow();
     });
   });
 
@@ -102,14 +101,13 @@ describe('Hyperscript Public API', () => {
     it('should use provided context', async () => {
       const context = hyperscript.createContext(mockElement);
       context.variables = new Map([['x', 5]]);
-      
+
       const result = await hyperscript.run('x + 15', context);
       expect(result).toBe(20);
     });
 
     it('should handle both compilation and execution errors', async () => {
-      await expect(hyperscript.run('invalid @@ syntax'))
-        .rejects.toThrow('Compilation failed');
+      await expect(hyperscript.run('invalid @@ syntax')).rejects.toThrow('Compilation failed');
     });
   });
 
@@ -129,14 +127,13 @@ describe('Hyperscript Public API', () => {
     it('should handle complex hyperscript syntax', async () => {
       const context = hyperscript.createContext(mockElement);
       context.variables = new Map([['value', 10]]);
-      
+
       const result = await hyperscript.evaluate('value * 2 + 2', context);
       expect(result).toBe(22);
     });
 
     it('should handle errors the same as run()', async () => {
-      await expect(hyperscript.evaluate('invalid @@ syntax'))
-        .rejects.toThrow('Compilation failed');
+      await expect(hyperscript.evaluate('invalid @@ syntax')).rejects.toThrow('Compilation failed');
     });
   });
 
@@ -154,7 +151,7 @@ describe('Hyperscript Public API', () => {
     it('should create child context with parent reference', () => {
       const parent = hyperscript.createContext(mockElement);
       parent.globals.set('parentVar', 'value');
-      
+
       const child = hyperscript.createChildContext(parent);
       expect(child.parent).toBe(parent);
       expect(child.globals).toBe(parent.globals); // Shared globals
@@ -164,10 +161,10 @@ describe('Hyperscript Public API', () => {
     it('should handle context inheritance properly', () => {
       const parent = hyperscript.createContext();
       parent.globals.set('globalVar', 42);
-      
+
       const child = hyperscript.createChildContext(parent, mockElement);
       child.locals.set('localVar', 'child');
-      
+
       expect(child.globals.get('globalVar')).toBe(42);
       expect(child.locals.get('localVar')).toBe('child');
       expect(parent.locals.has('localVar')).toBe(false);
@@ -192,9 +189,9 @@ describe('Hyperscript Public API', () => {
     it('should create runtime with custom options', () => {
       const runtime = hyperscript.createRuntime({
         enableAsyncCommands: false,
-        commandTimeout: 5000
+        commandTimeout: 5000,
       });
-      
+
       expect(runtime).toBeDefined();
       expect(typeof runtime.execute).toBe('function');
     });
@@ -218,7 +215,7 @@ describe('Hyperscript Public API', () => {
         message: expect.stringContaining('Expected expression'),
         line: expect.any(Number),
         column: expect.any(Number),
-        position: expect.any(Number)
+        position: expect.any(Number),
       });
     });
 
@@ -238,9 +235,9 @@ describe('Hyperscript Public API', () => {
     it('should handle assignments and variable scoping', async () => {
       const context = hyperscript.createContext();
       await hyperscript.run('x = 42', context);
-      
+
       expect(context.variables?.get('x')).toBe(42);
-      
+
       const result = await hyperscript.run('x + 8', context);
       expect(result).toBe(50);
     });

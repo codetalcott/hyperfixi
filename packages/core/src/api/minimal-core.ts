@@ -1,6 +1,6 @@
 /**
  * Minimal Core API - Zod-Free
- * 
+ *
  * This is a lightweight version of the HyperFixi API that excludes all enhanced
  * features requiring zod validation. Perfect for demos and basic usage.
  */
@@ -66,28 +66,30 @@ const runtime = new MinimalRuntime({ debug: false });
 async function compile(code: string): Promise<MinimalCompilationResult> {
   try {
     const parseResult = parse(code);
-    
+
     if (parseResult.success && parseResult.ast) {
       return {
         success: true,
         ast: parseResult.ast,
-        errors: []
+        errors: [],
       };
     } else {
       return {
         success: false,
-        errors: parseResult.error ? [parseResult.error] : []
+        errors: parseResult.error ? [parseResult.error] : [],
       };
     }
   } catch (error) {
     return {
       success: false,
-      errors: [{
-        name: 'CompileError',
-        message: error instanceof Error ? error.message : 'Unknown compilation error',
-        line: 1,
-        column: 1
-      }]
+      errors: [
+        {
+          name: 'CompileError',
+          message: error instanceof Error ? error.message : 'Unknown compilation error',
+          line: 1,
+          column: 1,
+        },
+      ],
     };
   }
 }
@@ -110,7 +112,7 @@ async function run(ast: ASTNode, context?: ExecutionContext): Promise<unknown> {
  */
 async function evaluate(code: string, context?: ExecutionContext): Promise<unknown> {
   const compilationResult = await compile(code);
-  
+
   if (!compilationResult.success) {
     const errorMessages = compilationResult.errors.map(e => e.message).join(', ');
     throw new Error(`Compilation failed: ${errorMessages}`);
@@ -125,8 +127,8 @@ async function evaluate(code: string, context?: ExecutionContext): Promise<unkno
 function processNode(root: Element = document.body): void {
   // Find all elements with hyperscript attributes
   const elements = root.querySelectorAll('[_]');
-  
-  elements.forEach(async (element) => {
+
+  elements.forEach(async element => {
     const code = element.getAttribute('_');
     if (code) {
       try {
@@ -151,7 +153,7 @@ export const hyperscript: MinimalHyperscriptAPI = {
   compile,
   run,
   createContext,
-  processNode
+  processNode,
 };
 
 // Default export

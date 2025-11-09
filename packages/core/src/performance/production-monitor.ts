@@ -50,18 +50,20 @@ export class ProductionPerformanceMonitor {
   private readonly thresholds: PerformanceThresholds = {
     command: { warning: 10, error: 50 },
     expression: { warning: 5, error: 25 },
-    validation: { warning: 2, error: 10 }
+    validation: { warning: 2, error: 10 },
   };
 
-  constructor(options: {
-    enabled?: boolean;
-    thresholds?: Partial<PerformanceThresholds>;
-    maxMetrics?: number;
-    flushIntervalMs?: number;
-  } = {}) {
+  constructor(
+    options: {
+      enabled?: boolean;
+      thresholds?: Partial<PerformanceThresholds>;
+      maxMetrics?: number;
+      flushIntervalMs?: number;
+    } = {}
+  ) {
     this.isEnabled = options.enabled ?? process.env.NODE_ENV === 'production';
     this.maxMetrics = options.maxMetrics ?? 1000;
-    
+
     // Override default thresholds
     if (options.thresholds) {
       Object.assign(this.thresholds, options.thresholds);
@@ -103,11 +105,11 @@ export class ProductionPerformanceMonitor {
       duration,
       success,
       ...(metadata !== undefined && { metadata }),
-      severity
+      severity,
     };
 
     this.metrics.push(metric);
-    
+
     // Trim metrics if we exceed the limit
     if (this.metrics.length > this.maxMetrics) {
       this.metrics = this.metrics.slice(-this.maxMetrics);
@@ -118,13 +120,13 @@ export class ProductionPerformanceMonitor {
       console.error(`🚨 Performance Error: ${name} took ${duration.toFixed(2)}ms`, {
         category,
         success,
-        metadata
+        metadata,
       });
     } else if (severity === 'warning') {
       console.warn(`⚠️ Performance Warning: ${name} took ${duration.toFixed(2)}ms`, {
         category,
         success,
-        metadata
+        metadata,
       });
     }
   }
@@ -153,14 +155,14 @@ export class ProductionPerformanceMonitor {
       const duration = performance.now() - start;
       this.record(name, category, duration, false, {
         ...metadata,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
 
     const duration = performance.now() - start;
     this.record(name, category, duration, success, metadata);
-    
+
     return result;
   }
 
@@ -178,7 +180,7 @@ export class ProductionPerformanceMonitor {
     warnings: number;
     errors: number;
   } {
-    const relevantMetrics = category 
+    const relevantMetrics = category
       ? this.metrics.filter(m => m.category === category)
       : this.metrics;
 
@@ -192,7 +194,7 @@ export class ProductionPerformanceMonitor {
         maxDuration: 0,
         minDuration: 0,
         warnings: 0,
-        errors: 0
+        errors: 0,
       };
     }
 
@@ -210,7 +212,7 @@ export class ProductionPerformanceMonitor {
       maxDuration: Math.max(...durations),
       minDuration: Math.min(...durations),
       warnings,
-      errors
+      errors,
     };
   }
 
@@ -218,7 +220,7 @@ export class ProductionPerformanceMonitor {
    * Get recent metrics
    */
   getRecentMetrics(minutes: number = 5): PerformanceMetric[] {
-    const cutoff = Date.now() - (minutes * 60 * 1000);
+    const cutoff = Date.now() - minutes * 60 * 1000;
     return this.metrics.filter(m => m.timestamp >= cutoff);
   }
 
@@ -232,7 +234,7 @@ export class ProductionPerformanceMonitor {
     return {
       memoryUsage: process.memoryUsage(),
       cpuUsage: currentCpuUsage,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -242,21 +244,28 @@ export class ProductionPerformanceMonitor {
   generateReport(): string {
     const lines: string[] = [];
     lines.push('\n📊 Production Performance Report');
-    lines.push('=' .repeat(50));
+    lines.push('='.repeat(50));
 
     // Overall stats
     const overallStats = this.getStats();
     lines.push(`\n📈 Overall Performance:`);
     lines.push(`  Total Operations: ${overallStats.total}`);
-    lines.push(`  Success Rate: ${((overallStats.successful / overallStats.total) * 100).toFixed(1)}%`);
+    lines.push(
+      `  Success Rate: ${((overallStats.successful / overallStats.total) * 100).toFixed(1)}%`
+    );
     lines.push(`  Average Duration: ${overallStats.averageDuration.toFixed(2)}ms`);
     lines.push(`  Median Duration: ${overallStats.medianDuration.toFixed(2)}ms`);
     lines.push(`  Warnings: ${overallStats.warnings}`);
     lines.push(`  Errors: ${overallStats.errors}`);
 
     // Category breakdown
-    const categories: PerformanceMetric['category'][] = ['command', 'expression', 'validation', 'runtime'];
-    
+    const categories: PerformanceMetric['category'][] = [
+      'command',
+      'expression',
+      'validation',
+      'runtime',
+    ];
+
     for (const category of categories) {
       const stats = this.getStats(category);
       if (stats.total === 0) continue;
@@ -266,7 +275,7 @@ export class ProductionPerformanceMonitor {
       lines.push(`  Success Rate: ${((stats.successful / stats.total) * 100).toFixed(1)}%`);
       lines.push(`  Average: ${stats.averageDuration.toFixed(2)}ms`);
       lines.push(`  Range: ${stats.minDuration.toFixed(2)}ms - ${stats.maxDuration.toFixed(2)}ms`);
-      
+
       if (stats.warnings > 0 || stats.errors > 0) {
         lines.push(`  ⚠️ Issues: ${stats.warnings} warnings, ${stats.errors} errors`);
       }
@@ -294,7 +303,9 @@ export class ProductionPerformanceMonitor {
       lines.push(`\n🐌 Recent Performance Issues:`);
       slowestOperations.forEach(metric => {
         const icon = metric.severity === 'error' ? '🚨' : '⚠️';
-        lines.push(`  ${icon} ${metric.name}: ${metric.duration.toFixed(2)}ms (${metric.category})`);
+        lines.push(
+          `  ${icon} ${metric.name}: ${metric.duration.toFixed(2)}ms (${metric.category})`
+        );
       });
     }
 
@@ -314,7 +325,7 @@ export class ProductionPerformanceMonitor {
    */
   setEnabled(enabled: boolean): void {
     this.isEnabled = enabled;
-    
+
     if (enabled && !this.flushInterval) {
       this.startSystemMonitoring();
     } else if (!enabled && this.flushInterval) {
@@ -334,7 +345,7 @@ export class ProductionPerformanceMonitor {
     this.flushInterval = setInterval(() => {
       const systemMetric = this.getCurrentSystemMetrics();
       this.systemMetrics.push(systemMetric);
-      
+
       // Keep only last 100 system metrics
       if (this.systemMetrics.length > 100) {
         this.systemMetrics = this.systemMetrics.slice(-100);
@@ -356,16 +367,13 @@ export class ProductionPerformanceMonitor {
 
 // Global production monitor instance
 export const productionMonitor = new ProductionPerformanceMonitor({
-  enabled: process.env.NODE_ENV === 'production' || process.env.PERFORMANCE_MONITORING === 'true'
+  enabled: process.env.NODE_ENV === 'production' || process.env.PERFORMANCE_MONITORING === 'true',
 });
 
 /**
  * Performance monitoring decorator for production use
  */
-export function monitorPerformance(
-  category: PerformanceMetric['category'],
-  name?: string
-) {
+export function monitorPerformance(category: PerformanceMetric['category'], name?: string) {
   return function <T extends (...args: any[]) => any>(
     target: any,
     propertyKey: string,
@@ -373,7 +381,7 @@ export function monitorPerformance(
   ) {
     const originalMethod = descriptor.value!;
     const operationName = name || `${target.constructor.name}.${propertyKey}`;
-    
+
     descriptor.value = async function (this: any, ...args: Parameters<T>) {
       return productionMonitor.measure(
         operationName,
@@ -382,11 +390,11 @@ export function monitorPerformance(
         {
           argsCount: args.length,
           className: target.constructor.name,
-          methodName: propertyKey
+          methodName: propertyKey,
         }
       );
     } as T;
-    
+
     return descriptor;
   };
 }

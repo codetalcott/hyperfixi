@@ -84,7 +84,7 @@ test.describe('Comprehensive Compatibility Metrics', () => {
             expected: test.expected,
             result: result,
             passed: passed,
-            error: null
+            error: null,
           });
         } catch (error) {
           tests.push({
@@ -94,7 +94,7 @@ test.describe('Comprehensive Compatibility Metrics', () => {
             expected: test.expected,
             result: null,
             passed: false,
-            error: error.message || String(error)
+            error: error.message || String(error),
           });
         }
       }

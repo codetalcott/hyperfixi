@@ -8,7 +8,7 @@ import type {
   TemplateExecutionContext,
   TemplateContextBridge as ITemplateContextBridge,
   TemplateDirectiveType,
-  EnhancedTemplateConfig
+  EnhancedTemplateConfig,
 } from '../../types/template-types.ts';
 import type { TypedExpressionContext } from '../../types/expression-types.ts';
 import type { HyperScriptValue } from '../../types/command-types';
@@ -19,7 +19,7 @@ import type { HyperScriptValue } from '../../types/command-types';
 
 export class TemplateContextBridge implements ITemplateContextBridge {
   private readonly config: EnhancedTemplateConfig;
-  
+
   constructor(config: Partial<EnhancedTemplateConfig> = {}) {
     this.config = {
       enableCaching: true,
@@ -31,7 +31,7 @@ export class TemplateContextBridge implements ITemplateContextBridge {
       customDirectives: {},
       preprocessors: [],
       postprocessors: [],
-      ...config
+      ...config,
     };
   }
 
@@ -47,7 +47,7 @@ export class TemplateContextBridge implements ITemplateContextBridge {
     } = {}
   ): TemplateExecutionContext {
     const now = Date.now();
-    
+
     // Create base typed context
     const baseContext: TypedExpressionContext = {
       me: context.me,
@@ -57,35 +57,35 @@ export class TemplateContextBridge implements ITemplateContextBridge {
       locals: context.locals || new Map(),
       globals: context.globals || new Map(),
       event: context.event ?? null,
-      
+
       // Enhanced expression context properties
       expressionStack: [],
       evaluationDepth: 0,
       validationMode: 'strict',
-      evaluationHistory: []
+      evaluationHistory: [],
     };
-    
+
     // Extend with template-specific properties
     const templateContext: TemplateExecutionContext = {
       ...baseContext,
-      
+
       // Template-specific properties
       templateBuffer: options.initialBuffer || [],
       templateDepth: 0,
       ...(options.iterationContext && { iterationContext: options.iterationContext }),
       conditionalContext: undefined,
-      
+
       templateMeta: {
         ...(options.templateName !== undefined && { templateName: options.templateName }),
         compiledAt: now,
         executionStartTime: now,
-        directiveStack: []
-      }
+        directiveStack: [],
+      },
     };
-    
+
     return templateContext;
   }
-  
+
   /**
    * Convert TemplateExecutionContext back to ExecutionContext
    */
@@ -102,16 +102,16 @@ export class TemplateContextBridge implements ITemplateContextBridge {
       locals: templateContext.locals,
       globals: templateContext.globals,
       event: templateContext.event ?? null,
-      
+
       // Preserve template results in meta
       meta: {
         ...originalContext.meta,
         __ht_template_result: templateContext.templateBuffer,
-        __ht_template_meta: templateContext.templateMeta
-      }
+        __ht_template_meta: templateContext.templateMeta,
+      },
     };
   }
-  
+
   /**
    * Create a scoped template context for nested directives
    */
@@ -122,27 +122,27 @@ export class TemplateContextBridge implements ITemplateContextBridge {
   ): TemplateExecutionContext {
     return {
       ...parentContext,
-      
+
       // Inherit parent buffer (shared)
       templateBuffer: parentContext.templateBuffer,
-      
+
       // Increase template depth
       templateDepth: parentContext.templateDepth + 1,
-      
+
       // Create new locals scope with parent fallback
       locals: new Map([
         ...Array.from(parentContext.locals.entries()),
-        ...Object.entries(scopeData)
+        ...Object.entries(scopeData),
       ]),
-      
+
       // Update directive stack
       templateMeta: {
         ...parentContext.templateMeta,
-        directiveStack: [...parentContext.templateMeta.directiveStack, directiveType]
-      }
+        directiveStack: [...parentContext.templateMeta.directiveStack, directiveType],
+      },
     };
   }
-  
+
   /**
    * Create iteration context for @repeat directives
    */
@@ -152,24 +152,26 @@ export class TemplateContextBridge implements ITemplateContextBridge {
     currentIndex: number,
     currentItem: HyperScriptValue
   ): TemplateExecutionContext {
-    const totalItems = Array.isArray(collection) ? collection.length : 
-                      collection && typeof collection === 'object' && 'length' in collection ? 
-                      (collection as { length: number }).length : 1;
-    
+    const totalItems = Array.isArray(collection)
+      ? collection.length
+      : collection && typeof collection === 'object' && 'length' in collection
+        ? (collection as { length: number }).length
+        : 1;
+
     return {
       ...parentContext,
-      
+
       // Set current item as 'it'
       it: currentItem,
-      
+
       // Create iteration context
       iterationContext: {
         collection,
         currentIndex,
         currentItem,
-        totalItems
+        totalItems,
       },
-      
+
       // Add iteration variables to locals
       locals: new Map([
         ...Array.from(parentContext.locals.entries()),
@@ -177,11 +179,11 @@ export class TemplateContextBridge implements ITemplateContextBridge {
         ['item', currentItem],
         ['first', currentIndex === 0],
         ['last', currentIndex === totalItems - 1],
-        ['length', totalItems]
-      ])
+        ['length', totalItems],
+      ]),
     };
   }
-  
+
   /**
    * Create conditional context for @if/@else chains
    */
@@ -191,18 +193,18 @@ export class TemplateContextBridge implements ITemplateContextBridge {
     isElse = false
   ): TemplateExecutionContext {
     const existingContext = parentContext.conditionalContext;
-    
+
     return {
       ...parentContext,
-      
+
       conditionalContext: {
         conditionMet,
         elseAllowed: !conditionMet && !isElse,
-        branchExecuted: existingContext?.branchExecuted || conditionMet
-      }
+        branchExecuted: existingContext?.branchExecuted || conditionMet,
+      },
     };
   }
-  
+
   /**
    * Validate template context constraints
    */
@@ -213,12 +215,14 @@ export class TemplateContextBridge implements ITemplateContextBridge {
   } {
     const errors: string[] = [];
     const warnings: string[] = [];
-    
+
     // Check nesting depth
     if (context.templateDepth > this.config.maxNestingDepth) {
-      errors.push(`Template nesting depth (${context.templateDepth}) exceeds maximum (${this.config.maxNestingDepth})`);
+      errors.push(
+        `Template nesting depth (${context.templateDepth}) exceeds maximum (${this.config.maxNestingDepth})`
+      );
     }
-    
+
     // Check directive stack consistency
     const stack = context.templateMeta.directiveStack;
     if (stack.length > 0) {
@@ -227,22 +231,26 @@ export class TemplateContextBridge implements ITemplateContextBridge {
         warnings.push(`Unbalanced directive stack: ${openDirectives.join(', ')}`);
       }
     }
-    
+
     // Check buffer size
     if (context.templateBuffer.length > 10000) {
-      warnings.push(`Large template buffer (${context.templateBuffer.length} segments) may impact performance`);
+      warnings.push(
+        `Large template buffer (${context.templateBuffer.length} segments) may impact performance`
+      );
     }
-    
+
     // Check execution time
     const executionTime = Date.now() - context.templateMeta.executionStartTime;
     if (executionTime > this.config.executionTimeout) {
-      errors.push(`Template execution time (${executionTime}ms) exceeds timeout (${this.config.executionTimeout}ms)`);
+      errors.push(
+        `Template execution time (${executionTime}ms) exceeds timeout (${this.config.executionTimeout}ms)`
+      );
     }
-    
+
     return {
       valid: errors.length === 0,
       errors,
-      warnings
+      warnings,
     };
   }
 }
@@ -260,75 +268,73 @@ export class TemplateContextUtils {
    */
   static extractVariables(context: TemplateExecutionContext): Record<string, HyperScriptValue> {
     const variables: Record<string, HyperScriptValue> = {};
-    
+
     // Add locals
     for (const [key, value] of context.locals.entries()) {
       variables[key] = value as any;
     }
-    
+
     // Add globals
     for (const [key, value] of context.globals.entries()) {
       variables[`global.${key}`] = value as any;
     }
-    
+
     // Add context elements
     if (context.me) variables['me'] = context.me as any;
     if (context.it !== undefined) variables['it'] = context.it as any;
     if (context.you) variables['you'] = context.you as any;
     if (context.result !== undefined) variables['result'] = context.result as any;
-    
+
     // Add iteration context
     if (context.iterationContext) {
       variables['index'] = context.iterationContext.currentIndex;
       variables['item'] = context.iterationContext.currentItem;
       variables['first'] = context.iterationContext.currentIndex === 0;
-      variables['last'] = context.iterationContext.currentIndex === context.iterationContext.totalItems - 1;
+      variables['last'] =
+        context.iterationContext.currentIndex === context.iterationContext.totalItems - 1;
       variables['length'] = context.iterationContext.totalItems;
     }
-    
+
     return variables;
   }
-  
+
   /**
    * Check if a condition should execute in the current context
    */
-  static shouldExecuteCondition(
-    context: TemplateExecutionContext,
-    isElse = false
-  ): boolean {
+  static shouldExecuteCondition(context: TemplateExecutionContext, isElse = false): boolean {
     const conditional = context.conditionalContext;
-    
+
     if (!conditional) {
       return !isElse; // Execute @if, not @else without prior @if
     }
-    
+
     if (isElse) {
       return conditional.elseAllowed && !conditional.branchExecuted;
     }
-    
+
     return conditional.conditionMet;
   }
-  
+
   /**
    * Get current iteration information
    */
   static getIterationInfo(context: TemplateExecutionContext) {
     const iteration = context.iterationContext;
-    
+
     if (!iteration) {
       return null;
     }
-    
+
     return {
       index: iteration.currentIndex,
       item: iteration.currentItem,
       isFirst: iteration.currentIndex === 0,
       isLast: iteration.currentIndex === iteration.totalItems - 1,
       total: iteration.totalItems,
-      progress: (iteration.currentIndex + 1) / iteration.totalItems
+      progress: (iteration.currentIndex + 1) / iteration.totalItems,
     };
   }
-  
+
   /**
    * Append content to template buffer with validation
    */
@@ -338,15 +344,15 @@ export class TemplateContextUtils {
     source = 'unknown'
   ): void {
     if (!content) return;
-    
+
     // Validate buffer size
     if (context.templateBuffer.length > 10000) {
       console.warn(`Template buffer approaching size limit (${context.templateBuffer.length})`);
     }
-    
+
     // Add content with metadata
     context.templateBuffer.push(content);
-    
+
     // Track in evaluation history if available
     if (context.evaluationHistory) {
       context.evaluationHistory.push({
@@ -356,7 +362,7 @@ export class TemplateContextUtils {
         output: content,
         timestamp: Date.now(),
         duration: 0,
-        success: true
+        success: true,
       });
     }
   }
@@ -378,7 +384,7 @@ export const defaultEnhancedTemplateConfig: EnhancedTemplateConfig = {
   maxNestingDepth: 10,
   customDirectives: {},
   preprocessors: [],
-  postprocessors: []
+  postprocessors: [],
 };
 
 /**

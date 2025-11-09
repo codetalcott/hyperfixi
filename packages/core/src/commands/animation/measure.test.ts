@@ -21,7 +21,7 @@ describe('Measure Command', () => {
       me: mockElement,
       locals: new Map(),
     };
-    
+
     // Set up element with dimensions for testing
     mockElement.style.width = '100px';
     mockElement.style.height = '50px';
@@ -51,7 +51,7 @@ describe('Measure Command', () => {
   describe('Basic Measurements', () => {
     it('should measure width by default', async () => {
       const result = await measureCommand.execute(context);
-      
+
       expect(typeof result).toBe('number');
       expect(result).toBeGreaterThan(0);
     });
@@ -59,7 +59,7 @@ describe('Measure Command', () => {
     it('should measure specific dimensions', async () => {
       const width = await measureCommand.execute(context, 'width');
       const height = await measureCommand.execute(context, 'height');
-      
+
       expect(typeof width).toBe('number');
       expect(typeof height).toBe('number');
       expect(width).toBeGreaterThan(0);
@@ -69,7 +69,7 @@ describe('Measure Command', () => {
     it('should measure position properties', async () => {
       const top = await measureCommand.execute(context, 'top');
       const left = await measureCommand.execute(context, 'left');
-      
+
       expect(typeof top).toBe('number');
       expect(typeof left).toBe('number');
     });
@@ -77,7 +77,7 @@ describe('Measure Command', () => {
     it('should measure offset properties', async () => {
       const offsetWidth = await measureCommand.execute(context, 'offsetWidth');
       const offsetHeight = await measureCommand.execute(context, 'offsetHeight');
-      
+
       expect(typeof offsetWidth).toBe('number');
       expect(typeof offsetHeight).toBe('number');
       expect(offsetWidth).toBeGreaterThan(0);
@@ -91,27 +91,27 @@ describe('Measure Command', () => {
       targetElement.style.width = '200px';
       targetElement.style.height = '100px';
       document.body.appendChild(targetElement);
-      
+
       const result = await measureCommand.execute(context, targetElement, 'width');
-      
+
       expect(typeof result).toBe('number');
-      
+
       document.body.removeChild(targetElement);
     });
 
     it('should measure element from CSS selector', async () => {
       mockElement.id = 'test-element';
-      
+
       const result = await measureCommand.execute(context, '#test-element', 'height');
-      
+
       expect(typeof result).toBe('number');
     });
 
     it('should measure element with class selector', async () => {
       mockElement.className = 'test-class';
-      
+
       const result = await measureCommand.execute(context, '.test-class', 'width');
-      
+
       expect(typeof result).toBe('number');
     });
   });
@@ -119,7 +119,7 @@ describe('Measure Command', () => {
   describe('Variable Assignment', () => {
     it('should set measurement in variable', async () => {
       const result = await measureCommand.execute(context, 'width', 'and', 'set', 'elementWidth');
-      
+
       expect(result).toBe(mockElement); // Should return element when setting variable
       expect(context.locals?.get('elementWidth')).toBeTypeOf('number');
       expect(context.locals?.get('elementWidth')).toBeGreaterThan(0);
@@ -127,7 +127,7 @@ describe('Measure Command', () => {
 
     it('should set height measurement in variable', async () => {
       await measureCommand.execute(context, 'height', 'and', 'set', 'elementHeight');
-      
+
       const height = context.locals?.get('elementHeight');
       expect(typeof height).toBe('number');
       expect(height).toBeGreaterThan(0);
@@ -138,12 +138,12 @@ describe('Measure Command', () => {
       targetElement.style.width = '300px';
       targetElement.id = 'target';
       document.body.appendChild(targetElement);
-      
+
       await measureCommand.execute(context, '#target', 'width', 'and', 'set', 'targetWidth');
-      
+
       const width = context.locals?.get('targetWidth');
       expect(typeof width).toBe('number');
-      
+
       document.body.removeChild(targetElement);
     });
   });
@@ -152,7 +152,7 @@ describe('Measure Command', () => {
     it('should measure client dimensions', async () => {
       const clientWidth = await measureCommand.execute(context, 'clientWidth');
       const clientHeight = await measureCommand.execute(context, 'clientHeight');
-      
+
       expect(typeof clientWidth).toBe('number');
       expect(typeof clientHeight).toBe('number');
     });
@@ -160,7 +160,7 @@ describe('Measure Command', () => {
     it('should measure scroll dimensions', async () => {
       const scrollWidth = await measureCommand.execute(context, 'scrollWidth');
       const scrollHeight = await measureCommand.execute(context, 'scrollHeight');
-      
+
       expect(typeof scrollWidth).toBe('number');
       expect(typeof scrollHeight).toBe('number');
     });
@@ -168,7 +168,7 @@ describe('Measure Command', () => {
     it('should measure margin properties', async () => {
       const marginTop = await measureCommand.execute(context, 'margin-top');
       const marginLeft = await measureCommand.execute(context, 'margin-left');
-      
+
       expect(typeof marginTop).toBe('number');
       expect(typeof marginLeft).toBe('number');
       expect(marginTop).toBe(5); // From style.margin = '5px'
@@ -178,7 +178,7 @@ describe('Measure Command', () => {
     it('should measure padding properties', async () => {
       const paddingTop = await measureCommand.execute(context, 'padding-top');
       const paddingLeft = await measureCommand.execute(context, 'padding-left');
-      
+
       expect(typeof paddingTop).toBe('number');
       expect(typeof paddingLeft).toBe('number');
       expect(paddingTop).toBe(3); // From style.padding = '3px'
@@ -188,7 +188,7 @@ describe('Measure Command', () => {
     it('should measure border properties', async () => {
       const borderTopWidth = await measureCommand.execute(context, 'border-top-width');
       const borderLeftWidth = await measureCommand.execute(context, 'border-left-width');
-      
+
       expect(typeof borderTopWidth).toBe('number');
       expect(typeof borderLeftWidth).toBe('number');
       expect(borderTopWidth).toBe(2); // From style.border = '2px solid black'
@@ -200,7 +200,7 @@ describe('Measure Command', () => {
     it('should handle kebab-case property names', async () => {
       const offsetWidth = await measureCommand.execute(context, 'offset-width');
       const offsetHeight = await measureCommand.execute(context, 'offset-height');
-      
+
       expect(typeof offsetWidth).toBe('number');
       expect(typeof offsetHeight).toBe('number');
     });
@@ -208,7 +208,7 @@ describe('Measure Command', () => {
     it('should handle camelCase property names', async () => {
       const offsetWidth = await measureCommand.execute(context, 'offsetWidth');
       const clientHeight = await measureCommand.execute(context, 'clientHeight');
-      
+
       expect(typeof offsetWidth).toBe('number');
       expect(typeof clientHeight).toBe('number');
     });
@@ -216,7 +216,7 @@ describe('Measure Command', () => {
     it('should handle scroll properties in both formats', async () => {
       const scrollTop1 = await measureCommand.execute(context, 'scroll-top');
       const scrollTop2 = await measureCommand.execute(context, 'scrollTop');
-      
+
       expect(typeof scrollTop1).toBe('number');
       expect(typeof scrollTop2).toBe('number');
       expect(scrollTop1).toBe(scrollTop2);
@@ -225,40 +225,42 @@ describe('Measure Command', () => {
 
   describe('Error Handling', () => {
     it('should handle element not found', async () => {
-      await expect(measureCommand.execute(context, '#non-existent', 'width'))
-        .rejects.toThrow('Measure target not found');
+      await expect(measureCommand.execute(context, '#non-existent', 'width')).rejects.toThrow(
+        'Measure target not found'
+      );
     });
 
     it('should handle unknown properties gracefully', async () => {
       const result = await measureCommand.execute(context, 'unknown-property');
-      
+
       expect(typeof result).toBe('number');
       expect(result).toBe(0); // Should return 0 for unknown properties
     });
 
     it('should handle missing target element', async () => {
       const contextWithoutMe = { locals: new Map() } as ExecutionContext;
-      
-      await expect(measureCommand.execute(contextWithoutMe))
-        .rejects.toThrow('No target element available');
+
+      await expect(measureCommand.execute(contextWithoutMe)).rejects.toThrow(
+        'No target element available'
+      );
     });
   });
 
   describe('Advanced Measurement Cases', () => {
     it('should measure elements with transforms', async () => {
       mockElement.style.transform = 'scale(2)';
-      
+
       const width = await measureCommand.execute(context, 'width');
-      
+
       expect(typeof width).toBe('number');
       expect(width).toBeGreaterThan(0);
     });
 
     it('should measure hidden elements', async () => {
       mockElement.style.display = 'none';
-      
+
       const width = await measureCommand.execute(context, 'offsetWidth');
-      
+
       expect(typeof width).toBe('number');
       // Hidden elements typically have 0 dimensions
       expect(width).toBe(0);
@@ -267,10 +269,10 @@ describe('Measure Command', () => {
     it('should measure elements with percentage dimensions', async () => {
       mockElement.style.width = '50%';
       mockElement.style.height = '25%';
-      
+
       const width = await measureCommand.execute(context, 'width');
       const height = await measureCommand.execute(context, 'height');
-      
+
       expect(typeof width).toBe('number');
       expect(typeof height).toBe('number');
     });
@@ -282,7 +284,7 @@ describe('Measure Command', () => {
       await measureCommand.execute(context, 'height', 'and', 'set', 'h');
       await measureCommand.execute(context, 'top', 'and', 'set', 't');
       await measureCommand.execute(context, 'left', 'and', 'set', 'l');
-      
+
       expect(typeof context.locals?.get('w')).toBe('number');
       expect(typeof context.locals?.get('h')).toBe('number');
       expect(typeof context.locals?.get('t')).toBe('number');
@@ -292,15 +294,15 @@ describe('Measure Command', () => {
     it('should handle complex measurement workflows', async () => {
       // Measure container dimensions
       const containerWidth = await measureCommand.execute(context, 'width');
-      
+
       // Create child element
       const child = document.createElement('span');
       child.style.width = '50%';
       mockElement.appendChild(child);
-      
+
       // Measure child relative to container
       const childWidth = await measureCommand.execute(context, child, 'width');
-      
+
       expect(typeof containerWidth).toBe('number');
       expect(typeof childWidth).toBe('number');
       expect(childWidth).toBeLessThanOrEqual(containerWidth);
@@ -318,13 +320,17 @@ describe('Measure Command', () => {
 
     it('should reject invalid syntax', () => {
       expect(measureCommand.validate(['width', 'and', 'set'])).toContain('Variable name required');
-      expect(measureCommand.validate(['width', 'and', 'set', 123])).toContain('Variable name must be a string');
+      expect(measureCommand.validate(['width', 'and', 'set', 123])).toContain(
+        'Variable name must be a string'
+      );
       expect(measureCommand.validate(['width', 'invalid'])).toContain('Invalid measure syntax');
     });
 
     it('should handle edge cases in validation', () => {
       expect(measureCommand.validate(['width', 'and'])).toContain('Invalid measure syntax');
-      expect(measureCommand.validate(['width', 'and', 'invalid'])).toContain('Invalid measure syntax');
+      expect(measureCommand.validate(['width', 'and', 'invalid'])).toContain(
+        'Invalid measure syntax'
+      );
     });
   });
 });

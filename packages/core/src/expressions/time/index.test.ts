@@ -4,14 +4,14 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { 
+import {
   EnhancedTimeParsingExpression,
   EnhancedDurationFormattingExpression,
   EnhancedTimeArithmeticExpression,
   enhancedTimeExpressions,
   parseTime,
   formatDuration,
-  performTimeArithmetic
+  performTimeArithmetic,
 } from './index';
 import type { TypedExecutionContext } from '../../types/command-types';
 
@@ -27,8 +27,8 @@ function createMockContext(): TypedExecutionContext {
     meta: {
       startTime: Date.now(),
       commandStack: [],
-      debugMode: false
-    }
+      debugMode: false,
+    },
   };
 }
 
@@ -44,7 +44,7 @@ describe('Enhanced Time Parsing Expression', () => {
   describe('Basic Time Parsing', () => {
     test('parses seconds correctly', async () => {
       const result = await expression.evaluate(context, '2s');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(2000);
@@ -54,7 +54,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
     test('parses milliseconds correctly', async () => {
       const result = await expression.evaluate(context, '500ms');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(500);
@@ -63,7 +63,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
     test('parses minutes correctly', async () => {
       const result = await expression.evaluate(context, '1 minute');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(60000);
@@ -72,7 +72,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
     test('parses hours correctly', async () => {
       const result = await expression.evaluate(context, '2h');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(7200000);
@@ -81,7 +81,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
     test('parses days correctly', async () => {
       const result = await expression.evaluate(context, '1 day');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(86400000);
@@ -90,7 +90,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
     test('parses weeks correctly', async () => {
       const result = await expression.evaluate(context, '1w');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(604800000);
@@ -101,7 +101,7 @@ describe('Enhanced Time Parsing Expression', () => {
   describe('Decimal and Negative Values', () => {
     test('handles decimal values', async () => {
       const result = await expression.evaluate(context, '2.5s');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(2500);
@@ -110,7 +110,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
     test('handles negative values', async () => {
       const result = await expression.evaluate(context, '-1s');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(-1000);
@@ -121,7 +121,7 @@ describe('Enhanced Time Parsing Expression', () => {
   describe('Pure Numbers', () => {
     test('handles pure numbers with default unit (ms)', async () => {
       const result = await expression.evaluate(context, '1000');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(1000);
@@ -130,7 +130,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
     test('handles pure numbers with custom default unit', async () => {
       const result = await expression.evaluate(context, '5', 's');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(5000);
@@ -141,7 +141,7 @@ describe('Enhanced Time Parsing Expression', () => {
   describe('Error Handling', () => {
     test('handles empty string', async () => {
       const result = await expression.evaluate(context, '');
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.code).toBe('EMPTY_TIME_STRING');
@@ -150,7 +150,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
     test('handles invalid format', async () => {
       const result = await expression.evaluate(context, 'invalid time');
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.code).toBe('INVALID_TIME_FORMAT');
@@ -159,7 +159,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
     test('handles invalid numeric value', async () => {
       const result = await expression.evaluate(context, 'abc s');
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.code).toBe('INVALID_TIME_FORMAT');
@@ -173,7 +173,7 @@ describe('Enhanced Time Parsing Expression', () => {
         expression.evaluate(context, '2 minutes'),
         expression.evaluate(context, '3 hours'),
         expression.evaluate(context, '4 days'),
-        expression.evaluate(context, '2 weeks')
+        expression.evaluate(context, '2 weeks'),
       ]);
 
       results.forEach(result => {
@@ -192,7 +192,7 @@ describe('Enhanced Time Parsing Expression', () => {
       const results = await Promise.all([
         expression.evaluate(context, '1m'),
         expression.evaluate(context, '1h'),
-        expression.evaluate(context, '1d')
+        expression.evaluate(context, '1d'),
       ]);
 
       results.forEach(result => {
@@ -214,7 +214,7 @@ describe('Enhanced Duration Formatting Expression', () => {
   describe('Default Format', () => {
     test('formats seconds', async () => {
       const result = await expression.evaluate(context, 2000);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('2s');
@@ -224,7 +224,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
     test('formats minutes and seconds', async () => {
       const result = await expression.evaluate(context, 90000); // 1m 30s
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('1m 30s');
@@ -233,7 +233,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
     test('formats complex duration', async () => {
       const result = await expression.evaluate(context, 3661000); // 1h 1m 1s
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('1h 1m 1s');
@@ -242,7 +242,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
     test('formats zero duration', async () => {
       const result = await expression.evaluate(context, 0);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('0s');
@@ -253,7 +253,7 @@ describe('Enhanced Duration Formatting Expression', () => {
   describe('Long Format', () => {
     test('formats with long unit names', async () => {
       const result = await expression.evaluate(context, 90000, 'long'); // 1 minute 30 seconds
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('1 minute, 30 seconds');
@@ -262,7 +262,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
     test('handles singular units', async () => {
       const result = await expression.evaluate(context, 61000, 'long'); // 1 minute 1 second
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('1 minute, 1 second');
@@ -271,7 +271,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
     test('formats zero in long format', async () => {
       const result = await expression.evaluate(context, 0, 'long');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('0 seconds');
@@ -282,7 +282,7 @@ describe('Enhanced Duration Formatting Expression', () => {
   describe('Short Format', () => {
     test('limits to first 2 units', async () => {
       const result = await expression.evaluate(context, 3661000, 'short'); // Should show 1h 1m only
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('1h 1m');
@@ -293,7 +293,7 @@ describe('Enhanced Duration Formatting Expression', () => {
   describe('Precise Format', () => {
     test('includes milliseconds', async () => {
       const result = await expression.evaluate(context, 2500, 'precise'); // 2.5s
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('2.5s');
@@ -302,7 +302,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
     test('handles standalone milliseconds', async () => {
       const result = await expression.evaluate(context, 500, 'precise');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('500ms');
@@ -313,7 +313,7 @@ describe('Enhanced Duration Formatting Expression', () => {
   describe('Max Units Limitation', () => {
     test('respects maxUnits parameter', async () => {
       const result = await expression.evaluate(context, 90061000, 'default', 2); // 1d 1h 1m 1s -> 1d 1h
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         // Should only show first 2 units
@@ -325,7 +325,7 @@ describe('Enhanced Duration Formatting Expression', () => {
   describe('Error Handling', () => {
     test('handles negative durations', async () => {
       const result = await expression.evaluate(context, -1000);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.code).toBe('NEGATIVE_DURATION');
@@ -346,7 +346,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
   describe('Addition', () => {
     test('adds two time strings', async () => {
       const result = await expression.evaluate(context, 'add', '2s', '500ms');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(2500);
@@ -356,7 +356,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
     test('adds time string and number', async () => {
       const result = await expression.evaluate(context, 'add', '1s', 500);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(1500);
@@ -365,7 +365,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
     test('adds two numbers', async () => {
       const result = await expression.evaluate(context, 'add', 1000, 500);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(1500);
@@ -376,7 +376,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
   describe('Subtraction', () => {
     test('subtracts two time strings', async () => {
       const result = await expression.evaluate(context, 'subtract', '2s', '500ms');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(1500);
@@ -385,7 +385,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
     test('handles negative results', async () => {
       const result = await expression.evaluate(context, 'subtract', '500ms', '2s');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(-1500);
@@ -396,7 +396,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
   describe('Multiplication', () => {
     test('multiplies time by number', async () => {
       const result = await expression.evaluate(context, 'multiply', '1s', 2);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(2000);
@@ -405,7 +405,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
     test('multiplies with decimals', async () => {
       const result = await expression.evaluate(context, 'multiply', '2s', 1.5);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(3000);
@@ -416,7 +416,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
   describe('Division', () => {
     test('divides time by number', async () => {
       const result = await expression.evaluate(context, 'divide', '2s', 2);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(1000);
@@ -425,7 +425,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
     test('handles division by zero', async () => {
       const result = await expression.evaluate(context, 'divide', '2s', 0);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.code).toBe('DIVISION_BY_ZERO');
@@ -434,7 +434,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
     test('rounds floating point results', async () => {
       const result = await expression.evaluate(context, 'divide', '1s', 3);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(333); // Rounded from 333.333...
@@ -445,7 +445,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
   describe('Operation Aliases', () => {
     test('handles + symbol', async () => {
       const result = await expression.evaluate(context, '+', '1s', '500ms');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(1500);
@@ -454,7 +454,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
     test('handles - symbol', async () => {
       const result = await expression.evaluate(context, '-', '2s', '500ms');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(1500);
@@ -463,7 +463,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
     test('handles * symbol', async () => {
       const result = await expression.evaluate(context, '*', '1s', 2);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(2000);
@@ -472,7 +472,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
     test('handles / symbol', async () => {
       const result = await expression.evaluate(context, '/', '2s', 2);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe(1000);
@@ -483,7 +483,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
   describe('Error Handling', () => {
     test('handles unsupported operation', async () => {
       const result = await expression.evaluate(context, 'invalid', '1s', '500ms');
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.code).toBe('UNSUPPORTED_OPERATION');
@@ -492,7 +492,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
     test('propagates time parsing errors', async () => {
       const result = await expression.evaluate(context, 'add', 'invalid time', '500ms');
-      
+
       expect(result.success).toBe(false);
       // Should get the parsing error from the time parsing expression
     });
@@ -502,8 +502,12 @@ describe('Enhanced Time Arithmetic Expression', () => {
 describe('Expression Registry', () => {
   test('exports all enhanced time expressions', () => {
     expect(enhancedTimeExpressions['time-parse']).toBeInstanceOf(EnhancedTimeParsingExpression);
-    expect(enhancedTimeExpressions['duration-format']).toBeInstanceOf(EnhancedDurationFormattingExpression);
-    expect(enhancedTimeExpressions['time-arithmetic']).toBeInstanceOf(EnhancedTimeArithmeticExpression);
+    expect(enhancedTimeExpressions['duration-format']).toBeInstanceOf(
+      EnhancedDurationFormattingExpression
+    );
+    expect(enhancedTimeExpressions['time-arithmetic']).toBeInstanceOf(
+      EnhancedTimeArithmeticExpression
+    );
   });
 });
 
@@ -516,7 +520,7 @@ describe('Utility Functions', () => {
 
   test('parseTime utility works', async () => {
     const result = await parseTime('2s', context);
-    
+
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.value).toBe(2000);
@@ -525,7 +529,7 @@ describe('Utility Functions', () => {
 
   test('formatDuration utility works', async () => {
     const result = await formatDuration(2000, context);
-    
+
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.value).toBe('2s');
@@ -534,7 +538,7 @@ describe('Utility Functions', () => {
 
   test('performTimeArithmetic utility works', async () => {
     const result = await performTimeArithmetic('add', '2s', '500ms', context);
-    
+
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.value).toBe(2500);
@@ -551,36 +555,40 @@ describe('Performance Characteristics', () => {
 
   test('handles many time parsing operations efficiently', async () => {
     const parseExpr = new EnhancedTimeParsingExpression();
-    const timeStrings = Array(1000).fill(0).map((_, i) => `${i}s`);
-    
+    const timeStrings = Array(1000)
+      .fill(0)
+      .map((_, i) => `${i}s`);
+
     const startTime = performance.now();
     const promises = timeStrings.map(timeStr => parseExpr.evaluate(context, timeStr));
     const results = await Promise.all(promises);
     const endTime = performance.now();
-    
+
     // All should succeed
     results.forEach(result => {
       expect(result.success).toBe(true);
     });
-    
+
     // Should be very fast
     expect(endTime - startTime).toBeLessThan(100); // Less than 100ms for 1000 operations
   });
 
   test('handles many formatting operations efficiently', async () => {
     const formatExpr = new EnhancedDurationFormattingExpression();
-    const durations = Array(1000).fill(0).map((_, i) => i * 1000);
-    
+    const durations = Array(1000)
+      .fill(0)
+      .map((_, i) => i * 1000);
+
     const startTime = performance.now();
     const promises = durations.map(duration => formatExpr.evaluate(context, duration));
     const results = await Promise.all(promises);
     const endTime = performance.now();
-    
+
     // All should succeed
     results.forEach(result => {
       expect(result.success).toBe(true);
     });
-    
+
     // Should be very fast
     expect(endTime - startTime).toBeLessThan(100); // Less than 100ms for 1000 operations
   });
@@ -588,24 +596,24 @@ describe('Performance Characteristics', () => {
   test('handles complex arithmetic operations efficiently', async () => {
     const arithmeticExpr = new EnhancedTimeArithmeticExpression();
     const operations = ['add', 'subtract', 'multiply', 'divide'];
-    
+
     const startTime = performance.now();
     const promises = [];
-    
+
     for (let i = 0; i < 250; i++) {
       const operation = operations[i % operations.length];
       const divisor = operation === 'divide' ? Math.max(1, i) : i; // Avoid division by zero
       promises.push(arithmeticExpr.evaluate(context, operation, `${i}s`, divisor));
     }
-    
+
     const results = await Promise.all(promises);
     const endTime = performance.now();
-    
+
     // All should succeed
     results.forEach(result => {
       expect(result.success).toBe(true);
     });
-    
+
     // Should be very fast
     expect(endTime - startTime).toBeLessThan(200); // Less than 200ms for 1000 operations
   });

@@ -24,7 +24,7 @@ describe('Existence Operators', () => {
       ['nonEmptyArray', [1, 2, 3]],
       ['nonEmptyObject', { key: 'value' }],
       ['falseValue', false],
-      ['zeroValue', 0]
+      ['zeroValue', 0],
     ]);
   });
 

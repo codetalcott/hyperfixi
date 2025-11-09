@@ -34,7 +34,7 @@ describe('Event System', () => {
     testElement = createTestElement('<button id="test-btn">Test Button</button>');
     containerElement.appendChild(testElement);
     document.body.appendChild(containerElement);
-    
+
     eventManager = createEventManager();
     registerManagerForDelegation(eventManager);
   });
@@ -62,12 +62,7 @@ describe('Event System', () => {
   describe('Event Registration', () => {
     it('should register event listeners correctly', () => {
       const handler = vi.fn();
-      const listenerId = registerEventListener(
-        eventManager,
-        testElement,
-        'click',
-        handler
-      );
+      const listenerId = registerEventListener(eventManager, testElement, 'click', handler);
 
       expect(typeof listenerId).toBe('string');
       expect(eventManager.listeners.has(listenerId)).toBe(true);
@@ -76,10 +71,10 @@ describe('Event System', () => {
     it('should handle multiple listeners for same event', () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
-      
+
       const id1 = registerEventListener(eventManager, testElement, 'click', handler1);
       const id2 = registerEventListener(eventManager, testElement, 'click', handler2);
-      
+
       expect(id1).not.toBe(id2);
       expect(eventManager.listeners.has(id1)).toBe(true);
       expect(eventManager.listeners.has(id2)).toBe(true);
@@ -88,7 +83,7 @@ describe('Event System', () => {
     it('should register listeners with options', () => {
       const handler = vi.fn();
       const options = { once: true, passive: true };
-      
+
       const listenerId = registerEventListener(
         eventManager,
         testElement,
@@ -96,7 +91,7 @@ describe('Event System', () => {
         handler,
         options
       );
-      
+
       expect(eventManager.listeners.has(listenerId)).toBe(true);
       const listenerInfo = eventManager.listeners.get(listenerId);
       expect(listenerInfo?.options).toEqual(options);
@@ -106,15 +101,10 @@ describe('Event System', () => {
   describe('Event Unregistration', () => {
     it('should unregister event listeners correctly', () => {
       const handler = vi.fn();
-      const listenerId = registerEventListener(
-        eventManager,
-        testElement,
-        'click',
-        handler
-      );
+      const listenerId = registerEventListener(eventManager, testElement, 'click', handler);
 
       expect(eventManager.listeners.has(listenerId)).toBe(true);
-      
+
       const unregistered = unregisterEventListener(eventManager, listenerId);
       expect(unregistered).toBe(true);
       expect(eventManager.listeners.has(listenerId)).toBe(false);
@@ -127,17 +117,12 @@ describe('Event System', () => {
 
     it('should clean up DOM event listeners when unregistering', () => {
       const removeEventListenerSpy = vi.spyOn(testElement, 'removeEventListener');
-      
+
       const handler = vi.fn();
-      const listenerId = registerEventListener(
-        eventManager,
-        testElement,
-        'click',
-        handler
-      );
-      
+      const listenerId = registerEventListener(eventManager, testElement, 'click', handler);
+
       unregisterEventListener(eventManager, listenerId);
-      
+
       expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function), undefined);
     });
   });
@@ -146,11 +131,11 @@ describe('Event System', () => {
     it('should dispatch custom events correctly', async () => {
       const eventType = 'hyperscript:test';
       const eventData = { test: 'data' };
-      
+
       const eventPromise = waitForEvent(testElement, eventType);
-      
+
       dispatchCustomEvent(testElement, eventType, eventData);
-      
+
       const event = await eventPromise;
       expect(event.type).toBe(eventType);
       expect((event as CustomEvent).detail).toEqual(eventData);
@@ -173,15 +158,15 @@ describe('Event System', () => {
     it('should dispatch events with proper bubbling', async () => {
       const containerHandler = vi.fn();
       const elementHandler = vi.fn();
-      
+
       containerElement.addEventListener('test-bubble', containerHandler);
       testElement.addEventListener('test-bubble', elementHandler);
-      
+
       dispatchCustomEvent(testElement, 'test-bubble', { bubbles: true });
-      
+
       // Wait for event propagation
       await new Promise(resolve => setTimeout(resolve, 0));
-      
+
       expect(elementHandler).toHaveBeenCalled();
       expect(containerHandler).toHaveBeenCalled();
     });
@@ -190,47 +175,39 @@ describe('Event System', () => {
   describe('Event Delegation', () => {
     it('should set up event delegation correctly', () => {
       const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
-      
+
       setupEventDelegation();
-      
-      expect(addEventListenerSpy).toHaveBeenCalledWith(
-        'click',
-        expect.any(Function),
-        { capture: true }
-      );
+
+      expect(addEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function), {
+        capture: true,
+      });
     });
 
     it('should handle delegated event listeners', () => {
       setupEventDelegation();
-      
+
       const handler = vi.fn();
-      const listenerId = registerEventListener(
-        eventManager,
-        testElement,
-        'click',
-        handler,
-        { delegated: true }
-      );
-      
+      const listenerId = registerEventListener(eventManager, testElement, 'click', handler, {
+        delegated: true,
+      });
+
       expect(eventManager.delegatedListeners.has('click')).toBe(true);
-      
+
       // Simulate click
       testElement.click();
-      
+
       expect(handler).toHaveBeenCalled();
     });
 
     it('should clean up delegation when requested', () => {
       const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
-      
+
       setupEventDelegation();
       cleanupEventDelegation();
-      
-      expect(removeEventListenerSpy).toHaveBeenCalledWith(
-        'click',
-        expect.any(Function),
-        { capture: true }
-      );
+
+      expect(removeEventListenerSpy).toHaveBeenCalledWith('click', expect.any(Function), {
+        capture: true,
+      });
     });
   });
 
@@ -240,34 +217,29 @@ describe('Event System', () => {
       const faultyHandler = vi.fn(() => {
         throw new Error('Handler error');
       });
-      
+
       // Set up error handling
       window.addEventListener('error', errorHandler);
-      
-      const listenerId = registerEventListener(
-        eventManager,
-        testElement,
-        'click',
-        faultyHandler
-      );
-      
+
+      const listenerId = registerEventListener(eventManager, testElement, 'click', faultyHandler);
+
       // This should not throw
       expect(() => testElement.click()).not.toThrow();
-      
+
       window.removeEventListener('error', errorHandler);
     });
 
     it('should dispatch error events for failed handlers', async () => {
       const errorEventPromise = waitForEvent(testElement, 'hyperscript:error');
-      
+
       const faultyHandler = vi.fn(() => {
         throw new Error('Handler error');
       });
-      
+
       registerEventListener(eventManager, testElement, 'click', faultyHandler);
-      
+
       testElement.click();
-      
+
       const errorEvent = await errorEventPromise;
       expect(errorEvent.type).toBe('hyperscript:error');
       expect((errorEvent as HyperscriptEvent).detail.error).toBeInstanceOf(Error);
@@ -277,7 +249,7 @@ describe('Event System', () => {
   describe('Performance', () => {
     it('should handle many event listeners efficiently', () => {
       const startTime = performance.now();
-      
+
       // Register many listeners
       const listenerIds: string[] = [];
       for (let i = 0; i < 1000; i++) {
@@ -285,10 +257,10 @@ describe('Event System', () => {
         const id = registerEventListener(eventManager, testElement, 'click', handler);
         listenerIds.push(id);
       }
-      
+
       const registrationTime = performance.now() - startTime;
       expect(registrationTime).toBeLessThan(100); // Should be fast
-      
+
       // Clean up
       listenerIds.forEach(id => unregisterEventListener(eventManager, id));
     });
@@ -299,7 +271,7 @@ describe('Event System', () => {
         const id = registerEventListener(eventManager, testElement, 'click', handler);
         unregisterEventListener(eventManager, id);
       }
-      
+
       expect(eventManager.listeners.size).toBe(0);
     });
   });
@@ -313,23 +285,29 @@ describe('Event System', () => {
         result: null,
         locals: new Map(),
         globals: new Map(),
-        flags: { halted: false, breaking: false, continuing: false, returning: false, async: false },
+        flags: {
+          halted: false,
+          breaking: false,
+          continuing: false,
+          returning: false,
+          async: false,
+        },
       };
-      
+
       const contextHandler = vi.fn((event: HyperscriptEvent) => {
         expect(event.detail.context.me).toBe(testElement);
       });
-      
+
       testElement.addEventListener('hyperscript:command', contextHandler);
-      
+
       const hsEvent = createHyperscriptEvent('command', {
         element: testElement,
         context,
         command: 'test',
       });
-      
+
       testElement.dispatchEvent(hsEvent);
-      
+
       expect(contextHandler).toHaveBeenCalled();
     });
   });
@@ -338,11 +316,11 @@ describe('Event System', () => {
     it('should emit fx:config event with proper data', () => {
       const cfg = { url: '/test', method: 'GET' };
       const handler = vi.fn();
-      
+
       testElement.addEventListener('fx:config', handler);
-      
+
       const result = emitConfigEvent(testElement, cfg);
-      
+
       expect(result).toBe(true);
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -356,12 +334,12 @@ describe('Event System', () => {
 
     it('should return false when fx:config event is cancelled', () => {
       const cfg = { url: '/test', method: 'GET' };
-      const handler = vi.fn((event) => event.preventDefault());
-      
+      const handler = vi.fn(event => event.preventDefault());
+
       testElement.addEventListener('fx:config', handler);
-      
+
       const result = emitConfigEvent(testElement, cfg);
-      
+
       expect(result).toBe(false);
       expect(handler).toHaveBeenCalled();
     });
@@ -369,11 +347,11 @@ describe('Event System', () => {
     it('should emit fx:before event with proper data', () => {
       const cfg = { url: '/test', method: 'POST', body: 'data' };
       const handler = vi.fn();
-      
+
       testElement.addEventListener('fx:before', handler);
-      
+
       const result = emitBeforeEvent(testElement, cfg);
-      
+
       expect(result).toBe(true);
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -387,12 +365,12 @@ describe('Event System', () => {
 
     it('should return false when fx:before event is cancelled', () => {
       const cfg = { url: '/test', method: 'POST' };
-      const handler = vi.fn((event) => event.preventDefault());
-      
+      const handler = vi.fn(event => event.preventDefault());
+
       testElement.addEventListener('fx:before', handler);
-      
+
       const result = emitBeforeEvent(testElement, cfg);
-      
+
       expect(result).toBe(false);
       expect(handler).toHaveBeenCalled();
     });
@@ -400,11 +378,11 @@ describe('Event System', () => {
     it('should emit fx:after event with proper data', () => {
       const cfg = { url: '/test', response: { status: 200, data: 'success' } };
       const handler = vi.fn();
-      
+
       testElement.addEventListener('fx:after', handler);
-      
+
       const result = emitAfterEvent(testElement, cfg);
-      
+
       expect(result).toBe(true);
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -418,12 +396,12 @@ describe('Event System', () => {
 
     it('should return false when fx:after event is cancelled', () => {
       const cfg = { url: '/test', response: { status: 200 } };
-      const handler = vi.fn((event) => event.preventDefault());
-      
+      const handler = vi.fn(event => event.preventDefault());
+
       testElement.addEventListener('fx:after', handler);
-      
+
       const result = emitAfterEvent(testElement, cfg);
-      
+
       expect(result).toBe(false);
       expect(handler).toHaveBeenCalled();
     });
@@ -433,11 +411,11 @@ describe('Event System', () => {
       const command = { type: 'fetch', target: testElement };
       const error = new Error('Network error');
       const handler = vi.fn();
-      
+
       testElement.addEventListener('fx:error', handler);
-      
+
       emitErrorEvent(testElement, error, cfg, command);
-      
+
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'fx:error',
@@ -451,11 +429,11 @@ describe('Event System', () => {
     it('should emit fx:finally event after request completion', () => {
       const cfg = { url: '/test', method: 'GET', completed: true };
       const handler = vi.fn();
-      
+
       testElement.addEventListener('fx:finally', handler);
-      
+
       emitFinallyEvent(testElement, cfg);
-      
+
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'fx:finally',
@@ -469,11 +447,11 @@ describe('Event System', () => {
     it('should emit fx:swapped event after DOM updates', () => {
       const cfg = { url: '/test', target: testElement, content: '<div>new content</div>' };
       const handler = vi.fn();
-      
+
       testElement.addEventListener('fx:swapped', handler);
-      
+
       emitSwappedEvent(testElement, cfg);
-      
+
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'fx:swapped',
@@ -486,21 +464,21 @@ describe('Event System', () => {
 
     it('should support event chaining with multiple handlers', () => {
       const cfg = { url: '/test', method: 'GET' };
-      let eventOrder: string[] = [];
-      
+      const eventOrder: string[] = [];
+
       testElement.addEventListener('fx:config', () => eventOrder.push('config'));
       testElement.addEventListener('fx:before', () => eventOrder.push('before'));
       testElement.addEventListener('fx:after', () => eventOrder.push('after'));
       testElement.addEventListener('fx:finally', () => eventOrder.push('finally'));
       testElement.addEventListener('fx:swapped', () => eventOrder.push('swapped'));
-      
+
       // Simulate typical fixi event chain
       expect(emitConfigEvent(testElement, cfg)).toBe(true);
       expect(emitBeforeEvent(testElement, cfg)).toBe(true);
       expect(emitAfterEvent(testElement, { ...cfg, response: { status: 200 } })).toBe(true);
       emitFinallyEvent(testElement, cfg);
       emitSwappedEvent(testElement, cfg);
-      
+
       expect(eventOrder).toEqual(['config', 'before', 'after', 'finally', 'swapped']);
     });
 
@@ -509,19 +487,19 @@ describe('Event System', () => {
       const childElement = createTestElement('<button id="child">Click me</button>');
       parentElement.appendChild(childElement);
       document.body.appendChild(parentElement);
-      
+
       const parentHandler = vi.fn();
       const childHandler = vi.fn();
-      
+
       parentElement.addEventListener('fx:config', parentHandler);
       childElement.addEventListener('fx:config', childHandler);
-      
+
       const cfg = { url: '/test', method: 'GET' };
       emitConfigEvent(childElement, cfg);
-      
+
       expect(childHandler).toHaveBeenCalled();
       expect(parentHandler).toHaveBeenCalled();
-      
+
       document.body.removeChild(parentElement);
     });
   });

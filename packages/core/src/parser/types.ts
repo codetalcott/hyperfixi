@@ -7,36 +7,36 @@
 // Token Types
 // ============================================================================
 
-export type TokenType = 
+export type TokenType =
   // Literals
-  | 'STRING' 
+  | 'STRING'
   | 'NUMBER'
   | 'BOOLEAN'
   | 'NULL'
-  
+
   // Identifiers and Keywords
   | 'IDENTIFIER'
   | 'KEYWORD'
-  
+
   // Operators
   | 'OPERATOR'
   | 'COMPARISON'
   | 'LOGICAL'
   | 'ASSIGNMENT'
-  
+
   // Punctuation
-  | 'LPAREN'     // (
-  | 'RPAREN'     // )
-  | 'LBRACKET'   // [
-  | 'RBRACKET'   // ]
-  | 'LBRACE'     // {
-  | 'RBRACE'     // }
-  | 'COMMA'      // ,
-  | 'DOT'        // .
-  | 'COLON'      // :
-  | 'SEMICOLON'  // ;
+  | 'LPAREN' // (
+  | 'RPAREN' // )
+  | 'LBRACKET' // [
+  | 'RBRACKET' // ]
+  | 'LBRACE' // {
+  | 'RBRACE' // }
+  | 'COMMA' // ,
+  | 'DOT' // .
+  | 'COLON' // :
+  | 'SEMICOLON' // ;
   | 'APOSTROPHE' // '
-  
+
   // Special
   | 'WHITESPACE'
   | 'NEWLINE'
@@ -58,19 +58,19 @@ export interface Token {
 export type ASTNodeType =
   // Expressions
   | 'Literal'
-  | 'Identifier' 
+  | 'Identifier'
   | 'BinaryExpression'
   | 'UnaryExpression'
   | 'CallExpression'
   | 'MemberExpression'
   | 'ConditionalExpression'
-  
+
   // Statements
   | 'ExpressionStatement'
   | 'BlockStatement'
   | 'EventStatement'
   | 'CommandStatement'
-  
+
   // Hyperscript specific
   | 'EventHandler'
   | 'Command'
@@ -151,9 +151,9 @@ export interface PossessiveExpressionNode extends BaseASTNode {
   property: ASTNode;
 }
 
-export type ASTNode = 
+export type ASTNode =
   | LiteralNode
-  | IdentifierNode  
+  | IdentifierNode
   | BinaryExpressionNode
   | UnaryExpressionNode
   | CallExpressionNode
@@ -193,39 +193,106 @@ export interface ParserOptions {
 
 export const HYPERSCRIPT_KEYWORDS = new Set([
   // Event keywords
-  'on', 'when', 'trigger', 'send',
-  
-  // Action keywords  
-  'put', 'add', 'remove', 'toggle', 'set', 'get',
-  'show', 'hide', 'take', 'make', 'call',
-  'go', 'fetch', 'post', 'delete',
-  
+  'on',
+  'when',
+  'trigger',
+  'send',
+
+  // Action keywords
+  'put',
+  'add',
+  'remove',
+  'toggle',
+  'set',
+  'get',
+  'show',
+  'hide',
+  'take',
+  'make',
+  'call',
+  'go',
+  'fetch',
+  'post',
+  'delete',
+
   // Control flow
-  'if', 'else', 'unless', 'then', 'wait', 'repeat',
-  'for', 'while', 'until', 'continue', 'break',
-  
+  'if',
+  'else',
+  'unless',
+  'then',
+  'wait',
+  'repeat',
+  'for',
+  'while',
+  'until',
+  'continue',
+  'break',
+
   // Logical operators
-  'and', 'or', 'not', 'is', 'as', 'in', 'of',
-  'matches', 'contains', 'exists', 'empty',
-  
+  'and',
+  'or',
+  'not',
+  'is',
+  'as',
+  'in',
+  'of',
+  'matches',
+  'contains',
+  'exists',
+  'empty',
+
   // Positional
-  'first', 'last', 'next', 'previous', 'closest',
-  'from', 'to', 'into', 'with', 'within',
-  
+  'first',
+  'last',
+  'next',
+  'previous',
+  'closest',
+  'from',
+  'to',
+  'into',
+  'with',
+  'within',
+
   // References
-  'me', 'my', 'you', 'your', 'it', 'its', 'result',
-  'window', 'document', 'event', 'target',
-  
+  'me',
+  'my',
+  'you',
+  'your',
+  'it',
+  'its',
+  'result',
+  'window',
+  'document',
+  'event',
+  'target',
+
   // Special
-  'class', 'classes', 'attribute', 'attributes',
-  'style', 'styles', 'property', 'properties',
-  'value', 'values', 'text', 'html', 'data',
-  
+  'class',
+  'classes',
+  'attribute',
+  'attributes',
+  'style',
+  'styles',
+  'property',
+  'properties',
+  'value',
+  'values',
+  'text',
+  'html',
+  'data',
+
   // Time/Animation
-  'over', 'during', 'with', 'easing', 'step',
-  
+  'over',
+  'during',
+  'with',
+  'easing',
+  'step',
+
   // Literals
-  'true', 'false', 'null', 'undefined'
+  'true',
+  'false',
+  'null',
+  'undefined',
 ]);
 
 // ============================================================================
@@ -234,41 +301,41 @@ export const HYPERSCRIPT_KEYWORDS = new Set([
 
 export const OPERATOR_PRECEDENCE: Record<string, number> = {
   // Logical operators (lowest precedence)
-  'or': 1,
-  'and': 2,
-  
+  or: 1,
+  and: 2,
+
   // Equality and comparison
   '==': 3,
   '!=': 3,
-  '===': 3,  
+  '===': 3,
   '!==': 3,
-  'is': 3,
-  'matches': 3,
-  'contains': 3,
-  'in': 3,
-  
+  is: 3,
+  matches: 3,
+  contains: 3,
+  in: 3,
+
   // Relational
   '<': 4,
   '>': 4,
   '<=': 4,
   '>=': 4,
-  
+
   // Additive
   '+': 5,
   '-': 5,
-  
-  // Multiplicative  
+
+  // Multiplicative
   '*': 6,
   '/': 6,
-  'mod': 6,
+  mod: 6,
   '%': 6,
-  
+
   // Exponentiation
   '^': 7,
   '**': 7,
-  
+
   // Unary (highest precedence)
-  'not': 8,
+  not: 8,
   'unary-': 9,
   'unary+': 9,
 };

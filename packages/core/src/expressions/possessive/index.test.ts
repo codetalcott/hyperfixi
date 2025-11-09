@@ -4,10 +4,10 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { 
+import {
   EnhancedPossessiveExpression,
   createPossessiveExpression,
-  evaluatePossessive
+  evaluatePossessive,
 } from './index.ts';
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
@@ -29,7 +29,7 @@ describe('Enhanced Possessive Expression', () => {
 
     test('validates different object types', () => {
       const testObjects = [null, undefined, {}, [], document.createElement('div')];
-      
+
       testObjects.forEach(obj => {
         const result = possessiveExpression.validate([obj, 'property']);
         expect(result.isValid).toBe(true);
@@ -58,9 +58,9 @@ describe('Enhanced Possessive Expression', () => {
   describe('Object Property Access', () => {
     test('accesses simple object properties', async () => {
       const obj = { name: 'test', value: 42 };
-      
+
       const result = await possessiveExpression.evaluate(context, obj, 'name');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('test');
@@ -70,9 +70,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('returns null for non-existent properties', async () => {
       const obj = { name: 'test' };
-      
+
       const result = await possessiveExpression.evaluate(context, obj, 'nonexistent');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeNull();
@@ -81,16 +81,16 @@ describe('Enhanced Possessive Expression', () => {
     });
 
     test('handles nested object access', async () => {
-      const obj = { 
-        user: { 
-          profile: { 
-            name: 'John' 
-          } 
-        } 
+      const obj = {
+        user: {
+          profile: {
+            name: 'John',
+          },
+        },
       };
-      
+
       const result = await possessiveExpression.evaluate(context, obj, 'user');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toEqual(obj.user);
@@ -118,9 +118,9 @@ describe('Enhanced Possessive Expression', () => {
       const input = document.createElement('input');
       input.value = 'test value';
       input.type = 'text';
-      
+
       const result = await possessiveExpression.evaluate(context, input, 'value');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('test value');
@@ -130,14 +130,14 @@ describe('Enhanced Possessive Expression', () => {
 
     test('accesses DOM element methods with binding', async () => {
       const div = document.createElement('div');
-      
+
       const result = await possessiveExpression.evaluate(context, div, 'getAttribute');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(typeof result.value).toBe('function');
         expect(result.type).toBe('function');
-        
+
         // Test that method is bound correctly
         const boundMethod = result.value as Function;
         div.setAttribute('test', 'value');
@@ -147,9 +147,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('handles non-existent DOM properties', async () => {
       const div = document.createElement('div');
-      
+
       const result = await possessiveExpression.evaluate(context, div, 'nonExistentProperty');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeNull();
@@ -161,9 +161,9 @@ describe('Enhanced Possessive Expression', () => {
     test('accesses attributes with @ prefix', async () => {
       const div = document.createElement('div');
       div.setAttribute('data-test', 'attribute value');
-      
+
       const result = await possessiveExpression.evaluate(context, div, '@data-test');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('attribute value');
@@ -173,9 +173,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('returns null for non-existent attributes', async () => {
       const div = document.createElement('div');
-      
+
       const result = await possessiveExpression.evaluate(context, div, '@data-nonexistent');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeNull();
@@ -185,9 +185,9 @@ describe('Enhanced Possessive Expression', () => {
     test('handles complex attribute names', async () => {
       const div = document.createElement('div');
       div.setAttribute('data-complex-name', 'complex value');
-      
+
       const result = await possessiveExpression.evaluate(context, div, '@data-complex-name');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('complex value');
@@ -196,9 +196,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('returns null for non-elements', async () => {
       const obj = { name: 'test' };
-      
+
       const result = await possessiveExpression.evaluate(context, obj, '@data-test');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeNull();
@@ -210,9 +210,9 @@ describe('Enhanced Possessive Expression', () => {
     test('accesses attributes with bracket notation', async () => {
       const div = document.createElement('div');
       div.setAttribute('data-bracket-test', 'bracket value');
-      
+
       const result = await possessiveExpression.evaluate(context, div, '[@data-bracket-test]');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('bracket value');
@@ -223,9 +223,9 @@ describe('Enhanced Possessive Expression', () => {
     test('handles attributes with special characters', async () => {
       const div = document.createElement('div');
       div.setAttribute('data-special-chars_123', 'special value');
-      
+
       const result = await possessiveExpression.evaluate(context, div, '[@data-special-chars_123]');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('special value');
@@ -234,9 +234,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('returns null for non-existent bracket attributes', async () => {
       const div = document.createElement('div');
-      
+
       const result = await possessiveExpression.evaluate(context, div, '[@data-nonexistent]');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeNull();
@@ -249,9 +249,9 @@ describe('Enhanced Possessive Expression', () => {
       const div = document.createElement('div');
       div.style.color = 'red';
       div.style.backgroundColor = 'blue';
-      
+
       const result = await possessiveExpression.evaluate(context, div, '*color');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('red');
@@ -262,9 +262,9 @@ describe('Enhanced Possessive Expression', () => {
     test('accesses camelCase style properties', async () => {
       const div = document.createElement('div');
       div.style.backgroundColor = 'blue';
-      
+
       const result = await possessiveExpression.evaluate(context, div, '*background-color');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('blue');
@@ -273,9 +273,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('returns null for non-existent style properties', async () => {
       const div = document.createElement('div');
-      
+
       const result = await possessiveExpression.evaluate(context, div, '*nonexistent-style');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeNull();
@@ -284,9 +284,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('returns null for non-elements', async () => {
       const obj = { color: 'red' };
-      
+
       const result = await possessiveExpression.evaluate(context, obj, '*color');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeNull();
@@ -299,16 +299,16 @@ describe('Enhanced Possessive Expression', () => {
       const div = document.createElement('div');
       div.style.color = 'red';
       document.body.appendChild(div);
-      
+
       const result = await possessiveExpression.evaluate(context, div, '*computed-color');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         // Computed style might return rgb() format
         expect(typeof result.value).toBe('string');
         expect(result.value).toBeTruthy();
       }
-      
+
       // Clean up
       div.remove();
     });
@@ -316,14 +316,14 @@ describe('Enhanced Possessive Expression', () => {
     test('returns null for non-existent computed styles', async () => {
       const div = document.createElement('div');
       document.body.appendChild(div);
-      
+
       const result = await possessiveExpression.evaluate(context, div, '*computed-nonexistent');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeNull();
       }
-      
+
       // Clean up
       div.remove();
     });
@@ -334,11 +334,11 @@ describe('Enhanced Possessive Expression', () => {
       const objects = [
         { name: 'first', value: 1 },
         { name: 'second', value: 2 },
-        { name: 'third', value: 3 }
+        { name: 'third', value: 3 },
       ];
-      
+
       const result = await possessiveExpression.evaluate(context, objects, 'name');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Array.isArray(result.value)).toBe(true);
@@ -353,9 +353,9 @@ describe('Enhanced Possessive Expression', () => {
       const div2 = document.createElement('div');
       div2.setAttribute('data-id', '2');
       const elements = [div1, div2];
-      
+
       const result = await possessiveExpression.evaluate(context, elements, '@data-id');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Array.isArray(result.value)).toBe(true);
@@ -369,9 +369,9 @@ describe('Enhanced Possessive Expression', () => {
       const div2 = document.createElement('div');
       div2.style.color = 'blue';
       const elements = [div1, div2];
-      
+
       const result = await possessiveExpression.evaluate(context, elements, '*color');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Array.isArray(result.value)).toBe(true);
@@ -380,14 +380,10 @@ describe('Enhanced Possessive Expression', () => {
     });
 
     test('handles mixed null/valid results in arrays', async () => {
-      const objects = [
-        { name: 'valid' },
-        null,
-        { name: 'also valid' }
-      ];
-      
+      const objects = [{ name: 'valid' }, null, { name: 'also valid' }];
+
       const result = await possessiveExpression.evaluate(context, objects, 'name');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Array.isArray(result.value)).toBe(true);
@@ -399,9 +395,9 @@ describe('Enhanced Possessive Expression', () => {
   describe('Type Inference', () => {
     test('correctly infers string types', async () => {
       const obj = { text: 'hello' };
-      
+
       const result = await possessiveExpression.evaluate(context, obj, 'text');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.type).toBe('string');
@@ -410,9 +406,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('correctly infers number types', async () => {
       const obj = { count: 42 };
-      
+
       const result = await possessiveExpression.evaluate(context, obj, 'count');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.type).toBe('number');
@@ -421,9 +417,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('correctly infers boolean types', async () => {
       const obj = { isActive: true };
-      
+
       const result = await possessiveExpression.evaluate(context, obj, 'isActive');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.type).toBe('boolean');
@@ -432,9 +428,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('correctly infers element types', async () => {
       const obj = { element: document.createElement('div') };
-      
+
       const result = await possessiveExpression.evaluate(context, obj, 'element');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.type).toBe('element');
@@ -443,9 +439,9 @@ describe('Enhanced Possessive Expression', () => {
 
     test('correctly infers function types', async () => {
       const obj = { callback: () => 'test' };
-      
+
       const result = await possessiveExpression.evaluate(context, obj, 'callback');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.type).toBe('function');
@@ -456,7 +452,7 @@ describe('Enhanced Possessive Expression', () => {
   describe('Error Handling', () => {
     test('handles validation errors gracefully', async () => {
       const result = await possessiveExpression.evaluate(context);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.name).toBe('PossessiveExpressionValidationError');
@@ -466,7 +462,7 @@ describe('Enhanced Possessive Expression', () => {
     test('handles property access errors gracefully', async () => {
       // This shouldn't actually throw in normal circumstances, but test error handling
       const result = await possessiveExpression.evaluate(context, {}, 'validProperty');
-      
+
       expect(result.success).toBe(true); // Should succeed even if property doesn't exist
     });
   });
@@ -480,7 +476,7 @@ describe('Enhanced Possessive Expression', () => {
     test('evaluatePossessive utility works', async () => {
       const obj = { test: 'value' };
       const result = await evaluatePossessive(obj, 'test', context);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('value');
@@ -489,7 +485,7 @@ describe('Enhanced Possessive Expression', () => {
 
     test('metadata provides comprehensive information', () => {
       const metadata = possessiveExpression.getMetadata();
-      
+
       expect(metadata.name).toBe('PossessiveExpression');
       expect(metadata.category).toBe('property-access');
       expect(metadata.supportedFeatures).toContain('object property access');
@@ -503,7 +499,7 @@ describe('Enhanced Possessive Expression', () => {
   describe('LLM Documentation', () => {
     test('provides comprehensive documentation', () => {
       const docs = possessiveExpression.documentation;
-      
+
       expect(docs.summary).toContain('properties'); // Check for "properties" instead of "property"
       expect(docs.parameters).toHaveLength(2);
       expect(docs.parameters[0].name).toBe('object');
@@ -516,20 +512,18 @@ describe('Enhanced Possessive Expression', () => {
 
   describe('Performance Characteristics', () => {
     test('handles many property accesses efficiently', async () => {
-      const objects = Array.from({ length: 100 }, (_, i) => ({ 
-        id: i, 
-        name: `item${i}` 
+      const objects = Array.from({ length: 100 }, (_, i) => ({
+        id: i,
+        name: `item${i}`,
       }));
-      
+
       const startTime = performance.now();
-      
-      const promises = objects.map(obj => 
-        possessiveExpression.evaluate(context, obj, 'name')
-      );
-      
+
+      const promises = objects.map(obj => possessiveExpression.evaluate(context, obj, 'name'));
+
       const results = await Promise.all(promises);
       const endTime = performance.now();
-      
+
       // All should succeed
       results.forEach((result, index) => {
         expect(result.success).toBe(true);
@@ -537,7 +531,7 @@ describe('Enhanced Possessive Expression', () => {
           expect(result.value).toBe(`item${index}`);
         }
       });
-      
+
       // Should be reasonably fast
       expect(endTime - startTime).toBeLessThan(100); // Less than 100ms for 100 operations
     });
@@ -547,7 +541,7 @@ describe('Enhanced Possessive Expression', () => {
     test('matches basic possessive property access', async () => {
       const obj = { foo: 'bar' };
       const result = await possessiveExpression.evaluate(context, obj, 'foo');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('bar');
@@ -557,9 +551,9 @@ describe('Enhanced Possessive Expression', () => {
     test('matches attribute access pattern', async () => {
       const div = document.createElement('div');
       div.setAttribute('data-foo', 'attribute-value');
-      
+
       const result = await possessiveExpression.evaluate(context, div, '@data-foo');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('attribute-value');
@@ -569,9 +563,9 @@ describe('Enhanced Possessive Expression', () => {
     test('matches bracket attribute notation', async () => {
       const div = document.createElement('div');
       div.setAttribute('data-foo', 'bracket-value');
-      
+
       const result = await possessiveExpression.evaluate(context, div, '[@data-foo]');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('bracket-value');
@@ -581,9 +575,9 @@ describe('Enhanced Possessive Expression', () => {
     test('matches style property access', async () => {
       const div = document.createElement('div');
       div.style.color = 'red';
-      
+
       const result = await possessiveExpression.evaluate(context, div, '*color');
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBe('red');

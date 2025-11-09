@@ -1,5 +1,3 @@
-
-
 /**
  * Enhanced On Feature Implementation
  * Type-safe event handling feature with enhanced validation and LLM integration
@@ -11,7 +9,7 @@ import type {
   ValidationError,
   LLMDocumentation,
   EvaluationType,
-  ExecutionContext
+  ExecutionContext,
 } from '../types/base-types';
 import type { ContextMetadata } from '../types/context-types';
 import type { EvaluationResult } from '../types/command-types';
@@ -38,19 +36,23 @@ export const EnhancedOnInputSchema = v.object({
   /** Command sequence to execute */
   commands: v.array(v.any()), // Parsed command nodes
   /** Execution context */
-  context: v.object({
-    variables: z.record(v.string(), v.any()).default({}),
-    me: v.any().optional(),
-    it: v.any().optional(),
-    target: v.any().optional(),
-  }).default({}),
+  context: v
+    .object({
+      variables: z.record(v.string(), v.any()).default({}),
+      me: v.any().optional(),
+      it: v.any().optional(),
+      target: v.any().optional(),
+    })
+    .default({}),
   /** Feature options */
-  options: v.object({
-    enableErrorHandling: v.boolean().default(true),
-    enableEventCapture: v.boolean().default(true),
-    enableAsyncExecution: v.boolean().default(true),
-    maxCommandCount: v.number().default(100),
-  }).default({}),
+  options: v
+    .object({
+      enableErrorHandling: v.boolean().default(true),
+      enableEventCapture: v.boolean().default(true),
+      enableAsyncExecution: v.boolean().default(true),
+      maxCommandCount: v.number().default(100),
+    })
+    .default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
   debug: v.boolean().default(false),
@@ -63,7 +65,7 @@ export const EnhancedOnOutputSchema = v.object({
   category: v.literal('Frontend'),
   capabilities: v.array(v.string()),
   state: z.enum(['ready', 'listening', 'executing', 'error']),
-  
+
   /** Event management */
   events: z.object({
     listen: z.function(),
@@ -73,7 +75,7 @@ export const EnhancedOnOutputSchema = v.object({
     pauseListener: z.function(),
     resumeListener: z.function(),
   }),
-  
+
   /** Command execution */
   execution: v.object({
     execute: z.function(),
@@ -81,7 +83,7 @@ export const EnhancedOnOutputSchema = v.object({
     getExecutionHistory: z.function(),
     clearHistory: z.function(),
   }),
-  
+
   /** Event filtering */
   filtering: v.object({
     addFilter: z.function(),
@@ -89,7 +91,7 @@ export const EnhancedOnOutputSchema = v.object({
     testFilter: z.function(),
     getFilters: z.function(),
   }),
-  
+
   /** Performance control */
   performance: v.object({
     throttle: z.function(),
@@ -97,7 +99,7 @@ export const EnhancedOnOutputSchema = v.object({
     setThrottleDelay: z.function(),
     setDebounceDelay: z.function(),
   }),
-  
+
   /** Error handling */
   errors: v.object({
     handle: z.function(),
@@ -163,7 +165,8 @@ export interface EventFilter {
 export class TypedOnFeatureImplementation {
   public readonly name = 'onFeature';
   public readonly category = 'Frontend' as const;
-  public readonly description = 'Type-safe event handling feature with advanced filtering, throttling, and execution control';
+  public readonly description =
+    'Type-safe event handling feature with advanced filtering, throttling, and execution control';
   public readonly inputSchema = EnhancedOnInputSchema;
   public readonly outputType: EvaluationType = 'Context';
 
@@ -190,20 +193,23 @@ export class TypedOnFeatureImplementation {
     returnTypes: ['Context'],
     examples: [
       {
-        input: '{ event: { type: "click", target: "button" }, commands: [{ type: "command", name: "hide", args: [] }] }',
+        input:
+          '{ event: { type: "click", target: "button" }, commands: [{ type: "command", name: "hide", args: [] }] }',
         description: 'Listen for click events on buttons and hide the element',
-        expectedOutput: 'TypedOnContext with event listener registration and command execution'
+        expectedOutput: 'TypedOnContext with event listener registration and command execution',
       },
       {
-        input: '{ event: { type: "submit", preventDefault: true, throttle: 1000 }, commands: [{ type: "command", name: "log", args: ["Form submitted"] }] }',
+        input:
+          '{ event: { type: "submit", preventDefault: true, throttle: 1000 }, commands: [{ type: "command", name: "log", args: ["Form submitted"] }] }',
         description: 'Handle form submission with preventDefault and throttling',
-        expectedOutput: 'Event handler with form processing and rate limiting'
+        expectedOutput: 'Event handler with form processing and rate limiting',
       },
       {
-        input: '{ event: { type: "scroll", target: "window", debounce: 500 }, commands: [{ type: "command", name: "updateScrollPosition" }] }',
+        input:
+          '{ event: { type: "scroll", target: "window", debounce: 500 }, commands: [{ type: "command", name: "updateScrollPosition" }] }',
         description: 'Handle window scroll events with debouncing for performance',
-        expectedOutput: 'Optimized scroll handler with debounce control'
-      }
+        expectedOutput: 'Optimized scroll handler with debounce control',
+      },
     ],
     relatedExpressions: ['onCommand', 'eventTrigger', 'listenerManagement'],
     relatedContexts: ['defFeature', 'behaviorFeature', 'executionContext'],
@@ -211,66 +217,77 @@ export class TypedOnFeatureImplementation {
     environmentRequirements: {
       browser: true,
       server: false,
-      nodejs: false
+      nodejs: false,
     },
     performance: {
       averageTime: 8.5,
-      complexity: 'O(n)' // n = number of commands to execute
-    }
+      complexity: 'O(n)', // n = number of commands to execute
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates type-safe event listeners for hyperscript with advanced filtering, performance optimization, and comprehensive error handling',
+    summary:
+      'Creates type-safe event listeners for hyperscript with advanced filtering, performance optimization, and comprehensive error handling',
     parameters: [
       {
         name: 'onConfig',
         type: 'EnhancedOnInput',
-        description: 'Event handling configuration including event type, target, commands, and performance options',
+        description:
+          'Event handling configuration including event type, target, commands, and performance options',
         optional: false,
         examples: [
           '{ event: { type: "click", target: ".button" }, commands: [{ name: "toggle", args: [] }] }',
           '{ event: { type: "input", debounce: 300 }, commands: [{ name: "validateForm" }] }',
-          '{ event: { type: "keydown", filter: "event.key === \\"Enter\\"" }, commands: [{ name: "submit" }] }'
-        ]
-      }
+          '{ event: { type: "keydown", filter: "event.key === \\"Enter\\"" }, commands: [{ name: "submit" }] }',
+        ],
+      },
     ],
     returns: {
       type: 'EnhancedOnContext',
-      description: 'Event handling context with listener management, execution control, and performance optimization capabilities',
+      description:
+        'Event handling context with listener management, execution control, and performance optimization capabilities',
       examples: [
         'context.events.listen(eventConfig) → event listener ID',
         'context.events.trigger("customEvent", data) → trigger custom event',
         'context.performance.throttle(listenerConfig, 1000) → throttled listener',
-        'context.filtering.addFilter("clickFilter", expression) → event filter'
-      ]
+        'context.filtering.addFilter("clickFilter", expression) → event filter',
+      ],
     },
     examples: [
       {
         title: 'Simple click handler',
         code: 'const onContext = await createOnFeature({ event: { type: "click", target: "button" }, commands: [{ name: "alert", args: ["Clicked!"] }] })',
         explanation: 'Create a click event listener that shows an alert when buttons are clicked',
-        output: 'Event context with click handler registration'
+        output: 'Event context with click handler registration',
       },
       {
         title: 'Throttled scroll handler',
         code: 'await onContext.events.listen({ type: "scroll", target: "window", throttle: 100 })',
         explanation: 'Create scroll event listener with 100ms throttling for performance',
-        output: 'Optimized scroll handler with rate limiting'
+        output: 'Optimized scroll handler with rate limiting',
       },
       {
         title: 'Filtered keyboard handler',
         code: 'await onContext.filtering.addFilter("enterKey", "event.key === \\"Enter\\" && !event.shiftKey")',
         explanation: 'Add event filter to only handle Enter key presses without Shift',
-        output: 'Conditional event handling with custom filtering logic'
-      }
+        output: 'Conditional event handling with custom filtering logic',
+      },
     ],
     seeAlso: ['defFeature', 'behaviorFeature', 'eventSystem', 'commandExecution'],
-    tags: ['events', 'listeners', 'filtering', 'throttling', 'debouncing', 'type-safe', 'enhanced-pattern']
+    tags: [
+      'events',
+      'listeners',
+      'filtering',
+      'throttling',
+      'debouncing',
+      'type-safe',
+      'enhanced-pattern',
+    ],
   };
 
   async initialize(input: EnhancedOnInput): Promise<EvaluationResult<EnhancedOnOutput>> {
     const startTime = Date.now();
-    
+
     try {
       // Validate input using enhanced pattern
       const validation = this.validate(input);
@@ -282,22 +299,28 @@ export class TypedOnFeatureImplementation {
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions
-          }
+            suggestions: validation.suggestions,
+          },
         };
       }
 
       // Initialize event system
       const config = await this.initializeConfig(input);
-      
+
       // Create enhanced on context
       const context: EnhancedOnOutput = {
         contextId: `on-${Date.now()}`,
         timestamp: startTime,
         category: 'Frontend',
-        capabilities: ['event-listening', 'command-execution', 'event-filtering', 'performance-optimization', 'error-handling'],
+        capabilities: [
+          'event-listening',
+          'command-execution',
+          'event-filtering',
+          'performance-optimization',
+          'error-handling',
+        ],
         state: 'ready',
-        
+
         // Event management
         events: {
           listen: this.createEventListener(config),
@@ -307,7 +330,7 @@ export class TypedOnFeatureImplementation {
           pauseListener: this.createListenerPauser(),
           resumeListener: this.createListenerResumer(),
         },
-        
+
         // Command execution
         execution: {
           execute: this.createCommandExecutor(config),
@@ -315,7 +338,7 @@ export class TypedOnFeatureImplementation {
           getExecutionHistory: this.createExecutionHistoryGetter(),
           clearHistory: this.createHistoryClearer(),
         },
-        
+
         // Event filtering
         filtering: {
           addFilter: this.createFilterAdder(),
@@ -323,7 +346,7 @@ export class TypedOnFeatureImplementation {
           testFilter: this.createFilterTester(),
           getFilters: this.createFilterGetter(),
         },
-        
+
         // Performance control
         performance: {
           throttle: this.createThrottleController(),
@@ -331,14 +354,14 @@ export class TypedOnFeatureImplementation {
           setThrottleDelay: this.createThrottleDelaySetter(),
           setDebounceDelay: this.createDebounceDelaySetter(),
         },
-        
+
         // Error handling
         errors: {
           handle: this.createErrorHandler(),
           getErrorHistory: this.createErrorHistoryGetter(),
           clearErrors: this.createErrorClearer(),
           setErrorHandler: this.createErrorHandlerSetter(),
-        }
+        },
       };
 
       // Register initial event listener if provided
@@ -348,23 +371,22 @@ export class TypedOnFeatureImplementation {
 
       // Track performance using enhanced pattern
       this.trackPerformance(startTime, true, context);
-      
+
       return {
         success: true,
         value: context,
-        type: 'object'
+        type: 'object',
       };
-
     } catch (error) {
       this.trackPerformance(startTime, false);
-      
+
       return {
         success: false,
         error: {
           type: 'runtime-error',
           message: `On feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: []
-        }
+          suggestions: [],
+        },
       };
     }
   }
@@ -377,7 +399,7 @@ export class TypedOnFeatureImplementation {
           isValid: false,
           error: { type: 'invalid-input', message: 'Input must be an object', suggestions: [] },
           suggestions: ['Provide a valid event handling configuration object'],
-          errors: []
+          errors: [],
         };
       }
 
@@ -394,13 +416,19 @@ export class TypedOnFeatureImplementation {
           type: 'validation-error',
           message: `"${data.event.type}" is not a valid DOM event type`,
           path: 'event.type',
-          suggestions: []
+          suggestions: [],
         });
-        suggestions.push('Use standard DOM event types like "click", "input", "submit", "keydown", etc.');
+        suggestions.push(
+          'Use standard DOM event types like "click", "input", "submit", "keydown", etc.'
+        );
       }
 
       // Validate target selector - skip validation in test environment
-      if (data.event?.target && data.event.target !== 'me' && data.event.target !== '>>>invalid-selector<<<') {
+      if (
+        data.event?.target &&
+        data.event.target !== 'me' &&
+        data.event.target !== '>>>invalid-selector<<<'
+      ) {
         try {
           // Basic CSS selector validation
           if (typeof document !== 'undefined') {
@@ -411,19 +439,19 @@ export class TypedOnFeatureImplementation {
             type: 'syntax-error',
             message: `Invalid CSS selector: "${data.event.target}"`,
             path: 'event.target',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Use valid CSS selector syntax for target element');
         }
       }
-      
+
       // Special validation for obviously invalid selectors
       if (data.event?.target === '>>>invalid-selector<<<') {
         errors.push({
           type: 'syntax-error',
           message: `Invalid CSS selector: "${data.event.target}"`,
           path: 'event.target',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Use valid CSS selector syntax for target element');
       }
@@ -434,7 +462,7 @@ export class TypedOnFeatureImplementation {
           type: 'validation-error',
           message: 'Cannot use both throttle and debounce simultaneously',
           path: 'event',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Choose either throttle OR debounce, not both');
       }
@@ -445,7 +473,7 @@ export class TypedOnFeatureImplementation {
           type: 'invalid-input',
           message: 'Throttle delay must be a positive number',
           path: 'event.throttle',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Set throttle delay to a positive number in milliseconds');
       }
@@ -455,7 +483,7 @@ export class TypedOnFeatureImplementation {
           type: 'invalid-input',
           message: 'Debounce delay must be a positive number',
           path: 'event.debounce',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Set debounce delay to a positive number in milliseconds');
       }
@@ -466,7 +494,7 @@ export class TypedOnFeatureImplementation {
           type: 'empty-config',
           message: 'Commands array cannot be empty',
           path: 'commands',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Add at least one command to execute when event occurs');
       }
@@ -477,7 +505,7 @@ export class TypedOnFeatureImplementation {
           type: 'validation-error',
           message: `Too many commands (max: ${data.options?.maxCommandCount || 100})`,
           path: 'commands',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Reduce number of commands or increase maxCommandCount limit');
       }
@@ -492,7 +520,7 @@ export class TypedOnFeatureImplementation {
             type: 'syntax-error',
             message: `Invalid filter expression: ${data.event.filter}`,
             path: 'event.filter',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Use valid JavaScript expression for event filtering');
         }
@@ -501,23 +529,22 @@ export class TypedOnFeatureImplementation {
       return {
         isValid: errors.length === 0,
         errors,
-        suggestions
+        suggestions,
       };
-
     } catch (error) {
       return {
         isValid: false,
         error: {
           type: 'schema-validation',
           message: error instanceof Error ? error.message : 'Invalid input format',
-          suggestions: []
+          suggestions: [],
         },
         suggestions: [
           'Ensure input matches EnhancedOnInput schema',
           'Check event configuration structure',
-          'Verify commands array contains valid command objects'
+          'Verify commands array contains valid command objects',
         ],
-        errors: []
+        errors: [],
       };
     }
   }
@@ -531,13 +558,17 @@ export class TypedOnFeatureImplementation {
       ...input.options,
       environment: input.environment,
       debug: input.debug,
-      initialized: Date.now()
+      initialized: Date.now(),
     };
   }
 
-  private async registerEventListener(event: any, commands: any[], context: any): Promise<EventListener> {
+  private async registerEventListener(
+    event: any,
+    commands: any[],
+    context: any
+  ): Promise<EventListener> {
     const id = `listener-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const listener: EventListener = {
       id,
       eventType: event.type,
@@ -548,7 +579,7 @@ export class TypedOnFeatureImplementation {
         me: context?.me || null,
         it: context?.it || null,
         target: context?.target || null,
-        ...context
+        ...context,
       },
       options: {
         once: event.once || false,
@@ -567,7 +598,7 @@ export class TypedOnFeatureImplementation {
     };
 
     this.listeners.set(id, listener);
-    
+
     // Register actual DOM event listener
     if (typeof document !== 'undefined') {
       this.attachDOMListener(listener);
@@ -578,9 +609,9 @@ export class TypedOnFeatureImplementation {
 
   private attachDOMListener(listener: EventListener): void {
     const handler = this.createDOMEventHandler(listener);
-    
+
     let targetElement: EventTarget | null = null;
-    
+
     if (typeof listener.target === 'string') {
       if (listener.target === 'me') {
         targetElement = listener.context.me as EventTarget;
@@ -596,7 +627,11 @@ export class TypedOnFeatureImplementation {
     }
 
     if (targetElement) {
-      targetElement.addEventListener(listener.eventType, handler as unknown as EventListenerOrEventListenerObject, listener.options);
+      targetElement.addEventListener(
+        listener.eventType,
+        handler as unknown as EventListenerOrEventListenerObject,
+        listener.options
+      );
     }
   }
 
@@ -617,7 +652,7 @@ export class TypedOnFeatureImplementation {
 
         if (listener.options.debounce) {
           this.applyDebounce(listener.id, listener.options.debounce, () => {
-            this.executeEventHandler(event, listener);
+            void this.executeEventHandler(event, listener);
           });
           return;
         }
@@ -629,7 +664,7 @@ export class TypedOnFeatureImplementation {
 
   private async executeEventHandler(event: Event, listener: EventListener): Promise<void> {
     const startTime = Date.now();
-    
+
     try {
       // Create event execution context
       const eventContext = {
@@ -657,13 +692,13 @@ export class TypedOnFeatureImplementation {
       };
 
       this.executionHistory.push(execution);
-      
+
       // Update listener statistics
       listener.executionCount++;
       listener.lastExecutionTime = Date.now();
-      listener.averageExecutionTime = 
-        (listener.averageExecutionTime * (listener.executionCount - 1) + execution.executionTime) / listener.executionCount;
-
+      listener.averageExecutionTime =
+        (listener.averageExecutionTime * (listener.executionCount - 1) + execution.executionTime) /
+        listener.executionCount;
     } catch (error) {
       const execution: EventExecution = {
         listenerId: listener.id,
@@ -681,22 +716,22 @@ export class TypedOnFeatureImplementation {
       this.errorHistory.push({
         error: error as Error,
         timestamp: Date.now(),
-        context: { listener, event }
+        context: { listener, event },
       });
     }
   }
 
   private async executeCommands(commands: any[], context: any): Promise<any> {
     // Simplified command execution - would integrate with actual command executor
-    let result = { success: true, executed: commands.length };
-    
+    const result = { success: true, executed: commands.length };
+
     for (const command of commands) {
       if (typeof command === 'object' && command.name) {
         // Execute basic commands
         await this.executeBasicCommand(command, context);
       }
     }
-    
+
     return result;
   }
 
@@ -731,19 +766,52 @@ export class TypedOnFeatureImplementation {
   private isValidEventType(eventType: string): boolean {
     // Common DOM events - in practice would be more comprehensive
     const validEvents = [
-      'click', 'dblclick', 'mousedown', 'mouseup', 'mouseover', 'mouseout', 'mousemove',
-      'keydown', 'keyup', 'keypress',
-      'focus', 'blur', 'focusin', 'focusout',
-      'input', 'change', 'submit', 'reset',
-      'load', 'unload', 'beforeunload', 'resize', 'scroll',
-      'dragstart', 'drag', 'dragenter', 'dragover', 'dragleave', 'drop', 'dragend',
-      'touchstart', 'touchmove', 'touchend', 'touchcancel',
-      'animationstart', 'animationend', 'animationiteration',
-      'transitionstart', 'transitionend',
-      'error', 'unhandledrejection' // Add error event types
+      'click',
+      'dblclick',
+      'mousedown',
+      'mouseup',
+      'mouseover',
+      'mouseout',
+      'mousemove',
+      'keydown',
+      'keyup',
+      'keypress',
+      'focus',
+      'blur',
+      'focusin',
+      'focusout',
+      'input',
+      'change',
+      'submit',
+      'reset',
+      'load',
+      'unload',
+      'beforeunload',
+      'resize',
+      'scroll',
+      'dragstart',
+      'drag',
+      'dragenter',
+      'dragover',
+      'dragleave',
+      'drop',
+      'dragend',
+      'touchstart',
+      'touchmove',
+      'touchend',
+      'touchcancel',
+      'animationstart',
+      'animationend',
+      'animationiteration',
+      'transitionstart',
+      'transitionend',
+      'error',
+      'unhandledrejection', // Add error event types
     ];
-    
-    return validEvents.includes(eventType) || eventType.startsWith('custom:') || /^test/.test(eventType);
+
+    return (
+      validEvents.includes(eventType) || eventType.startsWith('custom:') || /^test/.test(eventType)
+    );
   }
 
   private testEventFilter(event: Event, filter: string): boolean {
@@ -758,12 +826,12 @@ export class TypedOnFeatureImplementation {
   private isThrottled(listenerId: string, delay: number): boolean {
     const lastTime = this.throttleTimers.get(listenerId) || 0;
     const now = Date.now();
-    
+
     if (now - lastTime >= delay) {
       this.throttleTimers.set(listenerId, now);
       return false;
     }
-    
+
     return true;
   }
 
@@ -772,7 +840,7 @@ export class TypedOnFeatureImplementation {
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
-    
+
     const timer = setTimeout(callback, delay);
     this.debounceTimers.set(listenerId, timer as any);
   }
@@ -890,7 +958,7 @@ export class TypedOnFeatureImplementation {
     return (filterId: string, event: Event) => {
       const filter = this.filters.get(filterId);
       if (!filter || !filter.isActive) return false;
-      
+
       try {
         return Boolean(filter.compiled(event));
       } catch {
@@ -946,7 +1014,7 @@ export class TypedOnFeatureImplementation {
       this.errorHistory.push({
         error,
         timestamp: Date.now(),
-        context
+        context,
       });
       return true;
     };
@@ -982,21 +1050,27 @@ export class TypedOnFeatureImplementation {
       output,
       success,
       duration,
-      timestamp: startTime
+      timestamp: startTime,
     });
   }
 
   getPerformanceMetrics() {
     return {
       totalInitializations: this.evaluationHistory.length,
-      successRate: this.evaluationHistory.filter(h => h.success).length / Math.max(this.evaluationHistory.length, 1),
-      averageDuration: this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / Math.max(this.evaluationHistory.length, 1),
+      successRate:
+        this.evaluationHistory.filter(h => h.success).length /
+        Math.max(this.evaluationHistory.length, 1),
+      averageDuration:
+        this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) /
+        Math.max(this.evaluationHistory.length, 1),
       lastEvaluationTime: this.evaluationHistory[this.evaluationHistory.length - 1]?.timestamp || 0,
       evaluationHistory: this.evaluationHistory.slice(-10), // Last 10 evaluations
       totalListeners: this.listeners.size,
       totalExecutions: this.executionHistory.length,
       totalErrors: this.errorHistory.length,
-      averageExecutionTime: this.executionHistory.reduce((sum, exec) => sum + exec.executionTime, 0) / Math.max(this.executionHistory.length, 1)
+      averageExecutionTime:
+        this.executionHistory.reduce((sum, exec) => sum + exec.executionTime, 0) /
+        Math.max(this.executionHistory.length, 1),
     };
   }
 }
@@ -1024,7 +1098,7 @@ export async function createEnhancedOn(
       capture: false,
       preventDefault: false,
       stopPropagation: false,
-      ...event
+      ...event,
     },
     commands,
     context: {
@@ -1038,7 +1112,7 @@ export async function createEnhancedOn(
     },
     environment: 'frontend',
     debug: false,
-    ...options
+    ...options,
   });
 }
 

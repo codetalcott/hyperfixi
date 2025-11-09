@@ -9,7 +9,7 @@ import {
   BaseContextInputSchema,
   BaseContextOutputSchema,
   type ContextMetadata,
-  type EvaluationResult
+  type EvaluationResult,
 } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
@@ -18,45 +18,55 @@ import type { LLMDocumentation } from '../types/command-types';
 // Frontend Context Input/Output Schemas
 // ============================================================================
 
-export const FrontendContextInputSchema = v.object({
-  /** DOM environment */
-  dom: z.object({
-    document: v.any().optional(), // Browser Document
-    window: v.any().optional(),   // Browser Window
-  }).optional(),
-  /** Browser APIs */
-  apis: v.object({
-    fetch: z.function().optional(),
-    localStorage: v.any().optional(),
-    sessionStorage: v.any().optional(),
-    location: v.any().optional(),
-  }).optional(),
-  /** User interaction state */
-  userState: v.object({
-    isAuthenticated: v.boolean().optional(),
-    permissions: v.array(v.string()).optional(),
-    preferences: z.record(v.string(), v.unknown()).optional(),
-  }).optional(),
-}).merge(BaseContextInputSchema);
+export const FrontendContextInputSchema = v
+  .object({
+    /** DOM environment */
+    dom: z
+      .object({
+        document: v.any().optional(), // Browser Document
+        window: v.any().optional(), // Browser Window
+      })
+      .optional(),
+    /** Browser APIs */
+    apis: v
+      .object({
+        fetch: z.function().optional(),
+        localStorage: v.any().optional(),
+        sessionStorage: v.any().optional(),
+        location: v.any().optional(),
+      })
+      .optional(),
+    /** User interaction state */
+    userState: v
+      .object({
+        isAuthenticated: v.boolean().optional(),
+        permissions: v.array(v.string()).optional(),
+        preferences: z.record(v.string(), v.unknown()).optional(),
+      })
+      .optional(),
+  })
+  .merge(BaseContextInputSchema);
 
-export const FrontendContextOutputSchema = v.object({
-  /** Frontend-specific capabilities */
-  query: z.function(), // DOM query function
-  on: z.function(),    // Event handler function
-  apis: z.object({
-    fetch: z.function(),
-    storage: z.object({
-      get: z.function(),
-      set: z.function(),
-      remove: z.function(),
+export const FrontendContextOutputSchema = v
+  .object({
+    /** Frontend-specific capabilities */
+    query: z.function(), // DOM query function
+    on: z.function(), // Event handler function
+    apis: z.object({
+      fetch: z.function(),
+      storage: z.object({
+        get: z.function(),
+        set: z.function(),
+        remove: z.function(),
+      }),
+      navigation: v.object({
+        navigate: z.function(),
+        back: z.function(),
+        forward: z.function(),
+      }),
     }),
-    navigation: v.object({
-      navigate: z.function(),
-      back: z.function(),
-      forward: z.function(),
-    }),
-  }),
-}).merge(BaseContextOutputSchema);
+  })
+  .merge(BaseContextOutputSchema);
 
 export type FrontendContextInput = any; // Inferred from RuntimeValidator
 export type FrontendContextOutput = any; // Inferred from RuntimeValidator
@@ -65,10 +75,14 @@ export type FrontendContextOutput = any; // Inferred from RuntimeValidator
 // Frontend Context Implementation
 // ============================================================================
 
-export class TypedFrontendContextImplementation extends EnhancedContextBase<FrontendContextInput, FrontendContextOutput> {
+export class TypedFrontendContextImplementation extends EnhancedContextBase<
+  FrontendContextInput,
+  FrontendContextOutput
+> {
   public readonly name = 'frontendContext';
   public readonly category = 'Frontend' as const;
-  public readonly description = 'Type-safe frontend hyperscript context with DOM access and browser APIs';
+  public readonly description =
+    'Type-safe frontend hyperscript context with DOM access and browser APIs';
   public readonly inputSchema = FrontendContextInputSchema;
   public readonly outputType: EvaluationType = 'Context';
 
@@ -82,78 +96,81 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<Fron
       {
         input: '{ dom: { document }, apis: { fetch, localStorage } }',
         description: 'Initialize frontend context with DOM and browser APIs',
-        expectedOutput: 'TypedFrontendContext with query, event, and API capabilities'
+        expectedOutput: 'TypedFrontendContext with query, event, and API capabilities',
       },
       {
         input: '{ userState: { isAuthenticated: true, permissions: ["read", "write"] } }',
         description: 'Frontend context with authenticated user state',
-        expectedOutput: 'Context with user-aware capabilities'
-      }
+        expectedOutput: 'Context with user-aware capabilities',
+      },
     ],
     relatedExpressions: [],
     relatedContexts: ['backendContext', 'universalContext'],
     frameworkDependencies: ['browser'],
     environmentRequirements: {
       browser: true,
-      server: false
+      server: false,
     },
     performance: {
       averageTime: 2.5,
-      complexity: 'O(1)'
-    }
+      complexity: 'O(1)',
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates type-safe frontend context for browser-based hyperscript execution with DOM access, event handling, and browser API integration',
+    summary:
+      'Creates type-safe frontend context for browser-based hyperscript execution with DOM access, event handling, and browser API integration',
     parameters: [
       {
         name: 'contextData',
         type: 'FrontendContextInput',
-        description: 'Frontend-specific context initialization data including DOM references and browser APIs',
+        description:
+          'Frontend-specific context initialization data including DOM references and browser APIs',
         optional: false,
         examples: [
           '{ dom: { document, window } }',
           '{ apis: { fetch, localStorage }, userState: { isAuthenticated: true } }',
-          '{ dom: { document }, userState: { permissions: ["admin"] } }'
-        ]
-      }
+          '{ dom: { document }, userState: { permissions: ["admin"] } }',
+        ],
+      },
     ],
     returns: {
       type: 'FrontendContext',
-      description: 'Initialized frontend context with DOM query capabilities, event handling, and browser API access',
+      description:
+        'Initialized frontend context with DOM query capabilities, event handling, and browser API access',
       examples: [
         'context.query("button").on("click", handler)',
         'context.apis.storage.set("key", "value")',
-        'context.apis.navigation.navigate("/path")'
-      ]
+        'context.apis.navigation.navigate("/path")',
+      ],
     },
     examples: [
       {
         title: 'Basic DOM interaction',
         code: 'const context = new TypedFrontendContextImplementation(); await context.initialize({ dom: { document } })',
         explanation: 'Create frontend context for DOM manipulation and event handling',
-        output: 'Context with query() and on() methods for DOM interaction'
+        output: 'Context with query() and on() methods for DOM interaction',
       },
       {
         title: 'Full browser API context',
         code: 'await context.initialize({ dom: { document, window }, apis: { fetch, localStorage } })',
         explanation: 'Initialize complete frontend context with all browser capabilities',
-        output: 'Full-featured browser context with API access'
+        output: 'Full-featured browser context with API access',
       },
       {
         title: 'User-aware frontend context',
         code: 'await context.initialize({ userState: { isAuthenticated: true, permissions: ["write"] } })',
         explanation: 'Create context with user authentication and permission awareness',
-        output: 'Context with user-aware capabilities and permission checking'
-      }
+        output: 'Context with user-aware capabilities and permission checking',
+      },
     ],
     seeAlso: ['backendContext', 'universalContext', 'enhancedExpressions'],
-    tags: ['context', 'frontend', 'browser', 'dom', 'type-safe', 'enhanced-pattern']
+    tags: ['context', 'frontend', 'browser', 'dom', 'type-safe', 'enhanced-pattern'],
   };
 
   async initialize(input: FrontendContextInput): Promise<EvaluationResult<FrontendContextOutput>> {
     const startTime = Date.now();
-    
+
     try {
       // Validate input using enhanced pattern
       const validation = this.validate(input);
@@ -161,7 +178,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<Fron
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
 
@@ -172,44 +189,45 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<Fron
         category: 'Frontend',
         capabilities: ['dom-query', 'event-handling', 'api-access', 'storage', 'navigation'],
         state: 'ready',
-        
+
         // Enhanced DOM query function
         query: this.createEnhancedQuery(input.dom?.document),
-        
+
         // Enhanced event handling
         on: this.createEnhancedEventHandler(),
-        
+
         // Enhanced browser APIs
         apis: {
           fetch: this.createEnhancedFetch(input.apis?.fetch),
           storage: this.createEnhancedStorage(input.apis?.localStorage, input.apis?.sessionStorage),
           navigation: this.createEnhancedNavigation(input.apis?.location),
-        }
+        },
       };
 
       // Track performance using enhanced pattern
       this.trackPerformance(startTime, true, context);
-      
+
       return {
         success: true,
         value: context,
-        type: 'Context'
+        type: 'Context',
       };
-
     } catch (error) {
       this.trackPerformance(startTime, false);
-      
+
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Frontend context initialization failed: ${error instanceof Error ? error.message : String(error)}`
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Frontend context initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
         suggestions: [
           'Ensure document and window are available',
           'Verify browser API compatibility',
-          'Check user state validity'
-        ]
+          'Check user state validity',
+        ],
       };
     }
   }
@@ -257,7 +275,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<Fron
       remove: (key: string, useSession = false) => {
         const storage = useSession ? sessionStorage : localStorage;
         if (storage) storage.removeItem(key);
-      }
+      },
     };
   }
 
@@ -271,7 +289,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<Fron
       },
       forward: () => {
         if (history && typeof history.forward === 'function') history.forward();
-      }
+      },
     };
   }
 
@@ -285,7 +303,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<Fron
         type: 'validation-error',
         message: 'DOM document is required for frontend context',
         path: 'dom.document',
-        suggestions: ['Ensure context is initialized in browser environment']
+        suggestions: ['Ensure context is initialized in browser environment'],
       });
     }
 
@@ -296,7 +314,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<Fron
           type: 'type-mismatch',
           message: 'User permissions must be an array of strings',
           path: 'userState.permissions',
-          suggestions: ['Ensure permissions is an array of permission strings']
+          suggestions: ['Ensure permissions is an array of permission strings'],
         });
       }
     }
@@ -304,7 +322,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<Fron
     return {
       isValid: errors.length === 0,
       errors,
-      suggestions
+      suggestions,
     };
   }
 }

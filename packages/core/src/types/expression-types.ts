@@ -1,9 +1,7 @@
-
-
 /**
  * Enhanced Expression Types - Deep TypeScript Integration for Expression System
  * Extends enhanced patterns to hyperscript expression evaluation with full type safety
- * 
+ *
  * IMPORTANT: Core types now imported from base-types.ts for consistency
  */
 
@@ -16,7 +14,7 @@ import type {
   LLMDocumentation,
   ExecutionContext,
   TypedExpressionContext,
-  EvaluationType
+  EvaluationType,
 } from './base-types';
 
 // Re-export for external consumers
@@ -28,7 +26,7 @@ export type {
   TypedExecutionContext,
   TypedExpressionContext,
   EvaluationType,
-  HyperScriptValueType
+  HyperScriptValueType,
 } from './base-types';
 
 // Core types now imported from base-types.ts above
@@ -37,14 +35,14 @@ export type {
  * Expression categories for organization and metadata
  * Extends base categories with expression-specific types
  */
-export type ExpressionCategory = 
-  | 'Reference'      // me, you, it, CSS selectors
-  | 'Logical'        // comparisons, boolean logic, pattern matching
-  | 'Conversion'     // as keyword, type conversions
-  | 'Positional'     // first, last, array navigation
-  | 'Property'       // possessive syntax, attribute access
-  | 'Special'        // literals, math operations, string manipulation
-  | 'Template';      // template directives, conditional rendering, iteration
+export type ExpressionCategory =
+  | 'Reference' // me, you, it, CSS selectors
+  | 'Logical' // comparisons, boolean logic, pattern matching
+  | 'Conversion' // as keyword, type conversions
+  | 'Positional' // first, last, array navigation
+  | 'Property' // possessive syntax, attribute access
+  | 'Special' // literals, math operations, string manipulation
+  | 'Template'; // template directives, conditional rendering, iteration
 
 // EvaluationType and TypedExpressionContext now imported from base-types.ts above
 
@@ -94,9 +92,9 @@ export interface ExpressionEvaluation {
 export interface ExpressionMetadata {
   category: ExpressionCategory;
   complexity: 'simple' | 'medium' | 'complex';
-  sideEffects: string[];           // e.g., ['dom-query', 'context-modification']
-  dependencies: string[];          // Other expressions this depends on
-  returnTypes: EvaluationType[];   // Possible return types
+  sideEffects: string[]; // e.g., ['dom-query', 'context-modification']
+  dependencies: string[]; // Other expressions this depends on
+  returnTypes: EvaluationType[]; // Possible return types
   examples: {
     input: string;
     description: string;
@@ -105,7 +103,7 @@ export interface ExpressionMetadata {
   }[];
   relatedExpressions: string[];
   performance: {
-    averageTime: number;           // Average execution time in ms
+    averageTime: number; // Average execution time in ms
     complexity: 'O(1)' | 'O(n)' | 'O(log n)' | 'O(n²)';
   };
 }
@@ -116,7 +114,7 @@ export interface ExpressionMetadata {
 export interface TypedExpressionImplementation<
   TInput = unknown,
   TOutput = unknown,
-  TContext extends TypedExpressionContext = TypedExpressionContext
+  TContext extends TypedExpressionContext = TypedExpressionContext,
 > {
   readonly name: string;
   readonly category: ExpressionCategory;
@@ -152,7 +150,13 @@ export interface TypedExpressionImplementation<
  * Expression validation error with position information
  */
 export interface ExpressionValidationError {
-  type: 'type-mismatch' | 'missing-argument' | 'invalid-syntax' | 'runtime-error' | 'syntax-error' | 'security-warning';
+  type:
+    | 'type-mismatch'
+    | 'missing-argument'
+    | 'invalid-syntax'
+    | 'runtime-error'
+    | 'syntax-error'
+    | 'security-warning';
   message: string;
   position?: {
     line: number;
@@ -160,7 +164,7 @@ export interface ExpressionValidationError {
     source: string;
     start?: number;
     end?: number;
-  suggestions: []
+    suggestions: [];
   };
   suggestions: string[];
   code?: string;
@@ -187,37 +191,37 @@ export interface EnhancedExpressionRegistry {
   register<TInput, TOutput, TContext extends TypedExpressionContext>(
     expression: TypedExpressionImplementation<TInput, TOutput, TContext>
   ): void;
-  
+
   /**
    * Get expression by name
    */
   get(name: string): TypedExpressionImplementation | undefined;
-  
+
   /**
    * Check if expression exists
    */
   has(name: string): boolean;
-  
+
   /**
    * Get all expression names
    */
   getExpressionNames(): string[];
-  
+
   /**
    * Get expressions by category
    */
   getByCategory(category: ExpressionCategory): TypedExpressionImplementation[];
-  
+
   /**
    * Validate expression exists and can handle input
    */
   validateExpression(name: string, input: unknown): ExpressionValidationResult;
-  
+
   /**
    * Get expression metadata
    */
   getMetadata(name: string): ExpressionMetadata | undefined;
-  
+
   /**
    * Find expressions by capability
    */
@@ -243,11 +247,14 @@ export interface ExpressionContextBridge {
    * Convert ExecutionContext to TypedExpressionContext
    */
   toTyped(context: ExecutionContext, options?: ExpressionEvaluationOptions): TypedExpressionContext;
-  
+
   /**
    * Update ExecutionContext from TypedExpressionContext
    */
-  fromTyped(typedContext: TypedExpressionContext, originalContext: ExecutionContext): ExecutionContext;
+  fromTyped(
+    typedContext: TypedExpressionContext,
+    originalContext: ExecutionContext
+  ): ExecutionContext;
 }
 
 /**
@@ -261,7 +268,7 @@ export interface ExpressionFactory {
     name: string,
     evaluator: (context: TypedExpressionContext, input: unknown) => Promise<T>
   ): TypedExpressionImplementation;
-  
+
   /**
    * Create a logical expression (comparisons, boolean logic)
    */
@@ -269,7 +276,7 @@ export interface ExpressionFactory {
     name: string,
     evaluator: (context: TypedExpressionContext, left: unknown, right: unknown) => Promise<boolean>
   ): TypedExpressionImplementation;
-  
+
   /**
    * Create a conversion expression (as keyword, type conversions)
    */
@@ -289,12 +296,12 @@ export interface ExpressionProfiler {
    * Start profiling an expression evaluation
    */
   startProfiling(expressionName: string, input: unknown): string;
-  
+
   /**
    * End profiling and record results
    */
   endProfiling(profilingId: string, result: EvaluationResult<unknown>): void;
-  
+
   /**
    * Get performance statistics
    */
@@ -305,7 +312,7 @@ export interface ExpressionProfiler {
     fastestEvaluation: number;
     errorRate: number;
   };
-  
+
   /**
    * Clear performance data
    */
@@ -341,26 +348,29 @@ export interface ExpressionDebugger {
    * Enable debugging for specific expressions
    */
   enable(expressionNames: string[]): void;
-  
+
   /**
    * Disable debugging
    */
   disable(): void;
-  
+
   /**
    * Get debug information for last evaluation
    */
   getLastEvaluation(): ExpressionEvaluation | undefined;
-  
+
   /**
    * Get evaluation history
    */
   getHistory(limit?: number): ExpressionEvaluation[];
-  
+
   /**
    * Set breakpoint on expression
    */
-  setBreakpoint(expressionName: string, condition?: (context: TypedExpressionContext) => boolean): void;
+  setBreakpoint(
+    expressionName: string,
+    condition?: (context: TypedExpressionContext) => boolean
+  ): void;
 }
 
 /**
@@ -376,13 +386,13 @@ export const CommonInputSchemas = {
   ComparisonInput: v.object({
     left: v.unknown(),
     operator: z.enum(['==', '!=', '>', '<', '>=', '<=']),
-    right: v.unknown()
+    right: v.unknown(),
   }),
   LogicalInput: v.object({
     left: v.boolean(),
     operator: z.enum(['and', 'or']),
-    right: v.boolean()
-  })
+    right: v.boolean(),
+  }),
 } as const;
 
 // ValidationResult and LLMDocumentation already exported from base-types.js above

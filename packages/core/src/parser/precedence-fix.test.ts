@@ -1,9 +1,9 @@
 /**
  * Test-Driven Development for Operator Precedence Fix
- * 
+ *
  * Based on compatibility test failures, _hyperscript handles standard operator precedence:
  * - 2 + 3 * 4 should equal 14 (not error)
- * - 10 - 2 * 3 should equal 4 (not error)  
+ * - 10 - 2 * 3 should equal 4 (not error)
  * - true and false or true should equal true (not error)
  */
 
@@ -24,7 +24,7 @@ const context: ExecutionContext = {
   returned: false,
   broke: false,
   continued: false,
-  async: false
+  async: false,
 };
 
 describe('Operator Precedence Fix - TDD', () => {
@@ -111,18 +111,18 @@ describe('Operator Precedence Fix - TDD', () => {
     });
 
     it('now correctly evaluates logical mixed operators (was: error, now: JavaScript standard)', async () => {
-      // ✅ FIXED: Now correctly evaluates using JavaScript standard precedence  
+      // ✅ FIXED: Now correctly evaluates using JavaScript standard precedence
       // true and false or true = (true and false) or true = false or true = true
       const result = await parseAndEvaluateExpression('true and false or true', context);
       expect(result).toBe(true);
     });
-    
+
     it('confirms we follow JavaScript precedence standards', async () => {
       // These should all work correctly with standard precedence rules
-      expect(await parseAndEvaluateExpression('2 + 3 * 4', context)).toBe(14);  // * before +
-      expect(await parseAndEvaluateExpression('10 - 2 * 3', context)).toBe(4);  // * before -
-      expect(await parseAndEvaluateExpression('8 / 2 + 3', context)).toBe(7);   // / before +
-      expect(await parseAndEvaluateExpression('true and false or true', context)).toBe(true);   // and before or
+      expect(await parseAndEvaluateExpression('2 + 3 * 4', context)).toBe(14); // * before +
+      expect(await parseAndEvaluateExpression('10 - 2 * 3', context)).toBe(4); // * before -
+      expect(await parseAndEvaluateExpression('8 / 2 + 3', context)).toBe(7); // / before +
+      expect(await parseAndEvaluateExpression('true and false or true', context)).toBe(true); // and before or
       expect(await parseAndEvaluateExpression('false or true and false', context)).toBe(false); // and before or
     });
   });

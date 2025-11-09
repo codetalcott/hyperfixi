@@ -4,7 +4,12 @@
  */
 
 import type { RuntimeValidator } from '../validation/lightweight-validators';
-import type { ValidationResult, EvaluationResult, CommandMetadata, LLMDocumentation } from './command-types';
+import type {
+  ValidationResult,
+  EvaluationResult,
+  CommandMetadata,
+  LLMDocumentation,
+} from './command-types';
 
 /**
  * Enhanced execution context for features with additional feature-specific properties
@@ -16,17 +21,17 @@ export interface TypedFeatureContext {
   you: HTMLElement | null;
   result: any;
   event?: Event;
-  
+
   // Variable storage
   variables: Map<string, any>;
   locals: Map<string, any>;
   globals: Map<string, any>;
-  
+
   // Feature-specific context
   feature: string; // Feature name
-  syntax: string;  // Original syntax string
+  syntax: string; // Original syntax string
   element: HTMLElement; // Element where feature is attached
-  
+
   // Enhanced features
   errors: Error[];
   featureHistory: FeatureExecution[];
@@ -67,7 +72,7 @@ export interface FeatureMetadata extends CommandMetadata {
 export interface TypedFeatureImplementation<
   TInput = unknown,
   TOutput = unknown,
-  TContext extends TypedFeatureContext = TypedFeatureContext
+  TContext extends TypedFeatureContext = TypedFeatureContext,
 > {
   readonly name: string;
   readonly syntax: string;
@@ -76,22 +81,22 @@ export interface TypedFeatureImplementation<
   readonly outputType: string;
   readonly metadata: FeatureMetadata;
   readonly documentation: LLMDocumentation;
-  
+
   /**
    * Parse feature syntax string into typed input
    */
   parse(syntaxString: string, element: HTMLElement): Promise<EvaluationResult<TInput>>;
-  
+
   /**
    * Execute feature with typed context and input
    */
   execute(context: TContext, input: TInput): Promise<EvaluationResult<TOutput>>;
-  
+
   /**
    * Validate parsed input
    */
   validate(input: unknown): ValidationResult;
-  
+
   /**
    * Cleanup feature resources (called when element is removed)
    */
@@ -121,7 +126,7 @@ export interface FeatureValidationError {
     end: number;
     line?: number;
     column?: number;
-  suggestions: []
+    suggestions: [];
   };
   suggestion: string;
   code?: string;

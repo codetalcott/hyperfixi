@@ -9,7 +9,6 @@ import { parse } from './parser';
 import { tokenize } from './tokenizer';
 
 describe('Hyperscript AST Parser', () => {
-  
   // Helper function to test parsing
   function expectAST(input: string, expectedStructure: any) {
     const result = parse(input);
@@ -22,7 +21,7 @@ describe('Hyperscript AST Parser', () => {
       expectAST('42', {
         type: 'literal',
         value: 42,
-        raw: '42'
+        raw: '42',
       });
     });
 
@@ -30,7 +29,7 @@ describe('Hyperscript AST Parser', () => {
       expectAST('"hello"', {
         type: 'literal',
         value: 'hello',
-        raw: '"hello"'
+        raw: '"hello"',
       });
     });
 
@@ -38,21 +37,21 @@ describe('Hyperscript AST Parser', () => {
       expectAST('true', {
         type: 'literal',
         value: true,
-        raw: 'true'
+        raw: 'true',
       });
     });
 
     it('should parse identifiers', () => {
       expectAST('myVariable', {
         type: 'identifier',
-        name: 'myVariable'
+        name: 'myVariable',
       });
     });
 
     it('should parse context references', () => {
       expectAST('me', {
         type: 'identifier',
-        name: 'me'
+        name: 'me',
       });
     });
   });
@@ -64,12 +63,12 @@ describe('Hyperscript AST Parser', () => {
         operator: '+',
         left: {
           type: 'literal',
-          value: 5
+          value: 5,
         },
         right: {
           type: 'literal',
-          value: 3
-        }
+          value: 3,
+        },
       });
     });
 
@@ -79,12 +78,12 @@ describe('Hyperscript AST Parser', () => {
         operator: '>',
         left: {
           type: 'identifier',
-          name: 'x'
+          name: 'x',
         },
         right: {
           type: 'literal',
-          value: 10
-        }
+          value: 10,
+        },
       });
     });
 
@@ -94,12 +93,12 @@ describe('Hyperscript AST Parser', () => {
         operator: 'and',
         left: {
           type: 'identifier',
-          name: 'a'
+          name: 'a',
         },
         right: {
           type: 'identifier',
-          name: 'b'
-        }
+          name: 'b',
+        },
       });
     });
 
@@ -111,14 +110,14 @@ describe('Hyperscript AST Parser', () => {
           type: 'binaryExpression',
           operator: '>',
           left: { type: 'identifier', name: 'x' },
-          right: { type: 'literal', value: 5 }
+          right: { type: 'literal', value: 5 },
         },
         right: {
           type: 'binaryExpression',
           operator: '<',
           left: { type: 'identifier', name: 'y' },
-          right: { type: 'literal', value: 10 }
-        }
+          right: { type: 'literal', value: 10 },
+        },
       });
     });
   });
@@ -130,9 +129,9 @@ describe('Hyperscript AST Parser', () => {
         operator: 'not',
         argument: {
           type: 'identifier',
-          name: 'x'
+          name: 'x',
         },
-        prefix: true
+        prefix: true,
       });
     });
 
@@ -142,9 +141,9 @@ describe('Hyperscript AST Parser', () => {
         operator: '-',
         argument: {
           type: 'literal',
-          value: 42
+          value: 42,
         },
-        prefix: true
+        prefix: true,
       });
     });
   });
@@ -155,13 +154,13 @@ describe('Hyperscript AST Parser', () => {
         type: 'memberExpression',
         object: {
           type: 'identifier',
-          name: 'element'
+          name: 'element',
         },
         property: {
           type: 'identifier',
-          name: 'className'
+          name: 'className',
         },
-        computed: false
+        computed: false,
       });
     });
 
@@ -170,27 +169,27 @@ describe('Hyperscript AST Parser', () => {
         type: 'memberExpression',
         object: {
           type: 'identifier',
-          name: 'element'
+          name: 'element',
         },
         property: {
           type: 'identifier',
-          name: 'prop'
+          name: 'prop',
         },
-        computed: true
+        computed: true,
       });
     });
 
     it('should parse possessive syntax', () => {
-      expectAST('element\'s property', {
+      expectAST("element's property", {
         type: 'possessiveExpression',
         object: {
           type: 'identifier',
-          name: 'element'
+          name: 'element',
         },
         property: {
           type: 'identifier',
-          name: 'property'
-        }
+          name: 'property',
+        },
       });
     });
 
@@ -201,19 +200,19 @@ describe('Hyperscript AST Parser', () => {
           type: 'memberExpression',
           object: {
             type: 'identifier',
-            name: 'window'
+            name: 'window',
           },
           property: {
             type: 'identifier',
-            name: 'location'
+            name: 'location',
           },
-          computed: false
+          computed: false,
         },
         property: {
           type: 'identifier',
-          name: 'href'
+          name: 'href',
         },
-        computed: false
+        computed: false,
       });
     });
   });
@@ -224,9 +223,9 @@ describe('Hyperscript AST Parser', () => {
         type: 'callExpression',
         callee: {
           type: 'identifier',
-          name: 'func'
+          name: 'func',
         },
-        arguments: []
+        arguments: [],
       });
     });
 
@@ -235,12 +234,12 @@ describe('Hyperscript AST Parser', () => {
         type: 'callExpression',
         callee: {
           type: 'identifier',
-          name: 'func'
+          name: 'func',
         },
         arguments: [
           { type: 'identifier', name: 'a' },
-          { type: 'identifier', name: 'b' }
-        ]
+          { type: 'identifier', name: 'b' },
+        ],
       });
     });
 
@@ -251,11 +250,9 @@ describe('Hyperscript AST Parser', () => {
           type: 'memberExpression',
           object: { type: 'identifier', name: 'object' },
           property: { type: 'identifier', name: 'method' },
-          computed: false
+          computed: false,
         },
-        arguments: [
-          { type: 'identifier', name: 'arg' }
-        ]
+        arguments: [{ type: 'identifier', name: 'arg' }],
       });
     });
   });
@@ -264,17 +261,19 @@ describe('Hyperscript AST Parser', () => {
     it('should parse empty objects', () => {
       expectAST('{}', {
         type: 'objectLiteral',
-        properties: []
+        properties: [],
       });
     });
 
     it('should parse simple object literals', () => {
       expectAST('{color: "red"}', {
         type: 'objectLiteral',
-        properties: [{
-          key: { type: 'identifier', name: 'color' },
-          value: { type: 'literal', value: 'red' }
-        }]
+        properties: [
+          {
+            key: { type: 'identifier', name: 'color' },
+            value: { type: 'literal', value: 'red' },
+          },
+        ],
       });
     });
 
@@ -284,27 +283,29 @@ describe('Hyperscript AST Parser', () => {
         properties: [
           {
             key: { type: 'identifier', name: 'color' },
-            value: { type: 'literal', value: 'red' }
+            value: { type: 'literal', value: 'red' },
           },
           {
             key: { type: 'identifier', name: 'fontSize' },
-            value: { type: 'literal', value: '14px' }
+            value: { type: 'literal', value: '14px' },
           },
           {
             key: { type: 'identifier', name: 'margin' },
-            value: { type: 'literal', value: 0 }
-          }
-        ]
+            value: { type: 'literal', value: 0 },
+          },
+        ],
       });
     });
 
     it('should parse object literals with quoted keys', () => {
       expectAST('{"background-color": "blue"}', {
         type: 'objectLiteral',
-        properties: [{
-          key: { type: 'literal', value: 'background-color' },
-          value: { type: 'literal', value: 'blue' }
-        }]
+        properties: [
+          {
+            key: { type: 'literal', value: 'background-color' },
+            value: { type: 'literal', value: 'blue' },
+          },
+        ],
       });
     });
   });
@@ -313,28 +314,28 @@ describe('Hyperscript AST Parser', () => {
     it('should parse simple CSS selectors', () => {
       expectAST('<button/>', {
         type: 'selector',
-        value: 'button'
+        value: 'button',
       });
     });
 
     it('should parse class selectors', () => {
       expectAST('<.primary/>', {
         type: 'selector',
-        value: '.primary'
+        value: '.primary',
       });
     });
 
     it('should parse ID selectors', () => {
       expectAST('<#myButton/>', {
         type: 'selector',
-        value: '#myButton'
+        value: '#myButton',
       });
     });
 
     it('should parse complex CSS selectors', () => {
       expectAST('<button.primary:not(.disabled)/>', {
         type: 'selector',
-        value: 'button.primary:not(.disabled)'
+        value: 'button.primary:not(.disabled)',
       });
     });
   });
@@ -344,13 +345,13 @@ describe('Hyperscript AST Parser', () => {
       expectAST('on click hide me', {
         type: 'eventHandler',
         event: 'click',
-        commands: [{
-          type: 'command',
-          name: 'hide',
-          args: [
-            { type: 'identifier', name: 'me' }
-          ]
-        }]
+        commands: [
+          {
+            type: 'command',
+            name: 'hide',
+            args: [{ type: 'identifier', name: 'me' }],
+          },
+        ],
       });
     });
 
@@ -359,13 +360,13 @@ describe('Hyperscript AST Parser', () => {
         type: 'eventHandler',
         event: 'click',
         selector: '.button',
-        commands: [{
-          type: 'command',
-          name: 'hide',
-          args: [
-            { type: 'identifier', name: 'me' }
-          ]
-        }]
+        commands: [
+          {
+            type: 'command',
+            name: 'hide',
+            args: [{ type: 'identifier', name: 'me' }],
+          },
+        ],
       });
     });
 
@@ -377,14 +378,14 @@ describe('Hyperscript AST Parser', () => {
           {
             type: 'command',
             name: 'hide',
-            args: [{ type: 'identifier', name: 'me' }]
+            args: [{ type: 'identifier', name: 'me' }],
           },
           {
             type: 'command',
             name: 'show',
-            args: [{ type: 'selector', value: '#result' }]
-          }
-        ]
+            args: [{ type: 'selector', value: '#result' }],
+          },
+        ],
       });
     });
   });
@@ -393,7 +394,7 @@ describe('Hyperscript AST Parser', () => {
     it('should parse simple commands', () => {
       expectAST('hide', {
         type: 'identifier',
-        name: 'hide'
+        name: 'hide',
       });
     });
 
@@ -403,12 +404,12 @@ describe('Hyperscript AST Parser', () => {
         operator: ' ',
         left: {
           type: 'identifier',
-          name: 'hide'
+          name: 'hide',
         },
         right: {
           type: 'selector',
-          value: '#target'
-        }
+          value: '#target',
+        },
       });
     });
 
@@ -419,8 +420,8 @@ describe('Hyperscript AST Parser', () => {
         args: [
           { type: 'literal', value: 'hello' },
           { type: 'identifier', name: 'into' },
-          { type: 'selector', value: '#output' }
-        ]
+          { type: 'selector', value: '#output' },
+        ],
       });
     });
 
@@ -431,8 +432,8 @@ describe('Hyperscript AST Parser', () => {
         args: [
           { type: 'selector', value: '.active' },
           { type: 'identifier', name: 'from' },
-          { type: 'identifier', name: 'me' }
-        ]
+          { type: 'identifier', name: 'me' },
+        ],
       });
     });
 
@@ -443,8 +444,8 @@ describe('Hyperscript AST Parser', () => {
         args: [
           { type: 'selector', value: '.loading' },
           { type: 'identifier', name: 'from' },
-          { type: 'selector', value: '#button' }
-        ]
+          { type: 'selector', value: '#button' },
+        ],
       });
     });
 
@@ -453,7 +454,7 @@ describe('Hyperscript AST Parser', () => {
         type: 'binaryExpression',
         operator: ' ',
         left: { type: 'identifier', name: 'add' },
-        right: { type: 'selector', value: '.active' }
+        right: { type: 'selector', value: '.active' },
       });
     });
 
@@ -461,9 +462,7 @@ describe('Hyperscript AST Parser', () => {
       expectAST('wait 500ms', {
         type: 'command',
         name: 'wait',
-        args: [
-          { type: 'literal', value: '500ms' }
-        ]
+        args: [{ type: 'literal', value: '500ms' }],
       });
     });
   });
@@ -474,13 +473,13 @@ describe('Hyperscript AST Parser', () => {
         type: 'memberExpression',
         object: {
           type: 'identifier',
-          name: 'me'
+          name: 'me',
         },
         property: {
           type: 'identifier',
-          name: 'value'
+          name: 'value',
         },
-        computed: false
+        computed: false,
       });
     });
 
@@ -490,12 +489,12 @@ describe('Hyperscript AST Parser', () => {
         operator: 'as',
         left: {
           type: 'identifier',
-          name: 'value'
+          name: 'value',
         },
         right: {
           type: 'identifier',
-          name: 'Int'
-        }
+          name: 'Int',
+        },
       });
     });
 
@@ -505,12 +504,12 @@ describe('Hyperscript AST Parser', () => {
         operator: 'of',
         left: {
           type: 'identifier',
-          name: 'first'
+          name: 'first',
         },
         right: {
           type: 'identifier',
-          name: 'items'
-        }
+          name: 'items',
+        },
       });
     });
 
@@ -519,11 +518,9 @@ describe('Hyperscript AST Parser', () => {
         type: 'callExpression',
         callee: {
           type: 'identifier',
-          name: 'closest'
+          name: 'closest',
         },
-        arguments: [
-          { type: 'selector', value: 'form' }
-        ]
+        arguments: [{ type: 'selector', value: 'form' }],
       });
     });
   });
@@ -534,7 +531,7 @@ describe('Hyperscript AST Parser', () => {
         type: 'binaryExpression',
         operator: '+',
         left: { type: 'identifier', name: 'x' },
-        right: { type: 'identifier', name: 'y' }
+        right: { type: 'identifier', name: 'y' },
       });
     });
 
@@ -546,9 +543,9 @@ describe('Hyperscript AST Parser', () => {
           type: 'binaryExpression',
           operator: '+',
           left: { type: 'identifier', name: 'x' },
-          right: { type: 'identifier', name: 'y' }
+          right: { type: 'identifier', name: 'y' },
         },
-        right: { type: 'identifier', name: 'z' }
+        right: { type: 'identifier', name: 'z' },
       });
     });
   });
@@ -563,8 +560,8 @@ describe('Hyperscript AST Parser', () => {
           type: 'binaryExpression',
           operator: '*',
           left: { type: 'literal', value: 3 },
-          right: { type: 'literal', value: 4 }
-        }
+          right: { type: 'literal', value: 4 },
+        },
       });
     });
 
@@ -576,14 +573,14 @@ describe('Hyperscript AST Parser', () => {
           type: 'binaryExpression',
           operator: '>',
           left: { type: 'identifier', name: 'x' },
-          right: { type: 'literal', value: 5 }
+          right: { type: 'literal', value: 5 },
         },
         right: {
           type: 'binaryExpression',
           operator: '<',
           left: { type: 'identifier', name: 'y' },
-          right: { type: 'literal', value: 10 }
-        }
+          right: { type: 'literal', value: 10 },
+        },
       });
     });
 
@@ -596,8 +593,8 @@ describe('Hyperscript AST Parser', () => {
           type: 'binaryExpression',
           operator: '=',
           left: { type: 'identifier', name: 'b' },
-          right: { type: 'identifier', name: 'c' }
-        }
+          right: { type: 'identifier', name: 'c' },
+        },
       });
     });
   });
@@ -610,12 +607,12 @@ describe('Hyperscript AST Parser', () => {
         left: {
           type: 'callExpression',
           callee: { type: 'identifier', name: 'closest' },
-          arguments: [{ type: 'selector', value: 'form' }]
+          arguments: [{ type: 'selector', value: 'form' }],
         },
         right: {
           type: 'identifier',
-          name: 'Values'
-        }
+          name: 'Values',
+        },
       });
     });
 
@@ -627,12 +624,12 @@ describe('Hyperscript AST Parser', () => {
           type: 'memberExpression',
           object: { type: 'identifier', name: 'me' },
           property: { type: 'identifier', name: 'data-value' },
-          computed: false
+          computed: false,
         },
         right: {
           type: 'identifier',
-          name: 'Int'
-        }
+          name: 'Int',
+        },
       });
     });
 
@@ -643,18 +640,18 @@ describe('Hyperscript AST Parser', () => {
           type: 'binaryExpression',
           operator: '>',
           left: { type: 'identifier', name: 'x' },
-          right: { type: 'literal', value: 5 }
+          right: { type: 'literal', value: 5 },
         },
         consequent: {
           type: 'command',
           name: 'add',
-          args: [{ type: 'selector', value: '.active' }]
+          args: [{ type: 'selector', value: '.active' }],
         },
         alternate: {
           type: 'command',
           name: 'remove',
-          args: [{ type: 'selector', value: '.active' }]
-        }
+          args: [{ type: 'selector', value: '.active' }],
+        },
       });
     });
 
@@ -664,16 +661,18 @@ describe('Hyperscript AST Parser', () => {
       expectAST('on click hide me', {
         type: 'eventHandler',
         event: 'click',
-        commands: [{
-          type: 'command',
-          name: 'hide',
-          args: [{ type: 'identifier', name: 'me' }]
-        }]
+        commands: [
+          {
+            type: 'command',
+            name: 'hide',
+            args: [{ type: 'identifier', name: 'me' }],
+          },
+        ],
       });
     });
 
     it('should parse conditional event handler syntax', () => {
-      // Test the syntax: on keydown[altKey and code is 'KeyS'] hide me  
+      // Test the syntax: on keydown[altKey and code is 'KeyS'] hide me
       expectAST("on keydown[altKey and code is 'KeyS'] hide me", {
         type: 'eventHandler',
         event: 'keydown',
@@ -685,31 +684,35 @@ describe('Hyperscript AST Parser', () => {
             type: 'binaryExpression',
             operator: 'is',
             left: { type: 'identifier', name: 'code' },
-            right: { type: 'literal', value: 'KeyS' }
-          }
+            right: { type: 'literal', value: 'KeyS' },
+          },
         },
-        commands: [{
-          type: 'command',
-          name: 'hide',
-          args: [{ type: 'identifier', name: 'me' }]
-        }]
+        commands: [
+          {
+            type: 'command',
+            name: 'hide',
+            args: [{ type: 'identifier', name: 'me' }],
+          },
+        ],
       });
     });
 
     it('should parse simple conditional event handler', () => {
       // Test simpler conditional syntax
-      expectAST("on keydown[altKey] hide me", {
+      expectAST('on keydown[altKey] hide me', {
         type: 'eventHandler',
         event: 'keydown',
         condition: {
           type: 'identifier',
-          name: 'altKey'
+          name: 'altKey',
         },
-        commands: [{
-          type: 'command',
-          name: 'hide',
-          args: [{ type: 'identifier', name: 'me' }]
-        }]
+        commands: [
+          {
+            type: 'command',
+            name: 'hide',
+            args: [{ type: 'identifier', name: 'me' }],
+          },
+        ],
       });
     });
   });
@@ -730,12 +733,12 @@ describe('Hyperscript AST Parser', () => {
       const result1 = parse('5 +');
       expect(result1.success).toBe(false);
       expect(result1.error?.message).toContain('Expected expression');
-      
-      // Test invalid operator combination  
+
+      // Test invalid operator combination
       const result2 = parse('5 ** 3'); // Power operator not supported
       expect(result2.success).toBe(false);
       expect(result2.error?.message).toContain('Unexpected token');
-      
+
       // Test invalid identifier start
       const result3 = parse('123abc');
       expect(result3.success).toBe(false);
@@ -747,13 +750,13 @@ describe('Hyperscript AST Parser', () => {
       const result1 = parse('(5 + 3');
       expect(result1.success).toBe(false);
       expect(result1.error?.message).toContain(')');
-      
+
       // Test extra closing parenthesis
       const result2 = parse('5 + 3)');
       expect(result2.success).toBe(false);
       expect(result2.error?.message).toContain('Unexpected token');
-      
-      // Test mismatched brackets  
+
+      // Test mismatched brackets
       const result3 = parse('array[index}');
       expect(result3.success).toBe(false);
       expect(result3.error?.message).toContain(']');
@@ -765,12 +768,12 @@ describe('Hyperscript AST Parser', () => {
       expect(result1.success).toBe(false);
       expect(result1.error?.message).toMatch(/expected|missing|incomplete/i);
       expect(result1.error?.position).toBeGreaterThanOrEqual(0);
-      
+
       // Test error messages for invalid function calls
       const result2 = parse('func(,)');
       expect(result2.success).toBe(false);
       expect(result2.error?.message).toContain('Unexpected token');
-      
+
       // Test line and column information is accurate
       const result3 = parse('line1\nline2 invalid@symbol');
       expect(result3.success).toBe(false);
@@ -783,17 +786,17 @@ describe('Hyperscript AST Parser', () => {
       const result1 = parse('5 @ 3');
       expect(result1.success).toBe(false);
       expect(result1.error?.message).toContain('Unexpected');
-      
+
       // Test unexpected keywords in wrong context
       const result2 = parse('5 + then 3');
       expect(result2.success).toBe(false);
       expect(result2.error?.message).toContain('Unexpected');
-      
+
       // Test unexpected operators
       const result3 = parse('* 5');
       expect(result3.success).toBe(false);
       expect(result3.error?.message).toContain('requires a left operand');
-      
+
       // Test Unicode characters
       const result4 = parse('5 + λ');
       expect(result4.success).toBe(false);
@@ -827,21 +830,21 @@ describe('Hyperscript AST Parser', () => {
       const result = parse('5 + (10 * 2)');
       expect(result.success).toBe(true);
       expect(result.node).toBeDefined();
-      
+
       if (result.node) {
         // Root node should have position info
         expect(typeof result.node.start).toBe('number');
         expect(typeof result.node.end).toBe('number');
         expect(typeof result.node.line).toBe('number');
         expect(typeof result.node.column).toBe('number');
-        
+
         // Check nested nodes have position info
         function checkPositions(node: any): void {
           expect(node.start).toBeGreaterThanOrEqual(0);
           expect(node.end).toBeGreaterThan(node.start);
           expect(node.line).toBeGreaterThanOrEqual(1);
           expect(node.column).toBeGreaterThanOrEqual(1);
-          
+
           // Recursively check child nodes
           if (node.left) checkPositions(node.left);
           if (node.right) checkPositions(node.right);
@@ -849,7 +852,7 @@ describe('Hyperscript AST Parser', () => {
           if (node.object) checkPositions(node.object);
           if (node.property) checkPositions(node.property);
         }
-        
+
         checkPositions(result.node);
       }
     });
@@ -860,18 +863,18 @@ describe('Hyperscript AST Parser', () => {
       expect(result1.success).toBe(false);
       expect(result1.error?.line).toBe(1);
       expect(result1.error?.column).toBeGreaterThanOrEqual(1); // Position should be valid
-      
+
       // Test error position on second line
       const result2 = parse('42\ninvalid @');
       expect(result2.success).toBe(false);
       expect(result2.error?.line).toBeGreaterThan(0); // Should detect error somewhere
       expect(result2.error?.column).toBeGreaterThan(0);
-      
+
       // Test precise position tracking
       const result3 = parse('if (x > 5 then'); // Missing closing parenthesis
       expect(result3.success).toBe(false);
       expect(result3.error?.position).toBeGreaterThanOrEqual(0);
-      
+
       // Test that position corresponds to actual character location
       const input4 = 'hello world invalid!';
       const result4 = parse(input4);
@@ -886,22 +889,22 @@ describe('Hyperscript AST Parser', () => {
   describe('Performance', () => {
     it('should parse large expressions efficiently', () => {
       // Generate a large arithmetic expression
-      const terms = Array.from({length: 1000}, (_, i) => `${i + 1}`);
+      const terms = Array.from({ length: 1000 }, (_, i) => `${i + 1}`);
       const largeExpression = terms.join(' + ');
-      
+
       const startTime = performance.now();
       const result = parse(largeExpression);
       const endTime = performance.now();
-      
+
       expect(result.success).toBe(true);
       expect(endTime - startTime).toBeLessThan(1000); // Should parse in under 1 second
-      
+
       // Test large conditional expression
       const largeConditional = `if ${'x > 0 and '.repeat(100)}true then result = 1`;
       const startTime2 = performance.now();
       const result2 = parse(largeConditional);
       const endTime2 = performance.now();
-      
+
       expect(result2.success).toBe(true);
       expect(endTime2 - startTime2).toBeLessThan(500); // Should be reasonably fast
     });
@@ -910,31 +913,28 @@ describe('Hyperscript AST Parser', () => {
       // Test deeply nested parentheses
       const depth = 100;
       const nestedExpression = '('.repeat(depth) + '42' + ')'.repeat(depth);
-      
+
       const result = parse(nestedExpression);
       expect(result.success).toBe(true);
       expect(result.node).toBeDefined();
-      
+
       // Test deeply nested function calls
-      const nestedCalls = Array.from({length: 50}, (_, i) => `func${i}(`).join('') + 
-                         '42' + 
-                         ')'.repeat(50);
-      
+      const nestedCalls =
+        Array.from({ length: 50 }, (_, i) => `func${i}(`).join('') + '42' + ')'.repeat(50);
+
       const result2 = parse(nestedCalls);
       expect(result2.success).toBe(true);
-      
+
       // Test deeply nested member access
-      const nestedMembers = Array.from({length: 50}, (_, i) => `prop${i}.`).join('') + 'value';
-      
+      const nestedMembers = Array.from({ length: 50 }, (_, i) => `prop${i}.`).join('') + 'value';
+
       const result3 = parse(nestedMembers);
       expect(result3.success).toBe(true);
-      
+
       // Test nested conditionals (should not cause stack overflow)
-      const nestedConditionals = 'if true then ' + 
-                                'if true then '.repeat(20) + 
-                                'result = 42' + 
-                                ' else false'.repeat(20);
-      
+      const nestedConditionals =
+        'if true then ' + 'if true then '.repeat(20) + 'result = 42' + ' else false'.repeat(20);
+
       const result4 = parse(nestedConditionals);
       expect(result4.success).toBe(true);
     });

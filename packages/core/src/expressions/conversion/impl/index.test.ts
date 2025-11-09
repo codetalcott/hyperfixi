@@ -10,7 +10,7 @@ import {
   EnhancedAsExpression,
   EnhancedIsExpression,
   conversionExpressions,
-  enhancedConverters
+  enhancedConverters,
 } from './index';
 
 describe('Enhanced Conversion Expressions', () => {
@@ -19,7 +19,7 @@ describe('Enhanced Conversion Expressions', () => {
 
   beforeEach(() => {
     context = createTypedExecutionContext();
-    
+
     // Create test form for form value extraction tests
     testForm = document.createElement('form');
     testForm.innerHTML = `
@@ -63,9 +63,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should convert number to string', async () => {
         const result = await expression.evaluate(context, {
           value: 123,
-          type: 'String'
+          type: 'String',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('123');
@@ -76,9 +76,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should convert boolean to string', async () => {
         const result = await expression.evaluate(context, {
           value: true,
-          type: 'String'
+          type: 'String',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('true');
@@ -89,9 +89,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should convert null to empty string', async () => {
         const result = await expression.evaluate(context, {
           value: null,
-          type: 'String'
+          type: 'String',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('');
@@ -102,9 +102,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should convert object to JSON string', async () => {
         const result = await expression.evaluate(context, {
           value: { name: 'John', age: 30 },
-          type: 'String'
+          type: 'String',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('{"name":"John","age":30}');
@@ -117,9 +117,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should convert string to number', async () => {
         const result = await expression.evaluate(context, {
           value: '123.45',
-          type: 'Number'
+          type: 'Number',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(123.45);
@@ -130,9 +130,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should convert boolean to number', async () => {
         const result = await expression.evaluate(context, {
           value: true,
-          type: 'Number'
+          type: 'Number',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(1);
@@ -143,9 +143,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should handle invalid number conversion', async () => {
         const result = await expression.evaluate(context, {
           value: 'not-a-number',
-          type: 'Number'
+          type: 'Number',
         });
-        
+
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.name).toBe('NumberConversionError');
@@ -156,9 +156,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should convert null to zero', async () => {
         const result = await expression.evaluate(context, {
           value: null,
-          type: 'Number'
+          type: 'Number',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(0);
@@ -171,9 +171,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should convert decimal to integer', async () => {
         const result = await expression.evaluate(context, {
           value: 123.789,
-          type: 'Int'
+          type: 'Int',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(123);
@@ -184,9 +184,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should convert string to integer', async () => {
         const result = await expression.evaluate(context, {
           value: '456.123',
-          type: 'Int'
+          type: 'Int',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(456);
@@ -198,13 +198,13 @@ describe('Enhanced Conversion Expressions', () => {
     describe('Boolean Conversions', () => {
       it('should convert truthy values to true', async () => {
         const truthyValues = [1, 'hello', true, {}, []];
-        
+
         for (const value of truthyValues) {
           const result = await expression.evaluate(context, {
             value,
-            type: 'Boolean'
+            type: 'Boolean',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(true);
@@ -215,13 +215,13 @@ describe('Enhanced Conversion Expressions', () => {
 
       it('should convert falsy values to false', async () => {
         const falsyValues = [0, '', false, null, undefined];
-        
+
         for (const value of falsyValues) {
           const result = await expression.evaluate(context, {
             value,
-            type: 'Boolean'
+            type: 'Boolean',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(false);
@@ -239,15 +239,15 @@ describe('Enhanced Conversion Expressions', () => {
           { value: 'true', expected: true },
           { value: 'TRUE', expected: true },
           { value: '1', expected: true },
-          { value: 'anything', expected: true }
+          { value: 'anything', expected: true },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: 'Boolean'
+            type: 'Boolean',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -261,9 +261,9 @@ describe('Enhanced Conversion Expressions', () => {
         const nodeList = document.querySelectorAll('input');
         const result = await expression.evaluate(context, {
           value: nodeList,
-          type: 'Array'
+          type: 'Array',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(Array.isArray(result.value)).toBe(true);
@@ -274,9 +274,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should wrap single value in array', async () => {
         const result = await expression.evaluate(context, {
           value: 'single-value',
-          type: 'Array'
+          type: 'Array',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toEqual(['single-value']);
@@ -287,9 +287,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should convert null to empty array', async () => {
         const result = await expression.evaluate(context, {
           value: null,
-          type: 'Array'
+          type: 'Array',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toEqual([]);
@@ -302,9 +302,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should parse valid date string', async () => {
         const result = await expression.evaluate(context, {
           value: '2023-12-25',
-          type: 'Date'
+          type: 'Date',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeInstanceOf(Date);
@@ -319,9 +319,9 @@ describe('Enhanced Conversion Expressions', () => {
         const timestamp = Date.now();
         const result = await expression.evaluate(context, {
           value: timestamp,
-          type: 'Date'
+          type: 'Date',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeInstanceOf(Date);
@@ -332,9 +332,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should handle invalid date', async () => {
         const result = await expression.evaluate(context, {
           value: 'invalid-date',
-          type: 'Date'
+          type: 'Date',
         });
-        
+
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.name).toBe('DateConversionError');
@@ -348,9 +348,9 @@ describe('Enhanced Conversion Expressions', () => {
         const obj = { name: 'John', age: 30, active: true };
         const result = await expression.evaluate(context, {
           value: obj,
-          type: 'JSON'
+          type: 'JSON',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('{"name":"John","age":30,"active":true}');
@@ -362,9 +362,9 @@ describe('Enhanced Conversion Expressions', () => {
         const arr = [1, 2, 3, 'hello'];
         const result = await expression.evaluate(context, {
           value: arr,
-          type: 'JSON'
+          type: 'JSON',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('[1,2,3,"hello"]');
@@ -378,9 +378,9 @@ describe('Enhanced Conversion Expressions', () => {
         const jsonString = '{"name":"John","age":30}';
         const result = await expression.evaluate(context, {
           value: jsonString,
-          type: 'Object'
+          type: 'Object',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toEqual({ name: 'John', age: 30 });
@@ -391,9 +391,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should handle invalid JSON', async () => {
         const result = await expression.evaluate(context, {
           value: 'invalid-json',
-          type: 'Object'
+          type: 'Object',
         });
-        
+
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.name).toBe('ObjectConversionError');
@@ -405,9 +405,9 @@ describe('Enhanced Conversion Expressions', () => {
         const obj = { test: 'value' };
         const result = await expression.evaluate(context, {
           value: obj,
-          type: 'Object'
+          type: 'Object',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(obj);
@@ -420,9 +420,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should extract form values', async () => {
         const result = await expression.evaluate(context, {
           value: testForm,
-          type: 'Values'
+          type: 'Values',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           const values = result.value as Record<string, any>;
@@ -439,14 +439,15 @@ describe('Enhanced Conversion Expressions', () => {
 
       it('should extract values from element containing inputs', async () => {
         const container = document.createElement('div');
-        container.innerHTML = '<input name="test" value="value1" /><input name="test2" value="value2" />';
+        container.innerHTML =
+          '<input name="test" value="value1" /><input name="test2" value="value2" />';
         document.body.appendChild(container);
 
         const result = await expression.evaluate(context, {
           value: container,
-          type: 'Values'
+          type: 'Values',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           const values = result.value as Record<string, any>;
@@ -462,9 +463,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should format number to fixed precision', async () => {
         const result = await expression.evaluate(context, {
           value: 3.14159,
-          type: 'Fixed:2'
+          type: 'Fixed:2',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('3.14');
@@ -476,15 +477,15 @@ describe('Enhanced Conversion Expressions', () => {
         const testCases = [
           { value: 123.456789, precision: 0, expected: '123' },
           { value: 123.456789, precision: 2, expected: '123.46' },
-          { value: 123.456789, precision: 4, expected: '123.4568' }
+          { value: 123.456789, precision: 4, expected: '123.4568' },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: `Fixed:${testCase.precision}`
+            type: `Fixed:${testCase.precision}`,
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -500,15 +501,15 @@ describe('Enhanced Conversion Expressions', () => {
           { type: 'boolean', value: 'test', expected: true },
           { type: 'number', value: '123', expected: 123 },
           { type: 'int', value: '123.5', expected: 123 },
-          { type: 'array', value: 'test', expected: ['test'] }
+          { type: 'array', value: 'test', expected: ['test'] },
         ];
 
         for (const alias of aliases) {
           const result = await expression.evaluate(context, {
             value: alias.value,
-            type: alias.type
+            type: alias.type,
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toEqual(alias.expected);
@@ -521,33 +522,35 @@ describe('Enhanced Conversion Expressions', () => {
       it('should handle unknown conversion type', async () => {
         const result = await expression.evaluate(context, {
           value: 'test',
-          type: 'UnknownType'
+          type: 'UnknownType',
         });
-        
+
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.name).toBe('UnknownConversionTypeError');
           expect(result.error.code).toBe('UNKNOWN_CONVERSION_TYPE');
-          expect(result.error.suggestions).toContain('Use supported types: String, Number, Boolean, Array, Object, Date, JSON, Values');
+          expect(result.error.suggestions).toContain(
+            'Use supported types: String, Number, Boolean, Array, Object, Date, JSON, Values'
+          );
         }
       });
 
       it('should validate input structure', () => {
         const validResult = expression.validate({
           value: 'test',
-          type: 'String'
+          type: 'String',
         });
-        
+
         expect(validResult.isValid).toBe(true);
         expect(validResult.errors).toHaveLength(0);
       });
 
       it('should reject invalid input', () => {
         const invalidResult = expression.validate({
-          value: 'test'
+          value: 'test',
           // missing type
         });
-        
+
         expect(invalidResult.isValid).toBe(false);
         expect(invalidResult.errors).toHaveLength(1);
       });
@@ -556,14 +559,14 @@ describe('Enhanced Conversion Expressions', () => {
     describe('Performance Tracking', () => {
       it('should track evaluation performance', async () => {
         const initialHistoryLength = context.evaluationHistory.length;
-        
+
         await expression.evaluate(context, {
           value: 123,
-          type: 'String'
+          type: 'String',
         });
-        
+
         expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
-        
+
         const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
         expect(evaluation.expressionName).toBe('as');
         expect(evaluation.category).toBe('Conversion');
@@ -574,7 +577,9 @@ describe('Enhanced Conversion Expressions', () => {
 
     describe('Documentation', () => {
       it('should have comprehensive documentation', () => {
-        expect(expression.documentation.summary).toContain('Converts values between different types');
+        expect(expression.documentation.summary).toContain(
+          'Converts values between different types'
+        );
         expect(expression.documentation.parameters).toHaveLength(2);
         expect(expression.documentation.returns.type).toBe('object');
         expect(expression.documentation.examples.length).toBeGreaterThan(0);
@@ -601,9 +606,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should check null type', async () => {
         const result = await expression.evaluate(context, {
           value: null,
-          type: 'null'
+          type: 'null',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(true);
@@ -614,9 +619,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should check undefined type', async () => {
         const result = await expression.evaluate(context, {
           value: undefined,
-          type: 'undefined'
+          type: 'undefined',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(true);
@@ -627,9 +632,9 @@ describe('Enhanced Conversion Expressions', () => {
       it('should check string type', async () => {
         const result = await expression.evaluate(context, {
           value: 'hello',
-          type: 'string'
+          type: 'string',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(true);
@@ -644,15 +649,15 @@ describe('Enhanced Conversion Expressions', () => {
           { value: -1, expected: true },
           { value: 3.14, expected: true },
           { value: NaN, expected: false }, // NaN is not a valid number
-          { value: 'not a number', expected: false }
+          { value: 'not a number', expected: false },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: 'number'
+            type: 'number',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -666,15 +671,15 @@ describe('Enhanced Conversion Expressions', () => {
           { value: false, expected: true },
           { value: 'true', expected: false },
           { value: 1, expected: false },
-          { value: 0, expected: false }
+          { value: 0, expected: false },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: 'boolean'
+            type: 'boolean',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -688,15 +693,15 @@ describe('Enhanced Conversion Expressions', () => {
           { value: { key: 'value' }, expected: true },
           { value: null, expected: false }, // null is not an object
           { value: [], expected: true }, // arrays are objects
-          { value: 'string', expected: false }
+          { value: 'string', expected: false },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: 'object'
+            type: 'object',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -709,15 +714,15 @@ describe('Enhanced Conversion Expressions', () => {
           { value: [], expected: true },
           { value: [1, 2, 3], expected: true },
           { value: {}, expected: false },
-          { value: 'string', expected: false }
+          { value: 'string', expected: false },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: 'array'
+            type: 'array',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -728,18 +733,18 @@ describe('Enhanced Conversion Expressions', () => {
       it('should check function type', async () => {
         const testCases = [
           { value: () => {}, expected: true },
-          { value: function() {}, expected: true },
+          { value: function () {}, expected: true },
           { value: Math.max, expected: true },
           { value: 'function', expected: false },
-          { value: {}, expected: false }
+          { value: {}, expected: false },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: 'function'
+            type: 'function',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -752,15 +757,15 @@ describe('Enhanced Conversion Expressions', () => {
           { value: new Date(), expected: true },
           { value: new Date('2023-01-01'), expected: true },
           { value: '2023-01-01', expected: false },
-          { value: Date.now(), expected: false }
+          { value: Date.now(), expected: false },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: 'date'
+            type: 'date',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -774,15 +779,15 @@ describe('Enhanced Conversion Expressions', () => {
           { value: element, expected: true },
           { value: testForm, expected: true },
           { value: document.createTextNode('text'), expected: false }, // text node is not element
-          { value: 'not element', expected: false }
+          { value: 'not element', expected: false },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: 'element'
+            type: 'element',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -797,15 +802,15 @@ describe('Enhanced Conversion Expressions', () => {
           { value: element, expected: true },
           { value: textNode, expected: true },
           { value: document, expected: true },
-          { value: 'not node', expected: false }
+          { value: 'not node', expected: false },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: 'node'
+            type: 'node',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -822,15 +827,15 @@ describe('Enhanced Conversion Expressions', () => {
           { value: {}, expected: true },
           { value: 'hello', expected: false },
           { value: [1], expected: false },
-          { value: { key: 'value' }, expected: false }
+          { value: { key: 'value' }, expected: false },
         ];
 
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
             value: testCase.value,
-            type: 'empty'
+            type: 'empty',
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBe(testCase.expected);
@@ -844,13 +849,13 @@ describe('Enhanced Conversion Expressions', () => {
         class CustomClass {
           constructor() {}
         }
-        
+
         const instance = new CustomClass();
         const result = await expression.evaluate(context, {
           value: instance,
-          type: 'customclass'
+          type: 'customclass',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(true);
@@ -862,19 +867,19 @@ describe('Enhanced Conversion Expressions', () => {
       it('should validate input structure', () => {
         const validResult = expression.validate({
           value: 'test',
-          type: 'string'
+          type: 'string',
         });
-        
+
         expect(validResult.isValid).toBe(true);
         expect(validResult.errors).toHaveLength(0);
       });
 
       it('should reject invalid input', () => {
         const invalidResult = expression.validate({
-          value: 'test'
+          value: 'test',
           // missing type
         });
-        
+
         expect(invalidResult.isValid).toBe(false);
         expect(invalidResult.errors).toHaveLength(1);
       });
@@ -883,9 +888,9 @@ describe('Enhanced Conversion Expressions', () => {
         // This should not cause an error even with strange input
         const result = await expression.evaluate(context, {
           value: Symbol('test'),
-          type: 'string'
+          type: 'string',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(false); // Symbol is not a string
@@ -896,14 +901,14 @@ describe('Enhanced Conversion Expressions', () => {
     describe('Performance Tracking', () => {
       it('should track evaluation performance', async () => {
         const initialHistoryLength = context.evaluationHistory.length;
-        
+
         await expression.evaluate(context, {
           value: 'test',
-          type: 'string'
+          type: 'string',
         });
-        
+
         expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
-        
+
         const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
         expect(evaluation.expressionName).toBe('is');
         expect(evaluation.category).toBe('Conversion');
@@ -914,7 +919,9 @@ describe('Enhanced Conversion Expressions', () => {
 
     describe('Documentation', () => {
       it('should have comprehensive documentation', () => {
-        expect(expression.documentation.summary).toContain('Checks if a value is of a specific type');
+        expect(expression.documentation.summary).toContain(
+          'Checks if a value is of a specific type'
+        );
         expect(expression.documentation.parameters).toHaveLength(2);
         expect(expression.documentation.returns.type).toBe('object');
         expect(expression.documentation.examples.length).toBeGreaterThan(0);
@@ -944,10 +951,18 @@ describe('Enhanced Conversion Expressions', () => {
   describe('Enhanced Converters Registry', () => {
     it('should have all converter functions', () => {
       const expectedConverters = [
-        'Array', 'String', 'Boolean', 'Number', 'Int', 'Float',
-        'Date', 'JSON', 'Object', 'Values'
+        'Array',
+        'String',
+        'Boolean',
+        'Number',
+        'Int',
+        'Float',
+        'Date',
+        'JSON',
+        'Object',
+        'Values',
       ];
-      
+
       expectedConverters.forEach(converterName => {
         expect(enhancedConverters[converterName]).toBeDefined();
         expect(typeof enhancedConverters[converterName]).toBe('function');
@@ -965,21 +980,21 @@ describe('Enhanced Conversion Expressions', () => {
   describe('Integration Scenarios', () => {
     it('should handle chained conversions', async () => {
       const asExpr = new EnhancedAsExpression();
-      
+
       // Convert number to string, then back to number
       const stringResult = await asExpr.evaluate(context, {
         value: 123,
-        type: 'String'
+        type: 'String',
       });
-      
+
       expect(stringResult.success).toBe(true);
-      
+
       if (stringResult.success) {
         const numberResult = await asExpr.evaluate(context, {
           value: stringResult.value,
-          type: 'Number'
+          type: 'Number',
         });
-        
+
         expect(numberResult.success).toBe(true);
         if (numberResult.success) {
           expect(numberResult.value).toBe(123);
@@ -1001,9 +1016,9 @@ describe('Enhanced Conversion Expressions', () => {
       const asExpr = new EnhancedAsExpression();
       const result = await asExpr.evaluate(context, {
         value: complexForm,
-        type: 'Values'
+        type: 'Values',
       });
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         const values = result.value as Record<string, any>;
@@ -1020,17 +1035,17 @@ describe('Enhanced Conversion Expressions', () => {
     it('should maintain performance with large datasets', async () => {
       const largeArray = Array.from({ length: 1000 }, (_, i) => i);
       const asExpr = new EnhancedAsExpression();
-      
+
       const startTime = Date.now();
       const result = await asExpr.evaluate(context, {
         value: largeArray,
-        type: 'JSON'
+        type: 'JSON',
       });
       const duration = Date.now() - startTime;
-      
+
       expect(result.success).toBe(true);
       expect(duration).toBeLessThan(100); // Should complete quickly
-      
+
       if (result.success) {
         const parsed = JSON.parse(result.value as string);
         expect(parsed).toEqual(largeArray);

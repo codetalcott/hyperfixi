@@ -1,9 +1,9 @@
 /**
  * Enhanced JS Command Implementation
  * Executes inline JavaScript code with parameter passing and return values
- * 
+ *
  * Syntax: js([param1, param2, ...]) <javascript_code> end
- * 
+ *
  * Modernized with TypedCommandImplementation interface
  */
 
@@ -42,42 +42,51 @@ export interface JSCommandOutput {
 /**
  * Enhanced JS Command with full type safety and validation
  */
-export class JSCommand implements TypedCommandImplementation<
-  JSCommandInput,
-  JSCommandOutput,
-  TypedExecutionContext
-> {
+export class JSCommand
+  implements TypedCommandImplementation<JSCommandInput, JSCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'js',
-    description: 'The js command executes inline JavaScript code with access to the hyperscript context and optional parameters. It provides a way to run custom JavaScript within hyperscript.',
+    description:
+      'The js command executes inline JavaScript code with access to the hyperscript context and optional parameters. It provides a way to run custom JavaScript within hyperscript.',
     examples: [
       'js console.log("Hello World") end',
       'js([x, y]) return x + y end',
       'js me.style.color = "red" end',
-      'js([element]) element.classList.add("active") end'
+      'js([element]) element.classList.add("active") end',
     ],
     syntax: 'js([param1, param2, ...]) <javascript_code> end',
     category: 'advanced' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   // Compatibility properties for legacy tests
-  get name() { return this.metadata.name; }
-  get description() { return this.metadata.description; }
-  get syntax() { return this.metadata.syntax; }
-  get isBlocking() { return false; }
+  get name() {
+    return this.metadata.name;
+  }
+  get description() {
+    return this.metadata.description;
+  }
+  get syntax() {
+    return this.metadata.syntax;
+  }
+  get isBlocking() {
+    return false;
+  }
 
   validation = {
     validate(input: unknown): ValidationResult<JSCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'JS command requires JavaScript code',
-            suggestions: ['Provide JavaScript code to execute']
-          }],
-          suggestions: ['Provide JavaScript code to execute']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'JS command requires JavaScript code',
+              suggestions: ['Provide JavaScript code to execute'],
+            },
+          ],
+          suggestions: ['Provide JavaScript code to execute'],
         };
       }
 
@@ -86,12 +95,14 @@ export class JSCommand implements TypedCommandImplementation<
       if (!inputObj.code || typeof inputObj.code !== 'string') {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'JS command requires code string',
-            suggestions: ['Provide JavaScript code as a string']
-          }],
-          suggestions: ['Provide JavaScript code as a string']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'JS command requires code string',
+              suggestions: ['Provide JavaScript code as a string'],
+            },
+          ],
+          suggestions: ['Provide JavaScript code as a string'],
         };
       }
 
@@ -99,12 +110,14 @@ export class JSCommand implements TypedCommandImplementation<
       if (inputObj.parameters && !Array.isArray(inputObj.parameters)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Parameters must be an array of strings',
-            suggestions: ['Use array format: ["param1", "param2"]']
-          }],
-          suggestions: ['Use array format: ["param1", "param2"]']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Parameters must be an array of strings',
+              suggestions: ['Use array format: ["param1", "param2"]'],
+            },
+          ],
+          suggestions: ['Use array format: ["param1", "param2"]'],
         };
       }
 
@@ -114,10 +127,10 @@ export class JSCommand implements TypedCommandImplementation<
         suggestions: [],
         data: {
           code: inputObj.code,
-          parameters: inputObj.parameters
-        }
+          parameters: inputObj.parameters,
+        },
       };
-    }
+    },
   };
 
   // Compatibility method for legacy tests
@@ -194,7 +207,7 @@ export class JSCommand implements TypedCommandImplementation<
     }
 
     // Enhanced API: execute(input, context)
-    const input = contextOrInput as JSCommandInput;
+    const input = contextOrInput;
     const context = codeOrContext as TypedExecutionContext;
     return await this.executeTyped(input, context);
   }
@@ -211,7 +224,7 @@ export class JSCommand implements TypedCommandImplementation<
         result: undefined,
         executed: false,
         codeLength: code.length,
-        parameters
+        parameters,
       };
     }
 
@@ -230,16 +243,17 @@ export class JSCommand implements TypedCommandImplementation<
         result,
         executed: true,
         codeLength: code.length,
-        parameters
+        parameters,
       };
-
     } catch (error) {
-      throw new Error(`JavaScript execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(
+        `JavaScript execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
   }
 
   private createExecutionContext(
-    context: TypedExecutionContext, 
+    context: TypedExecutionContext,
     parameters: string[]
   ): Record<string, any> {
     const executionContext: Record<string, any> = {
@@ -247,22 +261,25 @@ export class JSCommand implements TypedCommandImplementation<
       me: context.me,
       it: context.it,
       you: context.you,
-      
+
       // Access to context data
       locals: context.locals,
       globals: context.globals,
       variables: context.variables,
-      
+
       // Utility functions
       console,
       document: typeof document !== 'undefined' ? document : undefined,
       window: typeof window !== 'undefined' ? window : undefined,
-      
+
       // Parameter values from context
-      ...parameters.reduce((acc, param) => {
-        acc[param] = context.locals?.get(param);
-        return acc;
-      }, {} as Record<string, any>)
+      ...parameters.reduce(
+        (acc, param) => {
+          acc[param] = context.locals?.get(param);
+          return acc;
+        },
+        {} as Record<string, any>
+      ),
     };
 
     return executionContext;

@@ -1,9 +1,9 @@
 /**
  * Enhanced Continue Command Implementation
  * Skips to the next iteration of the current loop
- * 
+ *
  * Syntax: continue
- * 
+ *
  * Modernized with CommandImplementation interface
  */
 
@@ -15,7 +15,7 @@ export interface ContinueCommandInput {
   // No input required
 }
 
-// Output type definition  
+// Output type definition
 export interface ContinueCommandOutput {
   continued: true;
   timestamp: number;
@@ -24,22 +24,18 @@ export interface ContinueCommandOutput {
 /**
  * Enhanced Continue Command with full type safety and validation
  */
-export class ContinueCommand implements CommandImplementation<
-  ContinueCommandInput,
-  ContinueCommandOutput,
-  TypedExecutionContext
-> {
+export class ContinueCommand
+  implements
+    CommandImplementation<ContinueCommandInput, ContinueCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'continue',
-    description: 'The continue command skips the rest of the current loop iteration and continues with the next iteration. It works within repeat, for, while, and until loops.',
-    examples: [
-      'continue',
-      'if item.isInvalid then continue',
-      'unless item.isActive then continue'
-    ],
+    description:
+      'The continue command skips the rest of the current loop iteration and continues with the next iteration. It works within repeat, for, while, and until loops.',
+    examples: ['continue', 'if item.isInvalid then continue', 'unless item.isActive then continue'],
     syntax: 'continue',
     category: 'flow' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -49,9 +45,9 @@ export class ContinueCommand implements CommandImplementation<
         isValid: true,
         errors: [],
         suggestions: [],
-        data: {}
+        data: {},
       };
-    }
+    },
   };
 
   async execute(

@@ -19,37 +19,47 @@ import { asHTMLElement } from '../../utils/dom-utils';
 /**
  * Input validation schema for LLM understanding
  */
-const TriggerCommandInputSchema = v.tuple([
-  v.string().min(1), // Event name (required)
-  v.union([
-    v.literal('on'),
-    v.any() // Event data or 'on' keyword
-  ]).optional(),
-  v.union([
-    v.custom((value: unknown) => value instanceof HTMLElement),
-    v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-    v.string(), // CSS selector or context reference
-    v.null(),
-    v.undefined()
-  ]).optional() // Target element(s)
-]).rest(); // Allow additional arguments
+const TriggerCommandInputSchema = v
+  .tuple([
+    v.string().min(1), // Event name (required)
+    v
+      .union([
+        v.literal('on'),
+        v.any(), // Event data or 'on' keyword
+      ])
+      .optional(),
+    v
+      .union([
+        v.custom((value: unknown) => value instanceof HTMLElement),
+        v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
+        v.string(), // CSS selector or context reference
+        v.null(),
+        v.undefined(),
+      ])
+      .optional(), // Target element(s)
+  ])
+  .rest(); // Allow additional arguments
 
 type TriggerCommandInput = any; // Inferred from RuntimeValidator
 
 /**
  * Enhanced Trigger Command with full type safety for LLM agents
  */
-export class TriggerCommand implements TypedCommandImplementation<
-  TriggerCommandInput,
-  CustomEvent,  // Returns the triggered event
-  TypedExecutionContext
-> {
+export class TriggerCommand
+  implements
+    TypedCommandImplementation<
+      TriggerCommandInput,
+      CustomEvent, // Returns the triggered event
+      TypedExecutionContext
+    >
+{
   public readonly name = 'trigger' as const;
   public readonly syntax = 'trigger <event-name> [<data>] on <target>';
-  public readonly description = 'Triggers custom events on target elements using clean "trigger X on Y" syntax';
+  public readonly description =
+    'Triggers custom events on target elements using clean "trigger X on Y" syntax';
   public readonly inputSchema = TriggerCommandInputSchema;
   public readonly outputType = 'event' as const;
-  
+
   public readonly metadata: CommandMetadata = {
     category: 'Event',
     complexity: 'simple',
@@ -58,20 +68,20 @@ export class TriggerCommand implements TypedCommandImplementation<
       {
         code: 'trigger click on <#button/>',
         description: 'Trigger click event on button element',
-        expectedOutput: {}
+        expectedOutput: {},
       },
       {
         code: 'trigger customEvent {data: "test"} on me',
         description: 'Trigger custom event with data on current element',
-        expectedOutput: {}
+        expectedOutput: {},
       },
       {
         code: 'trigger dataLoaded on <.components/>',
         description: 'Trigger dataLoaded event on all component elements',
-        expectedOutput: {}
-      }
+        expectedOutput: {},
+      },
     ],
-    relatedCommands: ['send', 'on', 'dispatch']
+    relatedCommands: ['send', 'on', 'dispatch'],
   };
 
   public readonly documentation: LLMDocumentation = {
@@ -82,57 +92,57 @@ export class TriggerCommand implements TypedCommandImplementation<
         type: 'string',
         description: 'Name of the event to trigger',
         optional: false,
-        examples: ['click', 'customEvent', 'dataLoaded', 'userAction']
+        examples: ['click', 'customEvent', 'dataLoaded', 'userAction'],
       },
       {
         name: 'eventData',
         type: 'object',
         description: 'Optional data to include in event.detail',
         optional: true,
-        examples: ['{data: "value"}', '{count: 5}', 'null']
+        examples: ['{data: "value"}', '{count: 5}', 'null'],
       },
       {
         name: 'onKeyword',
         type: 'string',
         description: 'Keyword "on" indicating target specification',
         optional: false,
-        examples: ['on']
+        examples: ['on'],
       },
       {
         name: 'target',
         type: 'element',
         description: 'Element(s) to trigger event on',
         optional: false,
-        examples: ['me', '<#modal/>', '<.buttons/>', 'document']
-      }
+        examples: ['me', '<#modal/>', '<.buttons/>', 'document'],
+      },
     ],
     returns: {
       type: 'event',
       description: 'The CustomEvent that was triggered',
-      examples: [{}]
+      examples: [{}],
     },
     examples: [
       {
         title: 'Simple event trigger',
         code: 'on click trigger customEvent on <#target/>',
         explanation: 'When clicked, triggers a customEvent on the target element',
-        output: {}
+        output: {},
       },
       {
         title: 'Event with data payload',
         code: 'trigger userAction {action: "save", id: 123} on me',
         explanation: 'Triggers userAction event with data on current element',
-        output: {}
+        output: {},
       },
       {
         title: 'Multiple target triggering',
         code: 'trigger dataLoaded on <.widgets/>',
         explanation: 'Triggers dataLoaded event on all elements with widgets class',
-        output: {}
-      }
+        output: {},
+      },
     ],
     seeAlso: ['send', 'on', 'addEventListener', 'dispatchEvent'],
-    tags: ['events', 'custom-events', 'trigger', 'dispatch']
+    tags: ['events', 'custom-events', 'trigger', 'dispatch'],
   };
 
   async execute(
@@ -146,66 +156,69 @@ export class TriggerCommand implements TypedCommandImplementation<
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'validation-error',
-                        message: validationResult.errors[0]?.message || 'Invalid input',
+            name: 'ValidationError',
+            type: 'validation-error',
+            message: validationResult.errors[0]?.message || 'Invalid input',
             code: 'TRIGGER_VALIDATION_FAILED',
-            suggestions: validationResult.suggestions
+            suggestions: validationResult.suggestions,
           },
-          type: 'error'
+          type: 'error',
         };
       }
-      
+
       // Parse arguments using "trigger eventName [data] on target" pattern
       const parseResult = this.parseArguments(args);
       if (!parseResult.success) {
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'syntax-error',
-                        message: parseResult.error || 'Failed to parse arguments',
+            name: 'ValidationError',
+            type: 'syntax-error',
+            message: parseResult.error || 'Failed to parse arguments',
             code: 'ARGUMENT_PARSE_FAILED',
-            suggestions: [ 'Use: trigger eventName on target', 'Use: trigger eventName data on target']
+            suggestions: [
+              'Use: trigger eventName on target',
+              'Use: trigger eventName data on target',
+            ],
           },
-          type: 'error'
+          type: 'error',
         };
       }
-      
+
       const { eventName = '', eventData, target } = parseResult;
-      
+
       // Resolve target elements
       const targetResult = await this.resolveTargetElements(target, context);
       if (!targetResult.success) {
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'runtime-error',
-                        message: targetResult.error || 'Failed to resolve target elements',
+            name: 'ValidationError',
+            type: 'runtime-error',
+            message: targetResult.error || 'Failed to resolve target elements',
             code: 'TARGET_RESOLUTION_FAILED',
-            suggestions: [ 'Check if target elements exist', 'Verify selector syntax']
+            suggestions: ['Check if target elements exist', 'Verify selector syntax'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
-      
+
       const targetElements = targetResult.elements;
-      
+
       if (!targetElements) {
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'missing-argument',
-                        message: 'No target elements found',
+            name: 'ValidationError',
+            type: 'missing-argument',
+            message: 'No target elements found',
             code: 'NO_TARGET_ELEMENTS',
-            suggestions: ['Check if target elements exist', 'Verify selector syntax']
+            suggestions: ['Check if target elements exist', 'Verify selector syntax'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
-      
+
       // Create and trigger the event
       const eventResult = await this.createAndTriggerEvent(
         eventName,
@@ -213,43 +226,42 @@ export class TriggerCommand implements TypedCommandImplementation<
         targetElements,
         context
       );
-      
+
       if (!eventResult.success) {
         return {
           success: false,
           error: {
-                        name: 'ValidationError',
-          type: 'runtime-error',
-                        message: eventResult.error || 'Failed to trigger event',
+            name: 'ValidationError',
+            type: 'runtime-error',
+            message: eventResult.error || 'Failed to trigger event',
             code: 'EVENT_TRIGGER_FAILED',
-            suggestions: [ 'Check if target elements are valid', 'Verify event name format']
+            suggestions: ['Check if target elements are valid', 'Verify event name format'],
           },
-          type: 'error'
+          type: 'error',
         };
       }
-      
+
       const event = eventResult.event;
-      
+
       // Store result in context
       Object.assign(context, { it: event });
-      
+
       return {
         success: true,
         ...(event && { value: event }),
-        type: 'event'
+        type: 'event',
       };
-      
     } catch (error) {
       return {
         success: false,
         error: {
-                    name: 'ValidationError',
+          name: 'ValidationError',
           type: 'runtime-error',
-                    message: error instanceof Error ? error.message : 'Unknown error',
+          message: error instanceof Error ? error.message : 'Unknown error',
           code: 'TRIGGER_EXECUTION_FAILED',
-          suggestions: [ 'Check event name and arguments', 'Verify target elements exist']
+          suggestions: ['Check event name and arguments', 'Verify target elements exist'],
         },
-        type: 'error'
+        type: 'error',
       };
     }
   }
@@ -263,7 +275,7 @@ export class TriggerCommand implements TypedCommandImplementation<
   } {
     try {
       const [eventName, ...rest] = args;
-      
+
       // Find 'on' keyword position
       let onIndex = -1;
       for (let i = 0; i < rest.length; i++) {
@@ -272,18 +284,18 @@ export class TriggerCommand implements TypedCommandImplementation<
           break;
         }
       }
-      
+
       if (onIndex === -1) {
         return {
           success: false,
-          error: 'Trigger command requires "on" keyword to specify target'
+          error: 'Trigger command requires "on" keyword to specify target',
         };
       }
-      
+
       // Everything before 'on' is event data, everything after is target
       const dataArgs = rest.slice(0, onIndex);
       const target = rest[onIndex + 1];
-      
+
       // Parse event data (single object or null)
       let eventData: any = {};
       if (dataArgs.length === 1) {
@@ -299,22 +311,21 @@ export class TriggerCommand implements TypedCommandImplementation<
         // Multiple data arguments - combine into object
         eventData = { args: dataArgs };
       }
-      
+
       return {
         success: true,
         eventName,
         eventData,
-        target
+        target,
       };
-      
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to parse arguments'
+        error: error instanceof Error ? error.message : 'Failed to parse arguments',
       };
     }
   }
-  
+
   private async resolveTargetElements(
     target: any,
     context: TypedExecutionContext
@@ -327,32 +338,31 @@ export class TriggerCommand implements TypedCommandImplementation<
       if (!target) {
         return {
           success: false,
-          error: 'Trigger command requires a target after "on" keyword'
+          error: 'Trigger command requires a target after "on" keyword',
         };
       }
-      
+
       const targetElements = this.resolveTargets(target, context);
-      
+
       if (targetElements.length === 0) {
         return {
           success: false,
-          error: 'No valid target elements found'
+          error: 'No valid target elements found',
         };
       }
-      
+
       return {
         success: true,
-        elements: targetElements
+        elements: targetElements,
       };
-      
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to resolve target elements'
+        error: error instanceof Error ? error.message : 'Failed to resolve target elements',
       };
     }
   }
-  
+
   private async createAndTriggerEvent(
     eventName: string,
     eventData: any,
@@ -368,17 +378,17 @@ export class TriggerCommand implements TypedCommandImplementation<
       const event = new CustomEvent(eventName, {
         bubbles: true,
         cancelable: true,
-        detail: eventData || {}
+        detail: eventData || {},
       });
-      
+
       let triggeredCount = 0;
       const errors: string[] = [];
-      
+
       for (const element of targetElements) {
         try {
           element.dispatchEvent(event);
           triggeredCount++;
-          
+
           // Dispatch enhanced trigger event with rich metadata
           const triggerEvent = new CustomEvent('hyperscript:trigger', {
             detail: {
@@ -389,34 +399,32 @@ export class TriggerCommand implements TypedCommandImplementation<
               eventData,
               timestamp: Date.now(),
               metadata: this.metadata,
-              result: 'success'
-            }
+              result: 'success',
+            },
           });
           element.dispatchEvent(triggerEvent);
-          
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error);
           errors.push(`Failed to trigger on element: ${errorMsg}`);
         }
       }
-      
+
       // If no elements were successfully triggered, return error
       if (triggeredCount === 0) {
         return {
           success: false,
-          error: errors.length > 0 ? errors.join(', ') : 'No events were triggered'
+          error: errors.length > 0 ? errors.join(', ') : 'No events were triggered',
         };
       }
-      
+
       return {
         success: true,
-        event
+        event,
       };
-      
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create or trigger event'
+        error: error instanceof Error ? error.message : 'Failed to create or trigger event',
       };
     }
   }
@@ -495,11 +503,13 @@ export class TriggerCommand implements TypedCommandImplementation<
 
   private isCSSSelector(selector: string): boolean {
     // Common patterns for CSS selectors
-    return selector.startsWith('#') || 
-           selector.startsWith('.') || 
-           selector.includes('[') || 
-           selector.includes(':') ||
-           /^[a-zA-Z][a-zA-Z0-9]*$/.test(selector); // Simple tag selector
+    return (
+      selector.startsWith('#') ||
+      selector.startsWith('.') ||
+      selector.includes('[') ||
+      selector.includes(':') ||
+      /^[a-zA-Z][a-zA-Z0-9]*$/.test(selector)
+    ); // Simple tag selector
   }
 
   private querySelectorAll(selector: string): HTMLElement[] {
@@ -510,11 +520,11 @@ export class TriggerCommand implements TypedCommandImplementation<
           const element = document.querySelector(selector);
           return element ? [element as HTMLElement] : [];
         }
-        
+
         const elements = document.querySelectorAll(selector);
         return Array.from(elements) as HTMLElement[];
       }
-      
+
       return [];
     } catch (error) {
       throw new Error(`Invalid CSS selector: ${selector}`);
@@ -527,89 +537,103 @@ export class TriggerCommand implements TypedCommandImplementation<
       if (args.length < 3) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Trigger command requires at least: eventName, "on", target',
-            suggestions: ['Use: trigger eventName on target']
-          }],
-          suggestions: [ 'Use: trigger "click" on element', 'Use: trigger "custom" data on target']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Trigger command requires at least: eventName, "on", target',
+              suggestions: ['Use: trigger eventName on target'],
+            },
+          ],
+          suggestions: ['Use: trigger "click" on element', 'Use: trigger "custom" data on target'],
         };
       }
-      
+
       const [eventName] = args;
       if (typeof eventName !== 'string') {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Event name must be a string',
-            suggestions: ['Use a string for the event name']
-          }],
-          suggestions: [ 'Use quotes around event name', 'Example: trigger "click" on element']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Event name must be a string',
+              suggestions: ['Use a string for the event name'],
+            },
+          ],
+          suggestions: ['Use quotes around event name', 'Example: trigger "click" on element'],
         };
       }
-      
+
       if (!eventName.trim()) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Event name cannot be empty',
-            suggestions: ['Provide a valid event name']
-          }],
-          suggestions: ['Use meaningful event names like "click", "custom", etc.']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Event name cannot be empty',
+              suggestions: ['Provide a valid event name'],
+            },
+          ],
+          suggestions: ['Use meaningful event names like "click", "custom", etc.'],
         };
       }
-      
+
       // Check for 'on' keyword
       let hasOnKeyword = false;
       for (let i = 1; i < args.length; i++) {
         if (args[i] === 'on') {
           hasOnKeyword = true;
-          
+
           // Check if target exists after 'on'
           if (i === args.length - 1) {
             return {
               isValid: false,
-              errors: [{
-                type: 'missing-argument',
-                message: 'Trigger command requires target after "on"',
-                suggestions: ['Specify target element after "on" keyword']
-              }],
-              suggestions: [ 'Use: trigger event on <#element/>', 'Use: trigger event on me']
+              errors: [
+                {
+                  type: 'missing-argument',
+                  message: 'Trigger command requires target after "on"',
+                  suggestions: ['Specify target element after "on" keyword'],
+                },
+              ],
+              suggestions: ['Use: trigger event on <#element/>', 'Use: trigger event on me'],
             };
           }
           break;
         }
       }
-      
+
       if (!hasOnKeyword) {
         return {
           isValid: false,
-          errors: [{
-            type: 'syntax-error',
-            message: 'Trigger command requires "on" keyword to specify target',
-            suggestions: ['Use "on" keyword before target specification']
-          }],
-          suggestions: [ 'Use: trigger eventName on target', 'Use: trigger eventName data on target']
+          errors: [
+            {
+              type: 'syntax-error',
+              message: 'Trigger command requires "on" keyword to specify target',
+              suggestions: ['Use "on" keyword before target specification'],
+            },
+          ],
+          suggestions: [
+            'Use: trigger eventName on target',
+            'Use: trigger eventName data on target',
+          ],
         };
       }
-      
+
       return {
         isValid: true,
         errors: [],
-        suggestions: []
+        suggestions: [],
       };
-      
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: ['Check input types and values']
-        }],
-        suggestions: ['Ensure arguments match expected types']
+        errors: [
+          {
+            type: 'runtime-error',
+            message: 'Validation failed with exception',
+            suggestions: ['Check input types and values'],
+          },
+        ],
+        suggestions: ['Ensure arguments match expected types'],
       };
     }
   }

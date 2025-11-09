@@ -13,7 +13,7 @@ const createMockElement = () => {
   // Create a real DOM element in Happy-DOM for proper style support
   const element = document.createElement('div');
   element.style.display = 'block';
-  
+
   // Add vitest spies for testing
   element.addEventListener = vi.fn();
   element.removeEventListener = vi.fn();
@@ -23,7 +23,7 @@ const createMockElement = () => {
   element.classList.toggle = vi.fn();
   element.classList.contains = vi.fn(() => false);
   element.querySelector = vi.fn();
-  
+
   return element;
 };
 
@@ -43,7 +43,7 @@ describe('Hyperscript Runtime', () => {
       locals: new Map(),
       globals: new Map(),
       variables: new Map(),
-      events: new Map()
+      events: new Map(),
     };
     vi.clearAllMocks();
   });
@@ -54,11 +54,11 @@ describe('Hyperscript Runtime', () => {
       const hideCommandAST = {
         type: 'command',
         name: 'hide',
-        args: [{ type: 'identifier', name: 'me' }]
+        args: [{ type: 'identifier', name: 'me' }],
       };
-      
+
       await runtime.execute(hideCommandAST as any, context);
-      
+
       expect(mockElement.style.display).toBe('none');
     });
 
@@ -66,7 +66,7 @@ describe('Hyperscript Runtime', () => {
       mockElement.style.display = 'none';
       const ast = parse('show me').node!;
       await runtime.execute(ast, context);
-      
+
       expect(mockElement.style.display).toBe('block');
     });
 
@@ -75,28 +75,28 @@ describe('Hyperscript Runtime', () => {
       const ast = parse('wait 100ms').node!;
       await runtime.execute(ast, context);
       const endTime = Date.now();
-      
+
       expect(endTime - startTime).toBeGreaterThanOrEqual(90); // Allow some variance
     });
 
     it('should execute add class command', async () => {
       const ast = parse('add .active').node!;
       await runtime.execute(ast, context);
-      
+
       expect(mockElement.classList.add).toHaveBeenCalledWith('active');
     });
 
     it('should execute remove class command', async () => {
       const ast = parse('remove .active').node!;
       await runtime.execute(ast, context);
-      
+
       expect(mockElement.classList.remove).toHaveBeenCalledWith('active');
     });
 
     it('should execute put command', async () => {
       const ast = parse('put "Hello World" into me').node!;
       await runtime.execute(ast, context);
-      
+
       // PUT with "into" sets innerHTML, not textContent
       expect(mockElement.innerHTML).toBe('Hello World');
     });
@@ -109,12 +109,12 @@ describe('Hyperscript Runtime', () => {
         args: [
           { type: 'identifier', name: 'myVar' },
           { type: 'identifier', name: 'to' },
-          { type: 'literal', value: 'test value' }
-        ]
+          { type: 'literal', value: 'test value' },
+        ],
       };
-      
+
       await runtime.execute(setCommandAST as any, context);
-      
+
       expect(context.locals?.get('myVar')).toBe('test value');
     });
 
@@ -126,12 +126,12 @@ describe('Hyperscript Runtime', () => {
         args: [
           { type: 'identifier', name: 'result' },
           { type: 'identifier', name: 'to' },
-          { type: 'literal', value: 'completed' }
-        ]
+          { type: 'literal', value: 'completed' },
+        ],
       };
-      
+
       await runtime.execute(setCommandAST as any, context);
-      
+
       expect(context.result).toBe('completed');
     });
   });
@@ -140,23 +140,20 @@ describe('Hyperscript Runtime', () => {
     it('should bind event handlers to elements', async () => {
       const ast = parse('on click hide me').node!;
       await runtime.execute(ast, context);
-      
-      expect(mockElement.addEventListener).toHaveBeenCalledWith(
-        'click', 
-        expect.any(Function)
-      );
+
+      expect(mockElement.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
     });
 
     it('should execute commands when event is triggered', async () => {
       const ast = parse('on click hide me').node!;
       await runtime.execute(ast, context);
-      
+
       // Get the event handler that was registered
       const eventHandler = mockElement.addEventListener.mock.calls[0][1];
-      
+
       // Trigger the event
       await eventHandler({ target: mockElement });
-      
+
       expect(mockElement.style.display).toBe('none');
     });
   });
@@ -166,14 +163,14 @@ describe('Hyperscript Runtime', () => {
       context.it = 'test value';
       const ast = parse('it').node!;
       const result = await runtime.execute(ast, context);
-      
+
       expect(result).toBe('test value');
     });
 
     it('should evaluate literals in commands', async () => {
       const ast = parse('"hello world"').node!;
       const result = await runtime.execute(ast, context);
-      
+
       expect(result).toBe('hello world');
     });
   });
@@ -182,7 +179,7 @@ describe('Hyperscript Runtime', () => {
     it('should maintain execution context across commands', async () => {
       const result1 = await runtime.execute(parse('me').node!, context);
       expect(result1).toBe(mockElement);
-      
+
       context.it = 'new value';
       const result2 = await runtime.execute(parse('it').node!, context);
       expect(result2).toBe('new value');
@@ -191,7 +188,7 @@ describe('Hyperscript Runtime', () => {
     it('should update context variables during execution', async () => {
       // For now, test direct context manipulation since parser doesn't handle "set" commands yet
       context.result = 'completed';
-      
+
       expect(context.result).toBe('completed');
     });
   });
@@ -199,20 +196,24 @@ describe('Hyperscript Runtime', () => {
   describe('Error Handling', () => {
     it('should handle unknown commands gracefully', async () => {
       const ast = { type: 'command', name: 'unknownCommand', args: [] } as any;
-      
-      await expect(runtime.execute(ast, context)).rejects.toThrow('Unknown command: unknownCommand');
+
+      await expect(runtime.execute(ast, context)).rejects.toThrow(
+        'Unknown command: unknownCommand'
+      );
     });
 
     it('should provide meaningful error messages', async () => {
       const invalidAst = { type: 'invalidNode' } as any;
-      
-      await expect(runtime.execute(invalidAst, context)).rejects.toThrow('Unsupported AST node type for evaluation: invalidNode');
+
+      await expect(runtime.execute(invalidAst, context)).rejects.toThrow(
+        'Unsupported AST node type for evaluation: invalidNode'
+      );
     });
 
     it('should handle missing context elements', async () => {
       context.me = null;
       const ast = parse('hide me').node!;
-      
+
       await expect(runtime.execute(ast, context)).rejects.toThrow('Context element "me" is null');
     });
   });
@@ -240,11 +241,19 @@ describe('Hyperscript Runtime', () => {
       // Expected list: commands that should be in enhanced registry only
       const expectedEnhancedCommands = [
         // DOM commands (enhanced pattern)
-        'hide', 'show', 'toggle', 'add', 'remove', 'put',
+        'hide',
+        'show',
+        'toggle',
+        'add',
+        'remove',
+        'put',
         // Event commands (enhanced pattern)
-        'send', 'trigger',
+        'send',
+        'trigger',
         // Data commands (enhanced pattern)
-        'set', 'increment', 'decrement',
+        'set',
+        'increment',
+        'decrement',
         // Utility commands (enhanced pattern)
         'log',
         // Navigation commands (enhanced pattern)
@@ -304,11 +313,17 @@ describe('Hyperscript Runtime', () => {
 
       // Verify key commands are available
       const criticalCommands = [
-        'hide', 'show', 'toggle',
-        'add', 'remove',
-        'set', 'increment', 'decrement',
-        'send', 'trigger',
-        'log'
+        'hide',
+        'show',
+        'toggle',
+        'add',
+        'remove',
+        'set',
+        'increment',
+        'decrement',
+        'send',
+        'trigger',
+        'log',
       ];
 
       criticalCommands.forEach(commandName => {

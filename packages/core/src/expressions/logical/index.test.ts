@@ -44,7 +44,9 @@ describe('Logical Expressions', () => {
         expect(await logicalExpressions.strictEquals.evaluate(context, 5, 5)).toBe(true);
         expect(await logicalExpressions.strictEquals.evaluate(context, 5, '5')).toBe(false);
         expect(await logicalExpressions.strictEquals.evaluate(context, 0, false)).toBe(false);
-        expect(await logicalExpressions.strictEquals.evaluate(context, null, undefined)).toBe(false);
+        expect(await logicalExpressions.strictEquals.evaluate(context, null, undefined)).toBe(
+          false
+        );
         expect(await logicalExpressions.strictEquals.evaluate(context, null, null)).toBe(true);
       });
 
@@ -78,7 +80,9 @@ describe('Logical Expressions', () => {
 
       it('should validate arguments', () => {
         expect(logicalExpressions.strictNotEquals.validate!([1, 2])).toBeNull();
-        expect(logicalExpressions.strictNotEquals.validate!([1])).toContain('exactly two arguments');
+        expect(logicalExpressions.strictNotEquals.validate!([1])).toContain(
+          'exactly two arguments'
+        );
       });
     });
 
@@ -113,7 +117,9 @@ describe('Logical Expressions', () => {
 
       it('should validate arguments', () => {
         expect(logicalExpressions.lessThanOrEqual.validate!([1, 2])).toBeNull();
-        expect(logicalExpressions.lessThanOrEqual.validate!([1])).toContain('exactly two arguments');
+        expect(logicalExpressions.lessThanOrEqual.validate!([1])).toContain(
+          'exactly two arguments'
+        );
       });
     });
 
@@ -139,7 +145,9 @@ describe('Logical Expressions', () => {
 
       it('should validate arguments', () => {
         expect(logicalExpressions.greaterThanOrEqual.validate!([1, 2])).toBeNull();
-        expect(logicalExpressions.greaterThanOrEqual.validate!([1])).toContain('exactly two arguments');
+        expect(logicalExpressions.greaterThanOrEqual.validate!([1])).toContain(
+          'exactly two arguments'
+        );
       });
     });
   });
@@ -251,10 +259,10 @@ describe('Logical Expressions', () => {
         // Create a proper mock NodeList with instanceof checking
         const emptyNodeList = Object.create(NodeList.prototype);
         emptyNodeList.length = 0;
-        
+
         const nonEmptyNodeList = Object.create(NodeList.prototype);
         nonEmptyNodeList.length = 2;
-        
+
         expect(await logicalExpressions.isEmpty.evaluate(context, emptyNodeList)).toBe(true);
         expect(await logicalExpressions.isEmpty.evaluate(context, nonEmptyNodeList)).toBe(false);
       });
@@ -314,8 +322,12 @@ describe('Logical Expressions', () => {
   describe('String/Pattern Matching Expressions', () => {
     describe('contains expression', () => {
       it('should check string containment', async () => {
-        expect(await logicalExpressions.contains.evaluate(context, 'hello world', 'world')).toBe(true);
-        expect(await logicalExpressions.contains.evaluate(context, 'hello world', 'foo')).toBe(false);
+        expect(await logicalExpressions.contains.evaluate(context, 'hello world', 'world')).toBe(
+          true
+        );
+        expect(await logicalExpressions.contains.evaluate(context, 'hello world', 'foo')).toBe(
+          false
+        );
         expect(await logicalExpressions.contains.evaluate(context, 'hello', 'hello')).toBe(true);
       });
 
@@ -326,12 +338,12 @@ describe('Logical Expressions', () => {
       });
 
       it('should handle NodeList', async () => {
-        // Create a proper mock NodeList 
+        // Create a proper mock NodeList
         const nodeList = Object.create(NodeList.prototype);
         nodeList.length = 2;
         nodeList[0] = 'item1';
         nodeList[1] = 'item2';
-        
+
         // Mock Array.from behavior for this NodeList
         const originalArrayFrom = Array.from;
         (Array as any).from = (iterable: any) => {
@@ -340,10 +352,10 @@ describe('Logical Expressions', () => {
           }
           return originalArrayFrom(iterable);
         };
-        
+
         expect(await logicalExpressions.contains.evaluate(context, nodeList, 'item1')).toBe(true);
         expect(await logicalExpressions.contains.evaluate(context, nodeList, 'item3')).toBe(false);
-        
+
         // Restore Array.from
         (Array as any).from = originalArrayFrom;
       });
@@ -361,8 +373,12 @@ describe('Logical Expressions', () => {
 
     describe('doesNotContain expression', () => {
       it('should be inverse of contains', async () => {
-        expect(await logicalExpressions.doesNotContain.evaluate(context, 'hello world', 'foo')).toBe(true);
-        expect(await logicalExpressions.doesNotContain.evaluate(context, 'hello world', 'world')).toBe(false);
+        expect(
+          await logicalExpressions.doesNotContain.evaluate(context, 'hello world', 'foo')
+        ).toBe(true);
+        expect(
+          await logicalExpressions.doesNotContain.evaluate(context, 'hello world', 'world')
+        ).toBe(false);
         expect(await logicalExpressions.doesNotContain.evaluate(context, [1, 2, 3], 4)).toBe(true);
         expect(await logicalExpressions.doesNotContain.evaluate(context, [1, 2, 3], 2)).toBe(false);
       });
@@ -375,8 +391,12 @@ describe('Logical Expressions', () => {
 
     describe('startsWith expression', () => {
       it('should check string prefix', async () => {
-        expect(await logicalExpressions.startsWith.evaluate(context, 'hello world', 'hello')).toBe(true);
-        expect(await logicalExpressions.startsWith.evaluate(context, 'hello world', 'world')).toBe(false);
+        expect(await logicalExpressions.startsWith.evaluate(context, 'hello world', 'hello')).toBe(
+          true
+        );
+        expect(await logicalExpressions.startsWith.evaluate(context, 'hello world', 'world')).toBe(
+          false
+        );
         expect(await logicalExpressions.startsWith.evaluate(context, 'hello', 'hello')).toBe(true);
         expect(await logicalExpressions.startsWith.evaluate(context, 'hello', '')).toBe(true);
       });
@@ -394,8 +414,12 @@ describe('Logical Expressions', () => {
 
     describe('endsWith expression', () => {
       it('should check string suffix', async () => {
-        expect(await logicalExpressions.endsWith.evaluate(context, 'hello world', 'world')).toBe(true);
-        expect(await logicalExpressions.endsWith.evaluate(context, 'hello world', 'hello')).toBe(false);
+        expect(await logicalExpressions.endsWith.evaluate(context, 'hello world', 'world')).toBe(
+          true
+        );
+        expect(await logicalExpressions.endsWith.evaluate(context, 'hello world', 'hello')).toBe(
+          false
+        );
         expect(await logicalExpressions.endsWith.evaluate(context, 'hello', 'hello')).toBe(true);
         expect(await logicalExpressions.endsWith.evaluate(context, 'hello', '')).toBe(true);
       });
@@ -415,7 +439,9 @@ describe('Logical Expressions', () => {
       it('should match regex patterns', async () => {
         expect(await logicalExpressions.matches.evaluate(context, 'hello123', '/\\d+/')).toBe(true);
         expect(await logicalExpressions.matches.evaluate(context, 'hello', '/\\d+/')).toBe(false);
-        expect(await logicalExpressions.matches.evaluate(context, 'test@email.com', '/^[^@]+@[^@]+$/')).toBe(true);
+        expect(
+          await logicalExpressions.matches.evaluate(context, 'test@email.com', '/^[^@]+@[^@]+$/')
+        ).toBe(true);
       });
 
       it('should match string patterns as regex', async () => {
@@ -424,8 +450,12 @@ describe('Logical Expressions', () => {
       });
 
       it('should fallback to string inclusion for invalid regex', async () => {
-        expect(await logicalExpressions.matches.evaluate(context, 'hello world', 'world')).toBe(true);
-        expect(await logicalExpressions.matches.evaluate(context, 'hello world', 'foo')).toBe(false);
+        expect(await logicalExpressions.matches.evaluate(context, 'hello world', 'world')).toBe(
+          true
+        );
+        expect(await logicalExpressions.matches.evaluate(context, 'hello world', 'foo')).toBe(
+          false
+        );
       });
 
       it('should return false for non-strings', async () => {
@@ -442,15 +472,36 @@ describe('Logical Expressions', () => {
 
   describe('Expression Metadata', () => {
     it('should have correct categories', () => {
-      const comparisonOps = ['equals', 'strictEquals', 'notEquals', 'strictNotEquals', 
-                           'lessThan', 'lessThanOrEqual', 'greaterThan', 'greaterThanOrEqual'];
+      const comparisonOps = [
+        'equals',
+        'strictEquals',
+        'notEquals',
+        'strictNotEquals',
+        'lessThan',
+        'lessThanOrEqual',
+        'greaterThan',
+        'greaterThanOrEqual',
+      ];
       comparisonOps.forEach(op => {
-        expect(logicalExpressions[op as keyof typeof logicalExpressions].category).toBe('Comparison');
+        expect(logicalExpressions[op as keyof typeof logicalExpressions].category).toBe(
+          'Comparison'
+        );
       });
 
-      const logicalOps = ['and', 'or', 'not', 'isEmpty', 'isNotEmpty', 'exists', 
-                         'doesNotExist', 'contains', 'doesNotContain', 'startsWith', 
-                         'endsWith', 'matches'];
+      const logicalOps = [
+        'and',
+        'or',
+        'not',
+        'isEmpty',
+        'isNotEmpty',
+        'exists',
+        'doesNotExist',
+        'contains',
+        'doesNotContain',
+        'startsWith',
+        'endsWith',
+        'matches',
+      ];
       logicalOps.forEach(op => {
         expect(logicalExpressions[op as keyof typeof logicalExpressions].category).toBe('Logical');
       });
@@ -464,9 +515,15 @@ describe('Logical Expressions', () => {
 
     it('should have correct precedence ordering', () => {
       // Higher precedence = evaluates first
-      expect(logicalExpressions.not.precedence).toBeGreaterThan(logicalExpressions.lessThan.precedence!);
-      expect(logicalExpressions.lessThan.precedence).toBeGreaterThan(logicalExpressions.equals.precedence!);
-      expect(logicalExpressions.equals.precedence).toBeGreaterThan(logicalExpressions.and.precedence!);
+      expect(logicalExpressions.not.precedence).toBeGreaterThan(
+        logicalExpressions.lessThan.precedence!
+      );
+      expect(logicalExpressions.lessThan.precedence).toBeGreaterThan(
+        logicalExpressions.equals.precedence!
+      );
+      expect(logicalExpressions.equals.precedence).toBeGreaterThan(
+        logicalExpressions.and.precedence!
+      );
       expect(logicalExpressions.and.precedence).toBeGreaterThan(logicalExpressions.or.precedence!);
     });
   });

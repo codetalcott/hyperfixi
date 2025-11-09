@@ -13,14 +13,14 @@ export const meExpression: ExpressionImplementation = {
   name: 'me',
   category: 'Reference',
   evaluatesTo: 'Element',
-  
+
   async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
     return context.me instanceof HTMLElement ? context.me : null;
   },
-  
+
   validate() {
     return null; // 'me' requires no arguments
-  }
+  },
 };
 
 export const youExpression: ExpressionImplementation = {
@@ -31,53 +31,53 @@ export const youExpression: ExpressionImplementation = {
   async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
     return context.you instanceof HTMLElement ? context.you : null;
   },
-  
+
   validate() {
     return null; // 'you' requires no arguments
-  }
+  },
 };
 
 export const itExpression: ExpressionImplementation = {
   name: 'it',
   category: 'Reference',
   evaluatesTo: 'Any',
-  
+
   async evaluate(context: ExecutionContext): Promise<unknown> {
     return context.it;
   },
-  
+
   validate() {
     return null; // 'it' requires no arguments
-  }
+  },
 };
 
 export const itsExpression: ExpressionImplementation = {
   name: 'its',
   category: 'Reference',
   evaluatesTo: 'Any',
-  
+
   async evaluate(context: ExecutionContext): Promise<unknown> {
     // 'its' refers to the same context as 'it' - they are aliases
     return context.it;
   },
-  
+
   validate() {
     return null; // 'its' requires no arguments
-  }
+  },
 };
 
 export const resultExpression: ExpressionImplementation = {
   name: 'result',
   category: 'Reference',
   evaluatesTo: 'Any',
-  
+
   async evaluate(context: ExecutionContext): Promise<unknown> {
     return context.result;
   },
-  
+
   validate() {
     return null; // 'result' requires no arguments
-  }
+  },
 };
 
 // ============================================================================
@@ -88,7 +88,7 @@ export const querySelectorExpression: ExpressionImplementation = {
   name: 'querySelector',
   category: 'Reference',
   evaluatesTo: 'Element',
-  
+
   async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<HTMLElement | null> {
     const [selector] = args;
     if (typeof selector !== 'string') {
@@ -97,9 +97,9 @@ export const querySelectorExpression: ExpressionImplementation = {
 
     // Always search from document to find any element
     // This matches hyperscript's behavior where selectors are global by default
-    return document.querySelector(selector) as HTMLElement | null;
+    return document.querySelector(selector);
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 1) {
       return 'querySelector requires exactly one argument (selector)';
@@ -108,14 +108,14 @@ export const querySelectorExpression: ExpressionImplementation = {
       return 'querySelector selector must be a string';
     }
     return null;
-  }
+  },
 };
 
 export const querySelectorAllExpression: ExpressionImplementation = {
   name: 'querySelectorAll',
   category: 'Reference',
   evaluatesTo: 'Array',
-  
+
   async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const selector = args[0];
     if (typeof selector !== 'string') {
@@ -127,7 +127,7 @@ export const querySelectorAllExpression: ExpressionImplementation = {
     const nodeList = document.querySelectorAll(selector);
     return Array.from(nodeList) as HTMLElement[];
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 1) {
       return 'querySelectorAll requires exactly one argument (selector)';
@@ -136,7 +136,7 @@ export const querySelectorAllExpression: ExpressionImplementation = {
       return 'querySelectorAll selector must be a string';
     }
     return null;
-  }
+  },
 };
 
 // ============================================================================
@@ -147,7 +147,7 @@ export const idExpression: ExpressionImplementation = {
   name: 'getElementById',
   category: 'Reference',
   evaluatesTo: 'Element',
-  
+
   async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const id = args[0];
     if (typeof id !== 'string') {
@@ -156,7 +156,7 @@ export const idExpression: ExpressionImplementation = {
 
     return document.getElementById(id);
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 1) {
       return 'getElementById requires exactly one argument (ID)';
@@ -165,14 +165,14 @@ export const idExpression: ExpressionImplementation = {
       return 'getElementById ID must be a string';
     }
     return null;
-  }
+  },
 };
 
 export const classExpression: ExpressionImplementation = {
   name: 'getElementsByClassName',
   category: 'Reference',
   evaluatesTo: 'Array',
-  
+
   async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const className = args[0];
     if (typeof className !== 'string') {
@@ -184,7 +184,7 @@ export const classExpression: ExpressionImplementation = {
     const collection = document.getElementsByClassName(className);
     return Array.from(collection) as HTMLElement[];
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 1) {
       return 'getElementsByClassName requires exactly one argument (className)';
@@ -193,7 +193,7 @@ export const classExpression: ExpressionImplementation = {
       return 'getElementsByClassName className must be a string';
     }
     return null;
-  }
+  },
 };
 
 // ============================================================================
@@ -204,7 +204,7 @@ export const closestExpression: ExpressionImplementation = {
   name: 'closest',
   category: 'Reference',
   evaluatesTo: 'Element',
-  
+
   async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const selector = args[0];
     if (typeof selector !== 'string') {
@@ -215,9 +215,9 @@ export const closestExpression: ExpressionImplementation = {
       return null;
     }
 
-    return context.me.closest(selector) as HTMLElement | null;
+    return context.me.closest(selector);
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 1) {
       return 'closest requires exactly one argument (selector)';
@@ -226,25 +226,25 @@ export const closestExpression: ExpressionImplementation = {
       return 'closest selector must be a string';
     }
     return null;
-  }
+  },
 };
 
 export const parentExpression: ExpressionImplementation = {
   name: 'parent',
   category: 'Reference',
   evaluatesTo: 'Element',
-  
+
   async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
     if (!context.me) {
       return null;
     }
-    
+
     return context.me.parentElement;
   },
-  
+
   validate(): string | null {
     return null; // parent requires no arguments
-  }
+  },
 };
 
 // ============================================================================
@@ -255,35 +255,35 @@ export const windowExpression: ExpressionImplementation = {
   name: 'window',
   category: 'Reference',
   evaluatesTo: 'Object',
-  
+
   async evaluate(_context: ExecutionContext): Promise<Window> {
     return window;
   },
-  
+
   validate(): string | null {
     return null; // window requires no arguments
-  }
+  },
 };
 
 export const documentExpression: ExpressionImplementation = {
   name: 'document',
   category: 'Reference',
   evaluatesTo: 'Object',
-  
+
   async evaluate(_context: ExecutionContext): Promise<Document> {
     return document;
   },
-  
+
   validate(): string | null {
     return null; // document requires no arguments
-  }
+  },
 };
 
 export const elementWithSelectorExpression: ExpressionImplementation = {
   name: 'elementWithSelector',
   category: 'Reference',
   evaluatesTo: 'Array',
-  
+
   async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const selector = args[0];
     if (typeof selector !== 'string') {
@@ -293,7 +293,7 @@ export const elementWithSelectorExpression: ExpressionImplementation = {
     const elements = document.querySelectorAll(selector);
     return Array.from(elements) as HTMLElement[];
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 1) {
       return 'elementWithSelector requires exactly one argument (selector)';
@@ -302,7 +302,7 @@ export const elementWithSelectorExpression: ExpressionImplementation = {
       return 'selector must be a string';
     }
     return null;
-  }
+  },
 };
 
 // ============================================================================
@@ -313,7 +313,7 @@ export const styleRefExpression: ExpressionImplementation = {
   name: 'styleRef',
   category: 'Reference',
   evaluatesTo: 'String',
-  
+
   async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const property = args[0];
     const element = args[1] as HTMLElement | undefined;
@@ -338,7 +338,7 @@ export const styleRefExpression: ExpressionImplementation = {
     const value = target.style.getPropertyValue(property);
     return value || undefined;
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length === 0 || args.length > 2) {
       return 'styleRef requires 1-2 arguments (property, optional element)';
@@ -350,14 +350,14 @@ export const styleRefExpression: ExpressionImplementation = {
       return 'styleRef element must be an HTMLElement';
     }
     return null;
-  }
+  },
 };
 
 export const possessiveStyleRefExpression: ExpressionImplementation = {
   name: 'possessiveStyleRef',
   category: 'Reference',
   evaluatesTo: 'String',
-  
+
   async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const possessor = args[0];
     const property = args[1];
@@ -389,7 +389,7 @@ export const possessiveStyleRefExpression: ExpressionImplementation = {
     const value = target.style.getPropertyValue(property);
     return value || undefined;
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 2) {
       return 'possessiveStyleRef requires exactly 2 arguments (possessor, property)';
@@ -401,14 +401,14 @@ export const possessiveStyleRefExpression: ExpressionImplementation = {
       return 'possessiveStyleRef property must be a string';
     }
     return null;
-  }
+  },
 };
 
 export const ofStyleRefExpression: ExpressionImplementation = {
   name: 'ofStyleRef',
   category: 'Reference',
   evaluatesTo: 'String',
-  
+
   async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
     const property = args[0];
     const reference = args[1];
@@ -440,7 +440,7 @@ export const ofStyleRefExpression: ExpressionImplementation = {
     const value = target.style.getPropertyValue(property);
     return value || undefined;
   },
-  
+
   validate(args: unknown[]): string | null {
     if (args.length !== 2) {
       return 'ofStyleRef requires exactly 2 arguments (property, reference)';
@@ -452,7 +452,7 @@ export const ofStyleRefExpression: ExpressionImplementation = {
       return 'ofStyleRef reference must be a string';
     }
     return null;
-  }
+  },
 };
 
 // ============================================================================

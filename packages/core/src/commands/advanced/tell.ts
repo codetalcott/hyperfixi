@@ -1,9 +1,9 @@
 /**
  * Enhanced Tell Command Implementation
  * Provides element/behavior communication by establishing new execution context
- * 
+ *
  * Syntax: tell <target> <command1> [<command2> ...]
- * 
+ *
  * Modernized with TypedCommandImplementation interface
  */
 
@@ -31,7 +31,7 @@ export interface TellCommandInput {
   commands: any[];
 }
 
-// Output type definition  
+// Output type definition
 export interface TellCommandOutput {
   targetElements: HTMLElement[];
   commandResults: any[];
@@ -41,24 +41,23 @@ export interface TellCommandOutput {
 /**
  * Enhanced Tell Command with full type safety and validation
  */
-export class TellCommand implements TypedCommandImplementation<
-  TellCommandInput,
-  TellCommandOutput,
-  TypedExecutionContext
-> {
+export class TellCommand
+  implements TypedCommandImplementation<TellCommandInput, TellCommandOutput, TypedExecutionContext>
+{
   metadata = {
     name: 'tell',
-    description: 'Execute commands in the context of a target element with you/your/yourself references. This allows you to run commands as if they were executed from within the target element.',
+    description:
+      'Execute commands in the context of a target element with you/your/yourself references. This allows you to run commands as if they were executed from within the target element.',
     examples: [
       'tell #sidebar hide',
       'tell .buttons add .disabled',
       'tell closest <form/> submit',
       'tell children <input/> set value to ""',
-      'tell me add .processing then wait 1s then remove .processing'
+      'tell me add .processing then wait 1s then remove .processing',
     ],
     syntax: 'tell <target> <command1> [<command2> ...]',
     category: 'utility' as const,
-    version: '2.0.0'
+    version: '2.0.0',
   };
 
   validation = {
@@ -66,12 +65,14 @@ export class TellCommand implements TypedCommandImplementation<
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
-          errors: [{
-            type: 'validation-error',
-            message: 'Tell command requires an object input',
-            suggestions: ['Provide an object with target and commands properties']
-          }],
-          suggestions: ['Provide an object with target and commands properties']
+          errors: [
+            {
+              type: 'validation-error',
+              message: 'Tell command requires an object input',
+              suggestions: ['Provide an object with target and commands properties'],
+            },
+          ],
+          suggestions: ['Provide an object with target and commands properties'],
         };
       }
 
@@ -81,28 +82,34 @@ export class TellCommand implements TypedCommandImplementation<
       if (!inputObj.target) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Tell command requires a target element or selector',
-            suggestions: ['Provide an element reference, CSS selector, or element array']
-          }],
-          suggestions: ['Provide an element reference, CSS selector, or element array']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Tell command requires a target element or selector',
+              suggestions: ['Provide an element reference, CSS selector, or element array'],
+            },
+          ],
+          suggestions: ['Provide an element reference, CSS selector, or element array'],
         };
       }
 
       // Validate target type
       const target = inputObj.target;
-      if (typeof target !== 'string' && 
-          !(target instanceof HTMLElement) && 
-          !Array.isArray(target)) {
+      if (
+        typeof target !== 'string' &&
+        !(target instanceof HTMLElement) &&
+        !Array.isArray(target)
+      ) {
         return {
           isValid: false,
-          errors: [{
-            type: 'type-mismatch',
-            message: 'Target must be a string (selector), HTMLElement, or array of elements',
-            suggestions: ['Use a CSS selector, element reference, or array of elements']
-          }],
-          suggestions: ['Use a CSS selector, element reference, or array of elements']
+          errors: [
+            {
+              type: 'type-mismatch',
+              message: 'Target must be a string (selector), HTMLElement, or array of elements',
+              suggestions: ['Use a CSS selector, element reference, or array of elements'],
+            },
+          ],
+          suggestions: ['Use a CSS selector, element reference, or array of elements'],
         };
       }
 
@@ -110,24 +117,28 @@ export class TellCommand implements TypedCommandImplementation<
       if (!inputObj.commands || !Array.isArray(inputObj.commands)) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Tell command requires at least one command to execute',
-            suggestions: ['Provide an array of commands to execute in the target context']
-          }],
-          suggestions: ['Provide an array of commands to execute in the target context']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Tell command requires at least one command to execute',
+              suggestions: ['Provide an array of commands to execute in the target context'],
+            },
+          ],
+          suggestions: ['Provide an array of commands to execute in the target context'],
         };
       }
 
       if (inputObj.commands.length === 0) {
         return {
           isValid: false,
-          errors: [{
-            type: 'missing-argument',
-            message: 'Tell command requires at least one command to execute',
-            suggestions: ['Provide at least one command in the commands array']
-          }],
-          suggestions: ['Provide at least one command in the commands array']
+          errors: [
+            {
+              type: 'missing-argument',
+              message: 'Tell command requires at least one command to execute',
+              suggestions: ['Provide at least one command in the commands array'],
+            },
+          ],
+          suggestions: ['Provide at least one command in the commands array'],
         };
       }
 
@@ -137,10 +148,10 @@ export class TellCommand implements TypedCommandImplementation<
         suggestions: [],
         data: {
           target: inputObj.target,
-          commands: inputObj.commands
-        }
+          commands: inputObj.commands,
+        },
       };
-    }
+    },
   };
 
   async execute(
@@ -151,13 +162,13 @@ export class TellCommand implements TypedCommandImplementation<
 
     // Resolve target to actual elements
     const resolvedTargets = this.resolveTarget(target, context);
-    
+
     // If no valid targets, return without executing commands
     if (!resolvedTargets || resolvedTargets.length === 0) {
       return {
         targetElements: [],
         commandResults: [],
-        executionCount: 0
+        executionCount: 0,
       };
     }
 
@@ -174,11 +185,14 @@ export class TellCommand implements TypedCommandImplementation<
     return {
       targetElements: resolvedTargets,
       commandResults: allResults,
-      executionCount
+      executionCount,
     };
   }
 
-  private resolveTarget(target: HTMLElement | HTMLElement[] | string, context: TypedExecutionContext): HTMLElement[] {
+  private resolveTarget(
+    target: HTMLElement | HTMLElement[] | string,
+    context: TypedExecutionContext
+  ): HTMLElement[] {
     // Handle null/undefined targets
     if (target === null || target === undefined) {
       return [];
@@ -223,16 +237,16 @@ export class TellCommand implements TypedCommandImplementation<
   }
 
   private async executeCommandsForTarget(
-    context: TypedExecutionContext, 
-    target: HTMLElement, 
+    context: TypedExecutionContext,
+    target: HTMLElement,
     commands: any[]
   ): Promise<any[]> {
     // Create new context with target as 'you'
     const tellContext = this.createTellContext(context, target);
-    
+
     // Execute all commands in the tell context
     const results: any[] = [];
-    
+
     for (const command of commands) {
       if (command && typeof command.execute === 'function') {
         const result = await command.execute(tellContext);
@@ -249,7 +263,10 @@ export class TellCommand implements TypedCommandImplementation<
     return results;
   }
 
-  private createTellContext(originalContext: TypedExecutionContext, target: HTMLElement): TypedExecutionContext {
+  private createTellContext(
+    originalContext: TypedExecutionContext,
+    target: HTMLElement
+  ): TypedExecutionContext {
     // Create a new context that inherits from the original but with modified references
     const tellContext = {
       ...originalContext,

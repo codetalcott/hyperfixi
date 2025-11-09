@@ -1,6 +1,6 @@
 /**
  * TDD Fix for 'mod' Operator
- * 
+ *
  * Current issue: 'mod' operator not being recognized/parsed properly
  * Expected: 5 mod 3 = 2, following _hyperscript's modulo behavior
  */
@@ -21,7 +21,7 @@ const context: ExecutionContext = {
   returned: false,
   broke: false,
   continued: false,
-  async: false
+  async: false,
 };
 
 describe('Mod Operator - TDD Fix', () => {

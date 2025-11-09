@@ -14,30 +14,30 @@ describe('CSS Pseudo-Class Support', () => {
 
   beforeEach(() => {
     context = createMockHyperscriptContext();
-    
+
     // Create some mock DOM elements for testing
     if (typeof document !== 'undefined') {
       // Clear any existing test elements
       document.querySelectorAll('.test-element').forEach(el => el.remove());
-      
+
       // Create test elements
       const container = document.createElement('div');
       container.id = 'test-container';
-      
+
       const input1 = document.createElement('input');
       input1.type = 'checkbox';
       input1.className = 'test-element';
       input1.checked = true;
-      
+
       const input2 = document.createElement('input');
       input2.type = 'checkbox';
       input2.className = 'test-element';
       input2.checked = false;
-      
+
       const button = document.createElement('button');
       button.className = 'test-element';
       button.disabled = true;
-      
+
       container.appendChild(input1);
       container.appendChild(input2);
       container.appendChild(button);

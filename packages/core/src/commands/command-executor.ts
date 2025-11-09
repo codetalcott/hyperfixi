@@ -23,21 +23,23 @@ export interface Command {
 // Adapter for CommandImplementation interface to Command interface
 class CommandAdapter implements Command {
   constructor(private impl: any) {}
-  
-  get name() { return this.impl.name; }
-  
+
+  get name() {
+    return this.impl.name;
+  }
+
   async execute(args: string[], context: ExecutionContext): Promise<any> {
     // CommandImplementation.execute takes (context, ...args)
     // Our Command interface takes (args, context)
     // Need to evaluate string arguments as expressions first
     const evaluatedArgs = [];
-    
+
     // Special handling for SET command - don't evaluate the target variable name
     if (this.impl.name === 'set' && args.length >= 3 && args[1] === 'to') {
       // For "set x to value", keep "x" as string, evaluate "value"
       evaluatedArgs.push(args[0]); // Keep target as string
       evaluatedArgs.push(args[1]); // Keep "to" as string
-      
+
       // Evaluate remaining arguments (the value expressions)
       for (let i = 2; i < args.length; i++) {
         try {
@@ -51,7 +53,7 @@ class CommandAdapter implements Command {
       // For ADD command, keep class/attribute expressions as strings
       // "add .class-name target" -> keep ".class-name" as string
       evaluatedArgs.push(args[0]); // Keep class/attribute expression as string
-      
+
       // Evaluate target if provided
       for (let i = 1; i < args.length; i++) {
         try {
@@ -70,10 +72,10 @@ class CommandAdapter implements Command {
       } catch (error) {
         evaluatedArgs.push(args[0]);
       }
-      
+
       evaluatedArgs.push(args[1]); // Keep preposition as string
       evaluatedArgs.push(args[2]); // Keep target as string for property parsing (don't evaluate CSS selectors)
-      
+
       // Handle any additional arguments
       for (let i = 3; i < args.length; i++) {
         try {
@@ -96,7 +98,7 @@ class CommandAdapter implements Command {
         }
       }
     }
-    
+
     return await this.impl.execute(context, ...evaluatedArgs);
   }
 }
@@ -124,7 +126,7 @@ registerCommand(new CommandAdapter(new RenderCommand()));
  */
 function parseCommand(commandString: string): { name: string; args: string[] } {
   const trimmed = commandString.trim();
-  
+
   // Handle hyperscript-specific command patterns
   if (trimmed.startsWith('set ')) {
     return parseSetCommand(trimmed);
@@ -137,19 +139,19 @@ function parseCommand(commandString: string): { name: string; args: string[] } {
   } else if (trimmed.startsWith('render ')) {
     return parseRenderCommand(trimmed);
   }
-  
+
   // Default parsing for other commands
   const tokens = trimmed.split(/\s+/);
   const name = tokens[0];
   const args = tokens.slice(1);
-  
+
   // Handle complex argument parsing for comma-separated values
   if (args.length > 0) {
     const argsString = args.join(' ');
     const parsedArgs = parseCommandArguments(argsString);
     return { name, args: parsedArgs };
   }
-  
+
   return { name, args };
 }
 
@@ -162,7 +164,7 @@ function parseSetCommand(command: string): { name: string; args: string[] } {
     const [, target, value] = match;
     return { name: 'set', args: [target.trim(), 'to', value.trim()] };
   }
-  
+
   // Fallback to simple parsing
   const tokens = command.split(/\s+/);
   return { name: tokens[0], args: tokens.slice(1) };
@@ -178,18 +180,19 @@ function parsePutCommand(command: string): { name: string; args: string[] } {
     /^put\s+(.+)\s+before\s+(.+)$/,
     /^put\s+(.+)\s+after\s+(.+)$/,
     /^put\s+(.+)\s+at\s+start\s+of\s+(.+)$/,
-    /^put\s+(.+)\s+at\s+end\s+of\s+(.+)$/
+    /^put\s+(.+)\s+at\s+end\s+of\s+(.+)$/,
   ];
-  
+
   for (const pattern of patterns) {
     const match = command.match(pattern);
     if (match) {
       const [, content, target] = match;
-      const preposition = match[0].match(/\s+(into|before|after|at\s+start\s+of|at\s+end\s+of)\s+/)?.[1] || 'into';
+      const preposition =
+        match[0].match(/\s+(into|before|after|at\s+start\s+of|at\s+end\s+of)\s+/)?.[1] || 'into';
       return { name: 'put', args: [content.trim(), preposition, target.trim()] };
     }
   }
-  
+
   // Fallback to simple parsing
   const tokens = command.split(/\s+/);
   return { name: tokens[0], args: tokens.slice(1) };
@@ -204,13 +207,13 @@ function parseAddCommand(command: string): { name: string; args: string[] } {
     const [, classes, target] = match;
     return { name: 'add', args: [classes.trim(), target.trim()] };
   }
-  
+
   // Handle "add .class" without target (implicit target 'me')
   const simpleMatch = command.match(/^add\s+(.+)$/);
   if (simpleMatch) {
     return { name: 'add', args: [simpleMatch[1].trim()] };
   }
-  
+
   // Fallback
   const tokens = command.split(/\s+/);
   return { name: tokens[0], args: tokens.slice(1) };
@@ -236,7 +239,7 @@ function parseRenderCommand(command: string): { name: string; args: string[] } {
     const [, template, data] = withMatch;
     return { name: 'render', args: [template.trim(), 'with', data.trim()] };
   }
-  
+
   // Simple render command: "render #template"
   const tokens = command.split(/\s+/);
   const template = tokens.slice(1).join(' '); // everything after 'render'
@@ -253,10 +256,10 @@ function parseCommandArguments(argsString: string): string[] {
   let quoteChar = '';
   let parenCount = 0;
   let i = 0;
-  
+
   while (i < argsString.length) {
     const char = argsString[i];
-    
+
     if (!inQuotes && (char === '"' || char === "'")) {
       inQuotes = true;
       quoteChar = char;
@@ -277,29 +280,32 @@ function parseCommandArguments(argsString: string): string[] {
     } else {
       current += char;
     }
-    
+
     i++;
   }
-  
+
   if (current.trim()) {
     args.push(current.trim());
   }
-  
+
   return args;
 }
 
 /**
  * Execute a command with the given context
  */
-export async function executeCommand(commandString: string, context: ExecutionContext): Promise<any> {
+export async function executeCommand(
+  commandString: string,
+  context: ExecutionContext
+): Promise<any> {
   try {
     const { name, args } = parseCommand(commandString);
-    
+
     const command = commandRegistry.get(name);
     if (!command) {
       throw new Error(`Unknown command: ${name}`);
     }
-    
+
     return await command.execute(args, context);
   } catch (error) {
     if (error instanceof Error) {
@@ -312,7 +318,10 @@ export async function executeCommand(commandString: string, context: ExecutionCo
 /**
  * Evaluate an expression argument in the given context
  */
-export async function evaluateCommandArgument(arg: string, context: ExecutionContext): Promise<any> {
+export async function evaluateCommandArgument(
+  arg: string,
+  context: ExecutionContext
+): Promise<any> {
   return await parseAndEvaluateExpression(arg, context);
 }
 

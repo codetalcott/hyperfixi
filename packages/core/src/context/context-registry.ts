@@ -8,7 +8,7 @@ import type {
   TypedContextImplementation,
   ContextRegistry as IContextRegistry,
   ContextFilter,
-  ContextCategory
+  ContextCategory,
 } from '../types/context-types';
 import type { ValidationResult, ValidationError } from '../types/base-types';
 
@@ -29,18 +29,20 @@ export class ContextRegistry implements IContextRegistry {
     // Validate context implementation
     const validation = this.validate(context);
     if (!validation.isValid) {
-      throw new Error(`Context registration failed: ${validation.errors.map((e: { message: string }) => e.message).join(', ')}`);
+      throw new Error(
+        `Context registration failed: ${validation.errors.map((e: { message: string }) => e.message).join(', ')}`
+      );
     }
 
     // Register context
     this.contexts.set(context.name, context);
-    
+
     // Update category index
     if (!this.categoryIndex.has(context.category)) {
       this.categoryIndex.set(context.category, new Set());
     }
     this.categoryIndex.get(context.category)!.add(context.name);
-    
+
     // Update framework index if framework dependencies exist
     if (context.metadata.frameworkDependencies) {
       context.metadata.frameworkDependencies.forEach(framework => {
@@ -80,7 +82,7 @@ export class ContextRegistry implements IContextRegistry {
     }
 
     if (filter?.framework) {
-      results = results.filter(context => 
+      results = results.filter(context =>
         context.metadata.frameworkDependencies?.includes(filter.framework!)
       );
     }
@@ -88,7 +90,7 @@ export class ContextRegistry implements IContextRegistry {
     if (filter?.capabilities) {
       results = results.filter(context =>
         filter.capabilities!.every(capability =>
-          context.metadata.examples?.some(example => 
+          context.metadata.examples?.some(example =>
             example.description.toLowerCase().includes(capability.toLowerCase())
           )
         )
@@ -99,14 +101,21 @@ export class ContextRegistry implements IContextRegistry {
       results = results.filter(context => {
         const env = filter.environment!;
         const requirements = context.metadata.environmentRequirements;
-        
+
         switch (env) {
           case 'frontend':
             return requirements?.browser === true;
           case 'backend':
-            return requirements?.server === true || requirements?.nodejs === true || requirements?.python === true;
+            return (
+              requirements?.server === true ||
+              requirements?.nodejs === true ||
+              requirements?.python === true
+            );
           case 'universal':
-            return !requirements || (requirements.browser && (requirements.server || requirements.nodejs));
+            return (
+              !requirements ||
+              (requirements.browser && (requirements.server || requirements.nodejs))
+            );
           default:
             return true;
         }
@@ -125,68 +134,139 @@ export class ContextRegistry implements IContextRegistry {
 
     // Validate required properties exist
     if (!context.name || typeof context.name !== 'string') {
-      errors.push({ type: 'validation-error', message: 'Context must have a string name property', suggestions: [] });
+      errors.push({
+        type: 'validation-error',
+        message: 'Context must have a string name property',
+        suggestions: [],
+      });
     }
 
     if (!context.category) {
-      errors.push({ type: 'validation-error', message: 'Context must have a category property', suggestions: [] });
+      errors.push({
+        type: 'validation-error',
+        message: 'Context must have a category property',
+        suggestions: [],
+      });
     }
 
     if (!context.description || typeof context.description !== 'string') {
-      errors.push({ type: 'validation-error', message: 'Context must have a string description property', suggestions: [] });
+      errors.push({
+        type: 'validation-error',
+        message: 'Context must have a string description property',
+        suggestions: [],
+      });
     }
 
     if (!context.inputSchema) {
-      errors.push({ type: 'validation-error', message: 'Context must have an inputSchema (Zod schema)', suggestions: [] });
+      errors.push({
+        type: 'validation-error',
+        message: 'Context must have an inputSchema (Zod schema)',
+        suggestions: [],
+      });
     }
 
     if (!context.outputType) {
-      errors.push({ type: 'validation-error', message: 'Context must have an outputType property', suggestions: [] });
+      errors.push({
+        type: 'validation-error',
+        message: 'Context must have an outputType property',
+        suggestions: [],
+      });
     }
 
     if (!context.metadata) {
-      errors.push({ type: 'validation-error', message: 'Context must have metadata property', suggestions: [] });
+      errors.push({
+        type: 'validation-error',
+        message: 'Context must have metadata property',
+        suggestions: [],
+      });
     } else {
       // Validate metadata structure
       if (!context.metadata.category) {
-        errors.push({ type: 'validation-error', message: 'Context metadata must include category', suggestions: [] });
+        errors.push({
+          type: 'validation-error',
+          message: 'Context metadata must include category',
+          suggestions: [],
+        });
       }
       if (!context.metadata.complexity) {
-        errors.push({ type: 'validation-error', message: 'Context metadata must include complexity level', suggestions: [] });
+        errors.push({
+          type: 'validation-error',
+          message: 'Context metadata must include complexity level',
+          suggestions: [],
+        });
       }
       if (!Array.isArray(context.metadata.examples) || context.metadata.examples.length === 0) {
-        errors.push({ type: 'validation-error', message: 'Context metadata must include examples array', suggestions: ['Add at least one usage example to metadata.examples'] });
+        errors.push({
+          type: 'validation-error',
+          message: 'Context metadata must include examples array',
+          suggestions: ['Add at least one usage example to metadata.examples'],
+        });
       }
     }
 
     if (!context.documentation) {
-      errors.push({ type: 'validation-error', message: 'Context must have documentation property', suggestions: [] });
+      errors.push({
+        type: 'validation-error',
+        message: 'Context must have documentation property',
+        suggestions: [],
+      });
     } else {
       // Validate LLM documentation structure
       if (!context.documentation.summary || typeof context.documentation.summary !== 'string') {
-        errors.push({ type: 'validation-error', message: 'Context documentation must include summary', suggestions: [] });
+        errors.push({
+          type: 'validation-error',
+          message: 'Context documentation must include summary',
+          suggestions: [],
+        });
       }
       if (!Array.isArray(context.documentation.parameters)) {
-        errors.push({ type: 'validation-error', message: 'Context documentation must include parameters array', suggestions: [] });
+        errors.push({
+          type: 'validation-error',
+          message: 'Context documentation must include parameters array',
+          suggestions: [],
+        });
       }
       if (!context.documentation.returns) {
-        errors.push({ type: 'validation-error', message: 'Context documentation must include returns specification', suggestions: [] });
+        errors.push({
+          type: 'validation-error',
+          message: 'Context documentation must include returns specification',
+          suggestions: [],
+        });
       }
-      if (!Array.isArray(context.documentation.examples) || context.documentation.examples.length === 0) {
-        errors.push({ type: 'validation-error', message: 'Context documentation must include examples', suggestions: ['Add comprehensive examples to documentation for LLM training'] });
+      if (
+        !Array.isArray(context.documentation.examples) ||
+        context.documentation.examples.length === 0
+      ) {
+        errors.push({
+          type: 'validation-error',
+          message: 'Context documentation must include examples',
+          suggestions: ['Add comprehensive examples to documentation for LLM training'],
+        });
       }
       if (!Array.isArray(context.documentation.tags) || context.documentation.tags.length === 0) {
-        errors.push({ type: 'validation-error', message: 'Context documentation must include tags for discoverability', suggestions: ['Add relevant tags like ["context", "frontend", "backend", etc.]'] });
+        errors.push({
+          type: 'validation-error',
+          message: 'Context documentation must include tags for discoverability',
+          suggestions: ['Add relevant tags like ["context", "frontend", "backend", etc.]'],
+        });
       }
     }
 
     // Validate required methods exist
     if (typeof context.initialize !== 'function') {
-      errors.push({ type: 'validation-error', message: 'Context must implement initialize method', suggestions: [] });
+      errors.push({
+        type: 'validation-error',
+        message: 'Context must implement initialize method',
+        suggestions: [],
+      });
     }
 
     if (typeof context.validate !== 'function') {
-      errors.push({ type: 'validation-error', message: 'Context must implement validate method', suggestions: [] });
+      errors.push({
+        type: 'validation-error',
+        message: 'Context must implement validate method',
+        suggestions: [],
+      });
     }
 
     // Check for naming conflicts
@@ -194,7 +274,7 @@ export class ContextRegistry implements IContextRegistry {
       errors.push({
         type: 'validation-error',
         message: `Context with name "${context.name}" is already registered`,
-        suggestions: ['Use a unique name or unregister the existing context first']
+        suggestions: ['Use a unique name or unregister the existing context first'],
       });
     }
 
@@ -207,7 +287,7 @@ export class ContextRegistry implements IContextRegistry {
         errors.push({
           type: 'validation-error',
           message: `Input schema validation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: ['Ensure inputSchema is a valid Zod schema']
+          suggestions: ['Ensure inputSchema is a valid Zod schema'],
         });
       }
     }
@@ -224,7 +304,7 @@ export class ContextRegistry implements IContextRegistry {
     return {
       isValid: errors.length === 0,
       errors,
-      suggestions
+      suggestions,
     };
   }
 
@@ -285,7 +365,7 @@ export class ContextRegistry implements IContextRegistry {
       categoryCounts: Object.fromEntries(categoryCounts),
       frameworkCounts: Object.fromEntries(frameworkCounts),
       categories: Array.from(this.categoryIndex.keys()),
-      frameworks: Array.from(this.frameworkIndex.keys())
+      frameworks: Array.from(this.frameworkIndex.keys()),
     };
   }
 
@@ -349,7 +429,7 @@ export function registerContexts(
         type: 'validation-error',
         message: `Failed to register context "${context.name}": ${error instanceof Error ? error.message : String(error)}`,
         path: context.name,
-        suggestions: []
+        suggestions: [],
       });
     }
   }
@@ -364,6 +444,6 @@ export function registerContexts(
   return {
     isValid: errors.length === 0,
     errors,
-    suggestions
+    suggestions,
   };
 }

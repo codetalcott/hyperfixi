@@ -72,7 +72,7 @@ describe('ExecutionContext System', () => {
     it('should create child contexts with proper parent linkage', () => {
       const childElement = createTestElement('<span>Child</span>');
       const childContext = createChildContext(context, childElement);
-      
+
       expect(childContext.parent).toBe(context);
       expect(childContext.me).toBe(childElement);
       expect(childContext.globals).toBe(context.globals); // Shared globals
@@ -81,10 +81,10 @@ describe('ExecutionContext System', () => {
     it('should resolve variables through scope chain', () => {
       // Set variable in parent
       setContextValue(context, 'parentVar', 'parentValue');
-      
+
       // Create child context
       const childContext = createChildContext(context);
-      
+
       // Child should see parent variable
       expect(getContextValue(childContext, 'parentVar')).toBe('parentValue');
     });
@@ -92,11 +92,11 @@ describe('ExecutionContext System', () => {
     it('should shadow parent variables with local ones', () => {
       // Set variable in parent
       setContextValue(context, 'shadowVar', 'parentValue');
-      
+
       // Create child and override
       const childContext = createChildContext(context);
       setContextValue(childContext, 'shadowVar', 'childValue');
-      
+
       expect(getContextValue(childContext, 'shadowVar')).toBe('childValue');
       expect(getContextValue(context, 'shadowVar')).toBe('parentValue');
     });
@@ -104,10 +104,10 @@ describe('ExecutionContext System', () => {
     it('should maintain proper isolation between sibling contexts', () => {
       const child1 = createChildContext(context);
       const child2 = createChildContext(context);
-      
+
       setContextValue(child1, 'siblingVar', 'child1Value');
       setContextValue(child2, 'siblingVar', 'child2Value');
-      
+
       expect(getContextValue(child1, 'siblingVar')).toBe('child1Value');
       expect(getContextValue(child2, 'siblingVar')).toBe('child2Value');
     });
@@ -118,7 +118,7 @@ describe('ExecutionContext System', () => {
       const newElement = createTestElement('<p>New Element</p>');
       context.me = newElement;
       context.you = testElement;
-      
+
       expect(context.me).toBe(newElement);
       expect(context.you).toBe(testElement);
     });
@@ -126,10 +126,10 @@ describe('ExecutionContext System', () => {
     it('should handle "it" value updates', () => {
       const initialValue = 'initial';
       const newValue = { complex: 'object' };
-      
+
       setContextValue(context, 'it', initialValue);
       expect(context.it).toBe(initialValue);
-      
+
       setContextValue(context, 'it', newValue);
       expect(context.it).toBe(newValue);
     });
@@ -146,7 +146,7 @@ describe('ExecutionContext System', () => {
       context.flags.breaking = true;
       expect(context.flags.breaking).toBe(true);
       expect(context.flags.continuing).toBe(false);
-      
+
       context.flags.breaking = false;
       context.flags.continuing = true;
       expect(context.flags.breaking).toBe(false);
@@ -168,7 +168,7 @@ describe('ExecutionContext System', () => {
     it('should handle null/undefined context values', () => {
       setContextValue(context, 'nullVar', null);
       setContextValue(context, 'undefinedVar', undefined);
-      
+
       expect(getContextValue(context, 'nullVar')).toBe(null);
       expect(getContextValue(context, 'undefinedVar')).toBe(undefined);
     });
@@ -177,7 +177,7 @@ describe('ExecutionContext System', () => {
   describe('Memory Management', () => {
     it('should allow context cleanup', () => {
       setContextValue(context, 'tempVar', 'tempValue');
-      
+
       // Clear locals
       context.locals.clear();
       expect(getContextValue(context, 'tempVar')).toBe(undefined);
@@ -186,7 +186,7 @@ describe('ExecutionContext System', () => {
     it('should maintain global variables across context cleanup', () => {
       setContextValue(context, 'globalVar', 'globalValue', true);
       context.locals.clear();
-      
+
       expect(getContextValue(context, 'globalVar')).toBe('globalValue');
     });
   });

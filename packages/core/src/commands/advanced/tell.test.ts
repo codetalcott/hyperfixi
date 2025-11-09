@@ -19,14 +19,14 @@ describe('Tell Command', () => {
     testElement = document.createElement('div');
     testElement.id = 'd1';
     testElement.classList.add('test-element');
-    
+
     targetElement = document.createElement('div');
     targetElement.id = 'd2';
     targetElement.classList.add('target-element');
-    
+
     document.body.appendChild(testElement);
     document.body.appendChild(targetElement);
-    
+
     context = {
       me: testElement,
       locals: new Map(),
@@ -60,15 +60,15 @@ describe('Tell Command', () => {
           // Verify that 'you' context points to target element
           expect(ctx.you).toBe(targetElement);
           expect(ctx.me).toBe(testElement); // me should remain unchanged
-          
+
           // Simulate adding a class to the target
           targetElement.classList.add('told-class');
           return 'ok';
-        }
+        },
       };
 
       await tellCommand.execute(context, targetElement, mockCommand);
-      
+
       expect(targetElement.classList.contains('told-class')).toBe(true);
       expect(testElement.classList.contains('told-class')).toBe(false);
     });
@@ -79,11 +79,11 @@ describe('Tell Command', () => {
         execute: async (ctx: ExecutionContext) => {
           ctx.you?.classList.add('selector-target');
           return 'ok';
-        }
+        },
       };
 
       await tellCommand.execute(context, '#d2', mockCommand);
-      
+
       expect(targetElement.classList.contains('selector-target')).toBe(true);
     });
 
@@ -100,11 +100,11 @@ describe('Tell Command', () => {
         execute: async (ctx: ExecutionContext) => {
           ctx.you?.classList.add('array-target');
           return 'ok';
-        }
+        },
       };
 
       await tellCommand.execute(context, [target2, target3], mockCommand);
-      
+
       expect(target2.classList.contains('array-target')).toBe(true);
       expect(target3.classList.contains('array-target')).toBe(true);
       expect(targetElement.classList.contains('array-target')).toBe(false);
@@ -117,11 +117,11 @@ describe('Tell Command', () => {
           // Should not execute when target is null
           testElement.classList.add('should-not-execute');
           return 'ok';
-        }
+        },
       };
 
       await tellCommand.execute(context, null, mockCommand);
-      
+
       expect(testElement.classList.contains('should-not-execute')).toBe(false);
     });
   });
@@ -129,35 +129,35 @@ describe('Tell Command', () => {
   describe('Context References', () => {
     it('should provide you reference to target element', async () => {
       let capturedYou: any;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async (ctx: ExecutionContext) => {
           capturedYou = ctx.you;
           return 'ok';
-        }
+        },
       };
 
       await tellCommand.execute(context, targetElement, mockCommand);
-      
+
       expect(capturedYou).toBe(targetElement);
     });
 
     it('should provide your reference for possessive syntax', async () => {
       targetElement.setAttribute('data-test', 'target-value');
       let capturedAttribute: any;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async (ctx: ExecutionContext) => {
           // Simulate accessing "your @data-test"
           capturedAttribute = ctx.you?.getAttribute('data-test');
           return 'ok';
-        }
+        },
       };
 
       await tellCommand.execute(context, targetElement, mockCommand);
-      
+
       expect(capturedAttribute).toBe('target-value');
     });
 
@@ -168,29 +168,29 @@ describe('Tell Command', () => {
           // Simulate "remove yourself"
           ctx.you?.parentNode?.removeChild(ctx.you);
           return 'ok';
-        }
+        },
       };
 
       expect(targetElement.parentNode).toBe(document.body);
-      
+
       await tellCommand.execute(context, targetElement, mockCommand);
-      
+
       expect(targetElement.parentNode).toBe(null);
     });
 
     it('should preserve original me context', async () => {
       let capturedMe: any;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async (ctx: ExecutionContext) => {
           capturedMe = ctx.me;
           return 'ok';
-        }
+        },
       };
 
       await tellCommand.execute(context, targetElement, mockCommand);
-      
+
       expect(capturedMe).toBe(testElement); // Should still be original element
     });
   });
@@ -202,7 +202,7 @@ describe('Tell Command', () => {
         execute: async (ctx: ExecutionContext) => {
           ctx.you?.classList.add('first-command');
           return 'ok';
-        }
+        },
       };
 
       const command2 = {
@@ -212,11 +212,11 @@ describe('Tell Command', () => {
             (ctx.you as any).customProp = 'told-value';
           }
           return 'ok';
-        }
+        },
       };
 
       await tellCommand.execute(context, targetElement, command1, command2);
-      
+
       expect(targetElement.classList.contains('first-command')).toBe(true);
       expect((targetElement as any).customProp).toBe('told-value');
     });
@@ -227,19 +227,20 @@ describe('Tell Command', () => {
         execute: async (ctx: ExecutionContext) => {
           ctx.you?.classList.add('good-command');
           return 'ok';
-        }
+        },
       };
 
       const badCommand = {
         name: 'error',
         execute: async () => {
           throw new Error('Command failed');
-        }
+        },
       };
 
-      await expect(tellCommand.execute(context, targetElement, goodCommand, badCommand))
-        .rejects.toThrow('Command failed');
-      
+      await expect(
+        tellCommand.execute(context, targetElement, goodCommand, badCommand)
+      ).rejects.toThrow('Command failed');
+
       // First command should have executed before error
       expect(targetElement.classList.contains('good-command')).toBe(true);
     });
@@ -249,18 +250,18 @@ describe('Tell Command', () => {
     it('should restore original context after tell block', async () => {
       const originalYou = context.you;
       const originalIt = context.it;
-      
+
       const mockCommand = {
         name: 'test',
         execute: async (ctx: ExecutionContext) => {
           // Modify context within tell
           ctx.it = targetElement;
           return 'ok';
-        }
+        },
       };
 
       await tellCommand.execute(context, targetElement, mockCommand);
-      
+
       // Context should be restored after tell
       expect(context.you).toBe(originalYou);
       expect(context.it).toBe(originalIt);
@@ -272,50 +273,51 @@ describe('Tell Command', () => {
       document.body.appendChild(nestedTarget);
 
       const nestedTell = new TellCommand();
-      
+
       const outerCommand = {
         name: 'outer',
         execute: async (ctx: ExecutionContext) => {
           ctx.you?.classList.add('outer-told');
-          
+
           // Nested tell command
           const innerCommand = {
             name: 'inner',
             execute: async (innerCtx: ExecutionContext) => {
               innerCtx.you?.classList.add('inner-told');
               return 'ok';
-            }
+            },
           };
-          
+
           await nestedTell.execute(ctx, nestedTarget, innerCommand);
           return 'ok';
-        }
+        },
       };
 
       await tellCommand.execute(context, targetElement, outerCommand);
-      
+
       expect(targetElement.classList.contains('outer-told')).toBe(true);
       expect(nestedTarget.classList.contains('inner-told')).toBe(true);
-      
+
       document.body.removeChild(nestedTarget);
     });
   });
 
   describe('Error Handling', () => {
     it('should throw error for missing arguments', async () => {
-      await expect(tellCommand.execute(context))
-        .rejects.toThrow('Tell command requires at least 2 arguments');
+      await expect(tellCommand.execute(context)).rejects.toThrow(
+        'Tell command requires at least 2 arguments'
+      );
     });
 
     it('should handle invalid target selectors gracefully', async () => {
       const mockCommand = {
         name: 'test',
-        execute: async () => 'ok'
+        execute: async () => 'ok',
       };
 
       // Should not throw, but also should not execute command
       await tellCommand.execute(context, '#nonexistent', mockCommand);
-      
+
       // Test passes if no error is thrown
       expect(true).toBe(true);
     });

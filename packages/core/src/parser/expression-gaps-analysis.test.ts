@@ -1,6 +1,6 @@
 /**
  * Expression Gaps Analysis - TDD for Remaining Compatibility Issues
- * 
+ *
  * This test systematically identifies and addresses the remaining 13 failing expression tests
  * from the official _hyperscript test suite to reach 100% expression compatibility.
  */
@@ -22,11 +22,10 @@ const context: ExecutionContext = {
   returned: false,
   broke: false,
   continued: false,
-  async: false
+  async: false,
 };
 
 describe('Expression Gaps Analysis - Systematic TDD', () => {
-  
   describe('Advanced Math Operations', () => {
     it('should handle exponentiation with ^ operator', async () => {
       // Test if exponentiation precedence is working
@@ -51,9 +50,9 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
     it('should handle template string interpolation', async () => {
       const contextWithVar = {
         ...context,
-        locals: new Map([['name', 'world']])
+        locals: new Map([['name', 'world']]),
       };
-      
+
       // Test template literal interpolation
       const result = await parseAndEvaluateExpression('"Hello ${name}!"', contextWithVar);
       expect(result).toBe('Hello world!');
@@ -86,15 +85,15 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
   describe('Object Operations', () => {
     it('should handle object literal syntax', async () => {
       const result = await parseAndEvaluateExpression('{name: "test", value: 42}', context);
-      expect(result).toEqual({name: "test", value: 42});
+      expect(result).toEqual({ name: 'test', value: 42 });
     });
 
     it('should handle object property access with dot notation', async () => {
       const contextWithObj = {
         ...context,
-        locals: new Map([['obj', {name: 'test', value: 42}]])
+        locals: new Map([['obj', { name: 'test', value: 42 }]]),
       };
-      
+
       const result = await parseAndEvaluateExpression('obj.name', contextWithObj);
       expect(result).toBe('test');
     });
@@ -102,9 +101,9 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
     it('should handle object property access with bracket notation', async () => {
       const contextWithObj = {
         ...context,
-        locals: new Map([['obj', {name: 'test', value: 42}]])
+        locals: new Map([['obj', { name: 'test', value: 42 }]]),
       };
-      
+
       const result = await parseAndEvaluateExpression('obj["name"]', contextWithObj);
       expect(result).toBe('test');
     });
@@ -125,9 +124,9 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
     it('should handle exists operator', async () => {
       const contextWithVar = {
         ...context,
-        locals: new Map([['myVar', 'exists']])
+        locals: new Map([['myVar', 'exists']]),
       };
-      
+
       const result = await parseAndEvaluateExpression('myVar exists', contextWithVar);
       expect(result).toBe(true);
     });
@@ -153,14 +152,14 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
   describe('Context Variable Edge Cases', () => {
     it('should handle complex me expressions with DOM elements', async () => {
       // Mock DOM element
-      const mockElement = { 
+      const mockElement = {
         tagName: 'DIV',
         className: 'test-class',
-        textContent: 'test content'
+        textContent: 'test content',
       };
-      
+
       const contextWithMe = { ...context, me: mockElement };
-      
+
       const result = await parseAndEvaluateExpression('me.className', contextWithMe);
       expect(result).toBe('test-class');
     });
@@ -169,13 +168,13 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
       const mockData = {
         user: {
           profile: {
-            name: 'John'
-          }
-        }
+            name: 'John',
+          },
+        },
       };
-      
+
       const contextWithData = { ...context, me: mockData };
-      
+
       const result = await parseAndEvaluateExpression("my user's profile's name", contextWithData);
       expect(result).toBe('John');
     });
@@ -192,12 +191,19 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
       // Test ternary-like expressions if supported
       const contextWithVar = {
         ...context,
-        locals: new Map([['condition', true], ['valueA', 'yes'], ['valueB', 'no']])
+        locals: new Map([
+          ['condition', true],
+          ['valueA', 'yes'],
+          ['valueB', 'no'],
+        ]),
       };
-      
+
       // This might not be supported yet, but testing the pattern
       try {
-        const result = await parseAndEvaluateExpression('condition ? valueA : valueB', contextWithVar);
+        const result = await parseAndEvaluateExpression(
+          'condition ? valueA : valueB',
+          contextWithVar
+        );
         expect(result).toBe('yes');
       } catch (error) {
         // If ternary not supported, skip this test
@@ -209,16 +215,16 @@ describe('Expression Gaps Analysis - Systematic TDD', () => {
   describe('Error Boundary Tests', () => {
     it('should handle graceful errors for undefined variables', async () => {
       // Test that undefined variables produce reasonable errors
-      await expect(parseAndEvaluateExpression('undefinedVar', context))
-        .rejects
-        .toThrow(/undefined|not defined/i);
+      await expect(parseAndEvaluateExpression('undefinedVar', context)).rejects.toThrow(
+        /undefined|not defined/i
+      );
     });
 
     it('should handle graceful errors for invalid operations', async () => {
       // Test division by zero handling
-      await expect(parseAndEvaluateExpression('5 / 0', context))
-        .rejects
-        .toThrow(/division by zero|infinity/i);
+      await expect(parseAndEvaluateExpression('5 / 0', context)).rejects.toThrow(
+        /division by zero|infinity/i
+      );
     });
   });
 });

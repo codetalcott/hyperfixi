@@ -20,9 +20,9 @@ describe('Top-level JS Feature', () => {
       it: null,
       locals: new Map(),
       globals: new Map(),
-      result: undefined
+      result: undefined,
     };
-    
+
     // Store original globals for cleanup
     originalGlobals = {};
   });
@@ -41,11 +41,11 @@ describe('Top-level JS Feature', () => {
   describe('Basic JavaScript Execution', () => {
     it('can run javascript at the top level', async () => {
       const jsCode = 'globalThis.testSuccess = true';
-      
+
       await feature.execute(context, jsCode);
-      
+
       expect((globalThis as any).testSuccess).toBe(true);
-      
+
       // Cleanup
       delete (globalThis as any).testSuccess;
     });
@@ -56,11 +56,11 @@ describe('Top-level JS Feature', () => {
         const b = 10;
         globalThis.testResult = a + b;
       `;
-      
+
       await feature.execute(context, jsCode);
-      
+
       expect((globalThis as any).testResult).toBe(15);
-      
+
       // Cleanup
       delete (globalThis as any).testResult;
     });
@@ -74,12 +74,12 @@ describe('Top-level JS Feature', () => {
         }
         return { testFunction: testFunction };
       `;
-      
+
       await feature.execute(context, jsCode);
-      
+
       expect((globalThis as any).testFunction).toBeDefined();
       expect((globalThis as any).testFunction()).toBe('test succeeded');
-      
+
       // Cleanup
       delete (globalThis as any).testFunction;
     });
@@ -94,14 +94,14 @@ describe('Top-level JS Feature', () => {
         }
         return { add, multiply };
       `;
-      
+
       await feature.execute(context, jsCode);
-      
+
       expect((globalThis as any).add).toBeDefined();
       expect((globalThis as any).multiply).toBeDefined();
       expect((globalThis as any).add(2, 3)).toBe(5);
       expect((globalThis as any).multiply(2, 3)).toBe(6);
-      
+
       // Cleanup
       delete (globalThis as any).add;
       delete (globalThis as any).multiply;
@@ -117,13 +117,13 @@ describe('Top-level JS Feature', () => {
         }
         return { exposedFunction };
       `;
-      
+
       await feature.execute(context, jsCode);
-      
+
       expect((globalThis as any).exposedFunction).toBeDefined();
       expect((globalThis as any).hiddenFunction).toBeUndefined();
       expect((globalThis as any).exposedFunction()).toBe('hidden exposed');
-      
+
       // Cleanup
       delete (globalThis as any).exposedFunction;
     });
@@ -134,9 +134,9 @@ describe('Top-level JS Feature', () => {
       const jsCode = `
         var testVar = 'should not be global';
       `;
-      
+
       await feature.execute(context, jsCode);
-      
+
       expect((globalThis as any).testVar).toBeUndefined();
     });
 
@@ -144,9 +144,9 @@ describe('Top-level JS Feature', () => {
       const jsCode = `
         let testLet = 'should not be global';
       `;
-      
+
       await feature.execute(context, jsCode);
-      
+
       expect((globalThis as any).testLet).toBeUndefined();
     });
 
@@ -154,9 +154,9 @@ describe('Top-level JS Feature', () => {
       const jsCode = `
         const testConst = 'should not be global';
       `;
-      
+
       await feature.execute(context, jsCode);
-      
+
       expect((globalThis as any).testConst).toBeUndefined();
     });
   });
@@ -166,11 +166,11 @@ describe('Top-level JS Feature', () => {
       const jsCode = `
         return { testValue: 'global value' };
       `;
-      
+
       await feature.execute(context, jsCode);
-      
+
       expect((globalThis as any).testValue).toBe('global value');
-      
+
       // Cleanup
       delete (globalThis as any).testValue;
     });
@@ -182,12 +182,12 @@ describe('Top-level JS Feature', () => {
         };
         return { helper };
       `;
-      
+
       await feature.execute(context, jsCode);
-      
+
       expect((globalThis as any).helper).toBeDefined();
       expect((globalThis as any).helper.format('test')).toBe('TEST');
-      
+
       // Cleanup
       delete (globalThis as any).helper;
     });
@@ -196,16 +196,20 @@ describe('Top-level JS Feature', () => {
   describe('Error Handling', () => {
     it('throws error for invalid javascript', async () => {
       const jsCode = 'invalid javascript syntax {{';
-      
+
       await expect(feature.execute(context, jsCode)).rejects.toThrow();
     });
 
     it('requires javascript code parameter', async () => {
-      await expect(feature.execute(context)).rejects.toThrow('JS feature requires JavaScript code to execute');
+      await expect(feature.execute(context)).rejects.toThrow(
+        'JS feature requires JavaScript code to execute'
+      );
     });
 
     it('requires string parameter', async () => {
-      await expect(feature.execute(context, 123)).rejects.toThrow('JavaScript code must be a string');
+      await expect(feature.execute(context, 123)).rejects.toThrow(
+        'JavaScript code must be a string'
+      );
     });
   });
 

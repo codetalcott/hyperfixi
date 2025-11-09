@@ -9,14 +9,16 @@ import {
   EnhancedAndExpression,
   EnhancedOrExpression,
   EnhancedNotExpression,
-  logicalExpressions
+  logicalExpressions,
 } from './index.ts';
 
 // ============================================================================
 // Test Helpers
 // ============================================================================
 
-function createTestContext(overrides: Partial<TypedExpressionContext> = {}): TypedExpressionContext {
+function createTestContext(
+  overrides: Partial<TypedExpressionContext> = {}
+): TypedExpressionContext {
   return {
     me: undefined,
     it: undefined,
@@ -25,14 +27,14 @@ function createTestContext(overrides: Partial<TypedExpressionContext> = {}): Typ
     locals: new Map(),
     globals: new Map(),
     event: undefined,
-    
+
     // Enhanced expression context properties
     expressionStack: [],
     evaluationDepth: 0,
     validationMode: 'strict',
     evaluationHistory: [],
-    
-    ...overrides
+
+    ...overrides,
   };
 }
 
@@ -374,7 +376,7 @@ describe('EnhancedNotExpression', () => {
   describe('Type coercion negation', () => {
     it('should negate truthy values to false', async () => {
       const truthyValues = [1, 'hello', [], {}, -1, 3.14, 'false'];
-      
+
       for (const value of truthyValues) {
         const result = await notExpr.evaluate(context, { operand: value });
         expect(result.success).toBe(true);
@@ -386,7 +388,7 @@ describe('EnhancedNotExpression', () => {
 
     it('should negate falsy values to true', async () => {
       const falsyValues = [false, 0, -0, 0n, '', null, undefined, NaN];
-      
+
       for (const value of falsyValues) {
         const result = await notExpr.evaluate(context, { operand: value });
         expect(result.success).toBe(true);
@@ -402,7 +404,7 @@ describe('EnhancedNotExpression', () => {
       // not (not true) should be true
       const innerResult = await notExpr.evaluate(context, { operand: true });
       expect(innerResult.success).toBe(true);
-      
+
       if (innerResult.success) {
         const outerResult = await notExpr.evaluate(context, { operand: innerResult.value });
         expect(outerResult.success).toBe(true);
@@ -429,7 +431,7 @@ describe('EnhancedNotExpression', () => {
       // Validation passes because z.unknown() accepts undefined
       expect(validation.isValid).toBe(true);
 
-      // But evaluation handles undefined correctly  
+      // But evaluation handles undefined correctly
       const result = await notExpr.evaluate(context, input);
       expect(result.success).toBe(true);
       if (result.success) {
@@ -448,7 +450,7 @@ describe('Enhanced Logical Expressions Integration', () => {
 
   beforeEach(() => {
     context = createTestContext({
-      evaluationHistory: []
+      evaluationHistory: [],
     });
   });
 
@@ -473,9 +475,9 @@ describe('Enhanced Logical Expressions Integration', () => {
       expect(rightOr.success).toBe(true);
 
       if (leftOr.success && rightOr.success) {
-        const finalAnd = await andExpr.evaluate(context, { 
-          left: leftOr.value, 
-          right: rightOr.value 
+        const finalAnd = await andExpr.evaluate(context, {
+          left: leftOr.value,
+          right: rightOr.value,
         });
 
         expect(finalAnd.success).toBe(true);
@@ -485,7 +487,7 @@ describe('Enhanced Logical Expressions Integration', () => {
       }
     });
 
-    it('should handle De Morgan\'s laws', async () => {
+    it("should handle De Morgan's laws", async () => {
       // not (A and B) = (not A) or (not B)
       const andExpr = logicalExpressions.and;
       const orExpr = logicalExpressions.or;
@@ -497,7 +499,7 @@ describe('Enhanced Logical Expressions Integration', () => {
       // Left side: not (A and B)
       const andResult = await andExpr.evaluate(context, { left: A, right: B });
       expect(andResult.success).toBe(true);
-      
+
       if (andResult.success) {
         const leftSide = await notExpr.evaluate(context, { operand: andResult.value });
         expect(leftSide.success).toBe(true);
@@ -505,18 +507,18 @@ describe('Enhanced Logical Expressions Integration', () => {
         // Right side: (not A) or (not B)
         const notA = await notExpr.evaluate(context, { operand: A });
         const notB = await notExpr.evaluate(context, { operand: B });
-        
+
         expect(notA.success).toBe(true);
         expect(notB.success).toBe(true);
-        
+
         if (notA.success && notB.success) {
-          const rightSide = await orExpr.evaluate(context, { 
-            left: notA.value, 
-            right: notB.value 
+          const rightSide = await orExpr.evaluate(context, {
+            left: notA.value,
+            right: notB.value,
           });
-          
+
           expect(rightSide.success).toBe(true);
-          
+
           if (leftSide.success && rightSide.success) {
             expect(leftSide.value).toBe(rightSide.value);
           }
@@ -539,7 +541,7 @@ describe('Enhanced Logical Expressions Integration', () => {
       expect(context.evaluationHistory![0].expressionName).toBe('and');
       expect(context.evaluationHistory![1].expressionName).toBe('or');
       expect(context.evaluationHistory![2].expressionName).toBe('not');
-      
+
       context.evaluationHistory!.forEach(entry => {
         expect(entry.success).toBe(true);
         expect(entry.duration).toBeGreaterThanOrEqual(0);
@@ -550,7 +552,7 @@ describe('Enhanced Logical Expressions Integration', () => {
   describe('Type safety', () => {
     it('should have consistent metadata', () => {
       const expressions = Object.values(logicalExpressions);
-      
+
       expressions.forEach(expr => {
         expect(expr.category).toBe('Logical');
         expect(expr.outputType).toBe('Boolean');
@@ -564,15 +566,12 @@ describe('Enhanced Logical Expressions Integration', () => {
 
   describe('Error consistency', () => {
     it('should handle undefined operands gracefully', async () => {
-      const expressions = [
-        logicalExpressions.and,
-        logicalExpressions.or
-      ];
-      
+      const expressions = [logicalExpressions.and, logicalExpressions.or];
+
       for (const expr of expressions) {
         // Test with missing right operand (undefined)
         const result = await expr.evaluate(context, { left: true } as any);
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           // true && undefined -> false, true || undefined -> true
@@ -587,27 +586,27 @@ describe('Enhanced Logical Expressions Integration', () => {
     it('should handle user permission checks', async () => {
       const andExpr = logicalExpressions.and;
       const orExpr = logicalExpressions.or;
-      
+
       // User must be active AND (admin OR owner)
       const user = {
         isActive: true,
         isAdmin: false,
-        isOwner: true
+        isOwner: true,
       };
-      
-      const adminOrOwner = await orExpr.evaluate(context, { 
-        left: user.isAdmin, 
-        right: user.isOwner 
+
+      const adminOrOwner = await orExpr.evaluate(context, {
+        left: user.isAdmin,
+        right: user.isOwner,
       });
-      
+
       expect(adminOrOwner.success).toBe(true);
-      
+
       if (adminOrOwner.success) {
-        const hasPermission = await andExpr.evaluate(context, { 
-          left: user.isActive, 
-          right: adminOrOwner.value 
+        const hasPermission = await andExpr.evaluate(context, {
+          left: user.isActive,
+          right: adminOrOwner.value,
         });
-        
+
         expect(hasPermission.success).toBe(true);
         if (hasPermission.success) {
           expect(hasPermission.value).toBe(true);
@@ -618,36 +617,36 @@ describe('Enhanced Logical Expressions Integration', () => {
     it('should handle form validation logic', async () => {
       const andExpr = logicalExpressions.and;
       const notExpr = logicalExpressions.not;
-      
+
       // Form is valid if all fields are filled AND not currently submitting
       const form = {
         name: 'John Doe',
         email: 'john@example.com',
-        isSubmitting: false
+        isSubmitting: false,
       };
-      
+
       const hasName = await notExpr.evaluate(context, { operand: form.name === '' });
       const hasEmail = await notExpr.evaluate(context, { operand: form.email === '' });
       const notSubmitting = await notExpr.evaluate(context, { operand: form.isSubmitting });
-      
+
       expect(hasName.success).toBe(true);
       expect(hasEmail.success).toBe(true);
       expect(notSubmitting.success).toBe(true);
-      
+
       if (hasName.success && hasEmail.success && notSubmitting.success) {
-        const fieldsValid = await andExpr.evaluate(context, { 
-          left: hasName.value, 
-          right: hasEmail.value 
+        const fieldsValid = await andExpr.evaluate(context, {
+          left: hasName.value,
+          right: hasEmail.value,
         });
-        
+
         expect(fieldsValid.success).toBe(true);
-        
+
         if (fieldsValid.success) {
-          const formValid = await andExpr.evaluate(context, { 
-            left: fieldsValid.value, 
-            right: notSubmitting.value 
+          const formValid = await andExpr.evaluate(context, {
+            left: fieldsValid.value,
+            right: notSubmitting.value,
           });
-          
+
           expect(formValid.success).toBe(true);
           if (formValid.success) {
             expect(formValid.value).toBe(true);

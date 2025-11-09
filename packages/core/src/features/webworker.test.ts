@@ -10,7 +10,7 @@ import {
   createWebWorker,
   enhancedWebWorkerImplementation,
   type WebWorkerInput,
-  type WebWorkerOutput
+  type WebWorkerOutput,
 } from './webworker';
 
 // Mock Worker for testing
@@ -29,7 +29,7 @@ class MockWorker {
   constructor(url: string, options: WorkerOptions = {}) {
     this.url = url;
     this.options = options;
-    
+
     // Simulate successful worker initialization
     setTimeout(() => {
       if (this.onmessage) {
@@ -86,12 +86,14 @@ class MockWorker {
 // Mock URL.createObjectURL and revokeObjectURL for inline workers
 (globalThis as any).URL = {
   createObjectURL: (blob: Blob) => `blob:mock-${Date.now()}`,
-  revokeObjectURL: (url: string) => { /* mock cleanup */ }
+  revokeObjectURL: (url: string) => {
+    /* mock cleanup */
+  },
 };
 
 describe('Enhanced WebWorker Feature Implementation', () => {
   let webworkerFeature: TypedWebWorkerFeatureImplementation;
-  
+
   beforeEach(() => {
     webworkerFeature = createWebWorkerFeature();
     vi.clearAllMocks();
@@ -117,10 +119,10 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       };
 
       const result = await webworkerFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
       expect(result.value).toBeDefined();
-      
+
       if (result.success && result.value) {
         expect(result.value.category).toBe('Frontend');
         expect(result.value.capabilities).toContain('worker-management');
@@ -167,7 +169,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
           {
             event: 'messageerror',
             commands: [{ type: 'command', name: 'handleMessageError', args: [] }],
-          }
+          },
         ],
         context: {
           variables: { workerId: 'main-worker', config: { timeout: 30000 } },
@@ -185,9 +187,9 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       };
 
       const result = await webworkerFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('worker-management');
         expect(result.value.capabilities).toContain('error-recovery');
@@ -213,9 +215,9 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       };
 
       const result = await webworkerFeature.initialize(input);
-      
+
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         expect(result.value.capabilities).toContain('background-execution');
         expect(result.value.state).toBe('ready');
@@ -235,7 +237,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test worker creation
         const worker = await result.value.workers.create({
@@ -267,13 +269,13 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Create worker
         const worker = await result.value.workers.create({
           script: './test-worker.js',
         });
-        
+
         // Test termination
         const terminated = await result.value.workers.terminate(worker.id);
         expect(typeof terminated).toBe('boolean');
@@ -291,13 +293,13 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Create worker
         const worker = await result.value.workers.create({
           script: './test-worker.js',
         });
-        
+
         // Test restart
         const newWorkerId = await result.value.workers.restart(worker.id);
         expect(typeof newWorkerId).toBe('string');
@@ -320,7 +322,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Create worker
         const worker = await result.value.workers.create({
@@ -354,7 +356,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Create worker
         const worker = await result.value.workers.create({
@@ -383,7 +385,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Create worker
         const worker = await result.value.workers.create({
@@ -409,14 +411,17 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Create multiple workers
         await result.value.workers.create({ script: './worker1.js' });
         await result.value.workers.create({ script: './worker2.js' });
 
         // Test broadcasting
-        const broadcasted = await result.value.messaging.broadcast({ type: 'broadcast', message: 'Hello all!' });
+        const broadcasted = await result.value.messaging.broadcast({
+          type: 'broadcast',
+          message: 'Hello all!',
+        });
         expect(typeof broadcasted).toBe('boolean');
       }
     });
@@ -432,12 +437,12 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test message subscription
         const subscribed = await result.value.messaging.subscribe('message', {
           name: 'handleSubscribedMessage',
-          args: []
+          args: [],
         });
         expect(subscribed).toBeDefined();
 
@@ -460,7 +465,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Create worker
         const worker = await result.value.workers.create({
@@ -470,7 +475,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
         // Test adding event handler
         const handler = await result.value.events.addHandler(worker.id, 'message', {
           name: 'processMessage',
-          args: []
+          args: [],
         });
         expect(handler).toBeDefined();
 
@@ -495,7 +500,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Create worker
         const worker = await result.value.workers.create({
@@ -528,7 +533,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Create worker
         const worker = await result.value.workers.create({
@@ -571,7 +576,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Test error handling
         const error = new Error('Test worker error');
@@ -590,7 +595,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
         const customHandler = (error: Error, context: any) => {
           console.warn('Custom error handler:', error.message);
         };
-        
+
         const handlerSet = result.value.errors.setErrorHandler(customHandler);
         expect(handlerSet).toBe(true);
       }
@@ -608,7 +613,9 @@ describe('Enhanced WebWorker Feature Implementation', () => {
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'invalid-worker-script')).toBe(true);
-      expect(validationResult.suggestions).toContain('Provide valid JavaScript file URL or inline script code');
+      expect(validationResult.suggestions).toContain(
+        'Provide valid JavaScript file URL or inline script code'
+      );
     });
 
     it('should validate inline script syntax', () => {
@@ -621,7 +628,9 @@ describe('Enhanced WebWorker Feature Implementation', () => {
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'invalid-inline-script')).toBe(true);
-      expect(validationResult.suggestions).toContain('Ensure inline script has valid JavaScript syntax');
+      expect(validationResult.suggestions).toContain(
+        'Ensure inline script has valid JavaScript syntax'
+      );
     });
 
     it('should validate worker limits', () => {
@@ -639,7 +648,9 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'invalid-max-workers')).toBe(true);
       expect(validationResult.errors.some(e => e.type === 'invalid-worker-timeout')).toBe(true);
-      expect(validationResult.errors.some(e => e.type === 'invalid-termination-timeout')).toBe(true);
+      expect(validationResult.errors.some(e => e.type === 'invalid-termination-timeout')).toBe(
+        true
+      );
     });
 
     it('should validate message queue settings', () => {
@@ -657,7 +668,9 @@ describe('Enhanced WebWorker Feature Implementation', () => {
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'invalid-queue-size')).toBe(true);
-      expect(validationResult.suggestions).toContain('Set queue maxSize to 0 for unlimited or positive number for limit');
+      expect(validationResult.suggestions).toContain(
+        'Set queue maxSize to 0 for unlimited or positive number for limit'
+      );
     });
 
     it('should validate event handler filter expressions', () => {
@@ -669,14 +682,16 @@ describe('Enhanced WebWorker Feature Implementation', () => {
           {
             event: 'message',
             filter: 'invalid javascript syntax [[[',
-            commands: [{ name: 'process', args: [] }]
-          }
+            commands: [{ name: 'process', args: [] }],
+          },
         ],
       });
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'invalid-filter-expression')).toBe(true);
-      expect(validationResult.suggestions).toContain('Use valid JavaScript expression for message filtering');
+      expect(validationResult.suggestions).toContain(
+        'Use valid JavaScript expression for message filtering'
+      );
     });
 
     it('should validate conflicting performance options', () => {
@@ -691,14 +706,18 @@ describe('Enhanced WebWorker Feature Implementation', () => {
             options: {
               throttle: 100,
               debounce: 200, // Cannot have both
-            }
-          }
+            },
+          },
         ],
       });
 
       expect(validationResult.isValid).toBe(false);
-      expect(validationResult.errors.some(e => e.type === 'conflicting-performance-options')).toBe(true);
-      expect(validationResult.suggestions).toContain('Choose either throttle OR debounce, not both');
+      expect(validationResult.errors.some(e => e.type === 'conflicting-performance-options')).toBe(
+        true
+      );
+      expect(validationResult.suggestions).toContain(
+        'Choose either throttle OR debounce, not both'
+      );
     });
 
     it('should validate empty commands arrays', () => {
@@ -709,14 +728,16 @@ describe('Enhanced WebWorker Feature Implementation', () => {
         eventHandlers: [
           {
             event: 'message',
-            commands: [] // Empty commands
-          }
+            commands: [], // Empty commands
+          },
         ],
       });
 
       expect(validationResult.isValid).toBe(false);
       expect(validationResult.errors.some(e => e.type === 'empty-commands-array')).toBe(true);
-      expect(validationResult.suggestions).toContain('Add at least one command to execute for event handler');
+      expect(validationResult.suggestions).toContain(
+        'Add at least one command to execute for event handler'
+      );
     });
 
     it('should handle initialization failures gracefully', async () => {
@@ -745,7 +766,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       }
 
       const metrics = webworkerFeature.getPerformanceMetrics();
-      
+
       expect(metrics.totalInitializations).toBeGreaterThanOrEqual(3);
       expect(typeof metrics.successRate).toBe('number');
       expect(typeof metrics.averageDuration).toBe('number');
@@ -798,7 +819,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
 
     it('should have comprehensive metadata', () => {
       const { metadata } = webworkerFeature;
-      
+
       expect(metadata.category).toBe('Frontend');
       expect(metadata.complexity).toBe('complex');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
@@ -811,7 +832,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
 
     it('should have LLM-compatible documentation', () => {
       const { documentation } = webworkerFeature;
-      
+
       expect(documentation.summary).toBeDefined();
       expect(Array.isArray(documentation.parameters)).toBe(true);
       expect(documentation.returns).toBeDefined();
@@ -836,7 +857,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
             event: 'message',
             commands: [
               { type: 'command', name: 'updateProgress', args: [] },
-              { type: 'command', name: 'displayResults', args: [] }
+              { type: 'command', name: 'displayResults', args: [] },
             ],
             filter: 'message.data.type === "result"',
             options: { throttle: 100 },
@@ -845,9 +866,9 @@ describe('Enhanced WebWorker Feature Implementation', () => {
             event: 'error',
             commands: [
               { type: 'command', name: 'showError', args: [] },
-              { type: 'command', name: 'retryProcessing', args: [] }
+              { type: 'command', name: 'retryProcessing', args: [] },
             ],
-          }
+          },
         ],
         messaging: {
           format: 'json',
@@ -858,9 +879,9 @@ describe('Enhanced WebWorker Feature Implementation', () => {
               type: 'object',
               properties: {
                 type: { type: 'string' },
-                data: { type: 'object' }
+                data: { type: 'object' },
               },
-              required: ['type']
+              required: ['type'],
             },
           },
           queue: {
@@ -872,7 +893,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
         context: {
           variables: {
             processingConfig: { batchSize: 1000, timeout: 30000 },
-            userId: 12345
+            userId: 12345,
           },
         },
         options: {
@@ -887,7 +908,7 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Verify worker capabilities
         expect(result.value.capabilities).toContain('worker-management');
@@ -920,10 +941,10 @@ describe('Enhanced WebWorker Feature Implementation', () => {
             event: 'message',
             commands: [
               { type: 'command', name: 'updateCanvas', args: [] },
-              { type: 'command', name: 'showProgress', args: [] }
+              { type: 'command', name: 'showProgress', args: [] },
             ],
             filter: 'message.data instanceof ImageData',
-          }
+          },
         ],
         messaging: {
           format: 'binary',
@@ -940,11 +961,11 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Verify binary message support
         expect(typeof result.value.messaging.sendBinary).toBe('function');
-        
+
         // Verify real-time optimizations
         expect(result.value.capabilities).toContain('transferable-objects');
       }
@@ -970,9 +991,9 @@ describe('Enhanced WebWorker Feature Implementation', () => {
             event: 'message',
             commands: [
               { type: 'command', name: 'displayCalculationResult', args: [] },
-              { type: 'command', name: 'logPerformance', args: [] }
+              { type: 'command', name: 'logPerformance', args: [] },
             ],
-          }
+          },
         ],
         messaging: {
           format: 'json',
@@ -988,11 +1009,11 @@ describe('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(true);
-      
+
       if (result.success && result.value) {
         // Verify module worker support
         expect(result.value.capabilities).toContain('background-execution');
-        
+
         // Verify parallel processing capabilities
         expect(typeof result.value.messaging.broadcast).toBe('function');
         expect(typeof result.value.workers.create).toBe('function');

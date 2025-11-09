@@ -6,7 +6,11 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { createTestElement } from '../test-setup';
 import type { ExecutionContext } from '../types/core';
-import { createEventManager, registerManagerForDelegation, cleanupEventDelegation } from '../core/events';
+import {
+  createEventManager,
+  registerManagerForDelegation,
+  cleanupEventDelegation,
+} from '../core/events';
 import { OnFeature, createOnFeature } from './on';
 
 describe('On Feature System', () => {
@@ -20,12 +24,12 @@ describe('On Feature System', () => {
     testElement = createTestElement('<button id="test-btn">Test Button</button>');
     containerElement.appendChild(testElement);
     document.body.appendChild(containerElement);
-    
+
     const eventManager = createEventManager();
     registerManagerForDelegation(eventManager);
-    
+
     feature = createOnFeature(eventManager);
-    
+
     context = {
       me: testElement,
       it: null,
@@ -60,23 +64,23 @@ describe('On Feature System', () => {
   describe('Event Registration', () => {
     it('should register simple click event', () => {
       const commands = [
-        { type: 'command', name: 'hide', args: [{ type: 'identifier', name: 'me' }] }
+        { type: 'command', name: 'hide', args: [{ type: 'identifier', name: 'me' }] },
       ];
 
       const listenerId = feature.register(testElement, 'click', commands, context);
-      
+
       expect(listenerId).toBeDefined();
       expect(typeof listenerId).toBe('string');
     });
 
     it('should register multiple event types', () => {
       const commands = [
-        { type: 'command', name: 'toggle', args: [{ type: 'identifier', name: 'me' }] }
+        { type: 'command', name: 'toggle', args: [{ type: 'identifier', name: 'me' }] },
       ];
 
       const clickId = feature.register(testElement, 'click', commands, context);
       const changeId = feature.register(testElement, 'change', commands, context);
-      
+
       expect(clickId).toBeDefined();
       expect(changeId).toBeDefined();
       expect(clickId).not.toBe(changeId);
@@ -86,11 +90,11 @@ describe('On Feature System', () => {
       const commands = [
         { type: 'command', name: 'add', args: [{ type: 'literal', value: 'active' }] },
         { type: 'command', name: 'wait', args: [{ type: 'literal', value: 100 }] },
-        { type: 'command', name: 'remove', args: [{ type: 'literal', value: 'active' }] }
+        { type: 'command', name: 'remove', args: [{ type: 'literal', value: 'active' }] },
       ];
 
       const listenerId = feature.register(testElement, 'click', commands, context);
-      
+
       expect(listenerId).toBeDefined();
     });
   });
@@ -98,7 +102,7 @@ describe('On Feature System', () => {
   describe('Event Handling', () => {
     it('should execute commands when event is triggered', async () => {
       const commands = [
-        { type: 'command', name: 'hide', args: [{ type: 'identifier', name: 'me' }] }
+        { type: 'command', name: 'hide', args: [{ type: 'identifier', name: 'me' }] },
       ];
 
       // Mock command execution
@@ -106,7 +110,7 @@ describe('On Feature System', () => {
       vi.stubGlobal('__hyperscriptExecuteCommand', executeCommand);
 
       feature.register(testElement, 'click', commands, context);
-      
+
       // Trigger click event
       const clickEvent = new MouseEvent('click', { bubbles: true });
       testElement.dispatchEvent(clickEvent);
@@ -115,27 +119,31 @@ describe('On Feature System', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(executeCommand).toHaveBeenCalled();
-      
+
       vi.unstubAllGlobals();
     });
 
     it('should provide correct event context to commands', async () => {
       const commands = [
-        { type: 'command', name: 'set', args: [
-          { type: 'identifier', name: 'event' },
-          { type: 'identifier', name: 'target' }
-        ]}
+        {
+          type: 'command',
+          name: 'set',
+          args: [
+            { type: 'identifier', name: 'event' },
+            { type: 'identifier', name: 'target' },
+          ],
+        },
       ];
 
       let capturedContext: ExecutionContext | null = null;
-      const executeCommand = vi.fn().mockImplementation((context) => {
+      const executeCommand = vi.fn().mockImplementation(context => {
         capturedContext = context;
         return Promise.resolve(true);
       });
       vi.stubGlobal('__hyperscriptExecuteCommand', executeCommand);
 
       feature.register(testElement, 'click', commands, context);
-      
+
       const clickEvent = new MouseEvent('click', { bubbles: true });
       testElement.dispatchEvent(clickEvent);
 
@@ -145,28 +153,28 @@ describe('On Feature System', () => {
       expect(capturedContext?.locals.get('event')).toBe(clickEvent);
       expect(capturedContext?.locals.get('target')).toBe(testElement);
       expect(capturedContext?.locals.get('currentTarget')).toBe(testElement);
-      
+
       vi.unstubAllGlobals();
     });
 
     it('should handle multiple commands in sequence', async () => {
       const commands = [
         { type: 'command', name: 'add', args: [{ type: 'literal', value: 'clicked' }] },
-        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'Button clicked' }] }
+        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'Button clicked' }] },
       ];
 
       const executeCommand = vi.fn().mockResolvedValue(true);
       vi.stubGlobal('__hyperscriptExecuteCommand', executeCommand);
 
       feature.register(testElement, 'click', commands, context);
-      
+
       const clickEvent = new MouseEvent('click', { bubbles: true });
       testElement.dispatchEvent(clickEvent);
 
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(executeCommand).toHaveBeenCalledTimes(2);
-      
+
       vi.unstubAllGlobals();
     });
   });
@@ -174,24 +182,24 @@ describe('On Feature System', () => {
   describe('Event Unregistration', () => {
     it('should unregister event listeners', () => {
       const commands = [
-        { type: 'command', name: 'hide', args: [{ type: 'identifier', name: 'me' }] }
+        { type: 'command', name: 'hide', args: [{ type: 'identifier', name: 'me' }] },
       ];
 
       const listenerId = feature.register(testElement, 'click', commands, context);
       const result = feature.unregister(listenerId);
-      
+
       expect(result).toBe(true);
     });
 
     it('should return false for non-existent listener', () => {
       const result = feature.unregister('non-existent-id');
-      
+
       expect(result).toBe(false);
     });
 
     it('should stop executing commands after unregistration', async () => {
       const commands = [
-        { type: 'command', name: 'hide', args: [{ type: 'identifier', name: 'me' }] }
+        { type: 'command', name: 'hide', args: [{ type: 'identifier', name: 'me' }] },
       ];
 
       const executeCommand = vi.fn().mockResolvedValue(true);
@@ -199,23 +207,21 @@ describe('On Feature System', () => {
 
       const listenerId = feature.register(testElement, 'click', commands, context);
       feature.unregister(listenerId);
-      
+
       const clickEvent = new MouseEvent('click', { bubbles: true });
       testElement.dispatchEvent(clickEvent);
 
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(executeCommand).not.toHaveBeenCalled();
-      
+
       vi.unstubAllGlobals();
     });
   });
 
   describe('Error Handling', () => {
     it('should handle command execution errors gracefully', async () => {
-      const commands = [
-        { type: 'command', name: 'invalid', args: [] }
-      ];
+      const commands = [{ type: 'command', name: 'invalid', args: [] }];
 
       const executeCommand = vi.fn().mockRejectedValue(new Error('Command failed'));
       vi.stubGlobal('__hyperscriptExecuteCommand', executeCommand);
@@ -224,37 +230,38 @@ describe('On Feature System', () => {
       testElement.addEventListener('hyperscript:error', errorHandler);
 
       feature.register(testElement, 'click', commands, context);
-      
+
       const clickEvent = new MouseEvent('click', { bubbles: true });
       testElement.dispatchEvent(clickEvent);
 
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(errorHandler).toHaveBeenCalled();
-      
+
       vi.unstubAllGlobals();
     });
 
     it('should continue executing remaining commands after error', async () => {
       const commands = [
         { type: 'command', name: 'invalid', args: [] },
-        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'Still executed' }] }
+        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'Still executed' }] },
       ];
 
-      const executeCommand = vi.fn()
+      const executeCommand = vi
+        .fn()
         .mockRejectedValueOnce(new Error('First command failed'))
         .mockResolvedValueOnce(true);
       vi.stubGlobal('__hyperscriptExecuteCommand', executeCommand);
 
       feature.register(testElement, 'click', commands, context);
-      
+
       const clickEvent = new MouseEvent('click', { bubbles: true });
       testElement.dispatchEvent(clickEvent);
 
       await new Promise(resolve => setTimeout(resolve, 0));
 
       expect(executeCommand).toHaveBeenCalledTimes(2);
-      
+
       vi.unstubAllGlobals();
     });
   });
@@ -262,31 +269,33 @@ describe('On Feature System', () => {
   describe('Integration with Event System', () => {
     it('should support event delegation', () => {
       const commands = [
-        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'delegated' }] }
+        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'delegated' }] },
       ];
 
-      const listenerId = feature.register(testElement, 'click', commands, context, { delegated: true });
-      
+      const listenerId = feature.register(testElement, 'click', commands, context, {
+        delegated: true,
+      });
+
       expect(listenerId).toBeDefined();
     });
 
     it('should support event listener options', () => {
       const commands = [
-        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'once' }] }
+        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'once' }] },
       ];
 
       const listenerId = feature.register(testElement, 'click', commands, context, { once: true });
-      
+
       expect(listenerId).toBeDefined();
     });
 
     it('should handle complex event types', () => {
       const commands = [
-        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'keyboard' }] }
+        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'keyboard' }] },
       ];
 
       const listenerId = feature.register(testElement, 'keydown', commands, context);
-      
+
       expect(listenerId).toBeDefined();
     });
   });
@@ -294,11 +303,11 @@ describe('On Feature System', () => {
   describe('Performance', () => {
     it('should handle many event registrations efficiently', () => {
       const commands = [
-        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'test' }] }
+        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'test' }] },
       ];
 
       const listenerIds: string[] = [];
-      
+
       // Register 100 event listeners
       for (let i = 0; i < 100; i++) {
         const id = feature.register(testElement, 'click', commands, context);
@@ -311,11 +320,11 @@ describe('On Feature System', () => {
 
     it('should clean up properly when many listeners are unregistered', () => {
       const commands = [
-        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'test' }] }
+        { type: 'command', name: 'log', args: [{ type: 'literal', value: 'test' }] },
       ];
 
       const listenerIds: string[] = [];
-      
+
       // Register 50 event listeners
       for (let i = 0; i < 50; i++) {
         const id = feature.register(testElement, 'click', commands, context);

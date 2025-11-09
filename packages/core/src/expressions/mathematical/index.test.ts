@@ -11,14 +11,16 @@ import {
   EnhancedMultiplicationExpression,
   EnhancedDivisionExpression,
   EnhancedModuloExpression,
-  mathematicalExpressions
+  mathematicalExpressions,
 } from './index.ts';
 
 // ============================================================================
 // Test Helpers
 // ============================================================================
 
-function createTestContext(overrides: Partial<TypedExpressionContext> = {}): TypedExpressionContext {
+function createTestContext(
+  overrides: Partial<TypedExpressionContext> = {}
+): TypedExpressionContext {
   return {
     me: undefined,
     it: undefined,
@@ -27,14 +29,14 @@ function createTestContext(overrides: Partial<TypedExpressionContext> = {}): Typ
     locals: new Map(),
     globals: new Map(),
     event: undefined,
-    
+
     // Enhanced expression context properties
     expressionStack: [],
     evaluationDepth: 0,
     validationMode: 'strict',
     evaluationHistory: [],
-    
-    ...overrides
+
+    ...overrides,
   };
 }
 
@@ -503,7 +505,7 @@ describe('Enhanced Mathematical Expressions Integration', () => {
 
   beforeEach(() => {
     context = createTestContext({
-      evaluationHistory: []
+      evaluationHistory: [],
     });
   });
 
@@ -511,7 +513,9 @@ describe('Enhanced Mathematical Expressions Integration', () => {
     it('should provide all mathematical expressions', () => {
       expect(mathematicalExpressions.addition).toBeInstanceOf(EnhancedAdditionExpression);
       expect(mathematicalExpressions.subtraction).toBeInstanceOf(EnhancedSubtractionExpression);
-      expect(mathematicalExpressions.multiplication).toBeInstanceOf(EnhancedMultiplicationExpression);
+      expect(mathematicalExpressions.multiplication).toBeInstanceOf(
+        EnhancedMultiplicationExpression
+      );
       expect(mathematicalExpressions.division).toBeInstanceOf(EnhancedDivisionExpression);
       expect(mathematicalExpressions.modulo).toBeInstanceOf(EnhancedModuloExpression);
     });
@@ -527,17 +531,23 @@ describe('Enhanced Mathematical Expressions Integration', () => {
       // Step 1: 5 + 3 = 8
       const addResult = await addition.evaluate(context, { left: 5, right: 3 });
       expect(addResult.success).toBe(true);
-      
+
       if (addResult.success) {
         // Step 2: 8 * 2 = 16
-        const mulResult = await multiplication.evaluate(context, { left: addResult.value, right: 2 });
+        const mulResult = await multiplication.evaluate(context, {
+          left: addResult.value,
+          right: 2,
+        });
         expect(mulResult.success).toBe(true);
-        
+
         if (mulResult.success) {
           // Step 3: 16 - 1 = 15
-          const subResult = await subtraction.evaluate(context, { left: mulResult.value, right: 1 });
+          const subResult = await subtraction.evaluate(context, {
+            left: mulResult.value,
+            right: 1,
+          });
           expect(subResult.success).toBe(true);
-          
+
           if (subResult.success) {
             expect(subResult.value).toBe(15);
           }
@@ -561,7 +571,7 @@ describe('Enhanced Mathematical Expressions Integration', () => {
   describe('Type safety', () => {
     it('should have consistent metadata', () => {
       const expressions = Object.values(mathematicalExpressions);
-      
+
       expressions.forEach(expr => {
         expect(expr.category).toBe('Special');
         expect(expr.outputType).toBe('Number');
@@ -577,10 +587,10 @@ describe('Enhanced Mathematical Expressions Integration', () => {
   describe('Error consistency', () => {
     it('should provide consistent error structures', async () => {
       const expressions = Object.values(mathematicalExpressions);
-      
+
       for (const expr of expressions) {
         const result = await expr.evaluate(context, { left: 'invalid', right: 5 });
-        
+
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.errors).toHaveLength(1);

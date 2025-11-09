@@ -11,7 +11,7 @@ import {
   EnhancedLastExpression,
   EnhancedAtExpression,
   EnhancedRandomExpression,
-  positionalExpressions
+  positionalExpressions,
 } from './index';
 
 describe('Enhanced Positional Expressions', () => {
@@ -20,7 +20,7 @@ describe('Enhanced Positional Expressions', () => {
 
   beforeEach(() => {
     context = createTypedExecutionContext();
-    
+
     // Create test DOM elements
     testElements = [];
     for (let i = 0; i < 5; i++) {
@@ -61,9 +61,9 @@ describe('Enhanced Positional Expressions', () => {
     describe('Array Collections', () => {
       it('should get first element from number array', async () => {
         const result = await expression.evaluate(context, {
-          collection: [1, 2, 3, 4, 5]
+          collection: [1, 2, 3, 4, 5],
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(1);
@@ -73,9 +73,9 @@ describe('Enhanced Positional Expressions', () => {
 
       it('should get first element from string array', async () => {
         const result = await expression.evaluate(context, {
-          collection: ['apple', 'banana', 'cherry']
+          collection: ['apple', 'banana', 'cherry'],
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('apple');
@@ -86,9 +86,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should get first element from mixed array', async () => {
         const testObj = { name: 'test' };
         const result = await expression.evaluate(context, {
-          collection: [testObj, 'string', 42, true]
+          collection: [testObj, 'string', 42, true],
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(testObj);
@@ -98,9 +98,9 @@ describe('Enhanced Positional Expressions', () => {
 
       it('should handle empty array', async () => {
         const result = await expression.evaluate(context, {
-          collection: []
+          collection: [],
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -112,9 +112,9 @@ describe('Enhanced Positional Expressions', () => {
     describe('String Collections', () => {
       it('should get first character from string', async () => {
         const result = await expression.evaluate(context, {
-          collection: 'hello'
+          collection: 'hello',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('h');
@@ -124,9 +124,9 @@ describe('Enhanced Positional Expressions', () => {
 
       it('should handle empty string', async () => {
         const result = await expression.evaluate(context, {
-          collection: ''
+          collection: '',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -136,9 +136,9 @@ describe('Enhanced Positional Expressions', () => {
 
       it('should handle single character string', async () => {
         const result = await expression.evaluate(context, {
-          collection: 'a'
+          collection: 'a',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('a');
@@ -151,9 +151,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should get first element from NodeList', async () => {
         const nodeList = document.querySelectorAll('.item');
         const result = await expression.evaluate(context, {
-          collection: nodeList
+          collection: nodeList,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeInstanceOf(HTMLElement);
@@ -165,9 +165,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should handle empty NodeList', async () => {
         const nodeList = document.querySelectorAll('.nonexistent');
         const result = await expression.evaluate(context, {
-          collection: nodeList
+          collection: nodeList,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -179,9 +179,9 @@ describe('Enhanced Positional Expressions', () => {
     describe('Edge Cases', () => {
       it('should handle null collection', async () => {
         const result = await expression.evaluate(context, {
-          collection: null
+          collection: null,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -191,9 +191,9 @@ describe('Enhanced Positional Expressions', () => {
 
       it('should handle undefined collection', async () => {
         const result = await expression.evaluate(context, {
-          collection: undefined
+          collection: undefined,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -204,9 +204,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should handle Set collection', async () => {
         const testSet = new Set([1, 2, 3]);
         const result = await expression.evaluate(context, {
-          collection: testSet
+          collection: testSet,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(1);
@@ -218,31 +218,31 @@ describe('Enhanced Positional Expressions', () => {
     describe('Validation and Error Handling', () => {
       it('should validate correct input', () => {
         const validation = expression.validate({
-          collection: [1, 2, 3]
+          collection: [1, 2, 3],
         });
-        
+
         expect(validation.isValid).toBe(true);
         expect(validation.errors).toHaveLength(0);
       });
 
       it('should reject invalid input structure', () => {
         const validation = expression.validate({
-          wrongParam: [1, 2, 3]
+          wrongParam: [1, 2, 3],
         });
-        
+
         expect(validation.isValid).toBe(false);
         expect(validation.errors).toHaveLength(1);
       });
 
       it('should track performance', async () => {
         const initialHistoryLength = context.evaluationHistory.length;
-        
+
         await expression.evaluate(context, {
-          collection: [1, 2, 3]
+          collection: [1, 2, 3],
         });
-        
+
         expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
-        
+
         const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
         expect(evaluation.expressionName).toBe('first');
         expect(evaluation.category).toBe('Positional');
@@ -279,9 +279,9 @@ describe('Enhanced Positional Expressions', () => {
     describe('Collection Operations', () => {
       it('should get last element from array', async () => {
         const result = await expression.evaluate(context, {
-          collection: [1, 2, 3, 4, 5]
+          collection: [1, 2, 3, 4, 5],
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(5);
@@ -291,9 +291,9 @@ describe('Enhanced Positional Expressions', () => {
 
       it('should get last character from string', async () => {
         const result = await expression.evaluate(context, {
-          collection: 'hello'
+          collection: 'hello',
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('o');
@@ -304,9 +304,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should get last element from NodeList', async () => {
         const nodeList = document.querySelectorAll('.item');
         const result = await expression.evaluate(context, {
-          collection: nodeList
+          collection: nodeList,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeInstanceOf(HTMLElement);
@@ -317,9 +317,9 @@ describe('Enhanced Positional Expressions', () => {
 
       it('should handle single element array', async () => {
         const result = await expression.evaluate(context, {
-          collection: ['only']
+          collection: ['only'],
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('only');
@@ -329,12 +329,12 @@ describe('Enhanced Positional Expressions', () => {
 
       it('should handle empty collections', async () => {
         const testCases = [[], '', document.querySelectorAll('.nonexistent')];
-        
+
         for (const testCase of testCases) {
           const result = await expression.evaluate(context, {
-            collection: testCase
+            collection: testCase,
           });
-          
+
           expect(result.success).toBe(true);
           if (result.success) {
             expect(result.value).toBeUndefined();
@@ -347,22 +347,22 @@ describe('Enhanced Positional Expressions', () => {
     describe('Error Handling', () => {
       it('should validate input correctly', () => {
         const validResult = expression.validate({
-          collection: 'test'
+          collection: 'test',
         });
-        
+
         expect(validResult.isValid).toBe(true);
         expect(validResult.errors).toHaveLength(0);
       });
 
       it('should track performance correctly', async () => {
         const initialHistoryLength = context.evaluationHistory.length;
-        
+
         await expression.evaluate(context, {
-          collection: 'test'
+          collection: 'test',
         });
-        
+
         expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
-        
+
         const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
         expect(evaluation.expressionName).toBe('last');
         expect(evaluation.success).toBe(true);
@@ -388,9 +388,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should access element at positive index', async () => {
         const result = await expression.evaluate(context, {
           collection: [10, 20, 30, 40, 50],
-          index: 2
+          index: 2,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(30);
@@ -401,9 +401,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should access element at index 0', async () => {
         const result = await expression.evaluate(context, {
           collection: ['a', 'b', 'c'],
-          index: 0
+          index: 0,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('a');
@@ -415,9 +415,9 @@ describe('Enhanced Positional Expressions', () => {
         const arr = [1, 2, 3];
         const result = await expression.evaluate(context, {
           collection: arr,
-          index: arr.length - 1
+          index: arr.length - 1,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(3);
@@ -430,9 +430,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should access last element with -1', async () => {
         const result = await expression.evaluate(context, {
           collection: [1, 2, 3, 4, 5],
-          index: -1
+          index: -1,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe(5);
@@ -443,9 +443,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should access second-to-last element with -2', async () => {
         const result = await expression.evaluate(context, {
           collection: ['a', 'b', 'c', 'd'],
-          index: -2
+          index: -2,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('c');
@@ -456,9 +456,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should handle negative index out of bounds', async () => {
         const result = await expression.evaluate(context, {
           collection: [1, 2],
-          index: -5
+          index: -5,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -471,9 +471,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should access character at index', async () => {
         const result = await expression.evaluate(context, {
           collection: 'hello',
-          index: 1
+          index: 1,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('e');
@@ -484,9 +484,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should access character with negative index', async () => {
         const result = await expression.evaluate(context, {
           collection: 'world',
-          index: -1
+          index: -1,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('d');
@@ -500,9 +500,9 @@ describe('Enhanced Positional Expressions', () => {
         const nodeList = document.querySelectorAll('.item');
         const result = await expression.evaluate(context, {
           collection: nodeList,
-          index: 2
+          index: 2,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeInstanceOf(HTMLElement);
@@ -515,9 +515,9 @@ describe('Enhanced Positional Expressions', () => {
         const nodeList = document.querySelectorAll('.item');
         const result = await expression.evaluate(context, {
           collection: nodeList,
-          index: -1
+          index: -1,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeInstanceOf(HTMLElement);
@@ -531,9 +531,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should return undefined for positive index out of bounds', async () => {
         const result = await expression.evaluate(context, {
           collection: [1, 2, 3],
-          index: 10
+          index: 10,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -544,9 +544,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should return undefined for empty collection', async () => {
         const result = await expression.evaluate(context, {
           collection: [],
-          index: 0
+          index: 0,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -559,18 +559,18 @@ describe('Enhanced Positional Expressions', () => {
       it('should validate correct input', () => {
         const validation = expression.validate({
           collection: [1, 2, 3],
-          index: 1
+          index: 1,
         });
-        
+
         expect(validation.isValid).toBe(true);
         expect(validation.errors).toHaveLength(0);
       });
 
       it('should reject missing index', () => {
         const validation = expression.validate({
-          collection: [1, 2, 3]
+          collection: [1, 2, 3],
         });
-        
+
         expect(validation.isValid).toBe(false);
         expect(validation.errors).toHaveLength(1);
       });
@@ -578,23 +578,23 @@ describe('Enhanced Positional Expressions', () => {
       it('should reject non-number index', () => {
         const validation = expression.validate({
           collection: [1, 2, 3],
-          index: 'not-a-number'
+          index: 'not-a-number',
         });
-        
+
         expect(validation.isValid).toBe(false);
         expect(validation.errors).toHaveLength(1);
       });
 
       it('should track performance', async () => {
         const initialHistoryLength = context.evaluationHistory.length;
-        
+
         await expression.evaluate(context, {
           collection: [1, 2, 3],
-          index: 1
+          index: 1,
         });
-        
+
         expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
-        
+
         const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
         expect(evaluation.expressionName).toBe('at');
         expect(evaluation.category).toBe('Positional');
@@ -621,9 +621,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should select random element from array', async () => {
         const collection = [1, 2, 3, 4, 5];
         const result = await expression.evaluate(context, {
-          collection
+          collection,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(collection).toContain(result.value);
@@ -634,9 +634,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should select random character from string', async () => {
         const collection = 'abcde';
         const result = await expression.evaluate(context, {
-          collection
+          collection,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(['a', 'b', 'c', 'd', 'e']).toContain(result.value);
@@ -647,14 +647,14 @@ describe('Enhanced Positional Expressions', () => {
       it('should select random element from NodeList', async () => {
         const nodeList = document.querySelectorAll('.item');
         const result = await expression.evaluate(context, {
-          collection: nodeList
+          collection: nodeList,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeInstanceOf(HTMLElement);
           expect(result.type).toBe('Element');
-          
+
           const index = (result.value as HTMLElement).getAttribute('data-index');
           expect(['0', '1', '2', '3', '4']).toContain(index);
         }
@@ -662,9 +662,9 @@ describe('Enhanced Positional Expressions', () => {
 
       it('should return undefined for empty collection', async () => {
         const result = await expression.evaluate(context, {
-          collection: []
+          collection: [],
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -674,9 +674,9 @@ describe('Enhanced Positional Expressions', () => {
 
       it('should handle single element collection', async () => {
         const result = await expression.evaluate(context, {
-          collection: ['only']
+          collection: ['only'],
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBe('only');
@@ -689,7 +689,7 @@ describe('Enhanced Positional Expressions', () => {
       it('should produce varied results over multiple calls', async () => {
         const collection = [1, 2, 3, 4, 5];
         const results = new Set();
-        
+
         // Run multiple times to check for variety
         for (let i = 0; i < 20; i++) {
           const result = await expression.evaluate(context, { collection });
@@ -697,7 +697,7 @@ describe('Enhanced Positional Expressions', () => {
             results.add(result.value);
           }
         }
-        
+
         // Should have some variety (not always the same result)
         expect(results.size).toBeGreaterThan(1);
       });
@@ -705,9 +705,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should handle collections with repeated elements', async () => {
         const collection = [1, 1, 1, 2, 2];
         const result = await expression.evaluate(context, {
-          collection
+          collection,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect([1, 2]).toContain(result.value);
@@ -719,9 +719,9 @@ describe('Enhanced Positional Expressions', () => {
     describe('Edge Cases', () => {
       it('should handle null collection', async () => {
         const result = await expression.evaluate(context, {
-          collection: null
+          collection: null,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.value).toBeUndefined();
@@ -732,9 +732,9 @@ describe('Enhanced Positional Expressions', () => {
       it('should handle Set collection', async () => {
         const testSet = new Set(['a', 'b', 'c']);
         const result = await expression.evaluate(context, {
-          collection: testSet
+          collection: testSet,
         });
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(['a', 'b', 'c']).toContain(result.value);
@@ -746,31 +746,31 @@ describe('Enhanced Positional Expressions', () => {
     describe('Validation and Error Handling', () => {
       it('should validate correct input', () => {
         const validation = expression.validate({
-          collection: [1, 2, 3]
+          collection: [1, 2, 3],
         });
-        
+
         expect(validation.isValid).toBe(true);
         expect(validation.errors).toHaveLength(0);
       });
 
       it('should reject invalid input structure', () => {
         const validation = expression.validate({
-          wrongParam: [1, 2, 3]
+          wrongParam: [1, 2, 3],
         });
-        
+
         expect(validation.isValid).toBe(false);
         expect(validation.errors).toHaveLength(1);
       });
 
       it('should track performance', async () => {
         const initialHistoryLength = context.evaluationHistory.length;
-        
+
         await expression.evaluate(context, {
-          collection: [1, 2, 3]
+          collection: [1, 2, 3],
         });
-        
+
         expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
-        
+
         const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
         expect(evaluation.expressionName).toBe('random');
         expect(evaluation.category).toBe('Positional');
@@ -817,13 +817,13 @@ describe('Enhanced Positional Expressions', () => {
       document.body.appendChild(container);
 
       const nodeList = container.querySelectorAll('.item');
-      
+
       // Test first
       const firstExpr = new EnhancedFirstExpression();
       const firstResult = await firstExpr.evaluate(context, {
-        collection: nodeList
+        collection: nodeList,
       });
-      
+
       expect(firstResult.success).toBe(true);
       if (firstResult.success) {
         expect((firstResult.value as HTMLElement).className).toContain('nested-1');
@@ -832,9 +832,9 @@ describe('Enhanced Positional Expressions', () => {
       // Test last
       const lastExpr = new EnhancedLastExpression();
       const lastResult = await lastExpr.evaluate(context, {
-        collection: nodeList
+        collection: nodeList,
       });
-      
+
       expect(lastResult.success).toBe(true);
       if (lastResult.success) {
         expect((lastResult.value as HTMLElement).className).toContain('nested-3');
@@ -844,9 +844,9 @@ describe('Enhanced Positional Expressions', () => {
       const atExpr = new EnhancedAtExpression();
       const atResult = await atExpr.evaluate(context, {
         collection: nodeList,
-        index: 1
+        index: 1,
       });
-      
+
       expect(atResult.success).toBe(true);
       if (atResult.success) {
         expect((atResult.value as HTMLElement).className).toContain('nested-2');
@@ -857,19 +857,19 @@ describe('Enhanced Positional Expressions', () => {
 
     it('should handle large collections efficiently', async () => {
       const largeArray = Array.from({ length: 10000 }, (_, i) => i);
-      
+
       const testCases = [
         { expr: new EnhancedFirstExpression(), input: { collection: largeArray } },
         { expr: new EnhancedLastExpression(), input: { collection: largeArray } },
         { expr: new EnhancedAtExpression(), input: { collection: largeArray, index: 5000 } },
-        { expr: new EnhancedRandomExpression(), input: { collection: largeArray } }
+        { expr: new EnhancedRandomExpression(), input: { collection: largeArray } },
       ];
 
       for (const testCase of testCases) {
         const startTime = Date.now();
         const result = await testCase.expr.evaluate(context, testCase.input as any);
         const duration = Date.now() - startTime;
-        
+
         expect(result.success).toBe(true);
         expect(duration).toBeLessThan(10); // Should be very fast
       }
@@ -877,12 +877,12 @@ describe('Enhanced Positional Expressions', () => {
 
     it('should maintain type consistency across operations', async () => {
       const mixedArray = [1, 'string', true, { key: 'value' }, [1, 2, 3]];
-      
+
       const firstExpr = new EnhancedFirstExpression();
       const firstResult = await firstExpr.evaluate(context, {
-        collection: mixedArray
+        collection: mixedArray,
       });
-      
+
       expect(firstResult.success).toBe(true);
       if (firstResult.success) {
         expect(firstResult.value).toBe(1);
@@ -892,9 +892,9 @@ describe('Enhanced Positional Expressions', () => {
       const atExpr = new EnhancedAtExpression();
       const atResult = await atExpr.evaluate(context, {
         collection: mixedArray,
-        index: 1
+        index: 1,
       });
-      
+
       expect(atResult.success).toBe(true);
       if (atResult.success) {
         expect(atResult.value).toBe('string');
@@ -903,9 +903,9 @@ describe('Enhanced Positional Expressions', () => {
 
       const lastResult = await atExpr.evaluate(context, {
         collection: mixedArray,
-        index: -1
+        index: -1,
       });
-      
+
       expect(lastResult.success).toBe(true);
       if (lastResult.success) {
         expect(Array.isArray(lastResult.value)).toBe(true);
@@ -915,12 +915,16 @@ describe('Enhanced Positional Expressions', () => {
 
     it('should handle iterable objects correctly', async () => {
       // Map
-      const testMap = new Map([['a', 1], ['b', 2], ['c', 3]]);
+      const testMap = new Map([
+        ['a', 1],
+        ['b', 2],
+        ['c', 3],
+      ]);
       const firstExpr = new EnhancedFirstExpression();
       const mapResult = await firstExpr.evaluate(context, {
-        collection: testMap
+        collection: testMap,
       });
-      
+
       expect(mapResult.success).toBe(true);
       if (mapResult.success) {
         expect(Array.isArray(mapResult.value)).toBe(true);
@@ -931,9 +935,9 @@ describe('Enhanced Positional Expressions', () => {
       // Set
       const testSet = new Set([10, 20, 30]);
       const setResult = await firstExpr.evaluate(context, {
-        collection: testSet
+        collection: testSet,
       });
-      
+
       expect(setResult.success).toBe(true);
       if (setResult.success) {
         expect(setResult.value).toBe(10);
@@ -945,17 +949,17 @@ describe('Enhanced Positional Expressions', () => {
   describe('Performance and Memory', () => {
     it('should not leak memory with large collections', async () => {
       const expression = new EnhancedRandomExpression();
-      
+
       // Create and process many large collections
       for (let i = 0; i < 100; i++) {
         const largeArray = Array.from({ length: 1000 }, (_, idx) => idx);
         const result = await expression.evaluate(context, {
-          collection: largeArray
+          collection: largeArray,
         });
-        
+
         expect(result.success).toBe(true);
       }
-      
+
       // No memory leaks should occur
       expect(true).toBe(true); // Test completes successfully
     });
@@ -963,19 +967,19 @@ describe('Enhanced Positional Expressions', () => {
     it('should maintain consistent performance', async () => {
       const collection = Array.from({ length: 1000 }, (_, i) => i);
       const durations: number[] = [];
-      
+
       for (let i = 0; i < 10; i++) {
         const startTime = Date.now();
         const result = await new EnhancedAtExpression().evaluate(context, {
           collection,
-          index: Math.floor(Math.random() * collection.length)
+          index: Math.floor(Math.random() * collection.length),
         });
         const duration = Date.now() - startTime;
-        
+
         expect(result.success).toBe(true);
         durations.push(duration);
       }
-      
+
       // Performance should be consistent (all operations under 5ms)
       durations.forEach(duration => {
         expect(duration).toBeLessThan(5);

@@ -22,8 +22,12 @@ describe('Put Command', () => {
   describe('Command Properties', () => {
     it('should have correct metadata', () => {
       expect(command.name).toBe('put');
-      expect(command.syntax).toBe('put <content> (into | before | after | at start of | at end of) <target>');
-      expect(command.description).toBe('Inserts content into DOM elements or properties with validation');
+      expect(command.syntax).toBe(
+        'put <content> (into | before | after | at start of | at end of) <target>'
+      );
+      expect(command.description).toBe(
+        'Inserts content into DOM elements or properties with validation'
+      );
     });
   });
 

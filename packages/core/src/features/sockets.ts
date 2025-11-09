@@ -1,15 +1,10 @@
-
-
 /**
  * Enhanced Sockets Feature Implementation
  * Type-safe WebSocket management feature with enhanced validation and LLM integration
  */
 
 import { v, z } from '../validation/lightweight-validators';
-import type {
-  ContextMetadata,
-  EvaluationResult
-} from '../types/context-types';
+import type { ContextMetadata, EvaluationResult } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
 
@@ -22,61 +17,81 @@ export const SocketsInputSchema = v.object({
   socket: z.object({
     url: v.string().url(),
     protocols: v.array(v.string()).default([]),
-    reconnect: z.object({
-      enabled: v.boolean().default(true),
-      maxAttempts: v.number().default(5),
-      delay: v.number().default(1000),
-      backoff: z.enum(['linear', 'exponential']).default('exponential'),
-      maxDelay: v.number().default(30000),
-    }).default({}),
-    heartbeat: v.object({
-      enabled: v.boolean().default(false),
-      interval: v.number().default(30000),
-      message: v.string().default('ping'),
-      timeout: v.number().default(5000),
-    }).default({}),
+    reconnect: z
+      .object({
+        enabled: v.boolean().default(true),
+        maxAttempts: v.number().default(5),
+        delay: v.number().default(1000),
+        backoff: z.enum(['linear', 'exponential']).default('exponential'),
+        maxDelay: v.number().default(30000),
+      })
+      .default({}),
+    heartbeat: v
+      .object({
+        enabled: v.boolean().default(false),
+        interval: v.number().default(30000),
+        message: v.string().default('ping'),
+        timeout: v.number().default(5000),
+      })
+      .default({}),
     compression: v.boolean().default(false),
     binaryType: z.enum(['blob', 'arraybuffer']).default('blob'),
   }),
   /** Event handlers */
-  eventHandlers: v.array(v.object({
-    event: z.enum(['open', 'close', 'error', 'message']),
-    filter: v.string().optional(), // Message filter expression
-    commands: v.array(v.any()),
-    options: z.object({
-      once: v.boolean().default(false),
-      debounce: v.number().optional(),
-      throttle: v.number().optional(),
-    }).default({}),
-  })).default([]),
+  eventHandlers: v
+    .array(
+      v.object({
+        event: z.enum(['open', 'close', 'error', 'message']),
+        filter: v.string().optional(), // Message filter expression
+        commands: v.array(v.any()),
+        options: z
+          .object({
+            once: v.boolean().default(false),
+            debounce: v.number().optional(),
+            throttle: v.number().optional(),
+          })
+          .default({}),
+      })
+    )
+    .default([]),
   /** Message handling */
-  messageHandling: v.object({
-    format: z.enum(['json', 'text', 'binary']).default('json'),
-    validation: z.object({
-      enabled: v.boolean().default(true),
-      schema: v.any().optional(), // JSON schema for message validation
-    }).default({}),
-    queue: v.object({
-      enabled: v.boolean().default(true),
-      maxSize: v.number().default(100),
-      persistence: v.boolean().default(false),
-    }).default({}),
-  }).default({}),
+  messageHandling: v
+    .object({
+      format: z.enum(['json', 'text', 'binary']).default('json'),
+      validation: z
+        .object({
+          enabled: v.boolean().default(true),
+          schema: v.any().optional(), // JSON schema for message validation
+        })
+        .default({}),
+      queue: v
+        .object({
+          enabled: v.boolean().default(true),
+          maxSize: v.number().default(100),
+          persistence: v.boolean().default(false),
+        })
+        .default({}),
+    })
+    .default({}),
   /** Execution context */
-  context: v.object({
-    variables: z.record(v.string(), v.any()).default({}),
-    me: v.any().optional(),
-    it: v.any().optional(),
-    target: v.any().optional(),
-  }).default({}),
+  context: v
+    .object({
+      variables: z.record(v.string(), v.any()).default({}),
+      me: v.any().optional(),
+      it: v.any().optional(),
+      target: v.any().optional(),
+    })
+    .default({}),
   /** Feature options */
-  options: v.object({
-    enableAutoConnect: v.boolean().default(true),
-    enableMessageQueue: v.boolean().default(true),
-    enableErrorHandling: v.boolean().default(true),
-    maxConnections: v.number().default(5),
-    connectionTimeout: v.number().default(10000),
-  }).default({}),
+  options: v
+    .object({
+      enableAutoConnect: v.boolean().default(true),
+      enableMessageQueue: v.boolean().default(true),
+      enableErrorHandling: v.boolean().default(true),
+      maxConnections: v.number().default(5),
+      connectionTimeout: v.number().default(10000),
+    })
+    .default({}),
   /** Environment settings */
   environment: z.enum(['frontend', 'backend', 'universal']).default('frontend'),
   debug: v.boolean().default(false),
@@ -89,7 +104,7 @@ export const SocketsOutputSchema = v.object({
   category: v.literal('Frontend'),
   capabilities: v.array(v.string()),
   state: z.enum(['ready', 'connecting', 'connected', 'disconnecting', 'disconnected', 'error']),
-  
+
   /** Connection management */
   connection: z.object({
     connect: v.any(),
@@ -99,7 +114,7 @@ export const SocketsOutputSchema = v.object({
     getState: v.any(),
     getConnectionInfo: v.any(),
   }),
-  
+
   /** Message handling */
   messaging: v.object({
     send: v.any(),
@@ -109,7 +124,7 @@ export const SocketsOutputSchema = v.object({
     unsubscribe: v.any(),
     getMessageHistory: v.any(),
   }),
-  
+
   /** Event management */
   events: v.object({
     addHandler: v.any(),
@@ -117,7 +132,7 @@ export const SocketsOutputSchema = v.object({
     emit: v.any(),
     getHandlers: v.any(),
   }),
-  
+
   /** Queue management */
   queue: v.object({
     add: v.any(),
@@ -126,7 +141,7 @@ export const SocketsOutputSchema = v.object({
     getSize: v.any(),
     getPending: v.any(),
   }),
-  
+
   /** Error handling */
   errors: v.object({
     handle: v.any(),
@@ -216,7 +231,8 @@ export interface SocketMetrics {
 export class TypedSocketsFeatureImplementation {
   public readonly name = 'socketsFeature';
   public readonly category = 'Frontend' as const;
-  public readonly description = 'Type-safe WebSocket management feature with reconnection, message queuing, and comprehensive error handling';
+  public readonly description =
+    'Type-safe WebSocket management feature with reconnection, message queuing, and comprehensive error handling';
   public readonly inputSchema = SocketsInputSchema;
   public readonly outputType: EvaluationType = 'Context';
 
@@ -239,25 +255,33 @@ export class TypedSocketsFeatureImplementation {
   public readonly metadata: ContextMetadata = {
     category: 'Frontend',
     complexity: 'complex',
-    sideEffects: ['network-connection', 'websocket-management', 'message-transmission', 'reconnection-logic'],
+    sideEffects: [
+      'network-connection',
+      'websocket-management',
+      'message-transmission',
+      'reconnection-logic',
+    ],
     dependencies: ['websocket-api', 'network-connection', 'message-serialization', 'event-system'],
     returnTypes: ['Context'],
     examples: [
       {
-        input: '{ socket: { url: "wss://api.example.com/ws" }, eventHandlers: [{ event: "message", commands: [{ name: "processMessage" }] }] }',
+        input:
+          '{ socket: { url: "wss://api.example.com/ws" }, eventHandlers: [{ event: "message", commands: [{ name: "processMessage" }] }] }',
         description: 'Connect to WebSocket server and handle incoming messages',
-        expectedOutput: 'TypedSocketsContext with connection management and message handling'
+        expectedOutput: 'TypedSocketsContext with connection management and message handling',
       },
       {
-        input: '{ socket: { url: "wss://chat.example.com", reconnect: { enabled: true, maxAttempts: 10 } }, messageHandling: { format: "json" } }',
+        input:
+          '{ socket: { url: "wss://chat.example.com", reconnect: { enabled: true, maxAttempts: 10 } }, messageHandling: { format: "json" } }',
         description: 'Chat WebSocket with auto-reconnection and JSON message handling',
-        expectedOutput: 'Resilient WebSocket connection with automatic recovery'
+        expectedOutput: 'Resilient WebSocket connection with automatic recovery',
       },
       {
-        input: '{ socket: { url: "wss://data.example.com", heartbeat: { enabled: true, interval: 30000 } }, messageHandling: { queue: { enabled: true } } }',
+        input:
+          '{ socket: { url: "wss://data.example.com", heartbeat: { enabled: true, interval: 30000 } }, messageHandling: { queue: { enabled: true } } }',
         description: 'Data WebSocket with heartbeat monitoring and message queuing',
-        expectedOutput: 'Monitored connection with reliable message delivery'
-      }
+        expectedOutput: 'Monitored connection with reliable message delivery',
+      },
     ],
     relatedContexts: ['onFeature', 'behaviorFeature', 'eventSourceFeature'],
     relatedExpressions: [],
@@ -265,70 +289,81 @@ export class TypedSocketsFeatureImplementation {
     environmentRequirements: {
       browser: true,
       server: true,
-      nodejs: true
+      nodejs: true,
     },
     performance: {
       averageTime: 25.4,
-      complexity: 'O(n)' // n = number of connections and messages
-    }
+      complexity: 'O(n)', // n = number of connections and messages
+    },
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Creates type-safe WebSocket connections for hyperscript with automatic reconnection, message queuing, and comprehensive error handling',
+    summary:
+      'Creates type-safe WebSocket connections for hyperscript with automatic reconnection, message queuing, and comprehensive error handling',
     parameters: [
       {
         name: 'socketsConfig',
         type: 'SocketsInput',
-        description: 'WebSocket configuration including URL, protocols, reconnection settings, and event handlers',
+        description:
+          'WebSocket configuration including URL, protocols, reconnection settings, and event handlers',
         optional: false,
         examples: [
           '{ socket: { url: "wss://api.example.com/ws" }, eventHandlers: [{ event: "message", commands: [{ name: "handleMessage" }] }] }',
           '{ socket: { url: "wss://chat.com", reconnect: { maxAttempts: 5 } }, messageHandling: { format: "json" } }',
-          '{ socket: { url: "wss://realtime.com", heartbeat: { enabled: true } }, options: { enableAutoConnect: true } }'
-        ]
-      }
+          '{ socket: { url: "wss://realtime.com", heartbeat: { enabled: true } }, options: { enableAutoConnect: true } }',
+        ],
+      },
     ],
     returns: {
       type: 'SocketsContext',
-      description: 'WebSocket management context with connection control, messaging, and event handling capabilities',
+      description:
+        'WebSocket management context with connection control, messaging, and event handling capabilities',
       examples: [
         'context.connection.connect() → establish WebSocket connection',
         'context.messaging.sendJSON({data: "value"}) → send JSON message',
         'context.events.addHandler("message", handler) → add message handler',
-        'context.queue.add(message) → queue message for delivery'
-      ]
+        'context.queue.add(message) → queue message for delivery',
+      ],
     },
     examples: [
       {
         title: 'Basic WebSocket connection',
         code: 'const socketsContext = await createSocketsFeature({ socket: { url: "wss://api.example.com/ws" }, eventHandlers: [{ event: "message", commands: [{ name: "processData" }] }] })',
         explanation: 'Create WebSocket connection with message processing',
-        output: 'Connected WebSocket with automatic message handling'
+        output: 'Connected WebSocket with automatic message handling',
       },
       {
         title: 'Resilient chat connection',
         code: 'await socketsContext.connection.connect({ reconnect: { enabled: true, maxAttempts: 10 }, heartbeat: { enabled: true } })',
         explanation: 'Establish chat connection with reconnection and heartbeat monitoring',
-        output: 'Robust WebSocket suitable for real-time chat applications'
+        output: 'Robust WebSocket suitable for real-time chat applications',
       },
       {
         title: 'Send structured data',
         code: 'await socketsContext.messaging.sendJSON({ type: "chat", message: "Hello", userId: 123 })',
         explanation: 'Send JSON-formatted message through WebSocket',
-        output: 'Structured message transmitted with automatic serialization'
-      }
+        output: 'Structured message transmitted with automatic serialization',
+      },
     ],
     seeAlso: ['onFeature', 'eventSourceFeature', 'networkManagement', 'realTimeData'],
-    tags: ['websockets', 'realtime', 'networking', 'messaging', 'reconnection', 'type-safe', 'enhanced-pattern']
+    tags: [
+      'websockets',
+      'realtime',
+      'networking',
+      'messaging',
+      'reconnection',
+      'type-safe',
+      'enhanced-pattern',
+    ],
   };
 
   async initialize(input: SocketsInput): Promise<EvaluationResult<SocketsOutput>> {
     const startTime = Date.now();
-    
+
     try {
       // Initialize socket system config first
       const config = await this.initializeConfig(input);
-      
+
       // Validate input using enhanced pattern
       const validation = this.validate(input);
       if (!validation.isValid) {
@@ -338,18 +373,25 @@ export class TypedSocketsFeatureImplementation {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions,
         };
       }
-      
+
       // Create enhanced sockets context
       const context: SocketsOutput = {
         contextId: `sockets-${Date.now()}`,
         timestamp: startTime,
         category: 'Frontend',
-        capabilities: ['websocket-connection', 'message-handling', 'reconnection-management', 'queue-management', 'event-handling', 'error-recovery'],
+        capabilities: [
+          'websocket-connection',
+          'message-handling',
+          'reconnection-management',
+          'queue-management',
+          'event-handling',
+          'error-recovery',
+        ],
         state: 'ready',
-        
+
         // Connection management
         connection: {
           connect: this.createConnectionEstablisher(config),
@@ -359,7 +401,7 @@ export class TypedSocketsFeatureImplementation {
           getState: this.createStateGetter(),
           getConnectionInfo: this.createConnectionInfoGetter(),
         },
-        
+
         // Message handling
         messaging: {
           send: this.createMessageSender(),
@@ -369,7 +411,7 @@ export class TypedSocketsFeatureImplementation {
           unsubscribe: this.createMessageUnsubscriber(),
           getMessageHistory: this.createMessageHistoryGetter(),
         },
-        
+
         // Event management
         events: {
           addHandler: this.createEventHandlerAdder(),
@@ -377,7 +419,7 @@ export class TypedSocketsFeatureImplementation {
           emit: this.createEventEmitter(),
           getHandlers: this.createHandlerGetter(),
         },
-        
+
         // Queue management
         queue: {
           add: this.createQueueAdder(),
@@ -386,14 +428,14 @@ export class TypedSocketsFeatureImplementation {
           getSize: this.createQueueSizeGetter(),
           getPending: this.createPendingGetter(),
         },
-        
+
         // Error handling
         errors: {
           handle: this.createErrorHandler(),
           getErrorHistory: this.createErrorHistoryGetter(),
           clearErrors: this.createErrorClearer(),
           setErrorHandler: this.createErrorHandlerSetter(),
-        }
+        },
       };
 
       // Create initial connection if auto-connect is enabled
@@ -403,28 +445,29 @@ export class TypedSocketsFeatureImplementation {
 
       // Track performance using enhanced pattern
       this.trackPerformance(startTime, true, context);
-      
+
       return {
         success: true,
         value: context,
-        type: 'Context'
+        type: 'Context',
       };
-
     } catch (error) {
       this.trackPerformance(startTime, false);
-      
+
       return {
         success: false,
-        errors: [{
-          type: 'runtime-error',
-          message: `Sockets feature initialization failed: ${error instanceof Error ? error.message : String(error)}`
-        }],
+        errors: [
+          {
+            type: 'runtime-error',
+            message: `Sockets feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
         suggestions: [
           'Verify WebSocket URL is valid and accessible',
           'Check network connectivity and firewall settings',
           'Ensure WebSocket server supports specified protocols',
-          'Validate event handler configurations are correct'
-        ]
+          'Validate event handler configurations are correct',
+        ],
       };
     }
   }
@@ -436,7 +479,7 @@ export class TypedSocketsFeatureImplementation {
         return {
           isValid: false,
           errors: [{ type: 'invalid-input', message: 'Input must be an object', suggestions: [] }],
-          suggestions: ['Provide a valid WebSocket configuration object']
+          suggestions: ['Provide a valid WebSocket configuration object'],
         };
       }
 
@@ -453,19 +496,21 @@ export class TypedSocketsFeatureImplementation {
           const url = new URL(data.socket.url);
           if (!['ws:', 'wss:'].includes(url.protocol)) {
             errors.push({
-              type: 'invalid-input', code: 'invalid-websocket-protocol',
+              type: 'invalid-input',
+              code: 'invalid-websocket-protocol',
               message: 'WebSocket URL must use ws:// or wss:// protocol',
               path: 'socket.url',
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Use ws:// for local development or wss:// for secure connections');
           }
         } catch (urlError) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-websocket-url',
+            type: 'invalid-input',
+            code: 'invalid-websocket-url',
             message: `Invalid WebSocket URL: ${data.socket.url}`,
             path: 'socket.url',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Provide a valid WebSocket URL (e.g., "wss://api.example.com/ws")');
         }
@@ -475,20 +520,22 @@ export class TypedSocketsFeatureImplementation {
       if (data.socket?.reconnect) {
         if (data.socket.reconnect.maxAttempts < 0) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-reconnect-attempts',
+            type: 'invalid-input',
+            code: 'invalid-reconnect-attempts',
             message: 'Max reconnection attempts must be non-negative',
             path: 'socket.reconnect.maxAttempts',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set maxAttempts to 0 or positive number (0 = no reconnection)');
         }
 
         if (data.socket.reconnect.delay < 0) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-reconnect-delay',
+            type: 'invalid-input',
+            code: 'invalid-reconnect-delay',
             message: 'Reconnection delay must be non-negative',
             path: 'socket.reconnect.delay',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set delay to positive number in milliseconds');
         }
@@ -498,7 +545,7 @@ export class TypedSocketsFeatureImplementation {
             type: 'validation-error',
             message: 'Max delay must be greater than or equal to initial delay',
             path: 'socket.reconnect.maxDelay',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Ensure maxDelay >= delay for proper backoff behavior');
         }
@@ -512,7 +559,7 @@ export class TypedSocketsFeatureImplementation {
             code: 'invalid-heartbeat-interval',
             message: 'Heartbeat interval must be positive',
             path: 'socket.heartbeat.interval',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set heartbeat interval to positive number in milliseconds');
         }
@@ -523,7 +570,7 @@ export class TypedSocketsFeatureImplementation {
             code: 'invalid-heartbeat-timeout',
             message: 'Heartbeat timeout must be positive',
             path: 'socket.heartbeat.timeout',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set heartbeat timeout to positive number in milliseconds');
         }
@@ -533,7 +580,7 @@ export class TypedSocketsFeatureImplementation {
             type: 'validation-error',
             message: 'Heartbeat timeout must be less than interval',
             path: 'socket.heartbeat',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Ensure timeout < interval for proper heartbeat detection');
         }
@@ -548,10 +595,11 @@ export class TypedSocketsFeatureImplementation {
               new Function('message', 'event', `return ${handler.filter}`);
             } catch (filterError) {
               errors.push({
-                type: 'invalid-input', code: 'invalid-filter-expression',
+                type: 'invalid-input',
+                code: 'invalid-filter-expression',
                 message: `Invalid filter expression: ${handler.filter}`,
                 path: `eventHandlers[${index}].filter`,
-                suggestions: []
+                suggestions: [],
               });
               suggestions.push('Use valid JavaScript expression for message filtering');
             }
@@ -560,10 +608,11 @@ export class TypedSocketsFeatureImplementation {
           // Validate performance settings
           if (handler.options?.throttle && handler.options?.debounce) {
             errors.push({
-              type: 'schema-validation', code: 'conflicting-performance-options',
+              type: 'schema-validation',
+              code: 'conflicting-performance-options',
               message: 'Cannot use both throttle and debounce on the same event handler',
               path: `eventHandlers[${index}].options`,
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Choose either throttle OR debounce, not both');
           }
@@ -571,10 +620,11 @@ export class TypedSocketsFeatureImplementation {
           // Validate commands array
           if (!handler.commands || handler.commands.length === 0) {
             errors.push({
-              type: 'empty-config', code: 'empty-commands-array',
+              type: 'empty-config',
+              code: 'empty-commands-array',
               message: 'Event handler must have at least one command',
               path: `eventHandlers[${index}].commands`,
-              suggestions: []
+              suggestions: [],
             });
             suggestions.push('Add at least one command to execute when event occurs');
           }
@@ -585,10 +635,11 @@ export class TypedSocketsFeatureImplementation {
       if (data.messageHandling?.queue) {
         if (data.messageHandling.queue.maxSize < 0) {
           errors.push({
-            type: 'invalid-input', code: 'invalid-queue-size',
+            type: 'invalid-input',
+            code: 'invalid-queue-size',
             message: 'Queue max size must be non-negative (0 = unlimited)',
             path: 'messageHandling.queue.maxSize',
-            suggestions: []
+            suggestions: [],
           });
           suggestions.push('Set queue maxSize to non-negative number (0 for unlimited)');
         }
@@ -597,20 +648,22 @@ export class TypedSocketsFeatureImplementation {
       // Validate connection limits
       if (data.options?.maxConnections <= 0) {
         errors.push({
-          type: 'invalid-input', code: 'invalid-max-connections',
+          type: 'invalid-input',
+          code: 'invalid-max-connections',
           message: 'Max connections must be positive',
           path: 'options.maxConnections',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Set maxConnections to positive number');
       }
 
       if (data.options?.connectionTimeout <= 0) {
         errors.push({
-          type: 'invalid-input', code: 'invalid-connection-timeout',
+          type: 'invalid-input',
+          code: 'invalid-connection-timeout',
           message: 'Connection timeout must be positive',
           path: 'options.connectionTimeout',
-          suggestions: []
+          suggestions: [],
         });
         suggestions.push('Set connectionTimeout to positive number in milliseconds');
       }
@@ -618,22 +671,23 @@ export class TypedSocketsFeatureImplementation {
       return {
         isValid: errors.length === 0,
         errors,
-        suggestions
+        suggestions,
       };
-
     } catch (error) {
       return {
         isValid: false,
-        errors: [{
-          type: 'schema-validation',
-          suggestions: [],
-          message: error instanceof Error ? error.message : 'Invalid input format'
-        }],
+        errors: [
+          {
+            type: 'schema-validation',
+            suggestions: [],
+            message: error instanceof Error ? error.message : 'Invalid input format',
+          },
+        ],
         suggestions: [
           'Ensure input matches SocketsInput schema',
           'Check WebSocket configuration structure',
-          'Verify event handler and message handling configurations are valid'
-        ]
+          'Verify event handler and message handling configurations are valid',
+        ],
       };
     }
   }
@@ -647,13 +701,17 @@ export class TypedSocketsFeatureImplementation {
       ...input.options,
       environment: input.environment,
       debug: input.debug,
-      initialized: Date.now()
+      initialized: Date.now(),
     };
   }
 
-  private async createSocketConnection(socketConfig: any, eventHandlers: any[], _context: any): Promise<SocketConnection> {
+  private async createSocketConnection(
+    socketConfig: any,
+    eventHandlers: any[],
+    _context: any
+  ): Promise<SocketConnection> {
     const connectionId = `socket-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const connection: SocketConnection = {
       id: connectionId,
       url: socketConfig.url,
@@ -667,7 +725,7 @@ export class TypedSocketsFeatureImplementation {
     };
 
     this.connections.set(connectionId, connection);
-    
+
     // Initialize message queue for this connection
     this.messageQueue.set(connectionId, []);
 
@@ -679,9 +737,12 @@ export class TypedSocketsFeatureImplementation {
     return connection;
   }
 
-  private async registerEventHandler(_connectionId: string, handler: any): Promise<SocketEventHandler> {
+  private async registerEventHandler(
+    _connectionId: string,
+    handler: any
+  ): Promise<SocketEventHandler> {
     const handlerId = `handler-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     const eventHandler: SocketEventHandler = {
       id: handlerId,
       event: handler.event,
@@ -703,16 +764,16 @@ export class TypedSocketsFeatureImplementation {
 
     try {
       connection.state = 'connecting';
-      
+
       // Create WebSocket instance (would be actual WebSocket in browser/Node.js)
       if (typeof WebSocket !== 'undefined') {
         connection.websocket = new WebSocket(connection.url, connection.protocols);
-        
+
         // Set up event listeners
         connection.websocket.onopen = () => this.handleWebSocketOpen(connectionId);
-        connection.websocket.onclose = (event) => this.handleWebSocketClose(connectionId, event);
-        connection.websocket.onerror = (event) => this.handleWebSocketError(connectionId, event);
-        connection.websocket.onmessage = (event) => this.handleWebSocketMessage(connectionId, event);
+        connection.websocket.onclose = event => this.handleWebSocketClose(connectionId, event);
+        connection.websocket.onerror = event => this.handleWebSocketError(connectionId, event);
+        connection.websocket.onmessage = event => this.handleWebSocketMessage(connectionId, event);
       } else {
         // Mock connection for testing environments
         connection.state = 'connected';
@@ -749,7 +810,7 @@ export class TypedSocketsFeatureImplementation {
     connection.disconnectedAt = Date.now();
 
     await this.executeEventHandlers(connectionId, 'close', event);
-    
+
     // Attempt reconnection if enabled
     // Would implement reconnection logic here
   }
@@ -769,7 +830,7 @@ export class TypedSocketsFeatureImplementation {
     if (!connection) return;
 
     connection.messagesReceived++;
-    
+
     // Create message record
     const message: SocketMessage = {
       id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -787,8 +848,9 @@ export class TypedSocketsFeatureImplementation {
   }
 
   private async executeEventHandlers(_connectionId: string, eventType: string, eventData: any) {
-    const handlers = Array.from(this.eventHandlers.values())
-      .filter(h => h.event === eventType && h.isActive);
+    const handlers = Array.from(this.eventHandlers.values()).filter(
+      h => h.event === eventType && h.isActive
+    );
 
     for (const handler of handlers) {
       try {
@@ -804,25 +866,24 @@ export class TypedSocketsFeatureImplementation {
 
         if (handler.options.debounce) {
           this.applyDebounce(handler.id, handler.options.debounce, () => {
-            this.executeHandlerCommands(handler, eventData);
+            void this.executeHandlerCommands(handler, eventData);
           });
           continue;
         }
 
         await this.executeHandlerCommands(handler, eventData);
-        
+
         handler.executionCount++;
         handler.lastExecutionTime = Date.now();
 
         if (handler.options.once) {
           handler.isActive = false;
         }
-
       } catch (error) {
         this.errorHistory.push({
           error: error as Error,
           timestamp: Date.now(),
-          context: { handler, eventData }
+          context: { handler, eventData },
         });
       }
     }
@@ -830,14 +891,14 @@ export class TypedSocketsFeatureImplementation {
 
   private async executeHandlerCommands(handler: SocketEventHandler, eventData: any): Promise<any> {
     // Simplified command execution - would integrate with actual command executor
-    let result = { success: true, executed: handler.commands.length };
-    
+    const result = { success: true, executed: handler.commands.length };
+
     for (const command of handler.commands) {
       if (typeof command === 'object' && command.name) {
         await this.executeBasicCommand(command, { eventData });
       }
     }
-    
+
     return result;
   }
 
@@ -867,7 +928,7 @@ export class TypedSocketsFeatureImplementation {
     if (data instanceof ArrayBuffer || data instanceof Blob) {
       return 'binary';
     }
-    
+
     if (typeof data === 'string') {
       try {
         JSON.parse(data);
@@ -876,7 +937,7 @@ export class TypedSocketsFeatureImplementation {
         return 'text';
       }
     }
-    
+
     return 'text';
   }
 
@@ -905,12 +966,12 @@ export class TypedSocketsFeatureImplementation {
   private isThrottled(handlerId: string, delay: number): boolean {
     const lastTime = this.throttleTimers.get(handlerId) || 0;
     const now = Date.now();
-    
+
     if (now - lastTime >= delay) {
       this.throttleTimers.set(handlerId, now);
       return false;
     }
-    
+
     return true;
   }
 
@@ -919,7 +980,7 @@ export class TypedSocketsFeatureImplementation {
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
-    
+
     const timer = setTimeout(callback, delay);
     this.debounceTimers.set(handlerId, timer as any);
   }
@@ -933,7 +994,7 @@ export class TypedSocketsFeatureImplementation {
 
     for (let i = queue.length - 1; i >= 0; i--) {
       const message = queue[i];
-      
+
       try {
         await this.sendMessage(connectionId, message.data, message.format);
         queue.splice(i, 1); // Remove sent message from queue
@@ -941,7 +1002,7 @@ export class TypedSocketsFeatureImplementation {
         message.attempts++;
         message.lastAttempt = Date.now();
         message.error = error as Error;
-        
+
         if (message.attempts >= message.maxAttempts) {
           queue.splice(i, 1); // Remove failed message
         }
@@ -949,7 +1010,11 @@ export class TypedSocketsFeatureImplementation {
     }
   }
 
-  private async sendMessage(connectionId: string, data: any, format: 'json' | 'text' | 'binary'): Promise<boolean> {
+  private async sendMessage(
+    connectionId: string,
+    data: any,
+    format: 'json' | 'text' | 'binary'
+  ): Promise<boolean> {
     const connection = this.connections.get(connectionId);
     if (!connection || !connection.websocket || connection.state !== 'connected') {
       // Queue message if not connected
@@ -959,7 +1024,7 @@ export class TypedSocketsFeatureImplementation {
 
     try {
       let payload: string | ArrayBuffer | Blob;
-      
+
       switch (format) {
         case 'json':
           payload = JSON.stringify(data);
@@ -974,7 +1039,7 @@ export class TypedSocketsFeatureImplementation {
       if (connection.websocket.readyState === WebSocket.OPEN) {
         connection.websocket.send(payload);
         connection.messagesSent++;
-        
+
         // Record outgoing message
         const message: SocketMessage = {
           id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -986,11 +1051,11 @@ export class TypedSocketsFeatureImplementation {
           size: this.calculateMessageSize(payload),
           validated: true,
         };
-        
+
         this.messageHistory.push(message);
         return true;
       }
-      
+
       return false;
     } catch (error) {
       await this.queueMessage(connectionId, data, format);
@@ -998,7 +1063,11 @@ export class TypedSocketsFeatureImplementation {
     }
   }
 
-  private async queueMessage(connectionId: string, data: any, format: 'json' | 'text' | 'binary'): Promise<void> {
+  private async queueMessage(
+    connectionId: string,
+    data: any,
+    format: 'json' | 'text' | 'binary'
+  ): Promise<void> {
     const queue = this.messageQueue.get(connectionId);
     if (!queue) return;
 
@@ -1012,7 +1081,7 @@ export class TypedSocketsFeatureImplementation {
     };
 
     queue.push(message);
-    
+
     // Limit queue size
     const maxSize = 100; // Would be configurable
     if (queue.length > maxSize) {
@@ -1035,11 +1104,7 @@ export class TypedSocketsFeatureImplementation {
           compression: false,
           binaryType: 'blob',
         };
-        const connection = await this.createSocketConnection(
-          socketConfig,
-          [],
-          {}
-        );
+        const connection = await this.createSocketConnection(socketConfig, [], {});
         return await this.connectWebSocket(connection.id);
       }
     };
@@ -1051,14 +1116,14 @@ export class TypedSocketsFeatureImplementation {
       if (!connection) return false;
 
       connection.state = 'disconnecting';
-      
+
       if (connection.websocket) {
         connection.websocket.close();
       }
-      
+
       connection.state = 'disconnected';
       connection.disconnectedAt = Date.now();
-      
+
       await this.executeEventHandlers(connectionId, 'close', null);
       return true;
     };
@@ -1072,10 +1137,10 @@ export class TypedSocketsFeatureImplementation {
       if (connection.websocket) {
         connection.websocket.close();
       }
-      
+
       connection.reconnectAttempts++;
       connection.totalReconnects++;
-      
+
       return await this.connectWebSocket(connectionId);
     };
   }
@@ -1149,25 +1214,29 @@ export class TypedSocketsFeatureImplementation {
   private createMessageHistoryGetter() {
     return (connectionId?: string, limit?: number) => {
       let messages = this.messageHistory;
-      
+
       if (connectionId) {
         messages = messages.filter(m => m.connectionId === connectionId);
       }
-      
+
       if (limit) {
         messages = messages.slice(-limit);
       }
-      
+
       return messages;
     };
   }
 
   private createEventHandlerAdder() {
-    return async (connectionId: string, eventType: 'open' | 'close' | 'error' | 'message', handler: any) => {
+    return async (
+      connectionId: string,
+      eventType: 'open' | 'close' | 'error' | 'message',
+      handler: any
+    ) => {
       return await this.registerEventHandler(connectionId, {
         event: eventType,
         commands: [handler],
-        options: {}
+        options: {},
       });
     };
   }
@@ -1238,7 +1307,7 @@ export class TypedSocketsFeatureImplementation {
       this.errorHistory.push({
         error,
         timestamp: Date.now(),
-        context: { connectionId }
+        context: { connectionId },
       });
       return true;
     };
@@ -1274,22 +1343,29 @@ export class TypedSocketsFeatureImplementation {
       output,
       success,
       duration,
-      timestamp: startTime
+      timestamp: startTime,
     });
   }
 
   getPerformanceMetrics() {
     return {
       totalInitializations: this.evaluationHistory.length,
-      successRate: this.evaluationHistory.filter(h => h.success).length / Math.max(this.evaluationHistory.length, 1),
-      averageDuration: this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) / Math.max(this.evaluationHistory.length, 1),
+      successRate:
+        this.evaluationHistory.filter(h => h.success).length /
+        Math.max(this.evaluationHistory.length, 1),
+      averageDuration:
+        this.evaluationHistory.reduce((sum, h) => sum + h.duration, 0) /
+        Math.max(this.evaluationHistory.length, 1),
       lastEvaluationTime: this.evaluationHistory[this.evaluationHistory.length - 1]?.timestamp || 0,
       evaluationHistory: this.evaluationHistory.slice(-10),
       totalConnections: this.connections.size,
       totalHandlers: this.eventHandlers.size,
       totalMessages: this.messageHistory.length,
       totalErrors: this.errorHistory.length,
-      queuedMessages: Array.from(this.messageQueue.values()).reduce((sum, queue) => sum + queue.length, 0)
+      queuedMessages: Array.from(this.messageQueue.values()).reduce(
+        (sum, queue) => sum + queue.length,
+        0
+      ),
     };
   }
 }
@@ -1326,7 +1402,7 @@ export async function createSockets(
       },
       compression: false,
       binaryType: 'blob',
-      ...socket
+      ...socket,
     },
     eventHandlers: [],
     messageHandling: {
@@ -1352,7 +1428,7 @@ export async function createSockets(
     },
     environment: 'frontend',
     debug: false,
-    ...options
+    ...options,
   });
 }
 

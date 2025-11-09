@@ -30,13 +30,13 @@ describe('Core System Validation', () => {
 
     it('should handle mixed expression types', async () => {
       const context = {
-        locals: { 
+        locals: {
           arr: [1, 2, 3],
-          obj: { name: 'test', count: 5 }
-        }
+          obj: { name: 'test', count: 5 },
+        },
       };
-      
-      const result = await evalHyperScript('arr\'s length + obj\'s count', context);
+
+      const result = await evalHyperScript("arr's length + obj's count", context);
       expect(result).toBe(8);
     });
 
@@ -56,7 +56,7 @@ describe('Core System Validation', () => {
       const result1 = await evalHyperScript('5+3');
       const result2 = await evalHyperScript('5 + 3');
       const result3 = await evalHyperScript('5  +  3');
-      
+
       expect(result1).toBe(8);
       expect(result2).toBe(8);
       expect(result3).toBe(8);
@@ -73,7 +73,7 @@ describe('Core System Validation', () => {
     });
 
     it('should handle array and object literals', async () => {
-      const arrayResult = await evalHyperScript('[1, 2, 3]\'s length');
+      const arrayResult = await evalHyperScript("[1, 2, 3]'s length");
       expect(arrayResult).toBe(3);
 
       const objResult = await evalHyperScript('{"key": "value"}\'s key');
@@ -86,38 +86,36 @@ describe('Core System Validation', () => {
       const context = {
         locals: new Map([
           ['x', 10],
-          ['y', 20]
-        ])
+          ['y', 20],
+        ]),
       };
-      
+
       const result = await evalHyperScript('x * y', context);
       expect(result).toBe(200);
     });
 
     it('should handle global variable scoping', async () => {
       const context = {
-        globals: new Map([
-          ['$global', 'global-value']
-        ])
+        globals: new Map([['$global', 'global-value']]),
       };
-      
+
       const result = await evalHyperScript('$global', context);
       expect(result).toBe('global-value');
     });
 
     it('should handle element context (me)', async () => {
       testContainer.className = 'test-class';
-      
-      const result = await evalHyperScript('me\'s className', { me: testContainer });
+
+      const result = await evalHyperScript("me's className", { me: testContainer });
       expect(result).toBe('test-class');
     });
 
     it('should handle context variable precedence', async () => {
       const context = {
         locals: new Map([['var', 'local']]),
-        globals: new Map([['var', 'global']])
+        globals: new Map([['var', 'global']]),
       };
-      
+
       const result = await evalHyperScript('var', context);
       expect(result).toBe('local'); // Local should shadow global
     });
@@ -135,7 +133,7 @@ describe('Core System Validation', () => {
 
     it('should handle runtime errors gracefully', async () => {
       try {
-        await evalHyperScript('nonexistent\'s property');
+        await evalHyperScript("nonexistent's property");
         // Should return undefined rather than throwing
       } catch (error: any) {
         // If it throws, error should be descriptive
@@ -162,35 +160,35 @@ describe('Core System Validation', () => {
     it('should handle large expressions efficiently', async () => {
       const largeExpression = Array.from({ length: 100 }, (_, i) => i).join(' + ');
       const expectedResult = Array.from({ length: 100 }, (_, i) => i).reduce((a, b) => a + b, 0);
-      
+
       const startTime = Date.now();
       const result = await evalHyperScript(largeExpression);
       const endTime = Date.now();
-      
+
       expect(result).toBe(expectedResult);
       expect(endTime - startTime).toBeLessThan(100); // Should complete in < 100ms
     });
 
     it('should handle large datasets without memory leaks', async () => {
       const largeArray = Array.from({ length: 1000 }, (_, i) => ({ id: i, value: `item${i}` }));
-      
-      const result = await evalHyperScript('data\'s length', {
-        locals: { data: largeArray }
+
+      const result = await evalHyperScript("data's length", {
+        locals: { data: largeArray },
       });
-      
+
       expect(result).toBe(1000);
     });
 
     it('should reuse parsed expressions efficiently', async () => {
       const expression = '5 + 3 * 2';
-      
+
       // Multiple evaluations should be fast
       const results = await Promise.all([
         evalHyperScript(expression),
         evalHyperScript(expression),
-        evalHyperScript(expression)
+        evalHyperScript(expression),
       ]);
-      
+
       expect(results).toEqual([11, 11, 11]);
     });
   });
@@ -205,7 +203,7 @@ describe('Core System Validation', () => {
     it('should handle null and undefined correctly', async () => {
       expect(await evalHyperScript('null == undefined')).toBe(true);
       expect(await evalHyperScript('null === undefined')).toBe(false);
-      
+
       const result = await evalHyperScript('nonexistent?.property');
       expect(result).toBeUndefined();
     });
@@ -219,8 +217,8 @@ describe('Core System Validation', () => {
 
     it('should handle array operations', async () => {
       const context = { locals: { arr: [1, 2, 3, 4, 5] } };
-      
-      expect(await evalHyperScript('arr\'s length', context)).toBe(5);
+
+      expect(await evalHyperScript("arr's length", context)).toBe(5);
       expect(await evalHyperScript('arr[0]', context)).toBe(1);
       expect(await evalHyperScript('arr[-1]', context)).toBe(5); // Last element
     });
@@ -229,7 +227,7 @@ describe('Core System Validation', () => {
   describe('DOM Integration Validation', () => {
     it('should handle DOM element queries', async () => {
       testContainer.innerHTML = '<div class="test-item">content</div>';
-      
+
       const result = await evalHyperScript('.test-item');
       expect(result).toBeDefined();
       expect(result.textContent).toBe('content');
@@ -241,7 +239,7 @@ describe('Core System Validation', () => {
         <div class="multi">second</div>
         <div class="multi">third</div>
       `;
-      
+
       const result = await evalHyperScript('.multi');
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(3);
@@ -249,15 +247,15 @@ describe('Core System Validation', () => {
 
     it('should handle element property access', async () => {
       testContainer.innerHTML = '<input id="test-input" value="test-value" />';
-      
-      const result = await evalHyperScript('#test-input\'s value');
+
+      const result = await evalHyperScript("#test-input's value");
       expect(result).toBe('test-value');
     });
 
     it('should handle element attribute access', async () => {
       testContainer.innerHTML = '<div data-test="attribute-value">content</div>';
-      
-      const result = await evalHyperScript('[data-test]\'s @data-test');
+
+      const result = await evalHyperScript("[data-test]'s @data-test");
       expect(result).toBe('attribute-value');
     });
   });
@@ -266,13 +264,13 @@ describe('Core System Validation', () => {
     it('should handle method chaining', async () => {
       const context = {
         locals: {
-          str: 'hello world'
-        }
+          str: 'hello world',
+        },
       };
-      
+
       // Note: This would require advanced method support
       // For now, test basic property chaining
-      const result = await evalHyperScript('str\'s length', context);
+      const result = await evalHyperScript("str's length", context);
       expect(result).toBe(11);
     });
 
@@ -280,22 +278,22 @@ describe('Core System Validation', () => {
       const context = {
         locals: {
           text: 'test123',
-          pattern: /\d+/
-        }
+          pattern: /\d+/,
+        },
       };
-      
+
       // Basic pattern matching - would need regex expression support
-      expect(await evalHyperScript('text\'s length', context)).toBe(7);
+      expect(await evalHyperScript("text's length", context)).toBe(7);
     });
 
     it('should handle date and time operations', async () => {
       const context = {
         locals: {
-          date: new Date('2023-01-01')
-        }
+          date: new Date('2023-01-01'),
+        },
       };
-      
-      const result = await evalHyperScript('date\'s getFullYear', context);
+
+      const result = await evalHyperScript("date's getFullYear", context);
       expect(typeof result).toBe('function'); // Method reference
     });
 
@@ -305,13 +303,13 @@ describe('Core System Validation', () => {
           data: {
             users: [
               { name: 'Alice', age: 30 },
-              { name: 'Bob', age: 25 }
-            ]
-          }
-        }
+              { name: 'Bob', age: 25 },
+            ],
+          },
+        },
       };
-      
-      const result = await evalHyperScript('data\'s users\'s length', context);
+
+      const result = await evalHyperScript("data's users's length", context);
       expect(result).toBe(2);
     });
   });
@@ -319,7 +317,7 @@ describe('Core System Validation', () => {
   describe('Integration with External Systems', () => {
     it('should handle window/global object access', async () => {
       (globalThis as any).testGlobal = 'test-value';
-      
+
       try {
         const result = await evalHyperScript('window.testGlobal');
         expect(result).toBe('test-value');
@@ -336,16 +334,16 @@ describe('Core System Validation', () => {
     it('should handle localStorage integration', async () => {
       // Mock localStorage for testing
       const mockStorage = {
-        getItem: (key: string) => key === 'test' ? 'stored-value' : null,
+        getItem: (key: string) => (key === 'test' ? 'stored-value' : null),
         setItem: () => {},
         removeItem: () => {},
         clear: () => {},
         length: 1,
-        key: () => null
+        key: () => null,
       };
-      
+
       (globalThis as any).localStorage = mockStorage;
-      
+
       try {
         const result = await evalHyperScript('localStorage.getItem("test")');
         expect(result).toBe('stored-value');
@@ -361,26 +359,24 @@ describe('Core System Validation', () => {
         '5 + 3',
         '10 * 2',
         '"hello" + " world"',
-        '[1, 2, 3]\'s length',
-        '{"test": true}\'s test'
+        "[1, 2, 3]'s length",
+        '{"test": true}\'s test',
       ];
-      
-      const results = await Promise.all(
-        expressions.map(expr => evalHyperScript(expr))
-      );
-      
+
+      const results = await Promise.all(expressions.map(expr => evalHyperScript(expr)));
+
       expect(results).toEqual([8, 20, 'hello world', 3, true]);
     });
 
     it('should maintain context isolation', async () => {
       const context1 = { locals: { x: 'first' } };
       const context2 = { locals: { x: 'second' } };
-      
+
       const [result1, result2] = await Promise.all([
         evalHyperScript('x', context1),
-        evalHyperScript('x', context2)
+        evalHyperScript('x', context2),
       ]);
-      
+
       expect(result1).toBe('first');
       expect(result2).toBe('second');
     });
@@ -389,12 +385,12 @@ describe('Core System Validation', () => {
       // Empty string
       const emptyResult = await evalHyperScript('""');
       expect(emptyResult).toBe('');
-      
+
       // Very long string
       const longString = 'x'.repeat(1000);
       const longResult = await evalHyperScript(`"${longString}"`);
       expect(longResult).toBe(longString);
-      
+
       // Very large number
       const largeResult = await evalHyperScript('1e10 + 1e10');
       expect(largeResult).toBe(2e10);
@@ -403,11 +399,11 @@ describe('Core System Validation', () => {
     it('should handle recursive data structures safely', async () => {
       const recursive: any = { name: 'test' };
       recursive.self = recursive;
-      
+
       const context = { locals: { obj: recursive } };
-      
+
       // Should handle at least basic property access
-      const result = await evalHyperScript('obj\'s name', context);
+      const result = await evalHyperScript("obj's name", context);
       expect(result).toBe('test');
     });
   });

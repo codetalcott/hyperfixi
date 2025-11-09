@@ -9,15 +9,15 @@ import { parseAndEvaluateExpression } from '../../parser/expression-parser';
 // Mock the global _hyperscript function that tests expect
 export function createHyperScriptTestAdapter() {
   // Replicate _hyperscript's global function signature
-  const hyperfixiAdapter = async function(src: string, ctx?: any): Promise<any> {
+  const hyperfixiAdapter = async function (src: string, ctx?: any): Promise<any> {
     // Convert _hyperscript context format to our ExecutionContext
     const context: ExecutionContext = {
       me: ctx?.me || null,
-      you: ctx?.you || null, 
+      you: ctx?.you || null,
       it: ctx?.it || ctx?.result || null,
       result: ctx?.result || null,
       locals: new Map(Object.entries(ctx?.locals || {})),
-      globals: new Map(Object.entries(ctx?.globals || {}))
+      globals: new Map(Object.entries(ctx?.globals || {})),
     };
 
     // Add any direct properties as locals (common pattern in _hyperscript tests)
@@ -41,7 +41,7 @@ export function createHyperScriptTestAdapter() {
   };
 
   // Add any additional methods that _hyperscript tests might expect
-  (hyperfixiAdapter as any).processNode = function(_node: Node) {
+  (hyperfixiAdapter as any).processNode = function (_node: Node) {
     // Placeholder - would implement DOM processing
     console.warn('processNode not implemented yet');
   };
@@ -53,27 +53,27 @@ export function createHyperScriptTestAdapter() {
 
 // Test utilities that _hyperscript tests expect
 export const testUtils = {
-  evalHyperScript: async function(src: string, ctx?: any) {
+  evalHyperScript: async function (src: string, ctx?: any) {
     const adapter = createHyperScriptTestAdapter();
     return await adapter(src, ctx);
   },
 
-  getParseErrorFor: function(src: string, ctx?: any): string {
+  getParseErrorFor: function (src: string, ctx?: any): string {
     try {
       const adapter = createHyperScriptTestAdapter();
-      adapter(src, ctx);
+      void adapter(src, ctx);
     } catch (e: any) {
       return e.message;
     }
-    return "";
+    return '';
   },
 
   // Mock DOM utilities that tests use
-  byId: function(id: string): Element | null {
+  byId: function (id: string): Element | null {
     return document.getElementById(id);
   },
 
-  make: function(htmlStr: string): Element {
+  make: function (htmlStr: string): Element {
     const range = document.createRange();
     const fragment = range.createContextualFragment(htmlStr);
     const workArea = document.createElement('div');
@@ -84,35 +84,35 @@ export const testUtils = {
     const wa = document.getElementById('work-area')!;
     let child: Element | null = null;
     while (fragment.children.length > 0) {
-      child = fragment.children[0] as Element;
+      child = fragment.children[0];
       // TODO: Process hyperscript attributes when we implement command system
       wa.appendChild(child);
     }
     return child!;
   },
 
-  clearWorkArea: function(): void {
+  clearWorkArea: function (): void {
     const workArea = document.getElementById('work-area');
     if (workArea) {
       workArea.innerHTML = '';
     }
   },
 
-  getWorkArea: function(): Element | null {
+  getWorkArea: function (): Element | null {
     return document.getElementById('work-area');
   },
 
   // Promise utilities used in async tests
-  promiseAnIntIn: function(millis: number): Promise<number> {
-    return new Promise((resolve) => {
+  promiseAnIntIn: function (millis: number): Promise<number> {
+    return new Promise(resolve => {
       setTimeout(() => {
         resolve(42);
       }, millis);
     });
   },
 
-  promiseValueBackIn: function(value: any, millis: number): Promise<any> {
-    return new Promise((resolve) => {
+  promiseValueBackIn: function (value: any, millis: number): Promise<any> {
+    return new Promise(resolve => {
       setTimeout(() => {
         resolve(value);
       }, millis);
@@ -120,9 +120,9 @@ export const testUtils = {
   },
 
   // Assertion helpers
-  startsWith: function(str: string, expected: string): void {
+  startsWith: function (str: string, expected: string): void {
     if (!str || str.indexOf(expected) !== 0) {
       throw new Error(`Expected string '${str}' to start with '${expected}'`);
     }
-  }
+  },
 };

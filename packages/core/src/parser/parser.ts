@@ -1,6 +1,6 @@
 /**
  * Hyperscript Parser
- * Converts tokens into Abstract Syntax Tree (AST) 
+ * Converts tokens into Abstract Syntax Tree (AST)
  * Handles hyperscript's unique natural language syntax
  */
 
@@ -14,7 +14,7 @@ import type {
   ParseError as CoreParseError,
   ParseWarning,
   EventHandlerNode,
-  BehaviorNode
+  BehaviorNode,
 } from '../types/core';
 import { debug } from '../utils/debug';
 
@@ -96,11 +96,11 @@ export class Parser {
 
   parse(): ParseResult {
     // debug.parse('🚀 PARSER: Parser.parse() method called', {
-      // tokenCount: this.tokens.length,
-      // firstToken: this.tokens[0]?.value,
-      // firstTokenType: this.tokens[0]?.type
+    // tokenCount: this.tokens.length,
+    // firstToken: this.tokens[0]?.value,
+    // firstTokenType: this.tokens[0]?.type
     // });
-    
+
     try {
       // Handle empty input
       if (this.tokens.length === 0) {
@@ -111,7 +111,7 @@ export class Parser {
           node: this.createErrorNode(),
           tokens: this.tokens,
           error: this.error!,
-          warnings: this.warnings
+          warnings: this.warnings,
         };
       }
 
@@ -126,7 +126,7 @@ export class Parser {
             node: behaviorNode || this.createErrorNode(),
             tokens: this.tokens,
             error: this.error,
-            warnings: this.warnings
+            warnings: this.warnings,
           };
         }
 
@@ -134,55 +134,75 @@ export class Parser {
           success: true,
           node: behaviorNode,
           tokens: this.tokens,
-          warnings: this.warnings
+          warnings: this.warnings,
         };
       }
 
       // Check if this looks like a command sequence (starts with command)
       // debug.parse('🔍 PARSER: checking if command sequence', {
-        // isCommandToken: this.checkTokenType(TokenType.COMMAND),
-        // isCommandValue: this.isCommand(this.peek().value),
-        // isKeyword: this.isKeyword(this.peek().value),
-        // firstTokenValue: this.peek().value
+      // isCommandToken: this.checkTokenType(TokenType.COMMAND),
+      // isCommandValue: this.isCommand(this.peek().value),
+      // isKeyword: this.isKeyword(this.peek().value),
+      // firstTokenValue: this.peek().value
       // });
-      
-      if (this.checkTokenType(TokenType.COMMAND) || (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))) {
+
+      if (
+        this.checkTokenType(TokenType.COMMAND) ||
+        (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))
+      ) {
         // debug.parse('✅ PARSER: confirmed command sequence, calling parseCommandSequence');
 
         const commandSequence = this.parseCommandSequence();
         if (commandSequence) {
           // Check if there are event handlers after the command sequence
           if (!this.isAtEnd() && this.check('on')) {
-            debug.parse('✅ PARSER: Found event handlers after command sequence, parsing as program');
+            debug.parse(
+              '✅ PARSER: Found event handlers after command sequence, parsing as program'
+            );
             const statements: ASTNode[] = [commandSequence];
-            debug.parse(`✅ PARSER: Starting with ${statements.length} statement(s) from command sequence`);
+            debug.parse(
+              `✅ PARSER: Starting with ${statements.length} statement(s) from command sequence`
+            );
 
             // Parse all event handlers
             let eventHandlerCount = 0;
             while (!this.isAtEnd() && this.check('on')) {
-              debug.parse(`✅ PARSER: Parsing event handler #${eventHandlerCount + 1}, current token: ${this.peek().value}`);
+              debug.parse(
+                `✅ PARSER: Parsing event handler #${eventHandlerCount + 1}, current token: ${this.peek().value}`
+              );
               this.advance(); // consume 'on'
               const eventHandler = this.parseEventHandler();
-              debug.parse(`✅ PARSER: parseEventHandler returned:`, eventHandler ? `type=${eventHandler.type}, event=${(eventHandler as any).event}` : 'null');
+              debug.parse(
+                `✅ PARSER: parseEventHandler returned:`,
+                eventHandler
+                  ? `type=${eventHandler.type}, event=${(eventHandler as any).event}`
+                  : 'null'
+              );
               if (eventHandler) {
                 statements.push(eventHandler);
                 eventHandlerCount++;
-                debug.parse(`✅ PARSER: Added event handler, now have ${statements.length} statements total`);
+                debug.parse(
+                  `✅ PARSER: Added event handler, now have ${statements.length} statements total`
+                );
               }
 
-              debug.parse(`✅ PARSER: After parsing event handler, current token: ${this.isAtEnd() ? 'END' : this.peek().value}, isAtEnd=${this.isAtEnd()}, check('on')=${this.check('on')}`);
+              debug.parse(
+                `✅ PARSER: After parsing event handler, current token: ${this.isAtEnd() ? 'END' : this.peek().value}, isAtEnd=${this.isAtEnd()}, check('on')=${this.check('on')}`
+              );
 
               // Check if there's another event handler
               if (!this.isAtEnd() && !this.check('on')) {
                 // No more event handlers, check if we're at the end
                 if (!this.isAtEnd()) {
-                  debug.parse(`⚠️ PARSER: Unexpected token after event handlers: ${this.peek().value}`);
+                  debug.parse(
+                    `⚠️ PARSER: Unexpected token after event handlers: ${this.peek().value}`
+                  );
                   this.addError(`Unexpected token after event handlers: ${this.peek().value}`);
                   return {
                     success: false,
                     node: this.createProgramNode(statements),
                     tokens: this.tokens,
-                    error: this.error!
+                    error: this.error!,
                   };
                 }
                 debug.parse(`✅ PARSER: No more event handlers, at end of input`);
@@ -190,13 +210,15 @@ export class Parser {
               }
             }
 
-            debug.parse(`✅ PARSER: Finished parsing, creating Program node with ${statements.length} statements`);
+            debug.parse(
+              `✅ PARSER: Finished parsing, creating Program node with ${statements.length} statements`
+            );
             // Return a program node containing both commands and event handlers
             return {
               success: true,
               node: this.createProgramNode(statements),
               tokens: this.tokens,
-              warnings: this.warnings
+              warnings: this.warnings,
             };
           }
 
@@ -207,7 +229,7 @@ export class Parser {
               success: false,
               node: commandSequence || this.createErrorNode(),
               tokens: this.tokens,
-              error: this.error!
+              error: this.error!,
             };
           }
 
@@ -215,24 +237,24 @@ export class Parser {
             success: true,
             node: commandSequence,
             tokens: this.tokens,
-            warnings: this.warnings
+            warnings: this.warnings,
           };
         }
       }
 
       // Fall back to expression parsing
       const ast = this.parseExpression();
-      
+
       // Check if we have an error or unexpected remaining tokens
       if (this.error) {
         return {
           success: false,
           node: ast || this.createErrorNode(), // Include partial AST if available
           tokens: this.tokens,
-          error: this.error
+          error: this.error,
         };
       }
-      
+
       // Check for unexpected tokens after parsing
       if (!this.isAtEnd()) {
         this.addError(`Unexpected token: ${this.peek().value}`);
@@ -241,7 +263,7 @@ export class Parser {
           node: ast || this.createErrorNode(),
           tokens: this.tokens,
           error: this.error!,
-          warnings: this.warnings
+          warnings: this.warnings,
         };
       }
 
@@ -249,7 +271,7 @@ export class Parser {
         success: true,
         node: ast,
         tokens: this.tokens,
-        warnings: this.warnings
+        warnings: this.warnings,
       };
     } catch (error) {
       this.addError(error instanceof Error ? error.message : 'Unknown parsing error');
@@ -258,7 +280,7 @@ export class Parser {
         node: this.createErrorNode(),
         tokens: this.tokens,
         error: this.error!,
-        warnings: this.warnings
+        warnings: this.warnings,
       };
     }
   }
@@ -307,7 +329,10 @@ export class Parser {
   private parseEquality(): ASTNode {
     let expr = this.parseComparison();
 
-    while (this.matchTokenType(TokenType.COMPARISON_OPERATOR) || this.match('is', 'matches', 'contains', 'include', 'includes', 'in', 'of', 'as', 'really')) {
+    while (
+      this.matchTokenType(TokenType.COMPARISON_OPERATOR) ||
+      this.match('is', 'matches', 'contains', 'include', 'includes', 'in', 'of', 'as', 'really')
+    ) {
       const operator = this.previous().value;
       const right = this.parseComparison();
       expr = this.createBinaryExpression(operator, expr, right);
@@ -333,19 +358,19 @@ export class Parser {
 
     while (this.match('+', '-') || this.matchOperator('+') || this.matchOperator('-')) {
       const operator = this.previous().value;
-      
+
       // Check for double operators like '++' or '+-'
       if (this.check('+') || this.check('-')) {
         this.addError(`Invalid operator combination: ${operator}${this.peek().value}`);
         return expr;
       }
-      
+
       // Check if we're at the end or have invalid token for right operand
       if (this.isAtEnd()) {
         this.addError(`Expected expression after '${operator}' operator`);
         return expr;
       }
-      
+
       const right = this.parseMultiplication();
       expr = this.createBinaryExpression(operator, expr, right);
     }
@@ -358,11 +383,17 @@ export class Parser {
 
     while (this.match('*', '/', '%', 'mod')) {
       const operator = this.previous().value;
-      
-      // Check for double operators 
-      if (this.check('*') || this.check('/') || this.check('%') || this.check('+') || this.check('-')) {
+
+      // Check for double operators
+      if (
+        this.check('*') ||
+        this.check('/') ||
+        this.check('%') ||
+        this.check('+') ||
+        this.check('-')
+      ) {
         const nextOp = this.peek().value;
-        // Special handling for ** which should be "Unexpected token" 
+        // Special handling for ** which should be "Unexpected token"
         if (operator === '*' && nextOp === '*') {
           this.addError(`Unexpected token: ${nextOp}`);
         } else {
@@ -370,13 +401,13 @@ export class Parser {
         }
         return expr;
       }
-      
+
       // Check if we're at the end or have invalid token for right operand
       if (this.isAtEnd()) {
         this.addError(`Expected expression after '${operator}' operator`);
         return expr;
       }
-      
+
       const right = this.parseUnary();
       expr = this.createBinaryExpression(operator, expr, right);
     }
@@ -407,15 +438,16 @@ export class Parser {
     let expr = this.parseCall();
 
     // Handle implicit binary expressions like "command selector" OR commands with arguments
-    while (!this.isAtEnd() && 
-           !this.checkTokenType(TokenType.OPERATOR) && 
-           !this.check('then') && 
-           !this.check('and') && 
-           !this.check('else') && 
-           !this.check(')') && 
-           !this.check(']') && 
-           !this.check(',')) {
-      
+    while (
+      !this.isAtEnd() &&
+      !this.checkTokenType(TokenType.OPERATOR) &&
+      !this.check('then') &&
+      !this.check('and') &&
+      !this.check('else') &&
+      !this.check(')') &&
+      !this.check(']') &&
+      !this.check(',')
+    ) {
       // Check if current expression is an identifier from a command token
       if (expr.type === 'identifier') {
         // First check if this identifier is a command
@@ -423,16 +455,17 @@ export class Parser {
           // Check if this is a compound command (has keywords like from, to, into)
           if (this.isCompoundCommand((expr as IdentifierNode).name.toLowerCase())) {
             // For compound commands, convert to command node if followed by arguments
-            if (this.checkTokenType(TokenType.CSS_SELECTOR) || 
-                this.checkTokenType(TokenType.ID_SELECTOR) || 
-                this.checkTokenType(TokenType.CLASS_SELECTOR) ||
-                this.checkTokenType(TokenType.TIME_EXPRESSION) ||
-                this.checkTokenType(TokenType.STRING) ||
-                this.checkTokenType(TokenType.NUMBER) ||
-                this.checkTokenType(TokenType.CONTEXT_VAR) ||
-                this.checkTokenType(TokenType.IDENTIFIER) ||
-                this.checkTokenType(TokenType.KEYWORD)) {
-
+            if (
+              this.checkTokenType(TokenType.CSS_SELECTOR) ||
+              this.checkTokenType(TokenType.ID_SELECTOR) ||
+              this.checkTokenType(TokenType.CLASS_SELECTOR) ||
+              this.checkTokenType(TokenType.TIME_EXPRESSION) ||
+              this.checkTokenType(TokenType.STRING) ||
+              this.checkTokenType(TokenType.NUMBER) ||
+              this.checkTokenType(TokenType.CONTEXT_VAR) ||
+              this.checkTokenType(TokenType.IDENTIFIER) ||
+              this.checkTokenType(TokenType.KEYWORD)
+            ) {
               const command = this.createCommandFromIdentifier(expr as IdentifierNode);
               if (command) {
                 expr = command;
@@ -449,9 +482,11 @@ export class Parser {
               if (command) {
                 expr = command;
               }
-            } else if (this.checkTokenType(TokenType.CSS_SELECTOR) || 
-                this.checkTokenType(TokenType.ID_SELECTOR) || 
-                this.checkTokenType(TokenType.CLASS_SELECTOR)) {
+            } else if (
+              this.checkTokenType(TokenType.CSS_SELECTOR) ||
+              this.checkTokenType(TokenType.ID_SELECTOR) ||
+              this.checkTokenType(TokenType.CLASS_SELECTOR)
+            ) {
               // Other simple commands with selectors become binary expressions
               const right = this.parseCall();
               expr = this.createBinaryExpression(' ', expr, right);
@@ -461,21 +496,26 @@ export class Parser {
           }
         } else {
           // Not a command - handle as regular identifier followed by selector
-          if (this.checkTokenType(TokenType.CSS_SELECTOR) || 
-              this.checkTokenType(TokenType.ID_SELECTOR) || 
-              this.checkTokenType(TokenType.CLASS_SELECTOR)) {
-            
+          if (
+            this.checkTokenType(TokenType.CSS_SELECTOR) ||
+            this.checkTokenType(TokenType.ID_SELECTOR) ||
+            this.checkTokenType(TokenType.CLASS_SELECTOR)
+          ) {
             const right = this.parseCall();
             expr = this.createBinaryExpression(' ', expr, right);
           } else {
             break;
           }
         }
-      } else if (expr.type === 'literal' && 
-                 (this.checkTokenType(TokenType.NUMBER) || this.checkTokenType(TokenType.IDENTIFIER))) {
+      } else if (
+        expr.type === 'literal' &&
+        (this.checkTokenType(TokenType.NUMBER) || this.checkTokenType(TokenType.IDENTIFIER))
+      ) {
         // Detect missing operator between literals/numbers like "5 3" or "123abc"
         const nextToken = this.peek();
-        this.addError(`Missing operator between '${expr.raw || expr.value}' and '${nextToken.value}'`);
+        this.addError(
+          `Missing operator between '${expr.raw || expr.value}' and '${nextToken.value}'`
+        );
         return expr;
       } else {
         break;
@@ -488,11 +528,46 @@ export class Parser {
   private isCommand(name: string): boolean {
     // Check if the name is in the COMMANDS set from tokenizer
     const COMMANDS = new Set([
-      'add', 'append', 'async', 'beep', 'break', 'call', 'continue', 'decrement',
-      'default', 'exit', 'fetch', 'get', 'go', 'halt', 'hide', 'if', 'increment', 'install', 'js', 'log',
-      'make', 'measure', 'pick', 'put', 'remove', 'render', 'repeat', 'return',
-      'send', 'set', 'settle', 'show', 'take', 'tell', 'throw', 'toggle',
-      'transition', 'trigger', 'unless', 'wait'
+      'add',
+      'append',
+      'async',
+      'beep',
+      'break',
+      'call',
+      'continue',
+      'decrement',
+      'default',
+      'exit',
+      'fetch',
+      'get',
+      'go',
+      'halt',
+      'hide',
+      'if',
+      'increment',
+      'install',
+      'js',
+      'log',
+      'make',
+      'measure',
+      'pick',
+      'put',
+      'remove',
+      'render',
+      'repeat',
+      'return',
+      'send',
+      'set',
+      'settle',
+      'show',
+      'take',
+      'tell',
+      'throw',
+      'toggle',
+      'transition',
+      'trigger',
+      'unless',
+      'wait',
     ]);
     return COMMANDS.has(name.toLowerCase());
   }
@@ -500,10 +575,43 @@ export class Parser {
   private isKeyword(name: string): boolean {
     // Check if the name is in the KEYWORDS set from tokenizer
     const KEYWORDS = new Set([
-      'if', 'else', 'unless', 'for', 'while', 'until', 'end', 'and', 'or', 
-      'not', 'in', 'to', 'from', 'into', 'with', 'without', 'as', 'matches', 'contains',
-      'then', 'on', 'when', 'every', 'init', 'def', 'behavior', 'the', 'of', 'first',
-      'last', 'next', 'previous', 'closest', 'within', 'pseudo', 'async', 'await'
+      'if',
+      'else',
+      'unless',
+      'for',
+      'while',
+      'until',
+      'end',
+      'and',
+      'or',
+      'not',
+      'in',
+      'to',
+      'from',
+      'into',
+      'with',
+      'without',
+      'as',
+      'matches',
+      'contains',
+      'then',
+      'on',
+      'when',
+      'every',
+      'init',
+      'def',
+      'behavior',
+      'the',
+      'of',
+      'first',
+      'last',
+      'next',
+      'previous',
+      'closest',
+      'within',
+      'pseudo',
+      'async',
+      'await',
     ]);
     return KEYWORDS.has(name.toLowerCase());
   }
@@ -515,24 +623,27 @@ export class Parser {
     if (this.isCompoundCommand(commandName)) {
       return this.parseCompoundCommand(identifierNode);
     }
-    
+
     // Parse command arguments (space-separated, not comma-separated)
-    while (!this.isAtEnd() && 
-           !this.check('then') && 
-           !this.check('and') && 
-           !this.check('else') && 
-           !this.checkTokenType(TokenType.COMMAND)) {
-      
-      if (this.checkTokenType(TokenType.CONTEXT_VAR) || 
-          this.checkTokenType(TokenType.IDENTIFIER) ||
-          this.checkTokenType(TokenType.KEYWORD) ||  // Add KEYWORD support for words like "into"
-          this.checkTokenType(TokenType.CSS_SELECTOR) ||
-          this.checkTokenType(TokenType.ID_SELECTOR) ||
-          this.checkTokenType(TokenType.CLASS_SELECTOR) ||
-          this.checkTokenType(TokenType.STRING) ||
-          this.checkTokenType(TokenType.NUMBER) ||
-          this.checkTokenType(TokenType.TIME_EXPRESSION) ||
-          this.match('<')) {
+    while (
+      !this.isAtEnd() &&
+      !this.check('then') &&
+      !this.check('and') &&
+      !this.check('else') &&
+      !this.checkTokenType(TokenType.COMMAND)
+    ) {
+      if (
+        this.checkTokenType(TokenType.CONTEXT_VAR) ||
+        this.checkTokenType(TokenType.IDENTIFIER) ||
+        this.checkTokenType(TokenType.KEYWORD) || // Add KEYWORD support for words like "into"
+        this.checkTokenType(TokenType.CSS_SELECTOR) ||
+        this.checkTokenType(TokenType.ID_SELECTOR) ||
+        this.checkTokenType(TokenType.CLASS_SELECTOR) ||
+        this.checkTokenType(TokenType.STRING) ||
+        this.checkTokenType(TokenType.NUMBER) ||
+        this.checkTokenType(TokenType.TIME_EXPRESSION) ||
+        this.match('<')
+      ) {
         args.push(this.parsePrimary());
       } else {
         // Stop parsing if we encounter an unrecognized token
@@ -548,7 +659,7 @@ export class Parser {
       ...(identifierNode.start !== undefined && { start: identifierNode.start }),
       end: this.getPosition().end,
       ...(identifierNode.line !== undefined && { line: identifierNode.line }),
-      ...(identifierNode.column !== undefined && { column: identifierNode.column })
+      ...(identifierNode.column !== undefined && { column: identifierNode.column }),
     };
   }
 
@@ -556,16 +667,27 @@ export class Parser {
     // Added 'set' back to use the sophisticated parseSetCommand method for "the X of Y" syntax
     // Added 'show' and 'hide' to ensure they parse as commands with selector arguments
     // Added 'halt' to handle "halt the event" syntax with special parsing
-    const compoundCommands = ['put', 'trigger', 'remove', 'take', 'toggle', 'set', 'show', 'hide', 'add', 'halt'];
+    const compoundCommands = [
+      'put',
+      'trigger',
+      'remove',
+      'take',
+      'toggle',
+      'set',
+      'show',
+      'hide',
+      'add',
+      'halt',
+    ];
     return compoundCommands.includes(commandName);
   }
 
   private parseCompoundCommand(identifierNode: IdentifierNode): CommandNode | null {
     const commandName = identifierNode.name.toLowerCase();
     // debug.parse('🎯 PARSER: parseCompoundCommand called', {
-      // commandName,
-      // originalName: identifierNode.name,
-      // isSetCommand: commandName === 'set'
+    // commandName,
+    // originalName: identifierNode.name,
+    // isSetCommand: commandName === 'set'
     // });
 
     switch (commandName) {
@@ -592,33 +714,45 @@ export class Parser {
     // Parse all arguments until we hit a terminator, then identify the structure
     const allArgs: ASTNode[] = [];
 
-    while (!this.isAtEnd() &&
-           !this.check('then') &&
-           !this.check('and') &&
-           !this.check('else') &&
-           !this.check('end') &&
-           !this.checkTokenType(TokenType.COMMAND)) {
-
+    while (
+      !this.isAtEnd() &&
+      !this.check('then') &&
+      !this.check('and') &&
+      !this.check('else') &&
+      !this.check('end') &&
+      !this.checkTokenType(TokenType.COMMAND)
+    ) {
       allArgs.push(this.parsePrimary());
     }
-    
+
     // Now find the operation keyword and restructure
     let operationIndex = -1;
     let operationKeyword = '';
-    
+
     for (let i = 0; i < allArgs.length; i++) {
       const arg = allArgs[i];
       // Check for identifier, literal, AND keyword types for operation keywords
       const argValue = (arg as any).name || (arg as any).value;
-      if ((arg.type === 'identifier' || arg.type === 'literal' || arg.type === 'keyword') &&
-          ['into', 'before', 'after', 'at', 'at start of', 'at end of', 'at the start of', 'at the end of'].includes(argValue)) {
+      if (
+        (arg.type === 'identifier' || arg.type === 'literal' || arg.type === 'keyword') &&
+        [
+          'into',
+          'before',
+          'after',
+          'at',
+          'at start of',
+          'at end of',
+          'at the start of',
+          'at the end of',
+        ].includes(argValue)
+      ) {
         operationIndex = i;
         operationKeyword = argValue;
         // debug.parse('🔍 PARSER: found operation keyword', { arg, operationKeyword, type: arg.type });
         break;
       }
     }
-    
+
     if (operationIndex === -1) {
       // debug.parse('⚠️ PARSER: no operation keyword found');
       // Return all args as-is (fallback)
@@ -630,19 +764,19 @@ export class Parser {
         start: identifierNode.start || 0,
         end: this.getPosition().end,
         line: identifierNode.line || 1,
-        column: identifierNode.column || 1
+        column: identifierNode.column || 1,
       };
     }
-    
+
     // debug.parse('🔍 PARSER: found operation keyword', { operationKeyword, operationIndex });
-    
+
     // Restructure: [content_args...] + [operation] + [target_args...]
     const contentArgs = allArgs.slice(0, operationIndex);
     const targetArgs = allArgs.slice(operationIndex + 1);
-    
+
     // Build final args: content, operation, target
     const finalArgs: ASTNode[] = [];
-    
+
     // Content (could be multiple parts, combine if needed)
     if (contentArgs.length === 1) {
       finalArgs.push(contentArgs[0]);
@@ -650,10 +784,10 @@ export class Parser {
       // Multiple content parts - keep as separate args for now
       finalArgs.push(...contentArgs);
     }
-    
+
     // Operation keyword
     finalArgs.push(this.createIdentifier(operationKeyword));
-    
+
     // Target (could be multiple parts, combine if needed)
     if (targetArgs.length === 1) {
       finalArgs.push(targetArgs[0]);
@@ -661,7 +795,7 @@ export class Parser {
       // Multiple target parts - keep as separate args for now
       finalArgs.push(...targetArgs);
     }
-    
+
     const result = {
       type: 'command' as const,
       name: identifierNode.name,
@@ -670,13 +804,13 @@ export class Parser {
       start: identifierNode.start || 0,
       end: this.getPosition().end,
       line: identifierNode.line || 1,
-      column: identifierNode.column || 1
+      column: identifierNode.column || 1,
     };
 
     // debug.parse('✅ PARSER: parsePutCommand completed', {
-      // result,
-      // argCount: finalArgs.length,
-      // finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
+    // result,
+    // argCount: finalArgs.length,
+    // finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
     // });
 
     return result;
@@ -699,7 +833,7 @@ export class Parser {
           name: variableToken.value,
           scope: scopeToken.value,
           start: scopeToken.start,
-          end: variableToken.end
+          end: variableToken.end,
         } as any;
 
         // Scoped variable parsed successfully
@@ -713,7 +847,8 @@ export class Parser {
 
         // Peek at next token to see if we have "X of Y" pattern
         const nextToken = this.peek();
-        const tokenAfterNext = this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
+        const tokenAfterNext =
+          this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
 
         // Only proceed with "the X of Y" parsing if we actually have "X of Y"
         if (nextToken && tokenAfterNext && tokenAfterNext.value === 'of') {
@@ -724,46 +859,46 @@ export class Parser {
           // Check for 'of' keyword
           // debug.parse('🔍 PARSER: checking for "of" keyword, next token:', this.peek()?.value);
           if (this.check('of')) {
-          // debug.parse('✅ PARSER: found "of" keyword, advancing');
-          this.advance(); // consume 'of'
-          
-          // Get the target element (Y)
-          const targetToken = this.advance();
-          // debug.parse('🔍 PARSER: target token:', targetToken?.value, 'type:', targetToken?.type);
-          
-          // Create a propertyOfExpression AST node
-          targetExpression = {
-            type: 'propertyOfExpression',
-            property: {
-              type: 'identifier',
-              name: propertyToken.value,
-              start: propertyToken.start,
-              end: propertyToken.end
-            },
-            target: {
-              type: targetToken.type === TokenType.ID_SELECTOR ? 'idSelector' : 'cssSelector',
-              value: targetToken.value,
-              start: targetToken.start,
-              end: targetToken.end
-            },
-            start: startPosition,
-            end: this.current
-          };
-          
-          // debug.parse('🔍 PARSER: created propertyOfExpression AST node', {
+            // debug.parse('✅ PARSER: found "of" keyword, advancing');
+            this.advance(); // consume 'of'
+
+            // Get the target element (Y)
+            const targetToken = this.advance();
+            // debug.parse('🔍 PARSER: target token:', targetToken?.value, 'type:', targetToken?.type);
+
+            // Create a propertyOfExpression AST node
+            targetExpression = {
+              type: 'propertyOfExpression',
+              property: {
+                type: 'identifier',
+                name: propertyToken.value,
+                start: propertyToken.start,
+                end: propertyToken.end,
+              },
+              target: {
+                type: targetToken.type === TokenType.ID_SELECTOR ? 'idSelector' : 'cssSelector',
+                value: targetToken.value,
+                start: targetToken.start,
+                end: targetToken.end,
+              },
+              start: startPosition,
+              end: this.current,
+            };
+
+            // debug.parse('🔍 PARSER: created propertyOfExpression AST node', {
             // property: propertyToken.value,
             // target: targetToken.value,
             // type: targetExpression.type
-          // });
-        } else {
-          // debug.parse('⚠️ PARSER: "the" not followed by "X of Y" pattern, reverting', {
+            // });
+          } else {
+            // debug.parse('⚠️ PARSER: "the" not followed by "X of Y" pattern, reverting', {
             // expectedOf: this.peek()?.value,
             // position: this.current,
             // startPosition
-          // });
-          this.current = startPosition;
-          targetExpression = null;
-        }
+            // });
+            this.current = startPosition;
+            targetExpression = null;
+          }
         } else {
           // Lookahead determined this is NOT a "the X of Y" pattern
           // Revert to before consuming "the" and let token-by-token parsing handle it
@@ -775,13 +910,13 @@ export class Parser {
         // Not a "the X of Y" pattern, try regular expression parsing
         targetExpression = this.parseExpression();
         // debug.parse('🔍 PARSER: regular expression parsing success', {
-          // type: targetExpression.type,
-          // value: (targetExpression as any).value || (targetExpression as any).name
+        // type: targetExpression.type,
+        // value: (targetExpression as any).value || (targetExpression as any).name
         // });
       }
     } catch (error) {
-      // console.error('⚠️ PARSER: direct "the X of Y" parsing failed, falling back to token-by-token', { 
-        // error: (error as Error).message
+      // console.error('⚠️ PARSER: direct "the X of Y" parsing failed, falling back to token-by-token', {
+      // error: (error as Error).message
       // });
       // Reset position and fall back to token-by-token parsing
       this.current = startPosition;
@@ -789,23 +924,32 @@ export class Parser {
     }
 
     // If single expression parsing failed, fall back to collecting individual tokens
-    let targetTokens: ASTNode[] = [];
+    const targetTokens: ASTNode[] = [];
     if (!targetExpression) {
-      while (!this.isAtEnd() && !this.check('to') && !this.check('then') && !this.check('and') && !this.check('else') && !this.check('end')) {
+      while (
+        !this.isAtEnd() &&
+        !this.check('to') &&
+        !this.check('then') &&
+        !this.check('and') &&
+        !this.check('else') &&
+        !this.check('end')
+      ) {
         const token = this.parsePrimary();
         targetTokens.push(token);
       }
-      
-      // debug.parse('🔍 PARSER: collected target tokens via fallback', { 
-        // targetTokens: targetTokens.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
+
+      // debug.parse('🔍 PARSER: collected target tokens via fallback', {
+      // targetTokens: targetTokens.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
       // });
-      
+
       // Reconstruct complex expressions from collected tokens
       if (targetTokens.length > 0) {
         // Check if we have a "the X of Y" pattern in the tokens
-        if (targetTokens.length >= 4 && 
-            (targetTokens[0] as any).value === 'the' &&
-            (targetTokens[2] as any).value === 'of') {
+        if (
+          targetTokens.length >= 4 &&
+          (targetTokens[0] as any).value === 'the' &&
+          (targetTokens[2] as any).value === 'of'
+        ) {
           // Create propertyOfExpression node
           targetExpression = {
             type: 'propertyOfExpression',
@@ -813,22 +957,22 @@ export class Parser {
               type: 'identifier',
               name: (targetTokens[1] as any).value || (targetTokens[1] as any).name,
               start: (targetTokens[1] as any).start,
-              end: (targetTokens[1] as any).end
+              end: (targetTokens[1] as any).end,
             },
             target: {
               type: (targetTokens[3] as any).type === 'idSelector' ? 'idSelector' : 'cssSelector',
               value: (targetTokens[3] as any).value || (targetTokens[3] as any).name,
               start: (targetTokens[3] as any).start,
-              end: (targetTokens[3] as any).end
+              end: (targetTokens[3] as any).end,
             },
             start: (targetTokens[0] as any).start,
-            end: (targetTokens[3] as any).end
+            end: (targetTokens[3] as any).end,
           };
-          
+
           // debug.parse('🔧 PARSER: reconstructed propertyOfExpression from tokens', {
-            // property: (targetTokens[1] as any).value,
-            // target: (targetTokens[3] as any).value,
-            // type: targetExpression.type
+          // property: (targetTokens[1] as any).value,
+          // target: (targetTokens[3] as any).value,
+          // type: targetExpression.type
           // });
         } else if (targetTokens.length === 1) {
           // Single token target (simple case like "count" or "myVar")
@@ -884,7 +1028,7 @@ export class Parser {
     if (valueTokens.length > 0) {
       finalArgs.push(...valueTokens);
     }
-    
+
     const result = {
       type: 'command' as const,
       name: identifierNode.name,
@@ -893,7 +1037,7 @@ export class Parser {
       start: identifierNode.start || 0,
       end: this.getPosition().end,
       line: identifierNode.line || 1,
-      column: identifierNode.column || 1
+      column: identifierNode.column || 1,
     };
 
     return result;
@@ -913,7 +1057,7 @@ export class Parser {
         start: theToken.start,
         end: theToken.end,
         line: theToken.line,
-        column: theToken.column
+        column: theToken.column,
       } as IdentifierNode);
 
       // Check if followed by "event"
@@ -925,7 +1069,7 @@ export class Parser {
           start: eventToken.start,
           end: eventToken.end,
           line: eventToken.line,
-          column: eventToken.column
+          column: eventToken.column,
         } as IdentifierNode);
       }
     }
@@ -938,47 +1082,51 @@ export class Parser {
       start: identifierNode.start || 0,
       end: this.getPosition().end,
       line: identifierNode.line || 1,
-      column: identifierNode.column || 1
+      column: identifierNode.column || 1,
     };
   }
 
   private parseTriggerCommand(identifierNode: IdentifierNode): CommandNode | null {
-    // debug.parse('🔍 PARSER: parseTriggerCommand started', { 
-      // commandName: identifierNode.name,
-      // currentToken: this.peek(),
-      // remainingTokens: this.tokens.slice(this.current).map(t => t.value)
+    // debug.parse('🔍 PARSER: parseTriggerCommand started', {
+    // commandName: identifierNode.name,
+    // currentToken: this.peek(),
+    // remainingTokens: this.tokens.slice(this.current).map(t => t.value)
     // });
-    
+
     // Use the same flexible approach as put/set commands
     const allArgs: ASTNode[] = [];
 
-    while (!this.isAtEnd() &&
-           !this.check('then') &&
-           !this.check('and') &&
-           !this.check('else') &&
-           !this.check('end') &&
-           !this.checkTokenType(TokenType.COMMAND)) {
+    while (
+      !this.isAtEnd() &&
+      !this.check('then') &&
+      !this.check('and') &&
+      !this.check('else') &&
+      !this.check('end') &&
+      !this.checkTokenType(TokenType.COMMAND)
+    ) {
       allArgs.push(this.parsePrimary());
     }
-    
-    // debug.parse('🔍 PARSER: collected all arguments for trigger', { 
-      // allArgs: allArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
+
+    // debug.parse('🔍 PARSER: collected all arguments for trigger', {
+    // allArgs: allArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
     // });
-    
+
     // Find the 'on' keyword
     let operationIndex = -1;
     for (let i = 0; i < allArgs.length; i++) {
       const arg = allArgs[i];
-      if ((arg.type === 'identifier' || arg.type === 'literal' || arg.type === 'keyword') && 
-          ((arg as any).name === 'on' || (arg as any).value === 'on')) {
+      if (
+        (arg.type === 'identifier' || arg.type === 'literal' || arg.type === 'keyword') &&
+        ((arg as any).name === 'on' || (arg as any).value === 'on')
+      ) {
         operationIndex = i;
         // debug.parse('🔍 PARSER: found "on" keyword', { arg, type: arg.type });
         break;
       }
     }
-    
+
     const finalArgs: ASTNode[] = [];
-    
+
     if (operationIndex === -1) {
       // debug.parse('⚠️ PARSER: no "on" keyword found in trigger command');
       finalArgs.push(...allArgs);
@@ -986,12 +1134,12 @@ export class Parser {
       // Restructure: event + 'on' + target
       const eventArgs = allArgs.slice(0, operationIndex);
       const targetArgs = allArgs.slice(operationIndex + 1);
-      
+
       finalArgs.push(...eventArgs);
       finalArgs.push(this.createIdentifier('on'));
       finalArgs.push(...targetArgs);
     }
-    
+
     const result = {
       type: 'command' as const,
       name: identifierNode.name,
@@ -1000,13 +1148,13 @@ export class Parser {
       start: identifierNode.start || 0,
       end: this.getPosition().end,
       line: identifierNode.line || 1,
-      column: identifierNode.column || 1
+      column: identifierNode.column || 1,
     };
 
     // debug.parse('✅ PARSER: parseTriggerCommand completed', {
-      // result,
-      // argCount: finalArgs.length,
-      // finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
+    // result,
+    // argCount: finalArgs.length,
+    // finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
     // });
 
     return result;
@@ -1033,7 +1181,12 @@ export class Parser {
     debug.parse('🔄 parseCommandListUntilEnd: Starting to parse command list');
 
     while (!this.isAtEnd() && !this.check('end')) {
-      debug.parse('📍 Loop iteration, current token:', this.peek().value, 'type:', this.peek().type);
+      debug.parse(
+        '📍 Loop iteration, current token:',
+        this.peek().value,
+        'type:',
+        this.peek().type
+      );
       // Try to parse a command
       let parsedCommand = false;
 
@@ -1046,7 +1199,10 @@ export class Parser {
           const cmd = this.parseCommand();
           // Check if an error was added during parsing (even if no exception was thrown)
           if (this.error && this.error !== savedError) {
-            debug.parse('⚠️  parseCommandListUntilEnd: Command parsing added error, restoring error state. Error was:', this.error.message);
+            debug.parse(
+              '⚠️  parseCommandListUntilEnd: Command parsing added error, restoring error state. Error was:',
+              this.error.message
+            );
             this.error = savedError;
           }
           if (cmd) {
@@ -1055,7 +1211,10 @@ export class Parser {
             parsedCommand = true;
           }
         } catch (error) {
-          debug.parse('⚠️  parseCommandListUntilEnd: Command parsing threw exception, restoring error state:', error instanceof Error ? error.message : String(error));
+          debug.parse(
+            '⚠️  parseCommandListUntilEnd: Command parsing threw exception, restoring error state:',
+            error instanceof Error ? error.message : String(error)
+          );
           this.error = savedError;
         }
       } else if (this.checkTokenType(TokenType.IDENTIFIER)) {
@@ -1069,7 +1228,10 @@ export class Parser {
             const cmd = this.parseCommand();
             // Check if an error was added during parsing (even if no exception was thrown)
             if (this.error && this.error !== savedError) {
-              debug.parse('⚠️  parseCommandListUntilEnd: Command parsing added error, restoring error state. Error was:', this.error.message);
+              debug.parse(
+                '⚠️  parseCommandListUntilEnd: Command parsing added error, restoring error state. Error was:',
+                this.error.message
+              );
               this.error = savedError;
             }
             if (cmd) {
@@ -1078,7 +1240,10 @@ export class Parser {
               parsedCommand = true;
             }
           } catch (error) {
-            debug.parse('⚠️  parseCommandListUntilEnd: Command parsing threw exception, restoring error state:', error instanceof Error ? error.message : String(error));
+            debug.parse(
+              '⚠️  parseCommandListUntilEnd: Command parsing threw exception, restoring error state:',
+              error instanceof Error ? error.message : String(error)
+            );
             this.error = savedError;
           }
         } else {
@@ -1096,13 +1261,15 @@ export class Parser {
 
       // Skip any unexpected tokens until we find 'end', a command, or a separator
       // This handles cases where command parsing doesn't consume all its arguments (like HSL colors)
-      while (!this.isAtEnd() &&
-             !this.check('end') &&
-             !this.checkTokenType(TokenType.COMMAND) &&
-             !this.isCommand(this.peek().value) &&
-             !this.check('then') &&
-             !this.check('and') &&
-             !this.check(',')) {
+      while (
+        !this.isAtEnd() &&
+        !this.check('end') &&
+        !this.checkTokenType(TokenType.COMMAND) &&
+        !this.isCommand(this.peek().value) &&
+        !this.check('then') &&
+        !this.check('and') &&
+        !this.check(',')
+      ) {
         debug.parse('⚠️  Skipping unexpected token:', this.peek().value);
         this.advance(); // skip the unexpected token
       }
@@ -1127,7 +1294,12 @@ export class Parser {
       debug.parse('✅ Found "end", consuming it');
       this.advance();
     } else {
-      debug.parse('❌ ERROR: Expected "end" but got:', this.peek().value, 'at position:', this.peek().start);
+      debug.parse(
+        '❌ ERROR: Expected "end" but got:',
+        this.peek().value,
+        'at position:',
+        this.peek().start
+      );
       throw new Error('Expected "end" to close repeat block');
     }
 
@@ -1181,7 +1353,10 @@ export class Parser {
 
         // Parse event name (dotOrColonPath in _hyperscript)
         const eventToken = this.peek();
-        debug.parse('📍 Parsing event name, current token:', { value: eventToken.value, type: eventToken.type });
+        debug.parse('📍 Parsing event name, current token:', {
+          value: eventToken.value,
+          type: eventToken.type,
+        });
         if (eventToken.type === TokenType.IDENTIFIER) {
           eventName = eventToken.value;
           this.advance();
@@ -1207,7 +1382,7 @@ export class Parser {
           debug.parse('🔍 Before parsePrimary for event target:', {
             value: beforePrimary.value,
             type: beforePrimary.type,
-            position: beforePrimary.start
+            position: beforePrimary.start,
           });
           eventTarget = this.parsePrimary();
           debug.parse('✅ After parsePrimary, eventTarget:', eventTarget);
@@ -1235,7 +1410,8 @@ export class Parser {
     let indexVariable: string | null = null;
     if (this.check('with')) {
       // Peek ahead to verify this is "with index" pattern
-      const nextToken = this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
+      const nextToken =
+        this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
       if (nextToken && nextToken.value.toLowerCase() === 'index') {
         this.advance(); // consume 'with'
         this.advance(); // consume 'index'
@@ -1264,7 +1440,7 @@ export class Parser {
       start: commandToken.start,
       end: commandToken.end,
       line: commandToken.line,
-      column: commandToken.column
+      column: commandToken.column,
     } as IdentifierNode);
 
     if (variable) {
@@ -1274,7 +1450,7 @@ export class Parser {
         start: commandToken.start,
         end: commandToken.end,
         line: commandToken.line,
-        column: commandToken.column
+        column: commandToken.column,
       } as any);
     }
 
@@ -1289,7 +1465,7 @@ export class Parser {
         start: commandToken.start,
         end: commandToken.end,
         line: commandToken.line,
-        column: commandToken.column
+        column: commandToken.column,
       } as any);
     }
 
@@ -1302,7 +1478,7 @@ export class Parser {
         start: commandToken.start,
         end: commandToken.end,
         line: commandToken.line,
-        column: commandToken.column
+        column: commandToken.column,
       } as any);
     }
 
@@ -1313,7 +1489,7 @@ export class Parser {
       start: commandToken.start,
       end: commandToken.end || 0,
       line: commandToken.line,
-      column: commandToken.column
+      column: commandToken.column,
     } as any);
 
     return {
@@ -1324,7 +1500,7 @@ export class Parser {
       start: commandToken.start || 0,
       end: commandToken.end || 0,
       line: commandToken.line || 1,
-      column: commandToken.column || 1
+      column: commandToken.column || 1,
     };
   }
 
@@ -1357,7 +1533,7 @@ export class Parser {
         start: commandToken.start || 0,
         end: this.getPosition().end,
         line: commandToken.line || 1,
-        column: commandToken.column || 1
+        column: commandToken.column || 1,
       };
     }
 
@@ -1366,7 +1542,7 @@ export class Parser {
       this.advance(); // consume 'for'
 
       // Parse event specifications (can be multiple with 'or')
-      const events: Array<{name: string, params: string[]}> = [];
+      const events: Array<{ name: string; params: string[] }> = [];
 
       do {
         // Parse event name
@@ -1434,30 +1610,40 @@ export class Parser {
       // Format: [eventList, target?]
       args.push({
         type: 'arrayLiteral',
-        elements: events.map(event => ({
-          type: 'objectLiteral',
-          properties: [
-            {
-              key: { type: 'identifier', name: 'name' } as IdentifierNode,
-              value: { type: 'literal', value: event.name, raw: `"${event.name}"` } as LiteralNode
-            },
-            {
-              key: { type: 'identifier', name: 'args' } as IdentifierNode,
-              value: {
-                type: 'arrayLiteral',
-                elements: event.params.map(param => ({
-                  type: 'literal',
-                  value: param,
-                  raw: `"${param}"`
-                } as LiteralNode))
-              } as any
-            }
-          ]
-        } as any)),
+        elements: events.map(
+          event =>
+            ({
+              type: 'objectLiteral',
+              properties: [
+                {
+                  key: { type: 'identifier', name: 'name' } as IdentifierNode,
+                  value: {
+                    type: 'literal',
+                    value: event.name,
+                    raw: `"${event.name}"`,
+                  } as LiteralNode,
+                },
+                {
+                  key: { type: 'identifier', name: 'args' } as IdentifierNode,
+                  value: {
+                    type: 'arrayLiteral',
+                    elements: event.params.map(
+                      param =>
+                        ({
+                          type: 'literal',
+                          value: param,
+                          raw: `"${param}"`,
+                        }) as LiteralNode
+                    ),
+                  } as any,
+                },
+              ],
+            }) as any
+        ),
         start: commandToken.start,
         end: this.getPosition().end,
         line: commandToken.line,
-        column: commandToken.column
+        column: commandToken.column,
       } as any);
 
       if (eventTarget) {
@@ -1473,7 +1659,7 @@ export class Parser {
       start: commandToken.start || 0,
       end: this.getPosition().end,
       line: commandToken.line || 1,
-      column: commandToken.column || 1
+      column: commandToken.column || 1,
     };
   }
 
@@ -1502,7 +1688,7 @@ export class Parser {
       start: this.previous().start,
       end: this.previous().end,
       line: this.previous().line,
-      column: this.previous().column
+      column: this.previous().column,
     } as IdentifierNode);
 
     // Check for parameter list
@@ -1510,7 +1696,7 @@ export class Parser {
       this.advance(); // consume '('
 
       // Parse parameters (can be named or positional)
-      const params: Array<{name?: string, value: ASTNode}> = [];
+      const params: Array<{ name?: string; value: ASTNode }> = [];
 
       while (!this.isAtEnd() && !this.check(')')) {
         // Check if this is a named parameter (identifier followed by ':')
@@ -1556,14 +1742,14 @@ export class Parser {
           type: 'objectLiteral',
           properties: params.map(param => ({
             key: param.name
-              ? { type: 'identifier', name: param.name } as IdentifierNode
-              : { type: 'literal', value: '_positional' } as LiteralNode,
-            value: param.value
+              ? ({ type: 'identifier', name: param.name } as IdentifierNode)
+              : ({ type: 'literal', value: '_positional' } as LiteralNode),
+            value: param.value,
           })),
           start: commandToken.start,
           end: this.getPosition().end,
           line: commandToken.line,
-          column: commandToken.column
+          column: commandToken.column,
         } as any);
       }
     }
@@ -1576,7 +1762,7 @@ export class Parser {
       start: commandToken.start || 0,
       end: this.getPosition().end,
       line: commandToken.line || 1,
-      column: commandToken.column || 1
+      column: commandToken.column || 1,
     };
   }
 
@@ -1638,7 +1824,7 @@ export class Parser {
           start: firstToken.start || 0,
           end: this.getPosition().end,
           line: firstToken.line,
-          column: firstToken.column
+          column: firstToken.column,
         };
       }
     }
@@ -1681,7 +1867,7 @@ export class Parser {
       start: commandToken.start || 0,
       end: this.getPosition().end,
       line: commandToken.line || 1,
-      column: commandToken.column || 1
+      column: commandToken.column || 1,
     };
   }
 
@@ -1723,7 +1909,7 @@ export class Parser {
       start: commandToken.start || 0,
       end: this.getPosition().end,
       line: commandToken.line || 1,
-      column: commandToken.column || 1
+      column: commandToken.column || 1,
     };
   }
 
@@ -1766,7 +1952,12 @@ export class Parser {
         const tokenValue = token.value?.toLowerCase();
 
         // Stop at structural boundaries
-        if (tokenValue === 'behavior' || tokenValue === 'def' || tokenValue === 'on' || tokenValue === 'end') {
+        if (
+          tokenValue === 'behavior' ||
+          tokenValue === 'def' ||
+          tokenValue === 'on' ||
+          tokenValue === 'end'
+        ) {
           break;
         }
 
@@ -1802,11 +1993,13 @@ export class Parser {
       const maxIterations = 20; // Safety limit to prevent infinite loops
       let iterations = 0;
 
-      while (!this.isAtEnd() &&
-             !this.checkTokenType(TokenType.COMMAND) &&
-             !this.isCommand(this.peek().value) &&
-             !this.check('then') &&
-             iterations < maxIterations) {
+      while (
+        !this.isAtEnd() &&
+        !this.checkTokenType(TokenType.COMMAND) &&
+        !this.isCommand(this.peek().value) &&
+        !this.check('then') &&
+        iterations < maxIterations
+      ) {
         const beforePos = this.current;
         // Use parseUnary() instead of parsePrimary() to handle unary operators like 'not' and 'no'
         conditionTokens.push(this.parseUnary());
@@ -1832,7 +2025,7 @@ export class Parser {
           start: conditionTokens[0].start,
           end: conditionTokens[conditionTokens.length - 1].end,
           line: commandToken.line,
-          column: commandToken.column
+          column: commandToken.column,
         } as any;
       }
     }
@@ -1866,7 +2059,7 @@ export class Parser {
         start: commandToken.start,
         end: this.getPosition().end,
         line: commandToken.line,
-        column: commandToken.column
+        column: commandToken.column,
       } as any);
 
       // Check for optional 'else' clause
@@ -1893,13 +2086,12 @@ export class Parser {
           start: commandToken.start,
           end: this.getPosition().end,
           line: commandToken.line,
-          column: commandToken.column
+          column: commandToken.column,
         } as any);
       }
 
       // Consume 'end' for multi-line form
       this.consume('end', "Expected 'end' after if block");
-
     } else {
       // Single-line form: if condition command
       // Parse exactly one command (no 'end' expected)
@@ -1914,7 +2106,7 @@ export class Parser {
           start: commandToken.start,
           end: this.getPosition().end,
           line: commandToken.line,
-          column: commandToken.column
+          column: commandToken.column,
         } as any);
       } else {
         throw new Error('Expected command after if condition in single-line form');
@@ -1929,31 +2121,31 @@ export class Parser {
       start: commandToken.start || 0,
       end: this.getPosition().end,
       line: commandToken.line || 1,
-      column: commandToken.column || 1
+      column: commandToken.column || 1,
     };
   }
 
   // @ts-expect-error - Reserved for future command parsing
   private _parseAddCommand(identifierNode: IdentifierNode): CommandNode | null {
     const args: ASTNode[] = [];
-    
+
     // Parse: add <class> to <target>
     // First argument: class
     if (!this.isAtEnd() && !this.check('to')) {
       args.push(this.parsePrimary());
     }
-    
+
     // Expect 'to' keyword
     if (this.check('to')) {
       this.advance(); // consume 'to'
       args.push(this.createIdentifier('to')); // Add 'to' as an argument
     }
-    
+
     // Third argument: target
     if (!this.isAtEnd() && !this.check('then') && !this.check('and') && !this.check('else')) {
       args.push(this.parsePrimary());
     }
-    
+
     return {
       type: 'command',
       name: identifierNode.name,
@@ -1962,7 +2154,7 @@ export class Parser {
       ...(identifierNode.start !== undefined && { start: identifierNode.start }),
       end: this.getPosition().end,
       ...(identifierNode.line !== undefined && { line: identifierNode.line }),
-      ...(identifierNode.column !== undefined && { column: identifierNode.column })
+      ...(identifierNode.column !== undefined && { column: identifierNode.column }),
     };
   }
 
@@ -1982,10 +2174,16 @@ export class Parser {
     }
 
     // Third argument: target
-    if (!this.isAtEnd() && !this.check('then') && !this.check('and') && !this.check('else') && !this.check('end')) {
+    if (
+      !this.isAtEnd() &&
+      !this.check('then') &&
+      !this.check('and') &&
+      !this.check('else') &&
+      !this.check('end')
+    ) {
       args.push(this.parsePrimary());
     }
-    
+
     return {
       type: 'command',
       name: identifierNode.name,
@@ -1994,7 +2192,7 @@ export class Parser {
       ...(identifierNode.start !== undefined && { start: identifierNode.start }),
       end: this.getPosition().end,
       ...(identifierNode.line !== undefined && { line: identifierNode.line }),
-      ...(identifierNode.column !== undefined && { column: identifierNode.column })
+      ...(identifierNode.column !== undefined && { column: identifierNode.column }),
     };
   }
 
@@ -2014,10 +2212,16 @@ export class Parser {
     }
 
     // Third argument: target
-    if (!this.isAtEnd() && !this.check('then') && !this.check('and') && !this.check('else') && !this.check('end')) {
+    if (
+      !this.isAtEnd() &&
+      !this.check('then') &&
+      !this.check('and') &&
+      !this.check('else') &&
+      !this.check('end')
+    ) {
       args.push(this.parsePrimary());
     }
-    
+
     return {
       type: 'command',
       name: identifierNode.name,
@@ -2026,7 +2230,7 @@ export class Parser {
       ...(identifierNode.start !== undefined && { start: identifierNode.start }),
       end: this.getPosition().end,
       ...(identifierNode.line !== undefined && { line: identifierNode.line }),
-      ...(identifierNode.column !== undefined && { column: identifierNode.column })
+      ...(identifierNode.column !== undefined && { column: identifierNode.column }),
     };
   }
 
@@ -2034,23 +2238,26 @@ export class Parser {
     const args: ASTNode[] = [];
 
     // Parse command arguments (space-separated, not comma-separated)
-    while (!this.isAtEnd() &&
-           !this.check('then') &&
-           !this.check('and') &&
-           !this.check('else') &&
-           !this.check('end') &&
-           !this.checkTokenType(TokenType.COMMAND)) {
-      
-      if (this.checkTokenType(TokenType.CONTEXT_VAR) || 
-          this.checkTokenType(TokenType.IDENTIFIER) ||
-          this.checkTokenType(TokenType.KEYWORD) ||
-          this.checkTokenType(TokenType.CSS_SELECTOR) ||
-          this.checkTokenType(TokenType.ID_SELECTOR) ||
-          this.checkTokenType(TokenType.CLASS_SELECTOR) ||
-          this.checkTokenType(TokenType.STRING) ||
-          this.checkTokenType(TokenType.NUMBER) ||
-          this.checkTokenType(TokenType.TIME_EXPRESSION) ||
-          this.match('<')) {
+    while (
+      !this.isAtEnd() &&
+      !this.check('then') &&
+      !this.check('and') &&
+      !this.check('else') &&
+      !this.check('end') &&
+      !this.checkTokenType(TokenType.COMMAND)
+    ) {
+      if (
+        this.checkTokenType(TokenType.CONTEXT_VAR) ||
+        this.checkTokenType(TokenType.IDENTIFIER) ||
+        this.checkTokenType(TokenType.KEYWORD) ||
+        this.checkTokenType(TokenType.CSS_SELECTOR) ||
+        this.checkTokenType(TokenType.ID_SELECTOR) ||
+        this.checkTokenType(TokenType.CLASS_SELECTOR) ||
+        this.checkTokenType(TokenType.STRING) ||
+        this.checkTokenType(TokenType.NUMBER) ||
+        this.checkTokenType(TokenType.TIME_EXPRESSION) ||
+        this.match('<')
+      ) {
         args.push(this.parsePrimary());
       } else {
         break;
@@ -2065,7 +2272,7 @@ export class Parser {
       ...(identifierNode.start !== undefined && { start: identifierNode.start }),
       end: this.getPosition().end,
       ...(identifierNode.line !== undefined && { line: identifierNode.line }),
-      ...(identifierNode.column !== undefined && { column: identifierNode.column })
+      ...(identifierNode.column !== undefined && { column: identifierNode.column }),
     };
   }
 
@@ -2076,7 +2283,10 @@ export class Parser {
       if (this.match('(')) {
         expr = this.finishCall(expr);
       } else if (this.match('.')) {
-        const name = this.consume(TokenType.IDENTIFIER, "Expected property name after '.' - malformed member access");
+        const name = this.consume(
+          TokenType.IDENTIFIER,
+          "Expected property name after '.' - malformed member access"
+        );
         expr = this.createMemberExpression(expr, this.createIdentifier(name.value), false);
       } else if (this.match('[')) {
         const index = this.parseExpression();
@@ -2085,7 +2295,10 @@ export class Parser {
       } else if (this.check("'s")) {
         // Handle possessive syntax: element's property (tokenized as single 's operator)
         this.advance(); // consume 's'
-        const property = this.consume(TokenType.IDENTIFIER, "Expected property name after possessive");
+        const property = this.consume(
+          TokenType.IDENTIFIER,
+          'Expected property name after possessive'
+        );
         expr = this.createPossessiveExpression(expr, this.createIdentifier(property.value));
       } else {
         break;
@@ -2113,10 +2326,12 @@ export class Parser {
       const raw = this.previous().value;
 
       // Check for unclosed string (if it doesn't end with matching quote)
-      if (raw.length < 2 ||
-          (raw.startsWith('"') && !raw.endsWith('"')) ||
-          (raw.startsWith("'") && !raw.endsWith("'"))) {
-        this.addError("Unclosed string literal - string not properly closed");
+      if (
+        raw.length < 2 ||
+        (raw.startsWith('"') && !raw.endsWith('"')) ||
+        (raw.startsWith("'") && !raw.endsWith("'"))
+      ) {
+        this.addError('Unclosed string literal - string not properly closed');
         return this.createErrorNode();
       }
 
@@ -2135,14 +2350,14 @@ export class Parser {
         start: token.start || 0,
         end: token.end || 0,
         line: token.line,
-        column: token.column
+        column: token.column,
       };
     }
 
     if (this.matchTokenType(TokenType.BOOLEAN)) {
       const tokenValue = this.previous().value;
       let value: unknown;
-      
+
       switch (tokenValue) {
         case 'true':
           value = true;
@@ -2159,7 +2374,7 @@ export class Parser {
         default:
           value = tokenValue === 'true'; // fallback to original logic
       }
-      
+
       return this.createLiteral(value, tokenValue);
     }
 
@@ -2170,7 +2385,11 @@ export class Parser {
     }
 
     // Handle CSS selectors
-    if (this.matchTokenType(TokenType.CSS_SELECTOR) || this.matchTokenType(TokenType.ID_SELECTOR) || this.matchTokenType(TokenType.CLASS_SELECTOR)) {
+    if (
+      this.matchTokenType(TokenType.CSS_SELECTOR) ||
+      this.matchTokenType(TokenType.ID_SELECTOR) ||
+      this.matchTokenType(TokenType.CLASS_SELECTOR)
+    ) {
       return this.createSelector(this.previous().value);
     }
 
@@ -2191,10 +2410,10 @@ export class Parser {
     if (this.match('(')) {
       // Check if this is an empty parentheses case like just '('
       if (this.isAtEnd()) {
-        this.addError("Expected expression inside parentheses");
+        this.addError('Expected expression inside parentheses');
         return this.createErrorNode();
       }
-      
+
       const expr = this.parseExpression();
       this.consume(')', "Expected closing parenthesis ')' after expression - unclosed parentheses");
       return expr;
@@ -2219,17 +2438,19 @@ export class Parser {
     // Handle identifiers, keywords, and commands
     // BUT: Don't consume structural keywords like 'end', 'else', 'then' as identifiers
     const currentToken = this.peek();
-    const isStructuralKeyword = currentToken && (
-      currentToken.value === 'end' ||
-      currentToken.value === 'else' ||
-      currentToken.value === 'then'
-    );
+    const isStructuralKeyword =
+      currentToken &&
+      (currentToken.value === 'end' ||
+        currentToken.value === 'else' ||
+        currentToken.value === 'then');
 
-    if (!isStructuralKeyword &&
-        (this.matchTokenType(TokenType.IDENTIFIER) ||
-         this.matchTokenType(TokenType.KEYWORD) ||
-         this.matchTokenType(TokenType.CONTEXT_VAR) ||
-         this.matchTokenType(TokenType.COMMAND))) {
+    if (
+      !isStructuralKeyword &&
+      (this.matchTokenType(TokenType.IDENTIFIER) ||
+        this.matchTokenType(TokenType.KEYWORD) ||
+        this.matchTokenType(TokenType.CONTEXT_VAR) ||
+        this.matchTokenType(TokenType.COMMAND))
+    ) {
       const token = this.previous();
 
       // Handle constructor calls with 'new' keyword
@@ -2247,9 +2468,20 @@ export class Parser {
       }
 
       // Handle hyperscript navigation functions
-      if (token.value === 'closest' || token.value === 'first' || token.value === 'last' || token.value === 'previous' || token.value === 'next') {
+      if (
+        token.value === 'closest' ||
+        token.value === 'first' ||
+        token.value === 'last' ||
+        token.value === 'previous' ||
+        token.value === 'next'
+      ) {
         // Check if followed by function call syntax or expression
-        if (this.check('(') || this.checkTokenType(TokenType.CSS_SELECTOR) || this.check('<') || this.checkTokenType(TokenType.QUERY_REFERENCE)) {
+        if (
+          this.check('(') ||
+          this.checkTokenType(TokenType.CSS_SELECTOR) ||
+          this.check('<') ||
+          this.checkTokenType(TokenType.QUERY_REFERENCE)
+        ) {
           return this.parseNavigationFunction(token.value);
         }
         return this.createIdentifier(token.value);
@@ -2275,55 +2507,59 @@ export class Parser {
 
   private parseDollarExpression(): ASTNode {
     // We've already consumed the '$' token
-    
+
     // Check if followed by a number (like $1, $2)
     if (this.checkTokenType(TokenType.NUMBER)) {
       const numberToken = this.advance();
       const value = numberToken.value;
       return this.createLiteral(value, `$${value}`);
     }
-    
+
     // Check if followed by an identifier (like $variable, $window)
     if (this.checkTokenType(TokenType.IDENTIFIER)) {
       const identifierToken = this.advance();
       let expression: ASTNode = this.createIdentifier(identifierToken.value);
-      
+
       // Handle property access like $window.foo
       while (this.match('.')) {
         if (this.checkTokenType(TokenType.IDENTIFIER)) {
           const propertyToken = this.advance();
-          expression = this.createMemberExpression(expression, this.createIdentifier(propertyToken.value), false);
+          expression = this.createMemberExpression(
+            expression,
+            this.createIdentifier(propertyToken.value),
+            false
+          );
         } else {
           this.addError("Expected property name after '.' in dollar expression");
           return this.createErrorNode();
         }
       }
-      
+
       // Wrap in a special dollar expression node
       return {
         type: 'dollarExpression',
         expression,
         raw: `$${identifierToken.value}${(this.previous() as any).raw || this.previous().value || ''}`,
         line: identifierToken.line,
-        column: identifierToken.column - 1 // Include the $ symbol
+        column: identifierToken.column - 1, // Include the $ symbol
       };
     }
-    
+
     this.addError("Expected identifier or number after '$'");
     return this.createErrorNode();
   }
 
   private parseHyperscriptSelector(): SelectorNode {
     let selector = '';
-    
+
     // Parse until we find '/>'
     while (!this.check('/') && !this.isAtEnd()) {
       selector += this.advance().value;
     }
-    
+
     this.consume('/', "Expected '/' in hyperscript selector");
     this.consume('>', "Expected '>' after '/' in hyperscript selector");
-    
+
     return this.createSelector(selector);
   }
 
@@ -2340,7 +2576,7 @@ export class Parser {
         start: pos.start,
         end: this.getPosition().end,
         line: pos.line,
-        column: pos.column
+        column: pos.column,
       };
     }
 
@@ -2348,7 +2584,7 @@ export class Parser {
     do {
       // Parse property key
       let key: ASTNode;
-      
+
       if (this.matchTokenType(TokenType.IDENTIFIER)) {
         // Unquoted property name
         key = this.createIdentifier(this.previous().value);
@@ -2358,7 +2594,7 @@ export class Parser {
         const value = raw.slice(1, -1); // Remove quotes
         key = this.createLiteral(value, raw);
       } else {
-        this.addError("Expected property name in object literal");
+        this.addError('Expected property name in object literal');
         return this.createErrorNode();
       }
 
@@ -2390,7 +2626,7 @@ export class Parser {
       start: pos.start,
       end: this.getPosition().end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
@@ -2418,7 +2654,7 @@ export class Parser {
         const value = raw.slice(1, -1);
         key = this.createLiteral(value, raw);
       } else {
-        this.addError("Expected CSS property name");
+        this.addError('Expected CSS property name');
         return this.createErrorNode();
       }
 
@@ -2465,7 +2701,7 @@ export class Parser {
             start: pos.start,
             end: this.getPosition().end,
             line: pos.line,
-            column: pos.column
+            column: pos.column,
           }
         : this.createLiteral(valueString, valueString);
 
@@ -2490,34 +2726,34 @@ export class Parser {
       start: pos.start,
       end: this.getPosition().end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
   private parseConstructorCall(): ASTNode {
     // We've already consumed the 'new' token
     const newToken = this.previous();
-    
+
     // Expect constructor name (identifier)
     if (!this.checkTokenType(TokenType.IDENTIFIER)) {
       this.addError('Expected constructor name after "new"');
       return this.createErrorNode();
     }
-    
+
     const constructorToken = this.advance();
     const constructorName = constructorToken.value;
-    
+
     // Expect opening parenthesis
     if (!this.check('(')) {
       this.addError('Expected "(" after constructor name');
       return this.createErrorNode();
     }
-    
+
     this.advance(); // consume '('
-    
+
     // For now, only support empty argument list (constructor calls without arguments)
     const args: ASTNode[] = [];
-    
+
     // Parse arguments if any (simplified - just handle empty for now)
     if (!this.check(')')) {
       // If there are arguments, we could parse them here
@@ -2531,7 +2767,7 @@ export class Parser {
     } else {
       this.advance(); // consume ')'
     }
-    
+
     // Create constructor call AST node (using callExpression type with constructor flag)
     return {
       type: 'callExpression',
@@ -2541,14 +2777,14 @@ export class Parser {
         start: constructorToken.start,
         end: constructorToken.end,
         line: constructorToken.line,
-        column: constructorToken.column
+        column: constructorToken.column,
       },
       arguments: args,
       isConstructor: true, // Flag to indicate this is a constructor call
       start: newToken.start,
       end: this.previous().end,
       line: newToken.line,
-      column: newToken.column
+      column: newToken.column,
     };
   }
 
@@ -2572,14 +2808,14 @@ export class Parser {
       const namespaceToken = this.advance(); // get the part after ':'
       event = `${event}:${namespaceToken.value}`;
     }
-    
+
     // Check for conditional syntax: [condition]
     let condition: ASTNode | undefined;
     if (this.match('[')) {
       condition = this.parseExpression();
       this.consume(']', "Expected ']' after event condition");
     }
-    
+
     // Optional: handle "from selector"
     let selector: string | undefined;
     if (this.match('from')) {
@@ -2590,15 +2826,21 @@ export class Parser {
     // Parse commands
     const commands: CommandNode[] = [];
 
-    debug.parse(`✅ parseEventHandler: About to parse commands, current token: ${this.isAtEnd() ? 'END' : this.peek().value}, isAtEnd: ${this.isAtEnd()}`);
+    debug.parse(
+      `✅ parseEventHandler: About to parse commands, current token: ${this.isAtEnd() ? 'END' : this.peek().value}, isAtEnd: ${this.isAtEnd()}`
+    );
 
     // Look for commands after the event (and optional selector)
     while (!this.isAtEnd()) {
-      debug.parse(`✅ parseEventHandler: Loop iteration, current token: ${this.peek().value}, type: ${this.peek().type}`);
+      debug.parse(
+        `✅ parseEventHandler: Loop iteration, current token: ${this.peek().value}, type: ${this.peek().type}`
+      );
 
       // Stop parsing commands if we encounter another event handler (on ...)
       if (this.check('on')) {
-        debug.parse(`✅ parseEventHandler: Stopping command parsing, found next event handler 'on'`);
+        debug.parse(
+          `✅ parseEventHandler: Stopping command parsing, found next event handler 'on'`
+        );
         break;
       }
 
@@ -2630,9 +2872,10 @@ export class Parser {
             const nextToken = this.peek();
 
             // Check if this looks like a pseudo-command pattern
-            const hasPseudoCommandPattern = pseudoCommandPrepositions.includes(nextToken.value.toLowerCase()) ||
-                                           (nextToken.type === TokenType.IDENTIFIER && !this.isCommand(nextToken.value)) ||
-                                           nextToken.type === TokenType.CONTEXT_VAR;
+            const hasPseudoCommandPattern =
+              pseudoCommandPrepositions.includes(nextToken.value.toLowerCase()) ||
+              (nextToken.type === TokenType.IDENTIFIER && !this.isCommand(nextToken.value)) ||
+              nextToken.type === TokenType.CONTEXT_VAR;
 
             const isPseudoCommand = hasPseudoCommandPattern;
 
@@ -2645,12 +2888,12 @@ export class Parser {
                   suggestions: [
                     `Rename method to avoid confusion (e.g., '${methodName}Fn', 'my${methodName.charAt(0).toUpperCase() + methodName.slice(1)}')`,
                     `Use 'call' command instead: call ${methodName}(...)`,
-                    'This works but may cause ambiguity'
+                    'This works but may cause ambiguity',
                   ],
                   severity: 'warning',
                   code: 'PSEUDO_CMD_SHADOW',
                   ...(expr.line !== undefined && { line: expr.line }),
-                  ...(expr.column !== undefined && { column: expr.column })
+                  ...(expr.column !== undefined && { column: expr.column }),
                 });
               }
               // Parse as pseudo-command
@@ -2672,7 +2915,7 @@ export class Parser {
                   ...(expr.start !== undefined && { start: expr.start }),
                   ...(expr.end !== undefined && { end: expr.end }),
                   ...(expr.line !== undefined && { line: expr.line }),
-                  ...(expr.column !== undefined && { column: expr.column })
+                  ...(expr.column !== undefined && { column: expr.column }),
                 };
                 commands.push(commandNode);
                 continue;
@@ -2688,32 +2931,44 @@ export class Parser {
                     properties: [
                       {
                         key: { type: 'identifier', name: 'methodName' } as IdentifierNode,
-                        value: { type: 'literal', value: methodName, raw: `"${methodName}"` } as LiteralNode
+                        value: {
+                          type: 'literal',
+                          value: methodName,
+                          raw: `"${methodName}"`,
+                        } as LiteralNode,
                       },
                       {
                         key: { type: 'identifier', name: 'methodArgs' } as IdentifierNode,
                         value: {
                           type: 'literal',
                           value: callExpr.arguments,
-                          raw: JSON.stringify(callExpr.arguments)
-                        } as LiteralNode
+                          raw: JSON.stringify(callExpr.arguments),
+                        } as LiteralNode,
                       },
-                      ...(preposition ? [{
-                        key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
-                        value: { type: 'literal', value: preposition, raw: `"${preposition}"` } as LiteralNode
-                      }] : []),
+                      ...(preposition
+                        ? [
+                            {
+                              key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
+                              value: {
+                                type: 'literal',
+                                value: preposition,
+                                raw: `"${preposition}"`,
+                              } as LiteralNode,
+                            },
+                          ]
+                        : []),
                       {
                         key: { type: 'identifier', name: 'targetExpression' } as IdentifierNode,
-                        value: targetExpr
-                      }
-                    ]
-                  } as any
+                        value: targetExpr,
+                      },
+                    ],
+                  } as any,
                 ] as ExpressionNode[],
                 isBlocking: false,
                 ...(expr.start !== undefined && { start: expr.start }),
                 ...(expr.end !== undefined && { end: expr.end }),
                 ...(expr.line !== undefined && { line: expr.line }),
-                ...(expr.column !== undefined && { column: expr.column })
+                ...(expr.column !== undefined && { column: expr.column }),
               };
               commands.push(pseudoCommandNode);
               continue;
@@ -2731,7 +2986,7 @@ export class Parser {
               ...(expr.start !== undefined && { start: expr.start }),
               ...(expr.end !== undefined && { end: expr.end }),
               ...(expr.line !== undefined && { line: expr.line }),
-              ...(expr.column !== undefined && { column: expr.column })
+              ...(expr.column !== undefined && { column: expr.column }),
             };
             commands.push(commandNode);
           }
@@ -2744,14 +2999,22 @@ export class Parser {
             const cmd = this.parseCommand();
             // Check if an error was added during parsing (even if no exception was thrown)
             if (this.error && this.error !== savedError) {
-              debug.parse('⚠️ Command parsing added error, restoring error state. Error was:', this.error.message);
+              debug.parse(
+                '⚠️ Command parsing added error, restoring error state. Error was:',
+                this.error.message
+              );
               this.error = savedError;
             }
             commands.push(cmd);
-            debug.parse(`✅ parseEventHandler: Parsed command, next token: ${this.isAtEnd() ? 'END' : this.peek().value}`);
+            debug.parse(
+              `✅ parseEventHandler: Parsed command, next token: ${this.isAtEnd() ? 'END' : this.peek().value}`
+            );
           } catch (error) {
             // If command parsing fails, restore error state and skip to next command
-            debug.parse('⚠️ Command parsing threw exception, restoring error state:', error instanceof Error ? error.message : String(error));
+            debug.parse(
+              '⚠️ Command parsing threw exception, restoring error state:',
+              error instanceof Error ? error.message : String(error)
+            );
             this.error = savedError;
           }
         }
@@ -2767,13 +3030,19 @@ export class Parser {
             const cmd = this.parseCommand();
             // Check if an error was added during parsing (even if no exception was thrown)
             if (this.error && this.error !== savedError) {
-              debug.parse('⚠️ Command parsing added error, restoring error state. Error was:', this.error.message);
+              debug.parse(
+                '⚠️ Command parsing added error, restoring error state. Error was:',
+                this.error.message
+              );
               this.error = savedError;
             }
             commands.push(cmd);
           } catch (error) {
             // If command parsing fails, restore error state and skip to next command
-            debug.parse('⚠️ Command parsing threw exception, restoring error state:', error instanceof Error ? error.message : String(error));
+            debug.parse(
+              '⚠️ Command parsing threw exception, restoring error state:',
+              error instanceof Error ? error.message : String(error)
+            );
             this.error = savedError;
           }
         } else {
@@ -2785,7 +3054,10 @@ export class Parser {
             expr = this.parseExpression();
           } catch (error) {
             // If expression parsing fails (e.g., HSL colors), restore error state and skip
-            debug.parse('⚠️ Expression parsing error, restoring error state:', error instanceof Error ? error.message : String(error));
+            debug.parse(
+              '⚠️ Expression parsing error, restoring error state:',
+              error instanceof Error ? error.message : String(error)
+            );
             this.error = savedError;
             break;
           }
@@ -2800,9 +3072,10 @@ export class Parser {
             const nextToken = this.peek();
 
             // Check if this looks like a pseudo-command pattern
-            const hasPseudoCommandPattern = pseudoCommandPrepositions.includes(nextToken.value.toLowerCase()) ||
-                                           (nextToken.type === TokenType.IDENTIFIER && !this.isCommand(nextToken.value)) ||
-                                           nextToken.type === TokenType.CONTEXT_VAR;
+            const hasPseudoCommandPattern =
+              pseudoCommandPrepositions.includes(nextToken.value.toLowerCase()) ||
+              (nextToken.type === TokenType.IDENTIFIER && !this.isCommand(nextToken.value)) ||
+              nextToken.type === TokenType.CONTEXT_VAR;
 
             const isPseudoCommand = hasPseudoCommandPattern;
 
@@ -2815,12 +3088,12 @@ export class Parser {
                   suggestions: [
                     `Rename method to avoid confusion (e.g., '${methodName}Fn', 'my${methodName.charAt(0).toUpperCase() + methodName.slice(1)}')`,
                     `Use 'call' command instead: call ${methodName}(...)`,
-                    'This works but may cause ambiguity'
+                    'This works but may cause ambiguity',
                   ],
                   severity: 'warning',
                   code: 'PSEUDO_CMD_SHADOW',
                   ...(expr.line !== undefined && { line: expr.line }),
-                  ...(expr.column !== undefined && { column: expr.column })
+                  ...(expr.column !== undefined && { column: expr.column }),
                 });
               }
               // Parse pseudo-command: methodName(args) [preposition] target
@@ -2845,7 +3118,7 @@ export class Parser {
                   ...(expr.start !== undefined && { start: expr.start }),
                   ...(expr.end !== undefined && { end: expr.end }),
                   ...(expr.line !== undefined && { line: expr.line }),
-                  ...(expr.column !== undefined && { column: expr.column })
+                  ...(expr.column !== undefined && { column: expr.column }),
                 };
                 commands.push(commandNode);
                 continue;
@@ -2862,32 +3135,44 @@ export class Parser {
                     properties: [
                       {
                         key: { type: 'identifier', name: 'methodName' } as IdentifierNode,
-                        value: { type: 'literal', value: methodName, raw: `"${methodName}"` } as LiteralNode
+                        value: {
+                          type: 'literal',
+                          value: methodName,
+                          raw: `"${methodName}"`,
+                        } as LiteralNode,
                       },
                       {
                         key: { type: 'identifier', name: 'methodArgs' } as IdentifierNode,
                         value: {
                           type: 'literal',
                           value: callExpr.arguments,
-                          raw: JSON.stringify(callExpr.arguments)
-                        } as LiteralNode
+                          raw: JSON.stringify(callExpr.arguments),
+                        } as LiteralNode,
                       },
-                      ...(preposition ? [{
-                        key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
-                        value: { type: 'literal', value: preposition, raw: `"${preposition}"` } as LiteralNode
-                      }] : []),
+                      ...(preposition
+                        ? [
+                            {
+                              key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
+                              value: {
+                                type: 'literal',
+                                value: preposition,
+                                raw: `"${preposition}"`,
+                              } as LiteralNode,
+                            },
+                          ]
+                        : []),
                       {
                         key: { type: 'identifier', name: 'targetExpression' } as IdentifierNode,
-                        value: targetExpr
-                      }
-                    ]
-                  } as any
+                        value: targetExpr,
+                      },
+                    ],
+                  } as any,
                 ] as ExpressionNode[],
                 isBlocking: false,
                 ...(expr.start !== undefined && { start: expr.start }),
                 ...(expr.end !== undefined && { end: expr.end }),
                 ...(expr.line !== undefined && { line: expr.line }),
-                ...(expr.column !== undefined && { column: expr.column })
+                ...(expr.column !== undefined && { column: expr.column }),
               };
               commands.push(pseudoCommandNode);
             } else {
@@ -2900,14 +3185,22 @@ export class Parser {
                 ...(expr.start !== undefined && { start: expr.start }),
                 ...(expr.end !== undefined && { end: expr.end }),
                 ...(expr.line !== undefined && { line: expr.line }),
-                ...(expr.column !== undefined && { column: expr.column })
+                ...(expr.column !== undefined && { column: expr.column }),
               };
               commands.push(commandNode);
             }
-          } else if (expr && expr.type === 'binaryExpression' && (expr as BinaryExpressionNode).operator === ' ') {
+          } else if (
+            expr &&
+            expr.type === 'binaryExpression' &&
+            (expr as BinaryExpressionNode).operator === ' '
+          ) {
             // Handle "command target" patterns
             const binExpr = expr as BinaryExpressionNode;
-            if (binExpr.left && binExpr.left.type === 'identifier' && this.isCommand((binExpr.left as any).name)) {
+            if (
+              binExpr.left &&
+              binExpr.left.type === 'identifier' &&
+              this.isCommand((binExpr.left as any).name)
+            ) {
               const commandNode: CommandNode = {
                 type: 'command',
                 name: (binExpr.left as any).name,
@@ -2916,7 +3209,7 @@ export class Parser {
                 ...(expr.start !== undefined && { start: expr.start }),
                 ...(expr.end !== undefined && { end: expr.end }),
                 ...(expr.line !== undefined && { line: expr.line }),
-                ...(expr.column !== undefined && { column: expr.column })
+                ...(expr.column !== undefined && { column: expr.column }),
               };
               commands.push(commandNode);
             } else {
@@ -2933,13 +3226,15 @@ export class Parser {
       // Skip any unexpected tokens until we find a command or separator
       // This handles cases where command parsing doesn't consume all its arguments (like HSL colors)
       // But don't skip 'on' tokens (they start new event handlers)
-      while (!this.isAtEnd() &&
-             !this.checkTokenType(TokenType.COMMAND) &&
-             !this.isCommand(this.peek().value) &&
-             !this.check('then') &&
-             !this.check('and') &&
-             !this.check(',') &&
-             !this.check('on')) {
+      while (
+        !this.isAtEnd() &&
+        !this.checkTokenType(TokenType.COMMAND) &&
+        !this.isCommand(this.peek().value) &&
+        !this.check('then') &&
+        !this.check('and') &&
+        !this.check(',') &&
+        !this.check('on')
+      ) {
         this.advance(); // skip the unexpected token
       }
 
@@ -2963,7 +3258,7 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
 
     if (condition) {
@@ -2995,7 +3290,10 @@ export class Parser {
 
     // 'behavior' keyword should already be consumed
     // Now expect behavior name (must start with uppercase)
-    const nameToken = this.consume(TokenType.IDENTIFIER, "Expected behavior name after 'behavior' keyword");
+    const nameToken = this.consume(
+      TokenType.IDENTIFIER,
+      "Expected behavior name after 'behavior' keyword"
+    );
     const behaviorName = nameToken.value;
 
     // Validate behavior name starts with uppercase
@@ -3100,13 +3398,14 @@ export class Parser {
 
               // Skip any unexpected tokens until next command or 'end'
               // (handles edge cases like extra whitespace tokens)
-              while (!this.isAtEnd() &&
-                     !this.check('end') &&
-                     !this.checkTokenType(TokenType.COMMAND) &&
-                     !this.isCommand(this.peek().value)) {
+              while (
+                !this.isAtEnd() &&
+                !this.check('end') &&
+                !this.checkTokenType(TokenType.COMMAND) &&
+                !this.isCommand(this.peek().value)
+              ) {
                 this.advance();
               }
-
             } catch (error) {
               // If command parsing throws, restore error state and exit
               this.error = savedError;
@@ -3131,14 +3430,13 @@ export class Parser {
           start: handlerPos.start,
           end: this.getPosition().end,
           line: handlerPos.line,
-          column: handlerPos.column
+          column: handlerPos.column,
         };
 
         eventHandlers.push(handlerNode);
 
         // Expect 'end' after event handler body
         this.consume('end', "Expected 'end' after event handler body");
-
       } else if (this.match('init')) {
         // Parse init block
         const initCommands: CommandNode[] = [];
@@ -3159,11 +3457,10 @@ export class Parser {
           start: pos.start,
           end: this.getPosition().end,
           line: pos.line,
-          column: pos.column
+          column: pos.column,
         };
 
         this.consume('end', "Expected 'end' after init block");
-
       } else {
         this.addError(`Unexpected token in behavior body: ${this.peek().value}`);
         break;
@@ -3184,7 +3481,7 @@ export class Parser {
       start: pos.start,
       end: this.getPosition().end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
 
     return behaviorNode;
@@ -3196,7 +3493,10 @@ export class Parser {
     // Parse commands separated by 'then' or newlines
     while (!this.isAtEnd()) {
       // Check if we have a command
-      if (this.checkTokenType(TokenType.COMMAND) || (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))) {
+      if (
+        this.checkTokenType(TokenType.COMMAND) ||
+        (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))
+      ) {
         this.advance(); // consume the command token
 
         // Save error state before parsing command
@@ -3206,7 +3506,10 @@ export class Parser {
 
         // Check if an error was added during parsing (even if no exception was thrown)
         if (this.error && this.error !== savedError) {
-          debug.parse('⚠️  parseCommandSequence: Command parsing added error, restoring error state. Error was:', this.error.message);
+          debug.parse(
+            '⚠️  parseCommandSequence: Command parsing added error, restoring error state. Error was:',
+            this.error.message
+          );
           this.error = savedError;
         }
 
@@ -3214,18 +3517,23 @@ export class Parser {
 
         // Skip any unexpected tokens until we find 'then', a command, an event handler, or end
         // This handles cases where command parsing doesn't consume all its arguments (like HSL colors)
-        while (!this.isAtEnd() &&
-               !this.checkTokenType(TokenType.COMMAND) &&
-               !this.isCommand(this.peek().value) &&
-               !this.check('then') &&
-               !this.check('on')) {  // Stop if we encounter an event handler
+        while (
+          !this.isAtEnd() &&
+          !this.checkTokenType(TokenType.COMMAND) &&
+          !this.isCommand(this.peek().value) &&
+          !this.check('then') &&
+          !this.check('on')
+        ) {
+          // Stop if we encounter an event handler
           debug.parse('⚠️  parseCommandSequence: Skipping unexpected token:', this.peek().value);
           this.advance(); // skip the unexpected token
         }
 
         // If we encountered an 'on' token, we're done with command sequence
         if (this.check('on')) {
-          debug.parse('✅ parseCommandSequence: Found "on" token, stopping command sequence to allow event handler parsing');
+          debug.parse(
+            '✅ parseCommandSequence: Found "on" token, stopping command sequence to allow event handler parsing'
+          );
           break;
         }
 
@@ -3235,7 +3543,10 @@ export class Parser {
         }
 
         // Check if next token is also a command (newline-separated)
-        if (this.checkTokenType(TokenType.COMMAND) || (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))) {
+        if (
+          this.checkTokenType(TokenType.COMMAND) ||
+          (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))
+        ) {
           continue; // Parse next command
         }
 
@@ -3246,12 +3557,12 @@ export class Parser {
         break;
       }
     }
-    
+
     // If we only have one command, return it directly
     if (commands.length === 1) {
       return commands[0];
     }
-    
+
     // Return a CommandSequence node
     return {
       type: 'CommandSequence',
@@ -3259,7 +3570,7 @@ export class Parser {
       start: commands[0]?.start || 0,
       end: commands[commands.length - 1]?.end || 0,
       line: commands[0]?.line || 1,
-      column: commands[0]?.column || 1
+      column: commands[0]?.column || 1,
     };
   }
 
@@ -3267,42 +3578,43 @@ export class Parser {
   private _parseFullCommand(): CommandNode {
     const commandToken = this.previous();
     let commandName = commandToken.value;
-    
+
     // Handle special case for beep! command
     if (commandName === 'beep' && this.check('!')) {
       this.advance(); // consume the !
       commandName = 'beep!';
     }
-    
+
     const args: ASTNode[] = [];
 
     // Use command-specific parsing instead of parseExpression to preserve natural language syntax
     while (!this.isAtEnd() && !this.check('then')) {
       // Parse individual tokens/primitives instead of full expressions
       // This prevents "add .highlight to #element" from being split into separate expressions
-      if (this.checkTokenType(TokenType.CSS_SELECTOR) || 
-          this.checkTokenType(TokenType.ID_SELECTOR) || 
-          this.checkTokenType(TokenType.CLASS_SELECTOR) ||
-          this.checkTokenType(TokenType.CONTEXT_VAR) ||
-          this.checkTokenType(TokenType.IDENTIFIER) ||
-          this.checkTokenType(TokenType.KEYWORD) ||
-          this.checkTokenType(TokenType.STRING) ||
-          this.checkTokenType(TokenType.NUMBER) ||
-          this.checkTokenType(TokenType.TIME_EXPRESSION) ||
-          this.checkTokenType(TokenType.OPERATOR) ||
-          this.match('<')) {
-        
+      if (
+        this.checkTokenType(TokenType.CSS_SELECTOR) ||
+        this.checkTokenType(TokenType.ID_SELECTOR) ||
+        this.checkTokenType(TokenType.CLASS_SELECTOR) ||
+        this.checkTokenType(TokenType.CONTEXT_VAR) ||
+        this.checkTokenType(TokenType.IDENTIFIER) ||
+        this.checkTokenType(TokenType.KEYWORD) ||
+        this.checkTokenType(TokenType.STRING) ||
+        this.checkTokenType(TokenType.NUMBER) ||
+        this.checkTokenType(TokenType.TIME_EXPRESSION) ||
+        this.checkTokenType(TokenType.OPERATOR) ||
+        this.match('<')
+      ) {
         args.push(this.parsePrimary());
       } else {
         // Unknown token type - break to avoid infinite loop
         break;
       }
-      
+
       // For comma-separated arguments, consume the comma and continue
       if (this.match(',')) {
         continue;
       }
-      
+
       // If we hit another command (not preceded by 'then'), we've gone too far
       if (this.checkTokenType(TokenType.COMMAND) && !this.check('then')) {
         break;
@@ -3318,7 +3630,7 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
@@ -3361,10 +3673,10 @@ export class Parser {
         start: commandToken.start || 0,
         end: commandToken.end || 0,
         line: commandToken.line,
-        column: commandToken.column
+        column: commandToken.column,
       };
       const result = this.parseCompoundCommand(identifierNode);
-      return result || this.createErrorNode() as unknown as CommandNode;
+      return result || (this.createErrorNode() as unknown as CommandNode);
     }
 
     const args: ASTNode[] = [];
@@ -3377,16 +3689,17 @@ export class Parser {
         hasGlobal = true;
         this.advance(); // consume 'global'
       }
-      
+
       // Parse target (everything before 'to')
       const targetTokens: ASTNode[] = [];
-      while (!this.isAtEnd() && 
-             !this.check('to') &&
-             !this.check('then') && 
-             !this.check('and') && 
-             !this.check('else') && 
-             !this.checkTokenType(TokenType.COMMAND)) {
-        
+      while (
+        !this.isAtEnd() &&
+        !this.check('to') &&
+        !this.check('then') &&
+        !this.check('and') &&
+        !this.check('else') &&
+        !this.checkTokenType(TokenType.COMMAND)
+      ) {
         const expr = this.parseExpression();
         if (expr) {
           targetTokens.push(expr);
@@ -3396,19 +3709,19 @@ export class Parser {
             targetTokens.push(primary);
           }
         }
-        
+
         // Don't consume comma here, let parseExpression handle it
         if (!this.check('to')) {
           break;
         }
       }
-      
+
       // Expect 'to' keyword
       if (!this.check('to')) {
         throw new Error(`Expected 'to' in set command, found: ${this.peek().value}`);
       }
       this.advance(); // consume 'to'
-      
+
       // Parse value (single expression after 'to')
       // The value should be exactly ONE expression (e.g., count + 1, "string", variable)
       // Not multiple expressions in a loop
@@ -3423,10 +3736,10 @@ export class Parser {
           valueTokens.push(primary);
         }
       }
-      
+
       // Combine target tokens into args
       args.push(...targetTokens);
-      
+
       // Add 'to' as separator
       args.push({
         type: 'identifier',
@@ -3434,12 +3747,12 @@ export class Parser {
         start: commandToken.start,
         end: commandToken.end,
         line: commandToken.line,
-        column: commandToken.column
+        column: commandToken.column,
       });
-      
+
       // Add value tokens
       args.push(...valueTokens);
-      
+
       // Add global scope indicator if present
       if (hasGlobal) {
         args.push({
@@ -3450,10 +3763,10 @@ export class Parser {
           end: commandToken.end,
           line: commandToken.line,
           column: commandToken.column,
-          raw: 'global'
+          raw: 'global',
         });
       }
-      
+
       // Return early for set command
       return {
         type: 'command',
@@ -3463,7 +3776,7 @@ export class Parser {
         start: commandToken.start,
         end: this.previous().end,
         line: commandToken.line,
-        column: commandToken.column
+        column: commandToken.column,
       };
     }
 
@@ -3475,13 +3788,13 @@ export class Parser {
         hasGlobal = true;
         this.advance(); // consume 'global'
       }
-      
+
       // Parse the target (variable name or element reference)
       const target = this.parseExpression();
       if (target) {
         args.push(target);
       }
-      
+
       // Check for 'by' keyword followed by amount
       if (this.check('by')) {
         this.advance(); // consume 'by'
@@ -3490,7 +3803,7 @@ export class Parser {
           args.push(amount);
         }
       }
-      
+
       // Add global scope indicator if present
       if (hasGlobal) {
         args.push({
@@ -3501,10 +3814,10 @@ export class Parser {
           end: commandToken.end,
           line: commandToken.line,
           column: commandToken.column,
-          raw: 'global'
+          raw: 'global',
         });
       }
-      
+
       // Return early for increment/decrement to avoid general parsing
       return {
         type: 'command',
@@ -3514,18 +3827,19 @@ export class Parser {
         start: commandToken.start,
         end: this.previous().end,
         line: commandToken.line,
-        column: commandToken.column
+        column: commandToken.column,
       };
     }
 
     // Parse command arguments - continue until we hit a separator, end, or another command
-    while (!this.isAtEnd() &&
-           !this.check('then') &&
-           !this.check('and') &&
-           !this.check('else') &&
-           !this.check('end') &&
-           !this.checkTokenType(TokenType.COMMAND)) {
-      
+    while (
+      !this.isAtEnd() &&
+      !this.check('then') &&
+      !this.check('and') &&
+      !this.check('else') &&
+      !this.check('end') &&
+      !this.checkTokenType(TokenType.COMMAND)
+    ) {
       // Always use parseExpression for arguments to handle complex expressions
       // This allows for expressions like 'Result: ' + (#math-input's value as Math)
       const expr = this.parseExpression();
@@ -3535,31 +3849,43 @@ export class Parser {
         // If parseExpression fails, try parsePrimary as fallback
         args.push(this.parsePrimary());
       }
-      
+
       // For comma-separated arguments, consume the comma and continue
       if (this.match(',')) {
         // Comma-separated - continue to next argument
         continue;
       }
-      
+
       // For hyperscript natural language syntax, continue if we see keywords that indicate more arguments
       // This handles patterns like "put X into Y", "add X to Y", "remove X from Y", "transition X over Yms", etc.
-      const continuationKeywords = ['into', 'from', 'to', 'with', 'by', 'at', 'before', 'after', 'over'];
+      const continuationKeywords = [
+        'into',
+        'from',
+        'to',
+        'with',
+        'by',
+        'at',
+        'before',
+        'after',
+        'over',
+      ];
       if (continuationKeywords.some(keyword => this.check(keyword))) {
         // Continue parsing - this is likely part of the command
         continue;
       }
-      
+
       // Also continue if the previous argument was a continuation keyword
       // This handles the case where we just parsed "from" and need to parse the target
       const lastArg = args[args.length - 1];
-      if (lastArg && 
-          (lastArg.type === 'identifier' || lastArg.type === 'keyword') &&
-          continuationKeywords.includes((lastArg as any).name || (lastArg as any).value)) {
+      if (
+        lastArg &&
+        (lastArg.type === 'identifier' || lastArg.type === 'keyword') &&
+        continuationKeywords.includes((lastArg as any).name || (lastArg as any).value)
+      ) {
         // The previous argument was a continuation keyword, so continue parsing
         continue;
       }
-      
+
       // No comma and no continuation context - this argument sequence is complete
       break;
     }
@@ -3573,16 +3899,16 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
   private parseConditional(): ASTNode {
     const test = this.parseExpression();
-    
+
     this.consume('then', "Expected 'then' after if condition");
     const consequent = this.parseConditionalBranch();
-    
+
     let alternate: ASTNode | undefined;
     if (this.match('else')) {
       alternate = this.parseConditionalBranch();
@@ -3597,7 +3923,7 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     } as unknown as CommandNode; // TypeScript helper for complex conditional types
   }
 
@@ -3610,11 +3936,11 @@ export class Parser {
       const command = this.createCommandFromIdentifier(identifierNode);
       return command || identifierNode;
     }
-    
+
     // Also check for IDENTIFIER tokens that are commands (backup)
     if (this.checkTokenType(TokenType.IDENTIFIER) || this.checkTokenType(TokenType.KEYWORD)) {
       const token = this.peek();
-      
+
       // Check if this identifier is a known command
       if (this.isCommand(token.value)) {
         // Parse as command
@@ -3624,21 +3950,26 @@ export class Parser {
         return command || identifierNode;
       }
     }
-    
+
     // Otherwise parse as expression
     return this.parseExpression();
   }
 
   private parseNavigationFunction(funcName: string): CallExpressionNode {
     const args: ASTNode[] = [];
-    
+
     // Handle "first of items", "closest <form/>", etc.
     if (this.match('of')) {
       args.push(this.parseExpression());
     } else if (this.check('(')) {
       // Standard function call syntax
       return this.finishCall(this.createIdentifier(funcName));
-    } else if (!this.isAtEnd() && !this.checkTokenType(TokenType.OPERATOR) && !this.check('then') && !this.check('else')) {
+    } else if (
+      !this.isAtEnd() &&
+      !this.checkTokenType(TokenType.OPERATOR) &&
+      !this.check('then') &&
+      !this.check('else')
+    ) {
       // Parse single argument (like selector)
       args.push(this.parsePrimary());
     }
@@ -3674,7 +4005,7 @@ export class Parser {
         if (this.checkTokenType(TokenType.IDENTIFIER)) {
           propertyName += this.advance().value;
         } else {
-          this.addError("Expected identifier after hyphen in CSS property name");
+          this.addError('Expected identifier after hyphen in CSS property name');
           break;
         }
       }
@@ -3721,7 +4052,7 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
@@ -3733,11 +4064,15 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
-  private createBinaryExpression(operator: string, left: ASTNode, right: ASTNode): BinaryExpressionNode {
+  private createBinaryExpression(
+    operator: string,
+    left: ASTNode,
+    right: ASTNode
+  ): BinaryExpressionNode {
     const pos = this.getPosition();
     return {
       type: 'binaryExpression',
@@ -3747,11 +4082,15 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
-  private createUnaryExpression(operator: string, argument: ASTNode, prefix: boolean): UnaryExpressionNode {
+  private createUnaryExpression(
+    operator: string,
+    argument: ASTNode,
+    prefix: boolean
+  ): UnaryExpressionNode {
     const pos = this.getPosition();
     return {
       type: 'unaryExpression',
@@ -3761,7 +4100,7 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
@@ -3774,11 +4113,15 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
-  private createMemberExpression(object: ASTNode, property: ASTNode, computed: boolean): MemberExpressionNode {
+  private createMemberExpression(
+    object: ASTNode,
+    property: ASTNode,
+    computed: boolean
+  ): MemberExpressionNode {
     const pos = this.getPosition();
     return {
       type: 'memberExpression',
@@ -3788,7 +4131,7 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
@@ -3800,7 +4143,7 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
@@ -3813,7 +4156,7 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
@@ -3825,7 +4168,7 @@ export class Parser {
       start: pos.start,
       end: pos.end,
       line: pos.line,
-      column: pos.column
+      column: pos.column,
     };
   }
 
@@ -3852,10 +4195,12 @@ export class Parser {
       start: statements[0]?.start || 0,
       end: statements[statements.length - 1]?.end || 0,
       line: statements[0]?.line || 1,
-      column: statements[0]?.column || 1
+      column: statements[0]?.column || 1,
     } as any;
 
-    debug.parse(`✅ createProgramNode: Returning Program node with ${statements.length} statements, type=${programNode.type}`);
+    debug.parse(
+      `✅ createProgramNode: Returning Program node with ${statements.length} statements, type=${programNode.type}`
+    );
     return programNode;
   }
 
@@ -3904,7 +4249,6 @@ export class Parser {
     return this.tokens[this.current + 1].value === value;
   }
 
-
   private advance(): Token {
     if (!this.isAtEnd()) this.current++;
     return this.previous();
@@ -3929,13 +4273,13 @@ export class Parser {
   private consume(expected: string | TokenType, message: string): Token {
     // Check if it's a token type (enum value) by checking if it matches any TokenType enum values
     const isTokenType = Object.values(TokenType).includes(expected as TokenType);
-    
+
     if (isTokenType) {
       // It's a token type - check the token's type property
       if (this.checkTokenType(expected as TokenType)) return this.advance();
     } else {
       // It's a literal string value - check the token's value property
-      if (this.check(expected as string)) return this.advance();
+      if (this.check(expected)) return this.advance();
     }
 
     this.addError(message);
@@ -3958,9 +4302,9 @@ export class Parser {
       line = previousToken.line || 1;
       column = previousToken.column || 1;
     }
-    
-    // For unclosed parentheses, use current position  
-    if (message.includes("parenthes")) {
+
+    // For unclosed parentheses, use current position
+    if (message.includes('parenthes')) {
       // Position should be where the error was detected
       const currentPos = this.current > 0 ? this.previous() : token;
       errorToken = currentPos;
@@ -3971,9 +4315,9 @@ export class Parser {
         position = this.current; // Use token index as fallback
       }
     }
-    
+
     // For trailing operators, position should be at the operator
-    if (message.includes("Expected expression after")) {
+    if (message.includes('Expected expression after')) {
       const previousToken = this.current > 0 ? this.previous() : token;
       errorToken = previousToken;
       position = previousToken.start || 0;
@@ -3984,9 +4328,9 @@ export class Parser {
         position = Math.max(1, this.current - 1);
       }
     }
-    
+
     // For missing operands, find the token at the beginning of the expression
-    if (message.includes("Missing operand")) {
+    if (message.includes('Missing operand')) {
       // Try to find a token that better represents where the error occurred
       let bestToken = token;
       for (let i = this.current - 1; i >= 0; i--) {
@@ -4001,12 +4345,12 @@ export class Parser {
       line = bestToken.line || 1;
       column = bestToken.column || 1;
     }
-    
+
     this.error = {
       name: 'ParseError',
       message,
       line: Math.max(1, line),
-      column: Math.max(1, column)
+      column: Math.max(1, column),
     };
   }
 
@@ -4040,7 +4384,7 @@ export class Parser {
         start: startPos,
         end: this.previous().end,
         line: startLine,
-        column: startColumn
+        column: startColumn,
       };
     }
 
@@ -4062,7 +4406,7 @@ export class Parser {
       start: startPos,
       end: this.previous().end,
       line: startLine,
-      column: startColumn
+      column: startColumn,
     };
   }
 
@@ -4072,32 +4416,32 @@ export class Parser {
       start: token.start || 0,
       end: token.end || 0,
       line: token.line || 1,
-      column: token.column || 1
+      column: token.column || 1,
     };
   }
 }
 
 // Main parse function
 export function parse(input: string): ParseResult {
-  // debug.parse('🎯 PARSER: parse() function called', { 
-    // input, 
-    // inputLength: input.length 
+  // debug.parse('🎯 PARSER: parse() function called', {
+  // input,
+  // inputLength: input.length
   // });
-  
+
   const tokens = tokenize(input);
-  // debug.parse('🔍 PARSER: tokenization completed', { 
-    // tokenCount: tokens.length,
-    // tokens: tokens.map(t => `${t.type}:${t.value}`).join(' ')
+  // debug.parse('🔍 PARSER: tokenization completed', {
+  // tokenCount: tokens.length,
+  // tokens: tokens.map(t => `${t.type}:${t.value}`).join(' ')
   // });
-  
+
   const parser = new Parser(tokens);
   const result = parser.parse();
-  
-  // debug.parse('🏁 PARSER: parsing completed', { 
-    // success: result.success,
-    // hasNode: !!result.node,
-    // errorCount: result.error ? 1 : 0
+
+  // debug.parse('🏁 PARSER: parsing completed', {
+  // success: result.success,
+  // hasNode: !!result.node,
+  // errorCount: result.error ? 1 : 0
   // });
-  
+
   return result;
 }

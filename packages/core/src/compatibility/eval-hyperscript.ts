@@ -30,14 +30,18 @@ export interface HyperScriptContext {
 /**
  * Converts _hyperscript context format to our internal ExecutionContext format
  */
-function convertContext(hyperScriptContext?: HyperScriptContext | ExecutionContext): ExecutionContext {
+function convertContext(
+  hyperScriptContext?: HyperScriptContext | ExecutionContext
+): ExecutionContext {
   // If it's already an ExecutionContext, return as-is
-  if (hyperScriptContext && 
-      typeof (hyperScriptContext as any).locals === 'object' && 
-      (hyperScriptContext as any).locals instanceof Map) {
+  if (
+    hyperScriptContext &&
+    typeof (hyperScriptContext as any).locals === 'object' &&
+    (hyperScriptContext as any).locals instanceof Map
+  ) {
     return hyperScriptContext as ExecutionContext;
   }
-  
+
   const context: ExecutionContext = {
     me: hyperScriptContext?.me || null,
     you: hyperScriptContext?.you || null,
@@ -49,7 +53,7 @@ function convertContext(hyperScriptContext?: HyperScriptContext | ExecutionConte
     returned: false,
     broke: false,
     continued: false,
-    async: false
+    async: false,
   };
 
   if (!hyperScriptContext) {
@@ -83,19 +87,19 @@ function convertContext(hyperScriptContext?: HyperScriptContext | ExecutionConte
 
 /**
  * Main compatibility function that matches _hyperscript's evalHyperScript() API
- * 
+ *
  * @param expression - Hyperscript expression string to evaluate
  * @param context - Optional context object with me, locals, result, etc.
  * @returns The result of evaluating the expression
- * 
+ *
  * @example
  * ```typescript
  * // Simple expression
  * evalHyperScript('5 + 3') // returns 8
- * 
+ *
  * // With context
  * evalHyperScript('my value', { me: { value: 42 } }) // returns 42
- * 
+ *
  * // With locals
  * evalHyperScript('foo', { locals: { foo: 'bar' } }) // returns 'bar'
  * ```
@@ -136,36 +140,36 @@ export async function evalHyperScript(
  */
 function isCommand(script: string): boolean {
   const trimmed = script.trim().toLowerCase();
-  
+
   // Known command patterns (more specific matching)
   const commandPatterns = [
-    /^set\s+.+\s+to\s+.+/,           // set x to y
+    /^set\s+.+\s+to\s+.+/, // set x to y
     /^put\s+.+\s+(into|before|after)\s+.+/, // put x into y
-    /^add\s+.+(\s+to\s+.+)?/,        // add .class or add .class to #element
-    /^remove\s+.+(\s+from\s+.+)?/,   // remove .class or remove .class from #element
-    /^show\s+.+/,                    // show #element
-    /^hide\s+.+/,                    // hide #element
-    /^toggle\s+.+/,                  // toggle .class
-    /^log\s+.*/,                     // log "message" (can have no args)
-    /^wait\s+.+/,                    // wait 1s
-    /^call\s+.+/,                    // call function()
-    /^send\s+.+/,                    // send event
-    /^make\s+.+/,                    // make <div/>
-    /^increment\s+.+/,               // increment counter
-    /^decrement\s+.+/,               // decrement counter
-    /^fetch\s+.+/,                   // fetch /api/data
-    /^throw\s+.+/,                   // throw error
-    /^return\s+.+/,                  // return value
-    /^break/,                        // break
-    /^continue/,                     // continue
-    /^halt/,                         // halt
-    /^go\s+.+/,                      // go to #section
-    /^if\s+.+/,                      // if condition
-    /^repeat\s+.+/,                  // repeat for x in list
-    /^on\s+.+/,                      // on click
-    /^render\s+.+/                   // render #template or render #template with data
+    /^add\s+.+(\s+to\s+.+)?/, // add .class or add .class to #element
+    /^remove\s+.+(\s+from\s+.+)?/, // remove .class or remove .class from #element
+    /^show\s+.+/, // show #element
+    /^hide\s+.+/, // hide #element
+    /^toggle\s+.+/, // toggle .class
+    /^log\s+.*/, // log "message" (can have no args)
+    /^wait\s+.+/, // wait 1s
+    /^call\s+.+/, // call function()
+    /^send\s+.+/, // send event
+    /^make\s+.+/, // make <div/>
+    /^increment\s+.+/, // increment counter
+    /^decrement\s+.+/, // decrement counter
+    /^fetch\s+.+/, // fetch /api/data
+    /^throw\s+.+/, // throw error
+    /^return\s+.+/, // return value
+    /^break/, // break
+    /^continue/, // continue
+    /^halt/, // halt
+    /^go\s+.+/, // go to #section
+    /^if\s+.+/, // if condition
+    /^repeat\s+.+/, // repeat for x in list
+    /^on\s+.+/, // on click
+    /^render\s+.+/, // render #template or render #template with data
   ];
-  
+
   // Check if script matches any command pattern
   return commandPatterns.some(pattern => pattern.test(trimmed));
 }
@@ -226,7 +230,7 @@ export function isAsyncExpression(expression: string): boolean {
   // Simple heuristics for detecting async expressions
   const asyncKeywords = ['fetch', 'wait', 'settle', 'async', 'promise'];
   const lowerExpression = expression.toLowerCase();
-  
+
   return asyncKeywords.some(keyword => lowerExpression.includes(keyword));
 }
 
