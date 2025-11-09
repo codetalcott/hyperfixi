@@ -284,9 +284,28 @@ export class CommandAdapter implements RuntimeCommand {
 
           const property = args[0] ? (typeof args[0] === 'string' ? args[0] : (args[0] as any).value || (args[0] as any).content) : undefined;
 
-          // Evaluate value, duration, timingFunction using the expression evaluator
+          // CSS keyword values that should not be evaluated as variables
+          const cssKeywords = ['initial', 'inherit', 'unset', 'revert', 'auto', 'none'];
+
+          // Evaluate value - handle CSS keywords specially
+          let value: unknown;
+          if (args[1] && typeof args[1] === 'object' && 'type' in args[1]) {
+            const valueNode = args[1] as any;
+            // Check if it's an identifier node with a CSS keyword value
+            if (valueNode.type === 'identifier' && cssKeywords.includes(valueNode.name)) {
+              // Use the keyword string directly, don't evaluate it as a variable
+              value = valueNode.name;
+            } else {
+              // Evaluate normally for other expressions (template literals, variables, etc.)
+              const evaluator = new ExpressionEvaluator();
+              value = await evaluator.evaluate(args[1] as ASTNode, context);
+            }
+          } else {
+            value = args[1];
+          }
+
+          // Evaluate duration and timing function
           const evaluator = new ExpressionEvaluator();
-          const value = args[1] && typeof args[1] === 'object' && 'type' in args[1] ? await evaluator.evaluate(args[1] as ASTNode, context) : args[1];
           const duration = args.length > 2 && args[2] && typeof args[2] === 'object' && 'type' in args[2] ? await evaluator.evaluate(args[2] as ASTNode, context) : args[2];
           const timingFunction = args.length > 3 && args[3] && typeof args[3] === 'object' && 'type' in args[3] ? await evaluator.evaluate(args[3] as ASTNode, context) : args[3];
 
@@ -451,6 +470,27 @@ export class CommandAdapter implements RuntimeCommand {
         } else if (this.impl.name === 'decrement' || this.impl.metadata?.name === 'decrement') {
           // DECREMENT command: Runtime already provides structured input { target, amount }
           input = args[0]; // Pass through - already in correct format
+        } else if (this.impl.name === 'halt' || this.impl.metadata?.name === 'halt') {
+          // HALT command - check for "halt the event" pattern
+          // Args from runtime: raw AST nodes like [{type: 'identifier', name: 'the'}, {type: 'identifier', name: 'event'}]
+          if (Array.isArray(args) && args.length >= 2) {
+            const firstArg = args[0];
+            const secondArg = args[1];
+
+            // Check for "the event" pattern
+            if (firstArg && typeof firstArg === 'object' && 'name' in firstArg && (firstArg as any).name === 'the' &&
+                secondArg && typeof secondArg === 'object' && 'name' in secondArg && (secondArg as any).name === 'event') {
+              // This is "halt the event" - pass 'the' string so halt command uses context.event
+              input = { target: 'the' };
+            } else {
+              // Other halt syntax - pass through
+              input = args.length === 1 ? args[0] : args;
+            }
+          } else if (args.length === 1) {
+            input = args[0];
+          } else {
+            input = {};
+          }
         } else {
           // Default input handling for other commands
           input = args.length === 1 ? args[0] : args;

@@ -68,8 +68,8 @@ export class HaltCommand implements CommandImplementation<
     // Check if we're halting an event (from "halt the event")
     // Input can be:
     // 1. The event object directly
-    // 2. { target: eventObject }
-    // 3. The string "the" (from "halt the event") - use context.event
+    // 2. { target: 'the' } - from command adapter detecting "halt the event" pattern
+    // 3. The string "the" - use context.event
 
     debug.command('HALT: Received input:', {
       input,
@@ -77,11 +77,14 @@ export class HaltCommand implements CommandImplementation<
       hasContextEvent: !!context.event
     });
 
-    // If input is "the" (from "halt the event"), use context.event
+    // If input is "the" or {target: "the"} (from "halt the event"), use context.event
     let targetToHalt;
-    if ((input as any) === 'the' && context.event) {
+    if ((input as any)?.target === 'the' && context.event) {
       targetToHalt = context.event;
-      debug.command('HALT: Using event from context');
+      debug.command('HALT: Using event from context (via {target: "the"})');
+    } else if ((input as any) === 'the' && context.event) {
+      targetToHalt = context.event;
+      debug.command('HALT: Using event from context (via raw "the")');
     } else {
       targetToHalt = (input as any)?.target || input;
     }

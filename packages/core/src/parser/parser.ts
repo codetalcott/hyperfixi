@@ -555,7 +555,8 @@ export class Parser {
   private isCompoundCommand(commandName: string): boolean {
     // Added 'set' back to use the sophisticated parseSetCommand method for "the X of Y" syntax
     // Added 'show' and 'hide' to ensure they parse as commands with selector arguments
-    const compoundCommands = ['put', 'trigger', 'remove', 'take', 'toggle', 'set', 'show', 'hide', 'add'];
+    // Added 'halt' to handle "halt the event" syntax with special parsing
+    const compoundCommands = ['put', 'trigger', 'remove', 'take', 'toggle', 'set', 'show', 'hide', 'add', 'halt'];
     return compoundCommands.includes(commandName);
   }
 
@@ -578,6 +579,8 @@ export class Parser {
         return this.parseToggleCommand(identifierNode);
       case 'set':
         return this.parseSetCommand(identifierNode);
+      case 'halt':
+        return this.parseHaltCommand(identifierNode);
       default:
         // Fallback to regular parsing
         return this.parseRegularCommand(identifierNode);
@@ -702,16 +705,25 @@ export class Parser {
         // Scoped variable parsed successfully
       } else if (this.check('the')) {
         // debug.parse('🎯 PARSER: detected "the" keyword! Proceeding with "X of Y" pattern recognition');
-        
+
+        // Look ahead to check if this is actually a "the X of Y" pattern
+        // before consuming any tokens
+        const thePosition = this.current;
         this.advance(); // consume 'the'
-        
-        // Get the property name (X)
-        const propertyToken = this.advance();
-        // debug.parse('🔍 PARSER: property token:', propertyToken?.value, 'type:', propertyToken?.type);
-        
-        // Check for 'of' keyword
-        // debug.parse('🔍 PARSER: checking for "of" keyword, next token:', this.peek()?.value);
-        if (this.check('of')) {
+
+        // Peek at next token to see if we have "X of Y" pattern
+        const nextToken = this.peek();
+        const tokenAfterNext = this.current + 1 < this.tokens.length ? this.tokens[this.current + 1] : null;
+
+        // Only proceed with "the X of Y" parsing if we actually have "X of Y"
+        if (nextToken && tokenAfterNext && tokenAfterNext.value === 'of') {
+          // Get the property name (X)
+          const propertyToken = this.advance();
+          // debug.parse('🔍 PARSER: property token:', propertyToken?.value, 'type:', propertyToken?.type);
+
+          // Check for 'of' keyword
+          // debug.parse('🔍 PARSER: checking for "of" keyword, next token:', this.peek()?.value);
+          if (this.check('of')) {
           // debug.parse('✅ PARSER: found "of" keyword, advancing');
           this.advance(); // consume 'of'
           
@@ -752,6 +764,13 @@ export class Parser {
           this.current = startPosition;
           targetExpression = null;
         }
+        } else {
+          // Lookahead determined this is NOT a "the X of Y" pattern
+          // Revert to before consuming "the" and let token-by-token parsing handle it
+          // debug.parse('⚠️ PARSER: "the" not part of "X of Y" pattern, reverting');
+          this.current = thePosition;
+          targetExpression = null;
+        }
       } else {
         // Not a "the X of Y" pattern, try regular expression parsing
         targetExpression = this.parseExpression();
@@ -768,13 +787,13 @@ export class Parser {
       this.current = startPosition;
       targetExpression = null;
     }
-    
-    // If single expression parsing failed, fall back to collecting individual tokens
-    if (!targetExpression) {
-      const targetTokens: ASTNode[] = [];
 
+    // If single expression parsing failed, fall back to collecting individual tokens
+    let targetTokens: ASTNode[] = [];
+    if (!targetExpression) {
       while (!this.isAtEnd() && !this.check('to') && !this.check('then') && !this.check('and') && !this.check('else') && !this.check('end')) {
-        targetTokens.push(this.parsePrimary());
+        const token = this.parsePrimary();
+        targetTokens.push(token);
       }
       
       // debug.parse('🔍 PARSER: collected target tokens via fallback', { 
@@ -811,19 +830,24 @@ export class Parser {
             // target: (targetTokens[3] as any).value,
             // type: targetExpression.type
           // });
-        } else {
-          // Use the first token as target (simple cases like "my property")
+        } else if (targetTokens.length === 1) {
+          // Single token target (simple case like "count" or "myVar")
           targetExpression = targetTokens[0];
+        } else {
+          // Multiple tokens but not "the X of Y" pattern
+          // Don't combine them into a single expression - leave as null
+          // and we'll add all tokens to finalArgs below
+          targetExpression = null;
         }
       }
     }
-    
+
     // Expect 'to' keyword
     if (!this.check('to')) {
       const found = this.isAtEnd() ? 'end of input' : this.peek().value;
       throw new Error(`Expected 'to' in set command, found: ${found}`);
     }
-    
+
     this.advance(); // consume 'to'
     // debug.parse('🔍 PARSER: consumed "to" keyword');
 
@@ -846,7 +870,11 @@ export class Parser {
     const finalArgs: ASTNode[] = [];
 
     if (targetExpression) {
+      // Single expression target
       finalArgs.push(targetExpression);
+    } else if (targetTokens.length > 0) {
+      // Multiple tokens: add them all (e.g., ["the", "dragHandle"])
+      finalArgs.push(...targetTokens);
     }
 
     // Add 'to' keyword
@@ -869,6 +897,49 @@ export class Parser {
     };
 
     return result;
+  }
+
+  private parseHaltCommand(identifierNode: IdentifierNode): CommandNode | null {
+    // Parse "halt" or "halt the event"
+    // We need to keep "the" and "event" as separate tokens for the command adapter
+    const args: ASTNode[] = [];
+
+    // Check if next tokens are "the event"
+    if (this.check('the')) {
+      const theToken = this.advance();
+      args.push({
+        type: 'identifier',
+        name: 'the',
+        start: theToken.start,
+        end: theToken.end,
+        line: theToken.line,
+        column: theToken.column
+      } as IdentifierNode);
+
+      // Check if followed by "event"
+      if (this.check('event')) {
+        const eventToken = this.advance();
+        args.push({
+          type: 'identifier',
+          name: 'event',
+          start: eventToken.start,
+          end: eventToken.end,
+          line: eventToken.line,
+          column: eventToken.column
+        } as IdentifierNode);
+      }
+    }
+
+    return {
+      type: 'command',
+      name: 'halt',
+      args: args as ExpressionNode[],
+      isBlocking: false,
+      start: identifierNode.start || 0,
+      end: this.getPosition().end,
+      line: identifierNode.line || 1,
+      column: identifierNode.column || 1
+    };
   }
 
   private parseTriggerCommand(identifierNode: IdentifierNode): CommandNode | null {
@@ -3576,12 +3647,55 @@ export class Parser {
   }
 
   private parseMyPropertyAccess(): MemberExpressionNode {
-    const property = this.consume(TokenType.IDENTIFIER, "Expected property name after 'my'");
-    return this.createMemberExpression(
-      this.createIdentifier('me'),
-      this.createIdentifier(property.value),
-      false
-    );
+    // Check for CSS property syntax: my *background-color
+    const hasCssPrefix = this.match('*');
+
+    if (hasCssPrefix) {
+      // Parse CSS property name with hyphens (e.g., background-color)
+      let propertyName = '';
+
+      if (!this.checkTokenType(TokenType.IDENTIFIER)) {
+        this.addError("Expected property name after 'my *'");
+        return this.createMemberExpression(
+          this.createIdentifier('me'),
+          this.createIdentifier(''),
+          false
+        );
+      }
+
+      // Build the CSS property name (e.g., "background-color")
+      propertyName = this.advance().value;
+
+      // Handle hyphenated properties (background-color, border-width, etc.)
+      while (this.check('-') && !this.isAtEnd()) {
+        propertyName += '-';
+        this.advance(); // consume '-'
+
+        if (this.checkTokenType(TokenType.IDENTIFIER)) {
+          propertyName += this.advance().value;
+        } else {
+          this.addError("Expected identifier after hyphen in CSS property name");
+          break;
+        }
+      }
+
+      // Create member expression with computed-prefix for CSS properties
+      // This tells the evaluator to use getComputedStyle
+      const cssPropertyName = `computed-${propertyName}`;
+      return this.createMemberExpression(
+        this.createIdentifier('me'),
+        this.createIdentifier(cssPropertyName),
+        false
+      );
+    } else {
+      // Standard JavaScript property access: my className
+      const property = this.consume(TokenType.IDENTIFIER, "Expected property name after 'my'");
+      return this.createMemberExpression(
+        this.createIdentifier('me'),
+        this.createIdentifier(property.value),
+        false
+      );
+    }
   }
 
   private finishCall(callee: ASTNode): CallExpressionNode {

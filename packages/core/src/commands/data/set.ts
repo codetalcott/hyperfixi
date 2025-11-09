@@ -405,9 +405,6 @@ export class SetCommand implements CommandImplementation<
     variableName: string,
     value: any
   ): SetCommandOutput {
-    console.log(`🔧 SET GLOBAL: variableName="${variableName}", value=${value}`);
-    console.log(`🔧 SET GLOBAL: globals before:`, Array.from(context.globals.keys()));
-
     // Get previous value
     const previousValue = context.globals?.get(variableName) ||
                          context.locals?.get(variableName) ||
@@ -416,9 +413,6 @@ export class SetCommand implements CommandImplementation<
 
     // Set the value in global scope
     context.globals.set(variableName, value);
-
-    console.log(`🔧 SET GLOBAL: globals after:`, Array.from(context.globals.keys()));
-    console.log(`🔧 SET GLOBAL: Can retrieve value?`, context.globals.get(variableName));
 
     // Also set on window for browser globals
     if (typeof window !== 'undefined') {
@@ -671,7 +665,6 @@ export class SetCommand implements CommandImplementation<
 
     try {
       const element = document.querySelector(selector);
-      console.log(`🔍 querySelector("${selector}"):`, element);
       return element as HTMLElement | null;
     } catch (error) {
       console.warn('Invalid selector:', selector, error);

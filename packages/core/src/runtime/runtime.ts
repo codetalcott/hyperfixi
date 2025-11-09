@@ -405,7 +405,9 @@ export class Runtime {
 
         default: {
           // For all other node types, use the expression evaluator
+          debug.runtime(`RUNTIME: DEFAULT CASE - About to call expression evaluator for node type '${node.type}'`);
           const result = await this.expressionEvaluator.evaluate(node, context);
+          debug.runtime(`RUNTIME: DEFAULT CASE - Expression evaluator returned:`, result);
 
           // Check if the result is a command-selector pattern from space operator
           if (result && typeof result === 'object' && result.command && result.selector) {
@@ -654,7 +656,6 @@ export class Runtime {
         }
       }
 
-
       if (toIndex === -1) {
         // No "to" found, fall back to normal evaluation
         evaluatedArgs = await Promise.all(
@@ -759,14 +760,21 @@ export class Runtime {
         } else {
           // Complex case: "set the textContent of #element to X"
           // Parse: ["the", "textContent", "of", "#element"] -> { element: "#element", property: "textContent" }
+          console.log('🔧 SET ARGS: Complex case - targetArgs:', targetArgs.map(arg => ({
+            type: nodeType(arg),
+            name: (arg as any).name,
+            value: (arg as any).value
+          })));
+
           let property = null;
           let element = null;
-          
+
           // Look for property name (first identifier after "the")
           for (let i = 0; i < targetArgs.length; i++) {
             const arg = targetArgs[i];
             if (nodeType(arg) === 'identifier' && (arg as any).name !== 'the' && (arg as any).name !== 'of') {
               property = (arg as any).name;
+              console.log('🔧 SET ARGS: Found property at index', i, ':', property);
               break;
             }
           }
@@ -776,13 +784,22 @@ export class Runtime {
             const arg = targetArgs[i];
             if (nodeType(arg) === 'selector') {
               element = (arg as any).value;
+              console.log('🔧 SET ARGS: Found element selector at index', i, ':', element);
               break;
             }
           }
 
+          console.log('🔧 SET ARGS: After parsing - property:', property, 'element:', element);
+
           if (property && element) {
             // Create a structured target for property setting
             target = { element, property };
+            console.log('🔧 SET ARGS: Using structured target:', target);
+          } else if (property && !element) {
+            // Simple variable with "the" keyword: "set the dragHandle to X"
+            // Just use the property name as the variable name
+            target = property;
+            console.log('🔧 SET ARGS: Using property as variable name:', target);
           } else {
             // Fallback to simple concatenation
             target = targetArgs.map(arg => {
@@ -791,6 +808,7 @@ export class Runtime {
               if (nodeType(arg) === 'literal') return (arg as any).value;
               return arg;
             }).join('.');
+            console.log('🔧 SET ARGS: Using fallback concatenation:', target);
           }
         }
         
@@ -943,8 +961,10 @@ export class Runtime {
           args.map(arg => this.execute(arg, context))
         );
       }
-    } else if (name === 'repeat' || name === 'transition') {
-      // REPEAT and TRANSITION commands need raw AST nodes for the adapter to extract metadata
+    } else if (name === 'repeat' || name === 'transition' || name === 'install' || name === 'halt') {
+      // REPEAT, TRANSITION, INSTALL, and HALT commands need raw AST nodes for the adapter to extract metadata
+      // INSTALL needs raw identifier nodes to extract behavior names (e.g., "Draggable", "Sortable")
+      // HALT needs raw nodes to detect "halt the event" pattern
       // Don't evaluate args - pass them as-is to the adapter
       evaluatedArgs = args;
     } else if (name === 'increment' || name === 'decrement') {
@@ -1405,6 +1425,7 @@ export class Runtime {
   private async executeBehaviorDefinition(node: any, _context: ExecutionContext): Promise<void> {
     const { name, parameters, eventHandlers, initBlock } = node;
 
+    console.log('🔧 BEHAVIOR: Registering behavior:', name);
     debug.runtime(`RUNTIME: Registering behavior: ${name}`);
 
     // Store the behavior definition in the registry
@@ -1415,6 +1436,9 @@ export class Runtime {
       initBlock
     });
 
+    console.log('🔧 BEHAVIOR: Behavior registered successfully:', name);
+    console.log('🔧 BEHAVIOR: Total behaviors in registry:', this.behaviorRegistry.size);
+    console.log('🔧 BEHAVIOR: Registry keys:', Array.from(this.behaviorRegistry.keys()));
     debug.runtime(`RUNTIME: Behavior registered: ${name} with ${eventHandlers.length} event handlers`);
   }
 
@@ -1492,6 +1516,8 @@ export class Runtime {
 
     // Attach event handlers to the element
     if (behavior.eventHandlers && behavior.eventHandlers.length > 0) {
+      console.log('🔧 BEHAVIOR: About to attach event handlers. Current behaviorContext.locals:', Array.from(behaviorContext.locals.keys()));
+      console.log('🔧 BEHAVIOR: dragHandle value in context:', behaviorContext.locals.get('dragHandle'));
       debug.runtime(`RUNTIME: Attaching ${behavior.eventHandlers.length} event handlers`);
       for (const handler of behavior.eventHandlers) {
         await this.executeEventHandler(handler, behaviorContext);
