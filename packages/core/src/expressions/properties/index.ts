@@ -4,6 +4,7 @@
  */
 
 import type { ExecutionContext, ExpressionImplementation } from '../../types/core';
+import { getElementProperty } from '../property-access-utils';
 
 // ============================================================================
 // Possessive Expressions
@@ -369,77 +370,11 @@ export const idReferenceExpression: ExpressionImplementation = {
 };
 
 // ============================================================================
-// Helper Functions
+// Helper Functions (Re-exported from shared utilities)
 // ============================================================================
 
-function getElementProperty(element: Element, property: string): any {
-  // Handle CSS computed style properties with computed- prefix
-  if (property.startsWith('computed-')) {
-    const cssProperty = property.slice('computed-'.length); // Remove prefix
-    if (element instanceof HTMLElement) {
-      const computedStyle = getComputedStyle(element);
-      return computedStyle.getPropertyValue(cssProperty);
-    }
-    return undefined;
-  }
-
-  // Handle special DOM properties first
-  switch (property.toLowerCase()) {
-    case 'id':
-      return element.id;
-    case 'classname':
-    case 'class':
-      return element.className;
-    case 'tagname':
-      return element.tagName.toLowerCase();
-    case 'innertext':
-      return element.textContent?.trim();
-    case 'innerHTML':
-      return element.innerHTML;
-    case 'outerhtml':
-      return element.outerHTML;
-    case 'value':
-      return (element as any).value;
-    case 'checked':
-      return (element as any).checked;
-    case 'disabled':
-      return (element as any).disabled;
-    case 'selected':
-      return (element as any).selected;
-    case 'hidden':
-      return (element as any).hidden;
-    case 'style':
-      return getComputedStyle(element);
-    case 'children':
-      return Array.from(element.children);
-    case 'parent':
-      return element.parentElement;
-    case 'firstchild':
-      return element.firstElementChild;
-    case 'lastchild':
-      return element.lastElementChild;
-    case 'nextsibling':
-      return element.nextElementSibling;
-    case 'previoussibling':
-      return element.previousElementSibling;
-    default:
-      // Try as attribute first
-      if (element.hasAttribute(property)) {
-        return element.getAttribute(property);
-      }
-
-      // Try as regular property
-      return (element as any)[property];
-  }
-}
-
-function isDataAttribute(property: string): boolean {
-  return property.startsWith('data-') || property === 'data';
-}
-
-function isAriaAttribute(property: string): boolean {
-  return property.startsWith('aria-') || property === 'aria';
-}
+// Re-export helper functions for backward compatibility
+export { isDataAttribute, isAriaAttribute } from '../property-access-utils';
 
 // ============================================================================
 // Export all property expressions
@@ -458,6 +393,3 @@ export const propertiesExpressions = {
 } as const;
 
 export type PropertyExpressionName = keyof typeof propertiesExpressions;
-
-// Export helper functions for testing
-export { getElementProperty, isDataAttribute, isAriaAttribute };

@@ -188,8 +188,9 @@ export class IfCommand
     }
 
     if (typeof condition === 'function') {
-      const result = condition();
-      return Boolean(result);
+      // Functions are always truthy (they're objects)
+      // Don't call them - they might require arguments (e.g., DOM methods like querySelector)
+      return true;
     }
 
     if (condition instanceof Promise) {
@@ -207,6 +208,13 @@ export class IfCommand
 
       // Check variables
       const value = this.getVariableValue(condition, context);
+
+      // If variable lookup failed (undefined), treat the string as a literal value
+      // This handles cases like CSS colors "rgb(100, 200, 150)" which should be truthy
+      if (value === undefined) {
+        return Boolean(condition); // Non-empty string is truthy
+      }
+
       return Boolean(value);
     }
 

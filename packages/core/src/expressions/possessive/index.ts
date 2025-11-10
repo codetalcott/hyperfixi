@@ -14,6 +14,13 @@ import type {
   TypedExecutionContext,
 } from '../../types/command-types';
 import type { ValidationResult, ValidationError } from '../../types/base-types';
+import {
+  accessProperty,
+  accessStyleProperty,
+  accessAttribute,
+  accessObjectProperty,
+  isElement,
+} from '../property-access-utils';
 
 // ============================================================================
 // Input Validation Schemas
@@ -192,8 +199,8 @@ export class EnhancedPossessiveExpression
 
       const [object, property] = this.inputSchema.parse(args) as [unknown, string];
 
-      // Access property from object
-      const value = await this.accessProperty(object, property, context);
+      // Access property from object using shared utilities
+      const value = await this.accessPropertyInternal(object, property, context);
 
       return {
         success: true,
@@ -217,119 +224,15 @@ export class EnhancedPossessiveExpression
 
   /**
    * Access property from object with comprehensive syntax support
+   * Delegates to shared utility functions for consistent behavior
    */
-  private async accessProperty(
+  private async accessPropertyInternal(
     object: unknown,
     property: string,
     context: TypedExecutionContext
   ): Promise<HyperScriptValue> {
-    // Handle null/undefined objects
-    if (object === null || object === undefined) {
-      return null;
-    }
-
-    // Handle array/multiple element access
-    if (Array.isArray(object)) {
-      const results = await Promise.all(
-        object.map(item => this.accessProperty(item, property, context))
-      );
-      return results;
-    }
-
-    // Handle style property access (*property)
-    if (property.startsWith('*')) {
-      return this.accessStyleProperty(object, property.slice(1));
-    }
-
-    // Handle bracket attribute notation ([@attribute])
-    if (property.startsWith('[@') && property.endsWith(']')) {
-      const attrName = property.slice(2, -1);
-      return this.accessAttribute(object, attrName);
-    }
-
-    // Handle attribute access (@attribute)
-    if (property.startsWith('@')) {
-      return this.accessAttribute(object, property.slice(1));
-    }
-
-    // Handle regular property access
-    return this.accessObjectProperty(object, property);
-  }
-
-  /**
-   * Access style property from element
-   */
-  private accessStyleProperty(object: unknown, styleProp: string): HyperScriptValue {
-    if (!this.isElement(object)) {
-      return null;
-    }
-
-    const element = object as Element;
-
-    // Handle computed styles for certain properties
-    if (styleProp.startsWith('computed-')) {
-      const computedProp = styleProp.slice(9); // Remove 'computed-' prefix
-      const styles = globalThis.getComputedStyle(element);
-      return styles.getPropertyValue(computedProp) || null;
-    }
-
-    // Access style property directly
-    const htmlElement = element as HTMLElement;
-    if (htmlElement.style) {
-      const styleValue = htmlElement.style.getPropertyValue(styleProp);
-      return styleValue || null;
-    }
-
-    return null;
-  }
-
-  /**
-   * Access attribute from element
-   */
-  private accessAttribute(object: unknown, attrName: string): HyperScriptValue {
-    if (!this.isElement(object)) {
-      return null;
-    }
-
-    const element = object as Element;
-    return element.getAttribute(attrName);
-  }
-
-  /**
-   * Access regular object property
-   */
-  private accessObjectProperty(object: unknown, property: string): HyperScriptValue {
-    if (typeof object !== 'object' || object === null) {
-      return null;
-    }
-
-    // Handle DOM elements
-    if (this.isElement(object)) {
-      const element = object as Element & Record<string, unknown>;
-
-      // Special handling for common DOM properties
-      if (property in element) {
-        const value = element[property];
-
-        // Handle methods by binding them to the element
-        if (typeof value === 'function') {
-          return value.bind(element);
-        }
-
-        return value;
-      }
-    }
-
-    // Handle regular objects
-    const obj = object as Record<string, unknown>;
-    return (obj[property] ?? null) as HyperScriptValue;
-  }
-
-  /**
-   * Check if value is a DOM element
-   */
-  private isElement(value: unknown): boolean {
-    return value instanceof Element;
+    // Use shared accessProperty utility for consistent behavior
+    return accessProperty(object, property);
   }
 
   /**

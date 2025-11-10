@@ -505,6 +505,8 @@ export const isEmptyExpression: ExpressionImplementation = {
     if (typeof value === 'string') return value.length === 0;
     if (Array.isArray(value)) return value.length === 0;
     if (value instanceof NodeList) return value.length === 0;
+    // DOM elements should NEVER be considered empty
+    if (value instanceof Node || value instanceof Element) return false;
     if (typeof value === 'object') return Object.keys(value).length === 0;
     return false;
   },
@@ -530,6 +532,9 @@ export const noExpression: ExpressionImplementation = {
     if (typeof value === 'string') return value.length === 0;
     if (Array.isArray(value)) return value.length === 0;
     if (value instanceof NodeList) return value.length === 0;
+    // DOM elements (Node, Element, HTMLElement) should NEVER be considered empty
+    // They are real, tangible objects with properties on the prototype chain
+    if (value instanceof Node || value instanceof Element) return false;
     if (typeof value === 'object') return Object.keys(value).length === 0;
     // For primitives like false, 0, etc., they are actual values so return false
     return false;
