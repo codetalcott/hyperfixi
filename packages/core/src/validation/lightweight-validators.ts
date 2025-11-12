@@ -218,6 +218,7 @@ export function createObjectValidator<T extends Record<string, RuntimeValidator>
       // Validate each field
       for (const [fieldName, validator] of Object.entries(fields)) {
         const fieldValue = obj[fieldName];
+        const fieldExists = fieldName in obj;
         const fieldResult = validator.validate(fieldValue);
 
         if (!fieldResult.success) {
@@ -234,8 +235,12 @@ export function createObjectValidator<T extends Record<string, RuntimeValidator>
           };
         }
 
-        // Check for required fields
-        if (fieldResult.data === undefined && !(fieldValue === undefined)) {
+        // Check if required field is missing from input
+        // A field is considered missing if:
+        // 1. It's not present in the input object (!fieldExists)
+        // 2. The validator returned undefined (fieldResult.data === undefined)
+        // 3. The validator is not explicitly optional (!(validator as any)._isOptional)
+        if (!fieldExists && fieldResult.data === undefined && !(validator as any)._isOptional) {
           return {
             success: false,
             error: createValidationError(
@@ -246,6 +251,7 @@ export function createObjectValidator<T extends Record<string, RuntimeValidator>
           };
         }
 
+        // If validation succeeded, include the data
         if (fieldResult.data !== undefined) {
           result[fieldName] = fieldResult.data;
         }
@@ -524,11 +530,22 @@ addDescribeToValidator = function <T>(validator: any): RuntimeValidator<T> {
       }
     };
   }
+
+  if (!validator.parse) {
+    validator.parse = function (value: unknown) {
+      const result = this.validate(value);
+      if (result.success && result.data !== undefined) {
+        return result.data;
+      }
+      throw new Error(result.error?.message || 'Validation failed');
+    };
+  }
   if (!validator.optional) {
     validator.optional = function () {
       const originalValidate = this.validate.bind(this);
       const optionalValidator = {
         ...this,
+        _isOptional: true,  // Mark as optional for object validator
         validate: (value: unknown): ValidationResult<T | undefined> => {
           // Allow undefined and null for optional validators
           if (value === undefined || value === null) {
@@ -542,23 +559,85 @@ addDescribeToValidator = function <T>(validator: any): RuntimeValidator<T> {
     };
   }
   // Add chainable methods for string validators (min, max)
+  // Only add if not already defined to avoid overwriting working implementations
   if (!validator.min) {
     validator.min = function (minLength: number) {
-      const newValidator = createStringValidator({ minLength });
-      return addDescribeToValidator(newValidator);
+      const originalValidate = this.validate.bind(this);
+      const minValidator = {
+        ...this,
+        validate: (value: unknown): ValidationResult<any> => {
+          // First run the original validation
+          const result = originalValidate(value);
+          if (!result.success) {
+            return result;
+          }
+
+          // Then check min length for strings
+          if (typeof result.data === 'string' && result.data.length < minLength) {
+            return {
+              success: false,
+              error: createValidationError(
+                'runtime-error',
+                `String must be at least ${minLength} characters long`
+              ),
+            };
+          }
+
+          return result;
+        },
+      };
+      return addDescribeToValidator(minValidator);
     };
   }
+
   if (!validator.max) {
     validator.max = function (maxLength: number) {
-      const newValidator = createStringValidator({ maxLength });
-      return addDescribeToValidator(newValidator);
+      const originalValidate = this.validate.bind(this);
+      const maxValidator = {
+        ...this,
+        validate: (value: unknown): ValidationResult<any> => {
+          // First run the original validation
+          const result = originalValidate(value);
+          if (!result.success) {
+            return result;
+          }
+
+          // Then check max length for strings
+          if (typeof result.data === 'string' && result.data.length > maxLength) {
+            return {
+              success: false,
+              error: createValidationError(
+                'runtime-error',
+                `String must be at most ${maxLength} characters long`
+              ),
+            };
+          }
+
+          return result;
+        },
+      };
+      return addDescribeToValidator(maxValidator);
     };
   }
-  // Add default method for enum-like validators
+
+  // Add default method - actually applies defaults when value is undefined
   if (!validator.default) {
     validator.default = function (defaultValue: any) {
-      this._defaultValue = defaultValue;
-      return this;
+      const originalValidate = this.validate.bind(this);
+      const defaultValidator = {
+        ...this,
+        _defaultValue: defaultValue,
+        _hasDefault: true,
+        validate: (value: unknown): ValidationResult<any> => {
+          // Apply default if value is undefined
+          if (value === undefined) {
+            return { success: true, data: defaultValue };
+          }
+          // Otherwise run original validation
+          return originalValidate(value);
+        },
+      };
+      return addDescribeToValidator(defaultValidator);
     };
   }
   // Add rest method for tuple validators (ignores rest elements for now)
