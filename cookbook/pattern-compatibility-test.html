@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Pattern Compatibility Test</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .pattern {
+      margin: 20px 0;
+      padding: 15px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-left: 4px solid #ccc;
+    }
+    .pattern.pass {
+      border-left-color: #4CAF50;
+    }
+    .pattern.fail {
+      border-left-color: #f44336;
+    }
+    .pattern h3 {
+      margin-top: 0;
+    }
+    .status {
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .status.pass {
+      background: #4CAF50;
+      color: white;
+    }
+    .status.fail {
+      background: #f44336;
+      color: white;
+    }
+    .status.pending {
+      background: #ff9800;
+      color: white;
+    }
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+    pre {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .btn {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      border: 2px solid #333;
+      background: #fff;
+      border-radius: 4px;
+    }
+    .btn.active {
+      background: #4CAF50;
+      color: white;
+    }
+    #console {
+      margin-top: 20px;
+      padding: 15px;
+      background: #000;
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 HyperFixi Pattern Compatibility Test</h1>
+  <p>Testing which _hyperscript patterns are supported by HyperFixi</p>
+
+  <div id="console"></div>
+
+  <!-- Pattern 1: String Concatenation + Property Access -->
+  <div class="pattern" id="pattern-1">
+    <h3>Pattern 1: String Concatenation + Property Access</h3>
+    <p><code>set my.innerText to #first.innerText + ' ' + #second.innerText</code></p>
+    <span class="status pending" id="status-1">Pending</span>
+    <div style="margin-top: 10px;">
+      <p id="first">Hello</p>
+      <p id="second">World</p>
+      <button class="btn" id="test-1" _="on click set my.innerText to #first.innerText + ' ' + #second.innerText">Test</button>
+    </div>
+  </div>
+
+  <!-- Pattern 2: Transition Command -->
+  <div class="pattern" id="pattern-2">
+    <h3>Pattern 2: Transition Command</h3>
+    <p><code>transition opacity to 0 then remove me</code></p>
+    <span class="status pending" id="status-2">Pending</span>
+    <div id="test-2-container" style="margin-top: 10px;">
+      <button class="btn" id="test-2" _="on click transition opacity to 0 then remove me">Test</button>
+    </div>
+  </div>
+
+  <!-- Pattern 3: Settle Command -->
+  <div class="pattern" id="pattern-3">
+    <h3>Pattern 3: Settle Command</h3>
+    <p><code>remove .primary then settle then add .primary</code></p>
+    <span class="status pending" id="status-3">Pending</span>
+    <div style="margin-top: 10px;">
+      <button class="btn primary" id="test-3" _="on click remove .primary then settle then add .primary">Test</button>
+    </div>
+  </div>
+
+  <!-- Pattern 4: Show...When Conditional Syntax -->
+  <div class="pattern" id="pattern-4">
+    <h3>Pattern 4: Show...When Conditional Syntax ⚠️</h3>
+    <p><code>show &lt;blockquote/&gt; in #quotes when its textContent contains my value</code></p>
+    <span class="status pending" id="status-4">Pending</span>
+    <div style="margin-top: 10px;">
+      <input type="text" id="test-4" placeholder="Type 'code'..."
+        _="on keyup show <blockquote/> in #quotes when its textContent contains my value">
+      <div id="quotes" style="margin-top: 10px;">
+        <blockquote style="margin: 5px 0; padding: 10px; background: #f0f0f0;">Quote with code</blockquote>
+        <blockquote style="margin: 5px 0; padding: 10px; background: #f0f0f0;">Quote without</blockquote>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pattern 5: Halt Command -->
+  <div class="pattern" id="pattern-5">
+    <h3>Pattern 5: Halt Command</h3>
+    <p><code>halt the event</code></p>
+    <span class="status pending" id="status-5">Pending</span>
+    <div style="margin-top: 10px;">
+      <a href="#" id="test-5" _="on click halt the event then log 'Link click prevented'">Test Link (should not navigate)</a>
+    </div>
+  </div>
+
+  <!-- Pattern 6: Get Command -->
+  <div class="pattern" id="pattern-6">
+    <h3>Pattern 6: Get Command ⚠️</h3>
+    <p><code>get event.dataTransfer.getData('text/plain')</code></p>
+    <span class="status pending" id="status-6">Pending</span>
+    <div style="margin-top: 10px;">
+      <button class="btn" draggable="true" _="on dragstart call event.dataTransfer.setData('text/plain', 'test')">Drag Me</button>
+      <div id="drop-target" style="border: 2px dashed #ccc; padding: 20px; margin-top: 10px;"
+           _="on drop get event.dataTransfer.getData('text/plain') then log 'Got: ' + it">
+        Drop Here
+      </div>
+    </div>
+  </div>
+
+  <!-- Pattern 7: Put...Into Command -->
+  <div class="pattern" id="pattern-7">
+    <h3>Pattern 7: Put...Into Command</h3>
+    <p><code>put 'Deactivate' into me</code></p>
+    <span class="status pending" id="status-7">Pending</span>
+    <div style="margin-top: 10px;">
+      <button class="btn" id="test-7" _="on click put 'Clicked!' into me">Test</button>
+    </div>
+  </div>
+
+  <!-- Pattern 8: If/Else/End Control Flow -->
+  <div class="pattern" id="pattern-8">
+    <h3>Pattern 8: If/Else/End Control Flow</h3>
+    <p><code>if I match .active ... else ... end</code></p>
+    <span class="status pending" id="status-8">Pending</span>
+    <div style="margin-top: 10px;">
+      <button class="btn" id="test-8" _="on click
+        if I match .active
+          remove .active from me
+          put 'Activate' into me
+        else
+          add .active to me
+          put 'Deactivate' into me
+        end">
+        Activate
+      </button>
+    </div>
+  </div>
+
+  <!-- Pattern 9: Match Operator -->
+  <div class="pattern" id="pattern-9">
+    <h3>Pattern 9: Match Operator</h3>
+    <p><code>I match .active</code></p>
+    <span class="status pending" id="status-9">Pending</span>
+    <div style="margin-top: 10px;">
+      <button class="btn active" id="test-9" _="on click log (I match .active)">Test (should log true)</button>
+    </div>
+  </div>
+
+  <!-- Pattern 10: Navigation - Closest -->
+  <div class="pattern" id="pattern-10">
+    <h3>Pattern 10: Navigation - Closest</h3>
+    <p><code>closest &lt;table/&gt;</code></p>
+    <span class="status pending" id="status-10">Pending</span>
+    <div style="margin-top: 10px;">
+      <table>
+        <tr>
+          <td>
+            <button class="btn" id="test-10" _="on click log (closest <table/>)">Test (check console)</button>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Pattern 11: Navigation - Next -->
+  <div class="pattern" id="pattern-11">
+    <h3>Pattern 11: Navigation - Next</h3>
+    <p><code>next &lt;output/&gt;</code></p>
+    <span class="status pending" id="status-11">Pending</span>
+    <div style="margin-top: 10px;">
+      <button class="btn" id="test-11" _="on click put 'Next element found!' into next <output/>">Test</button>
+      <output style="display: block; margin-top: 10px; padding: 10px; background: #f0f0f0;"></output>
+    </div>
+  </div>
+
+  <script>
+    const consoleEl = document.getElementById('console');
+    function log(message, color = '#00ff00') {
+      const timestamp = new Date().toLocaleTimeString();
+      consoleEl.innerHTML += `<span style="color: ${color}">[${timestamp}] ${message}</span><br>`;
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+      console.log(message);
+    }
+
+    // Capture compilation errors
+    window.addEventListener('error', (event) => {
+      log(`❌ Error: ${event.error?.message}`, '#ff0000');
+    });
+
+    log('🔧 Loading HyperFixi bundle...', '#00ffff');
+  </script>
+
+  <script src="../packages/core/dist/hyperfixi-browser.js"></script>
+
+  <script>
+    log('✅ HyperFixi bundle loaded', '#00ff00');
+    log('📝 Checking pattern compilation...', '#ffff00');
+
+    // Check which patterns compiled successfully
+    setTimeout(() => {
+      const patterns = [
+        { id: 1, element: '#test-1', name: 'String concatenation' },
+        { id: 2, element: '#test-2', name: 'Transition command' },
+        { id: 3, element: '#test-3', name: 'Settle command' },
+        { id: 4, element: '#test-4', name: 'Show...when syntax' },
+        { id: 5, element: '#test-5', name: 'Halt command' },
+        { id: 6, element: '#drop-target', name: 'Get command' },
+        { id: 7, element: '#test-7', name: 'Put...into command' },
+        { id: 8, element: '#test-8', name: 'If/else/end control flow' },
+        { id: 9, element: '#test-9', name: 'Match operator' },
+        { id: 10, element: '#test-10', name: 'Closest navigation' },
+        { id: 11, element: '#test-11', name: 'Next navigation' },
+      ];
+
+      let passCount = 0;
+      let failCount = 0;
+
+      patterns.forEach(pattern => {
+        const element = document.querySelector(pattern.element);
+        const hasHyperscript = element?.hasAttribute('_');
+
+        // Check if element exists and has _hyperscript attribute
+        if (hasHyperscript) {
+          log(`✅ Pattern ${pattern.id}: ${pattern.name} - Compiled successfully`, '#00ff00');
+          document.getElementById(`status-${pattern.id}`).textContent = 'PASS';
+          document.getElementById(`status-${pattern.id}`).className = 'status pass';
+          document.getElementById(`pattern-${pattern.id}`).classList.add('pass');
+          passCount++;
+        } else {
+          log(`❌ Pattern ${pattern.id}: ${pattern.name} - Compilation failed`, '#ff0000');
+          document.getElementById(`status-${pattern.id}`).textContent = 'FAIL';
+          document.getElementById(`status-${pattern.id}`).className = 'status fail';
+          document.getElementById(`pattern-${pattern.id}`).classList.add('fail');
+          failCount++;
+        }
+      });
+
+      log('', '');
+      log(`📊 Summary: ${passCount} passed, ${failCount} failed`, '#00ffff');
+    }, 1000);
+  </script>
+</body>
+</html>
