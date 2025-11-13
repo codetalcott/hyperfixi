@@ -2793,8 +2793,11 @@ export class Parser {
 
   private parseEventHandler(): EventHandlerNode {
     debug.parse(`🔧 parseEventHandler: ENTRY - parsing event handler`);
-    // Event name can be EVENT token or IDENTIFIER (for cases like "keydown")
-    // Can also include namespace separator like "draggable:start"
+
+    // Collect all event names (supports "on event1 or event2 or event3")
+    const eventNames: string[] = [];
+
+    // Parse first event name
     let eventToken: Token;
     if (this.checkTokenType(TokenType.EVENT)) {
       eventToken = this.advance();
@@ -2811,6 +2814,37 @@ export class Parser {
       const namespaceToken = this.advance(); // get the part after ':'
       event = `${event}:${namespaceToken.value}`;
     }
+
+    eventNames.push(event);
+    debug.parse(`🔧 parseEventHandler: Parsed first event name: ${event}`);
+
+    // Check for additional event names with 'or' keyword
+    while (this.check('or')) {
+      this.advance(); // consume 'or'
+      debug.parse(`🔧 parseEventHandler: Found 'or', parsing additional event name`);
+
+      // Parse next event name
+      if (this.checkTokenType(TokenType.EVENT)) {
+        eventToken = this.advance();
+      } else if (this.checkTokenType(TokenType.IDENTIFIER)) {
+        eventToken = this.advance();
+      } else {
+        eventToken = this.consume(TokenType.EVENT, "Expected event name after 'or'");
+      }
+
+      // Check for namespace
+      let additionalEvent = eventToken.value;
+      if (this.check(':')) {
+        this.advance(); // consume ':'
+        const namespaceToken = this.advance(); // get the part after ':'
+        additionalEvent = `${additionalEvent}:${namespaceToken.value}`;
+      }
+
+      eventNames.push(additionalEvent);
+      debug.parse(`🔧 parseEventHandler: Parsed additional event name: ${additionalEvent}`);
+    }
+
+    debug.parse(`🔧 parseEventHandler: Total events parsed: ${eventNames.join(', ')}`);
 
     // Check for conditional syntax: [condition]
     let condition: ASTNode | undefined;
@@ -3254,9 +3288,12 @@ export class Parser {
     }
 
     const pos = this.getPosition();
+
+    // Use first event name for compatibility (if single event) or all events
     const node: EventHandlerNode = {
       type: 'eventHandler',
-      event,
+      event: eventNames.length === 1 ? eventNames[0] : eventNames.join('|'),
+      events: eventNames, // Store all event names for runtime
       commands,
       start: pos.start,
       end: pos.end,
@@ -3272,6 +3309,7 @@ export class Parser {
       node.selector = selector;
     }
 
+    debug.parse(`🔧 parseEventHandler: Created node with events: ${eventNames.join(', ')}`);
     return node;
   }
 

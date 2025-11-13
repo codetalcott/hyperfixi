@@ -1504,9 +1504,13 @@ export class Runtime {
     node: EventHandlerNode,
     context: ExecutionContext
   ): Promise<void> {
-    const { event, commands, target, args } = node;
+    const { event, events, commands, target, args } = node;
+
+    // Get all event names (support both single event and multiple events with "or")
+    const eventNames = events && events.length > 0 ? events : [event];
+
     debug.runtime(
-      `RUNTIME: executeEventHandler for event '${event}', target=${target}, args=${args}, context.me=`,
+      `RUNTIME: executeEventHandler for events '${eventNames.join(', ')}', target=${target}, args=${args}, context.me=`,
       context.me
     );
 
@@ -1538,16 +1542,16 @@ export class Runtime {
       targets = context.me ? [context.me as HTMLElement] : [];
     }
 
-    debug.runtime(`RUNTIME: Found ${targets.length} target elements for event '${event}'`);
+    debug.runtime(`RUNTIME: Found ${targets.length} target elements for events '${eventNames.join(', ')}'`);
 
     if (targets.length === 0) {
-      console.warn(`No elements found for event handler: ${event}`);
+      console.warn(`No elements found for event handler: ${eventNames.join(', ')}`);
       return;
     }
 
     // Create event handler function
     const eventHandler = async (domEvent: Event) => {
-      debug.event(`EVENT FIRED: ${event} on`, domEvent.target, 'with', commands.length, 'commands');
+      debug.event(`EVENT FIRED: ${domEvent.type} on`, domEvent.target, 'with', commands.length, 'commands');
 
       // Create new context for event execution
       // IMPORTANT: Create a NEW locals Map that starts with the behavior's context
@@ -1615,22 +1619,24 @@ export class Runtime {
           throw error;
         }
       }
-      debug.event(`EVENT HANDLER COMPLETE: ${event}`);
+      debug.event(`EVENT HANDLER COMPLETE: ${domEvent.type}`);
     };
 
-    // Bind event handlers to all target elements
+    // Bind event handlers to all target elements for all event names
     for (const target of targets) {
-      debug.runtime(`RUNTIME: Adding event listener for '${event}' on element:`, target);
-      target.addEventListener(event, eventHandler);
+      for (const eventName of eventNames) {
+        debug.runtime(`RUNTIME: Adding event listener for '${eventName}' on element:`, target);
+        target.addEventListener(eventName, eventHandler);
 
-      // Store event handler for potential cleanup
-      if (!context.events) {
-        Object.assign(context, { events: new Map() });
-      }
-      const eventKey = `${event}-${targets.indexOf(target)}`;
-      const htmlTarget = asHTMLElement(target);
-      if (htmlTarget) {
-        context.events!.set(eventKey, { target: htmlTarget, event, handler: eventHandler });
+        // Store event handler for potential cleanup
+        if (!context.events) {
+          Object.assign(context, { events: new Map() });
+        }
+        const eventKey = `${eventName}-${targets.indexOf(target)}`;
+        const htmlTarget = asHTMLElement(target);
+        if (htmlTarget) {
+          context.events!.set(eventKey, { target: htmlTarget, event: eventName, handler: eventHandler });
+        }
       }
     }
   }

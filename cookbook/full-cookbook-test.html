@@ -430,7 +430,8 @@
       &lt;p _="on dragstart call event.dataTransfer.setData('text/plain',target.textContent)"&gt;<br>
       &nbsp;&nbsp;&lt;button draggable=true&gt;DRAG ME&lt;/button&gt;<br>
       &lt;/p&gt;<br>
-      &lt;pre _="on dragover or dragenter halt the event then set target's style.background to 'lightgray'..."&gt;
+      &lt;pre _="on dragover or dragenter halt the event then set target's style.background to 'lightgray'<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on dragleave or drop set the target's style.background to ''..."&gt;
     </div>
     <div class="demo-area">
       <p _="on dragstart call event.dataTransfer.setData('text/plain',target.textContent)">
@@ -438,11 +439,9 @@
         <button class="btn btn-success" draggable="true">OR ME</button>
       </p>
       <pre id="drop-zone" _="
-        on dragover or dragenter halt the event
-          then set the target's style.background to 'lightgray'
+        on dragover or dragenter halt the event then set the target's style.background to 'lightgray'
         on dragleave or drop set the target's style.background to ''
-        on drop get event.dataTransfer.getData('text/plain')
-          then put it into the next <output/>">Drop Area
+        on drop get event.dataTransfer.getData('text/plain') then put it into the next <output/>">Drop Area
 
 
 Drop Here</pre>

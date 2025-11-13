@@ -528,7 +528,8 @@ export interface LiteralNode extends ASTNode {
  */
 export interface EventHandlerNode extends ASTNode {
   readonly type: 'eventHandler';
-  readonly event: string;
+  readonly event: string; // Primary event name (for backward compatibility)
+  readonly events?: string[]; // All event names when using "on event1 or event2" syntax
   readonly target?: string;
   readonly args?: string[]; // Event parameter names to destructure (e.g., ['clientX', 'clientY'])
   readonly commands: ASTNode[];
