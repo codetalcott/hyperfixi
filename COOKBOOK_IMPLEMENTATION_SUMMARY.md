@@ -52,13 +52,14 @@ We've created a comprehensive test suite that implements all 9 official _hypersc
 - Command chaining with `then`
 - Element removal
 
-### 4. Toggle Active Class ⚠️
+### 4. Toggle Active Class ✅
+
 **Syntax**: `on click toggle .active on me`
 
-**Status**: Partial - Parser fixed, event handler registration issue
+**Status**: **WORKING** - Parser and toggle command both fixed!
 - Tests toggle command with `on` preposition
 - CSS class manipulation
-- **Known Issue**: Event handler not being registered (under investigation)
+- **Fixed**: Toggle command now strips leading dots from class names (bug was in validation, not event handler)
 
 ### 5. Event Filtering ⚠️
 **Syntax**: `on click[event.altKey] remove .primary then settle then add .primary`
@@ -148,17 +149,23 @@ npm run test:cookbook --prefix packages/core
 ## Current Compatibility Estimate
 
 Based on the cookbook examples:
-- **Fully Working**: 2/9 (22%) - Concat, Indeterminate
-- **Partially Working**: 2/9 (22%) - Fade & Remove, Toggle (parser works, runtime issue)
+
+- **Fully Working**: 3/9 (33%) - Concat, Indeterminate, **Toggle (FIXED!)**
+- **Partially Working**: 1/9 (11%) - Fade & Remove (requires `transition` command)
 - **Requires Implementation**: 5/9 (56%) - Event filtering, Show/when, Drag-n-drop, If/else, Complex patterns
+
+**Recent Fixes**:
+
+- ✅ Toggle command: Fixed class name validation (was rejecting `.active` syntax)
+- ✅ Parser: Added support for both `on` and `from` prepositions
 
 ## Next Steps to Improve Compatibility
 
 ### High Priority (Required for Examples 3-7)
+
 1. **Implement `transition` command** - For fade/animation effects
-2. **Fix event handler registration** - Currently toggle button doesn't respond
-3. **Implement `show ... when` conditional** - For filtering examples (6, 7)
-4. **Implement `settle` command** - For animation settling
+2. **Implement `show ... when` conditional** - For filtering examples (6, 7)
+3. **Implement `settle` command** - For animation settling
 
 ### Medium Priority (Required for Examples 5, 8, 9)
 1. **Event filtering syntax** `on event[condition]` - For conditional event handling
@@ -194,15 +201,13 @@ The test page includes:
 
 ## Known Issues
 
-### 1. Toggle Button Event Handler Not Registering
-**Issue**: Event handler compiled correctly but doesn't fire on click
-**Files**: [cookbook/complete-demo.html](cookbook/complete-demo.html#L482-L503)
-**Status**: Under investigation
-**Evidence**:
-- Parser creates correct AST: `['['.active', 'on', 'me']`
-- Runtime receives correct arguments
-- Manual event listener works fine
-- HyperFixi event handler doesn't fire
+### 1. ~~Toggle Button Event Handler Not Registering~~ ✅ RESOLVED
+
+**Issue**: Event handler compiled correctly but toggle command didn't modify classList
+**Status**: **FIXED** in commit c50d71b
+**Root Cause**: Toggle command's `parseClasses()` method wasn't stripping leading dots from class names (e.g., `.active`), causing validation to fail silently
+**Solution**: Added dot-stripping logic matching add/remove commands
+**Details**: See [TOGGLE_COMMAND_FIX_SUMMARY.md](TOGGLE_COMMAND_FIX_SUMMARY.md)
 
 ### 2. Missing Commands
 Several cookbook examples require commands not yet implemented:
@@ -221,17 +226,21 @@ Several cookbook examples require commands not yet implemented:
 ## Success Metrics
 
 Current compatibility with official cookbook:
-- **22% Fully Working** - 2 out of 9 examples work completely
-- **44% Partially Working** - 4 out of 9 examples work with workarounds or have minor issues
+
+- **33% Fully Working** - 3 out of 9 examples work completely ✅ (+11% from toggle fix!)
+- **11% Partially Working** - 1 out of 9 examples work with workarounds
 - **56% Not Yet Implemented** - 5 out of 9 examples require new features
+
+**Progress**: From 22% → 33% fully working examples
 
 ## Recommendations
 
-1. **Prioritize Event Handler Fix** - This blocks several examples and is a core feature
+1. ~~**Prioritize Event Handler Fix**~~ ✅ **COMPLETED** - Toggle command now working!
 2. **Implement Missing Commands** - Focus on `transition`, `show...when`, `if/else`
 3. **Complete Feature Set** - Event filtering, pattern matching, control flow
 4. **Document Differences** - Where HyperFixi syntax differs from _hyperscript
 5. **Expand Test Coverage** - Add more edge cases and complex patterns
+6. **Add Validation Logging** - Silent validation failures made toggle bug hard to debug
 
 ## Resources
 
