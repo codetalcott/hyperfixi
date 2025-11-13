@@ -54,6 +54,7 @@
     "test:feedback:verbose": "node scripts/test-feedback.mjs --verbose",
     "test:comprehensive": "npm run build:browser && node test-comprehensive-suite.mjs",
     "test:quick": "npm run build:browser && node scripts/test-feedback.mjs --quick",
+    "test:cookbook": "node validate-cookbook-demos.mjs",
     "test:auto": "node run-automated-tests.js --quick",
     "test:auto:watch": "node run-automated-tests.js --watch",
     "test:auto:analyze": "node run-automated-tests.js --analyze",

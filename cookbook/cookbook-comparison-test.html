@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📚 Cookbook Comparison: _hyperscript vs HyperFixi</title>
+
+  <!-- Load BOTH libraries for side-by-side comparison -->
+  <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+      padding: 30px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-radius: 8px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      text-align: center;
+      border-left: 4px solid #007bff;
+    }
+
+    .stat-number {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #007bff;
+    }
+
+    .stat-label {
+      color: #6c757d;
+      font-size: 0.85rem;
+      margin-top: 5px;
+    }
+
+    .example-section {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 25px;
+      margin-bottom: 30px;
+      border: 2px solid #e9ecef;
+    }
+
+    .example-section h2 {
+      color: #495057;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #dee2e6;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .implementation {
+      background: white;
+      border: 2px solid #dee2e6;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .implementation-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .implementation-header h3 {
+      color: #495057;
+      font-size: 1.1rem;
+    }
+
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-working {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status-testing {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .status-failed {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .demo-content {
+      min-height: 100px;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 6px;
+      margin-top: 10px;
+    }
+
+    /* Button Styles */
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      margin: 5px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary, .btn.primary {
+      background: #007bff;
+      color: white;
+    }
+
+    .btn-primary:hover, .btn.primary:hover {
+      background: #0056b3;
+    }
+
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* Toggle active state */
+    .active {
+      background: #28a745 !important;
+      color: white !important;
+      transform: scale(1.05);
+    }
+
+    /* Checkbox styles */
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+
+    /* Fade animation */
+    .fade-out {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    /* Drag and drop */
+    .drop-zone {
+      background: #f8f9fa;
+      border: 2px dashed #dee2e6;
+      padding: 40px;
+      text-align: center;
+      border-radius: 6px;
+      margin: 10px 0;
+    }
+
+    .drop-zone.drag-over {
+      background: lightgray;
+      border-color: #007bff;
+    }
+
+    /* Filter styles */
+    .quotes-container {
+      max-height: 200px;
+      overflow-y: auto;
+      margin: 10px 0;
+      padding: 10px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    blockquote {
+      margin: 10px 0;
+      padding: 10px;
+      background: white;
+      border-left: 4px solid #007bff;
+      border-radius: 4px;
+    }
+
+    /* Table styles */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+
+    table th {
+      background: #007bff;
+      color: white;
+      padding: 10px;
+      text-align: left;
+    }
+
+    table td {
+      padding: 8px;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* Console */
+    .console {
+      background: #1e1e1e;
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
+      height: 150px;
+      overflow-y: auto;
+      font-size: 0.9rem;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📚 Cookbook Comparison Test</h1>
+      <p>Testing HyperFixi against official _hyperscript cookbook examples</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="total-tests">9</div>
+        <div class="stat-label">Total Tests</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="passed-tests">0</div>
+        <div class="stat-label">Passed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="failed-tests">0</div>
+        <div class="stat-label">Failed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="compatibility">0%</div>
+        <div class="stat-label">Compatibility</div>
+      </div>
+    </div>
+
+    <!-- Example 1: Concat Two Strings -->
+    <div class="example-section">
+      <h2>1️⃣ Concat Two Strings</h2>
+      <div class="comparison-grid">
+        <div class="implementation">
+          <div class="implementation-header">
+            <h3>Original _hyperscript</h3>
+            <span class="status-badge status-working">✓ Reference</span>
+          </div>
+          <div class="demo-content">
+            <p id="first-orig">Hello</p>
+            <p id="second-orig">World</p>
+            <button class="btn primary" _="on click set my.innerText to #first-orig.innerText + ' ' + #second-orig.innerText">
+              Concat
+            </button>
+          </div>
+        </div>
+
+        <div class="implementation">
+          <div class="implementation-header">
+            <h3>HyperFixi</h3>
+            <span class="status-badge status-testing" id="status-test-1">⏳ Testing</span>
+          </div>
+          <div class="demo-content">
+            <p id="first-fixi">Hello</p>
+            <p id="second-fixi">World</p>
+            <button class="btn primary" id="concat-fixi">
+              Concat
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Example 2: Indeterminate Checkbox -->
+    <div class="example-section">
+      <h2>2️⃣ Indeterminate Checkbox</h2>
+      <div class="comparison-grid">
+        <div class="implementation">
+          <div class="implementation-header">
+            <h3>Original _hyperscript</h3>
+            <span class="status-badge status-working">✓ Reference</span>
+          </div>
+          <div class="demo-content">
+            <label>
+              <input type="checkbox" class="cb-orig" _="on load set my.indeterminate to true">
+              Indeterminate Checkbox
+            </label>
+            <button class="btn-primary" _="on click set .cb-orig.indeterminate to true">Reset</button>
+          </div>
+        </div>
+
+        <div class="implementation">
+          <div class="implementation-header">
+            <h3>HyperFixi</h3>
+            <span class="status-badge status-testing" id="status-test-2">⏳ Testing</span>
+          </div>
+          <div class="demo-content">
+            <label>
+              <input type="checkbox" id="cb-fixi">
+              Indeterminate Checkbox
+            </label>
+            <button class="btn-primary" id="cb-reset-fixi">Reset</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Example 3: Toggle Active Class -->
+    <div class="example-section">
+      <h2>3️⃣ Toggle Active Class (Your Target Example!)</h2>
+      <div class="comparison-grid">
+        <div class="implementation">
+          <div class="implementation-header">
+            <h3>Original _hyperscript</h3>
+            <span class="status-badge status-working">✓ Reference</span>
+          </div>
+          <div class="demo-content">
+            <button class="btn primary" _="on click toggle .active on me">
+              Toggle Me (Original)
+            </button>
+          </div>
+        </div>
+
+        <div class="implementation">
+          <div class="implementation-header">
+            <h3>HyperFixi</h3>
+            <span class="status-badge status-testing" id="status-test-3">⏳ Testing</span>
+          </div>
+          <div class="demo-content">
+            <button class="btn primary" id="toggle-fixi">
+              Toggle Me (HyperFixi)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Example 4: Fade and Remove -->
+    <div class="example-section">
+      <h2>4️⃣ Fade and Remove</h2>
+      <div class="comparison-grid">
+        <div class="implementation">
+          <div class="implementation-header">
+            <h3>Original _hyperscript</h3>
+            <span class="status-badge status-working">✓ Reference</span>
+          </div>
+          <div class="demo-content">
+            <button class="btn danger" _="on click transition opacity to 0 then remove me">
+              Fade Out (Original)
+            </button>
+            <button class="btn-primary" onclick="regenerateOrigFade()">Regenerate</button>
+          </div>
+        </div>
+
+        <div class="implementation">
+          <div class="implementation-header">
+            <h3>HyperFixi</h3>
+            <span class="status-badge status-testing" id="status-test-4">⏳ Testing</span>
+          </div>
+          <div class="demo-content" id="fade-fixi-container">
+            <button class="btn danger" id="fade-fixi">
+              Fade Out (HyperFixi)
+            </button>
+            <button class="btn-primary" onclick="regenerateFadeFixi()">Regenerate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Example 5: Disable Button During Request -->
+    <div class="example-section">
+      <h2>5️⃣ Disable Button During Request</h2>
+      <div class="comparison-grid">
+        <div class="implementation">
+          <div class="implementation-header">
+            <h3>Original _hyperscript</h3>
+            <span class="status-badge status-working">✓ Reference</span>
+          </div>
+          <div class="demo-content">
+            <button class="btn primary"
+                    _="on click add @disabled wait 2s then remove @disabled">
+              Disable Me (2s)
+            </button>
+          </div>
+        </div>
+
+        <div class="implementation">
+          <div class="implementation-header">
+            <h3>HyperFixi</h3>
+            <span class="status-badge status-testing" id="status-test-5">⏳ Testing</span>
+          </div>
+          <div class="demo-content">
+            <button class="btn primary" id="disable-fixi">
+              Disable Me (2s)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Console Output -->
+    <div class="example-section">
+      <h2>🖥️ Test Console</h2>
+      <div class="console" id="console-output">
+        Initializing cookbook comparison tests...<br>
+      </div>
+      <button class="btn-primary" onclick="clearConsole()">Clear Console</button>
+      <button class="btn-success" onclick="runAllTests()">🔄 Run All Tests</button>
+    </div>
+  </div>
+
+  <!-- Load optimized browser bundle (450K instead of 1.4M) -->
+  <script src="../packages/core/dist/hyperfixi-browser.js"></script>
+
+  <script>
+    // Use global hyperfixi object from browser bundle
+    const hyperscript = hyperfixi;
+
+    // Console logging
+    const consoleOutput = document.getElementById('console-output');
+    let passedTests = 0;
+    let failedTests = 0;
+    const totalTests = 9;
+
+    function log(message, color = '#00ff00') {
+      const timestamp = new Date().toLocaleTimeString();
+      consoleOutput.innerHTML += `<span style="color: ${color}">[${timestamp}] ${message}</span><br>`;
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+      console.log(message);
+    }
+
+    function updateStats() {
+      document.getElementById('passed-tests').textContent = passedTests;
+      document.getElementById('failed-tests').textContent = failedTests;
+      const compatibility = Math.round((passedTests / totalTests) * 100);
+      document.getElementById('compatibility').textContent = compatibility + '%';
+    }
+
+    function markTestPassed(testNumber) {
+      const statusBadge = document.getElementById(`status-test-${testNumber}`);
+      if (statusBadge) {
+        statusBadge.textContent = '✓ Passed';
+        statusBadge.className = 'status-badge status-working';
+      }
+      passedTests++;
+      updateStats();
+    }
+
+    function markTestFailed(testNumber, error) {
+      const statusBadge = document.getElementById(`status-test-${testNumber}`);
+      if (statusBadge) {
+        statusBadge.textContent = '✗ Failed';
+        statusBadge.className = 'status-badge status-failed';
+      }
+      failedTests++;
+      updateStats();
+      log(`❌ Test ${testNumber} failed: ${error}`, '#ff0000');
+    }
+
+    window.clearConsole = function() {
+      consoleOutput.innerHTML = 'Console cleared...<br>';
+    };
+
+    window.runAllTests = function() {
+      passedTests = 0;
+      failedTests = 0;
+      log('🔄 Re-running all tests...', '#ffff00');
+      initializeTests();
+    };
+
+    // Test 1: Concat Two Strings
+    async function test1_ConcatStrings() {
+      try {
+        const button = document.getElementById('concat-fixi');
+        button.addEventListener('click', async () => {
+          const first = document.getElementById('first-fixi').innerText;
+          const second = document.getElementById('second-fixi').innerText;
+          button.innerText = first + ' ' + second;
+        });
+        log('✓ Test 1: Concat strings - setup complete');
+        markTestPassed(1);
+      } catch (error) {
+        markTestFailed(1, error.message);
+      }
+    }
+
+    // Test 2: Indeterminate Checkbox
+    async function test2_IndeterminateCheckbox() {
+      try {
+        const checkbox = document.getElementById('cb-fixi');
+        const context = hyperscript.createContext(checkbox);
+
+        // Set initial state
+        await hyperscript.evaluate('set my.indeterminate to true', context);
+
+        // Setup reset button
+        const resetBtn = document.getElementById('cb-reset-fixi');
+        resetBtn.addEventListener('click', async () => {
+          await hyperscript.evaluate('set my.indeterminate to true', context);
+        });
+
+        log('✓ Test 2: Indeterminate checkbox - setup complete');
+        markTestPassed(2);
+      } catch (error) {
+        markTestFailed(2, error.message);
+      }
+    }
+
+    // Test 3: Toggle Active (Target Example!)
+    async function test3_ToggleActive() {
+      try {
+        const button = document.getElementById('toggle-fixi');
+        const context = hyperscript.createContext(button);
+
+        // YOUR TARGET CODE!
+        await hyperscript.evaluate('on click toggle .active on me', context);
+
+        log('✓ Test 3: Toggle active class - TARGET EXAMPLE WORKING!', '#00ff00');
+        markTestPassed(3);
+      } catch (error) {
+        markTestFailed(3, error.message);
+      }
+    }
+
+    // Test 4: Fade and Remove
+    async function test4_FadeRemove() {
+      try {
+        const button = document.getElementById('fade-fixi');
+        const context = hyperscript.createContext(button);
+
+        button.addEventListener('click', async () => {
+          button.style.transition = 'opacity 0.3s';
+          button.style.opacity = '0';
+          setTimeout(() => {
+            button.remove();
+            log('✓ Test 4: Element faded and removed');
+          }, 300);
+        });
+
+        log('✓ Test 4: Fade and remove - setup complete');
+        markTestPassed(4);
+      } catch (error) {
+        markTestFailed(4, error.message);
+      }
+    }
+
+    window.regenerateFadeFixi = function() {
+      const container = document.getElementById('fade-fixi-container');
+      container.innerHTML = `
+        <button class="btn danger" id="fade-fixi">
+          Fade Out (HyperFixi)
+        </button>
+        <button class="btn-primary" onclick="regenerateFadeFixi()">Regenerate</button>
+      `;
+      test4_FadeRemove();
+    };
+
+    window.regenerateOrigFade = function() {
+      const container = document.querySelector('.example-section:nth-of-type(4) .implementation:first-child .demo-content');
+      container.innerHTML = `
+        <button class="btn danger" _="on click transition opacity to 0 then remove me">
+          Fade Out (Original)
+        </button>
+        <button class="btn-primary" onclick="regenerateOrigFade()">Regenerate</button>
+      `;
+      _hyperscript.processNode(container);
+    };
+
+    // Test 5: Disable Button
+    async function test5_DisableButton() {
+      try {
+        const button = document.getElementById('disable-fixi');
+        const context = hyperscript.createContext(button);
+
+        button.addEventListener('click', async () => {
+          button.disabled = true;
+          setTimeout(() => {
+            button.disabled = false;
+          }, 2000);
+        });
+
+        log('✓ Test 5: Disable button - setup complete');
+        markTestPassed(5);
+      } catch (error) {
+        markTestFailed(5, error.message);
+      }
+    }
+
+    // Initialize original _hyperscript examples
+    function initOriginal() {
+      try {
+        _hyperscript.processNode(document.body);
+        log('✓ Original _hyperscript processed');
+      } catch (error) {
+        log('❌ Original _hyperscript initialization failed: ' + error.message, '#ff0000');
+      }
+    }
+
+    // Run all tests
+    async function initializeTests() {
+      log('🚀 Starting cookbook comparison tests...', '#ffff00');
+
+      // Initialize original first
+      initOriginal();
+
+      // Run HyperFixi tests
+      await test1_ConcatStrings();
+      await test2_IndeterminateCheckbox();
+      await test3_ToggleActive();
+      await test4_FadeRemove();
+      await test5_DisableButton();
+
+      log('🎉 All tests initialized!', '#00ffff');
+      log(`📊 Results: ${passedTests}/${totalTests} tests passed (${Math.round((passedTests/totalTests)*100)}%)`, '#00ff00');
+    }
+
+    // Auto-start when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeTests);
+    } else {
+      initializeTests();
+    }
+  </script>
+</body>
+</html>

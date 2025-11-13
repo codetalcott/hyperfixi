@@ -54,8 +54,8 @@ export class ToggleCommand
     >
 {
   public readonly name = 'toggle' as const;
-  public readonly syntax = 'toggle <class-expression> [from <target-expression>]';
-  public readonly description = 'Toggles CSS classes on elements';
+  public readonly syntax = 'toggle <class-expression> [on|from <target-expression>]';
+  public readonly description = 'Toggles CSS classes on elements (supports both "on" and "from" syntax)';
   public readonly inputSchema = ToggleCommandInputSchema;
   public readonly outputType = 'element-list' as const;
 
@@ -65,12 +65,17 @@ export class ToggleCommand
     sideEffects: ['dom-mutation'],
     examples: [
       {
-        code: 'toggle .active from me',
-        description: 'Toggle active class on current element',
+        code: 'toggle .active on me',
+        description: 'Toggle active class on current element (official _hyperscript syntax)',
         expectedOutput: [],
       },
       {
-        code: 'toggle "loading spinner" from <.buttons/>',
+        code: 'toggle .active from me',
+        description: 'Toggle active class on current element (HyperFixi syntax)',
+        expectedOutput: [],
+      },
+      {
+        code: 'toggle "loading spinner" on <.buttons/>',
         description: 'Toggle multiple classes on elements with buttons class',
         expectedOutput: [],
       },
@@ -103,14 +108,20 @@ export class ToggleCommand
     },
     examples: [
       {
-        title: 'Toggle single class',
-        code: 'on click toggle .active from me',
+        title: 'Toggle single class (official _hyperscript syntax)',
+        code: 'on click toggle .active on me',
         explanation: 'When clicked, toggles the "active" class on the element',
         output: [],
       },
       {
+        title: 'Toggle single class (HyperFixi syntax)',
+        code: 'on click toggle .active from me',
+        explanation: 'When clicked, toggles the "active" class on the element (alternative syntax)',
+        output: [],
+      },
+      {
         title: 'Toggle multiple classes',
-        code: 'toggle "loading complete" from <#submit-btn/>',
+        code: 'toggle "loading complete" on <#submit-btn/>',
         explanation: 'Toggles both "loading" and "complete" classes on submit button',
         output: [],
       },

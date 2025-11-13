@@ -393,9 +393,17 @@
     </div>
   </div>
 
-  <script type="module">
-    // Import from main HyperFixi API (now zod-free!)
-    import { hyperscript } from '../packages/core/src/index.ts';
+  <!-- Enable debug mode BEFORE loading bundle -->
+  <script>
+    window.__HYPERFIXI_DEBUG__ = true;
+  </script>
+
+  <!-- Load optimized browser bundle (450K instead of 1.4M) -->
+  <script src="../packages/core/dist/hyperfixi-browser.js"></script>
+
+  <script>
+    // Use global hyperfixi object from browser bundle
+    const hyperscript = hyperfixi;
 
     // Console logging system
     const consoleOutput = document.getElementById('console-output');
@@ -472,15 +480,58 @@
     async function setupTargetExample() {
       try {
         const targetButton = document.getElementById('target-example');
+
+        // Check debug flags
+        console.log('🔍 Debug flags:', {
+          commands: hyperscript.debug.DEBUG?.commands,
+          events: hyperscript.debug.DEBUG?.events,
+          runtime: hyperscript.debug.DEBUG?.runtime,
+        });
+
+        // Create context with the button as 'me'
         const context = hyperscript.createContext(targetButton);
-        
-        // 🎯 YOUR EXACT TARGET CODE!
-        await hyperscript.evaluate('on click toggle .active on me', context);
-        
+        console.log('🔍 Context created:', {
+          me: context.me,
+          meIsButton: context.me === targetButton,
+          meTag: context.me?.tagName,
+          meId: context.me?.id
+        });
+
+        // Compile the hyperscript code
+        const code = 'on click toggle .active on me';
+        const result = hyperscript.compile(code);
+
+        if (!result.success) {
+          throw new Error(`Compilation failed: ${result.errors?.[0]?.message}`);
+        }
+
+        console.log('🔍 Compiled AST:', JSON.stringify(result.ast, null, 2));
+
+        // Execute the compiled AST to register the event handler
+        const execResult = await hyperscript.execute(result.ast, context);
+        console.log('🔍 Execute result:', execResult);
+
+        // Add a manual event listener to verify the button is clickable
+        targetButton.addEventListener('click', () => {
+          console.log('🔍 Manual listener: Button was clicked!');
+        });
+
+        // Verify the event listener was added
+        // Try clicking programmatically to test
+        setTimeout(() => {
+          console.log('🔍 Testing click...');
+          console.log('🔍 classList before click:', Array.from(targetButton.classList));
+          targetButton.click();
+          console.log('🔍 classList after click:', Array.from(targetButton.classList));
+          console.log('🔍 Has .active after click?', targetButton.classList.contains('active'));
+        }, 100);
+
         log('🎯 TARGET EXAMPLE SETUP COMPLETE!', '#ffff00');
-        log('✅ hyperscript.evaluate("on click toggle .active on me") is working!', '#00ff00');
+        log('✅ Click the button below to test "toggle .active on me"', '#00ff00');
+        log('   (Event handler should be registered)', '#aaaaaa');
       } catch (error) {
         log(`❌ Target example error: ${error.message}`, '#ff0000');
+        console.error('Target example setup error:', error);
       }
     }
 

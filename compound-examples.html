@@ -6,7 +6,7 @@
     <title>HyperFixi - Compound Hyperscript Examples</title>
 
     <!-- Test Navigation -->
-    <script src="test-nav.js"></script>
+    <script src="packages/core/test-nav.js"></script>
 
     <style>
         body {
@@ -393,73 +393,11 @@
         </div>
     </div>
 
-    <!-- Implementation Status -->
-    <div class="demo-section">
-        <h2>📊 Implementation Status</h2>
-
-        <div class="description">
-            <p><strong>What's Expected:</strong></p>
-            <table style="width: 100%; border-collapse: collapse;">
-                <tr style="border-bottom: 2px solid #ddd;">
-                    <th style="text-align: left; padding: 10px;">Feature</th>
-                    <th style="text-align: left; padding: 10px;">Example</th>
-                    <th style="text-align: center; padding: 10px;">Status</th>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 10px;"><code>on pointerdown</code></td>
-                    <td style="padding: 10px;">HSL Color Box</td>
-                    <td style="padding: 10px; text-align: center;">✅ Should Work</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 10px;"><code>repeat until event</code></td>
-                    <td style="padding: 10px;">HSL Color Box</td>
-                    <td style="padding: 10px; text-align: center;">⚠️ Needs Testing</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 10px;"><code>Math.random()</code></td>
-                    <td style="padding: 10px;">HSL Color Box</td>
-                    <td style="padding: 10px; text-align: center;">✅ Fixed Today</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 10px;"><code>transition</code></td>
-                    <td style="padding: 10px;">HSL Color Box</td>
-                    <td style="padding: 10px; text-align: center;">⚠️ Needs Implementation</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 10px;"><code>behavior</code></td>
-                    <td style="padding: 10px;">Draggable Items</td>
-                    <td style="padding: 10px; text-align: center;">❌ Not Yet Implemented</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 10px;"><code>measure</code></td>
-                    <td style="padding: 10px;">Draggable Items</td>
-                    <td style="padding: 10px; text-align: center;">⚠️ Needs Implementation</td>
-                </tr>
-                <tr>
-                    <td style="padding: 10px;"><code>trigger</code></td>
-                    <td style="padding: 10px;">Draggable Items</td>
-                    <td style="padding: 10px; text-align: center;">⚠️ Needs Implementation</td>
-                </tr>
-            </table>
-        </div>
-
-        <div class="note">
-            💡 <strong>Testing Strategy:</strong>
-            <ol>
-                <li>Open this page in a browser with HyperFixi loaded</li>
-                <li>Try the HSL color box first (simpler example)</li>
-                <li>Check browser console for any errors</li>
-                <li>Try the draggable items (more complex)</li>
-                <li>Document which features work and which need implementation</li>
-            </ol>
-        </div>
-    </div>
-
     <!-- Load HyperFixi -->
     <script>
         // Cache busting for development - force fresh load
         const script = document.createElement('script');
-        script.src = '/dist/hyperfixi-browser.js?v=' + Date.now();
+        script.src = 'packages/core/dist/hyperfixi-browser.js?v=' + Date.now();
         document.write(script.outerHTML);
     </script>
 

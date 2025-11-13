@@ -660,6 +660,56 @@ export class Runtime {
 
       // Enhanced commands expect [classExpression, target]
       evaluatedArgs = [classArg, target];
+    } else if (name === 'toggle' && args.length === 3) {
+      // Handle "toggle .class on #target" and "toggle .class from #target" patterns
+      // Support both 'on' (official _hyperscript) and 'from' (HyperFixi) for compatibility
+
+      // For toggle, the first argument (class) should be treated as a literal value, not evaluated as selector
+      let classArg: any = args[0];
+      if (classArg?.type === 'selector' || classArg?.type === 'literal') {
+        classArg = classArg.value;
+      } else if (classArg?.type === 'identifier') {
+        classArg = classArg.name;
+      } else {
+        classArg = await this.execute(args[0], context);
+      }
+
+      await this.execute(args[1], context); // 'on' or 'from' (evaluated for side effects)
+      let target: any = args[2];
+
+      // Extract target selector/element
+      if (target?.type === 'identifier' && target.name === 'me') {
+        target = context.me;
+      } else if (target?.type === 'selector') {
+        target = target.value;
+      } else if (target?.type === 'identifier') {
+        // For identifiers, check if it's a variable reference that needs to be looked up
+        // Try to evaluate it as a variable reference
+        const evaluated = await this.execute(target, context);
+        target = evaluated;
+      } else if (target?.type === 'literal') {
+        target = target.value;
+      } else {
+        const evaluated = await this.execute(target, context);
+        target = evaluated;
+      }
+
+      // Enhanced commands expect [classExpression, target]
+      evaluatedArgs = [classArg, target];
+    } else if (name === 'toggle' && args.length === 1) {
+      // Handle single-arg pattern: "toggle .active" (implicit target: me)
+      let classArg: unknown = args[0];
+      const classArgAny = classArg as any;
+      if (classArgAny?.type === 'selector' || classArgAny?.type === 'literal') {
+        classArg = classArgAny.value;
+      } else if (classArgAny?.type === 'identifier') {
+        classArg = classArgAny.name;
+      } else {
+        classArg = await this.execute(args[0], context);
+      }
+
+      // Use context.me as implicit target
+      evaluatedArgs = [classArg, context.me];
     } else if ((name === 'add' || name === 'remove') && args.length === 1) {
       // Handle single-arg pattern: "add .active" (implicit target: me)
       let classArg: unknown = args[0];

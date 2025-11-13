@@ -2199,16 +2199,18 @@ export class Parser {
   private parseToggleCommand(identifierNode: IdentifierNode): CommandNode | null {
     const args: ASTNode[] = [];
 
-    // Parse: toggle <class> from <target>
+    // Parse: toggle <class> from <target> OR toggle <class> on <target>
+    // Support both 'from' (HyperFixi) and 'on' (official _hyperscript) for compatibility
     // First argument: class
-    if (!this.isAtEnd() && !this.check('from') && !this.check('end')) {
+    if (!this.isAtEnd() && !this.check('from') && !this.check('on') && !this.check('end')) {
       args.push(this.parsePrimary());
     }
 
-    // Expect 'from' keyword
-    if (this.check('from')) {
-      this.advance(); // consume 'from'
-      args.push(this.createIdentifier('from')); // Add 'from' as an argument
+    // Accept either 'from' or 'on' keyword for target specification
+    if (this.check('from') || this.check('on')) {
+      const preposition = this.peek().value; // 'from' or 'on'
+      this.advance(); // consume the preposition
+      args.push(this.createIdentifier(preposition)); // Add preposition as an argument
     }
 
     // Third argument: target
@@ -2487,8 +2489,9 @@ export class Parser {
         return this.createIdentifier(token.value);
       }
 
-      // Handle "my" property access
-      if (token.value === 'my') {
+      // Handle "my" property access (but only for space syntax, not dot syntax)
+      // For dot syntax (my.prop), let it fall through to be handled by parseCall()
+      if (token.value === 'my' && !this.check('.')) {
         return this.parseMyPropertyAccess();
       }
 
