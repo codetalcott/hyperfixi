@@ -19,6 +19,7 @@ export class AttributeProcessor {
   private observer: MutationObserver | null = null;
   private processedCount = 0;
   private readyEventDispatched = false;
+  private initialized = false;
 
   constructor(options: AttributeProcessorOptions = {}) {
     this.options = {
@@ -38,16 +39,29 @@ export class AttributeProcessor {
       return; // Skip in non-browser environments
     }
 
+    // Prevent double initialization
+    if (this.initialized) {
+      console.log('🔧 ATTR INIT: Already initialized, skipping duplicate init()');
+      debug.parse('ATTR: Already initialized, skipping duplicate init()');
+      return;
+    }
+    console.log('🔧 ATTR INIT: Starting initialization');
+    this.initialized = true;
+
     // Process existing elements
     if (this.options.autoScan) {
+      console.log('🔧 ATTR INIT: Auto-scan enabled, scanning document');
       this.scanAndProcessAll();
 
       // Dispatch hyperscript:ready event after initial page processing
       this.dispatchReadyEvent();
+    } else {
+      console.log('🔧 ATTR INIT: Auto-scan disabled');
     }
 
     // Set up mutation observer for new elements
     this.setupMutationObserver();
+    console.log('🔧 ATTR INIT: Initialization complete');
   }
 
   /**
@@ -56,14 +70,17 @@ export class AttributeProcessor {
   scanAndProcessAll(): void {
     // Process elements with _ attributes
     const elements = document.querySelectorAll(`[${this.options.attributeName}]`);
-    elements.forEach(element => {
+    console.log(`🔧 SCAN: Found ${elements.length} elements with [${this.options.attributeName}] attribute`);
+    elements.forEach((element, index) => {
       if (element instanceof HTMLElement) {
+        console.log(`🔧 SCAN: Processing element ${index + 1}/${elements.length}:`, element.tagName, element.id);
         this.processElement(element);
       }
     });
 
     // Process <script type="text/hyperscript"> tags
     const scriptTags = document.querySelectorAll('script[type="text/hyperscript"]');
+    console.log(`🔧 SCAN: Found ${scriptTags.length} <script type="text/hyperscript"> tags`);
     scriptTags.forEach(script => {
       if (script instanceof HTMLScriptElement) {
         this.processHyperscriptTag(script);
@@ -136,14 +153,17 @@ export class AttributeProcessor {
     }
 
     const hyperscriptCode = element.getAttribute(this.options.attributeName);
+    console.log('🔧 PROCESS: Found hyperscript code:', hyperscriptCode?.substring(0, 50) + '...');
     debug.parse('ATTR: Found hyperscript code:', hyperscriptCode);
 
     if (!hyperscriptCode) {
+      console.log('🔧 PROCESS: No hyperscript code found on element');
       debug.parse('ATTR: No hyperscript code found on element');
       return;
     }
 
     try {
+      console.log('🔧 PROCESS: Creating context for element');
       debug.parse('ATTR: Processing element with code:', hyperscriptCode);
 
       // Create execution context with the element as 'me'
@@ -151,8 +171,10 @@ export class AttributeProcessor {
       debug.parse('ATTR: Created context for element');
 
       // Parse and prepare the hyperscript code
+      console.log('🔧 PROCESS: Compiling hyperscript code');
       debug.parse('ATTR: About to compile hyperscript code');
       const compilationResult = hyperscript.compile(hyperscriptCode);
+      console.log('🔧 PROCESS: Compilation result:', compilationResult.success ? '✅ SUCCESS' : '❌ FAILED');
       debug.parse('ATTR: Compilation result:', compilationResult);
 
       if (!compilationResult.success) {
@@ -172,12 +194,14 @@ export class AttributeProcessor {
         return;
       }
 
+      console.log('🔧 PROCESS: Compilation succeeded, executing AST');
       debug.parse('ATTR: Compilation succeeded, processing handler type');
 
       // Execute the compiled AST regardless of whether it's an event handler or immediate execution
       // The runtime will handle event handlers properly by registering them
       debug.parse('ATTR: Executing compiled AST');
       void hyperscript.execute(compilationResult.ast!, context);
+      console.log('🔧 PROCESS: Execution call completed');
 
       // Mark as processed
       this.processedElements.add(element);
@@ -185,6 +209,7 @@ export class AttributeProcessor {
 
       // Dispatch load event on the element after successful processing
       this.dispatchLoadEvent(element);
+      console.log('🔧 PROCESS: Element processing complete');
     } catch (error) {
       console.error(`Error processing hyperscript attribute on element:`, element, error);
     }

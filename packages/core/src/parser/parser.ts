@@ -821,9 +821,25 @@ export class Parser {
     const startPosition = this.current;
     let targetExpression: ASTNode | null = null;
 
+    console.log('🎯 PARSER (SET): parseSetCommand called, current token:', this.peek().value, 'type:', this.peek().type);
+
     try {
+      // Check for local variable prefix `:` FIRST (before any other parsing)
+      if (this.check(':')) {
+        console.log('✅ PARSER (SET): Found `:` prefix at start, parsing local variable');
+        this.advance(); // consume `:`
+        const varToken = this.advance(); // get variable name
+        console.log('✅ PARSER (SET): Variable name:', varToken.value);
+        targetExpression = {
+          type: 'identifier',
+          name: varToken.value,
+          scope: 'local',
+          start: varToken.start - 1, // Include the `:` in the start position
+          end: varToken.end,
+        } as any;
+      }
       // Check for scope modifiers (global/local) first
-      if (this.check('global') || this.check('local')) {
+      else if (this.check('global') || this.check('local')) {
         const scopeToken = this.advance();
         const variableToken = this.advance();
 
@@ -926,16 +942,35 @@ export class Parser {
     // If single expression parsing failed, fall back to collecting individual tokens
     const targetTokens: ASTNode[] = [];
     if (!targetExpression) {
-      while (
-        !this.isAtEnd() &&
-        !this.check('to') &&
-        !this.check('then') &&
-        !this.check('and') &&
-        !this.check('else') &&
-        !this.check('end')
-      ) {
-        const token = this.parsePrimary();
-        targetTokens.push(token);
+      debug.parse('🔍 PARSER (SET): Fallback token collection, current token:', this.peek().value);
+      // Check for local variable prefix `:` (hyperscript syntax for local variables)
+      if (this.match(':')) {
+        debug.parse('✅ PARSER (SET): Found `:` prefix, parsing local variable');
+        // Consume the `:` and get the variable name
+        const varToken = this.advance();
+        debug.parse('✅ PARSER (SET): Variable name after `:`:', varToken.value);
+        // Create a variable node with local scope
+        targetExpression = {
+          type: 'identifier',
+          name: varToken.value,
+          scope: 'local',
+          start: varToken.start,
+          end: varToken.end,
+        } as any;
+      } else {
+        debug.parse('🔍 PARSER (SET): No `:` prefix, collecting tokens until "to"');
+        // Original token collection logic
+        while (
+          !this.isAtEnd() &&
+          !this.check('to') &&
+          !this.check('then') &&
+          !this.check('and') &&
+          !this.check('else') &&
+          !this.check('end')
+        ) {
+          const token = this.parsePrimary();
+          targetTokens.push(token);
+        }
       }
 
       // debug.parse('🔍 PARSER: collected target tokens via fallback', {
@@ -2431,6 +2466,24 @@ export class Parser {
       return this.parseAttributeOrArrayLiteral();
     }
 
+    // Handle local variable prefix `:` for expressions (e.g., put :x into #result)
+    // IMPORTANT: Check for :variable BEFORE general operator handling
+    if (this.check(':')) {
+      console.log('✅ EXPR PARSER: Found `:` prefix for local variable in expression');
+      this.advance(); // consume `:`
+      const varToken = this.advance(); // get variable name
+      console.log('✅ EXPR PARSER: Variable name:', varToken.value);
+      return {
+        type: 'identifier',
+        name: varToken.value,
+        scope: 'local', // Mark as local variable
+        start: varToken.start - 1, // Include the `:` in the start position
+        end: varToken.end,
+        line: varToken.line,
+        column: varToken.column,
+      } as any;
+    }
+
     // Handle operators as literal tokens
     if (this.matchTokenType(TokenType.OPERATOR)) {
       const token = this.previous();
@@ -3733,32 +3786,74 @@ export class Parser {
 
       // Parse target (everything before 'to')
       const targetTokens: ASTNode[] = [];
-      while (
-        !this.isAtEnd() &&
-        !this.check('to') &&
-        !this.check('then') &&
-        !this.check('and') &&
-        !this.check('else') &&
-        !this.checkTokenType(TokenType.COMMAND)
-      ) {
-        const expr = this.parseExpression();
-        if (expr) {
-          targetTokens.push(expr);
-        } else {
-          const primary = this.parsePrimary();
-          if (primary) {
-            targetTokens.push(primary);
-          }
-        }
 
-        // Don't consume comma here, let parseExpression handle it
-        if (!this.check('to')) {
-          break;
+      // DEBUG: Log the next 3 tokens to understand structure
+      console.log('🔍 PARSER (SET-ALT): Tokens after set command:');
+      console.log('  Token 0 (current):', this.peek().value, 'type:', this.peek().type);
+      if (this.current + 1 < this.tokens.length) {
+        console.log('  Token 1:', this.tokens[this.current + 1].value, 'type:', this.tokens[this.current + 1].type);
+      }
+      if (this.current + 2 < this.tokens.length) {
+        console.log('  Token 2:', this.tokens[this.current + 2].value, 'type:', this.tokens[this.current + 2].type);
+      }
+
+      // Check for local variable prefix `:` (hyperscript syntax for local variables)
+      // Check the token VALUE instead of using check(':') since : might be part of the token
+      const currentToken = this.peek();
+      if (currentToken && currentToken.value && typeof currentToken.value === 'string' && currentToken.value.startsWith(':')) {
+        // Token value starts with ':', this is a local variable
+        console.log('✅ PARSER (SET-ALT): Found :variable as single token:', currentToken.value);
+        const varName = currentToken.value.substring(1); // Remove ':' prefix
+        this.advance(); // consume the whole ':variable' token
+        targetTokens.push({
+          type: 'identifier',
+          name: varName,
+          scope: 'local',
+          start: currentToken.start,
+          end: currentToken.end,
+        } as any);
+      } else if (currentToken && currentToken.value === ':' && this.current + 1 < this.tokens.length) {
+        // : is separate token, next token is the variable name
+        console.log('✅ PARSER (SET-ALT): Found : as separate token, next is:', this.tokens[this.current + 1].value);
+        this.advance(); // consume ':'
+        const varToken = this.advance(); // consume variable name
+        targetTokens.push({
+          type: 'identifier',
+          name: varToken.value,
+          scope: 'local',
+          start: currentToken.start,
+          end: varToken.end,
+        } as any);
+      } else {
+        // Original token collection logic
+        while (
+          !this.isAtEnd() &&
+          !this.check('to') &&
+          !this.check('then') &&
+          !this.check('and') &&
+          !this.check('else') &&
+          !this.checkTokenType(TokenType.COMMAND)
+        ) {
+          const expr = this.parseExpression();
+          if (expr) {
+            targetTokens.push(expr);
+          } else {
+            const primary = this.parsePrimary();
+            if (primary) {
+              targetTokens.push(primary);
+            }
+          }
+
+          // Don't consume comma here, let parseExpression handle it
+          if (!this.check('to')) {
+            break;
+          }
         }
       }
 
       // Expect 'to' keyword
       if (!this.check('to')) {
+        console.log('❌ PARSER (SET-ALT): ERROR - Expected "to", found:', this.peek().value, 'targetTokens collected:', targetTokens.length);
         throw new Error(`Expected 'to' in set command, found: ${this.peek().value}`);
       }
       this.advance(); // consume 'to'
