@@ -307,7 +307,6 @@ export class Runtime {
    * Execute an AST node within the given execution context
    */
   async execute(node: ASTNode, context: ExecutionContext): Promise<unknown> {
-    console.log(`🔧 RUNTIME: execute() called with node type: '${node.type}'`);
     debug.runtime(`RUNTIME: execute() called with node type: '${node.type}'`);
 
     // Inject behavior API into context so install command can access it
@@ -316,7 +315,6 @@ export class Runtime {
     }
 
     try {
-      console.log(`🔧 RUNTIME: About to enter switch with node.type='${node.type}'`);
       debug.runtime(`RUNTIME: About to enter switch with node.type='${node.type}'`);
       switch (node.type) {
         case 'command': {
@@ -324,7 +322,6 @@ export class Runtime {
         }
 
         case 'eventHandler': {
-          console.log(`🔧 RUNTIME: Executing eventHandler node`);
           return await this.executeEventHandler(node as EventHandlerNode, context);
         }
 
@@ -826,12 +823,9 @@ export class Runtime {
 
           if (nodeType(targetArg) === 'identifier') {
             // Check if identifier has scope property (e.g., "set global count to X")
-            console.log('🔧 SET ARGS: targetArg =', targetArg);
-            console.log('🔧 SET ARGS: targetArg.scope =', (targetArg as any).scope);
             if ((targetArg as any).scope) {
               const scopeValue = (targetArg as any).scope;
               const nameValue = (targetArg as any).name;
-              console.log(`🔧 SET ARGS: Creating scoped target object: {name: '${nameValue}', scope: '${scopeValue}'}`);
               // Create structured object with both name and scope for adapter
               target = {
                 _isScoped: true,
@@ -839,7 +833,6 @@ export class Runtime {
                 scope: scopeValue,
               };
             } else {
-              console.log('🔧 SET ARGS: No scope property, using name:', (targetArg as any).name);
               target = (targetArg as any).name;
             }
           } else if (nodeType(targetArg) === 'literal') {
@@ -1154,10 +1147,15 @@ export class Runtime {
       const targetArg = args[0];
 
       let target: string | number;
+      let extractedScope: 'global' | 'local' | undefined;
 
-      // Extract variable name from AST node without evaluating
+      // Extract variable name AND scope from AST node without evaluating
       if (nodeType(targetArg) === 'identifier') {
         target = (targetArg as any).name;
+        // Extract scope if present (from :variable syntax)
+        if ((targetArg as any).scope) {
+          extractedScope = (targetArg as any).scope;
+        }
       } else if (nodeType(targetArg) === 'literal') {
         target = (targetArg as any).value;
       } else {
@@ -1169,7 +1167,7 @@ export class Runtime {
       // Parser structure: [target, amount?, 'global'?]
 
       let amount = 1;
-      let scope: 'global' | undefined;
+      let scope: 'global' | 'local' | undefined = extractedScope;
 
       // Check each arg to find amount and/or global scope
       for (let i = 1; i < args.length; i++) {
@@ -1251,22 +1249,17 @@ export class Runtime {
       }
 
       const input: any = { target: inputTarget, value, toKeyword: 'to' as const };
-console.log('🔧 SET INPUT: Creating input object before scope check:', input);
-      console.log('🔧 SET INPUT: scope variable =', scope);
 
       // Add scope if extracted from _isScoped object
       if (scope) {
         input.scope = scope;
-        console.log('🔧 SET INPUT: Added scope to input:', input);
       }
 
       // Add scope if it was detected during argument parsing (legacy path)
       if ((context as any)._pendingSetScope) {
         input.scope = (context as any)._pendingSetScope;
-        console.log('🔧 SET INPUT: Added pending scope to input:', input);
         delete (context as any)._pendingSetScope; // Clean up after use
       }
-      console.log('🔧 SET INPUT: Final input object:', input);
       result = await adapter.execute(context, input);
     } else if (name === 'measure' && evaluatedArgs.length >= 1) {
       // MEASURE command expects input object format: { target?, property?, variable? }
@@ -1521,8 +1514,6 @@ console.log('🔧 SET INPUT: Creating input object before scope check:', input);
     // Get all event names (support both single event and multiple events with "or")
     const eventNames = events && events.length > 0 ? events : [event];
 
-    console.log(`🔧 EVENT HANDLER: Starting executeEventHandler for events '${eventNames.join(', ')}'`);
-    console.log(`🔧 EVENT HANDLER: target=${target}, commands.length=${commands?.length}, context.me=`, context.me);
     debug.runtime(
       `RUNTIME: executeEventHandler for events '${eventNames.join(', ')}', target=${target}, args=${args}, context.me=`,
       context.me
@@ -1530,7 +1521,6 @@ console.log('🔧 SET INPUT: Creating input object before scope check:', input);
 
     // Determine target element(s)
     let targets: HTMLElement[] = [];
-    console.log(`🔧 EVENT HANDLER: Determining target elements...`);
 
     if (target) {
       // First check if target is a variable name in the context
@@ -1557,7 +1547,6 @@ console.log('🔧 SET INPUT: Creating input object before scope check:', input);
       targets = context.me ? [context.me as HTMLElement] : [];
     }
 
-    console.log(`🔧 EVENT HANDLER: Found ${targets.length} target elements`);
     debug.runtime(`RUNTIME: Found ${targets.length} target elements for events '${eventNames.join(', ')}'`);
 
     if (targets.length === 0) {
@@ -1567,7 +1556,6 @@ console.log('🔧 SET INPUT: Creating input object before scope check:', input);
 
     // Create event handler function
     const eventHandler = async (domEvent: Event) => {
-      console.log(`🔧 EVENT CALLBACK: Event '${domEvent.type}' fired!`);
       // Recursion protection: track event handler execution depth
       const currentDepth = (domEvent as any).__hyperfixi_recursion_depth || 0;
       if (currentDepth >= 100) {
@@ -1577,7 +1565,6 @@ console.log('🔧 SET INPUT: Creating input object before scope check:', input);
       }
       (domEvent as any).__hyperfixi_recursion_depth = currentDepth + 1;
 
-      console.log(`🔧 EVENT CALLBACK: About to execute ${commands.length} commands`);
       debug.event(`EVENT FIRED: ${domEvent.type} on`, domEvent.target, 'with', commands.length, 'commands');
 
       // Create new context for event execution
@@ -1650,10 +1637,8 @@ console.log('🔧 SET INPUT: Creating input object before scope check:', input);
     };
 
     // Bind event handlers to all target elements for all event names
-    console.log(`🔧 EVENT HANDLER: About to bind event listeners to ${targets.length} targets for ${eventNames.length} events`);
     for (const target of targets) {
       for (const eventName of eventNames) {
-        console.log(`🔧 EVENT HANDLER: Adding event listener for '${eventName}' on element:`, target);
         debug.runtime(`RUNTIME: Adding event listener for '${eventName}' on element:`, target);
         target.addEventListener(eventName, eventHandler);
 

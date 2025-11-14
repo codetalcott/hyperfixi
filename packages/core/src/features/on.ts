@@ -30,6 +30,8 @@ export const EnhancedOnInputSchema = v.object({
     preventDefault: v.boolean().default(false),
     stopPropagation: v.boolean().default(false),
     filter: v.string().optional(), // Event filter expression
+    inSelector: v.string().optional(), // 'in <selector>' filter (cookbook pattern)
+    every: v.boolean().default(false), // 'on every' - disable event queuing
     throttle: v.number().optional(), // Throttle delay in ms
     debounce: v.number().optional(), // Debounce delay in ms
   }),
@@ -128,6 +130,8 @@ export interface EventListener {
     capture?: boolean;
     delegated?: boolean;
     filter?: string;
+    inSelector?: string; // 'in <selector>' cookbook pattern
+    every?: boolean; // 'on every' - disable event queuing
     throttle?: number;
     debounce?: number;
   };
@@ -587,6 +591,8 @@ export class TypedOnFeatureImplementation {
         capture: event.capture || false,
         delegated: event.delegated || false,
         filter: event.filter,
+        inSelector: event.inSelector, // 'in <selector>' cookbook pattern
+        every: event.every || false, // 'on every' - disable event queuing
         throttle: event.throttle,
         debounce: event.debounce,
       },
@@ -639,6 +645,11 @@ export class TypedOnFeatureImplementation {
     return (event: Event) => {
       void (async () => {
         if (!listener.isActive || listener.isPaused) return;
+
+        // Apply 'in <selector>' filter if provided (cookbook pattern)
+        if (listener.options.inSelector && !this.testInSelectorFilter(event, listener.options.inSelector)) {
+          return;
+        }
 
         // Apply filter if provided
         if (listener.options.filter && !this.testEventFilter(event, listener.options.filter)) {
@@ -820,6 +831,33 @@ export class TypedOnFeatureImplementation {
       return Boolean(filterFunction(event));
     } catch {
       return true; // If filter fails, allow event through
+    }
+  }
+
+  /**
+   * Test if event.target matches the 'in <selector>' filter (cookbook pattern)
+   * Example: on click in <button:not(.no-disable)/>
+   */
+  private testInSelectorFilter(event: Event, selector: string): boolean {
+    try {
+      const target = event.target as HTMLElement;
+      if (!target || !target.matches) {
+        return false;
+      }
+
+      // Check if target itself matches the selector
+      if (target.matches(selector)) {
+        return true;
+      }
+
+      // Check if target is contained within an element matching the selector
+      // This handles delegation where the event bubbles from a child
+      const matchingParent = target.closest(selector);
+      return matchingParent !== null;
+    } catch (error) {
+      // If selector is invalid, log error and allow event through
+      console.warn(`Invalid 'in' selector: "${selector}"`, error);
+      return true;
     }
   }
 

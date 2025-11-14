@@ -16,6 +16,7 @@ import type {
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { asHTMLElement } from '../../utils/dom-utils';
+import { createToggleUntil } from '../../runtime/temporal-modifiers';
 
 export interface ToggleCommandOptions {
   delimiter?: string;
@@ -54,8 +55,8 @@ export class ToggleCommand
     >
 {
   public readonly name = 'toggle' as const;
-  public readonly syntax = 'toggle <class-expression> [on|from <target-expression>]';
-  public readonly description = 'Toggles CSS classes on elements (supports both "on" and "from" syntax)';
+  public readonly syntax = 'toggle <class-expression|@attribute> [on|from <target-expression>] [until <event>]';
+  public readonly description = 'Toggles CSS classes or attributes on elements with optional temporal modifier (supports "on", "from", @attribute, [@attribute="value"], and "until" syntax)';
   public readonly inputSchema = ToggleCommandInputSchema;
   public readonly outputType = 'element-list' as const;
 
@@ -70,8 +71,18 @@ export class ToggleCommand
         expectedOutput: [],
       },
       {
-        code: 'toggle .active from me',
-        description: 'Toggle active class on current element (HyperFixi syntax)',
+        code: 'toggle @disabled',
+        description: 'Toggle disabled attribute on current element (cookbook pattern)',
+        expectedOutput: [],
+      },
+      {
+        code: 'toggle [@disabled="true"]',
+        description: 'Toggle disabled attribute with explicit value (advanced cookbook pattern)',
+        expectedOutput: [],
+      },
+      {
+        code: 'toggle @disabled until htmx:afterOnLoad',
+        description: 'Toggle disabled attribute until event fires (temporal modifier - Cookbook Example #4)',
         expectedOutput: [],
       },
       {
@@ -80,18 +91,18 @@ export class ToggleCommand
         expectedOutput: [],
       },
     ],
-    relatedCommands: ['add', 'remove', 'hide', 'show'],
+    relatedCommands: ['add', 'remove', 'hide', 'show', 'set'],
   };
 
   public readonly documentation: LLMDocumentation = {
-    summary: 'Toggles CSS classes on HTML elements',
+    summary: 'Toggles CSS classes or attributes on HTML elements',
     parameters: [
       {
-        name: 'classExpression',
+        name: 'expression',
         type: 'string',
-        description: 'CSS class names to toggle',
+        description: 'CSS class names (.class), attributes (@attr), or attributes with values ([@attr="value"]) to toggle',
         optional: false,
-        examples: ['.active', 'highlighted', 'loading spinner'],
+        examples: ['.active', '@disabled', '[@disabled="true"]', 'loading spinner'],
       },
       {
         name: 'target',
@@ -108,15 +119,21 @@ export class ToggleCommand
     },
     examples: [
       {
-        title: 'Toggle single class (official _hyperscript syntax)',
+        title: 'Toggle CSS class (official _hyperscript syntax)',
         code: 'on click toggle .active on me',
         explanation: 'When clicked, toggles the "active" class on the element',
         output: [],
       },
       {
-        title: 'Toggle single class (HyperFixi syntax)',
-        code: 'on click toggle .active from me',
-        explanation: 'When clicked, toggles the "active" class on the element (alternative syntax)',
+        title: 'Toggle attribute (cookbook pattern)',
+        code: 'on click toggle @disabled',
+        explanation: 'When clicked, toggles the disabled attribute on/off',
+        output: [],
+      },
+      {
+        title: 'Toggle attribute with value (advanced cookbook)',
+        code: 'toggle [@disabled="true"]',
+        explanation: 'Toggles disabled="true" attribute (sets if not present, removes if present with that value)',
         output: [],
       },
       {
@@ -126,8 +143,8 @@ export class ToggleCommand
         output: [],
       },
     ],
-    seeAlso: ['add', 'remove', 'hide', 'show'],
-    tags: ['dom', 'css', 'classes'],
+    seeAlso: ['add', 'remove', 'hide', 'show', 'set'],
+    tags: ['dom', 'css', 'classes', 'attributes'],
   };
 
   private readonly _options: ToggleCommandOptions; // Reserved for future enhancements - configuration storage
@@ -147,10 +164,10 @@ export class ToggleCommand
     context: TypedExecutionContext,
     ...args: ToggleCommandInput
   ): Promise<EvaluationResult<HTMLElement[]>> {
-    const [classExpression, target] = args;
+    const [expression, target, untilEvent] = args;
     try {
       // Runtime validation for type safety
-      const validationResult = this.validate([classExpression, target]);
+      const validationResult = this.validate([expression, target]);
       if (!validationResult.isValid) {
         return {
           success: false,
@@ -165,54 +182,116 @@ export class ToggleCommand
         };
       }
 
-      // Parse and validate classes
-      const classes = this.parseClasses(classExpression);
-      if (!classes.length) {
-        return {
-          success: false,
-          error: {
-            name: 'ValidationError',
-            type: 'missing-argument',
-            message: 'No valid classes provided to toggle',
-            code: 'NO_VALID_CLASSES',
-            suggestions: ['Provide valid CSS class names', 'Check class name syntax'],
-          },
-          type: 'error',
-        };
-      }
+      // Determine if this is an attribute or class toggle
+      const isAttribute = this.isAttributeExpression(expression);
 
-      // Type-safe target resolution
-      const elements = this.resolveTargets(context, target);
-
-      if (!elements.length) {
-        return {
-          success: false,
-          error: {
-            name: 'ValidationError',
-            type: 'missing-argument',
-            message: 'No target elements found',
-            code: 'NO_TARGET_ELEMENTS',
-            suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM'],
-          },
-          type: 'error',
-        };
-      }
-
-      // Process elements with enhanced error handling
-      const modifiedElements: HTMLElement[] = [];
-
-      for (const element of elements) {
-        const classResult = await this.toggleClassesOnElement(element, classes, context);
-        if (classResult.success) {
-          modifiedElements.push(element);
+      // Parse and validate
+      if (isAttribute) {
+        const attributes = this.parseAttributes(expression);
+        if (!attributes.length) {
+          return {
+            success: false,
+            error: {
+              name: 'ValidationError',
+              type: 'missing-argument',
+              message: 'No valid attributes provided to toggle',
+              code: 'NO_VALID_ATTRIBUTES',
+              suggestions: ['Provide valid attribute names like @disabled or [@disabled="true"]'],
+            },
+            type: 'error',
+          };
         }
-      }
 
-      return {
-        success: true,
-        value: modifiedElements,
-        type: 'element-list',
-      };
+        // Type-safe target resolution
+        const elements = this.resolveTargets(context, target);
+        if (!elements.length) {
+          return {
+            success: false,
+            error: {
+              name: 'ValidationError',
+              type: 'missing-argument',
+              message: 'No target elements found',
+              code: 'NO_TARGET_ELEMENTS',
+              suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM'],
+            },
+            type: 'error',
+          };
+        }
+
+        // Toggle attributes on elements
+        const modifiedElements: HTMLElement[] = [];
+        for (const element of elements) {
+          const attrResult = await this.toggleAttributesOnElement(element, attributes, context);
+          if (attrResult.success) {
+            modifiedElements.push(element);
+
+            // If untilEvent is specified, register temporal modifier
+            if (untilEvent && typeof untilEvent === 'string') {
+              const attr = attributes[0]; // Use first attribute for temporal modifier
+              createToggleUntil(element, 'attribute', attr.name, untilEvent);
+            }
+          }
+        }
+
+        return {
+          success: true,
+          value: modifiedElements,
+          type: 'element-list',
+        };
+      } else {
+        // Original class toggle logic
+        const classes = this.parseClasses(expression);
+        if (!classes.length) {
+          return {
+            success: false,
+            error: {
+              name: 'ValidationError',
+              type: 'missing-argument',
+              message: 'No valid classes provided to toggle',
+              code: 'NO_VALID_CLASSES',
+              suggestions: ['Provide valid CSS class names', 'Check class name syntax'],
+            },
+            type: 'error',
+          };
+        }
+
+        // Type-safe target resolution
+        const elements = this.resolveTargets(context, target);
+        if (!elements.length) {
+          return {
+            success: false,
+            error: {
+              name: 'ValidationError',
+              type: 'missing-argument',
+              message: 'No target elements found',
+              code: 'NO_TARGET_ELEMENTS',
+              suggestions: ['Check if target selector is valid', 'Ensure elements exist in DOM'],
+            },
+            type: 'error',
+          };
+        }
+
+        // Process elements with enhanced error handling
+        const modifiedElements: HTMLElement[] = [];
+        for (const element of elements) {
+          const classResult = await this.toggleClassesOnElement(element, classes, context);
+          if (classResult.success) {
+            modifiedElements.push(element);
+
+            // If untilEvent is specified, register temporal modifier
+            if (untilEvent && typeof untilEvent === 'string') {
+              const className = classes[0]; // Use first class for temporal modifier
+              createToggleUntil(element, 'class', className, untilEvent);
+            }
+          }
+        }
+
+        return {
+          success: true,
+          value: modifiedElements,
+          type: 'element-list',
+        };
+      }
     } catch (error) {
       return {
         success: false,
@@ -221,7 +300,7 @@ export class ToggleCommand
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'Unknown error',
           code: 'TOGGLE_EXECUTION_FAILED',
-          suggestions: ['Check if elements exist', 'Verify class names are valid'],
+          suggestions: ['Check if elements exist', 'Verify class names or attributes are valid'],
         },
         type: 'error',
       };
@@ -372,6 +451,121 @@ export class ToggleCommand
     // Class names cannot start with a digit or contain certain special characters
     const cssClassNameRegex = /^[a-zA-Z_-][a-zA-Z0-9_-]*$/;
     return cssClassNameRegex.test(className.trim());
+  }
+
+  /**
+   * Check if expression is an attribute toggle (starts with @ or [@)
+   */
+  private isAttributeExpression(expression: any): boolean {
+    if (typeof expression !== 'string') {
+      return false;
+    }
+    const trimmed = expression.trim();
+    return trimmed.startsWith('@') || trimmed.startsWith('[@');
+  }
+
+  /**
+   * Parse attribute expressions like @disabled or [@disabled="true"]
+   * Returns array of {name, value} objects
+   */
+  private parseAttributes(expression: any): Array<{name: string; value?: string}> {
+    if (!expression || typeof expression !== 'string') {
+      return [];
+    }
+
+    const trimmed = expression.trim();
+
+    // Handle bracket syntax: [@disabled="true"] or [@data-value="foo"]
+    if (trimmed.startsWith('[@') && trimmed.includes(']')) {
+      const bracketMatch = trimmed.match(/\[@([a-zA-Z][a-zA-Z0-9-]*)\s*(?:=\s*["']([^"']*)["'])?\]/);
+      if (bracketMatch) {
+        return [{
+          name: bracketMatch[1],
+          value: bracketMatch[2] // undefined if no value specified
+        }];
+      }
+    }
+
+    // Handle simple syntax: @disabled or @data-value
+    if (trimmed.startsWith('@')) {
+      const simpleName = trimmed.slice(1).trim();
+      if (simpleName.length > 0 && /^[a-zA-Z][a-zA-Z0-9-]*$/.test(simpleName)) {
+        return [{name: simpleName}];
+      }
+    }
+
+    return [];
+  }
+
+  /**
+   * Toggle attributes on an element
+   */
+  private async toggleAttributesOnElement(
+    element: HTMLElement,
+    attributes: Array<{name: string; value?: string}>,
+    context: TypedExecutionContext
+  ): Promise<EvaluationResult<HTMLElement>> {
+    try {
+      const toggledAttributes: string[] = [];
+
+      for (const attr of attributes) {
+        // Check if attribute currently exists
+        const hasAttribute = element.hasAttribute(attr.name);
+
+        if (attr.value !== undefined) {
+          // Toggle with specific value
+          if (hasAttribute && element.getAttribute(attr.name) === attr.value) {
+            // Remove if it has the specified value
+            element.removeAttribute(attr.name);
+          } else {
+            // Set to the specified value
+            element.setAttribute(attr.name, attr.value);
+          }
+        } else {
+          // Simple toggle (boolean attributes like disabled, readonly)
+          if (hasAttribute) {
+            element.removeAttribute(attr.name);
+          } else {
+            element.setAttribute(attr.name, '');
+          }
+        }
+
+        toggledAttributes.push(attr.name);
+      }
+
+      // Dispatch enhanced toggle event with rich metadata
+      if (toggledAttributes.length > 0) {
+        dispatchCustomEvent(element, 'hyperscript:toggle', {
+          element,
+          context,
+          command: this.name,
+          type: 'attributes',
+          attributes: toggledAttributes,
+          allAttributes: attributes,
+          timestamp: Date.now(),
+          metadata: this.metadata,
+          result: 'success',
+        });
+      }
+
+      return {
+        success: true,
+        value: element,
+        type: 'element',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: {
+          name: 'ValidationError',
+          type: 'runtime-error',
+          message: error instanceof Error ? error.message : 'Failed to toggle attributes',
+          code: 'ATTRIBUTE_TOGGLE_FAILED',
+          suggestions: ['Check if element is still in DOM', 'Verify attribute names are valid'],
+        },
+        type: 'error',
+      };
+    }
   }
 
   validate(args: unknown[]): UnifiedValidationResult {

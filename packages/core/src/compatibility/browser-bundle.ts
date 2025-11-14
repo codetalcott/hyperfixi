@@ -130,15 +130,8 @@ if (typeof window !== 'undefined') {
   window.evalHyperScriptAsync = evalHyperScriptAsync;
   window.evalHyperScriptSmart = evalHyperScriptSmart;
 
-  // Auto-initialize attribute processing for full _hyperscript compatibility
-  // This allows _="on click put ..." syntax to work automatically
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      defaultAttributeProcessor.init();
-    });
-  } else {
-    defaultAttributeProcessor.init();
-  }
+  // Note: defaultAttributeProcessor already auto-initializes itself in attribute-processor.ts
+  // No need to call init() again here - it would be redundant and has a guard against double-init
 }
 
 // Export as default for IIFE

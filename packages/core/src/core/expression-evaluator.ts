@@ -357,10 +357,10 @@ export class ExpressionEvaluator {
    * Evaluate identifier nodes (me, you, it, etc.)
    */
   private async evaluateIdentifier(
-    node: { name: string },
+    node: { name: string; scope?: 'local' | 'global' },
     context: ExecutionContext
   ): Promise<any> {
-    const { name } = node;
+    const { name, scope } = node;
 
     // Check if it's a built-in reference expression
     const expression = this.expressionRegistry.get(name);
@@ -368,6 +368,29 @@ export class ExpressionEvaluator {
       return expression.evaluate(context);
     }
 
+    // If explicit scope is specified, ONLY check that scope
+    if (scope === 'local') {
+      // Only check locals (for :variable syntax)
+      if (context.locals?.has(name)) {
+        return context.locals.get(name);
+      }
+      // Return undefined if not found in locals
+      return undefined;
+    }
+
+    if (scope === 'global') {
+      // Only check globals (for ::variable syntax or explicit global)
+      if (context.globals?.has(name)) {
+        return context.globals.get(name);
+      }
+      // Also check window for browser globals
+      if (typeof window !== 'undefined' && name in window) {
+        return (window as any)[name];
+      }
+      return undefined;
+    }
+
+    // No explicit scope - use normal resolution order (locals → globals → variables → window)
     // Check locals first (for command arguments and locally scoped variables)
     if (context.locals?.has(name)) {
       return context.locals.get(name);

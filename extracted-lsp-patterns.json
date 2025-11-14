@@ -1,0 +1,747 @@
+{
+  "extractedAt": "2025-11-13T18:29:19.603Z",
+  "source": "/Users/williamtalcott/projects/hyperfixi/packages/core/scripts/lsp-data/",
+  "stats": {
+    "totalPatterns": 103,
+    "byCategory": {
+      "commands": 37,
+      "expressions": 22,
+      "features": 9,
+      "keywords": 27,
+      "symbols": 8
+    }
+  },
+  "patterns": {
+    "commands": [
+      {
+        "name": "0",
+        "syntax": "0",
+        "description": "The throw command throws an exception.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "1",
+        "syntax": "1",
+        "description": "The take command allows you to take a class or an attribute from a set of elements (or all elements) and add it to the current element (or the targeted element).\nWhen using take with attributes, elements matching from expression will have their attributes with the same name removed regardless of value.You can specify a new value to be assigned instead via with clause (in this case the attribute will be added even if the element didn't have it originally).",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "2",
+        "syntax": "2",
+        "description": "The hide command allows you to hide an element in the DOM using various strategies. The default strategy is display.\nBy default, the following strategies are available:\ndisplay - toggle display between none and block\nvisibility - toggle visibility between hidden and visible\nopacity - toggle opacity between 0 and 1\nYou can change the default hide/show strategy by setting _hyperscript.config.defaultHideShowStrategy\nYou can add new hide/show strategies by setting new values into the _hyperscript.config.hideShowStrategies object.\nIn case you are using Tailwind CSS, you may want to use their utility classes.\nYou will have to set _hyperscript.config.defaultHideShowStrategy to one of this options :\ntwDisplay - add class hidden Display - Tailwind CSS\ntwVisibility - add class invisible Visibility - Tailwind CSS\ntwOpacity - add class opacity-0 Opacity - Tailwind CSS\nYou may also have to update your tailwind.config.js to add to the safe list the classes you need\nMore information here : Content Configuration - Tailwind CSS",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "3",
+        "syntax": "3",
+        "description": "The make command can be used to create class instances or DOM elements.\nIn the first form:\nis equal to the JavaScript new URL(\"/path/\", \"https://origin.example.com\").\nIn the second form:\nwill create an <a> element and add the class \"navlink\" to it. Currently, onlyclasses and IDs are supported.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "4",
+        "syntax": "4",
+        "description": "The tell command can be used to temporarily change the default target for commands like add.\nWithin tell blocks, keywords you, your, and yourself can be used to identify the individual element being referenced.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "5",
+        "syntax": "5",
+        "description": "The go command allows you navigate on the page with various forms\ngo to url <stringLike> will navigate to the given URL. If the url starts with an anchor # it will instead updatethe windows href.\ngo to <modifiers> elt will scroll the element into view on the current page. You can pick the top, bottom, left, etc.by using modifiers, and you can pick the animation style with a following smoothly or instantly.\nAdditionally you can use a pixel-based offset to pad the scrolling by some amount since, annoyingly, the default behavior ofscrollIntoView() is to put the element right on the edge of the viewport.\nFinally, the go back form will navigate back in the history stack.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "6",
+        "syntax": "6",
+        "description": "This command has several forms:\nitem | items\ncharacter | characters\nmatch\nmatches\n{%syntax \"pick items at|from[[?]] from[[?]] [[start]] to [[end]] from [[array]] inclusive|exclusive[[?]]\"%}\n{%syntax \"pick item at[[?]] [...]\"%}\nSelects items from <var>array</var> using Array.slice. By default, it willinclude <var>start</var> but not <var>end</var>. You can use inclusive orexclusive to override this behavior. If <var>end</var> is omitted, it willreturn an array containing just one item.\nYou can use the keywords start or end for <var>start</var> and<var>end</var>, respectively.\n{%syntax \"pick characters [...]\"%}\n{%syntax \"pick character [...]\"%}\nSame as pick items, but for strings, using String.slice.\n{%syntax \"pick match of[[?]] [[regex]] | [[flags]][[?]] from [[string]]\"%}\nSelects the first match for the <var>regex</var> in the <var>string</var>.\n{%syntax \"pick matches of[[?]] [[regex]] | [[flags]][[?]] from [[string]]\"%}\nReturns an iterable of all matches for the <var>regex</var> in the<var>string</var>.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "7",
+        "syntax": "7",
+        "description": "The default command defaults a variable or property to a given value.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "8",
+        "syntax": "8",
+        "description": "The continue command works inside any repeat block.  It exits the current iteration of the loop and begins at the top of the next iteration.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "9",
+        "syntax": "9",
+        "description": "The repeat command provides iteration in the hyperscript language. It is very flexible and supports many forms.\nIn every form you may assign a named value to the current iteration index by appending a index i to theloop specification.\nHere are examples of all the above forms:",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "10",
+        "syntax": "10",
+        "description": "The return command returns a value from a function in hyperscript or stops an event handler from continuing.\nYou may use the exit form to return no value.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "11",
+        "syntax": "11",
+        "description": "The if command provides the standard if-statement control flow.\nNote that a leading if on a separate line from an else statement will be treated as a nested if within the else:",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "12",
+        "syntax": "12",
+        "description": "The break command works inside any repeat block.  It exits the loop.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "13",
+        "syntax": "13",
+        "description": "See the send command documentation",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "14",
+        "syntax": "14",
+        "description": "The async command you to execute a command or a block of commands asynchronously (they will not block hyperscript from continuingeven if they return a promise)",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "15",
+        "syntax": "15",
+        "description": "Pseudo-commands allow you to treat a method on an object as a top level command. The method name must be followed byan argument list, then optional prepositional syntax to clarify the code, then an expression. The method will belooked up on the value returned by the expression and executed.\nA function defined with the same name as a hyperscript command cannot be called as a pseudo-command.\nBuilt-in commands can be called with or without parentheses grouping the single object the command works on. If a function has the same name as a command but takes more than a single parameter, the hyperscript parser will not see the call to the function as a pseudo-command, but will see the additional parameters in the function call as a parse error for the built-in command.\nFor example, this function's name, increment(), collides with the built-in hyperscript increment command.\nThis demonstrates typical increment command usage:\nHere is a call to the increment command with parens around the variable to increment.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "16",
+        "syntax": "16",
+        "description": "The beep! command allows you to debug an expression (or multiple expressions) by printingthe source of the expression, its result and the type of the result to the console.  This isquick and convenient mechanism for print-debugging in hyperscript.\nNote that the syntax is slightly different than the beep! expression, which bindsto unary expressions rather than general expressions.\nNote that you can also print the value of multiple expressions in a single beep! command.Note that you can also print the value of multiple expressions in a single beep! command.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "17",
+        "syntax": "17",
+        "description": "The set command allows you to set a value of a variable, property or the DOM. It is similar to the put commandbut reads more naturally for operations like setting variables.\nIt can also be used to set many properties at once using the set {...} on form.\nWhen setting a symbol, such as x, the following rules are used:\nIf a symbol x exists in the current local scope, set the locally scoped value\nIf not, if a symbol x exists in the current element-local scope, set the element-local scoped value\nIf not, create a new locally scoped symbol named x with the value\nNote that if you wish to set a global variable you must explicitly use the global modifier unless the symbol startswith a $:",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "18",
+        "syntax": "18",
+        "description": "The call command allows you evaluate an expression.\nThe value of this expression will be put into the it variable.\nget is an alias for call and can be used if it more clearly expresses the meaning of the code.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "19",
+        "syntax": "19",
+        "description": "The append command adds a string value to the end of another string, array, or HTML Element. If no target variable is defined, then the standard result variable is used by default.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "20",
+        "syntax": "20",
+        "description": "The add command allows you to add a class (via a class ref), an attribute(via an attribute ref) or CSS attributes (via an object literal) to either the current element or to another element.\nNote: Hyperscript supports hyphens in object property names, so you can write add { font-size: '2em' }. However, double hyphens (--) mark comments in hyperscript, so if you need to use them for [CSS Custom Properties][], use quotes -- add { '--big-font-size': '2em' }.\nThe where clause allows you filter what elements have the class or property added in the target.  The expression will be evaluated foreach element in target and, if the result is true, the element class or property will be added.  If it is false, the classor property will be removed.  The it symbol will be set to the current element, allowing you to express conditions against each elementin target.  Note that this clause only works with classes and properties.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "21",
+        "syntax": "21",
+        "description": "Note: if you want the template command, you must include the /dist/template.js file in addition to the hyperscript script\nThe render command implements a simple template language. This language has two rules:\nYou can use ${} string interpolation, just like in template literals. However, bare `$var` interpolation is not supported.\nInterpolated expressions will be HTML-escaped, unless they are preceded by unescaped.\nAny line starting with @ is executed as a _hyperscript statement.\nThe result of rendering the template will be stored in the result (or it) variable.\nFor example, if we want to render a list of colors:\nOur template might look like this:",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "22",
+        "syntax": "22",
+        "description": "The log command logs an expression to console.log or whatever value is provided with the with clause.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "23",
+        "syntax": "23",
+        "description": "The toggle command allows you to toggle:\nA class or set of classes (via a class ref)\nAn attribute (via an attribute ref)\nOr the visibility of an element via opacity, visibility or display\non either the current element or, if a target expressionis provided, to the targeted element(s).\nYou can use the form toggle between .class1 and .class2 to flip between two classes.\nIf you provide a for <time expression> the class or attribute will be toggled for that amount of time.\nIf you provide an until <event name> the class or attribute will be toggled until the given event is received.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "24",
+        "syntax": "24",
+        "description": "The put command allows you to insert content into a variable, property or the DOM.\nContent that is added to the DOM via the put command targeting DOM will have any hyperscript content within itinitialized without needing to call processNode().",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "25",
+        "syntax": "25",
+        "description": "The fetch command issues a fetch request to thegiven URL. The URL can either be a naked URL or a string literal.\nBy default the result will be processed as text, but you can have it processedas JSON, as HTML, or as a raw response object by adding the as json, as htmlor as response modifiers.\nAdditionally, you can use conversions directly on theresponse text.\nThis command saves the result into the it variable.\nThis command is asynchronous.\nThe fetch command supports both timeouts as well as request cancellation.\nTo add a timeout to a request syntactically, you can use add a timeout property using the with form:\nTo cancel a fetch request, send a fetch:abort event to the element that triggered the request:\nIf you need to fetch from a dynamically-generated URL, just use a template literal string (the ones with the backticks) as the URL.  For example:\nThe fetch command features a few events that can be listened to (using hyperscript or javascript) to do thingslike configure the fetch options, update UI state, etc.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "26",
+        "syntax": "26",
+        "description": "The show command allows you to show an element in the DOM using various strategies. The default strategy is display.\nBy default, the following strategies are available:\ndisplay - toggle display between none and block\nvisibility - toggle visibility between hidden and visible\nopacity - toggle visibility between 0 and 1\nYou can also use the style-literal form (e.g. *display).\nYou can change the default hide/show strategy by setting _hyperscript.config.defaultHideShowStrategy\nYou can add new hide/show strategies by setting the hyperscript.config.hideShowStrategies object.\nNote that the display strategy can take an argument to specify the type of display to use when showing. The defaultis block\nThe where clause allows you filter what elements are shown in the target.  The expression will be evaluated foreach element in target and, if the result is true, the element will be shown.  If it is false, the element will behidden.  The it symbol will be set to the current element, allowing you to express conditions against each elementin target",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "27",
+        "syntax": "27",
+        "description": "The measure command gets the measurements for a given element using getBoundingClientRect() as well as thescroll* properties. It will place the result into the result variable.\nYou may also specify particular measurements to be saved into local variables, by name.\nThe available measurements are:\nx\ny\nleft\ntop\nright\nbottom\nwidth\nheight\nbounds\nscrollLeft\nscrollTop\nscrollLeftMax\nscrollTopMax\nscrollWidth\nscrollHeight\nscroll",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "28",
+        "syntax": "28",
+        "description": "The decrement command subtracts from an existing variable, property, or attribute. It defaults to subtracting the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then decremented by the specified amount. The decrement command is the opposite of the increment command command.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "29",
+        "syntax": "29",
+        "description": "The send command sends an event to the given target. Arguments can optionally be provided in a named argument listand will be passed in the event.detail object.\nYou can alternatively use the equivalent trigger syntax.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "30",
+        "syntax": "30",
+        "description": "The increment command adds to an existing variable, property, or attribute. It defaults to adding the value 1, but this can be changed using the by modifier. If the target variable is null, then it is assumed to be 0, and then incremented by the specified amount. The increment command is the opposite of the decrement command command.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "31",
+        "syntax": "31",
+        "description": "The wait command can either wait for an event to occur or for a fixed amount of time\nIn the form wait for <event> {or <event>} [from <source>] the hyperscript will pause until the element receivesany of the specified events.\nEvents may destructure properties into local variables using the eventName(property1, property2, ...) form.\nIn the wait <time-expr> form, it waits the given amount of time, which can be in the following formats:\n10 - 10 milliseconds\n100 ms - 100 milliseconds\n100 milliseconds - 100 milliseconds\n1 s - 1000 milliseconds\n1 seconds - 1000 milliseconds\nYou can also mix timeouts and events, which can be useful to avoid waiting forever for an event:\nThis command is asynchronous. All commands that follow it will be delayed until the wait completes.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "32",
+        "syntax": "32",
+        "description": "The settle command allows you to synchronize on the CSS transition of an element. It will listen for thetransitionend even on the given element (or me if no element is given).\nIf a transitionstart event is not received within 500ms, the command will continue assuming that notransition will occur.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "33",
+        "syntax": "33",
+        "description": "The remove command allows you to remove an element from the DOM or to removea class or property from an element node.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "34",
+        "syntax": "34",
+        "description": "The transition command allows you to transition properties on an element from one value to another.\nIf you use the form transition <transition target> the transition will take place on the specified target, otherwiseit is done on the current me.\nThe transition target can be a pseudo-possessive:\nIf the target is a symbol it will need to be preceded by a the or the keyword element to distinguish the symbol from aproperty name:\nFollowing the start is a series of transitions, starting with a style property name, followed optionally bya from and an initial value. If this is omitted, the current calculated value of the property is used.\nNext comes a required to followed by a final value to transition the property too. Note that you can useeither strings or naked strings.\nYou can optionally set the transition time by using the over clause and passing in a time expression such as500ms or 2 seconds.\nFinally, if you don't specify a transition time, you can optionally set the transition style by using the usingclause and passing in a string that specifies a transformation specification, e.g. all 1s ease-in.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "35",
+        "syntax": "35",
+        "description": "The halt command prevents an event from bubbling and/or from performing its default action.\nThe form halt the event will halt both the bubbling and default for the event, but continue execution of theevent handler\nThe form halt the event's (bubbling|default) will halt either the bubbling or the default for the event, but continueexecution of the event handler\nThe form halt will halt both the bubbling and default for the event and exit the current event handler, acting the sameas the exit command.\nThe form halt (bubbling|default) will halt either the bubbling or the default for the event and exit the current eventhandler.",
+        "examples": [],
+        "category": "command"
+      },
+      {
+        "name": "36",
+        "syntax": "36",
+        "description": "Note: This page is about the inline JS command. _hyperscript also supports JS blocks at the top level.\nThe js command can be used to embed JavaScript code inline in _hyperscript, as shown below:\nthis inside a js block is the global scope (window, or self in workers).\nIf the js block returns a promise, the code that comes after it will execute when it resolves.\nIf the js block needs to use variables from the surrounding _hyperscript code, these need to be explicitly declared as shown:\n{% include \"js_end.md\" %}",
+        "examples": [],
+        "category": "command"
+      }
+    ],
+    "expressions": [
+      {
+        "name": "0",
+        "syntax": "0",
+        "description": "Attribute references are similar to CSS attribute references, and may or may not include a value.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "1",
+        "syntax": "1",
+        "description": "The query reference expression allows you to embed arbitrary CSS selectors in hyperscript. It will evaluate to all matching elements.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "2",
+        "syntax": "2",
+        "description": "Many hyperscript commands return a value which is stored in the local variable scope as result or it.  Subsequent commands will often overwrite this value, so you'll need to store it in your own variable before it gets erased.\nFor possessive expressions, its will also work, as in its property instead of it.property.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "3",
+        "syntax": "3",
+        "description": "Hyperscript provides a pluggable conversion system with the as expression. It will look up the conversion of the given name and apply it to the input expression.\nBy default, hyperscript provides the following conversions:\nArray - convert to Array\nDate - convert to Date\nFloat - convert to float\nFragment - converts a string into an HTML Fragment\nHTML - converts NodeLists and arrays to an HTML string\nInt - convert to integer\nJSON - convert to a JSON String\nNumber - convert to number\nObject - convert from a JSON String\nString - convert to String\nValues - converts a Form (or other element) into a struct containing its input names/values\nValues:Form - converts a Form (or other element) into form encoded string\nValues:JSON - converts a Form (or other element) into json encoded string\nFixed<:N> - convert to a fixed precision string representation of the number, with an optional precision of N\nSome examples:\nYou can add new conversions by adding them to the _hyperscript.config.conversions object:",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "4",
+        "syntax": "4",
+        "description": "Block expressions are anonymous functions that return a value (the right hand side expression).",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "5",
+        "syntax": "5",
+        "description": "Positional expressions allow you to select an element from an array or array-like object. If they are applied to aDOM element, the children of the DOM object will be used.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "6",
+        "syntax": "6",
+        "description": "The closest expression allows you to find the closest matching element to a given DOM element. By defaultit will use the current element.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "7",
+        "syntax": "7",
+        "description": "An id reference expression uses a syntax from to CSS selectors to reference elements by directly by the id property. It evaluates to a singlenode in the DOM with the given identifier",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "8",
+        "syntax": "8",
+        "description": "Logical operators are similar to logical operators in javascript, but use the english words rather than symbols.\nNote that all logical operators have the same precedence, but if multiple distinct operators are used the expression must be parenthesized to avoid ambiguity.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "9",
+        "syntax": "9",
+        "description": "By default, hyperscript synchronizes on any Promisesthat go through its runtime. This is usually what is desired butat times you may want to avoid this synchronization when evaluatingan expression. To do so, you can use the async keyword.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "10",
+        "syntax": "10",
+        "description": "String expressions are similar to string expressions in javascript, and support both a quote and double quote delimiter.\nHyperscript supports template literalslike in Javascript by using the back-tic character, and you can use either a $ or ${} to include an expression value in the template.\nNote that in some places you can use \"naked strings\", which are strings that do not have a starting quote or double quote.Instead they are delimited by whitespace: /example",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "11",
+        "syntax": "11",
+        "description": "The beep! expression allows you to debug a partial expression value, logging its value to the console and otherwiseacting like an identity function: it simply returns the inner value it logs.  This allows you to insert a beep!into an expression without disrupting its evaluation.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "12",
+        "syntax": "12",
+        "description": "The of expression allows you to reverse the normal order of property accessors for clearer code.\nSo this:\nCan be rewritten like this:\nWhere we have converted window.location into the form the location of the window.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "13",
+        "syntax": "13",
+        "description": "Many comparison operators are similar to comparison operators in javascript. In addition to the usual comparison operators, hyperscript includes the english terms is and is not for == and != respectively.\nThe really modifier switches a comparison to use === or !==, depending on what it modifies.\nHyperscript also includes four additional operations, match, contain, include, exists and various syntaxes depending on what is being tested against. match will test if the left hand side matches the CSS query or Regular Expression string.  contains will test if the left hand side contains OR includes the right hand side (invoking contains() or includes()).  includes is identical to contains.  exist test if the left hand sideis not null and, if it is a collection of elements, it contains any elements.\nThe is in test effectively flips the left hand side and right hand side of the contains comparison.\nYou can also test if a value exists or not using the is empty and is not empty comparisons. Hyperscript considers \"empty\" values to be undefined, null, empty strings, and zero length arrays and objects. This works in the same way as the no expression.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "14",
+        "syntax": "14",
+        "description": "The time expression can be used in some commands to express a number of milliseconds in a clearer manner.\nIf the numeric value is followed by s or seconds the number will be multiplied by 1000",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "15",
+        "syntax": "15",
+        "description": "Most hyperscript features run within the context of an HTML element.  For example, <div _=\"on click ...\"> is an event handler that runs in the context of the <div> that contains it.  Within these scripts, you can use the me expression as a link back to their associated HTML element.\nFor possessive expressions, my will also work, as in my property instead of me.property.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "16",
+        "syntax": "16",
+        "description": "Relative positional expressions allow you to select an element relative to another element in the DOM, using thenext and previous keywords.  The command will scan forward (next) or backwards (previous) in a linear depth-firstwalk over the DOM, including elements adjacent to parent elements.\nYou can use the from clause to start the linear forward search from another element.  The default element to startthe search from is the current element that the script is on.\nYou can use the within clause to restrict the search to a given subset of the DOM.  The default is the entire document.\nYou can have the search wrap around by adding the with wrapping clause at the end of the expression.\nThese expressions can be used, for example, to create a custom focus ring.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "17",
+        "syntax": "17",
+        "description": "The cookies symbol is not a proper expression, but rather a value assigned, by default, to the cookies symbol.  Thisvalue presents a better API than the standard document.cookieAPI, making cookies work more like window.localStorage\nThe API of the cookies symbol is as follows:\nIn addition to this, the cookies symbol can be iterated over:\nYou can also assign a simple javascript object to a given cookie name in order to pass values forspecialized attributes like expires:\nThe attributes of the the javascript object will be interpreted as follows:\nvalue will be the value of the cookie\nAll other properties will be kebab-cased from camel case and set as part of the cookie string, as specified here.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "18",
+        "syntax": "18",
+        "description": "The you reference is available within the tell command as a reference to current node being acted upon.\nMost hyperscript features run within the context of an HTML element.  For example, <div _=\"on click ...\"> is an event handler that runs in the context of the <div> that contains it.  Within these scripts, you can use the me expression as a link back to their associated HTML element.\nIf it makes the code more readable in English, yourself can be used as an alias.\nFor possessive expressions, your will also work, as in my property instead of me.property.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "19",
+        "syntax": "19",
+        "description": "The no operator returns true if the value of the expression is null, undefined oran object of length 0 (an empty string or array). You can also accomplish thissame task using the is empty and is not empty comparisons operators.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "20",
+        "syntax": "20",
+        "description": "The class reference expression uses a syntax from CSS selectors to reference all elements with a given class. It typicallyevaluates to a NodeList of all matching classes, unless it is used as theright hand side of an assignment.",
+        "examples": [],
+        "category": "expression"
+      },
+      {
+        "name": "21",
+        "syntax": "21",
+        "description": "The possessive expression can be used in places to more clearly express intent when compared with the more typical. operator.\nThe possessive expression can also be used to get and set attributes of an element in the DOM",
+        "examples": [],
+        "category": "expression"
+      }
+    ],
+    "features": [
+      {
+        "name": "0",
+        "syntax": "0",
+        "description": "The set feature allows you to set an element scoped variable to a value.  When used as a top-level feature, onlyelement-scoped variables are supported.\nSee the set command for more information.",
+        "examples": [],
+        "category": "feature"
+      },
+      {
+        "name": "1",
+        "syntax": "1",
+        "description": "Note: if you want the socket feature, you must either use the \"Whole 9 Yards\" release of hyperscript, or include the /dist/socket.js file.\n<br/>\nsocket-name is a name for the socket. This is available in the current hypertext scope and exposes additional data about the browser WebSocket object.\nsocket-url is the address that the socket is connected to. Schemes like ws or wss can optionally be specified (like in socket MySocket ws://myserver.com/example). If not specified, hyperscript defaults to add the location's scheme-type, host and port (like in socket MySocket /example).\nwith timeout <time expr> allows you to set a default timeout for RPC calls.\non message is an optional message handler body that can be run when messages are received. The message symbolwill be set to the message value. The optional as json modifier will convert the message to json before runningthe handler.\nWeb Sockets provide a mechanism for two-way communicationbetween a browser client and a server. Hyperscript provides a simple way to create them, as well as a simpleRemote Procedure Call (RPC) mechanism layered on top of them.",
+        "examples": [],
+        "category": "feature"
+      },
+      {
+        "name": "2",
+        "syntax": "2",
+        "description": "The init keyword allows you to run some hyperscript when an element initializes.  By default, it will execute afterall features have been evaluated.  If you add the immediately modifier, it will run immediately, which can be usefulfrom a timing perspective, but note that features defined after the init (e.g. functions) will not be available.",
+        "examples": [],
+        "category": "feature"
+      },
+      {
+        "name": "3",
+        "syntax": "3",
+        "description": "Note: if you want the event source feature, you must either use the \"Whole 9 Yards\" release of hyperscript, or include the /dist/eventsource.js file.\nServer Sent Events are a simple way for your web server to push information directly to your clients that is supported by all modern browsers. They provide real-time, uni-directional communication from your server to a browser. Server Sent Events cannot sent information back to your server. If you need two-way communication, consider implementing WebSockets instead.\nSSE connections can require substantial work to set up and maintain. For example, browsers are supposed to reconnect to a failed SSE stream automatically, but their behavior differs. Hyperscript manages everything for you, and reconnects connections that have failed, so your code only has to handle incoming messages.\nThe SSE specification requires that every event listener must declare a specific event name that it will listen to. There is no ability to designate a \"catch all\" handler for any unnamed events. This means that you will need to know exactly what event names are being sent, and will need to write specific event handlers for each one.",
+        "examples": [],
+        "category": "feature"
+      },
+      {
+        "name": "4",
+        "syntax": "4",
+        "description": "Behaviors allow you to bundle together some hyperscript code (that would normally go in the _ attribute of an element) so that it can be \"installed\" on any other.\nFor instance, consider this disappearing div:\nThis revolutionary UI technology impresses the client, and they come to you with a list of other components that they would like to be Removable™. Do you copy this code to each of those elements? That would work, but is not ideal, since\nThis code is highly experimental, you'd like to be able to change it in just one place.\nYour boss is considering licensing the Removable™ tech to other companies.\nTo remedy this, you can define a behavior:\n<!-- I've never actually had a job, so I'm just imitating stories from techtalks. This is what the industry is like, right? -->\nand install it in your elements:\nSo far, so good! Until you come across this:\nHow do we implement this? We could create a new behavior, but we'd have to duplicate our highly sophisticated logic. Thankfully, behaviors can accept arguments:",
+        "examples": [],
+        "category": "feature"
+      },
+      {
+        "name": "5",
+        "syntax": "5",
+        "description": "Note: if you want the worker feature, you must either use the \"Whole 9 Yards\" release of hyperscript, or include the /dist/workers.js file.\n_hyperscript allows you to create Web Workers whose functions are exposed to the main thread.\nAny function declarations (declared with def) will be exposed on the main thread, so the above worker can be invoked as Incrementer.increment(4) in either _hyperscript or JavaScript. The body of the function will then run in the worker and the result returned asynchronously to the main thread. As a result, the worker feature can be used to perform calculations in a non-blocking way, and although these worker functions return promises, _hyperscript's [async-transparent] nature means we can call it as if it were synchronous. In summary:\nFunctions are declared in workers\nThey can be called from the main thread just like normal functions\nThey return promises\nWhen calling worker functions from _hyperscript code, you don't need to worry about this fact\nBecause it runs in a Web Worker, the code inside a worker body cannot access the DOM or the window global scope. It also can't access scripts included in the main thread, which is what the external-scripts feature is for. URLs passed in as external scripts, if relative, need to be relative to the HTML document which spawns the worker.",
+        "examples": [],
+        "category": "feature"
+      },
+      {
+        "name": "6",
+        "syntax": "6",
+        "description": "Event handlers are used to handle events with hyperscript. They are typically embedded directly on the element thatis responding to the event.\nIf the every prefix is used, the event handler will not be synchronized (see queueing below.)\nThe event-name can be a symbol, a dot-separated symbol or a string that names the event. The most obvious eventsof interest are are standard HTML DOM events such as click,focus/blur, change, etc. There are many, many standard browser events thatmay be of interest depending on what you are trying to build. You may also wish to define your own events for higher level abstractions.\nThe optional param-list is a comma separated list of parameter names. Parameters will be set from properties directlyon the event or in the details property.\nThe optional filter is a boolean expression that will filter the event. Symbols in the expression will be resolvedagainst the event first, then against the global scope.\nThe optional count is a count filter with a value of either a specific number, a range or an unbounded start:",
+        "examples": [],
+        "category": "feature"
+      },
+      {
+        "name": "7",
+        "syntax": "7",
+        "description": "Note: This page is about the top-level JS feature. _hyperscript also supports inline JS as a command, say, inside an event listener or function.\nTop-level JavaScript can be used in a <script type=text/hyperscript> block, as shown:\nfunction declarations inside a JS block will be exposed to the global scope (let, var, const declarations will not be exposed). As a result, this function can then be used in _hyperscript code:\nIf you don't want to expose all the functions, return an object containing those that you do want to expose:\njs blocks can also be placed in workers:\nthis inside a js block is the global scope (window, or self in workers).\n{% include \"js_end.md\" %}",
+        "examples": [],
+        "category": "feature"
+      },
+      {
+        "name": "8",
+        "syntax": "8",
+        "description": "The def keyword allows you to define functions in hyperscript. It consists of a function name, a parameter listand a body with an optional catch and/or an optional finally block.\nThe body of the function is a list of commands, optionally separated by the then keyword.\nFunctions are typically placed in script tags:\nYou may also namespace functions by giving them a dot separated namespace\nFunctions may be invoked from both hyperscript or javascript. However, in javascript, an asynchronous function willreturn a promise that must be dealt with explicitly.\nValues may be returned with the return command. If the function is synchronous, the value will be returned as normaland if it is asynchronous, the promise will be resolved. The hyperscript runtime hides this difference when thefunction is invoked within hyperscript.\nExceptions may be thrown with the throw command. If the function is synchronous, the exception will be thrown as normaland if it is asynchronous, the promise will be rejected. The hyperscript runtime hides this difference when thefunction is invoked within hyperscript.",
+        "examples": [],
+        "category": "feature"
+      }
+    ],
+    "keywords": [
+      {
+        "name": "0",
+        "syntax": "0",
+        "description": "Keyword \"end\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "1",
+        "syntax": "1",
+        "description": "Keyword \"with\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "2",
+        "syntax": "2",
+        "description": "Keyword \"from\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "3",
+        "syntax": "3",
+        "description": "Keyword \"in\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "4",
+        "syntax": "4",
+        "description": "Keyword \"to\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "5",
+        "syntax": "5",
+        "description": "Keyword \"on\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "6",
+        "syntax": "6",
+        "description": "Keyword \"then\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "7",
+        "syntax": "7",
+        "description": "Keyword \"not\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "8",
+        "syntax": "8",
+        "description": "Keyword \"into\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "9",
+        "syntax": "9",
+        "description": "Keyword \"as\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "10",
+        "syntax": "10",
+        "description": "Keyword \"by\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "11",
+        "syntax": "11",
+        "description": "Keyword \"for\" used in command syntax patterns.",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "12",
+        "syntax": "12",
+        "description": "Hyperscript keyword \"else\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "13",
+        "syntax": "13",
+        "description": "Hyperscript keyword \"when\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "14",
+        "syntax": "14",
+        "description": "Hyperscript keyword \"after\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "15",
+        "syntax": "15",
+        "description": "Hyperscript keyword \"before\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "16",
+        "syntax": "16",
+        "description": "Hyperscript keyword \"until\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "17",
+        "syntax": "17",
+        "description": "Hyperscript keyword \"while\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "18",
+        "syntax": "18",
+        "description": "Hyperscript keyword \"unless\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "19",
+        "syntax": "19",
+        "description": "Hyperscript keyword \"at\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "20",
+        "syntax": "20",
+        "description": "Hyperscript keyword \"async\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "21",
+        "syntax": "21",
+        "description": "Hyperscript keyword \"and\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "22",
+        "syntax": "22",
+        "description": "Hyperscript keyword \"or\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "23",
+        "syntax": "23",
+        "description": "Hyperscript keyword \"if\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "24",
+        "syntax": "24",
+        "description": "Hyperscript keyword \"repeat\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "25",
+        "syntax": "25",
+        "description": "Hyperscript keyword \"of\".",
+        "examples": [],
+        "category": "keyword"
+      },
+      {
+        "name": "26",
+        "syntax": "26",
+        "description": "Hyperscript keyword \"target\".",
+        "examples": [],
+        "category": "keyword"
+      }
+    ],
+    "symbols": [
+      {
+        "name": "0",
+        "syntax": "0",
+        "description": "Many hyperscript commands return a value which is stored in the local variable scope as result or it.  Subsequent commands will often overwrite this value, so you'll need to store it in your own variable before it gets erased.\nFor possessive expressions, its will also work, as in its property instead of it.property.",
+        "examples": [],
+        "category": "symbol"
+      },
+      {
+        "name": "1",
+        "syntax": "1",
+        "description": "The special symbol \"my\" typically possessive form of \"me\", for accessing properties",
+        "examples": [],
+        "category": "symbol"
+      },
+      {
+        "name": "2",
+        "syntax": "2",
+        "description": "Most hyperscript features run within the context of an HTML element.  For example, <div _=\"on click ...\"> is an event handler that runs in the context of the <div> that contains it.  Within these scripts, you can use the me expression as a link back to their associated HTML element.\nFor possessive expressions, my will also work, as in my property instead of me.property.",
+        "examples": [],
+        "category": "symbol"
+      },
+      {
+        "name": "3",
+        "syntax": "3",
+        "description": "The you reference is available within the tell command as a reference to current node being acted upon.\nMost hyperscript features run within the context of an HTML element.  For example, <div _=\"on click ...\"> is an event handler that runs in the context of the <div> that contains it.  Within these scripts, you can use the me expression as a link back to their associated HTML element.\nIf it makes the code more readable in English, yourself can be used as an alias.\nFor possessive expressions, your will also work, as in my property instead of me.property.",
+        "examples": [],
+        "category": "symbol"
+      },
+      {
+        "name": "4",
+        "syntax": "4",
+        "description": "The special symbol \"your\" typically possessive form of \"you\", for accessing properties",
+        "examples": [],
+        "category": "symbol"
+      },
+      {
+        "name": "5",
+        "syntax": "5",
+        "description": "The special symbol \"its\" typically possessive form of \"it\", for accessing properties",
+        "examples": [],
+        "category": "symbol"
+      },
+      {
+        "name": "6",
+        "syntax": "6",
+        "description": "The special symbol \"result\" typically alternative to \"it\", stores the result of the previous command",
+        "examples": [],
+        "category": "symbol"
+      },
+      {
+        "name": "7",
+        "syntax": "7",
+        "description": "The special symbol \"@\" typically symbol used to denote element-scoped variables",
+        "examples": [],
+        "category": "symbol"
+      }
+    ]
+  }
+}

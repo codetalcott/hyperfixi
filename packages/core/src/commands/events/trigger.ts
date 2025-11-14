@@ -374,35 +374,51 @@ export class TriggerCommand
     error?: string;
   }> {
     try {
-      // Create the event
-      const event = new CustomEvent(eventName, {
-        bubbles: true,
-        cancelable: true,
-        detail: eventData || {},
-      });
-
       let triggeredCount = 0;
       const errors: string[] = [];
+      let lastEvent: CustomEvent | undefined;
 
       for (const element of targetElements) {
         try {
-          element.dispatchEvent(event);
-          triggeredCount++;
+          // Dispatch event asynchronously to prevent synchronous recursion
+          // This allows patterns like "on keyup ... trigger keyup" to work without infinite loops
+          // IMPORTANT: Create a NEW event for each element (events can only be dispatched once)
+          queueMicrotask(() => {
+            // Create fresh event for THIS element
+            const event = new CustomEvent(eventName, {
+              bubbles: true,
+              cancelable: true,
+              detail: eventData || {},
+            });
 
-          // Dispatch enhanced trigger event with rich metadata
-          const triggerEvent = new CustomEvent('hyperscript:trigger', {
-            detail: {
-              element,
-              context,
-              command: this.name,
-              eventName,
-              eventData,
-              timestamp: Date.now(),
-              metadata: this.metadata,
-              result: 'success',
-            },
+            element.dispatchEvent(event);
+
+            // Dispatch enhanced trigger event with rich metadata
+            const triggerEvent = new CustomEvent('hyperscript:trigger', {
+              detail: {
+                element,
+                context,
+                command: this.name,
+                eventName,
+                eventData,
+                timestamp: Date.now(),
+                metadata: this.metadata,
+                result: 'success',
+              },
+            });
+            element.dispatchEvent(triggerEvent);
           });
-          element.dispatchEvent(triggerEvent);
+
+          // Create a reference event for return value (won't be dispatched)
+          if (!lastEvent) {
+            lastEvent = new CustomEvent(eventName, {
+              bubbles: true,
+              cancelable: true,
+              detail: eventData || {},
+            });
+          }
+
+          triggeredCount++;
         } catch (error) {
           const errorMsg = error instanceof Error ? error.message : String(error);
           errors.push(`Failed to trigger on element: ${errorMsg}`);
@@ -419,7 +435,7 @@ export class TriggerCommand
 
       return {
         success: true,
-        event,
+        event: lastEvent,
       };
     } catch (error) {
       return {

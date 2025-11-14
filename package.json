@@ -27,7 +27,12 @@
     "compatibility:monitor": "node scripts/compatibility-monitor.js",
     "compatibility:improve": "node scripts/improvement-workflow.js",
     "compatibility:cycle": "npm run compatibility:monitor && npm run compatibility:improve",
-    "compatibility:dashboard": "node scripts/metrics-dashboard.js"
+    "compatibility:dashboard": "node scripts/metrics-dashboard.js",
+    "patterns:generate": "node scripts/generate-pattern-tests.mjs",
+    "patterns:test": "node scripts/test-all-patterns.mjs",
+    "patterns:validate": "npm run patterns:generate && npm run patterns:test",
+    "patterns:extract": "node scripts/extract-official-patterns.mjs",
+    "patterns:full": "npm run build:browser --prefix packages/core && npm run patterns:validate"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.0.0",

@@ -821,15 +821,11 @@ export class Parser {
     const startPosition = this.current;
     let targetExpression: ASTNode | null = null;
 
-    console.log('🎯 PARSER (SET): parseSetCommand called, current token:', this.peek().value, 'type:', this.peek().type);
-
     try {
       // Check for local variable prefix `:` FIRST (before any other parsing)
       if (this.check(':')) {
-        console.log('✅ PARSER (SET): Found `:` prefix at start, parsing local variable');
         this.advance(); // consume `:`
         const varToken = this.advance(); // get variable name
-        console.log('✅ PARSER (SET): Variable name:', varToken.value);
         targetExpression = {
           type: 'identifier',
           name: varToken.value,
@@ -2469,10 +2465,8 @@ export class Parser {
     // Handle local variable prefix `:` for expressions (e.g., put :x into #result)
     // IMPORTANT: Check for :variable BEFORE general operator handling
     if (this.check(':')) {
-      console.log('✅ EXPR PARSER: Found `:` prefix for local variable in expression');
       this.advance(); // consume `:`
       const varToken = this.advance(); // get variable name
-      console.log('✅ EXPR PARSER: Variable name:', varToken.value);
       return {
         type: 'identifier',
         name: varToken.value,

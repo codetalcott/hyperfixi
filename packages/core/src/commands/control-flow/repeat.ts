@@ -262,14 +262,25 @@ export class RepeatCommand
       };
     } catch (error) {
       // Handle control flow errors (break, continue, return)
-      if (error instanceof Error && error.message.includes('BREAK')) {
-        return {
-          type,
-          iterations,
-          completed: true,
-          lastResult,
-          interrupted: true,
-        };
+      if (error instanceof Error) {
+        if (error.message.includes('BREAK')) {
+          return {
+            type,
+            iterations,
+            completed: true,
+            lastResult,
+            interrupted: true,
+          };
+        }
+        if (error.message.includes('CONTINUE')) {
+          // CONTINUE at top level means loop completed normally
+          return {
+            type,
+            iterations,
+            completed: true,
+            lastResult,
+          };
+        }
       }
 
       throw error;
@@ -314,6 +325,8 @@ export class RepeatCommand
             if (error.message.includes('CONTINUE')) {
               break;
             }
+            // If we reach here, it's not a control flow error - rethrow
+            throw error;
           }
           throw error;
         }
@@ -342,6 +355,9 @@ export class RepeatCommand
         context.locals.set(indexVariable, i);
       }
 
+      // Set context.it to current iteration index (1-indexed for _hyperscript compatibility)
+      Object.assign(context, { it: i + 1 });
+
       // Execute commands
       for (const command of commands) {
         try {
@@ -355,6 +371,8 @@ export class RepeatCommand
             if (error.message.includes('CONTINUE')) {
               break;
             }
+            // If we reach here, it's not a control flow error - rethrow
+            throw error;
           }
           throw error;
         }
@@ -397,6 +415,8 @@ export class RepeatCommand
             if (error.message.includes('CONTINUE')) {
               break;
             }
+            // If we reach here, it's not a control flow error - rethrow
+            throw error;
           }
           throw error;
         }
@@ -439,6 +459,8 @@ export class RepeatCommand
             if (error.message.includes('CONTINUE')) {
               break;
             }
+            // If we reach here, it's not a control flow error - rethrow
+            throw error;
           }
           throw error;
         }
@@ -568,6 +590,8 @@ export class RepeatCommand
             if (error.message.includes('CONTINUE')) {
               break;
             }
+            // If we reach here, it's not a control flow error - rethrow
+            throw error;
           }
           throw error;
         }
