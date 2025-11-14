@@ -822,17 +822,33 @@ export class Parser {
     let targetExpression: ASTNode | null = null;
 
     try {
-      // Check for local variable prefix `:` FIRST (before any other parsing)
+      // Check for global variable prefix `::` or local prefix `:` FIRST (before any other parsing)
       if (this.check(':')) {
-        this.advance(); // consume `:`
-        const varToken = this.advance(); // get variable name
-        targetExpression = {
-          type: 'identifier',
-          name: varToken.value,
-          scope: 'local',
-          start: varToken.start - 1, // Include the `:` in the start position
-          end: varToken.end,
-        } as any;
+        this.advance(); // consume first `:`
+
+        // Check if this is `::variable` (global) or `:variable` (local)
+        if (this.check(':')) {
+          // This is `::variable` (explicit global scope)
+          this.advance(); // consume second `:`
+          const varToken = this.advance(); // get variable name
+          targetExpression = {
+            type: 'identifier',
+            name: varToken.value,
+            scope: 'global',
+            start: varToken.start - 2, // Include both `::` in the start position
+            end: varToken.end,
+          } as any;
+        } else {
+          // This is `:variable` (local scope)
+          const varToken = this.advance(); // get variable name
+          targetExpression = {
+            type: 'identifier',
+            name: varToken.value,
+            scope: 'local',
+            start: varToken.start - 1, // Include the `:` in the start position
+            end: varToken.end,
+          } as any;
+        }
       }
       // Check for scope modifiers (global/local) first
       else if (this.check('global') || this.check('local')) {
@@ -2462,20 +2478,38 @@ export class Parser {
       return this.parseAttributeOrArrayLiteral();
     }
 
-    // Handle local variable prefix `:` for expressions (e.g., put :x into #result)
-    // IMPORTANT: Check for :variable BEFORE general operator handling
+    // Handle global `::` or local `:` variable prefix for expressions
+    // IMPORTANT: Check for ::variable and :variable BEFORE general operator handling
     if (this.check(':')) {
-      this.advance(); // consume `:`
-      const varToken = this.advance(); // get variable name
-      return {
-        type: 'identifier',
-        name: varToken.value,
-        scope: 'local', // Mark as local variable
-        start: varToken.start - 1, // Include the `:` in the start position
-        end: varToken.end,
-        line: varToken.line,
-        column: varToken.column,
-      } as any;
+      this.advance(); // consume first `:`
+
+      // Check if this is `::variable` (global) or `:variable` (local)
+      if (this.check(':')) {
+        // This is `::variable` (explicit global scope)
+        this.advance(); // consume second `:`
+        const varToken = this.advance(); // get variable name
+        return {
+          type: 'identifier',
+          name: varToken.value,
+          scope: 'global', // Mark as explicit global variable
+          start: varToken.start - 2, // Include both `::` in the start position
+          end: varToken.end,
+          line: varToken.line,
+          column: varToken.column,
+        } as any;
+      } else {
+        // This is `:variable` (local scope)
+        const varToken = this.advance(); // get variable name
+        return {
+          type: 'identifier',
+          name: varToken.value,
+          scope: 'local', // Mark as local variable
+          start: varToken.start - 1, // Include the `:` in the start position
+          end: varToken.end,
+          line: varToken.line,
+          column: varToken.column,
+        } as any;
+      }
     }
 
     // Handle operators as literal tokens
