@@ -939,4 +939,130 @@ describe('Hyperscript AST Parser', () => {
       expect(result4.success).toBe(true);
     });
   });
+
+  describe('Local Variable Syntax (:variable)', () => {
+    it('should parse :variable in SET command target', () => {
+      const result = parse('set :x to 5');
+      expect(result.success).toBe(true);
+      expect(result.node).toMatchObject({
+        type: 'command',
+        name: 'set',
+        args: expect.arrayContaining([
+          expect.objectContaining({
+            type: 'identifier',
+            name: 'x',
+            scope: 'local',
+          }),
+        ]),
+      });
+    });
+
+    it('should parse :variable in expressions', () => {
+      const result = parse('put :x into #result');
+      expect(result.success).toBe(true);
+      // The :x should be parsed as an identifier with scope: 'local'
+      const putCommand = result.node as any;
+      expect(putCommand.type).toBe('command');
+      expect(putCommand.name).toBe('put');
+      // First arg should be :x with scope metadata
+      expect(putCommand.args[0]).toMatchObject({
+        type: 'identifier',
+        name: 'x',
+        scope: 'local',
+      });
+    });
+
+    it('should parse :variable in INCREMENT command', () => {
+      const result = parse('increment :counter by 1');
+      expect(result.success).toBe(true);
+      const command = result.node as any;
+      expect(command.type).toBe('command');
+      expect(command.name).toBe('increment');
+      expect(command.args[0]).toMatchObject({
+        type: 'identifier',
+        name: 'counter',
+        scope: 'local',
+      });
+    });
+
+    it('should parse :variable in arithmetic expressions', () => {
+      const result = parse('increment :sum by :amount');
+      expect(result.success).toBe(true);
+      const command = result.node as any;
+      expect(command.type).toBe('command');
+      expect(command.name).toBe('increment');
+      // Both :sum and :amount should have scope: 'local'
+      expect(command.args[0]).toMatchObject({
+        type: 'identifier',
+        name: 'sum',
+        scope: 'local',
+      });
+      // Second arg should be :amount
+      expect(command.args[1]).toMatchObject({
+        type: 'identifier',
+        name: 'amount',
+        scope: 'local',
+      });
+    });
+
+    it('should parse string values with :variable', () => {
+      const result = parse('set :name to "hello"');
+      expect(result.success).toBe(true);
+      const command = result.node as any;
+      expect(command.args[0]).toMatchObject({
+        type: 'identifier',
+        name: 'name',
+        scope: 'local',
+      });
+      expect(command.args[1]).toMatchObject({
+        type: 'literal',
+        value: 'hello',
+      });
+    });
+
+    it('should handle :variable in repeat loops', () => {
+      const result = parse('repeat 3 times set :idx to it end');
+      expect(result.success).toBe(true);
+      const command = result.node as any;
+      expect(command.type).toBe('command');
+      expect(command.name).toBe('repeat');
+    });
+
+    it('should distinguish :local from global variables', () => {
+      // Parse both in same context
+      const localResult = parse('set :x to 5');
+      const globalResult = parse('set x to 5');
+
+      expect(localResult.success).toBe(true);
+      expect(globalResult.success).toBe(true);
+
+      const localCommand = localResult.node as any;
+      const globalCommand = globalResult.node as any;
+
+      // :x should have scope: 'local'
+      expect(localCommand.args[0].scope).toBe('local');
+      // x should have no scope (or undefined)
+      expect(globalCommand.args[0].scope).toBeUndefined();
+    });
+
+    it('should handle complex expressions with :variable', () => {
+      const result = parse('set :result to (:a + :b) * 2');
+      expect(result.success).toBe(true);
+      const command = result.node as any;
+      expect(command.args[0]).toMatchObject({
+        type: 'identifier',
+        name: 'result',
+        scope: 'local',
+      });
+    });
+
+    it('should parse multiple :variables in sequence', () => {
+      const result = parse('set :x to 1 set :y to 2 set :z to 3');
+      expect(result.success).toBe(true);
+      // Should create a command sequence or program with 3 commands
+      const node = result.node as any;
+      // The structure depends on how the parser handles multiple commands
+      expect(node.type).toMatch(/command|CommandSequence|Program/);
+    });
+  });
 });
