@@ -164,61 +164,87 @@ class OfficialTestSuiteRunner {
   }
 
   /**
-   * Run a single test case using HyperFixi
+   * Run a single test case using HyperFixi - NEW APPROACH: Run complete test code
    */
   async runTestCase(page: any, testFile: TestFile, testCase: TestCase): Promise<boolean> {
     try {
-      const evalCalls = this.extractEvalCalls(testCase.code);
+      // NEW: Run the complete test code in browser context
+      const testResult = await page.evaluate(
+        async ({ code, description }) => {
+          try {
+            // Clear work area before each test
+            if (window.clearWorkArea) {
+              window.clearWorkArea();
+            }
 
-      if (evalCalls.length === 0) {
-        // Some tests might not have evalHyperScript calls - that's ok
+            // Create a test execution context with all utilities
+            const testContext = {
+              make: window.make,
+              clearWorkArea: window.clearWorkArea,
+              evalHyperScript: window.evalHyperScript,
+              getParseErrorFor: window.getParseErrorFor,
+              document: document,
+              window: window,
+              console: console,
+              // Chai-style assertion helper
+              should: {
+                equal: function(expected: any) {
+                  return {
+                    actual: this.value,
+                    equal: (actual: any) => {
+                      if (actual !== expected) {
+                        throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+                      }
+                    }
+                  };
+                }
+              }
+            };
+
+            // Execute the test code with access to utilities
+            // Wrap in async function to handle async operations
+            const testFn = new Function(
+              'make',
+              'clearWorkArea',
+              'evalHyperScript',
+              'getParseErrorFor',
+              'document',
+              'window',
+              'should',
+              `return (async function() { ${code} })();`
+            );
+
+            await testFn(
+              testContext.make,
+              testContext.clearWorkArea,
+              testContext.evalHyperScript,
+              testContext.getParseErrorFor,
+              testContext.document,
+              testContext.window,
+              testContext.should
+            );
+
+            return { success: true };
+          } catch (error) {
+            return {
+              success: false,
+              error: error.message || String(error)
+            };
+          }
+        },
+        { code: testCase.code, description: testCase.description }
+      );
+
+      if (testResult.success) {
         this.results.passed++;
         return true;
+      } else {
+        this.results.errors.push(
+          `${testFile.category}/${testFile.filename} - ${testCase.description}: ${testResult.error}`
+        );
+        this.results.failed++;
+        return false;
       }
-
-      for (const call of evalCalls) {
-        try {
-          // Execute the expression using HyperFixi via browser context
-          const result = await page.evaluate(
-            async ({ expression, context }) => {
-              // Use the evalHyperScript helper available in the compatibility page
-              if (typeof window.evalHyperScript === 'undefined') {
-                throw new Error('evalHyperScript not available');
-              }
-
-              // Convert context to the format expected by evalHyperScript
-              const execContext = {};
-              if (context) {
-                Object.assign(execContext, context);
-                if (context.locals) Object.assign(execContext, context.locals);
-              }
-
-              // Run the expression using the compatibility helper
-              return await window.evalHyperScript(expression, execContext);
-            },
-            { expression: call.expression, context: call.context }
-          );
-
-          // Check if there's an expected result
-          const expectedResult = this.extractExpectedResult(testCase.code, call.expression);
-          if (expectedResult !== undefined) {
-            if (JSON.stringify(result) !== JSON.stringify(expectedResult)) {
-              throw new Error(
-                `Expected ${JSON.stringify(expectedResult)}, got ${JSON.stringify(result)}`
-              );
-            }
-          }
-        } catch (error) {
-          this.results.errors.push(
-            `${testFile.category}/${testFile.filename} - ${testCase.description}: ${error.message}`
-          );
-          this.results.failed++;
-          return false;
-        }
-      }
-
-      this.results.passed++;
-      return true;
     } catch (error) {
       this.results.errors.push(
         `${testFile.category}/${testFile.filename} - ${testCase.description}: ${error.message}`

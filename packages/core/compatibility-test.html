@@ -84,6 +84,34 @@
                 return e.message;
             }
         };
+
+        // Add Chai-style should assertions to all objects
+        Object.defineProperty(Object.prototype, 'should', {
+            get: function() {
+                const self = this;
+                return {
+                    equal: function(expected) {
+                        if (self !== expected) {
+                            throw new Error(`Expected ${JSON.stringify(expected)}, got ${JSON.stringify(self)}`);
+                        }
+                        return this;
+                    },
+                    be: {
+                        get a() {
+                            return function(type) {
+                                const actualType = Object.prototype.toString.call(self).slice(8, -1);
+                                if (actualType !== type) {
+                                    throw new Error(`Expected type ${type}, got ${actualType}`);
+                                }
+                                return this;
+                            };
+                        }
+                    }
+                };
+            },
+            configurable: true,
+            enumerable: false
+        });
         
         // Clear work area helper
         window.clearWorkArea = function() {
