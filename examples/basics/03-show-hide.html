@@ -193,7 +193,7 @@
                 <button class="secondary" _="on click hide #content">
                     🙈 Hide Content
                 </button>
-                <button class="success" _="on click toggle #content">
+                <button class="success" _="on click toggle the *display of #content">
                     🔄 Toggle Content
                 </button>
             </div>
@@ -221,7 +221,7 @@
 &lt;/button&gt;
 
 <span class="comment">&lt;!-- Toggle button --&gt;</span>
-&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle #content"</span>&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle the *display of #content"</span>&gt;
   🔄 Toggle Content
 &lt;/button&gt;
 
@@ -235,7 +235,7 @@
             <ul>
                 <li><code>show #content</code> - Makes the element visible by removing <code>display: none</code></li>
                 <li><code>hide #content</code> - Hides the element by adding <code>display: none</code></li>
-                <li><code>toggle #content</code> - Switches between visible and hidden states</li>
+                <li><code>toggle the *display of #content</code> - Toggles the display CSS property between visible and hidden</li>
             </ul>
 
             <h3>Key Concepts:</h3>
@@ -255,6 +255,28 @@
                 <li><strong>Loading States:</strong> Show/hide loading indicators</li>
             </ul>
 
+            <h3>Toggle Command Syntax:</h3>
+            <p>The toggle command has several forms:</p>
+            <div class="code">
+<span class="comment">&lt;!-- Toggle display property (recommended for visibility) --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle the *display of #element"</span>&gt;Toggle&lt;/button&gt;
+
+<span class="comment">&lt;!-- Toggle a CSS class --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle .active on #element"</span>&gt;Toggle Class&lt;/button&gt;
+
+<span class="comment">&lt;!-- Toggle between two classes --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle between .light and .dark on #theme"</span>&gt;Theme&lt;/button&gt;
+
+<span class="comment">&lt;!-- Toggle an attribute --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle @disabled on #submit-btn"</span>&gt;Enable/Disable&lt;/button&gt;
+
+<span class="comment">&lt;!-- Toggle visibility property --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle the *visibility of #element"</span>&gt;Toggle&lt;/button&gt;
+
+<span class="comment">&lt;!-- Toggle opacity (for fade effects) --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle the *opacity of #element"</span>&gt;Fade&lt;/button&gt;
+            </div>
+
             <h3>Advanced Patterns:</h3>
             <p>You can also show/hide multiple elements at once:</p>
             <div class="code">
@@ -264,6 +286,11 @@
 <span class="comment">&lt;!-- Hide all except the first --&gt;</span>
 &lt;button <span class="keyword">_</span>=<span class="string">"on click hide .item then show .item:first-child"</span>&gt;
   Show Only First
+&lt;/button&gt;
+
+<span class="comment">&lt;!-- Toggle for a duration --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle .active on #element for 2s"</span>&gt;
+  Flash Active
 &lt;/button&gt;
             </div>
 
