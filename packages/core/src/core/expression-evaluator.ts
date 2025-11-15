@@ -1013,7 +1013,13 @@ export class ExpressionEvaluator {
     const { object, property } = node;
 
     // Evaluate the object first
-    const objectValue = await this.evaluate(object, context);
+    let objectValue = await this.evaluate(object, context);
+
+    // If objectValue is an array (from selector evaluation), extract the first element
+    // This handles cases like: #count's textContent where #count evaluates to [HTMLDivElement]
+    if (Array.isArray(objectValue) && objectValue.length > 0) {
+      objectValue = objectValue[0];
+    }
 
     if (!objectValue) {
       return undefined;

@@ -690,7 +690,10 @@ export class Runtime {
     // Special handling for commands with natural language syntax
     if (name === 'put' && args.length >= 3) {
       // For put command: evaluate content, extract position keyword, handle target specially
+      debug.command(`PUT: Evaluating content expression type='${args[0]?.type}'`);
       const content = await this.execute(args[0], context);
+      debug.command(`PUT: Content evaluated to: "${content}" (type: ${typeof content})`);
+
       // Position is a keyword (identifier or literal) - extract the value, don't evaluate
       const positionArg: any = args[1];
       const position =
