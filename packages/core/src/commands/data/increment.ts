@@ -269,10 +269,15 @@ export class IncrementCommand
     newValue: number,
     context: TypedExecutionContext
   ): void {
+    debug.command(`INCREMENT setTargetValue: target type=${typeof target}, isElement=${target instanceof HTMLElement}, newValue=${newValue}`);
+
     // Handle HTMLElement
     if (target instanceof HTMLElement) {
+      debug.command(`  → Target is HTMLElement: ${target.tagName}#${target.id}`);
+
       if (property) {
         // Set element property or attribute
+        debug.command(`  → Setting property: ${property}`);
         if (
           property.startsWith('data-') ||
           ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)
@@ -283,10 +288,17 @@ export class IncrementCommand
         }
       } else {
         // Set element's text content or value
-        if ('value' in target) {
+        const hasValue = 'value' in target;
+        debug.command(`  → No property specified. hasValue=${hasValue}, tagName=${target.tagName}`);
+
+        if ('value' in target && (target as any).value !== undefined) {
+          debug.command(`  → Setting value property to: ${newValue}`);
           (target as any).value = String(newValue);
         } else {
+          debug.command(`  → Setting textContent to: ${newValue}`);
+          const oldContent = target.textContent;
           target.textContent = String(newValue);
+          debug.command(`  → textContent changed from "${oldContent}" to "${target.textContent}"`);
         }
       }
       return;
