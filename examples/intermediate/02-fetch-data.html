@@ -228,15 +228,18 @@
 
         <div class="description">
             <strong>Load data from external APIs dynamically</strong><br>
-            Learn how to make HTTP requests and display data using hyperscript's fetch integration.
-            Perfect for loading user data, posts, products, and any external content!
+            Learn how to make HTTP requests using the <code>call</code> command with JavaScript's native Fetch API.
+            This approach lets you fetch JSON, text, and other data from APIs directly from hyperscript!
+            <br><br>
+            <strong>Note:</strong> We use <code>call fetch()</code> to invoke the browser's native Fetch API,
+            which works seamlessly with hyperscript's promise handling.
         </div>
 
         <div>
+            <span class="tag">call</span>
             <span class="tag">fetch</span>
             <span class="tag">JSON</span>
             <span class="tag">async</span>
-            <span class="tag">wait</span>
         </div>
 
         <!-- Demo 1: Fetch User -->
@@ -250,8 +253,8 @@
                    add .loading to me
                    show #spinner
                    hide #user-data
-                   fetch https://jsonplaceholder.typicode.com/users/1 as json
-                   put it.data into userData
+                   call fetch('https://jsonplaceholder.typicode.com/users/1').then(r => r.json())
+                   put it into userData
                    put `<h3>${userData.name}</h3>
                         <p>📧 ${userData.email}</p>
                         <p>🏢 ${userData.company.name}</p>
@@ -278,8 +281,8 @@
                    add .loading to me
                    show #posts-spinner
                    hide #posts-list
-                   fetch https://jsonplaceholder.typicode.com/posts?_limit=5 as json
-                   put it.data into posts
+                   call fetch('https://jsonplaceholder.typicode.com/posts?_limit=5').then(r => r.json())
+                   put it into posts
                    set html to ''
                    repeat for post in posts
                      set html to html + `<div class='list-item'>
@@ -309,8 +312,8 @@
                    hide #error-box
                    add .loading to me
                    try
-                     fetch https://jsonplaceholder.typicode.com/invalid as json
-                     log it.data
+                     call fetch('https://jsonplaceholder.typicode.com/invalid').then(r => r.json())
+                     log it
                    catch error
                      put 'Failed to load data: ' + error into #error-message
                      show #error-box
@@ -332,8 +335,8 @@
         <h3>Basic Fetch:</h3>
         <div class="code">
 &lt;button <span class="keyword">_</span>=<span class="string">"on click
-        fetch https://api.example.com/data as json
-        put it.data into #output"</span>&gt;
+        call fetch('https://api.example.com/data').then(r => r.json())
+        put it into #output"</span>&gt;
   Load Data
 &lt;/button&gt;
         </div>
@@ -343,8 +346,8 @@
 &lt;button <span class="keyword">_</span>=<span class="string">"on click
         add .loading to me
         show #spinner
-        fetch https://api.example.com/users as json
-        put it.data into userData
+        call fetch('https://api.example.com/users').then(r => r.json())
+        put it into userData
         <span class="comment">-- Process the data</span>
         hide #spinner
         remove .loading from me"</span>&gt;
@@ -355,8 +358,8 @@
         <h3>Loop Through Results:</h3>
         <div class="code">
 &lt;button <span class="keyword">_</span>=<span class="string">"on click
-        fetch https://api.example.com/posts as json
-        put it.data into posts
+        call fetch('https://api.example.com/posts').then(r => r.json())
+        put it into posts
         set html to ''
         repeat for post in posts
           set html to html + `&lt;div&gt;${post.title}&lt;/div&gt;`
@@ -370,8 +373,8 @@
         <div class="code">
 &lt;button <span class="keyword">_</span>=<span class="string">"on click
         try
-          fetch https://api.example.com/data as json
-          put it.data into #output
+          call fetch('https://api.example.com/data').then(r => r.json())
+          put it into #output
         catch error
           put 'Error: ' + error into #error-message
           show #error-box
@@ -383,9 +386,9 @@
         <div class="explanation">
             <h3>How it works:</h3>
             <ul>
-                <li><code>fetch URL as json</code> - Makes HTTP GET request and parses JSON response</li>
-                <li><code>put it.data into variable</code> - The fetch result has a <code>data</code> property with parsed content</li>
-                <li>Commands on new lines are automatically chained (no <code>then</code> needed)</li>
+                <li><code>call fetch(URL).then(r => r.json())</code> - Uses native JavaScript Fetch API</li>
+                <li><code>put it into variable</code> - Stores the returned promise result</li>
+                <li><code>call</code> command - Executes JavaScript functions and waits for promises</li>
                 <li><code>repeat for item in items</code> - Loops through array results</li>
                 <li><code>try/catch</code> - Handles errors gracefully</li>
                 <li>Template literals (<code>`${variable}`</code>) - Embed data in HTML</li>
@@ -393,34 +396,41 @@
 
             <h3>Key Concepts:</h3>
             <ul>
-                <li><strong>Async Operations:</strong> Fetch is async, commands wait automatically</li>
-                <li><strong>JSON Parsing:</strong> <code>as json</code> converts response to JavaScript object</li>
-                <li><strong>Result Object:</strong> <code>it</code> has properties: <code>data</code>, <code>status</code>, <code>headers</code>, <code>url</code></li>
-                <li><strong>Auto-chaining:</strong> New lines automatically chain commands (explicit <code>then</code> not needed)</li>
+                <li><strong>Call Command:</strong> <code>call</code> lets you execute JavaScript functions from hyperscript</li>
+                <li><strong>Native Fetch:</strong> Uses the browser's built-in Fetch API</li>
+                <li><strong>Promise Handling:</strong> <code>call</code> automatically waits for promises to resolve</li>
+                <li><strong>Result Variable:</strong> <code>it</code> contains the resolved promise value</li>
                 <li><strong>Template Literals:</strong> Use backticks for string interpolation</li>
                 <li><strong>Error Handling:</strong> <code>try/catch</code> for network errors</li>
             </ul>
 
-            <h3>Fetch Options:</h3>
+            <h3>Response Parsing Options:</h3>
             <ul>
-                <li><code>as json</code> - Parse JSON response</li>
-                <li><code>as text</code> - Get plain text response</li>
-                <li><code>as html</code> - Get HTML response</li>
-                <li><code>as response</code> - Get raw Response object</li>
+                <li><code>.then(r => r.json())</code> - Parse JSON response</li>
+                <li><code>.then(r => r.text())</code> - Get plain text response</li>
+                <li><code>.then(r => r.blob())</code> - Get binary blob</li>
+                <li><code>.then(r => r.arrayBuffer())</code> - Get array buffer</li>
             </ul>
 
             <h3>HTTP Methods:</h3>
             <div class="code">
 <span class="comment">&lt;!-- POST request --&gt;</span>
-fetch /api/users with method: 'POST', body: JSON.stringify({ name: 'John' }) as json
-put it.data into newUser
+call fetch('/api/users', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ name: 'John', email: 'john@example.com' })
+}).then(r => r.json())
+put it into newUser
 
 <span class="comment">&lt;!-- PUT request --&gt;</span>
-fetch /api/users/1 with method: 'PUT', body: JSON.stringify({ name: 'Updated' }) as json
-put it.data into updatedUser
+call fetch('/api/users/1', {
+  method: 'PUT',
+  body: JSON.stringify({ name: 'Updated Name' })
+}).then(r => r.json())
+put it into updatedUser
 
 <span class="comment">&lt;!-- DELETE request --&gt;</span>
-fetch /api/users/1 with method: 'DELETE'
+call fetch('/api/users/1', { method: 'DELETE' })
 log 'User deleted'
             </div>
 
