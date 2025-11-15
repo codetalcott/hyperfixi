@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced 02: Draggable Elements - HyperFixi Examples</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .description {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .demo {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        .draggable-container {
+            position: relative;
+            min-height: 450px;
+            background: #f8f9fa;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .draggable-item {
+            position: absolute;
+            width: 220px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: move;
+            user-select: none;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .draggable-item.dragging {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        .titlebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px 8px 0 0;
+            cursor: move;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 15px;
+            color: #333;
+        }
+
+        #item1 {
+            top: 20px;
+            left: 20px;
+        }
+
+        #item2 {
+            top: 20px;
+            left: 280px;
+        }
+
+        #item3 {
+            top: 200px;
+            left: 20px;
+        }
+
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #1976d2;
+            font-weight: 500;
+        }
+
+        .code {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .keyword {
+            color: #c678dd;
+        }
+
+        .string {
+            color: #98c379;
+        }
+
+        .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #fce4ec;
+            color: #c2185b;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            margin: 5px;
+            font-weight: 600;
+        }
+
+        .tag.feature {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .nav-buttons a {
+            background: #f0f0f0;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        .nav-buttons a:hover {
+            background: #e0e0e0;
+        }
+
+        .success-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Advanced</strong> / 02: Draggable Elements
+        </div>
+
+        <h1>🖱️ Draggable Elements <span class="success-badge">PURE HYPERSCRIPT</span></h1>
+
+        <div class="description">
+            <strong>Reusable behavior with parameters and custom events</strong><br>
+            This example shows how to create a reusable "Draggable" behavior that can be installed
+            on any element, with support for custom drag handles, event hooks, and smooth positioning.
+        </div>
+
+        <div>
+            <span class="tag">behavior</span>
+            <span class="tag">install</span>
+            <span class="tag feature">measure</span>
+            <span class="tag feature">custom events</span>
+            <span class="tag feature">halt event</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <div class="instructions">
+                📝 Instructions: <strong>Drag the boxes</strong> by their title bars. Notice the shadow effect during dragging!
+            </div>
+
+            <div class="draggable-container">
+                <div id="item1" class="draggable-item"
+                     _="install Draggable(dragHandle: .titlebar in me)
+                        on draggable:start add .dragging
+                        on draggable:end remove .dragging">
+                    <div class="titlebar">📦 Draggable Item 1</div>
+                    <div class="content">Drag me by the title bar!</div>
+                </div>
+
+                <div id="item2" class="draggable-item"
+                     _="install Draggable(dragHandle: .titlebar in me)
+                        on draggable:start add .dragging
+                        on draggable:end remove .dragging">
+                    <div class="titlebar">📦 Draggable Item 2</div>
+                    <div class="content">I'm draggable too!</div>
+                </div>
+
+                <div id="item3" class="draggable-item"
+                     _="install Draggable(dragHandle: .titlebar in me)
+                        on draggable:start add .dragging
+                        on draggable:end remove .dragging">
+                    <div class="titlebar">📦 Draggable Item 3</div>
+                    <div class="content">Move me around!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Behavior Definition</h2>
+        <div class="code">
+<span class="keyword">behavior</span> Draggable(dragHandle)
+  <span class="keyword">init</span>
+    <span class="keyword">if no</span> dragHandle <span class="keyword">set the</span> dragHandle <span class="keyword">to</span> me
+  <span class="keyword">end</span>
+
+  <span class="keyword">on</span> pointerdown(clientX, clientY) <span class="keyword">from</span> dragHandle
+    <span class="keyword">halt the event</span>        <span class="comment">-- Prevent text selection</span>
+    <span class="keyword">trigger</span> draggable:start  <span class="comment">-- Custom event hook</span>
+
+    <span class="keyword">measure</span> x
+    <span class="keyword">set</span> startX <span class="keyword">to</span> it
+    <span class="keyword">measure</span> y
+    <span class="keyword">set</span> startY <span class="keyword">to</span> it
+
+    <span class="keyword">set</span> xoff <span class="keyword">to</span> clientX - startX
+    <span class="keyword">set</span> yoff <span class="keyword">to</span> clientY - startY
+
+    <span class="keyword">repeat until</span> <span class="keyword">event</span> pointerup <span class="keyword">from</span> document
+      <span class="keyword">wait for</span> pointermove(clientX, clientY) <span class="keyword">or</span>
+                 pointerup(clientX, clientY) <span class="keyword">from</span> document
+
+      <span class="keyword">add</span> <span class="string">{ left: ${clientX - xoff}px; top: ${clientY - yoff}px; }</span>
+      <span class="keyword">trigger</span> draggable:move  <span class="comment">-- During drag</span>
+    <span class="keyword">end</span>
+
+    <span class="keyword">trigger</span> draggable:end      <span class="comment">-- Drag complete</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+        </div>
+
+        <h2>Usage Example</h2>
+        <div class="code">
+&lt;div class=<span class="string">"draggable-item"</span>
+     <span class="keyword">_</span>=<span class="string">"install Draggable(dragHandle: .titlebar in me)
+        on draggable:start add .dragging
+        on draggable:end remove .dragging"</span>&gt;
+
+  &lt;div class=<span class="string">"titlebar"</span>&gt;📦 Draggable Item&lt;/div&gt;
+  &lt;div class=<span class="string">"content"</span>&gt;Drag me!&lt;/div&gt;
+&lt;/div&gt;
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ol>
+                <li><strong>Install behavior:</strong> <code>install Draggable(dragHandle: .titlebar in me)</code></li>
+                <li><strong>Initialize:</strong> If no drag handle specified, use the element itself</li>
+                <li><strong>Capture start:</strong> On pointerdown, measure current position and calculate offset</li>
+                <li><strong>Track movement:</strong> Loop until pointerup, updating position on each pointermove</li>
+                <li><strong>Custom events:</strong> Trigger draggable:start, draggable:move, draggable:end for hooks</li>
+                <li><strong>CSS injection:</strong> Use template strings to add position styles directly</li>
+            </ol>
+
+            <h3>Advanced Concepts:</h3>
+            <ul>
+                <li><strong>Behaviors:</strong> Reusable components that encapsulate logic</li>
+                <li><strong>Parameters:</strong> <code>Draggable(dragHandle)</code> accepts configuration</li>
+                <li><strong>init block:</strong> Runs once when behavior is installed</li>
+                <li><strong>measure:</strong> Get element dimensions and position</li>
+                <li><strong>halt the event:</strong> Prevent default behavior and stop propagation</li>
+                <li><strong>Custom events:</strong> <code>trigger eventName</code> for lifecycle hooks</li>
+                <li><strong>Event parameters:</strong> Destructure event properties in handler signature</li>
+            </ul>
+
+            <h3>Custom Event Hooks:</h3>
+            <ul>
+                <li><code>draggable:start</code> - Fired when drag begins (great for adding visual feedback)</li>
+                <li><code>draggable:move</code> - Fired during each movement (could track distance, log position)</li>
+                <li><code>draggable:end</code> - Fired when drag completes (save state, check drop zones)</li>
+            </ul>
+
+            <h3>Try it yourself:</h3>
+            <ul>
+                <li>Add boundaries: Check position limits before applying styles</li>
+                <li>Snap to grid: Round positions to nearest 20px</li>
+                <li>Drop zones: Use draggable:end to check if element is over a target</li>
+                <li>Multiple behaviors: Install other behaviors alongside Draggable</li>
+            </ul>
+        </div>
+
+        <div class="note">
+            ⚠️ <strong>Note about behaviors:</strong> The <code>behavior</code> feature requires full hyperscript implementation.
+            If dragging doesn't work yet, it indicates the behavior system needs implementation. The behavior code above is defined
+            in a <code>&lt;script type="text/hyperscript"&gt;</code> tag at the bottom of this page.
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="01-color-cycling.html">← Previous: Color Cycling</a>
+            <a href="../../compound-examples.html">View All Advanced Examples →</a>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+
+    <!-- Define Draggable Behavior -->
+    <script type="text/hyperscript">
+behavior Draggable(dragHandle)
+  init
+    if no dragHandle set the dragHandle to me
+  end
+  on pointerdown(clientX, clientY) from dragHandle
+    halt the event
+    trigger draggable:start
+    measure x
+    set startX to it
+    measure y
+    set startY to it
+    set xoff to clientX - startX
+    set yoff to clientY - startY
+    repeat until event pointerup from document
+      wait for pointermove(clientX, clientY) or
+               pointerup(clientX, clientY) from document
+      add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }
+      trigger draggable:move
+    end
+    trigger draggable:end
+  end
+end
+    </script>
+</body>
+</html>

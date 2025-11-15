@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>05: Counter - HyperFixi Examples</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .description {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .demo {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .counter-display {
+            font-size: 72px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 30px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            font-weight: 600;
+            min-width: 120px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.reset {
+            background: #dc3545;
+        }
+
+        button.reset:hover {
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+
+        .code {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+        }
+
+        .keyword {
+            color: #c678dd;
+        }
+
+        .string {
+            color: #98c379;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .nav-buttons a {
+            background: #f0f0f0;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        .nav-buttons a:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Basics</strong> / 05: Counter
+        </div>
+
+        <h1>🔢 Counter</h1>
+
+        <div class="description">
+            <strong>Increment and decrement values</strong><br>
+            Learn how to modify numeric values with hyperscript's increment and decrement commands.
+        </div>
+
+        <div>
+            <span class="tag">increment</span>
+            <span class="tag">decrement</span>
+            <span class="tag">numbers</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <div id="count" class="counter-display">0</div>
+
+            <div class="button-group">
+                <button _="on click decrement #count">
+                    ➖ Decrease
+                </button>
+
+                <button class="reset" _="on click put 0 into #count">
+                    🔄 Reset
+                </button>
+
+                <button _="on click increment #count">
+                    ➕ Increase
+                </button>
+            </div>
+
+            <p style="margin-top: 20px; color: #666;">
+                Current value: <span id="count-mirror" _="on every change in #count put #count's textContent into me">0</span>
+            </p>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+        <div class="code">
+&lt;div <span class="keyword">id</span>=<span class="string">"count"</span> <span class="keyword">class</span>=<span class="string">"counter-display"</span>&gt;0&lt;/div&gt;
+
+&lt;button <span class="keyword">_</span>=<span class="string">"on click decrement #count"</span>&gt;
+  ➖ Decrease
+&lt;/button&gt;
+
+&lt;button <span class="keyword">_</span>=<span class="string">"on click put 0 into #count"</span>&gt;
+  🔄 Reset
+&lt;/button&gt;
+
+&lt;button <span class="keyword">_</span>=<span class="string">"on click increment #count"</span>&gt;
+  ➕ Increase
+&lt;/button&gt;
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><code>increment #count</code> - Adds 1 to the current value</li>
+                <li><code>decrement #count</code> - Subtracts 1 from the current value</li>
+                <li><code>put 0 into #count</code> - Resets to zero</li>
+            </ul>
+
+            <h3>Advanced Increment/Decrement:</h3>
+            <ul>
+                <li><code>increment #count by 5</code> - Add 5 instead of 1</li>
+                <li><code>decrement #count by 10</code> - Subtract 10</li>
+                <li><code>increment my value</code> - Increment an element's value attribute</li>
+                <li><code>increment @data-score</code> - Increment a data attribute</li>
+            </ul>
+
+            <h3>Reactive Updates:</h3>
+            <p>
+                The count mirror below the buttons uses:
+                <code>on every change in #count</code> to reactively update whenever the counter changes!
+            </p>
+
+            <h3>Try it yourself:</h3>
+            <ul>
+                <li>Add a button that increments by 10</li>
+                <li>Create a counter that only allows values 0-100</li>
+                <li>Build a multi-counter with separate increment/decrement buttons</li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="04-input-mirror.html">← Previous: Input Mirror</a>
+            <a href="../intermediate/01-form-validation.html">Next: Intermediate Examples →</a>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+</body>
+</html>

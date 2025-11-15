@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HyperFixi Example Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .tagline {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin: 5px;
+            backdrop-filter: blur(10px);
+        }
+
+        .badge.success {
+            background: #28a745;
+            color: white;
+            font-weight: bold;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-description {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .example-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .example-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .example-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .example-body {
+            padding: 20px;
+        }
+
+        .example-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .example-description {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .example-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .tag.advanced {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .tag.feature {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 60px;
+            opacity: 0.9;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: rgba(255,255,255,0.2);
+            padding: 20px 30px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎨 HyperFixi Example Gallery</h1>
+            <p class="tagline">Learn hyperscript patterns through interactive examples</p>
+            <div>
+                <span class="badge success">✅ 100% Pattern Compatibility</span>
+                <span class="badge">77/77 Patterns Implemented</span>
+                <span class="badge">TypeScript Powered</span>
+            </div>
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-number">15+</span>
+                    <span class="stat-label">Examples</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">3</span>
+                    <span class="stat-label">Skill Levels</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-number">100%</span>
+                    <span class="stat-label">Interactive</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Basics Section -->
+        <div class="section">
+            <h2><span class="icon">🌱</span> Basics</h2>
+            <p class="section-description">
+                Start here! Learn fundamental hyperscript patterns including event handling,
+                DOM manipulation, and simple interactions.
+            </p>
+            <div class="example-grid">
+                <a href="basics/01-hello-world.html" class="example-card">
+                    <div class="example-header">01</div>
+                    <div class="example-body">
+                        <div class="example-title">👋 Hello World</div>
+                        <div class="example-description">
+                            Your first hyperscript! Learn basic event handling and DOM updates.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag">on click</span>
+                            <span class="tag">put</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="basics/02-toggle-class.html" class="example-card">
+                    <div class="example-header">02</div>
+                    <div class="example-body">
+                        <div class="example-title">🎭 Toggle Classes</div>
+                        <div class="example-description">
+                            Add and remove CSS classes to create interactive UI elements.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag">toggle</span>
+                            <span class="tag">classes</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="basics/03-show-hide.html" class="example-card">
+                    <div class="example-header">03</div>
+                    <div class="example-body">
+                        <div class="example-title">👁️ Show/Hide Elements</div>
+                        <div class="example-description">
+                            Control element visibility with simple show/hide commands.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag">show</span>
+                            <span class="tag">hide</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="basics/04-input-mirror.html" class="example-card">
+                    <div class="example-header">04</div>
+                    <div class="example-body">
+                        <div class="example-title">🪞 Input Mirroring</div>
+                        <div class="example-description">
+                            Mirror input values to other elements in real-time.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag">on input</span>
+                            <span class="tag">value</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="basics/05-counter.html" class="example-card">
+                    <div class="example-header">05</div>
+                    <div class="example-body">
+                        <div class="example-title">🔢 Counter</div>
+                        <div class="example-description">
+                            Increment and decrement values with button clicks.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag">increment</span>
+                            <span class="tag">decrement</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Intermediate Section -->
+        <div class="section">
+            <h2><span class="icon">🚀</span> Intermediate</h2>
+            <p class="section-description">
+                Level up! Explore form handling, AJAX requests, animations, and conditional logic.
+            </p>
+            <div class="example-grid">
+                <a href="intermediate/01-form-validation.html" class="example-card">
+                    <div class="example-header">01</div>
+                    <div class="example-body">
+                        <div class="example-title">✅ Form Validation</div>
+                        <div class="example-description">
+                            Client-side form validation with custom error messages.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag">validation</span>
+                            <span class="tag">forms</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="intermediate/02-fetch-data.html" class="example-card">
+                    <div class="example-header">02</div>
+                    <div class="example-body">
+                        <div class="example-title">🌐 Fetch Data</div>
+                        <div class="example-description">
+                            Load data from APIs and display it dynamically.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag">fetch</span>
+                            <span class="tag">JSON</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="intermediate/03-fade-effects.html" class="example-card">
+                    <div class="example-header">03</div>
+                    <div class="example-body">
+                        <div class="example-title">✨ Fade Effects</div>
+                        <div class="example-description">
+                            Smooth transitions using hyperscript's transition command.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag">transition</span>
+                            <span class="tag">opacity</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="intermediate/04-tabs.html" class="example-card">
+                    <div class="example-header">04</div>
+                    <div class="example-body">
+                        <div class="example-title">📑 Tab Navigation</div>
+                        <div class="example-description">
+                            Create tabbed interfaces without JavaScript frameworks.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag">navigation</span>
+                            <span class="tag">event delegation</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="intermediate/05-modal.html" class="example-card">
+                    <div class="example-header">05</div>
+                    <div class="example-body">
+                        <div class="example-title">🪟 Modal Dialog</div>
+                        <div class="example-description">
+                            Build accessible modal dialogs with keyboard support.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag">modal</span>
+                            <span class="tag">accessibility</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Advanced Section -->
+        <div class="section">
+            <h2><span class="icon">🎯</span> Advanced</h2>
+            <p class="section-description">
+                Master level! Complex patterns including behaviors, drag-and-drop, animations, and state management.
+            </p>
+            <div class="example-grid">
+                <a href="advanced/01-color-cycling.html" class="example-card">
+                    <div class="example-header">01</div>
+                    <div class="example-body">
+                        <div class="example-title">🌈 Color Cycling</div>
+                        <div class="example-description">
+                            HSL color animation with pointer hold event loop.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag advanced">repeat until</span>
+                            <span class="tag feature">transitions</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="advanced/02-draggable.html" class="example-card">
+                    <div class="example-header">02</div>
+                    <div class="example-body">
+                        <div class="example-title">🖱️ Draggable Elements</div>
+                        <div class="example-description">
+                            Reusable drag behavior with custom events and parameters.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag advanced">behavior</span>
+                            <span class="tag feature">measure</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="advanced/03-sortable-list.html" class="example-card">
+                    <div class="example-header">03</div>
+                    <div class="example-body">
+                        <div class="example-title">📋 Sortable List</div>
+                        <div class="example-description">
+                            Drag-and-drop list reordering with visual feedback.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag advanced">drag events</span>
+                            <span class="tag feature">dataTransfer</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="advanced/04-infinite-scroll.html" class="example-card">
+                    <div class="example-header">04</div>
+                    <div class="example-body">
+                        <div class="example-title">♾️ Infinite Scroll</div>
+                        <div class="example-description">
+                            Load more content as user scrolls to bottom.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag advanced">intersection</span>
+                            <span class="tag feature">fetch</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="advanced/05-state-machine.html" class="example-card">
+                    <div class="example-header">05</div>
+                    <div class="example-body">
+                        <div class="example-title">⚙️ State Machine</div>
+                        <div class="example-description">
+                            Manage complex UI states with hyperscript patterns.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag advanced">states</span>
+                            <span class="tag feature">transitions</span>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="../compound-examples.html" class="example-card">
+                    <div class="example-header">★</div>
+                    <div class="example-body">
+                        <div class="example-title">🎪 All Advanced Examples</div>
+                        <div class="example-description">
+                            View all advanced examples together in one comprehensive page.
+                        </div>
+                        <div class="example-tags">
+                            <span class="tag advanced">complete</span>
+                            <span class="tag feature">showcase</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <footer>
+            <p>
+                Built with ❤️ using <strong>HyperFixi</strong><br>
+                100% _hyperscript compatible • TypeScript powered • Production ready
+            </p>
+            <p style="margin-top: 20px;">
+                <a href="https://github.com/codetalcott/hyperfixi">GitHub</a> •
+                <a href="../packages/core/docs/">Documentation</a> •
+                <a href="../packages/core/test-dashboard.html">Test Dashboard</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

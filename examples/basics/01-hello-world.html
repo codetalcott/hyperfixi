@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>01: Hello World - HyperFixi Examples</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .description {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .demo {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #output {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #1976d2;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .code {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+        }
+
+        .keyword {
+            color: #c678dd;
+        }
+
+        .string {
+            color: #98c379;
+        }
+
+        .explanation {
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .nav-buttons a {
+            background: #f0f0f0;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .nav-buttons a:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Basics</strong> / 01: Hello World
+        </div>
+
+        <h1>👋 Hello World</h1>
+
+        <div class="description">
+            <strong>Your first hyperscript!</strong><br>
+            This example demonstrates the most basic hyperscript pattern: listening for a click event
+            and updating the DOM. No JavaScript required!
+        </div>
+
+        <div>
+            <span class="tag">on click</span>
+            <span class="tag">put</span>
+            <span class="tag">event handling</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <button _="on click put 'Hello, HyperFixi! 👋' into #output">
+                Click Me!
+            </button>
+            <div id="output">Click the button to see the magic ✨</div>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+        <div class="code">
+&lt;button <span class="keyword">_</span>=<span class="string">"on click put 'Hello, HyperFixi! 👋' into #output"</span>&gt;
+  Click Me!
+&lt;/button&gt;
+&lt;div <span class="keyword">id</span>=<span class="string">"output"</span>&gt;&lt;/div&gt;
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><code>_="..."</code> - The hyperscript attribute where all the magic happens</li>
+                <li><code>on click</code> - Listen for click events on this button</li>
+                <li><code>put 'Hello, HyperFixi! 👋'</code> - The value to insert</li>
+                <li><code>into #output</code> - Target the element with id="output"</li>
+            </ul>
+
+            <h3>Key Concepts:</h3>
+            <ul>
+                <li><strong>Event Handling:</strong> <code>on [event]</code> sets up event listeners</li>
+                <li><strong>DOM Updates:</strong> <code>put [value] into [target]</code> updates content</li>
+                <li><strong>CSS Selectors:</strong> <code>#output</code> uses standard CSS selector syntax</li>
+                <li><strong>Declarative:</strong> Describe what should happen, not how to do it</li>
+            </ul>
+
+            <h3>Try it yourself:</h3>
+            <p>
+                Modify the hyperscript to change different parts:
+            </p>
+            <ul>
+                <li>Change the message to your own text</li>
+                <li>Try <code>on mouseover</code> instead of <code>on click</code></li>
+                <li>Use <code>append</code> instead of <code>put</code> to add text</li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="../index.html">← Gallery Home</a>
+            <a href="02-toggle-class.html">Next: Toggle Classes →</a>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+</body>
+</html>

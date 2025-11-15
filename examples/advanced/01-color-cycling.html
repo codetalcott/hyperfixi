@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced 01: HSL Color Cycling - HyperFixi Examples</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .description {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .demo {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 40px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        #color-box {
+            width: 350px;
+            height: 250px;
+            background: hsl(200, 100%, 90%);
+            border: 3px solid #333;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            margin: 0 auto;
+        }
+
+        #color-box:active {
+            transform: scale(0.98);
+        }
+
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #1976d2;
+            font-weight: 500;
+        }
+
+        .code {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+
+        .keyword {
+            color: #c678dd;
+        }
+
+        .string {
+            color: #98c379;
+        }
+
+        .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #fce4ec;
+            color: #c2185b;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            margin: 5px;
+            font-weight: 600;
+        }
+
+        .tag.feature {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .nav-buttons a {
+            background: #f0f0f0;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        .nav-buttons a:hover {
+            background: #e0e0e0;
+        }
+
+        .success-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Advanced</strong> / 01: Color Cycling
+        </div>
+
+        <h1>🌈 HSL Color Cycling <span class="success-badge">PURE HYPERSCRIPT</span></h1>
+
+        <div class="description">
+            <strong>Loop-based event handling with dynamic color generation</strong><br>
+            This example demonstrates a sophisticated pattern: using an event-driven loop
+            to continuously animate colors while the pointer is held down. Zero JavaScript required!
+        </div>
+
+        <div>
+            <span class="tag">repeat until</span>
+            <span class="tag feature">pointerdown/pointerup</span>
+            <span class="tag feature">transition</span>
+            <span class="tag feature">Math.random()</span>
+            <span class="tag feature">template strings</span>
+        </div>
+
+        <!-- Demo -->
+        <div class="demo">
+            <div class="instructions">
+                📝 Instructions: <strong>Press and hold</strong> on the box below. Watch the colors cycle while you hold! Release to stop.
+            </div>
+
+            <div id="color-box"
+                 _="on pointerdown
+                      set originalColor to my *background-color
+                      repeat until event pointerup from the document
+                        set rand to Math.random() * 360
+                        transition
+                          *background-color
+                          to `hsl(${rand} 100% 90%)`
+                          over 250ms
+                      end
+                      transition *background-color to originalColor
+                    end">
+                Press & Hold Me!
+            </div>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+        <div class="code">
+&lt;div id=<span class="string">"color-box"</span>
+     <span class="keyword">_</span>=<span class="string">"on pointerdown
+          set originalColor to my *background-color
+          repeat until event pointerup from the document
+            set rand to Math.random() * 360
+            transition
+              *background-color
+              to `hsl(${rand} 100% 90%)`
+              over 250ms
+          end
+          transition *background-color to originalColor
+        end"</span>&gt;
+  Press &amp; Hold Me!
+&lt;/div&gt;
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ol>
+                <li><strong>Save original color:</strong> <code>set originalColor to my *background-color</code></li>
+                <li><strong>Start event loop:</strong> <code>repeat until event pointerup from the document</code></li>
+                <li><strong>Generate random hue:</strong> <code>set rand to Math.random() * 360</code></li>
+                <li><strong>Animate color:</strong> <code>transition *background-color to `hsl(${rand} 100% 90%)` over 250ms</code></li>
+                <li><strong>Loop continues</strong> until pointer is released</li>
+                <li><strong>Restore original:</strong> <code>transition *background-color to originalColor</code></li>
+            </ol>
+
+            <h3>Advanced Concepts:</h3>
+            <ul>
+                <li><strong>Event-driven loops:</strong> <code>repeat until event [eventName]</code> creates loops that wait for events</li>
+                <li><strong>CSS property access:</strong> <code>my *background-color</code> reads computed CSS properties</li>
+                <li><strong>Template strings:</strong> <code>`hsl(${rand} 100% 90%)`</code> uses JavaScript template literal syntax</li>
+                <li><strong>Transitions:</strong> <code>transition [property] to [value] over [duration]</code> creates smooth animations</li>
+                <li><strong>Global scope:</strong> Access <code>Math.random()</code> and other JavaScript globals directly</li>
+                <li><strong>Event sources:</strong> <code>from the document</code> listens on the document object</li>
+            </ul>
+
+            <h3>Why this pattern is powerful:</h3>
+            <ul>
+                <li>No timers or intervals needed - event-driven by design</li>
+                <li>Automatic cleanup when loop exits - no memory leaks</li>
+                <li>Declarative control flow - easy to read and understand</li>
+                <li>Smooth transitions handled by browser - hardware accelerated</li>
+            </ul>
+
+            <h3>Try it yourself:</h3>
+            <ul>
+                <li>Change the transition duration: <code>over 500ms</code> for slower color changes</li>
+                <li>Modify the HSL values: <code>hsl(${rand} 80% 70%)</code> for different saturation/lightness</li>
+                <li>Add a counter: <code>increment #counter</code> inside the loop to count cycles</li>
+                <li>Try different events: <code>repeat until event keyup from the document</code></li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="../intermediate/05-modal.html">← Previous: Intermediate Examples</a>
+            <a href="02-draggable.html">Next: Draggable Elements →</a>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+</body>
+</html>
