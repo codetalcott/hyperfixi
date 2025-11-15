@@ -1,0 +1,164 @@
+
+Running 2 tests using 2 workers
+
+[1A[2K[1/2] [chromium] › src/compatibility/browser-tests/full-official-suite.spec.ts:380:3 › Complete Official _hyperscript Test Suite › Verify test categories are complete
+[1A[2K[2/2] [chromium] › src/compatibility/browser-tests/full-official-suite.spec.ts:308:3 › Complete Official _hyperscript Test Suite › Run all 84 official _hyperscript test files
+[1A[2K[chromium] › src/compatibility/browser-tests/full-official-suite.spec.ts:380:3 › Complete Official _hyperscript Test Suite › Verify test categories are complete
+📋 Found test categories: core, expressions, commands, features
+
+[1A[2K[chromium] › src/compatibility/browser-tests/full-official-suite.spec.ts:308:3 › Complete Official _hyperscript Test Suite › Run all 84 official _hyperscript test files
+🚀 Discovered 81 official test files
+
+[1A[2K[chromium] › src/compatibility/browser-tests/full-official-suite.spec.ts:380:3 › Complete Official _hyperscript Test Suite › Verify test categories are complete
+📊 Files per category:
+
+[1A[2K  core: 10 files
+
+[1A[2K  expressions: 33 files
+
+[1A[2K  commands: 30 files
+
+[1A[2K  features: 8 files
+
+[1A[2K[chromium] › src/compatibility/browser-tests/full-official-suite.spec.ts:308:3 › Complete Official _hyperscript Test Suite › Run all 84 official _hyperscript test files
+
+📁 Testing core category (10 files)
+
+[1A[2K  🧪 api.js: 1 test cases
+
+[1A[2K    ❌ processNodes does not reinitialize a node already processed
+
+[1A[2K  🧪 bootstrap.js: 12 test cases
+
+[1A[2K    ❌ on a single div
+
+[1A[2K    ❌ toggles
+
+[1A[2K    ❌ can target another div
+
+[1A[2K    ❌ hyperscript can have more than one action 
+
+[1A[2K    ❌ can change non-class properties
+
+[1A[2K    ❌ can send events
+
+[1A[2K    ❌ can respond to events on other elements
+
+[1A[2K    ❌ can take a class from other elements
+
+[1A[2K    ❌ can set properties
+
+[1A[2K    ❌ can set styles
+
+[1A[2K    ❌ can send events with args
+
+[1A[2K    ❌ can call functions
+
+[1A[2K  🧪 parser.js: 9 test cases
+
+[1A[2K    ❌ basic parse error messages work
+
+[1A[2K    ❌ continues initializing elements in the presence of a parse error
+
+[1A[2K    ❌ can have comments in scripts
+
+[1A[2K    ❌ can have comments in attributes
+
+[1A[2K    ❌ can have alternate comments in scripts
+
+[1A[2K    ❌ can have alternate comments in attributes
+
+[1A[2K    ❌ can have alternate multiline comments in scripts
+
+[1A[2K    ❌ can have multiline comments in attributes
+
+[1A[2K    ❌ can support parenthesized commands and features
+
+[1A[2K  🧪 regressions.js: 16 test cases
+
+[1A[2K    ❌ can pick detail fields out by name
+
+[1A[2K    ❌ can trigger htmx events
+
+[1A[2K    ❌ can remove class by id
+
+[1A[2K    ❌ can remove by clicks elsewhere
+
+[1A[2K    ❌ me and it is properly set when responding to events
+
+[1A[2K    ❌ me symbol works in from expressions
+
+[1A[2K    ❌ can create a paragraph tag
+
+[1A[2K    ❌ async exception
+
+[1A[2K    ❌ return followed by boundary returns an error
+
+[1A[2K    ❌ extra chars cause error when evaling
+
+[1A[2K    ❌ string literals can dot-invoked against
+
+[1A[2K    ❌ button query in form
+
+[1A[2K    ❌ can invoke functions w/ numbers in name
+
+[1A[2K    ❌ properly interpolates values
+
+[1A[2K    ❌ properly interpolates values 2
+
+[1A[2K    ❌ listen for event on form
+
+[1A[2K  🧪 runtime.js: 4 test cases
+
+[1A[2K    ❌ has proper stack
+
+[1A[2K    ❌ has proper stack from event handler
+
+[1A[2K    ❌ hypertrace is reasonable
+
+[1A[2K    ❌ hypertrace from javascript is reasonable
+
+[1A[2K  🧪 runtimeErrors.js: 18 test cases
+
+[1A[2K    ❌ reports basic function invocation null errors properly
+
+[1A[2K    ❌ reports basic function invocation null errors properly w/ possessives
+
+[1A[2K    ❌ reports basic function invocation null errors properly w/ of
+
+[1A[2K    ❌ reports null errors on sets properly
+
+[1A[2K    ❌ reports null errors on settle command properly
+
+[1A[2K    ❌ reports null errors on add command properly
+
+[1A[2K    ❌ reports null errors on remove command properly
+
+[1A[2K    ❌ reports null errors on toggle command properly
+
+[1A[2K    ❌ reports null errors on show command properly
+
+[1A[2K    ❌ reports null errors on hide command properly
+
+[1A[2K    ❌ reports null errors on put command properly
+
+[1A[2K    ❌ reports null errors on transition command properly
+
+[1A[2K    ❌ reports null errors on send command properly
+
+[1A[2K    ❌ reports null errors on trigger command properly
+
+[1A[2K    ❌ reports null errors on increment command properly
+
+[1A[2K  1) [chromium] › src/compatibility/browser-tests/full-official-suite.spec.ts:308:3 › Complete Official _hyperscript Test Suite › Run all 84 official _hyperscript test files 
+
+    [31mTest timeout of 600000ms exceeded.[39m
+
+
+[1A[2K    ❌ reports null errors on decrement command properly
+
+[1A[2K  1 failed
+    [chromium] › src/compatibility/browser-tests/full-official-suite.spec.ts:308:3 › Complete Official _hyperscript Test Suite › Run all 84 official _hyperscript test files 
+  1 passed (10.0m)
+
+  Serving HTML report at http://localhost:57203. Press Ctrl+C to quit.

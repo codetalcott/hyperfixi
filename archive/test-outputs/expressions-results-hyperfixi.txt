@@ -1,0 +1,16 @@
+🚀 Category-by-Category Test Runner
+
+Categories to test: expressions
+
+
+======================================================================
+📁 Category: EXPRESSIONS
+======================================================================
+
+Found 33 test files
+
+[1/33] arrayIndex.js (14 tests)... ❌ 0/14 (0%)
+[2/33] arrayLiteral.js (3 tests)... ❌ 0/3 (0%)
+[3/33] asExpression.js (28 tests)... ❌ 0/28 (0%)
+[4/33] async.js (2 tests)... ❌ 0/2 (0%)
+[5/33] attributeRef.js (22 tests)... 

@@ -102,6 +102,13 @@ debug*.html
 # Test outputs
 test-results/
 
+# Test result files (session artifacts)
+*-test-results*.txt
+*test-output*.txt
+expressions-results*.txt
+pattern-test-results*.txt
+official-test-results*.txt
+
 # Playwright reports and test artifacts
 playwright-report/
 packages/*/playwright-report/

@@ -1,0 +1,64 @@
+
+Running 2 tests using 2 workers
+
+[1A[2K[1/2] [chromium] › src/compatibility/browser-tests/debug-expressions-only.spec.ts:20:3 › DEBUG: Expressions Category Only › Run expressions category with detailed logging
+[1A[2K[2/2] [chromium] › src/compatibility/browser-tests/debug-expressions-only.spec.ts:111:3 › DEBUG: Expressions Category Only › Try to run a single arrayIndex test directly
+[1A[2K  1) [chromium] › src/compatibility/browser-tests/debug-expressions-only.spec.ts:111:3 › DEBUG: Expressions Category Only › Try to run a single arrayIndex test directly 
+
+    [31mTest timeout of 60000ms exceeded while running "beforeEach" hook.[39m
+
+      13 |
+      14 | test.describe('DEBUG: Expressions Category Only', () => {
+    > 15 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      16 |     await page.goto('http://127.0.0.1:3000/official-test-suite.html');
+      17 |     await page.waitForFunction(() => typeof window._hyperscript !== 'undefined');
+      18 |   });
+        at /Users/williamtalcott/projects/hyperfixi/packages/core/src/compatibility/browser-tests/debug-expressions-only.spec.ts:15:8
+
+    Error: page.waitForFunction: Test timeout of 60000ms exceeded.
+
+      15 |   test.beforeEach(async ({ page }) => {
+      16 |     await page.goto('http://127.0.0.1:3000/official-test-suite.html');
+    > 17 |     await page.waitForFunction(() => typeof window._hyperscript !== 'undefined');
+         |                ^
+      18 |   });
+      19 |
+      20 |   test('Run expressions category with detailed logging', async ({ page }) => {
+        at /Users/williamtalcott/projects/hyperfixi/packages/core/src/compatibility/browser-tests/debug-expressions-only.spec.ts:17:16
+
+    Error Context: test-results/debug-expressions-only-DEB-0ad3d-le-arrayIndex-test-directly-chromium/error-context.md
+
+
+[1A[2K  2) [chromium] › src/compatibility/browser-tests/debug-expressions-only.spec.ts:20:3 › DEBUG: Expressions Category Only › Run expressions category with detailed logging 
+
+    [31mTest timeout of 60000ms exceeded while running "beforeEach" hook.[39m
+
+      13 |
+      14 | test.describe('DEBUG: Expressions Category Only', () => {
+    > 15 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      16 |     await page.goto('http://127.0.0.1:3000/official-test-suite.html');
+      17 |     await page.waitForFunction(() => typeof window._hyperscript !== 'undefined');
+      18 |   });
+        at /Users/williamtalcott/projects/hyperfixi/packages/core/src/compatibility/browser-tests/debug-expressions-only.spec.ts:15:8
+
+    Error: page.waitForFunction: Test timeout of 60000ms exceeded.
+
+      15 |   test.beforeEach(async ({ page }) => {
+      16 |     await page.goto('http://127.0.0.1:3000/official-test-suite.html');
+    > 17 |     await page.waitForFunction(() => typeof window._hyperscript !== 'undefined');
+         |                ^
+      18 |   });
+      19 |
+      20 |   test('Run expressions category with detailed logging', async ({ page }) => {
+        at /Users/williamtalcott/projects/hyperfixi/packages/core/src/compatibility/browser-tests/debug-expressions-only.spec.ts:17:16
+
+    Error Context: test-results/debug-expressions-only-DEB-b851b-egory-with-detailed-logging-chromium/error-context.md
+
+
+[1A[2K  2 failed
+    [chromium] › src/compatibility/browser-tests/debug-expressions-only.spec.ts:20:3 › DEBUG: Expressions Category Only › Run expressions category with detailed logging 
+    [chromium] › src/compatibility/browser-tests/debug-expressions-only.spec.ts:111:3 › DEBUG: Expressions Category Only › Try to run a single arrayIndex test directly 
+
+  Serving HTML report at http://localhost:9323. Press Ctrl+C to quit.
