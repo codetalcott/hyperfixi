@@ -748,96 +748,67 @@ export class Parser {
   }
 
   private parsePutCommand(identifierNode: IdentifierNode): CommandNode | null {
-    // Use a more flexible approach similar to the original _hyperscript
-    // Parse all arguments until we hit a terminator, then identify the structure
-    const allArgs: ASTNode[] = [];
+    // Strategy 1: Parse expressions properly instead of primitives
+    // This handles complex expressions like: put (#count's textContent as Int) + 1 into #count
 
-    while (
-      !this.isAtEnd() &&
-      !this.check('then') &&
-      !this.check('and') &&
-      !this.check('else') &&
-      !this.check('end') &&
-      !this.checkTokenType(TokenType.COMMAND)
-    ) {
-      allArgs.push(this.parsePrimary());
+    // Step 1: Parse the content expression (everything before operation keyword)
+    const contentExpr = this.parseExpression();
+
+    if (!contentExpr) {
+      this.addError('Put command requires content expression');
+      return null;
     }
 
-    // Now find the operation keyword and restructure
-    let operationIndex = -1;
-    let operationKeyword = '';
+    // Step 2: Look for operation keyword (into, before, after, at)
+    const validOperations = ['into', 'before', 'after', 'at'];
+    const currentToken = this.peek();
 
-    for (let i = 0; i < allArgs.length; i++) {
-      const arg = allArgs[i];
-      // Check for identifier, literal, AND keyword types for operation keywords
-      const argValue = (arg as any).name || (arg as any).value;
-      if (
-        (arg.type === 'identifier' || arg.type === 'literal' || arg.type === 'keyword') &&
-        [
-          'into',
-          'before',
-          'after',
-          'at',
-          'at start of',
-          'at end of',
-          'at the start of',
-          'at the end of',
-        ].includes(argValue)
-      ) {
-        operationIndex = i;
-        operationKeyword = argValue;
-        // debug.parse('🔍 PARSER: found operation keyword', { arg, operationKeyword, type: arg.type });
-        break;
+    if (!currentToken || !validOperations.includes(currentToken.value)) {
+      this.addError(`Expected operation keyword (into, before, after, at) after put expression, got: ${currentToken?.value}`);
+      return null;
+    }
+
+    let operation = this.advance().value;  // consume 'into', 'before', 'after', or 'at'
+
+    // Step 3: Handle "at start of" / "at end of" multi-word operations
+    if (operation === 'at') {
+      if (this.check('start') || this.check('the')) {
+        if (this.check('the')) {
+          this.advance();  // consume 'the'
+        }
+        if (this.check('start')) {
+          this.advance();  // consume 'start'
+          if (this.check('of')) {
+            this.advance();  // consume 'of'
+            operation = 'at start of';
+          }
+        }
+      } else if (this.check('end')) {
+        this.advance();  // consume 'end'
+        if (this.check('of')) {
+          this.advance();  // consume 'of'
+          operation = 'at end of';
+        }
       }
     }
 
-    if (operationIndex === -1) {
-      // debug.parse('⚠️ PARSER: no operation keyword found');
-      // Return all args as-is (fallback)
-      return {
-        type: 'command',
-        name: identifierNode.name,
-        args: allArgs as ExpressionNode[],
-        isBlocking: false,
-        start: identifierNode.start || 0,
-        end: this.getPosition().end,
-        line: identifierNode.line || 1,
-        column: identifierNode.column || 1,
-      };
+    // Step 4: Parse the target expression
+    const targetExpr = this.parseExpression();
+
+    if (!targetExpr) {
+      this.addError('Put command requires target expression after operation keyword');
+      return null;
     }
 
-    // debug.parse('🔍 PARSER: found operation keyword', { operationKeyword, operationIndex });
-
-    // Restructure: [content_args...] + [operation] + [target_args...]
-    const contentArgs = allArgs.slice(0, operationIndex);
-    const targetArgs = allArgs.slice(operationIndex + 1);
-
-    // Build final args: content, operation, target
-    const finalArgs: ASTNode[] = [];
-
-    // Content (could be multiple parts, combine if needed)
-    if (contentArgs.length === 1) {
-      finalArgs.push(contentArgs[0]);
-    } else if (contentArgs.length > 1) {
-      // Multiple content parts - keep as separate args for now
-      finalArgs.push(...contentArgs);
-    }
-
-    // Operation keyword
-    finalArgs.push(this.createIdentifier(operationKeyword));
-
-    // Target (could be multiple parts, combine if needed)
-    if (targetArgs.length === 1) {
-      finalArgs.push(targetArgs[0]);
-    } else if (targetArgs.length > 1) {
-      // Multiple target parts - keep as separate args for now
-      finalArgs.push(...targetArgs);
-    }
-
+    // Step 5: Create command node with proper structure
     const result = {
       type: 'command' as const,
       name: identifierNode.name,
-      args: finalArgs as ExpressionNode[],
+      args: [
+        contentExpr,
+        this.createIdentifier(operation),
+        targetExpr
+      ] as ExpressionNode[],
       isBlocking: false,
       start: identifierNode.start || 0,
       end: this.getPosition().end,
