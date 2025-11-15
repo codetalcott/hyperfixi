@@ -593,11 +593,66 @@ export class Runtime {
   }
 
   /**
+   * Build command input from args and modifiers for multi-word commands
+   * Returns null if this command doesn't use modifiers or should fall through to existing logic
+   */
+  private async buildCommandInputFromModifiers(
+    name: string,
+    args: ExpressionNode[],
+    modifiers: Record<string, ExpressionNode>,
+    context: ExecutionContext
+  ): Promise<any | null> {
+    switch (name) {
+      case 'append': {
+        // append <content> to <target>
+        const content = args.length > 0 ? await this.execute(args[0], context) : undefined;
+        const target = modifiers.to ? await this.execute(modifiers.to, context) : undefined;
+        return { content, target };
+      }
+
+      case 'fetch': {
+        // fetch <url> [as <type>] [with <options>]
+        const url = args.length > 0 ? await this.execute(args[0], context) : undefined;
+        const responseType = modifiers.as
+          ? await this.execute(modifiers.as, context)
+          : undefined;
+        const options = modifiers.with ? await this.execute(modifiers.with, context) : undefined;
+        return { url, responseType, options };
+      }
+
+      case 'make': {
+        // make (a|an) <type>
+        const article = modifiers.a || modifiers.an;
+        const type = args.length > 0 ? await this.execute(args[0], context) : undefined;
+        return { type, article: article ? 'a' : undefined };
+      }
+
+      case 'send': {
+        // send <event> to <target>
+        const event = args.length > 0 ? await this.execute(args[0], context) : undefined;
+        const target = modifiers.to ? await this.execute(modifiers.to, context) : undefined;
+        return { event, target };
+      }
+
+      case 'throw': {
+        // throw <error>
+        const error = args.length > 0 ? await this.execute(args[0], context) : undefined;
+        return { error };
+      }
+
+      default:
+        // Not a multi-word command - return null to fall through to existing logic
+        return null;
+    }
+  }
+
+  /**
    * Execute enhanced command with adapter
    */
   private async executeEnhancedCommand(
     name: string,
     args: ExpressionNode[],
+    modifiers: Record<string, ExpressionNode>,
     context: ExecutionContext
   ): Promise<unknown> {
     const adapter = await this.enhancedRegistry.getAdapter(name);
@@ -615,6 +670,22 @@ export class Runtime {
     }
 
     let evaluatedArgs: unknown[];
+
+    // Handle multi-word commands with modifiers (append...to, fetch...as, send...to, etc.)
+    if (Object.keys(modifiers).length > 0) {
+      const commandInput = await this.buildCommandInputFromModifiers(
+        name,
+        args,
+        modifiers,
+        context
+      );
+
+      if (commandInput !== null) {
+        // Command was handled by modifier logic
+        return await adapter.execute(context, commandInput);
+      }
+      // Otherwise fall through to existing logic
+    }
 
     // Special handling for commands with natural language syntax
     if (name === 'put' && args.length >= 3) {
@@ -1389,12 +1460,14 @@ export class Runtime {
    * Execute a command node (hide, show, wait, add, remove, etc.)
    */
   private async executeCommand(node: CommandNode, context: ExecutionContext): Promise<unknown> {
-    const { name, args } = node;
+    const { name, args, modifiers } = node;
 
     // DEBUG: Log all command executions
     debug.command(`executeCommand() called:`, {
       name,
       argsLength: args?.length,
+      hasModifiers: !!modifiers,
+      modifierKeys: modifiers ? Object.keys(modifiers) : [],
       useEnhanced: this.options.useEnhancedCommands,
       hasEnhanced: this.enhancedRegistry.has(name.toLowerCase()),
     });
@@ -1414,6 +1487,7 @@ export class Runtime {
       return await this.executeEnhancedCommand(
         name.toLowerCase(),
         (args || []) as ExpressionNode[],
+        modifiers || {},
         context
       );
     }

@@ -100,6 +100,8 @@ export interface CommandNode extends ASTNode {
   body?: StatementNode[];
   implicitTarget?: ExpressionNode;
   isBlocking: boolean;
+  // Modifiers for multi-word commands (e.g., "append X to Y" → modifiers: {to: Y})
+  modifiers?: Record<string, ExpressionNode>;
 }
 
 // ExpressionNode is now imported from base-types.ts for consistency

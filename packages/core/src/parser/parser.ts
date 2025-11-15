@@ -77,6 +77,22 @@ interface PossessiveExpressionNode extends ASTNode {
 //   properties: Array<{ key: ASTNode; value: ASTNode }>;
 // }
 
+// Multi-word command pattern definitions
+// These patterns define which keywords indicate modifiers for specific commands
+interface MultiWordPattern {
+  command: string;
+  keywords: string[];
+  syntax: string;
+}
+
+const MULTI_WORD_PATTERNS: MultiWordPattern[] = [
+  { command: 'append', keywords: ['to'], syntax: 'append <value> [to <target>]' },
+  { command: 'fetch', keywords: ['as', 'with'], syntax: 'fetch <url> [as <type>] [with <options>]' },
+  { command: 'make', keywords: ['a', 'an'], syntax: 'make (a|an) <type>' },
+  { command: 'send', keywords: ['to'], syntax: 'send <event> to <target>' },
+  { command: 'throw', keywords: [], syntax: 'throw <error>' },
+];
+
 export class Parser {
   private tokens: Token[];
   private current: number = 0;
@@ -3779,6 +3795,90 @@ export class Parser {
     };
   }
 
+  /**
+   * Get multi-word pattern definition for a command
+   */
+  private getMultiWordPattern(commandName: string): MultiWordPattern | null {
+    return MULTI_WORD_PATTERNS.find(p => p.command === commandName.toLowerCase()) || null;
+  }
+
+  /**
+   * Check if current token is one of the specified keywords
+   */
+  private isKeyword(token: Token | undefined, keywords: string[]): boolean {
+    if (!token) return false;
+    return keywords.some(kw => token.value === kw || token.value.toLowerCase() === kw);
+  }
+
+  /**
+   * Parse multi-word command with modifiers (e.g., "append X to Y", "fetch URL as json")
+   * Returns null if this command doesn't use multi-word syntax
+   */
+  private parseMultiWordCommand(commandToken: Token, commandName: string): CommandNode | null {
+    const pattern = this.getMultiWordPattern(commandName);
+    if (!pattern) return null;
+
+    const args: ASTNode[] = [];
+    const modifiers: Record<string, ExpressionNode> = {};
+
+    // Parse primary arguments (before any keywords)
+    while (
+      !this.isAtEnd() &&
+      !this.isKeyword(this.peek(), pattern.keywords) &&
+      !this.check('then') &&
+      !this.check('and') &&
+      !this.check('else') &&
+      !this.check('end') &&
+      !this.checkTokenType(TokenType.COMMAND)
+    ) {
+      const expr = this.parseExpression();
+      if (expr) {
+        args.push(expr);
+      } else {
+        break;
+      }
+
+      // Handle comma-separated arguments
+      if (this.match(',')) {
+        continue;
+      }
+
+      // Check if we're at a modifier keyword
+      if (this.isKeyword(this.peek(), pattern.keywords)) {
+        break;
+      }
+    }
+
+    // Parse modifiers (keywords + their arguments)
+    while (!this.isAtEnd() && this.isKeyword(this.peek(), pattern.keywords)) {
+      const keyword = this.advance().value;
+
+      // Parse the expression after the keyword
+      const modifierValue = this.parseExpression();
+      if (modifierValue) {
+        modifiers[keyword] = modifierValue as ExpressionNode;
+      }
+
+      // Check for more modifiers
+      if (!this.isKeyword(this.peek(), pattern.keywords)) {
+        break;
+      }
+    }
+
+    const pos = this.getPosition();
+    return {
+      type: 'command',
+      name: commandName,
+      args: args as ExpressionNode[],
+      modifiers: Object.keys(modifiers).length > 0 ? modifiers : undefined,
+      isBlocking: false,
+      start: commandToken.start || pos.start,
+      end: pos.end,
+      line: commandToken.line || pos.line,
+      column: commandToken.column || pos.column,
+    };
+  }
+
   private parseCommand(): CommandNode {
     const commandToken = this.previous();
     let commandName = commandToken.value;
@@ -3787,6 +3887,12 @@ export class Parser {
     if (commandName === 'beep' && this.check('!')) {
       this.advance(); // consume the !
       commandName = 'beep!';
+    }
+
+    // Check if this is a multi-word command (append...to, fetch...as, etc.)
+    const multiWordResult = this.parseMultiWordCommand(commandToken, commandName);
+    if (multiWordResult) {
+      return multiWordResult;
     }
 
     // Handle control flow commands
