@@ -531,6 +531,8 @@ export interface EventHandlerNode extends ASTNode {
   readonly event: string; // Primary event name (for backward compatibility)
   readonly events?: string[]; // All event names when using "on event1 or event2" syntax
   readonly target?: string;
+  readonly selector?: string; // CSS selector for event delegation ("from" keyword)
+  readonly condition?: ASTNode; // Optional event condition ("[condition]" syntax)
   readonly args?: string[]; // Event parameter names to destructure (e.g., ['clientX', 'clientY'])
   readonly commands: ASTNode[];
 }

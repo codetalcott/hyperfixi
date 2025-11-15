@@ -1583,13 +1583,13 @@ export class Runtime {
     node: EventHandlerNode,
     context: ExecutionContext
   ): Promise<void> {
-    const { event, events, commands, target, args } = node;
+    const { event, events, commands, target, args, selector } = node as EventHandlerNode & { selector?: string };
 
     // Get all event names (support both single event and multiple events with "or")
     const eventNames = events && events.length > 0 ? events : [event];
 
     debug.runtime(
-      `RUNTIME: executeEventHandler for events '${eventNames.join(', ')}', target=${target}, args=${args}, context.me=`,
+      `RUNTIME: executeEventHandler for events '${eventNames.join(', ')}', target=${target}, selector=${selector}, args=${args}, context.me=`,
       context.me
     );
 
@@ -1638,6 +1638,22 @@ export class Runtime {
         return;
       }
       (domEvent as any).__hyperfixi_recursion_depth = currentDepth + 1;
+
+      // Event delegation: if selector is provided, check if event.target matches
+      if (selector && domEvent.target instanceof Element) {
+        const matchesSelector = domEvent.target.matches(selector);
+        debug.event(`EVENT DELEGATION: checking if target matches selector '${selector}': ${matchesSelector}`);
+
+        if (!matchesSelector) {
+          // Check if any parent element matches (for bubbled events)
+          const closestMatch = domEvent.target.closest(selector);
+          if (!closestMatch) {
+            debug.event(`EVENT DELEGATION: target does not match selector '${selector}', skipping handler`);
+            return; // Skip this handler if selector doesn't match
+          }
+          debug.event(`EVENT DELEGATION: parent element matches selector '${selector}'`);
+        }
+      }
 
       debug.event(`EVENT FIRED: ${domEvent.type} on`, domEvent.target, 'with', commands.length, 'commands');
 
