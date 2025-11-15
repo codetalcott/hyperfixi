@@ -1683,7 +1683,7 @@ export class Runtime {
       debug.runtime(`RUNTIME: Setting up MutationObserver for content changes on watch target`);
 
       // Evaluate the watchTarget expression to get the target element(s)
-      const watchTargetResult = await this.evaluate(watchTarget, context);
+      const watchTargetResult = await this.execute(watchTarget, context);
       let watchTargetElements: HTMLElement[] = [];
 
       if (this.isElement(watchTargetResult)) {
