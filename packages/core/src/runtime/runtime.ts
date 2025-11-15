@@ -1230,8 +1230,14 @@ export class Runtime {
       } else if (nodeType(targetArg) === 'literal') {
         target = (targetArg as any).value;
       } else {
-        // Fallback: evaluate if it's a complex expression
-        target = (await this.execute(targetArg, context)) as string | number;
+        // Fallback: evaluate if it's a complex expression (e.g., selector)
+        const evaluated = await this.execute(targetArg, context);
+        // If evaluation returns an array (from selector), extract first element
+        if (Array.isArray(evaluated) && evaluated.length > 0) {
+          target = evaluated[0];
+        } else {
+          target = evaluated as string | number;
+        }
       }
 
       // Check for "by <amount>" pattern and "global" scope marker
