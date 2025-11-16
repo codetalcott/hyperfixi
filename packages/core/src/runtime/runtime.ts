@@ -652,22 +652,39 @@ export class Runtime {
       }
 
       case 'measure': {
-        // measure <target> <property> [and set <variable>]
-        let target = args.length > 0 ? await this.execute(args[0], context) : undefined;
+        // Handle both old and new measure syntax:
+        // - Old: "measure x and set var" (1 arg + modifier) -> property=x, target=me
+        // - New: "measure <#elem/> x and set var" (2 args + modifier) -> target=#elem, property=x
 
-        // Extract first element if target is an array/NodeList
-        if (Array.isArray(target) && target.length > 0) {
-          target = target[0];
-        }
-
-        // Property is an identifier - extract name without evaluating
+        let target: any = undefined;
         let property: string | undefined;
-        if (args.length > 1) {
-          const propertyNode = args[1] as any;
+
+        if (args.length === 1) {
+          // Single argument: treat as property, target defaults to 'me'
+          const propertyNode = args[0] as any;
           if (propertyNode.type === 'identifier') {
             property = propertyNode.name;
           } else {
-            property = await this.execute(args[1], context);
+            property = await this.execute(args[0], context);
+          }
+          // target stays undefined, will default to context.me in execute()
+        } else {
+          // Two or more arguments: first is target, second is property
+          target = await this.execute(args[0], context);
+
+          // Extract first element if target is an array/NodeList
+          if (Array.isArray(target) && target.length > 0) {
+            target = target[0];
+          }
+
+          // Property is an identifier - extract name without evaluating
+          if (args.length > 1) {
+            const propertyNode = args[1] as any;
+            if (propertyNode.type === 'identifier') {
+              property = propertyNode.name;
+            } else {
+              property = await this.execute(args[1], context);
+            }
           }
         }
 
@@ -914,22 +931,39 @@ export class Runtime {
       // Use context.me as implicit target
       evaluatedArgs = [classArg, context.me];
     } else if (name === 'measure' && args.length >= 1) {
-      // Handle "measure <target> <property>" pattern
-      let target = args.length > 0 ? await this.execute(args[0], context) : undefined;
+      // Handle both old and new measure syntax:
+      // - Old: "measure x" (1 arg) -> property=x, target=me (implicit)
+      // - New: "measure <#elem/> x" (2 args) -> target=#elem, property=x
 
-      // Extract first element if target is an array/NodeList
-      if (Array.isArray(target) && target.length > 0) {
-        target = target[0];
-      }
-
-      // Property is an identifier - extract name without evaluating
+      let target: any = undefined;
       let property: string | undefined;
-      if (args.length > 1) {
-        const propertyNode = args[1] as any;
+
+      if (args.length === 1) {
+        // Single argument: treat as property, target defaults to 'me'
+        const propertyNode = args[0] as any;
         if (propertyNode.type === 'identifier') {
           property = propertyNode.name;
         } else {
-          property = await this.execute(args[1], context);
+          property = await this.execute(args[0], context);
+        }
+        // target stays undefined, will default to context.me in execute()
+      } else {
+        // Two or more arguments: first is target, second is property
+        target = await this.execute(args[0], context);
+
+        // Extract first element if target is an array/NodeList
+        if (Array.isArray(target) && target.length > 0) {
+          target = target[0];
+        }
+
+        // Property is an identifier - extract name without evaluating
+        if (args.length > 1) {
+          const propertyNode = args[1] as any;
+          if (propertyNode.type === 'identifier') {
+            property = propertyNode.name;
+          } else {
+            property = await this.execute(args[1], context);
+          }
         }
       }
 

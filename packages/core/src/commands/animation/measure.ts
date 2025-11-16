@@ -158,13 +158,9 @@ export class MeasureCommand
     // Set the result in context
     Object.assign(context, { it: measurementResult.value });
 
-    return {
-      element: targetElement,
-      property: measureProperty,
-      value: measurementResult.value,
-      unit: measurementResult.unit,
-      stored: !!variable,
-    };
+    // Return just the value (for `it` context and `put it into` commands)
+    // Note: The full measurement details are available in context.it metadata if needed
+    return measurementResult.value as any;
   }
 
   private async resolveElement(
