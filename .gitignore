@@ -121,6 +121,7 @@ packages/*/html/
 **/test-*.html
 !**/test-runner.html
 !**/test-dashboard.html
+!**/test-measure-css-properties.html
 
 # MCP server files
 mcp-server-hyperscript/dist/
