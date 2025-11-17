@@ -245,6 +245,9 @@ export class HideCommand
   }
 
   private hideWithDisplay(element: HTMLElement): void {
+    // Remove .show class for CSS compatibility
+    element.classList.remove('show');
+
     // Preserve original display value if not already stored
     if (!element.dataset.originalDisplay) {
       const currentDisplay = element.style.display;
@@ -256,6 +259,10 @@ export class HideCommand
   }
 
   private hideWithClass(element: HTMLElement): void {
+    // Remove .show class (standard _hyperscript behavior)
+    element.classList.remove('show');
+
+    // Also add hide class if specified
     if (this.options.className) {
       element.classList.add(this.options.className);
     }

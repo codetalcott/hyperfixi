@@ -242,6 +242,9 @@ export class ShowCommand
   }
 
   private showWithDisplay(element: HTMLElement): void {
+    // Also add .show class for CSS compatibility
+    element.classList.add('show');
+
     // Restore original display value if available
     const originalDisplay = element.dataset.originalDisplay;
 
@@ -260,6 +263,10 @@ export class ShowCommand
   }
 
   private showWithClass(element: HTMLElement): void {
+    // Add .show class (standard _hyperscript behavior)
+    element.classList.add('show');
+
+    // Also remove hide class if specified
     if (this.options.className) {
       element.classList.remove(this.options.className);
     }
