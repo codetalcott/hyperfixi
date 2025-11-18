@@ -3056,11 +3056,11 @@ export class Parser {
       this.consume(']', "Expected ']' after event condition");
     }
 
-    // Optional: handle "from selector"
-    let selector: string | undefined;
+    // Optional: handle "from <target>"
+    let target: string | undefined;
     if (this.match('from')) {
-      const selectorToken = this.advance();
-      selector = selectorToken.value;
+      const targetToken = this.advance();
+      target = targetToken.value;
     }
 
     // Optional: handle "of attribute" for mutation events
@@ -3529,8 +3529,8 @@ export class Parser {
       node.condition = condition;
     }
 
-    if (selector) {
-      node.selector = selector;
+    if (target) {
+      node.target = target;
     }
 
     if (attributeName) {

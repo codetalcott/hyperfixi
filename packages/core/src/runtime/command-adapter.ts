@@ -270,18 +270,59 @@ export class CommandAdapter implements RuntimeCommand {
           // Extract parameters (if present)
           if (args.length > 1 && args[1]) {
             const paramsNode = args[1];
-            if (typeof paramsNode === 'object' && paramsNode !== null) {
-              // Check if it's an object literal node from the parser
-              if ('properties' in paramsNode && Array.isArray((paramsNode as any).properties)) {
-                // It's an AST objectLiteral node - already evaluated by runtime
-                parameters = paramsNode as Record<string, unknown>;
-              } else if ('type' in paramsNode && (paramsNode as any).type === 'objectLiteral') {
-                // AST node not yet evaluated - this shouldn't happen but handle it
-                parameters = paramsNode as Record<string, unknown>;
-              } else {
-                // Already evaluated to a plain object
-                parameters = paramsNode as Record<string, unknown>;
+            debug.command(`INSTALL ADAPTER: paramsNode type check:`, {
+              isObject: typeof paramsNode === 'object',
+              isNull: paramsNode === null,
+              hasType: 'type' in (paramsNode || {}),
+              hasProperties: 'properties' in (paramsNode || {}),
+              typeValue: (paramsNode as any)?.type,
+              keys: Object.keys(paramsNode || {})
+            });
+
+            // Check if it's already a plain evaluated object (from runtime.ts special handling)
+            if (
+              typeof paramsNode === 'object' &&
+              paramsNode !== null &&
+              !('type' in paramsNode) &&
+              !('properties' in paramsNode)
+            ) {
+              debug.command(`INSTALL ADAPTER: Branch 1 - Already evaluated object`);
+              debug.command(`INSTALL ADAPTER: Evaluated params keys:`, Object.keys(paramsNode));
+              debug.command(`INSTALL ADAPTER: Evaluated params values:`, paramsNode);
+              // Already evaluated to a plain object by runtime
+              parameters = paramsNode as Record<string, unknown>;
+            } else if (
+              typeof paramsNode === 'object' &&
+              paramsNode !== null &&
+              ('properties' in paramsNode || (paramsNode as any).type === 'objectLiteral')
+            ) {
+              debug.command(`INSTALL ADAPTER: Branch 2 - AST objectLiteral node`);
+              // AST objectLiteral node - need to evaluate property values
+              const props = (paramsNode as any).properties || [];
+              parameters = {};
+
+              // Evaluate each property value in the current context
+              debug.command(`INSTALL ADAPTER: Evaluating ${props.length} parameter(s)`);
+              for (const prop of props) {
+                const key = prop.key?.name || prop.key?.value;
+                if (key && prop.value) {
+                  debug.command(`INSTALL ADAPTER: Evaluating parameter "${key}" with value node type:`, prop.value?.type);
+                  // Evaluate the property value using the expression evaluator
+                  const evaluator = new ExpressionEvaluator(typedContext);
+                  try {
+                    parameters[key] = await evaluator.evaluate(prop.value);
+                    debug.command(`INSTALL ADAPTER: Parameter "${key}" evaluated to:`, parameters[key]);
+                  } catch (error) {
+                    debug.command(`INSTALL ADAPTER: Failed to evaluate parameter "${key}":`, error);
+                    // If evaluation fails, use undefined
+                    parameters[key] = undefined;
+                  }
+                }
               }
+            } else if (typeof paramsNode === 'object' && paramsNode !== null) {
+              debug.command(`INSTALL ADAPTER: Branch 3 - Fallback object`);
+              // Fallback: treat as evaluated object
+              parameters = paramsNode as Record<string, unknown>;
             }
           }
 
@@ -558,6 +599,10 @@ export class CommandAdapter implements RuntimeCommand {
           } else {
             input = {};
           }
+        } else if (this.impl.name === 'call' || this.impl.metadata?.name === 'call' ||
+                   this.impl.name === 'get' || this.impl.metadata?.name === 'get') {
+          // CALL/GET commands expect {expression: ...} format
+          input = { expression: args.length === 1 ? args[0] : args };
         } else {
           // Default input handling for other commands
           input = args.length === 1 ? args[0] : args;

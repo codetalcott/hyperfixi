@@ -1261,14 +1261,51 @@ export class Runtime {
       const condition = await this.execute(args[0], context);
       // Pass evaluated condition + raw block nodes
       evaluatedArgs = [condition, ...args.slice(1)];
+    } else if (name === 'install') {
+      // INSTALL: Keep behavior name as identifier, but evaluate parameter values
+      const behaviorNameArg = args[0]; // Identifier node for behavior name
+      const parametersArg = args[1]; // ObjectLiteral node with parameters
+
+      debug.runtime(`[INSTALL RUNTIME] args.length: ${args.length}`);
+      debug.runtime(`[INSTALL RUNTIME] parametersArg:`, parametersArg);
+      debug.runtime(`[INSTALL RUNTIME] parametersArg type:`, (parametersArg as any)?.type);
+      debug.runtime(`[INSTALL RUNTIME] has properties:`, 'properties' in (parametersArg || {}));
+
+      evaluatedArgs = [behaviorNameArg]; // Keep behavior name as-is
+
+      // If there's a parameters object literal, evaluate its property values
+      if (parametersArg && (parametersArg as any).type === 'objectLiteral') {
+        debug.runtime(`[INSTALL RUNTIME] Evaluating objectLiteral parameters`);
+        const params = (parametersArg as any).properties || [];
+        const evaluatedParams: Record<string, any> = {};
+
+        for (const prop of params) {
+          const key = prop.key.name || prop.key.value;
+          debug.runtime(`[INSTALL RUNTIME] Evaluating param "${key}"`);
+          // Evaluate the parameter value in the current context (where 'me' is the install target)
+          let value = await this.execute(prop.value, context);
+          // If value is an array (from expression like `.titlebar in me`), extract first element
+          if (Array.isArray(value) && value.length > 0) {
+            value = value[0];
+            debug.runtime(`[INSTALL RUNTIME] Extracted first element from array for "${key}"`);
+          }
+          debug.runtime(`[INSTALL RUNTIME] Param "${key}" = `, value);
+          evaluatedParams[key] = value;
+        }
+
+        evaluatedArgs.push(evaluatedParams);
+      } else {
+        debug.runtime(`[INSTALL RUNTIME] No objectLiteral, passing parametersArg as-is`);
+        if (parametersArg) {
+          evaluatedArgs.push(parametersArg);
+        }
+      }
     } else if (
       name === 'repeat' ||
       name === 'transition' ||
-      name === 'install' ||
       name === 'halt'
     ) {
-      // REPEAT, TRANSITION, INSTALL, and HALT commands need raw AST nodes for the adapter to extract metadata
-      // INSTALL needs raw identifier nodes to extract behavior names (e.g., "Draggable", "Sortable")
+      // REPEAT, TRANSITION, and HALT commands need raw AST nodes for the adapter to extract metadata
       // HALT needs raw nodes to detect "halt the event" pattern
       // Don't evaluate args - pass them as-is to the adapter
       evaluatedArgs = args;
@@ -1340,9 +1377,39 @@ export class Runtime {
           return await this.execute(arg, context);
         })
       );
+    } else if (name === 'trigger') {
+      // TRIGGER: Extract event name from identifier node instead of evaluating
+      // First arg is event name (identifier/string), rest are data/target args
+      evaluatedArgs = await Promise.all(
+        args.map(async (arg, index) => {
+          if (index === 0) {
+            // First argument is the event name - extract string value from identifier
+            if (arg && typeof arg === 'object' && 'value' in arg) {
+              // Extract the token value (e.g., "draggable:start")
+              return (arg as any).value;
+            } else if (arg && typeof arg === 'object' && 'name' in arg) {
+              // Alternative: extract name property
+              return (arg as any).name;
+            } else if (typeof arg === 'string') {
+              // Already a string
+              return arg;
+            }
+            // Fallback: evaluate it
+            return await this.execute(arg, context);
+          }
+          // For other args (data, "on", target), evaluate normally
+          return await this.execute(arg, context);
+        })
+      );
     } else {
       // For other commands, evaluate all arguments normally
+      console.log('[RUNTIME DEBUG] Evaluating args for command:', name, 'args:', args.map(arg => ({type: (arg as any)?.type, value: (arg as any)?.value, name: (arg as any)?.name})));
       evaluatedArgs = await Promise.all(args.map(arg => this.execute(arg, context)));
+      console.log('[RUNTIME DEBUG] Evaluated args result:', evaluatedArgs, 'first arg:', {
+        isArray: Array.isArray(evaluatedArgs[0]),
+        length: Array.isArray(evaluatedArgs[0]) ? evaluatedArgs[0].length : 'N/A',
+        value: evaluatedArgs[0]
+      });
     }
 
     // Execute through enhanced adapter
@@ -1433,7 +1500,9 @@ export class Runtime {
 
       result = await adapter.execute(context, input);
     } else {
+      console.log('[RUNTIME DEBUG] Calling adapter.execute for command:', name, 'with evaluatedArgs:', evaluatedArgs);
       result = await adapter.execute(context, ...evaluatedArgs);
+      console.log('[RUNTIME DEBUG] Adapter returned:', result);
     }
 
     return result;
@@ -1847,9 +1916,33 @@ export class Runtime {
       for (const command of commands) {
         try {
           debug.command(`EXECUTING COMMAND in event handler:`, command);
-          const result = await this.execute(command, eventContext);
+          let result = await this.execute(command, eventContext);
+          console.log('[RUNTIME DEBUG] Command result:', {isArray: Array.isArray(result), hasResult: result !== null && typeof result === 'object' && 'result' in result, result});
           // Update 'it' with command result for next command in sequence
           if (result !== undefined) {
+            // If result is a call/get command output object, extract the result property
+            // This handles: {result, wasAsync, expressionType}
+            if (result !== null && typeof result === 'object' && 'result' in result && 'wasAsync' in result) {
+              console.log('[RUNTIME DEBUG] Extracting result property from call/get command output');
+              result = result.result;
+              console.log('[RUNTIME DEBUG] After extracting result:', result);
+            }
+            // If result is a repeat command output object, extract the lastResult property
+            // This handles: {type, iterations, completed, lastResult, interrupted}
+            else if (result !== null && typeof result === 'object' && 'type' in result && 'iterations' in result && 'lastResult' in result) {
+              console.log('[RUNTIME DEBUG] Extracting lastResult property from repeat command output');
+              result = result.lastResult;
+              console.log('[RUNTIME DEBUG] After extracting lastResult:', result);
+            }
+
+            // If result is an array from selector evaluation, extract first element
+            // This allows "get #dialog" then "call it.showModal()" to work properly
+            if (Array.isArray(result) && result.length > 0) {
+              console.log('[RUNTIME DEBUG] Extracting first element from array');
+              result = result[0];
+              console.log('[RUNTIME DEBUG] After extracting element:', result);
+            }
+            console.log('[RUNTIME DEBUG] Setting context.it to:', result);
             eventContext.it = result;
             eventContext.result = result;
           }
@@ -1888,7 +1981,10 @@ export class Runtime {
     // Bind event handlers to all target elements for all event names
     for (const target of targets) {
       for (const eventName of eventNames) {
-        debug.runtime(`RUNTIME: Adding event listener for '${eventName}' on element:`, target);
+        const elementInfo = this.isElement(target) ?
+          `${target.tagName}${target.id ? '#' + target.id : ''}${target.className ? '.' + target.className.split(' ').join('.') : ''}` :
+          'unknown';
+        debug.runtime(`RUNTIME: Adding event listener for '${eventName}' on element: ${elementInfo}`, target);
         target.addEventListener(eventName, eventHandler);
 
         // Store event handler for potential cleanup

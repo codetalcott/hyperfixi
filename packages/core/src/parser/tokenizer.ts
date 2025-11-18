@@ -868,6 +868,7 @@ function tokenizeIdentifier(tokenizer: Tokenizer): void {
   while (tokenizer.position < inputLength) {
     const char = input[tokenizer.position];
     // Optimized character checking - avoid function calls
+    // Include ':' to support namespaced event names like "draggable:start"
     if (
       (char >= 'a' && char <= 'z') ||
       (char >= 'A' && char <= 'Z') ||
