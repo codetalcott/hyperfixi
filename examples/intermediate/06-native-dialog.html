@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>06: Native Dialog Element - HyperFixi Examples</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .description {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .demo {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            font-weight: 600;
+            margin: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #6c757d;
+        }
+
+        button.danger {
+            background: #dc3545;
+        }
+
+        button.success {
+            background: #28a745;
+        }
+
+        button.info {
+            background: #17a2b8;
+        }
+
+        /* Native Dialog Styles */
+        dialog {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 0;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+
+        .dialog-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .dialog-header h3 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .close-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .dialog-body {
+            padding: 30px;
+            text-align: left;
+        }
+
+        .dialog-body p {
+            line-height: 1.6;
+            margin: 15px 0;
+            color: #333;
+        }
+
+        .dialog-footer {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            text-align: right;
+            border-top: 1px solid #e0e0e0;
+            border-radius: 0 0 16px 16px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .code {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+        }
+
+        .keyword {
+            color: #c678dd;
+        }
+
+        .string {
+            color: #98c379;
+        }
+
+        .comment {
+            color: #5c6370;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .nav-buttons a {
+            background: #f0f0f0;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .nav-buttons a:hover {
+            background: #e0e0e0;
+        }
+
+        .result-display {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: monospace;
+        }
+
+        .advantage {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        /* Non-modal dialog specific */
+        dialog.non-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>Intermediate</strong> / 06: Native Dialog
+        </div>
+
+        <h1>🗨️ Native Dialog Element</h1>
+
+        <div class="description">
+            <strong>Modern, accessible dialogs with the native &lt;dialog&gt; element</strong><br>
+            Learn how to use HTML's built-in dialog element with hyperscript for cleaner,
+            more accessible modals with automatic focus management and keyboard handling.
+        </div>
+
+        <div>
+            <span class="tag">dialog</span>
+            <span class="tag">native</span>
+            <span class="tag">accessibility</span>
+            <span class="tag">modern HTML</span>
+        </div>
+
+        <!-- Why Use <dialog>? -->
+        <h2>Why Use Native &lt;dialog&gt;?</h2>
+
+        <div class="advantage">
+            ✅ <strong>Automatic Accessibility:</strong> Built-in ARIA roles and keyboard handling
+        </div>
+        <div class="advantage">
+            ✅ <strong>Focus Management:</strong> Automatic focus trapping and return
+        </div>
+        <div class="advantage">
+            ✅ <strong>ESC Key Handling:</strong> Closes on ESC by default (can be prevented)
+        </div>
+        <div class="advantage">
+            ✅ <strong>Backdrop Support:</strong> Native ::backdrop pseudo-element
+        </div>
+        <div class="advantage">
+            ✅ <strong>Simpler Code:</strong> No need for manual show/hide class management
+        </div>
+
+        <!-- Demo 1: Simple Modal Dialog -->
+        <div class="demo">
+            <h2>Demo 1: Simple Modal Dialog</h2>
+
+            <button _="on click
+                          get #info-dialog
+                          call it.showModal()">
+                Open Info Dialog
+            </button>
+
+            <dialog id="info-dialog">
+                <div class="dialog-header">
+                    <h3>ℹ️ Information</h3>
+                    <button class="close-btn"
+                            _="on click
+                                  get #info-dialog
+                                  call it.close()">×</button>
+                </div>
+                <div class="dialog-body">
+                    <p>
+                        <strong>Welcome to Native Dialog Elements!</strong>
+                    </p>
+                    <p>
+                        This dialog uses the HTML5 <code>&lt;dialog&gt;</code> element
+                        with built-in accessibility and keyboard support.
+                    </p>
+                    <p>
+                        Press ESC or click outside to close automatically!
+                    </p>
+                </div>
+                <div class="dialog-footer">
+                    <button class="secondary"
+                            onclick="document.getElementById('info-dialog').close()">
+                        Close
+                    </button>
+                </div>
+            </dialog>
+        </div>
+
+        <!-- Demo 2: Dialog with Form and Return Value -->
+        <div class="demo">
+            <h2>Demo 2: Form Dialog with Return Value</h2>
+
+            <button class="success"
+                    onclick="document.getElementById('form-dialog').showModal()">
+                Add User
+            </button>
+
+            <div id="form-result" class="result-display" style="display: none;">
+                <strong>Result:</strong> <span id="result-text">None</span>
+            </div>
+
+            <dialog id="form-dialog">
+                <div class="dialog-header"
+                     style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                    <h3>👤 New User</h3>
+                    <button class="close-btn"
+                            onclick="document.getElementById('form-dialog').close('cancelled')">×</button>
+                </div>
+                <form method="dialog">
+                    <div class="dialog-body">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username"
+                               placeholder="Enter username" required />
+
+                        <label for="role">Role:</label>
+                        <select id="role" name="role">
+                            <option value="developer">Developer</option>
+                            <option value="designer">Designer</option>
+                            <option value="manager">Manager</option>
+                        </select>
+                    </div>
+                    <div class="dialog-footer">
+                        <button type="button" class="secondary"
+                                onclick="document.getElementById('form-dialog').close('cancelled')">
+                            Cancel
+                        </button>
+                        <button type="submit" class="success" value="confirmed">
+                            Create User
+                        </button>
+                    </div>
+                </form>
+            </dialog>
+
+            <!-- Handle dialog close event with hyperscript -->
+            <div _="on close from #form-dialog
+                      get #form-dialog
+                      set returnValue to it.returnValue
+                      if returnValue is 'confirmed'
+                        get #username then set username to it.value
+                        get #role then set role to it.value
+                        get #result-text
+                        set it.textContent to `User '${username}' created as ${role}`
+                        show #form-result
+                      else
+                        get #result-text
+                        set it.textContent to 'User creation cancelled'
+                        show #form-result
+                      end"></div>
+        </div>
+
+        <!-- Demo 3: Non-Modal Dialog -->
+        <div class="demo">
+            <h2>Demo 3: Non-Modal Dialog</h2>
+            <p style="margin-bottom: 20px;">
+                Non-modal dialogs don't block interaction with the page
+            </p>
+
+            <button class="info"
+                    onclick="document.getElementById('non-modal-dialog').show()">
+                Open Non-Modal Dialog
+            </button>
+
+            <dialog id="non-modal-dialog" class="non-modal">
+                <div class="dialog-header"
+                     style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                    <h3>📌 Non-Modal</h3>
+                    <button class="close-btn"
+                            onclick="document.getElementById('non-modal-dialog').close()">×</button>
+                </div>
+                <div class="dialog-body">
+                    <p>
+                        This is a <strong>non-modal</strong> dialog opened with <code>show()</code>
+                        instead of <code>showModal()</code>.
+                    </p>
+                    <p>
+                        You can still interact with the page behind it!
+                    </p>
+                </div>
+                <div class="dialog-footer">
+                    <button class="info"
+                            onclick="document.getElementById('non-modal-dialog').close()">
+                        Close
+                    </button>
+                </div>
+            </dialog>
+        </div>
+
+        <!-- Demo 4: Click Backdrop to Close -->
+        <div class="demo">
+            <h2>Demo 4: Close on Backdrop Click</h2>
+
+            <button class="danger"
+                    onclick="document.getElementById('backdrop-dialog').showModal()">
+                Open Dialog
+            </button>
+
+            <dialog id="backdrop-dialog"
+                    onclick="if (event.target === this) this.close()">
+                <div class="dialog-header"
+                     style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <h3>🎯 Click Outside</h3>
+                    <button class="close-btn"
+                            onclick="event.stopPropagation(); document.getElementById('backdrop-dialog').close()">×</button>
+                </div>
+                <div class="dialog-body" _="on click halt">
+                    <p>
+                        <strong>Click the backdrop</strong> (dark area outside) to close this dialog.
+                    </p>
+                    <p>
+                        This works by checking if <code>event.target</code> is the dialog element itself
+                        (not a child element).
+                    </p>
+                </div>
+                <div class="dialog-footer" onclick="event.stopPropagation()">
+                    <button class="secondary"
+                            onclick="document.getElementById('backdrop-dialog').close()">
+                        Close
+                    </button>
+                </div>
+            </dialog>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+
+        <div class="description" style="margin-bottom: 20px; background: #fff3cd; border-left-color: #ffc107;">
+            <strong>⚠️ Note on Implementation:</strong><br>
+            The native <code>&lt;dialog&gt;</code> element's methods (<code>showModal()</code>, <code>close()</code>)
+            require calling native DOM methods. Since hyperscript's <code>call</code> command doesn't currently
+            support this pattern, we use standard JavaScript <code>onclick</code> handlers instead.
+            This is a common hybrid approach when working with modern browser APIs.<br><br>
+            <strong>Hybrid Approach:</strong> JavaScript for dialog control + hyperscript for event handling and logic
+        </div>
+
+        <h3>Opening a Modal Dialog:</h3>
+        <div class="code">
+<span class="comment">&lt;!-- Use JavaScript onclick for dialog methods --&gt;</span>
+&lt;button <span class="keyword">onclick</span>=<span class="string">"document.getElementById('my-dialog').showModal()"</span>&gt;
+  Open Dialog
+&lt;/button&gt;
+
+&lt;dialog <span class="keyword">id</span>=<span class="string">"my-dialog"</span>&gt;
+  &lt;h2&gt;Dialog Title&lt;/h2&gt;
+  &lt;p&gt;Content here&lt;/p&gt;
+  &lt;button <span class="keyword">onclick</span>=<span class="string">"document.getElementById('my-dialog').close()"</span>&gt;Close&lt;/button&gt;
+&lt;/dialog&gt;
+        </div>
+
+        <h3>Form Dialog with Return Value:</h3>
+        <div class="code">
+&lt;dialog <span class="keyword">id</span>=<span class="string">"form-dialog"</span>&gt;
+  &lt;form <span class="keyword">method</span>=<span class="string">"dialog"</span>&gt;
+    &lt;input <span class="keyword">type</span>=<span class="string">"text"</span> <span class="keyword">name</span>=<span class="string">"username"</span> /&gt;
+    &lt;button <span class="keyword">type</span>=<span class="string">"submit"</span> <span class="keyword">value</span>=<span class="string">"confirmed"</span>&gt;Submit&lt;/button&gt;
+  &lt;/form&gt;
+&lt;/dialog&gt;
+
+<span class="comment">&lt;!-- Hyperscript is great for handling events and logic! --&gt;</span>
+&lt;div <span class="keyword">_</span>=<span class="string">"on close from #form-dialog
+     get #form-dialog
+     set result to it.returnValue
+     if result is 'confirmed'
+       log 'Form submitted!'
+     end"</span>&gt;&lt;/div&gt;
+        </div>
+
+        <h3>Close on Backdrop Click:</h3>
+        <div class="code">
+<span class="comment">&lt;!-- Check if click was on dialog itself (backdrop) --&gt;</span>
+&lt;dialog <span class="keyword">onclick</span>=<span class="string">"if (event.target === this) this.close()"</span>&gt;
+  <span class="comment">&lt;!-- Content with stopPropagation to prevent closing --&gt;</span>
+  &lt;div <span class="keyword">onclick</span>=<span class="string">"event.stopPropagation()"</span>&gt;
+    Dialog content
+  &lt;/div&gt;
+&lt;/dialog&gt;
+        </div>
+
+        <h3>Non-Modal Dialog:</h3>
+        <div class="code">
+<span class="comment">&lt;!-- Use show() instead of showModal() --&gt;</span>
+&lt;button <span class="keyword">onclick</span>=<span class="string">"document.getElementById('my-dialog').show()"</span>&gt;
+  Open Non-Modal
+&lt;/button&gt;
+
+<span class="comment">&lt;!-- Non-modal allows page interaction --&gt;</span>
+&lt;dialog <span class="keyword">id</span>=<span class="string">"my-dialog"</span>&gt;
+  Content here
+&lt;/dialog&gt;
+        </div>
+
+        <div class="description" style="margin-top: 30px;">
+            <h3>Key Differences from Custom Modals:</h3>
+            <ul>
+                <li><strong>Native methods vs CSS classes:</strong> Use <code>dialog.showModal()</code>/<code>dialog.close()</code> instead of adding/removing classes</li>
+                <li><strong>Form integration:</strong> <code>method="dialog"</code> automatically closes dialog on submit</li>
+                <li><strong>Return values:</strong> <code>dialog.returnValue</code> captures submit button values</li>
+                <li><strong>Close event:</strong> Listen for <code>close</code> event with hyperscript or JavaScript</li>
+                <li><strong>Backdrop styling:</strong> Use <code>::backdrop</code> CSS pseudo-element</li>
+                <li><strong>ESC handling:</strong> Built-in, no need for keydown listeners</li>
+                <li><strong>Accessibility:</strong> Native ARIA roles and keyboard navigation included</li>
+            </ul>
+
+            <h3>Browser Support:</h3>
+            <p>
+                The <code>&lt;dialog&gt;</code> element is supported in all modern browsers
+                (Chrome 37+, Firefox 98+, Safari 15.4+, Edge 79+). Use a polyfill for older browsers if needed.
+            </p>
+
+            <h3>Advanced Patterns (Hybrid JavaScript + Hyperscript):</h3>
+            <div class="code">
+<span class="comment">&lt;!-- Prevent ESC from closing (hyperscript event handling) --&gt;</span>
+&lt;dialog <span class="keyword">_</span>=<span class="string">"on cancel halt"</span>&gt;
+
+<span class="comment">&lt;!-- Close after timeout --&gt;</span>
+&lt;button <span class="keyword">onclick</span>=<span class="string">"
+  const dialog = document.getElementById('my-dialog');
+  dialog.showModal();
+  setTimeout(() => dialog.close(), 3000);
+"</span>&gt;Open for 3 seconds&lt;/button&gt;
+
+<span class="comment">&lt;!-- Confirm before closing (hyperscript for logic) --&gt;</span>
+&lt;dialog <span class="keyword">_</span>=<span class="string">"on cancel
+         if not confirm('Close dialog?')
+           halt the event
+         end"</span>&gt;
+
+<span class="comment">&lt;!-- Store element reference for cleaner code --&gt;</span>
+&lt;script&gt;
+  const myDialog = document.getElementById('my-dialog');
+&lt;/script&gt;
+&lt;button <span class="keyword">onclick</span>=<span class="string">"myDialog.showModal()"</span>&gt;Open&lt;/button&gt;
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="05-modal.html">← Previous: Custom Modal</a>
+            <a href="../advanced/01-color-cycling.html">Next: Advanced Examples →</a>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+</body>
+</html>

@@ -393,12 +393,7 @@
     </div>
 
     <!-- Load HyperFixi -->
-    <script>
-        // Cache busting for development - force fresh load
-        const script = document.createElement('script');
-        script.src = 'packages/core/dist/hyperfixi-browser.js?v=' + Date.now();
-        document.write(script.outerHTML);
-    </script>
+    <script src="packages/core/dist/hyperfixi-browser.js"></script>
 
     <!-- Define Draggable Behavior in Hyperscript -->
     <script type="text/hyperscript">
