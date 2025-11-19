@@ -524,6 +524,14 @@ export class LazyExpressionEvaluator {
   private async evaluateCallExpression(node: any, context: ExecutionContext): Promise<any> {
     const { callee, arguments: args } = node;
 
+    console.log('[CALL-EXPR DEBUG] Evaluating call expression:', {
+      calleeType: callee?.type,
+      calleeName: callee?.name,
+      calleeObject: callee?.object,
+      calleeProperty: callee?.property,
+      argsCount: args?.length
+    });
+
     // Evaluate arguments first
     const evaluatedArgs = await Promise.all(args.map((arg: any) => this.evaluate(arg, context)));
 
@@ -549,17 +557,45 @@ export class LazyExpressionEvaluator {
     // Handle method calls (property access like obj.method(...))
     if (callee.type === 'propertyAccess' || callee.type === 'memberExpression') {
       // Evaluate the object (e.g., event.target)
-      const object = await this.evaluate(callee.object, context);
+      let object = await this.evaluate(callee.object, context);
+
+      console.log('[LAZY-EVAL DEBUG] Before array extraction:', {
+        isArray: Array.isArray(object),
+        length: Array.isArray(object) ? object.length : 'N/A',
+        type: typeof object,
+        value: object,
+        constructor: object?.constructor?.name
+      });
+
+      // If object is an array (from selector evaluation), extract the first element
+      // This handles cases like: call showModal() where #dialog evaluates to [HTMLDialogElement]
+      if (Array.isArray(object) && object.length > 0) {
+        object = object[0];
+        console.log('[LAZY-EVAL DEBUG] After array extraction:', {
+          type: typeof object,
+          value: object,
+          constructor: object?.constructor?.name
+        });
+      }
+
       const propertyName = callee.property.name || callee.property;
+      console.log('[LAZY-EVAL DEBUG] Looking for property:', propertyName);
 
       // Get the method
-      const method = object[propertyName];
+      const method = object?.[propertyName];
+      console.log('[LAZY-EVAL DEBUG] Method lookup result:', {
+        methodType: typeof method,
+        methodExists: method !== undefined,
+        method: method
+      });
+
       if (typeof method === 'function') {
+        console.log('[LAZY-EVAL DEBUG] Calling method with args:', evaluatedArgs);
         // Call method with proper 'this' binding
         return method.call(object, ...evaluatedArgs);
       }
 
-      throw new Error(`Property ${propertyName} is not a function`);
+      throw new Error(`Member expression does not evaluate to a function: ${propertyName || 'unknown'}`);
     }
 
     // Fallback: evaluate callee as expression

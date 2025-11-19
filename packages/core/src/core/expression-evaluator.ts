@@ -895,20 +895,56 @@ export class ExpressionEvaluator {
 
     // Handle member expression calls (like obj.method())
     if (callee.type === 'memberExpression') {
-      // Evaluate the member expression to get the function
-      const func = await this.evaluateMemberExpression(callee, context);
+      // Evaluate the object to use as 'this' context
+      let thisContext = await this.evaluate(callee.object, context);
+
+      const objectKeys = thisContext ? Object.keys(thisContext) : [];
+      console.log('[EXPR-EVAL DEBUG] Before array extraction:', {
+        isArray: Array.isArray(thisContext),
+        length: Array.isArray(thisContext) ? thisContext.length : 'N/A',
+        type: typeof thisContext,
+        constructor: thisContext?.constructor?.name,
+        keysCount: objectKeys.length,
+        keys: objectKeys,
+        id: thisContext?.id,
+        tagName: thisContext?.tagName
+      });
+      console.log('[EXPR-EVAL DEBUG] Full object:', thisContext);
+
+      // If thisContext is an array (from selector evaluation), extract the first element
+      // This handles cases like: call showModal() where #dialog evaluates to [HTMLDialogElement]
+      if (Array.isArray(thisContext) && thisContext.length > 0) {
+        thisContext = thisContext[0];
+        console.log('[EXPR-EVAL DEBUG] After array extraction:', {
+          type: typeof thisContext,
+          value: thisContext,
+          constructor: thisContext?.constructor?.name
+        });
+      }
+
+      // Get property name
+      const propertyName = callee.property?.name || callee.property;
+      console.log('[EXPR-EVAL DEBUG] Looking for property:', propertyName);
+
+      // Access the method/property from the object
+      const func = thisContext?.[propertyName];
+      console.log('[EXPR-EVAL DEBUG] Method lookup result:', {
+        methodType: typeof func,
+        methodExists: func !== undefined,
+        method: func
+      });
 
       if (typeof func === 'function') {
         const evaluatedArgs = await Promise.all(
           args.map((arg: any) => this.evaluate(arg, context))
         );
-        // Evaluate the object to use as 'this' context
-        const thisContext = await this.evaluate(callee.object, context);
+        console.log('[EXPR-EVAL DEBUG] Calling method with args:', evaluatedArgs);
+        // Call with proper 'this' binding
         return func.apply(thisContext, evaluatedArgs);
       }
 
       throw new Error(
-        `Member expression does not evaluate to a function: ${callee.property?.name || 'unknown'}`
+        `Member expression does not evaluate to a function: ${propertyName || 'unknown'}`
       );
     }
 

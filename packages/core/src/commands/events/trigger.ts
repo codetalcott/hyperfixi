@@ -285,13 +285,34 @@ export class TriggerCommand
         }
       }
 
+      // Simplified syntax: trigger eventName (no "on" keyword)
+      // Default to triggering on 'me' (current element)
       if (onIndex === -1) {
+        // Check if there are any remaining args (would be event data)
+        let eventData: any = {};
+        if (rest.length === 1) {
+          const data = rest[0];
+          if (data !== null && data !== undefined) {
+            if (typeof data === 'object' && !Array.isArray(data)) {
+              eventData = data;
+            } else {
+              eventData = { data };
+            }
+          }
+        } else if (rest.length > 1) {
+          // Multiple data arguments - combine into object
+          eventData = { args: rest };
+        }
+
         return {
-          success: false,
-          error: 'Trigger command requires "on" keyword to specify target',
+          success: true,
+          eventName,
+          eventData,
+          target: 'me', // Default to current element
         };
       }
 
+      // Full syntax: trigger eventName [data] on target
       // Everything before 'on' is event data, everything after is target
       const dataArgs = rest.slice(0, onIndex);
       const target = rest[onIndex + 1];
@@ -549,18 +570,18 @@ export class TriggerCommand
 
   validate(args: unknown[]): UnifiedValidationResult {
     try {
-      // Basic argument validation
-      if (args.length < 3) {
+      // Basic argument validation - allow simplified syntax with just eventName
+      if (args.length < 1) {
         return {
           isValid: false,
           errors: [
             {
               type: 'missing-argument',
-              message: 'Trigger command requires at least: eventName, "on", target',
-              suggestions: ['Use: trigger eventName on target'],
+              message: 'Trigger command requires at least an event name',
+              suggestions: ['Use: trigger eventName', 'Use: trigger eventName on target'],
             },
           ],
-          suggestions: ['Use: trigger "click" on element', 'Use: trigger "custom" data on target'],
+          suggestions: ['Use: trigger "click"', 'Use: trigger "custom" on element'],
         };
       }
 
@@ -575,7 +596,7 @@ export class TriggerCommand
               suggestions: ['Use a string for the event name'],
             },
           ],
-          suggestions: ['Use quotes around event name', 'Example: trigger "click" on element'],
+          suggestions: ['Use quotes around event name', 'Example: trigger "click"'],
         };
       }
 
@@ -593,45 +614,33 @@ export class TriggerCommand
         };
       }
 
-      // Check for 'on' keyword
-      let hasOnKeyword = false;
-      for (let i = 1; i < args.length; i++) {
-        if (args[i] === 'on') {
-          hasOnKeyword = true;
+      // Check for 'on' keyword if more than 1 argument
+      if (args.length > 1) {
+        let hasOnKeyword = false;
+        for (let i = 1; i < args.length; i++) {
+          if (args[i] === 'on') {
+            hasOnKeyword = true;
 
-          // Check if target exists after 'on'
-          if (i === args.length - 1) {
-            return {
-              isValid: false,
-              errors: [
-                {
-                  type: 'missing-argument',
-                  message: 'Trigger command requires target after "on"',
-                  suggestions: ['Specify target element after "on" keyword'],
-                },
-              ],
-              suggestions: ['Use: trigger event on <#element/>', 'Use: trigger event on me'],
-            };
+            // Check if target exists after 'on'
+            if (i === args.length - 1) {
+              return {
+                isValid: false,
+                errors: [
+                  {
+                    type: 'missing-argument',
+                    message: 'Trigger command requires target after "on"',
+                    suggestions: ['Specify target element after "on" keyword'],
+                  },
+                ],
+                suggestions: ['Use: trigger event on <#element/>', 'Use: trigger event on me'],
+              };
+            }
+            break;
           }
-          break;
         }
-      }
 
-      if (!hasOnKeyword) {
-        return {
-          isValid: false,
-          errors: [
-            {
-              type: 'syntax-error',
-              message: 'Trigger command requires "on" keyword to specify target',
-              suggestions: ['Use "on" keyword before target specification'],
-            },
-          ],
-          suggestions: [
-            'Use: trigger eventName on target',
-            'Use: trigger eventName data on target',
-          ],
-        };
+        // If there are multiple args but no 'on' keyword, that's okay for data args
+        // The simplified syntax allows: trigger eventName or trigger eventName data
       }
 
       return {

@@ -934,30 +934,41 @@ export class Runtime {
         // Use context.me as implicit target for class/attribute toggle
         evaluatedArgs = [classArg, context.me];
       }
-    } else if (name === 'toggle' && args.length === 2) {
-      // Handle pattern: "toggle #dialog as modal" or "toggle #dialog"
-      // Check if first arg is a binary expression with 'as' operator (from parser)
+    } else if (name === 'toggle' && args.length >= 2) {
+      // Handle pattern: "toggle #dialog modal" or "toggle #dialog as modal"
       const firstArg = args[0] as any;
       const secondArg = args[1] as any;
+      const thirdArg = args.length >= 3 ? args[2] : undefined as any;
 
       let mode: string | undefined;
       let targetArg = firstArg;
 
-      // Detect "as modal" or "as dialog" pattern
-      // The parser creates a binary expression: {type: 'binary', operator: 'as', left: target, right: mode}
-      if (firstArg && firstArg.type === 'binary' && firstArg.operator === 'as') {
-        // This is "#dialog as modal" - extract the parts
-        targetArg = firstArg.left;  // The actual target (#dialog)
-        const modeExpr = firstArg.right;  // The mode (modal/dialog)
-
-        // Extract mode value
+      // Detect mode parameter patterns:
+      // Pattern 1: "toggle #dialog modal" -> args[0] = selector, args[1] = identifier 'modal'
+      // Pattern 2: "toggle #dialog as modal" -> args[0] = selector, args[1] = identifier 'as', args[2] = identifier 'modal'
+      if (args.length === 2 && secondArg && secondArg.type === 'identifier' &&
+          ['modal', 'dialog'].includes(secondArg.name)) {
+        // Simple pattern: toggle #dialog modal
+        mode = secondArg.name;
+        debug.runtime(`RUNTIME: toggle command detected '${mode}' mode`);
+      } else if (secondArg && secondArg.type === 'identifier' && secondArg.name === 'as' && thirdArg) {
+        // Pattern with 'as': toggle #dialog as modal (if parser ever supports it)
+        if (thirdArg.type === 'identifier') {
+          mode = thirdArg.name;
+        } else if (thirdArg.type === 'literal') {
+          mode = thirdArg.value;
+        }
+        debug.runtime(`RUNTIME: toggle command detected 'as ${mode}' mode`);
+      } else if (firstArg && firstArg.type === 'binary' && firstArg.operator === 'as') {
+        // Binary expression (unlikely with current parser)
+        targetArg = firstArg.left;
+        const modeExpr = firstArg.right;
         if (modeExpr.type === 'identifier') {
-          mode = modeExpr.name;  // 'modal' or 'dialog'
+          mode = modeExpr.name;
         } else if (modeExpr.type === 'literal') {
           mode = modeExpr.value;
         }
-
-        debug.runtime(`RUNTIME: toggle command detected 'as ${mode}' mode`);
+        debug.runtime(`RUNTIME: toggle command detected '${mode}' mode (binary)`);
       }
 
       // Now evaluate the target (without the 'as modal' part)

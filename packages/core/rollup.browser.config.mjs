@@ -27,7 +27,8 @@ export default {
       compress: {
         pure_getters: true,
         unsafe: true,
-        unsafe_comps: true
+        unsafe_comps: true,
+        drop_console: false // Keep console.log for now
       },
       mangle: {
         properties: false // Keep property names for compatibility

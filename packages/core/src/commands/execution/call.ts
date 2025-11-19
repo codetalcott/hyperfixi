@@ -112,7 +112,17 @@ export class CallCommand
     input: CallCommandInput,
     context: TypedExecutionContext
   ): Promise<CallCommandOutput> {
+    console.log('[CALL COMMAND DEBUG] Received input object:', input);
     const { expression } = input;
+
+    console.log('[CALL COMMAND DEBUG] Extracted expression:', {
+      type: typeof expression,
+      isArray: Array.isArray(expression),
+      value: expression,
+      constructor: expression?.constructor?.name,
+      id: expression?.id,
+      tagName: expression?.tagName
+    });
 
     try {
       let result: any;
