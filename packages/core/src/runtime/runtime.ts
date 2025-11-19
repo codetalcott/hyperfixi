@@ -916,6 +916,56 @@ export class Runtime {
 
       // Use context.me as implicit target
       evaluatedArgs = [classArg, context.me];
+    } else if (name === 'toggle' && args.length === 2) {
+      // Handle pattern: "toggle #dialog as modal" or "toggle #dialog"
+      // Check if first arg is a binary expression with 'as' operator (from parser)
+      const firstArg = args[0] as any;
+      const secondArg = args[1] as any;
+
+      let mode: string | undefined;
+      let targetArg = firstArg;
+
+      // Detect "as modal" or "as dialog" pattern
+      // The parser creates a binary expression: {type: 'binary', operator: 'as', left: target, right: mode}
+      if (firstArg && firstArg.type === 'binary' && firstArg.operator === 'as') {
+        // This is "#dialog as modal" - extract the parts
+        targetArg = firstArg.left;  // The actual target (#dialog)
+        const modeExpr = firstArg.right;  // The mode (modal/dialog)
+
+        // Extract mode value
+        if (modeExpr.type === 'identifier') {
+          mode = modeExpr.name;  // 'modal' or 'dialog'
+        } else if (modeExpr.type === 'literal') {
+          mode = modeExpr.value;
+        }
+
+        debug.runtime(`RUNTIME: toggle command detected 'as ${mode}' mode`);
+      }
+
+      // Now evaluate the target (without the 'as modal' part)
+      let target: any;
+      if (targetArg?.type === 'selector') {
+        target = targetArg.value;
+      } else if (targetArg?.type === 'identifier') {
+        const name = targetArg.name;
+        if (name === 'me') {
+          target = context.me;
+        } else if (name === 'it') {
+          target = context.it;
+        } else if (name === 'you') {
+          target = context.you;
+        } else {
+          target = name;
+        }
+      } else {
+        target = await this.execute(targetArg, context);
+      }
+
+      // Pass [target, undefined, undefined, mode] to match toggle command signature
+      // toggle command expects: [expression, target, untilEvent, mode]
+      evaluatedArgs = [target, undefined, undefined, mode];
+
+      debug.runtime(`RUNTIME: toggle evaluated args:`, evaluatedArgs);
     } else if ((name === 'add' || name === 'remove') && args.length === 1) {
       // Handle single-arg pattern: "add .active" (implicit target: me)
       let classArg: unknown = args[0];
