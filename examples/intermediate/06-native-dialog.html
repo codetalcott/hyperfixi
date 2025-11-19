@@ -306,11 +306,11 @@
             <h2>Demo 0: Smart Toggle (Recommended ⭐)</h2>
 
             <button _="on click toggle #smart-dialog">
-                Open Non-Modal Dialog
+                Open Dialog (Non-Modal)
             </button>
 
-            <button _="on click toggle #smart-dialog as modal">
-                Open Modal Dialog
+            <button _="on click call #smart-dialog.showModal()">
+                Open Dialog (Modal)
             </button>
 
             <dialog id="smart-dialog">
@@ -320,18 +320,19 @@
                 </div>
                 <div class="dialog-body">
                     <p>
-                        <strong>This is the cleanest approach!</strong>
+                        <strong>Clean, declarative dialog control!</strong>
                     </p>
                     <p>
-                        HyperFixi automatically detects that this is a <code>&lt;dialog&gt;</code> element
-                        and calls the appropriate native methods:
+                        HyperFixi automatically detects <code>&lt;dialog&gt;</code> elements
+                        and provides smart toggle:
                     </p>
                     <ul>
-                        <li>✅ <code>toggle #smart-dialog</code> → Uses <code>show()</code>/<code>close()</code></li>
-                        <li>✅ <code>toggle #smart-dialog as modal</code> → Uses <code>showModal()</code>/<code>close()</code></li>
+                        <li>✅ <code>toggle #dialog</code> → Non-modal (show/close)</li>
+                        <li>✅ <code>call #dialog.showModal()</code> → Modal (blocks page)</li>
+                        <li>✅ <code>toggle #dialog</code> → Close either mode</li>
                     </ul>
                     <p>
-                        No need to manually call methods or use JavaScript onclick!
+                        Much cleaner than JavaScript onclick handlers!
                     </p>
                 </div>
                 <div class="dialog-footer">
@@ -522,27 +523,29 @@
             <strong>✅ Implementation Options:</strong><br>
             HyperFixi provides multiple ways to work with native <code>&lt;dialog&gt;</code> elements:<br><br>
 
-            <strong>1. Smart Toggle (Recommended):</strong> HyperFixi automatically detects dialog elements and provides clean syntax:<br>
-            <code>toggle #myDialog</code> - Opens/closes using <code>show()</code>/<code>close()</code><br>
-            <code>toggle #myDialog as modal</code> - Opens/closes using <code>showModal()</code>/<code>close()</code><br><br>
+            <strong>1. Smart Toggle (Recommended):</strong> HyperFixi automatically detects dialog elements:<br>
+            <code>toggle #myDialog</code> - Opens/closes in non-modal mode using <code>show()</code>/<code>close()</code><br>
+            For modal dialogs, combine with call command: <code>call #myDialog.showModal()</code><br>
+            Close works the same way: <code>toggle #myDialog</code> closes both modal and non-modal<br><br>
 
-            <strong>2. Call Command (Also Works):</strong> Hyperscript's <code>call</code> command supports native methods:<br>
-            <code>call #myDialog.showModal()</code> - Directly invoke native methods<br>
+            <strong>2. Call Command (Direct Control):</strong> Hyperscript's <code>call</code> command supports native methods:<br>
+            <code>call #myDialog.showModal()</code> - Open as modal (blocks page, traps focus)<br>
+            <code>call #myDialog.show()</code> - Open as non-modal (page stays interactive)<br>
             <code>call #myDialog.close()</code> - Close the dialog<br><br>
 
             <strong>3. JavaScript onclick:</strong> Traditional approach also works, but not necessary<br><br>
 
-            The smart toggle approach provides the cleanest, most declarative syntax and is recommended for new code.
+            The smart toggle + call combination provides the cleanest, most declarative syntax for new code.
         </div>
 
-        <h3>Option 1: Smart Toggle (Recommended ⭐):</h3>
+        <h3>Option 1: Smart Toggle + Call (Recommended ⭐):</h3>
         <div class="code">
 <span class="comment">&lt;!-- HyperFixi auto-detects dialog elements --&gt;</span>
 &lt;button <span class="keyword">_</span>=<span class="string">"on click toggle #my-dialog"</span>&gt;
   Open Non-Modal Dialog
 &lt;/button&gt;
 
-&lt;button <span class="keyword">_</span>=<span class="string">"on click toggle #my-dialog as modal"</span>&gt;
+&lt;button <span class="keyword">_</span>=<span class="string">"on click call #my-dialog.showModal()"</span>&gt;
   Open Modal Dialog
 &lt;/button&gt;
 
