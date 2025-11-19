@@ -18,7 +18,7 @@ export interface TemporalState {
   element: HTMLElement;
   originalState: any;
   untilEvent: string;
-  untilTarget?: HTMLElement | Document | Window;
+  untilTarget?: HTMLElement | Document | Window | undefined;
   cleanup: () => void;
   timestamp: number;
 }
@@ -27,7 +27,7 @@ export interface TemporalModifierOptions {
   command: string;
   element: HTMLElement;
   untilEvent: string;
-  untilTarget?: HTMLElement | Document | Window;
+  untilTarget?: HTMLElement | Document | Window | undefined;
   stateCapture: () => any;
   stateRestore: (state: any) => void;
 }

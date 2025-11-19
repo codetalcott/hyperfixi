@@ -7,14 +7,14 @@ import {
   CommandPatternValidator,
   CommandSuiteValidator,
   ValidationReporter,
-} from './command-pattern-validator.ts';
+} from './command-pattern-validator';
 
 // Import enhanced commands
-import { HideCommand, createHideCommand } from '../commands/dom/hide.ts';
-import { ShowCommand, createShowCommand } from '../commands/dom/show.ts';
-import { ToggleCommand, createToggleCommand } from '../commands/dom/toggle.ts';
-import { AddCommand, createAddCommand } from '../commands/dom/add.ts';
-import { RemoveCommand, createRemoveCommand } from '../commands/dom/remove.ts';
+import { HideCommand, createHideCommand } from '../commands/dom/hide';
+import { ShowCommand, createShowCommand } from '../commands/dom/show';
+import { ToggleCommand, createToggleCommand } from '../commands/dom/toggle';
+import { AddCommand, createAddCommand } from '../commands/dom/add';
+import { RemoveCommand, createRemoveCommand } from '../commands/dom/remove';
 
 describe('Enhanced Command Pattern Validation', () => {
   describe('Individual Command Validation', () => {

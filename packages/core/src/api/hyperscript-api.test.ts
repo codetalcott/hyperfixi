@@ -100,7 +100,7 @@ describe('Hyperscript Public API', () => {
 
     it('should use provided context', async () => {
       const context = hyperscript.createContext(mockElement);
-      context.variables = new Map([['x', 5]]);
+      context.variables?.set('x', 5);
 
       const result = await hyperscript.run('x + 15', context);
       expect(result).toBe(20);
@@ -126,7 +126,7 @@ describe('Hyperscript Public API', () => {
 
     it('should handle complex hyperscript syntax', async () => {
       const context = hyperscript.createContext(mockElement);
-      context.variables = new Map([['value', 10]]);
+      context.variables?.set('value', 10);
 
       const result = await hyperscript.evaluate('value * 2 + 2', context);
       expect(result).toBe(22);
@@ -229,7 +229,7 @@ describe('Hyperscript Public API', () => {
     it('should integrate with expression evaluator', async () => {
       const context = hyperscript.createContext(mockElement);
       const result = await hyperscript.run('me.tagName', context);
-      expect(result.toLowerCase()).toBe('div'); // Happy-DOM returns lowercase
+      expect(String(result).toLowerCase()).toBe('div'); // Happy-DOM returns lowercase
     });
 
     it('should handle assignments and variable scoping', async () => {

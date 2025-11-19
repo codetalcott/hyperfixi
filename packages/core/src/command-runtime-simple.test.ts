@@ -1,21 +1,17 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CommandRuntime } from './command-runtime';
-import type { ExecutionContext } from './types/core';
 import type { CommandNode } from './hyperscript-parser';
+import { createMutableTestContext } from './test-helpers/context-factory';
 
 describe('CommandRuntime - Simple Tests', () => {
   let runtime: CommandRuntime;
-  let context: ExecutionContext;
+  let context: ReturnType<typeof createMutableTestContext>;
 
   beforeEach(() => {
     runtime = new CommandRuntime();
-    context = {
+    context = createMutableTestContext({
       me: {} as Element,
-      it: null,
-      event: null,
-      locals: new Map(),
-      result: null,
-    };
+    });
   });
 
   describe('LOG command', () => {
@@ -186,7 +182,7 @@ describe('CommandRuntime - Simple Tests', () => {
     });
 
     it('should convert string to fragment', () => {
-      const result = (runtime as any).convertToFragment('Hello');
+      (runtime as any).convertToFragment('Hello');
 
       expect(globalThis.document.createDocumentFragment).toHaveBeenCalled();
       expect(globalThis.document.createElement).toHaveBeenCalledWith('template');
@@ -194,7 +190,7 @@ describe('CommandRuntime - Simple Tests', () => {
 
     it('should handle Node values', () => {
       const mockNode = { nodeType: 1 };
-      const result = (runtime as any).convertToFragment(mockNode);
+      (runtime as any).convertToFragment(mockNode);
 
       // The mock fragment should have been called to append the node
       expect(globalThis.document.createDocumentFragment).toHaveBeenCalled();

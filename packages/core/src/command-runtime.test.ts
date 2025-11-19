@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CommandRuntime } from './command-runtime';
 import { parseHyperscript } from './hyperscript-parser';
-import type { ExecutionContext } from './types/core';
+import { createMutableTestContext } from './test-helpers/context-factory';
 
 // Mock DOM environment
 const mockElement = {
@@ -45,17 +45,13 @@ globalThis.console = { log: vi.fn() } as any;
 
 describe('CommandRuntime', () => {
   let runtime: CommandRuntime;
-  let context: ExecutionContext;
+  let context: ReturnType<typeof createMutableTestContext>;
 
   beforeEach(() => {
     runtime = new CommandRuntime();
-    context = {
+    context = createMutableTestContext({
       me: mockElement,
-      it: null,
-      event: null,
-      locals: new Map(),
-      result: null,
-    };
+    });
 
     // Reset mocks
     vi.clearAllMocks();
