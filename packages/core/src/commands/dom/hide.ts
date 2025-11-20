@@ -5,6 +5,7 @@
  */
 
 import { v } from '../../validation/lightweight-validators';
+import { validators } from '../../validation/common-validators.ts';
 import type {
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -14,8 +15,9 @@ import type {
 } from '../../types/command-types';
 // Removed TypedResult import '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
-import { asHTMLElement } from '../../utils/dom-utils';
+import { resolveTargets } from '../../utils/dom-utils.ts';
 import { dispatchCustomEvent } from '../../core/events';
+import { ErrorCodes, createError, getSuggestions } from '../../types/error-codes.ts';
 
 export interface HideCommandOptions {
   useClass?: boolean;
@@ -26,15 +28,7 @@ export interface HideCommandOptions {
  * Input validation schema for LLM understanding
  */
 const HideCommandInputSchema = v.tuple([
-  v
-    .union([
-      v.custom((value: unknown) => value instanceof HTMLElement),
-      v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-      v.string(), // CSS selector
-      v.null(), // Use implicit target (me)
-      v.undefined(),
-    ])
-    .optional(),
+  validators.elementTarget.optional(),
 ]);
 
 type HideCommandInput = any; // Inferred from RuntimeValidator
@@ -57,58 +51,66 @@ export class HideCommand
   public readonly inputSchema = HideCommandInputSchema;
   public readonly outputType = 'element-list' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'DOM',
-    complexity: 'simple',
-    sideEffects: ['dom-mutation'],
-    examples: [
-      {
-        code: 'hide me',
-        description: 'Hide the current element',
-        expectedOutput: [],
-      },
-      {
-        code: 'hide <.modal/>',
-        description: 'Hide all elements with modal class',
-        expectedOutput: [],
-      },
-    ],
-    relatedCommands: ['show', 'toggle'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'DOM',
+          complexity: 'simple',
+          sideEffects: ['dom-mutation'],
+          examples: [
+            {
+              code: 'hide me',
+              description: 'Hide the current element',
+              expectedOutput: [],
+            },
+            {
+              code: 'hide <.modal/>',
+              description: 'Hide all elements with modal class',
+              expectedOutput: [],
+            },
+          ],
+          relatedCommands: ['show', 'toggle'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Hides HTML elements from view using CSS display property or classes',
-    parameters: [
-      {
-        name: 'target',
-        type: 'element',
-        description: 'Element(s) to hide. If omitted, hides the current element (me)',
-        optional: true,
-        examples: ['me', '<#modal/>', '<.button/>'],
-      },
-    ],
-    returns: {
-      type: 'element-list',
-      description: 'Array of elements that were hidden',
-      examples: [[]],
-    },
-    examples: [
-      {
-        title: 'Hide current element',
-        code: 'on click hide me',
-        explanation: 'When clicked, the button hides itself',
-        output: [],
-      },
-      {
-        title: 'Hide modal dialog',
-        code: 'on escape hide <#modal/>',
-        explanation: 'Press escape to hide modal with id "modal"',
-        output: [],
-      },
-    ],
-    seeAlso: ['show', 'toggle', 'add-class'],
-    tags: ['dom', 'visibility', 'css'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary: 'Hides HTML elements from view using CSS display property or classes',
+          parameters: [
+            {
+              name: 'target',
+              type: 'element',
+              description: 'Element(s) to hide. If omitted, hides the current element (me)',
+              optional: true,
+              examples: ['me', '<#modal/>', '<.button/>'],
+            },
+          ],
+          returns: {
+            type: 'element-list',
+            description: 'Array of elements that were hidden',
+            examples: [[]],
+          },
+          examples: [
+            {
+              title: 'Hide current element',
+              code: 'on click hide me',
+              explanation: 'When clicked, the button hides itself',
+              output: [],
+            },
+            {
+              title: 'Hide modal dialog',
+              code: 'on escape hide <#modal/>',
+              explanation: 'Press escape to hide modal with id "modal"',
+              output: [],
+            },
+          ],
+          seeAlso: ['show', 'toggle', 'add-class'],
+          tags: ['dom', 'visibility', 'css'],
+        }
+  ) as LLMDocumentation;
 
   private options: HideCommandOptions;
 
@@ -127,7 +129,7 @@ export class HideCommand
     const [input] = args;
     try {
       // Type-safe target resolution
-      const elements = this.resolveTargets(context, input);
+      const elements = resolveTargets(context, input);
 
       // Process elements with enhanced error handling
       const hiddenElements: HTMLElement[] = [];
@@ -152,56 +154,17 @@ export class HideCommand
 
       return {
         success: false,
-        error: {
-          name: 'ValidationError',
-          type: 'runtime-error',
-          message: error instanceof Error ? error.message : 'Unknown error',
-          code: 'HIDE_EXECUTION_FAILED',
-          suggestions: ['Check if element exists', 'Verify element is not null'],
-        },
+        error: createError(
+          ErrorCodes.EXECUTION.HIDE_FAILED,
+          error instanceof Error ? error.message : undefined,
+          [],
+          getSuggestions(ErrorCodes.EXECUTION.HIDE_FAILED)
+        ),
         type: 'error',
       };
     }
   }
 
-  private resolveTargets(
-    context: TypedExecutionContext,
-    target?: HideCommandInput[0]
-  ): HTMLElement[] {
-    // Default to context.me if no target specified
-    if (target === undefined || target === null) {
-      if (!context.me) {
-        throw new Error('Context element "me" is null');
-      }
-      const htmlElement = asHTMLElement(context.me);
-      if (!htmlElement) {
-        throw new Error('Context element "me" is not an HTMLElement');
-      }
-      return [htmlElement];
-    }
-
-    // Handle HTMLElement directly
-    if (target instanceof HTMLElement) {
-      return [target];
-    }
-
-    // Handle HTMLElement array
-    if (Array.isArray(target)) {
-      return target.filter((el): el is HTMLElement => el instanceof HTMLElement);
-    }
-
-    // Handle CSS selector string
-    if (typeof target === 'string') {
-      try {
-        const elements = document.querySelectorAll(target);
-        return Array.from(elements) as HTMLElement[];
-      } catch (_error) {
-        throw new Error(`Invalid CSS selector: "${target}"`);
-      }
-    }
-
-    return [];
-  }
 
   private hideElement(
     element: HTMLElement,
@@ -232,13 +195,12 @@ export class HideCommand
     } catch (error) {
       return {
         success: false,
-        error: {
-          name: 'ValidationError',
-          type: 'runtime-error',
-          message: error instanceof Error ? error.message : 'Failed to hide element',
-          code: 'ELEMENT_HIDE_FAILED',
-          suggestions: ['Check if element is still in DOM', 'Verify element is not null'],
-        },
+        error: createError(
+          ErrorCodes.OPERATION.ELEMENT_HIDE_FAILED,
+          error instanceof Error ? error.message : undefined,
+          [],
+          getSuggestions(ErrorCodes.OPERATION.ELEMENT_HIDE_FAILED)
+        ),
         type: 'error',
       };
     }

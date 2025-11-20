@@ -5,6 +5,7 @@
  */
 
 import { v, z } from '../../validation/lightweight-validators';
+import { validators } from '../../validation/common-validators.ts';
 import type {
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -31,7 +32,7 @@ const PutCommandInputSchema = v.tuple([
       v.string(),
       v.number(),
       v.boolean(),
-      v.custom((value: unknown) => value instanceof HTMLElement),
+      validators.htmlElement,
       v.array(v.unknown()),
       z.record(v.string(), v.unknown()),
       v.null(),
@@ -41,7 +42,7 @@ const PutCommandInputSchema = v.tuple([
   z.enum(['into', 'before', 'after', 'at start of', 'at end of']).describe('Insertion position'),
   v
     .union([
-      v.custom((value: unknown) => value instanceof HTMLElement),
+      validators.htmlElement,
       v.string(), // CSS selector or property access
       v.null(), // Use implicit target (me)
       v.undefined(),
@@ -69,78 +70,86 @@ export class PutCommand
   public readonly inputSchema = PutCommandInputSchema;
   public readonly outputType = 'element' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'DOM',
-    complexity: 'medium',
-    sideEffects: ['dom-mutation'],
-    examples: [
-      {
-        code: 'put "Hello World" into me',
-        description: 'Insert text content into current element',
-        expectedOutput: 'HTMLElement',
-      },
-      {
-        code: 'put <div>Content</div> before <#target/>',
-        description: 'Insert HTML before target element',
-        expectedOutput: 'HTMLElement',
-      },
-    ],
-    relatedCommands: ['take', 'add', 'remove'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'DOM',
+          complexity: 'medium',
+          sideEffects: ['dom-mutation'],
+          examples: [
+            {
+              code: 'put "Hello World" into me',
+              description: 'Insert text content into current element',
+              expectedOutput: 'HTMLElement',
+            },
+            {
+              code: 'put <div>Content</div> before <#target/>',
+              description: 'Insert HTML before target element',
+              expectedOutput: 'HTMLElement',
+            },
+          ],
+          relatedCommands: ['take', 'add', 'remove'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Inserts content into DOM elements with precise positioning control',
-    parameters: [
-      {
-        name: 'content',
-        type: 'string',
-        description: 'Content to insert (text, HTML, or values)',
-        optional: false,
-        examples: ['"Hello"', '<div>HTML</div>', 'variable'],
-      },
-      {
-        name: 'position',
-        type: 'string',
-        description: 'Where to insert the content',
-        optional: false,
-        examples: ['into', 'before', 'after', 'at start of', 'at end of'],
-      },
-      {
-        name: 'target',
-        type: 'element',
-        description: 'Target element or property. If omitted, uses current element (me)',
-        optional: true,
-        examples: ['me', '<#content/>', 'me.innerHTML'],
-      },
-    ],
-    returns: {
-      type: 'element',
-      description: 'The target element that was modified',
-      examples: ['HTMLElement'],
-    },
-    examples: [
-      {
-        title: 'Insert text content',
-        code: 'put "Hello World" into me',
-        explanation: 'Inserts text into the current element',
-        output: 'HTMLElement',
-      },
-      {
-        title: 'Insert HTML before element',
-        code: 'put <span>New</span> before <.target/>',
-        explanation: 'Inserts HTML content before elements with target class',
-        output: 'HTMLElement',
-      },
-      {
-        title: 'Append to element',
-        code: 'put "More content" at end of <#container/>',
-        explanation: 'Appends content to the end of container element',
-        output: 'HTMLElement',
-      },
-    ],
-    seeAlso: ['take', 'add-class', 'remove-class', 'append'],
-    tags: ['dom', 'content', 'insertion', 'html'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary: 'Inserts content into DOM elements with precise positioning control',
+          parameters: [
+            {
+              name: 'content',
+              type: 'string',
+              description: 'Content to insert (text, HTML, or values)',
+              optional: false,
+              examples: ['"Hello"', '<div>HTML</div>', 'variable'],
+            },
+            {
+              name: 'position',
+              type: 'string',
+              description: 'Where to insert the content',
+              optional: false,
+              examples: ['into', 'before', 'after', 'at start of', 'at end of'],
+            },
+            {
+              name: 'target',
+              type: 'element',
+              description: 'Target element or property. If omitted, uses current element (me)',
+              optional: true,
+              examples: ['me', '<#content/>', 'me.innerHTML'],
+            },
+          ],
+          returns: {
+            type: 'element',
+            description: 'The target element that was modified',
+            examples: ['HTMLElement'],
+          },
+          examples: [
+            {
+              title: 'Insert text content',
+              code: 'put "Hello World" into me',
+              explanation: 'Inserts text into the current element',
+              output: 'HTMLElement',
+            },
+            {
+              title: 'Insert HTML before element',
+              code: 'put <span>New</span> before <.target/>',
+              explanation: 'Inserts HTML content before elements with target class',
+              output: 'HTMLElement',
+            },
+            {
+              title: 'Append to element',
+              code: 'put "More content" at end of <#container/>',
+              explanation: 'Appends content to the end of container element',
+              output: 'HTMLElement',
+            },
+          ],
+          seeAlso: ['take', 'add-class', 'remove-class', 'append'],
+          tags: ['dom', 'content', 'insertion', 'html'],
+        }
+  ) as LLMDocumentation;
 
   private options: PutCommandOptions;
 

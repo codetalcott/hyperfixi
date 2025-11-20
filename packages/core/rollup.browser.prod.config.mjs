@@ -44,6 +44,10 @@ export default {
         drop_console: false,        // Keep console.* for LOG command and errors
         drop_debugger: true,        // Remove debugger statements
         passes: 2,                  // Multiple passes for better compression
+        dead_code: true,            // Remove unreachable code (enables metadata stripping)
+        conditionals: true,         // Optimize if-statements
+        evaluate: true,             // Evaluate constant expressions
+        unused: true,               // Remove unused functions/variables
         pure_funcs: [               // Only strip debug helpers (not console.*)
           'debug.command',
           'debug.event',

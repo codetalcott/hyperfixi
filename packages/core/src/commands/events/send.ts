@@ -7,6 +7,7 @@
  */
 
 import { v } from '../../validation/lightweight-validators';
+import { validators } from '../../validation/common-validators.ts';
 import type {
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -25,15 +26,7 @@ const SendCommandInputSchema = v
     v.string().min(1), // Event name (required)
     v.any().optional(), // Event detail/arguments (optional)
     v.union([v.literal('to'), v.literal('on')]).optional(), // Target keyword
-    v
-      .union([
-        v.custom((value: unknown) => value instanceof HTMLElement),
-        v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-        v.string(), // CSS selector or context reference
-        v.null(),
-        v.undefined(),
-      ])
-      .optional(), // Target element(s)
+    validators.elementTarget.optional(), // Target element(s)
   ])
   .rest(); // Allow additional arguments
 
@@ -57,90 +50,98 @@ export class SendCommand
   public readonly inputSchema = SendCommandInputSchema;
   public readonly outputType = 'event' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'Event',
-    complexity: 'medium',
-    sideEffects: ['event-emission'],
-    examples: [
-      {
-        code: 'send click to <#button/>',
-        description: 'Send click event to button element',
-        expectedOutput: {},
-      },
-      {
-        code: 'send customEvent {data: "test"} to me',
-        description: 'Send custom event with data to current element',
-        expectedOutput: {},
-      },
-      {
-        code: 'trigger dataLoaded on <.components/>',
-        description: 'Trigger dataLoaded event on all component elements',
-        expectedOutput: {},
-      },
-    ],
-    relatedCommands: ['trigger', 'on', 'dispatch'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'Event',
+          complexity: 'medium',
+          sideEffects: ['event-emission'],
+          examples: [
+            {
+              code: 'send click to <#button/>',
+              description: 'Send click event to button element',
+              expectedOutput: {},
+            },
+            {
+              code: 'send customEvent {data: "test"} to me',
+              description: 'Send custom event with data to current element',
+              expectedOutput: {},
+            },
+            {
+              code: 'trigger dataLoaded on <.components/>',
+              description: 'Trigger dataLoaded event on all component elements',
+              expectedOutput: {},
+            },
+          ],
+          relatedCommands: ['trigger', 'on', 'dispatch'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Dispatches custom events to HTML elements with optional data payload',
-    parameters: [
-      {
-        name: 'eventName',
-        type: 'string',
-        description: 'Name of the event to dispatch',
-        optional: false,
-        examples: ['click', 'customEvent', 'dataLoaded', 'userAction'],
-      },
-      {
-        name: 'eventDetail',
-        type: 'object',
-        description: 'Optional data to include in event.detail',
-        optional: true,
-        examples: ['{data: "value"}', '{count: 5}', 'null'],
-      },
-      {
-        name: 'targetKeyword',
-        type: 'string',
-        description: 'Keyword indicating target specification',
-        optional: true,
-        examples: ['to', 'on'],
-      },
-      {
-        name: 'target',
-        type: 'element',
-        description: 'Element(s) to send event to. If omitted, sends to current element (me)',
-        optional: true,
-        examples: ['me', '<#modal/>', '<.buttons/>', 'document'],
-      },
-    ],
-    returns: {
-      type: 'event',
-      description: 'The CustomEvent that was dispatched',
-      examples: [{}],
-    },
-    examples: [
-      {
-        title: 'Simple event dispatch',
-        code: 'on click send customEvent to <#target/>',
-        explanation: 'When clicked, sends a customEvent to the target element',
-        output: {},
-      },
-      {
-        title: 'Event with data payload',
-        code: 'send userAction {action: "save", id: 123} to me',
-        explanation: 'Sends userAction event with data to current element',
-        output: {},
-      },
-      {
-        title: 'Trigger syntax alternative',
-        code: 'trigger dataLoaded on <.widgets/>',
-        explanation: 'Alternative trigger syntax - sends dataLoaded to all widgets',
-        output: {},
-      },
-    ],
-    seeAlso: ['trigger', 'on', 'addEventListener', 'dispatchEvent'],
-    tags: ['events', 'custom-events', 'dispatch', 'communication'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary: 'Dispatches custom events to HTML elements with optional data payload',
+          parameters: [
+            {
+              name: 'eventName',
+              type: 'string',
+              description: 'Name of the event to dispatch',
+              optional: false,
+              examples: ['click', 'customEvent', 'dataLoaded', 'userAction'],
+            },
+            {
+              name: 'eventDetail',
+              type: 'object',
+              description: 'Optional data to include in event.detail',
+              optional: true,
+              examples: ['{data: "value"}', '{count: 5}', 'null'],
+            },
+            {
+              name: 'targetKeyword',
+              type: 'string',
+              description: 'Keyword indicating target specification',
+              optional: true,
+              examples: ['to', 'on'],
+            },
+            {
+              name: 'target',
+              type: 'element',
+              description: 'Element(s) to send event to. If omitted, sends to current element (me)',
+              optional: true,
+              examples: ['me', '<#modal/>', '<.buttons/>', 'document'],
+            },
+          ],
+          returns: {
+            type: 'event',
+            description: 'The CustomEvent that was dispatched',
+            examples: [{}],
+          },
+          examples: [
+            {
+              title: 'Simple event dispatch',
+              code: 'on click send customEvent to <#target/>',
+              explanation: 'When clicked, sends a customEvent to the target element',
+              output: {},
+            },
+            {
+              title: 'Event with data payload',
+              code: 'send userAction {action: "save", id: 123} to me',
+              explanation: 'Sends userAction event with data to current element',
+              output: {},
+            },
+            {
+              title: 'Trigger syntax alternative',
+              code: 'trigger dataLoaded on <.widgets/>',
+              explanation: 'Alternative trigger syntax - sends dataLoaded to all widgets',
+              output: {},
+            },
+          ],
+          seeAlso: ['trigger', 'on', 'addEventListener', 'dispatchEvent'],
+          tags: ['events', 'custom-events', 'dispatch', 'communication'],
+        }
+  ) as LLMDocumentation;
 
   async execute(
     context: TypedExecutionContext,

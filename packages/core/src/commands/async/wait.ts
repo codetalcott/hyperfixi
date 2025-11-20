@@ -102,88 +102,96 @@ export class WaitCommand
   public readonly inputSchema = WaitCommandInputSchema;
   public readonly outputType = 'object' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'Control',
-    complexity: 'medium',
-    sideEffects: ['time', 'event-listening'],
-    examples: [
-      {
-        code: 'wait 2s',
-        description: 'Wait 2 seconds',
-        expectedOutput: '2000',
-      },
-      {
-        code: 'wait for click',
-        description: 'Wait for click event on current element',
-        expectedOutput: 'Event',
-      },
-      {
-        code: 'wait for load or 1s',
-        description: 'Wait for load event or 1 second timeout',
-        expectedOutput: 'Event | 1000',
-      },
-      {
-        code: 'wait for mousemove(clientX, clientY)',
-        description: 'Wait for mousemove and destructure event properties',
-        expectedOutput: 'Event',
-      },
-    ],
-    relatedCommands: ['async', 'fetch', 'settle'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'Control',
+          complexity: 'medium',
+          sideEffects: ['time', 'event-listening'],
+          examples: [
+            {
+              code: 'wait 2s',
+              description: 'Wait 2 seconds',
+              expectedOutput: '2000',
+            },
+            {
+              code: 'wait for click',
+              description: 'Wait for click event on current element',
+              expectedOutput: 'Event',
+            },
+            {
+              code: 'wait for load or 1s',
+              description: 'Wait for load event or 1 second timeout',
+              expectedOutput: 'Event | 1000',
+            },
+            {
+              code: 'wait for mousemove(clientX, clientY)',
+              description: 'Wait for mousemove and destructure event properties',
+              expectedOutput: 'Event',
+            },
+          ],
+          relatedCommands: ['async', 'fetch', 'settle'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Provides asynchronous time delays and event waiting functionality',
-    examples: [
-      {
-        title: 'Time delay',
-        code: 'wait 2s',
-        explanation: 'Wait for 2 seconds before continuing',
-        output: '2000',
-      },
-      {
-        title: 'Event waiting',
-        code: 'wait for click',
-        explanation: 'Wait for a click event on the current element',
-        output: 'Event',
-      },
-      {
-        title: 'Event with timeout',
-        code: 'wait for click or 1s',
-        explanation: 'Wait for click event, but timeout after 1 second',
-        output: 'Event | 1000',
-      },
-    ],
-    parameters: [
-      {
-        name: 'time',
-        type: 'number | string',
-        description: 'Time to wait (e.g., "2s", "500ms", 100)',
-        optional: false,
-        examples: ['2s', '500ms', '1000', '1 second'],
-      },
-      {
-        name: 'event',
-        type: 'string',
-        description: 'Event name to wait for',
-        optional: false,
-        examples: ['click', 'load', 'transitionend', 'custom:event'],
-      },
-      {
-        name: 'source',
-        type: 'EventTarget',
-        description: 'Element to listen for events on (defaults to current element)',
-        optional: true,
-        examples: ['document', 'window', '#myElement'],
-      },
-    ],
-    returns: {
-      type: 'Promise<Event | number>',
-      description: 'Resolves with event object or timeout duration',
-      examples: ['Event', '2000'],
-    },
-    seeAlso: ['on', 'trigger', 'send'],
-    tags: ['async', 'events', 'timing', 'delay'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary: 'Provides asynchronous time delays and event waiting functionality',
+          examples: [
+            {
+              title: 'Time delay',
+              code: 'wait 2s',
+              explanation: 'Wait for 2 seconds before continuing',
+              output: '2000',
+            },
+            {
+              title: 'Event waiting',
+              code: 'wait for click',
+              explanation: 'Wait for a click event on the current element',
+              output: 'Event',
+            },
+            {
+              title: 'Event with timeout',
+              code: 'wait for click or 1s',
+              explanation: 'Wait for click event, but timeout after 1 second',
+              output: 'Event | 1000',
+            },
+          ],
+          parameters: [
+            {
+              name: 'time',
+              type: 'number | string',
+              description: 'Time to wait (e.g., "2s", "500ms", 100)',
+              optional: false,
+              examples: ['2s', '500ms', '1000', '1 second'],
+            },
+            {
+              name: 'event',
+              type: 'string',
+              description: 'Event name to wait for',
+              optional: false,
+              examples: ['click', 'load', 'transitionend', 'custom:event'],
+            },
+            {
+              name: 'source',
+              type: 'EventTarget',
+              description: 'Element to listen for events on (defaults to current element)',
+              optional: true,
+              examples: ['document', 'window', '#myElement'],
+            },
+          ],
+          returns: {
+            type: 'Promise<Event | number>',
+            description: 'Resolves with event object or timeout duration',
+            examples: ['Event', '2000'],
+          },
+          seeAlso: ['on', 'trigger', 'send'],
+          tags: ['async', 'events', 'timing', 'delay'],
+        }
+  ) as LLMDocumentation;
 
   /**
    * Validate command arguments

@@ -5,6 +5,7 @@
  */
 
 import { v } from '../../validation/lightweight-validators';
+import { validators } from '../../validation/common-validators.ts';
 import type {
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -15,7 +16,7 @@ import type {
 // Removed TypedResult import '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
-import { asHTMLElement } from '../../utils/dom-utils';
+import { resolveTargets } from '../../utils/dom-utils.ts';
 import { createToggleUntil } from '../../runtime/temporal-modifiers';
 
 export interface ToggleCommandOptions {
@@ -29,18 +30,10 @@ const ToggleCommandInputSchema = v.tuple([
   v.union([
     v.string(), // Class names, CSS selectors, or attributes
     v.array(v.string()), // Array of class names
-    v.custom((value: unknown) => value instanceof HTMLElement), // Direct element reference
-    v.array(v.custom((value: unknown) => value instanceof HTMLElement)), // Array of elements
+    validators.htmlElement, // Direct element reference
+    validators.htmlElementArray, // Array of elements
   ]),
-  v
-    .union([
-      v.custom((value: unknown) => value instanceof HTMLElement),
-      v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-      v.string(), // CSS selector
-      v.null(), // Use implicit target (me)
-      v.undefined(),
-    ])
-    .optional(),
+  validators.elementTarget.optional(),
 ]);
 
 type ToggleCommandInput = any; // Inferred from RuntimeValidator
@@ -62,158 +55,166 @@ export class ToggleCommand
   public readonly inputSchema = ToggleCommandInputSchema;
   public readonly outputType = 'element-list' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'DOM',
-    complexity: 'simple',
-    sideEffects: ['dom-mutation'],
-    examples: [
-      {
-        code: 'toggle .active on me',
-        description: 'Toggle active class on current element (official _hyperscript syntax)',
-        expectedOutput: [],
-      },
-      {
-        code: 'toggle @disabled',
-        description: 'Toggle disabled attribute on current element (cookbook pattern)',
-        expectedOutput: [],
-      },
-      {
-        code: 'toggle [@disabled="true"]',
-        description: 'Toggle disabled attribute with explicit value (advanced cookbook pattern)',
-        expectedOutput: [],
-      },
-      {
-        code: 'toggle @disabled until htmx:afterOnLoad',
-        description: 'Toggle disabled attribute until event fires (temporal modifier - Cookbook Example #4)',
-        expectedOutput: [],
-      },
-      {
-        code: 'toggle "loading spinner" on <.buttons/>',
-        description: 'Toggle multiple classes on elements with buttons class',
-        expectedOutput: [],
-      },
-      {
-        code: 'toggle #myDialog',
-        description: 'Toggle dialog element (non-modal by default using show/close)',
-        expectedOutput: [],
-      },
-      {
-        code: 'toggle #confirmDialog as modal',
-        description: 'Toggle dialog in modal mode (using showModal/close)',
-        expectedOutput: [],
-      },
-      {
-        code: 'toggle me',
-        description: 'Toggle current element (if it\'s a dialog, toggles open/closed state)',
-        expectedOutput: [],
-      },
-      {
-        code: 'toggle #faqSection',
-        description: 'Toggle details element (expands/collapses content)',
-        expectedOutput: [],
-      },
-      {
-        code: 'toggle #countrySelect',
-        description: 'Toggle select dropdown (opens/closes options)',
-        expectedOutput: [],
-      },
-      {
-        code: 'toggle me',
-        description: 'When used on a summary element, toggles parent details element',
-        expectedOutput: [],
-      },
-    ],
-    relatedCommands: ['add', 'remove', 'hide', 'show', 'set', 'call'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'DOM',
+          complexity: 'simple',
+          sideEffects: ['dom-mutation'],
+          examples: [
+            {
+              code: 'toggle .active on me',
+              description: 'Toggle active class on current element (official _hyperscript syntax)',
+              expectedOutput: [],
+            },
+            {
+              code: 'toggle @disabled',
+              description: 'Toggle disabled attribute on current element (cookbook pattern)',
+              expectedOutput: [],
+            },
+            {
+              code: 'toggle [@disabled="true"]',
+              description: 'Toggle disabled attribute with explicit value (advanced cookbook pattern)',
+              expectedOutput: [],
+            },
+            {
+              code: 'toggle @disabled until htmx:afterOnLoad',
+              description: 'Toggle disabled attribute until event fires (temporal modifier - Cookbook Example #4)',
+              expectedOutput: [],
+            },
+            {
+              code: 'toggle "loading spinner" on <.buttons/>',
+              description: 'Toggle multiple classes on elements with buttons class',
+              expectedOutput: [],
+            },
+            {
+              code: 'toggle #myDialog',
+              description: 'Toggle dialog element (non-modal by default using show/close)',
+              expectedOutput: [],
+            },
+            {
+              code: 'toggle #confirmDialog as modal',
+              description: 'Toggle dialog in modal mode (using showModal/close)',
+              expectedOutput: [],
+            },
+            {
+              code: 'toggle me',
+              description: 'Toggle current element (if it\'s a dialog, toggles open/closed state)',
+              expectedOutput: [],
+            },
+            {
+              code: 'toggle #faqSection',
+              description: 'Toggle details element (expands/collapses content)',
+              expectedOutput: [],
+            },
+            {
+              code: 'toggle #countrySelect',
+              description: 'Toggle select dropdown (opens/closes options)',
+              expectedOutput: [],
+            },
+            {
+              code: 'toggle me',
+              description: 'When used on a summary element, toggles parent details element',
+              expectedOutput: [],
+            },
+          ],
+          relatedCommands: ['add', 'remove', 'hide', 'show', 'set', 'call'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Toggles CSS classes or attributes on HTML elements',
-    parameters: [
-      {
-        name: 'expression',
-        type: 'string',
-        description: 'CSS class names (.class), attributes (@attr), or attributes with values ([@attr="value"]) to toggle',
-        optional: false,
-        examples: ['.active', '@disabled', '[@disabled="true"]', 'loading spinner'],
-      },
-      {
-        name: 'target',
-        type: 'element',
-        description: 'Element(s) to modify. If omitted, uses the current element (me)',
-        optional: true,
-        examples: ['me', '<#sidebar/>', '<.buttons/>'],
-      },
-    ],
-    returns: {
-      type: 'element-list',
-      description: 'Array of elements that were modified',
-      examples: [[]],
-    },
-    examples: [
-      {
-        title: 'Toggle CSS class (official _hyperscript syntax)',
-        code: 'on click toggle .active on me',
-        explanation: 'When clicked, toggles the "active" class on the element',
-        output: [],
-      },
-      {
-        title: 'Toggle attribute (cookbook pattern)',
-        code: 'on click toggle @disabled',
-        explanation: 'When clicked, toggles the disabled attribute on/off',
-        output: [],
-      },
-      {
-        title: 'Toggle attribute with value (advanced cookbook)',
-        code: 'toggle [@disabled="true"]',
-        explanation: 'Toggles disabled="true" attribute (sets if not present, removes if present with that value)',
-        output: [],
-      },
-      {
-        title: 'Toggle multiple classes',
-        code: 'toggle "loading complete" on <#submit-btn/>',
-        explanation: 'Toggles both "loading" and "complete" classes on submit button',
-        output: [],
-      },
-      {
-        title: 'Toggle dialog (non-modal)',
-        code: 'on click toggle #myDialog',
-        explanation: 'Toggles dialog open/closed using show() (non-modal, default behavior)',
-        output: [],
-      },
-      {
-        title: 'Toggle dialog (modal)',
-        code: 'on click toggle #confirmDialog as modal',
-        explanation: 'Toggles dialog in modal mode using showModal() (blocks page, traps focus)',
-        output: [],
-      },
-      {
-        title: 'Toggle dialog from inside',
-        code: 'on click toggle me',
-        explanation: 'When used inside a dialog, toggles the dialog itself (closes it)',
-        output: [],
-      },
-      {
-        title: 'Toggle details element',
-        code: 'on click toggle #faqItem',
-        explanation: 'Toggles details element open/closed (for accordions, FAQs, etc.)',
-        output: [],
-      },
-      {
-        title: 'Toggle select dropdown',
-        code: 'on focus toggle #dropdown',
-        explanation: 'Opens/closes select dropdown programmatically',
-        output: [],
-      },
-      {
-        title: 'Toggle from summary element',
-        code: '<details><summary _="on click toggle me">FAQ</summary><p>Answer</p></details>',
-        explanation: 'When used on a summary element, automatically toggles the parent details element',
-        output: [],
-      },
-    ],
-    seeAlso: ['add', 'remove', 'hide', 'show', 'set', 'call'],
-    tags: ['dom', 'css', 'classes', 'attributes', 'dialog', 'modal', 'details', 'summary', 'select', 'interactive'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary: 'Toggles CSS classes or attributes on HTML elements',
+          parameters: [
+            {
+              name: 'expression',
+              type: 'string',
+              description: 'CSS class names (.class), attributes (@attr), or attributes with values ([@attr="value"]) to toggle',
+              optional: false,
+              examples: ['.active', '@disabled', '[@disabled="true"]', 'loading spinner'],
+            },
+            {
+              name: 'target',
+              type: 'element',
+              description: 'Element(s) to modify. If omitted, uses the current element (me)',
+              optional: true,
+              examples: ['me', '<#sidebar/>', '<.buttons/>'],
+            },
+          ],
+          returns: {
+            type: 'element-list',
+            description: 'Array of elements that were modified',
+            examples: [[]],
+          },
+          examples: [
+            {
+              title: 'Toggle CSS class (official _hyperscript syntax)',
+              code: 'on click toggle .active on me',
+              explanation: 'When clicked, toggles the "active" class on the element',
+              output: [],
+            },
+            {
+              title: 'Toggle attribute (cookbook pattern)',
+              code: 'on click toggle @disabled',
+              explanation: 'When clicked, toggles the disabled attribute on/off',
+              output: [],
+            },
+            {
+              title: 'Toggle attribute with value (advanced cookbook)',
+              code: 'toggle [@disabled="true"]',
+              explanation: 'Toggles disabled="true" attribute (sets if not present, removes if present with that value)',
+              output: [],
+            },
+            {
+              title: 'Toggle multiple classes',
+              code: 'toggle "loading complete" on <#submit-btn/>',
+              explanation: 'Toggles both "loading" and "complete" classes on submit button',
+              output: [],
+            },
+            {
+              title: 'Toggle dialog (non-modal)',
+              code: 'on click toggle #myDialog',
+              explanation: 'Toggles dialog open/closed using show() (non-modal, default behavior)',
+              output: [],
+            },
+            {
+              title: 'Toggle dialog (modal)',
+              code: 'on click toggle #confirmDialog as modal',
+              explanation: 'Toggles dialog in modal mode using showModal() (blocks page, traps focus)',
+              output: [],
+            },
+            {
+              title: 'Toggle dialog from inside',
+              code: 'on click toggle me',
+              explanation: 'When used inside a dialog, toggles the dialog itself (closes it)',
+              output: [],
+            },
+            {
+              title: 'Toggle details element',
+              code: 'on click toggle #faqItem',
+              explanation: 'Toggles details element open/closed (for accordions, FAQs, etc.)',
+              output: [],
+            },
+            {
+              title: 'Toggle select dropdown',
+              code: 'on focus toggle #dropdown',
+              explanation: 'Opens/closes select dropdown programmatically',
+              output: [],
+            },
+            {
+              title: 'Toggle from summary element',
+              code: '<details><summary _="on click toggle me">FAQ</summary><p>Answer</p></details>',
+              explanation: 'When used on a summary element, automatically toggles the parent details element',
+              output: [],
+            },
+          ],
+          seeAlso: ['add', 'remove', 'hide', 'show', 'set', 'call'],
+          tags: ['dom', 'css', 'classes', 'attributes', 'dialog', 'modal', 'details', 'summary', 'select', 'interactive'],
+        }
+  ) as LLMDocumentation;
 
   private readonly _options: ToggleCommandOptions; // Reserved for future enhancements - configuration storage
 
@@ -291,7 +292,7 @@ export class ToggleCommand
         }
 
         // Type-safe target resolution
-        const elements = this.resolveTargets(context, target);
+        const elements = resolveTargets(context, target);
         if (!elements.length) {
           return {
             success: false,
@@ -344,7 +345,7 @@ export class ToggleCommand
         }
 
         // Type-safe target resolution
-        const elements = this.resolveTargets(context, target);
+        const elements = resolveTargets(context, target);
         if (!elements.length) {
           return {
             success: false,
@@ -391,7 +392,7 @@ export class ToggleCommand
         }
 
         // Type-safe target resolution
-        const elements = this.resolveTargets(context, target);
+        const elements = resolveTargets(context, target);
         if (!elements.length) {
           return {
             success: false,
@@ -469,49 +470,6 @@ export class ToggleCommand
       .filter(cls => cls.length > 0);
   }
 
-  private resolveTargets(
-    context: TypedExecutionContext,
-    target?: ToggleCommandInput[1]
-  ): HTMLElement[] {
-    // If no target specified, use implicit target (me)
-    if (target === undefined || target === null) {
-      if (!context.me) {
-        throw new Error('Context element "me" is null');
-      }
-      const htmlElement = asHTMLElement(context.me);
-      if (!htmlElement) {
-        throw new Error('Context element "me" is not an HTMLElement');
-      }
-      return [htmlElement];
-    }
-
-    // Handle HTMLElement
-    if (target instanceof HTMLElement) {
-      return [target];
-    }
-
-    // Handle NodeList or HTMLCollection
-    if (target instanceof NodeList || target instanceof HTMLCollection) {
-      return Array.from(target) as HTMLElement[];
-    }
-
-    // Handle Array of elements
-    if (Array.isArray(target)) {
-      return target.filter(item => item instanceof HTMLElement);
-    }
-
-    // Handle CSS selector string
-    if (typeof target === 'string') {
-      try {
-        const elements = document.querySelectorAll(target);
-        return Array.from(elements) as HTMLElement[];
-      } catch (_error) {
-        throw new Error(`Invalid CSS selector: "${target}"`);
-      }
-    }
-
-    return [];
-  }
 
   private async toggleClassesOnElement(
     element: HTMLElement,
@@ -969,7 +927,7 @@ export class ToggleCommand
           elements = expression;
         } else {
           // Try to resolve as selector
-          elements = this.resolveTargets(context, expression);
+          elements = resolveTargets(context, expression);
         }
       } catch {
         return {type: 'none'};

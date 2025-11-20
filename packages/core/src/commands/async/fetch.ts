@@ -111,93 +111,101 @@ export class FetchCommand
   public readonly inputSchema = FetchCommandInputSchema;
   public readonly outputType = 'object' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'Communication',
-    complexity: 'complex',
-    sideEffects: ['network', 'event-dispatching'],
-    examples: [
-      {
-        code: 'fetch /api/data',
-        description: 'Fetch data as text',
-        expectedOutput: 'string',
-      },
-      {
-        code: 'fetch /api/users as json',
-        description: 'Fetch and parse JSON',
-        expectedOutput: 'object',
-      },
-      {
-        code: 'fetch /api/save as json with method:"POST"',
-        description: 'POST request with JSON response',
-        expectedOutput: 'object',
-      },
-      {
-        code: 'fetch /page as html',
-        description: 'Fetch HTML fragment',
-        expectedOutput: 'HTMLElement',
-      },
-      {
-        code: 'fetch /slow with timeout:5000',
-        description: 'Fetch with 5 second timeout',
-        expectedOutput: 'string',
-      },
-    ],
-    relatedCommands: ['wait', 'async', 'call'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'Communication',
+          complexity: 'complex',
+          sideEffects: ['network', 'event-dispatching'],
+          examples: [
+            {
+              code: 'fetch /api/data',
+              description: 'Fetch data as text',
+              expectedOutput: 'string',
+            },
+            {
+              code: 'fetch /api/users as json',
+              description: 'Fetch and parse JSON',
+              expectedOutput: 'object',
+            },
+            {
+              code: 'fetch /api/save as json with method:"POST"',
+              description: 'POST request with JSON response',
+              expectedOutput: 'object',
+            },
+            {
+              code: 'fetch /page as html',
+              description: 'Fetch HTML fragment',
+              expectedOutput: 'HTMLElement',
+            },
+            {
+              code: 'fetch /slow with timeout:5000',
+              description: 'Fetch with 5 second timeout',
+              expectedOutput: 'string',
+            },
+          ],
+          relatedCommands: ['wait', 'async', 'call'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Issues HTTP requests using the Fetch API with lifecycle event support',
-    examples: [
-      {
-        title: 'Basic GET request',
-        code: 'fetch "/api/users" as json',
-        explanation: 'Fetch JSON data from an API endpoint',
-        output: '{ users: [...] }',
-      },
-      {
-        title: 'POST request with data',
-        code: 'fetch "/api/users" with { method: "POST", body: data }',
-        explanation: 'Send a POST request with body data',
-        output: 'Response',
-      },
-      {
-        title: 'HTML fragment fetch',
-        code: 'fetch "/partial.html" as html',
-        explanation: 'Fetch and parse HTML fragment',
-        output: 'HTMLElement | DocumentFragment',
-      },
-    ],
-    parameters: [
-      {
-        name: 'url',
-        type: 'string',
-        description: 'URL to fetch from (supports template literals)',
-        optional: false,
-        examples: ['/api/data', 'https://example.com', '`/users/${userId}`'],
-      },
-      {
-        name: 'responseType',
-        type: '"json" | "html" | "response" | "text"',
-        description: 'How to parse the response',
-        optional: true,
-        examples: ['json', 'html', 'response'],
-      },
-      {
-        name: 'options',
-        type: 'object',
-        description: 'Fetch options (method, headers, body, timeout, etc.)',
-        optional: true,
-        examples: ['{ method: "POST" }', '{ headers: { "X-Auth": "token" } }'],
-      },
-    ],
-    returns: {
-      type: 'Promise<any>',
-      description: 'Resolves with parsed response based on responseType',
-      examples: ['{ name: "John" }', '<div>HTML</div>', 'text content'],
-    },
-    seeAlso: ['go', 'post', 'put', 'delete'],
-    tags: ['async', 'http', 'network', 'request', 'ajax'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary: 'Issues HTTP requests using the Fetch API with lifecycle event support',
+          examples: [
+            {
+              title: 'Basic GET request',
+              code: 'fetch "/api/users" as json',
+              explanation: 'Fetch JSON data from an API endpoint',
+              output: '{ users: [...] }',
+            },
+            {
+              title: 'POST request with data',
+              code: 'fetch "/api/users" with { method: "POST", body: data }',
+              explanation: 'Send a POST request with body data',
+              output: 'Response',
+            },
+            {
+              title: 'HTML fragment fetch',
+              code: 'fetch "/partial.html" as html',
+              explanation: 'Fetch and parse HTML fragment',
+              output: 'HTMLElement | DocumentFragment',
+            },
+          ],
+          parameters: [
+            {
+              name: 'url',
+              type: 'string',
+              description: 'URL to fetch from (supports template literals)',
+              optional: false,
+              examples: ['/api/data', 'https://example.com', '`/users/${userId}`'],
+            },
+            {
+              name: 'responseType',
+              type: '"json" | "html" | "response" | "text"',
+              description: 'How to parse the response',
+              optional: true,
+              examples: ['json', 'html', 'response'],
+            },
+            {
+              name: 'options',
+              type: 'object',
+              description: 'Fetch options (method, headers, body, timeout, etc.)',
+              optional: true,
+              examples: ['{ method: "POST" }', '{ headers: { "X-Auth": "token" } }'],
+            },
+          ],
+          returns: {
+            type: 'Promise<any>',
+            description: 'Resolves with parsed response based on responseType',
+            examples: ['{ name: "John" }', '<div>HTML</div>', 'text content'],
+          },
+          seeAlso: ['go', 'post', 'put', 'delete'],
+          tags: ['async', 'http', 'network', 'request', 'ajax'],
+        }
+  ) as LLMDocumentation;
 
   /**
    * Validate command arguments

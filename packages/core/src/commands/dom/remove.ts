@@ -5,6 +5,7 @@
  */
 
 import { v } from '../../validation/lightweight-validators';
+import { validators } from '../../validation/common-validators.ts';
 import type {
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -15,7 +16,7 @@ import type {
 // Removed TypedResult import '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
-import { asHTMLElement } from '../../utils/dom-utils';
+import { resolveTargets } from '../../utils/dom-utils.ts';
 
 export interface RemoveCommandOptions {
   delimiter?: string;
@@ -29,15 +30,7 @@ const RemoveCommandInputSchema = v.tuple([
     v.string(), // Class names
     v.array(v.string()), // Array of class names
   ]),
-  v
-    .union([
-      v.custom((value: unknown) => value instanceof HTMLElement),
-      v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-      v.string(), // CSS selector
-      v.null(), // Use implicit target (me)
-      v.undefined(),
-    ])
-    .optional(),
+  validators.elementTarget.optional(),
 ]);
 
 type RemoveCommandInput = any; // Inferred from RuntimeValidator
@@ -59,65 +52,73 @@ export class RemoveCommand
   public readonly inputSchema = RemoveCommandInputSchema;
   public readonly outputType = 'element-list' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'DOM',
-    complexity: 'simple',
-    sideEffects: ['dom-mutation'],
-    examples: [
-      {
-        code: 'remove .active from me',
-        description: 'Remove active class from current element',
-        expectedOutput: [],
-      },
-      {
-        code: 'remove "loading spinner" from <.buttons/>',
-        description: 'Remove multiple classes from elements with buttons class',
-        expectedOutput: [],
-      },
-    ],
-    relatedCommands: ['add', 'toggle', 'hide'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'DOM',
+          complexity: 'simple',
+          sideEffects: ['dom-mutation'],
+          examples: [
+            {
+              code: 'remove .active from me',
+              description: 'Remove active class from current element',
+              expectedOutput: [],
+            },
+            {
+              code: 'remove "loading spinner" from <.buttons/>',
+              description: 'Remove multiple classes from elements with buttons class',
+              expectedOutput: [],
+            },
+          ],
+          relatedCommands: ['add', 'toggle', 'hide'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Removes CSS classes from HTML elements',
-    parameters: [
-      {
-        name: 'classExpression',
-        type: 'string',
-        description: 'CSS class names to remove',
-        optional: false,
-        examples: ['.active', 'highlighted', 'loading spinner'],
-      },
-      {
-        name: 'target',
-        type: 'element',
-        description: 'Element(s) to modify. If omitted, uses the current element (me)',
-        optional: true,
-        examples: ['me', '<#sidebar/>', '<.buttons/>'],
-      },
-    ],
-    returns: {
-      type: 'element-list',
-      description: 'Array of elements that were modified',
-      examples: [[]],
-    },
-    examples: [
-      {
-        title: 'Remove single class',
-        code: 'on click remove .active from me',
-        explanation: 'When clicked, removes the "active" class from the element',
-        output: [],
-      },
-      {
-        title: 'Remove multiple classes',
-        code: 'remove "loading error" from <#submit-btn/>',
-        explanation: 'Removes both "loading" and "error" classes from submit button',
-        output: [],
-      },
-    ],
-    seeAlso: ['add', 'toggle', 'hide', 'show'],
-    tags: ['dom', 'css', 'classes'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary: 'Removes CSS classes from HTML elements',
+          parameters: [
+            {
+              name: 'classExpression',
+              type: 'string',
+              description: 'CSS class names to remove',
+              optional: false,
+              examples: ['.active', 'highlighted', 'loading spinner'],
+            },
+            {
+              name: 'target',
+              type: 'element',
+              description: 'Element(s) to modify. If omitted, uses the current element (me)',
+              optional: true,
+              examples: ['me', '<#sidebar/>', '<.buttons/>'],
+            },
+          ],
+          returns: {
+            type: 'element-list',
+            description: 'Array of elements that were modified',
+            examples: [[]],
+          },
+          examples: [
+            {
+              title: 'Remove single class',
+              code: 'on click remove .active from me',
+              explanation: 'When clicked, removes the "active" class from the element',
+              output: [],
+            },
+            {
+              title: 'Remove multiple classes',
+              code: 'remove "loading error" from <#submit-btn/>',
+              explanation: 'Removes both "loading" and "error" classes from submit button',
+              output: [],
+            },
+          ],
+          seeAlso: ['add', 'toggle', 'hide', 'show'],
+          tags: ['dom', 'css', 'classes'],
+        }
+  ) as LLMDocumentation;
 
   private readonly _options: RemoveCommandOptions; // Reserved for future enhancements - configuration storage
 
@@ -171,7 +172,7 @@ export class RemoveCommand
       }
 
       // Type-safe target resolution
-      const elements = this.resolveTargets(context, target);
+      const elements = resolveTargets(context, target);
 
       if (!elements.length) {
         return {
@@ -242,49 +243,6 @@ export class RemoveCommand
     return [String(classExpression).trim()].filter(cls => cls.length > 0);
   }
 
-  private resolveTargets(
-    context: TypedExecutionContext,
-    target?: RemoveCommandInput[1]
-  ): HTMLElement[] {
-    // If no target specified, use implicit target (me)
-    if (target === undefined || target === null) {
-      if (!context.me) {
-        throw new Error('Context element "me" is null');
-      }
-      const htmlElement = asHTMLElement(context.me);
-      if (!htmlElement) {
-        throw new Error('Context element "me" is not an HTMLElement');
-      }
-      return [htmlElement];
-    }
-
-    // Handle HTMLElement
-    if (target instanceof HTMLElement) {
-      return [target];
-    }
-
-    // Handle NodeList or HTMLCollection
-    if (target instanceof NodeList || target instanceof HTMLCollection) {
-      return Array.from(target) as HTMLElement[];
-    }
-
-    // Handle Array of elements
-    if (Array.isArray(target)) {
-      return target.filter(item => item instanceof HTMLElement);
-    }
-
-    // Handle CSS selector string
-    if (typeof target === 'string') {
-      try {
-        const elements = document.querySelectorAll(target);
-        return Array.from(elements) as HTMLElement[];
-      } catch (_error) {
-        throw new Error(`Invalid CSS selector: "${target}"`);
-      }
-    }
-
-    return [];
-  }
 
   private async removeClassesFromElement(
     element: HTMLElement,

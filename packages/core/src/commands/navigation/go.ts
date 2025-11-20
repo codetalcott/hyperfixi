@@ -5,6 +5,7 @@
  */
 
 import { v, z } from '../../validation/lightweight-validators';
+import { validators } from '../../validation/common-validators.ts';
 import type {
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -45,7 +46,7 @@ const GoCommandInputSchema = z.union([
         v.string(),
         v.number(),
         v.boolean(),
-        v.custom((value: unknown) => value instanceof HTMLElement),
+        validators.htmlElement,
         v.null(),
         v.undefined(),
       ])
@@ -75,83 +76,91 @@ export class GoCommand
   public readonly inputSchema = GoCommandInputSchema;
   public readonly outputType = 'object' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'Control',
-    complexity: 'complex',
-    sideEffects: ['navigation', 'dom-query', 'history'],
-    examples: [
-      {
-        code: 'go to url "https://example.com"',
-        description: 'Navigate to a URL',
-        expectedOutput: 'https://example.com',
-      },
-      {
-        code: 'go back',
-        description: 'Navigate back in browser history',
-        expectedOutput: 'back',
-      },
-      {
-        code: 'go to top of <#header/>',
-        description: 'Scroll to top of header element',
-        expectedOutput: 'HTMLElement',
-      },
-    ],
-    relatedCommands: ['fetch', 'redirect', 'scroll'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'Control',
+          complexity: 'complex',
+          sideEffects: ['navigation', 'dom-query', 'history'],
+          examples: [
+            {
+              code: 'go to url "https://example.com"',
+              description: 'Navigate to a URL',
+              expectedOutput: 'https://example.com',
+            },
+            {
+              code: 'go back',
+              description: 'Navigate back in browser history',
+              expectedOutput: 'back',
+            },
+            {
+              code: 'go to top of <#header/>',
+              description: 'Scroll to top of header element',
+              expectedOutput: 'HTMLElement',
+            },
+          ],
+          relatedCommands: ['fetch', 'redirect', 'scroll'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Provides comprehensive navigation functionality for URLs, elements, and browser history',
-    parameters: [
-      {
-        name: 'type',
-        type: 'string',
-        description: 'Navigation type: "url", "back", or position keywords',
-        optional: false,
-        examples: ['url', 'back', 'top', 'middle', 'bottom'],
-      },
-      {
-        name: 'target',
-        type: 'string',
-        description: 'URL string or target element for scrolling',
-        optional: true,
-        examples: ['"https://example.com"', '<#header/>', 'me'],
-      },
-    ],
-    returns: {
-      type: 'object',
-      description: 'URL string for navigation or target element for scrolling',
-      examples: ['"https://example.com"', 'HTMLElement', '"back"'],
-    },
-    examples: [
-      {
-        title: 'URL navigation',
-        code: 'go to url "https://example.com"',
-        explanation: 'Navigate to the specified URL in the current window',
-        output: '"https://example.com"',
-      },
-      {
-        title: 'New window navigation',
-        code: 'go to url "https://example.com" in new window',
-        explanation: 'Open URL in a new window/tab',
-        output: '"https://example.com"',
-      },
-      {
-        title: 'Element scrolling',
-        code: 'go to top of <#header/>',
-        explanation: 'Scroll to the top of the header element',
-        output: 'HTMLElement',
-      },
-      {
-        title: 'History navigation',
-        code: 'go back',
-        explanation: 'Navigate back in browser history',
-        output: '"back"',
-      },
-    ],
-    seeAlso: ['fetch', 'redirect', 'scroll', 'history'],
-    tags: ['navigation', 'url', 'scroll', 'history', 'browser'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary:
+            'Provides comprehensive navigation functionality for URLs, elements, and browser history',
+          parameters: [
+            {
+              name: 'type',
+              type: 'string',
+              description: 'Navigation type: "url", "back", or position keywords',
+              optional: false,
+              examples: ['url', 'back', 'top', 'middle', 'bottom'],
+            },
+            {
+              name: 'target',
+              type: 'string',
+              description: 'URL string or target element for scrolling',
+              optional: true,
+              examples: ['"https://example.com"', '<#header/>', 'me'],
+            },
+          ],
+          returns: {
+            type: 'object',
+            description: 'URL string for navigation or target element for scrolling',
+            examples: ['"https://example.com"', 'HTMLElement', '"back"'],
+          },
+          examples: [
+            {
+              title: 'URL navigation',
+              code: 'go to url "https://example.com"',
+              explanation: 'Navigate to the specified URL in the current window',
+              output: '"https://example.com"',
+            },
+            {
+              title: 'New window navigation',
+              code: 'go to url "https://example.com" in new window',
+              explanation: 'Open URL in a new window/tab',
+              output: '"https://example.com"',
+            },
+            {
+              title: 'Element scrolling',
+              code: 'go to top of <#header/>',
+              explanation: 'Scroll to the top of the header element',
+              output: 'HTMLElement',
+            },
+            {
+              title: 'History navigation',
+              code: 'go back',
+              explanation: 'Navigate back in browser history',
+              output: '"back"',
+            },
+          ],
+          seeAlso: ['fetch', 'redirect', 'scroll', 'history'],
+          tags: ['navigation', 'url', 'scroll', 'history', 'browser'],
+        }
+  ) as LLMDocumentation;
 
   private options: GoCommandOptions;
 

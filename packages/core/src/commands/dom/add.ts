@@ -5,6 +5,7 @@
  */
 
 import { v } from '../../validation/lightweight-validators';
+import { validators } from '../../validation/common-validators.ts';
 import type {
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -13,7 +14,7 @@ import type {
   LLMDocumentation,
 } from '../../types/command-types';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
-import { asHTMLElement } from '../../utils/dom-utils';
+import { resolveTargets } from '../../utils/dom-utils.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { debug } from '../../utils/debug';
 import { styleBatcher } from '../../utils/performance';
@@ -30,15 +31,7 @@ const AddCommandInputSchema = v.tuple([
     v.string(), // Class names or attribute syntax
     v.array(v.string()), // Array of class names
   ]),
-  v
-    .union([
-      v.custom((value: unknown) => value instanceof HTMLElement),
-      v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-      v.string(), // CSS selector
-      v.null(), // Use implicit target (me)
-      v.undefined(),
-    ])
-    .optional(),
+  validators.elementTarget.optional(),
 ]);
 
 type AddCommandInput = any; // Inferred from RuntimeValidator
@@ -60,76 +53,84 @@ export class AddCommand
   public readonly inputSchema = AddCommandInputSchema;
   public readonly outputType = 'element-list' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'DOM',
-    complexity: 'medium',
-    sideEffects: ['dom-mutation'],
-    examples: [
-      {
-        code: 'add .highlighted to me',
-        description: 'Add highlighted class to current element',
-        expectedOutput: [],
-      },
-      {
-        code: 'add "active selected" to <.buttons/>',
-        description: 'Add multiple classes to elements with buttons class',
-        expectedOutput: [],
-      },
-      {
-        code: 'add [@data-loaded="true"] to <#content/>',
-        description: 'Add data attribute to content element',
-        expectedOutput: [],
-      },
-    ],
-    relatedCommands: ['remove', 'toggle', 'set'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'DOM',
+          complexity: 'medium',
+          sideEffects: ['dom-mutation'],
+          examples: [
+            {
+              code: 'add .highlighted to me',
+              description: 'Add highlighted class to current element',
+              expectedOutput: [],
+            },
+            {
+              code: 'add "active selected" to <.buttons/>',
+              description: 'Add multiple classes to elements with buttons class',
+              expectedOutput: [],
+            },
+            {
+              code: 'add [@data-loaded="true"] to <#content/>',
+              description: 'Add data attribute to content element',
+              expectedOutput: [],
+            },
+          ],
+          relatedCommands: ['remove', 'toggle', 'set'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Adds CSS classes or HTML attributes to elements',
-    parameters: [
-      {
-        name: 'classExpression',
-        type: 'string',
-        description: 'CSS class names to add or attribute syntax [@name="value"]',
-        optional: false,
-        examples: ['.active', 'highlighted', 'active selected', '[@data-state="loaded"]'],
-      },
-      {
-        name: 'target',
-        type: 'element',
-        description: 'Element(s) to modify. If omitted, uses the current element (me)',
-        optional: true,
-        examples: ['me', '<#sidebar/>', '<.buttons/>'],
-      },
-    ],
-    returns: {
-      type: 'element-list',
-      description: 'Array of elements that were modified',
-      examples: [[]],
-    },
-    examples: [
-      {
-        title: 'Add single class',
-        code: 'on click add .active to me',
-        explanation: 'When clicked, adds the "active" class to the element',
-        output: [],
-      },
-      {
-        title: 'Add multiple classes',
-        code: 'add "loading spinner" to <#submit-btn/>',
-        explanation: 'Adds both "loading" and "spinner" classes to submit button',
-        output: [],
-      },
-      {
-        title: 'Add data attribute',
-        code: 'add [@data-processed="true"] to <.items/>',
-        explanation: 'Sets data-processed attribute to "true" on all items',
-        output: [],
-      },
-    ],
-    seeAlso: ['remove', 'toggle', 'set-attribute'],
-    tags: ['dom', 'css', 'classes', 'attributes'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary: 'Adds CSS classes or HTML attributes to elements',
+          parameters: [
+            {
+              name: 'classExpression',
+              type: 'string',
+              description: 'CSS class names to add or attribute syntax [@name="value"]',
+              optional: false,
+              examples: ['.active', 'highlighted', 'active selected', '[@data-state="loaded"]'],
+            },
+            {
+              name: 'target',
+              type: 'element',
+              description: 'Element(s) to modify. If omitted, uses the current element (me)',
+              optional: true,
+              examples: ['me', '<#sidebar/>', '<.buttons/>'],
+            },
+          ],
+          returns: {
+            type: 'element-list',
+            description: 'Array of elements that were modified',
+            examples: [[]],
+          },
+          examples: [
+            {
+              title: 'Add single class',
+              code: 'on click add .active to me',
+              explanation: 'When clicked, adds the "active" class to the element',
+              output: [],
+            },
+            {
+              title: 'Add multiple classes',
+              code: 'add "loading spinner" to <#submit-btn/>',
+              explanation: 'Adds both "loading" and "spinner" classes to submit button',
+              output: [],
+            },
+            {
+              title: 'Add data attribute',
+              code: 'add [@data-processed="true"] to <.items/>',
+              explanation: 'Sets data-processed attribute to "true" on all items',
+              output: [],
+            },
+          ],
+          seeAlso: ['remove', 'toggle', 'set-attribute'],
+          tags: ['dom', 'css', 'classes', 'attributes'],
+        }
+  ) as LLMDocumentation;
 
   private readonly _options: AddCommandOptions; // Reserved for future enhancements - configuration storage
 
@@ -158,7 +159,7 @@ export class AddCommand
       ) {
         debug.style('ADD: Detected object literal for inline styles:', classExpression);
         // This is an object of CSS properties - add them as inline styles
-        const elements = this.resolveTargets(context, target);
+        const elements = resolveTargets(context, target);
 
         if (!elements.length) {
           return {
@@ -207,7 +208,7 @@ export class AddCommand
       }
 
       // Type-safe target resolution
-      const elements = this.resolveTargets(context, target);
+      const elements = resolveTargets(context, target);
 
       if (!elements.length) {
         return {
@@ -325,49 +326,6 @@ export class AddCommand
     return cleanStr.length > 0 && this.isValidClassName(cleanStr) ? [cleanStr] : [];
   }
 
-  private resolveTargets(
-    context: TypedExecutionContext,
-    target?: AddCommandInput[1]
-  ): HTMLElement[] {
-    // If no target specified, use implicit target (me)
-    if (target === undefined || target === null) {
-      if (!context.me) {
-        throw new Error('Context element "me" is null');
-      }
-      const htmlElement = asHTMLElement(context.me);
-      if (!htmlElement) {
-        throw new Error('Context element "me" is not an HTMLElement');
-      }
-      return [htmlElement];
-    }
-
-    // Handle HTMLElement
-    if (target instanceof HTMLElement) {
-      return [target];
-    }
-
-    // Handle NodeList or HTMLCollection
-    if (target instanceof NodeList || target instanceof HTMLCollection) {
-      return Array.from(target) as HTMLElement[];
-    }
-
-    // Handle Array of elements
-    if (Array.isArray(target)) {
-      return target.filter(item => item instanceof HTMLElement);
-    }
-
-    // Handle CSS selector string
-    if (typeof target === 'string') {
-      try {
-        const elements = document.querySelectorAll(target);
-        return Array.from(elements) as HTMLElement[];
-      } catch (_error) {
-        throw new Error(`Invalid CSS selector: "${target}"`);
-      }
-    }
-
-    return [];
-  }
 
   private async addStylesToElement(
     element: HTMLElement,

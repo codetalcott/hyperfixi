@@ -8,6 +8,7 @@
  */
 
 import { v, z } from '../../validation/lightweight-validators';
+import { validators } from '../../validation/common-validators.ts';
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
 import type { UnifiedValidationResult } from '../../types/unified-types';
@@ -19,7 +20,7 @@ import { asHTMLElement } from '../../utils/dom-utils';
 export const SetCommandInputSchema = v
   .object({
     target: v
-      .union([v.string().min(1), v.custom((value: unknown) => value instanceof HTMLElement)])
+      .union([v.string().min(1), validators.htmlElement])
       .describe('Target variable, element property, or attribute'),
 
     value: v.unknown().describe('Value to set'),

@@ -5,6 +5,7 @@
  */
 
 import { v } from '../../validation/lightweight-validators';
+import { validators } from '../../validation/common-validators.ts';
 import type {
   TypedCommandImplementation,
   TypedExecutionContext,
@@ -15,7 +16,7 @@ import type {
 // Removed TypedResult import '../../types/base-types.ts';
 import type { UnifiedValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
-import { asHTMLElement } from '../../utils/dom-utils';
+import { resolveTargets } from '../../utils/dom-utils.ts';
 
 export interface ShowCommandOptions {
   useClass?: boolean;
@@ -27,15 +28,7 @@ export interface ShowCommandOptions {
  * Input validation schema for LLM understanding
  */
 const ShowCommandInputSchema = v.tuple([
-  v
-    .union([
-      v.custom((value: unknown) => value instanceof HTMLElement),
-      v.array(v.custom((value: unknown) => value instanceof HTMLElement)),
-      v.string(), // CSS selector
-      v.null(), // Use implicit target (me)
-      v.undefined(),
-    ])
-    .optional(),
+  validators.elementTarget.optional(),
 ]);
 
 type ShowCommandInput = any; // Inferred from RuntimeValidator
@@ -58,58 +51,66 @@ export class ShowCommand
   public readonly inputSchema = ShowCommandInputSchema;
   public readonly outputType = 'element-list' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'DOM',
-    complexity: 'simple',
-    sideEffects: ['dom-mutation'],
-    examples: [
-      {
-        code: 'show me',
-        description: 'Show the current element',
-        expectedOutput: [],
-      },
-      {
-        code: 'show <.hidden/>',
-        description: 'Show all elements with hidden class',
-        expectedOutput: [],
-      },
-    ],
-    relatedCommands: ['hide', 'toggle'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'DOM',
+          complexity: 'simple',
+          sideEffects: ['dom-mutation'],
+          examples: [
+            {
+              code: 'show me',
+              description: 'Show the current element',
+              expectedOutput: [],
+            },
+            {
+              code: 'show <.hidden/>',
+              description: 'Show all elements with hidden class',
+              expectedOutput: [],
+            },
+          ],
+          relatedCommands: ['hide', 'toggle'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Shows HTML elements by restoring their display property or removing CSS classes',
-    parameters: [
-      {
-        name: 'target',
-        type: 'element',
-        description: 'Element(s) to show. If omitted, shows the current element (me)',
-        optional: true,
-        examples: ['me', '<#modal/>', '<.hidden/>'],
-      },
-    ],
-    returns: {
-      type: 'element-list',
-      description: 'Array of elements that were shown',
-      examples: [[]],
-    },
-    examples: [
-      {
-        title: 'Show current element',
-        code: 'on click show me',
-        explanation: 'When clicked, the button shows itself',
-        output: [],
-      },
-      {
-        title: 'Show hidden modal',
-        code: 'on click show <#modal/>',
-        explanation: 'Click to reveal a previously hidden modal',
-        output: [],
-      },
-    ],
-    seeAlso: ['hide', 'toggle', 'remove-class'],
-    tags: ['dom', 'visibility', 'css'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary: 'Shows HTML elements by restoring their display property or removing CSS classes',
+          parameters: [
+            {
+              name: 'target',
+              type: 'element',
+              description: 'Element(s) to show. If omitted, shows the current element (me)',
+              optional: true,
+              examples: ['me', '<#modal/>', '<.hidden/>'],
+            },
+          ],
+          returns: {
+            type: 'element-list',
+            description: 'Array of elements that were shown',
+            examples: [[]],
+          },
+          examples: [
+            {
+              title: 'Show current element',
+              code: 'on click show me',
+              explanation: 'When clicked, the button shows itself',
+              output: [],
+            },
+            {
+              title: 'Show hidden modal',
+              code: 'on click show <#modal/>',
+              explanation: 'Click to reveal a previously hidden modal',
+              output: [],
+            },
+          ],
+          seeAlso: ['hide', 'toggle', 'remove-class'],
+          tags: ['dom', 'visibility', 'css'],
+        }
+  ) as LLMDocumentation;
 
   private options: ShowCommandOptions;
 
@@ -129,7 +130,7 @@ export class ShowCommand
     const [input] = args;
     try {
       // Type-safe target resolution
-      const elements = this.resolveTargets(context, input);
+      const elements = resolveTargets(context, input);
 
       // Process elements with enhanced error handling
       const shownElements: HTMLElement[] = [];
@@ -161,44 +162,6 @@ export class ShowCommand
     }
   }
 
-  private resolveTargets(
-    context: TypedExecutionContext,
-    target?: ShowCommandInput[0]
-  ): HTMLElement[] {
-    // Default to context.me if no target specified
-    if (target === undefined || target === null) {
-      if (!context.me) {
-        throw new Error('Context element "me" is null');
-      }
-      const htmlElement = asHTMLElement(context.me);
-      if (!htmlElement) {
-        throw new Error('Context element "me" is not an HTMLElement');
-      }
-      return [htmlElement];
-    }
-
-    // Handle HTMLElement directly
-    if (target instanceof HTMLElement) {
-      return [target];
-    }
-
-    // Handle HTMLElement array
-    if (Array.isArray(target)) {
-      return target.filter((el): el is HTMLElement => el instanceof HTMLElement);
-    }
-
-    // Handle CSS selector string
-    if (typeof target === 'string') {
-      try {
-        const elements = document.querySelectorAll(target);
-        return Array.from(elements) as HTMLElement[];
-      } catch (_error) {
-        throw new Error(`Invalid CSS selector: "${target}"`);
-      }
-    }
-
-    return [];
-  }
 
   private showElement(
     element: HTMLElement,

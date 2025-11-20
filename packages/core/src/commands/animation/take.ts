@@ -59,89 +59,97 @@ export class TakeCommand
     TakeCommandInputSchema as RuntimeValidator<TakeCommandInput>;
   public readonly outputType = 'element' as const;
 
-  public readonly metadata: CommandMetadata = {
-    category: 'DOM',
-    complexity: 'medium',
-    sideEffects: ['dom-mutation', 'attribute-transfer'],
-    examples: [
-      {
-        code: 'take class from <#source/> and put it on me',
-        description: 'Move all classes from source element to current element',
-        expectedOutput: 'HTMLElement',
-      },
-      {
-        code: 'take @data-value from <.source/> and put it on <#target/>',
-        description: 'Move data attribute from source to target element',
-        expectedOutput: 'HTMLElement',
-      },
-      {
-        code: 'take title from <#old-button/>',
-        description: 'Take title attribute from old button (put on current element)',
-        expectedOutput: 'HTMLElement',
-      },
-    ],
-    relatedCommands: ['put', 'add', 'remove', 'copy'],
-  };
+  public readonly metadata: CommandMetadata = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          category: 'DOM',
+          complexity: 'medium',
+          sideEffects: ['dom-mutation', 'attribute-transfer'],
+          examples: [
+            {
+              code: 'take class from <#source/> and put it on me',
+              description: 'Move all classes from source element to current element',
+              expectedOutput: 'HTMLElement',
+            },
+            {
+              code: 'take @data-value from <.source/> and put it on <#target/>',
+              description: 'Move data attribute from source to target element',
+              expectedOutput: 'HTMLElement',
+            },
+            {
+              code: 'take title from <#old-button/>',
+              description: 'Take title attribute from old button (put on current element)',
+              expectedOutput: 'HTMLElement',
+            },
+          ],
+          relatedCommands: ['put', 'add', 'remove', 'copy'],
+        }
+  ) as CommandMetadata;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Transfers properties, attributes, and classes between HTML elements',
-    parameters: [
-      {
-        name: 'property',
-        type: 'string',
-        description: 'Property or attribute name to transfer (class, @attr, style properties)',
-        optional: false,
-        examples: ['class', '@data-value', 'title', 'background-color', '.active'],
-      },
-      {
-        name: 'source',
-        type: 'element',
-        description: 'Source element to take the property from',
-        optional: false,
-        examples: ['<#source-element/>', '<.source-class/>', 'me'],
-      },
-      {
-        name: 'target',
-        type: 'element',
-        description: 'Target element to put the property on. If omitted, uses current element (me)',
-        optional: true,
-        examples: ['me', '<#target-element/>', '<.target-class/>'],
-      },
-    ],
-    returns: {
-      type: 'element',
-      description: 'The target element that received the transferred property',
-      examples: ['HTMLElement'],
-    },
-    examples: [
-      {
-        title: 'Transfer all classes',
-        code: 'take class from <#old-element/> and put it on <#new-element/>',
-        explanation: 'Moves all CSS classes from old element to new element',
-        output: 'HTMLElement',
-      },
-      {
-        title: 'Transfer specific attribute',
-        code: 'take @data-config from <.source/> and put it on me',
-        explanation: 'Moves data-config attribute from source element to current element',
-        output: 'HTMLElement',
-      },
-      {
-        title: 'Transfer to implicit target',
-        code: 'take title from <#tooltip-source/>',
-        explanation: 'Takes title attribute from source and puts it on current element',
-        output: 'HTMLElement',
-      },
-      {
-        title: 'Transfer CSS property',
-        code: 'take background-color from <.theme-source/> and put it on <.theme-target/>',
-        explanation: 'Moves background-color style property between elements',
-        output: 'HTMLElement',
-      },
-    ],
-    seeAlso: ['put', 'add-class', 'remove-class', 'copy-attribute'],
-    tags: ['dom', 'transfer', 'properties', 'attributes', 'classes'],
-  };
+  public readonly documentation: LLMDocumentation = (
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : {
+          summary: 'Transfers properties, attributes, and classes between HTML elements',
+          parameters: [
+            {
+              name: 'property',
+              type: 'string',
+              description: 'Property or attribute name to transfer (class, @attr, style properties)',
+              optional: false,
+              examples: ['class', '@data-value', 'title', 'background-color', '.active'],
+            },
+            {
+              name: 'source',
+              type: 'element',
+              description: 'Source element to take the property from',
+              optional: false,
+              examples: ['<#source-element/>', '<.source-class/>', 'me'],
+            },
+            {
+              name: 'target',
+              type: 'element',
+              description: 'Target element to put the property on. If omitted, uses current element (me)',
+              optional: true,
+              examples: ['me', '<#target-element/>', '<.target-class/>'],
+            },
+          ],
+          returns: {
+            type: 'element',
+            description: 'The target element that received the transferred property',
+            examples: ['HTMLElement'],
+          },
+          examples: [
+            {
+              title: 'Transfer all classes',
+              code: 'take class from <#old-element/> and put it on <#new-element/>',
+              explanation: 'Moves all CSS classes from old element to new element',
+              output: 'HTMLElement',
+            },
+            {
+              title: 'Transfer specific attribute',
+              code: 'take @data-config from <.source/> and put it on me',
+              explanation: 'Moves data-config attribute from source element to current element',
+              output: 'HTMLElement',
+            },
+            {
+              title: 'Transfer to implicit target',
+              code: 'take title from <#tooltip-source/>',
+              explanation: 'Takes title attribute from source and puts it on current element',
+              output: 'HTMLElement',
+            },
+            {
+              title: 'Transfer CSS property',
+              code: 'take background-color from <.theme-source/> and put it on <.theme-target/>',
+              explanation: 'Moves background-color style property between elements',
+              output: 'HTMLElement',
+            },
+          ],
+          seeAlso: ['put', 'add-class', 'remove-class', 'copy-attribute'],
+          tags: ['dom', 'transfer', 'properties', 'attributes', 'classes'],
+        }
+  ) as LLMDocumentation;
 
   private options: TakeCommandOptions;
 
