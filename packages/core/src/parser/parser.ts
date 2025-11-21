@@ -1951,16 +1951,11 @@ export class Parser {
       }
     }
 
-    return {
-      type: 'command',
-      name: 'add',
-      args: args as ExpressionNode[],
-      isBlocking: false,
-      start: commandToken.start || 0,
-      end: this.getPosition().end,
-      line: commandToken.line || 1,
-      column: commandToken.column || 1,
-    };
+    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
+    return CommandNodeBuilder.from(commandToken)
+      .withArgs(...args)
+      .endingAt(this.getPosition())
+      .build();
   }
 
   /**
@@ -2248,39 +2243,36 @@ export class Parser {
 
     // Parse: toggle <class> from <target> OR toggle <class> on <target>
     // Support both 'from' (HyperFixi) and 'on' (official _hyperscript) for compatibility
-    // First argument: class
+
+    // Parse first argument (class) until 'from' or 'on'
     if (!this.isAtEnd() && !this.check('from') && !this.check('on') && !this.check('end')) {
       args.push(this.parsePrimary());
     }
 
     // Accept either 'from' or 'on' keyword for target specification
+    // Note: We add the preposition as an argument for backwards compatibility
     if (this.check('from') || this.check('on')) {
       const preposition = this.peek().value; // 'from' or 'on'
       this.advance(); // consume the preposition
       args.push(this.createIdentifier(preposition)); // Add preposition as an argument
+
+      // Parse target
+      if (
+        !this.isAtEnd() &&
+        !this.check('then') &&
+        !this.check('and') &&
+        !this.check('else') &&
+        !this.check('end')
+      ) {
+        args.push(this.parsePrimary());
+      }
     }
 
-    // Third argument: target
-    if (
-      !this.isAtEnd() &&
-      !this.check('then') &&
-      !this.check('and') &&
-      !this.check('else') &&
-      !this.check('end')
-    ) {
-      args.push(this.parsePrimary());
-    }
-
-    return {
-      type: 'command',
-      name: identifierNode.name,
-      args: args as ExpressionNode[],
-      isBlocking: false,
-      ...(identifierNode.start !== undefined && { start: identifierNode.start }),
-      end: this.getPosition().end,
-      ...(identifierNode.line !== undefined && { line: identifierNode.line }),
-      ...(identifierNode.column !== undefined && { column: identifierNode.column }),
-    };
+    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
+    return CommandNodeBuilder.fromIdentifier(identifierNode)
+      .withArgs(...args)
+      .endingAt(this.getPosition())
+      .build();
   }
 
   private parseRegularCommand(identifierNode: IdentifierNode): CommandNode | null {
