@@ -2266,16 +2266,11 @@ export class Parser {
       }
     }
 
-    return {
-      type: 'command',
-      name: identifierNode.name,
-      args: args as ExpressionNode[],
-      isBlocking: false,
-      ...(identifierNode.start !== undefined && { start: identifierNode.start }),
-      end: this.getPosition().end,
-      ...(identifierNode.line !== undefined && { line: identifierNode.line }),
-      ...(identifierNode.column !== undefined && { column: identifierNode.column }),
-    };
+    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
+    return CommandNodeBuilder.fromIdentifier(identifierNode)
+      .withArgs(...args)
+      .endingAt(this.getPosition())
+      .build();
   }
 
   private parseCall(): ASTNode {
@@ -3830,19 +3825,16 @@ export class Parser {
       }
     }
 
-    const pos = this.getPosition();
+    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
+    const builder = CommandNodeBuilder.from(commandToken)
+      .withArgs(...args)
+      .endingAt(this.getPosition());
 
-    return {
-      type: 'command',
-      name: commandName,
-      args: args as ExpressionNode[],
-      modifiers: Object.keys(modifiers).length > 0 ? modifiers : undefined,
-      isBlocking: false,
-      start: commandToken.start || pos.start,
-      end: pos.end,
-      line: commandToken.line || pos.line,
-      column: commandToken.column || pos.column,
-    };
+    if (Object.keys(modifiers).length > 0) {
+      builder.withModifiers(modifiers);
+    }
+
+    return builder.build();
   }
 
   private parseCommand(): CommandNode {
