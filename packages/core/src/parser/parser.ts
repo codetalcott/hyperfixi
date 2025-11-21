@@ -18,6 +18,19 @@ import type {
 } from '../types/core';
 import { debug } from '../utils/debug';
 
+// Phase 1 Refactoring: Import new helper modules
+import {
+  COMMANDS,
+  COMPOUND_COMMANDS,
+  HYPERSCRIPT_KEYWORDS,
+  CommandClassification,
+  PUT_OPERATIONS,
+  PUT_OPERATION_KEYWORDS,
+  KEYWORDS,
+} from './parser-constants';
+import { CommandNodeBuilder } from './command-node-builder';
+import { TokenConsumer } from './token-consumer';
+
 // Use core types for consistency
 export type ParseResult = CoreParseResult;
 export type ParseError = CoreParseError;
@@ -564,94 +577,13 @@ export class Parser {
   }
 
   private isCommand(name: string): boolean {
-    // Check if the name is in the COMMANDS set from tokenizer
-    const COMMANDS = new Set([
-      'add',
-      'append',
-      'async',
-      'beep',
-      'break',
-      'call',
-      'continue',
-      'decrement',
-      'default',
-      'exit',
-      'fetch',
-      'get',
-      'go',
-      'halt',
-      'hide',
-      'if',
-      'increment',
-      'install',
-      'js',
-      'log',
-      'make',
-      'measure',
-      'pick',
-      'put',
-      'remove',
-      'render',
-      'repeat',
-      'return',
-      'send',
-      'set',
-      'settle',
-      'show',
-      'take',
-      'tell',
-      'throw',
-      'toggle',
-      'transition',
-      'trigger',
-      'unless',
-      'wait',
-    ]);
-    return COMMANDS.has(name.toLowerCase());
+    // Phase 1 Refactoring: Use centralized command list
+    return CommandClassification.isCommand(name);
   }
 
   private isKeyword(name: string): boolean {
-    // Check if the name is in the KEYWORDS set from tokenizer
-    const KEYWORDS = new Set([
-      'if',
-      'else',
-      'unless',
-      'for',
-      'while',
-      'until',
-      'end',
-      'and',
-      'or',
-      'not',
-      'in',
-      'to',
-      'from',
-      'into',
-      'with',
-      'without',
-      'as',
-      'matches',
-      'contains',
-      'then',
-      'on',
-      'when',
-      'every',
-      'init',
-      'def',
-      'behavior',
-      'the',
-      'of',
-      'first',
-      'last',
-      'next',
-      'previous',
-      'closest',
-      'within',
-      'pseudo',
-      'async',
-      'await',
-    ]);
-    return KEYWORDS.has(name.toLowerCase());
+    // Phase 1 Refactoring: Use centralized keyword list
+    return CommandClassification.isKeyword(name);
   }
 
   private createCommandFromIdentifier(identifierNode: IdentifierNode): CommandNode | null {
@@ -702,24 +634,8 @@ export class Parser {
   }
 
   private isCompoundCommand(commandName: string): boolean {
-    // Added 'set' back to use the sophisticated parseSetCommand method for "the X of Y" syntax
-    // Added 'show' and 'hide' to ensure they parse as commands with selector arguments
-    // Added 'halt' to handle "halt the event" syntax with special parsing
-    // Added 'measure' to handle multi-argument syntax: measure <target> property
-    const compoundCommands = [
-      'put',
-      'trigger',
-      'remove',
-      'take',
-      'toggle',
-      'set',
-      'show',
-      'hide',
-      'add',
-      'halt',
-      'measure',
-    ];
-    return compoundCommands.includes(commandName);
+    // Phase 1 Refactoring: Use centralized command list
+    return CommandClassification.isCompoundCommand(commandName);
   }
 
   private parseCompoundCommand(identifierNode: IdentifierNode): CommandNode | null {
@@ -752,6 +668,7 @@ export class Parser {
   }
 
   private parsePutCommand(identifierNode: IdentifierNode): CommandNode | null {
+    // Phase 1 Refactoring: Demonstrates new helpers
     // Strategy 1: Parse expressions properly instead of primitives
     // This handles complex expressions like: put (#count's textContent as Int) + 1 into #count
 
@@ -764,34 +681,34 @@ export class Parser {
     }
 
     // Step 2: Look for operation keyword (into, before, after, at)
-    const validOperations = ['into', 'before', 'after', 'at'];
+    // Phase 1: Use constants instead of magic strings
     const currentToken = this.peek();
 
-    if (!currentToken || !validOperations.includes(currentToken.value)) {
-      this.addError(`Expected operation keyword (into, before, after, at) after put expression, got: ${currentToken?.value}`);
+    if (!currentToken || !PUT_OPERATION_KEYWORDS.includes(currentToken.value as any)) {
+      this.addError(`Expected operation keyword (${PUT_OPERATION_KEYWORDS.join(', ')}) after put expression, got: ${currentToken?.value}`);
       return null;
     }
 
     let operation = this.advance().value;  // consume 'into', 'before', 'after', or 'at'
 
     // Step 3: Handle "at start of" / "at end of" multi-word operations
-    if (operation === 'at') {
-      if (this.check('start') || this.check('the')) {
-        if (this.check('the')) {
+    if (operation === PUT_OPERATIONS.AT) {
+      if (this.check(KEYWORDS.START) || this.check(KEYWORDS.THE)) {
+        if (this.check(KEYWORDS.THE)) {
           this.advance();  // consume 'the'
         }
-        if (this.check('start')) {
+        if (this.check(KEYWORDS.START)) {
           this.advance();  // consume 'start'
-          if (this.check('of')) {
+          if (this.check(KEYWORDS.OF)) {
             this.advance();  // consume 'of'
-            operation = 'at start of';
+            operation = PUT_OPERATIONS.AT_START_OF;
           }
         }
-      } else if (this.check('end')) {
+      } else if (this.check(KEYWORDS.END)) {
         this.advance();  // consume 'end'
-        if (this.check('of')) {
+        if (this.check(KEYWORDS.OF)) {
           this.advance();  // consume 'of'
-          operation = 'at end of';
+          operation = PUT_OPERATIONS.AT_END_OF;
         }
       }
     }
@@ -804,29 +721,12 @@ export class Parser {
       return null;
     }
 
-    // Step 5: Create command node with proper structure
-    const result = {
-      type: 'command' as const,
-      name: identifierNode.name,
-      args: [
-        contentExpr,
-        this.createIdentifier(operation),
-        targetExpr
-      ] as ExpressionNode[],
-      isBlocking: false,
-      start: identifierNode.start || 0,
-      end: this.getPosition().end,
-      line: identifierNode.line || 1,
-      column: identifierNode.column || 1,
-    };
-
-    // debug.parse('✅ PARSER: parsePutCommand completed', {
-    // result,
-    // argCount: finalArgs.length,
-    // finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
-    // });
-
-    return result;
+    // Step 5: Create command node using builder pattern
+    // Phase 1: Use CommandNodeBuilder instead of manual object creation
+    return CommandNodeBuilder.fromIdentifier(identifierNode)
+      .withArgs(contentExpr, this.createIdentifier(operation), targetExpr)
+      .endingAt(this.getPosition())
+      .build();
   }
 
   private parseSetCommand(identifierNode: IdentifierNode): CommandNode | null {
@@ -2310,41 +2210,37 @@ export class Parser {
   }
 
   private parseRemoveCommand(identifierNode: IdentifierNode): CommandNode | null {
+    // Phase 1 Refactoring: Use constants and CommandNodeBuilder
     const args: ASTNode[] = [];
 
     // Parse: remove <class> from <target>
     // First argument: class
-    if (!this.isAtEnd() && !this.check('from') && !this.check('end')) {
+    if (!this.isAtEnd() && !this.check(KEYWORDS.FROM) && !this.check(KEYWORDS.END)) {
       args.push(this.parsePrimary());
     }
 
     // Expect 'from' keyword
-    if (this.check('from')) {
+    if (this.check(KEYWORDS.FROM)) {
       this.advance(); // consume 'from'
-      args.push(this.createIdentifier('from')); // Add 'from' as an argument
+      args.push(this.createIdentifier(KEYWORDS.FROM)); // Add 'from' as an argument
     }
 
     // Third argument: target
     if (
       !this.isAtEnd() &&
-      !this.check('then') &&
-      !this.check('and') &&
-      !this.check('else') &&
-      !this.check('end')
+      !this.check(KEYWORDS.THEN) &&
+      !this.check(KEYWORDS.AND) &&
+      !this.check(KEYWORDS.ELSE) &&
+      !this.check(KEYWORDS.END)
     ) {
       args.push(this.parsePrimary());
     }
 
-    return {
-      type: 'command',
-      name: identifierNode.name,
-      args: args as ExpressionNode[],
-      isBlocking: false,
-      ...(identifierNode.start !== undefined && { start: identifierNode.start }),
-      end: this.getPosition().end,
-      ...(identifierNode.line !== undefined && { line: identifierNode.line }),
-      ...(identifierNode.column !== undefined && { column: identifierNode.column }),
-    };
+    // Phase 1: Use CommandNodeBuilder
+    return CommandNodeBuilder.fromIdentifier(identifierNode)
+      .withArgs(...args)
+      .endingAt(this.getPosition())
+      .build();
   }
 
   private parseToggleCommand(identifierNode: IdentifierNode): CommandNode | null {

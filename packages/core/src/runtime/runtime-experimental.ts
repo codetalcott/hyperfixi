@@ -18,11 +18,33 @@ import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { LazyExpressionEvaluator } from '../core/lazy-expression-evaluator';
 
 // Import commands-v2 (with parseInput() methods)
+// DOM Commands (7)
 import { createHideCommand } from '../commands-v2/dom/hide';
 import { createShowCommand } from '../commands-v2/dom/show';
 import { createAddCommand } from '../commands-v2/dom/add';
 import { createRemoveCommand } from '../commands-v2/dom/remove';
 import { createToggleCommand } from '../commands-v2/dom/toggle';
+import { createPutCommand } from '../commands-v2/dom/put';
+import { createMakeCommand } from '../commands-v2/dom/make';
+
+// Async Commands (2)
+import { createWaitCommand } from '../commands-v2/async/wait';
+import { createFetchCommand } from '../commands-v2/async/fetch';
+
+// Data Commands (3)
+import { createSetCommand } from '../commands-v2/data/set';
+import { createIncrementCommand } from '../commands-v2/data/increment';
+import { createDecrementCommand } from '../commands-v2/data/decrement';
+
+// Utility Commands (1)
+import { createLogCommand } from '../commands-v2/utility/log';
+
+// Event Commands (2)
+import { createTriggerCommand } from '../commands-v2/events/trigger';
+import { createSendCommand } from '../commands-v2/events/send';
+
+// Navigation Commands (1)
+import { createGoCommand } from '../commands-v2/navigation/go';
 
 export interface RuntimeExperimentalOptions {
   /**
@@ -59,31 +81,52 @@ export interface RuntimeExperimentalOptions {
 /**
  * RuntimeExperimental - Test runtime for tree-shaking validation
  *
- * This runtime extends RuntimeBase and pre-registers 5 core commands from
+ * This runtime extends RuntimeBase and pre-registers all 16 V2 commands from
  * commands-v2/ for testing purposes.
  *
  * Key differences from Runtime:
  * - Uses RuntimeBase (generic AST traversal)
  * - Uses EnhancedCommandRegistryV2 (generic adapter)
  * - Uses commands-v2 (with parseInput())
- * - Only registers 5 core commands by default
- * - Much smaller bundle size (estimated 120KB vs 511KB)
+ * - Registers 16 V2 commands by default
+ * - Much smaller bundle size (estimated ~200KB vs 511KB)
  */
 export class RuntimeExperimental extends RuntimeBase {
   constructor(options: RuntimeExperimentalOptions = {}) {
     // Create or use provided registry
     const registry = options.registry || new EnhancedCommandRegistryV2();
 
-    // If no custom registry provided, register default 5 core commands
+    // If no custom registry provided, register all 16 V2 commands
     if (!options.registry) {
-      // Register commands from commands-v2/ (with parseInput() methods)
+      // DOM Commands (7)
       registry.register(createHideCommand());
       registry.register(createShowCommand());
       registry.register(createAddCommand());
       registry.register(createRemoveCommand());
       registry.register(createToggleCommand());
+      registry.register(createPutCommand());
+      registry.register(createMakeCommand());
 
-      console.log('RuntimeExperimental: Registered 5 core commands (hide, show, add, remove, toggle)');
+      // Async Commands (2)
+      registry.register(createWaitCommand());
+      registry.register(createFetchCommand());
+
+      // Data Commands (3)
+      registry.register(createSetCommand());
+      registry.register(createIncrementCommand());
+      registry.register(createDecrementCommand());
+
+      // Utility Commands (1)
+      registry.register(createLogCommand());
+
+      // Event Commands (2)
+      registry.register(createTriggerCommand());
+      registry.register(createSendCommand());
+
+      // Navigation Commands (1)
+      registry.register(createGoCommand());
+
+      console.log('RuntimeExperimental: Registered 16 V2 commands');
     }
 
     // Create expression evaluator (lazy or standard)

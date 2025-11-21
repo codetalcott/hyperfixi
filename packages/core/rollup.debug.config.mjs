@@ -1,12 +1,11 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import { terser } from 'rollup-plugin-terser';
 
 export default {
-  input: 'src/compatibility/browser-bundle-standard-v2.ts',
+  input: 'src/compatibility/browser-bundle-minimal-v2.ts',
   output: {
-    file: 'dist/hyperfixi-browser-standard.js',
+    file: 'dist/hyperfixi-debug.js',
     format: 'iife',
     name: 'hyperfixi',
     sourcemap: true,
@@ -22,16 +21,7 @@ export default {
       tsconfig: 'tsconfig.json',
       declaration: false,
       sourceMap: true
-    }),
-    terser({
-      compress: {
-        pure_getters: true,
-        unsafe: true,
-        unsafe_comps: true
-      },
-      mangle: {
-        properties: false // Keep property names for compatibility
-      }
     })
+    // NO terser - we want to see what's actually bundled
   ]
 };

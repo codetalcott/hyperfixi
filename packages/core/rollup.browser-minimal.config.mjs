@@ -4,7 +4,7 @@ import commonjs from '@rollup/plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 
 export default {
-  input: 'src/compatibility/browser-bundle-minimal.ts',
+  input: 'src/compatibility/browser-bundle-minimal-v2.ts',
   output: {
     file: 'dist/hyperfixi-browser-minimal.js',
     format: 'iife',
