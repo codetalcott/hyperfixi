@@ -52,7 +52,7 @@ export class ShowCommand
   public readonly outputType = 'element-list' as const;
 
   public readonly metadata: CommandMetadata = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           category: 'DOM',
@@ -75,7 +75,7 @@ export class ShowCommand
   ) as CommandMetadata;
 
   public readonly documentation: LLMDocumentation = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           summary: 'Shows HTML elements by restoring their display property or removing CSS classes',

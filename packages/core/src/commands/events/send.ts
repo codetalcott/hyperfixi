@@ -51,7 +51,7 @@ export class SendCommand
   public readonly outputType = 'event' as const;
 
   public readonly metadata: CommandMetadata = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           category: 'Event',
@@ -79,7 +79,7 @@ export class SendCommand
   ) as CommandMetadata;
 
   public readonly documentation: LLMDocumentation = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           summary: 'Dispatches custom events to HTML elements with optional data payload',

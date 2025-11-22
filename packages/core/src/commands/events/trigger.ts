@@ -54,7 +54,7 @@ export class TriggerCommand
   public readonly outputType = 'event' as const;
 
   public readonly metadata: CommandMetadata = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           category: 'Event',
@@ -82,7 +82,7 @@ export class TriggerCommand
   ) as CommandMetadata;
 
   public readonly documentation: LLMDocumentation = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           summary: 'Triggers custom events on HTML elements using clean "trigger X on Y" syntax',

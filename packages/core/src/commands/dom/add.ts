@@ -54,7 +54,7 @@ export class AddCommand
   public readonly outputType = 'element-list' as const;
 
   public readonly metadata: CommandMetadata = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           category: 'DOM',
@@ -82,7 +82,7 @@ export class AddCommand
   ) as CommandMetadata;
 
   public readonly documentation: LLMDocumentation = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           summary: 'Adds CSS classes or HTML attributes to elements',

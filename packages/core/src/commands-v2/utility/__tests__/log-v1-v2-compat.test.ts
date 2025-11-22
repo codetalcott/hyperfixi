@@ -9,7 +9,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { LogCommand as LogV1 } from '../../../commands/utility/log';
-import { LogCommand as LogV2 } from '../log-standalone';
+import { LogCommand as LogV2 } from '../log';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 
 // ========== Test Utilities ==========

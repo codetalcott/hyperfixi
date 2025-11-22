@@ -77,7 +77,7 @@ export class GoCommand
   public readonly outputType = 'object' as const;
 
   public readonly metadata: CommandMetadata = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           category: 'Control',
@@ -105,7 +105,7 @@ export class GoCommand
   ) as CommandMetadata;
 
   public readonly documentation: LLMDocumentation = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           summary:

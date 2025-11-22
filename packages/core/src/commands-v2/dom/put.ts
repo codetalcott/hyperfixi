@@ -125,6 +125,26 @@ export class PutCommand extends PutCommandV1 {
       else if (targetType === 'selector') {
         target = (targetArg as any).value;
       }
+      // Handle memberExpression (property access like "#target.innerHTML")
+      else if (targetType === 'memberExpression') {
+        // Reconstruct the selector string with property access
+        let selector = '';
+        const obj = (targetArg as any).object;
+        const prop = (targetArg as any).property;
+
+        if (obj?.type === 'selector') {
+          selector = obj.value;
+        } else if (obj?.type === 'identifier') {
+          selector = obj.name;
+        }
+
+        if (selector && prop?.name) {
+          target = `${selector}.${prop.name}`;
+        } else {
+          // Fallback: evaluate if we can't reconstruct
+          target = await evaluator.evaluate(targetArg, context);
+        }
+      }
       // For other types, evaluate them
       else {
         target = await evaluator.evaluate(targetArg, context);

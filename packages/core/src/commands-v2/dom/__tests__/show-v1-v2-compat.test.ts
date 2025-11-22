@@ -9,7 +9,7 @@
 
 import { describe, it, expect, afterEach } from 'vitest';
 import { ShowCommand as ShowV1 } from '../../../commands/dom/show';
-import { ShowCommand as ShowV2 } from '../show-standalone';
+import { ShowCommand as ShowV2 } from '../show';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 
 // ========== Test Utilities ==========

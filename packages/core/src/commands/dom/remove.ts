@@ -53,7 +53,7 @@ export class RemoveCommand
   public readonly outputType = 'element-list' as const;
 
   public readonly metadata: CommandMetadata = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           category: 'DOM',
@@ -76,7 +76,7 @@ export class RemoveCommand
   ) as CommandMetadata;
 
   public readonly documentation: LLMDocumentation = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           summary: 'Removes CSS classes from HTML elements',

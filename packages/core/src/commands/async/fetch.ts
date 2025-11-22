@@ -112,7 +112,7 @@ export class FetchCommand
   public readonly outputType = 'object' as const;
 
   public readonly metadata: CommandMetadata = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           category: 'Communication',
@@ -150,7 +150,7 @@ export class FetchCommand
   ) as CommandMetadata;
 
   public readonly documentation: LLMDocumentation = (
-    process.env.NODE_ENV === 'production'
+    typeof process !== 'undefined' && process.env.NODE_ENV === 'production'
       ? undefined
       : {
           summary: 'Issues HTTP requests using the Fetch API with lifecycle event support',

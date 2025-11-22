@@ -773,6 +773,22 @@ export class Runtime {
         target = target.name;
       } else if (target?.type === 'literal') {
         target = target.value;
+      } else if (target?.type === 'memberExpression') {
+        // Handle property access like "#target.innerHTML" or "me.textContent"
+        // Reconstruct the selector string with property access for PUT command
+        let selector = '';
+        if (target.object?.type === 'selector') {
+          selector = target.object.value;
+        } else if (target.object?.type === 'identifier') {
+          selector = target.object.name;
+        }
+
+        if (selector && target.property?.name) {
+          target = `${selector}.${target.property.name}`;
+        } else {
+          // Fallback: evaluate if we can't reconstruct the string
+          target = await this.execute(target, context);
+        }
       } else {
         // Evaluate and extract first element if it's an array
         const evaluated = await this.execute(target, context);

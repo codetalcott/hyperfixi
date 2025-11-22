@@ -9,7 +9,7 @@
 
 import { describe, it, expect, afterEach } from 'vitest';
 import { HideCommand as HideV1 } from '../../../commands/dom/hide';
-import { HideCommand as HideV2 } from '../hide-standalone';
+import { HideCommand as HideV2 } from '../hide';
 import type { ExecutionContext, TypedExecutionContext } from '../../../types/core';
 
 // ========== Test Utilities ==========
