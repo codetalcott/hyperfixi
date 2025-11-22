@@ -36,6 +36,13 @@ export { SendCommand, createSendCommand } from './events/send';
 // Navigation Commands
 export { GoCommand, createGoCommand } from './navigation/go';
 
+// Control Flow Commands
+export { IfCommand, createIfCommand } from './control-flow/if';
+export { RepeatCommand, createRepeatCommand } from './control-flow/repeat';
+export { BreakCommand, createBreakCommand } from './control-flow/break';
+export { ContinueCommand, createContinueCommand } from './control-flow/continue';
+export { HaltCommand, createHaltCommand } from './control-flow/halt';
+
 // Export raw input types for documentation
 export type { HideCommandRawInput } from './dom/hide';
 export type { ShowCommandRawInput } from './dom/show';
@@ -53,3 +60,8 @@ export type { LogCommandRawInput } from './utility/log';
 export type { TriggerCommandRawInput } from './events/trigger';
 export type { SendCommandRawInput } from './events/send';
 export type { GoCommandRawInput } from './navigation/go';
+export type { IfCommandInput } from './control-flow/if';
+export type { RepeatCommandInput } from './control-flow/repeat';
+export type { BreakCommandInput } from './control-flow/break';
+export type { ContinueCommandInput } from './control-flow/continue';
+export type { HaltCommandInput } from './control-flow/halt';

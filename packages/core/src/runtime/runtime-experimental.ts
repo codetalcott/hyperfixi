@@ -46,6 +46,13 @@ import { createSendCommand } from '../commands-v2/events/send';
 // Navigation Commands (1)
 import { createGoCommand } from '../commands-v2/navigation/go';
 
+// Control Flow Commands (5)
+import { createIfCommand } from '../commands-v2/control-flow/if';
+import { createRepeatCommand } from '../commands-v2/control-flow/repeat';
+import { createBreakCommand } from '../commands-v2/control-flow/break';
+import { createContinueCommand } from '../commands-v2/control-flow/continue';
+import { createHaltCommand } from '../commands-v2/control-flow/halt';
+
 export interface RuntimeExperimentalOptions {
   /**
    * Enable lazy loading of expressions
@@ -81,15 +88,15 @@ export interface RuntimeExperimentalOptions {
 /**
  * RuntimeExperimental - Test runtime for tree-shaking validation
  *
- * This runtime extends RuntimeBase and pre-registers all 16 V2 commands from
- * commands-v2/ for testing purposes.
+ * This runtime extends RuntimeBase and pre-registers all 21 V2 commands from
+ * commands-v2/ for testing purposes (Phase 5 + Phase 6-1).
  *
  * Key differences from Runtime:
  * - Uses RuntimeBase (generic AST traversal)
  * - Uses EnhancedCommandRegistryV2 (generic adapter)
  * - Uses commands-v2 (with parseInput())
- * - Registers 16 V2 commands by default
- * - Much smaller bundle size (estimated ~200KB vs 511KB)
+ * - Registers 21 V2 commands by default (16 Phase 5 + 5 Phase 6-1)
+ * - Much smaller bundle size (estimated ~140KB vs 366KB baseline)
  */
 export class RuntimeExperimental extends RuntimeBase {
   constructor(options: RuntimeExperimentalOptions = {}) {
@@ -126,7 +133,14 @@ export class RuntimeExperimental extends RuntimeBase {
       // Navigation Commands (1)
       registry.register(createGoCommand());
 
-      console.log('RuntimeExperimental: Registered 16 V2 commands');
+      // Control Flow Commands (5)
+      registry.register(createIfCommand());
+      registry.register(createRepeatCommand());
+      registry.register(createBreakCommand());
+      registry.register(createContinueCommand());
+      registry.register(createHaltCommand());
+
+      console.log('RuntimeExperimental: Registered 21 V2 commands (Phase 5 + Phase 6-1)');
     }
 
     // Create expression evaluator (lazy or standard)
