@@ -46,12 +46,23 @@ import { createSendCommand } from '../commands-v2/events/send';
 // Navigation Commands (1)
 import { createGoCommand } from '../commands-v2/navigation/go';
 
-// Control Flow Commands (5)
+// Control Flow Commands (7)
 import { createIfCommand } from '../commands-v2/control-flow/if';
 import { createRepeatCommand } from '../commands-v2/control-flow/repeat';
 import { createBreakCommand } from '../commands-v2/control-flow/break';
 import { createContinueCommand } from '../commands-v2/control-flow/continue';
 import { createHaltCommand } from '../commands-v2/control-flow/halt';
+import { createReturnCommand } from '../commands-v2/control-flow/return';
+import { createExitCommand } from '../commands-v2/control-flow/exit';
+
+// Data Commands - Phase 6-2 (1)
+import { createBindCommand } from '../commands-v2/data/bind';
+
+// Execution Commands (1)
+import { createCallCommand } from '../commands-v2/execution/call';
+
+// Content Commands (1)
+import { createAppendCommand } from '../commands-v2/content/append';
 
 export interface RuntimeExperimentalOptions {
   /**
@@ -88,22 +99,22 @@ export interface RuntimeExperimentalOptions {
 /**
  * RuntimeExperimental - Test runtime for tree-shaking validation
  *
- * This runtime extends RuntimeBase and pre-registers all 21 V2 commands from
- * commands-v2/ for testing purposes (Phase 5 + Phase 6-1).
+ * This runtime extends RuntimeBase and pre-registers all 26 V2 commands from
+ * commands-v2/ for testing purposes (Phase 5 + Phase 6-1 + Phase 6-2).
  *
  * Key differences from Runtime:
  * - Uses RuntimeBase (generic AST traversal)
  * - Uses EnhancedCommandRegistryV2 (generic adapter)
  * - Uses commands-v2 (with parseInput())
- * - Registers 21 V2 commands by default (16 Phase 5 + 5 Phase 6-1)
- * - Much smaller bundle size (estimated ~140KB vs 366KB baseline)
+ * - Registers 26 V2 commands by default (16 Phase 5 + 5 Phase 6-1 + 5 Phase 6-2)
+ * - Much smaller bundle size (estimated ~145KB vs 366KB baseline, 60% reduction)
  */
 export class RuntimeExperimental extends RuntimeBase {
   constructor(options: RuntimeExperimentalOptions = {}) {
     // Create or use provided registry
     const registry = options.registry || new EnhancedCommandRegistryV2();
 
-    // If no custom registry provided, register all 16 V2 commands
+    // If no custom registry provided, register all 26 V2 commands
     if (!options.registry) {
       // DOM Commands (7)
       registry.register(createHideCommand());
@@ -133,14 +144,21 @@ export class RuntimeExperimental extends RuntimeBase {
       // Navigation Commands (1)
       registry.register(createGoCommand());
 
-      // Control Flow Commands (5)
+      // Control Flow Commands (7)
       registry.register(createIfCommand());
       registry.register(createRepeatCommand());
       registry.register(createBreakCommand());
       registry.register(createContinueCommand());
       registry.register(createHaltCommand());
+      registry.register(createReturnCommand());
+      registry.register(createExitCommand());
 
-      console.log('RuntimeExperimental: Registered 21 V2 commands (Phase 5 + Phase 6-1)');
+      // Phase 6-2 Commands (5)
+      registry.register(createBindCommand());
+      registry.register(createCallCommand());
+      registry.register(createAppendCommand());
+
+      console.log('RuntimeExperimental: Registered 26 V2 commands (Phase 5 + Phase 6-1 + Phase 6-2)');
     }
 
     // Create expression evaluator (lazy or standard)

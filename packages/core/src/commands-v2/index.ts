@@ -42,6 +42,17 @@ export { RepeatCommand, createRepeatCommand } from './control-flow/repeat';
 export { BreakCommand, createBreakCommand } from './control-flow/break';
 export { ContinueCommand, createContinueCommand } from './control-flow/continue';
 export { HaltCommand, createHaltCommand } from './control-flow/halt';
+export { ReturnCommand, createReturnCommand } from './control-flow/return';
+export { ExitCommand, createExitCommand } from './control-flow/exit';
+
+// Data Commands (Phase 6-2)
+export { BindCommand, createBindCommand } from './data/bind';
+
+// Execution Commands
+export { CallCommand, createCallCommand } from './execution/call';
+
+// Content Commands
+export { AppendCommand, createAppendCommand } from './content/append';
 
 // Export raw input types for documentation
 export type { HideCommandRawInput } from './dom/hide';
@@ -65,3 +76,8 @@ export type { RepeatCommandInput } from './control-flow/repeat';
 export type { BreakCommandInput } from './control-flow/break';
 export type { ContinueCommandInput } from './control-flow/continue';
 export type { HaltCommandInput } from './control-flow/halt';
+export type { ReturnCommandInput } from './control-flow/return';
+export type { ExitCommandInput } from './control-flow/exit';
+export type { BindCommandInput } from './data/bind';
+export type { CallCommandInput } from './execution/call';
+export type { AppendCommandInput } from './content/append';
