@@ -54,6 +54,14 @@ export { CallCommand, createCallCommand } from './execution/call';
 // Content Commands
 export { AppendCommand, createAppendCommand } from './content/append';
 
+// Animation Commands (Phase 6-3)
+export { TransitionCommand, createTransitionCommand } from './animation/transition';
+export { MeasureCommand, createMeasureCommand } from './animation/measure';
+export { SettleCommand, createSettleCommand } from './animation/settle';
+
+// Data Persistence (Phase 6-3)
+export { PersistCommand, createPersistCommand } from './data/persist';
+
 // Export raw input types for documentation
 export type { HideCommandRawInput } from './dom/hide';
 export type { ShowCommandRawInput } from './dom/show';
@@ -81,3 +89,7 @@ export type { ExitCommandInput } from './control-flow/exit';
 export type { BindCommandInput } from './data/bind';
 export type { CallCommandInput } from './execution/call';
 export type { AppendCommandInput } from './content/append';
+export type { TransitionCommandInput } from './animation/transition';
+export type { MeasureCommandInput } from './animation/measure';
+export type { SettleCommandInput } from './animation/settle';
+export type { PersistCommandInput } from './data/persist';
