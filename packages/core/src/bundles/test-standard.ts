@@ -1,14 +1,14 @@
 /**
- * Test Bundle: Standard (21 commands)
+ * Test Bundle: Standard (26 commands)
  *
- * This bundle uses RuntimeExperimental with all 21 V2 commands for tree-shaking testing.
- * Phase 5 (16 commands) + Phase 6-1 (5 control flow commands)
- * Expected size: ~140 KB (62% reduction from 366 KB baseline)
+ * This bundle uses RuntimeExperimental with all 26 V2 commands for tree-shaking testing.
+ * Phase 5 (16 commands) + Phase 6-1 (5 control flow) + Phase 6-2 (5 data/execution)
+ * Expected size: ~145 KB (60% reduction from 366 KB baseline)
  */
 
 import { createRuntimeExperimental } from '../runtime/runtime-experimental';
 
-// Create runtime with all 21 V2 commands (default behavior)
+// Create runtime with all 26 V2 commands (default behavior)
 export const runtime = createRuntimeExperimental();
 
 // Export for browser global
@@ -39,12 +39,18 @@ if (typeof window !== 'undefined') {
       'send',
       // Navigation (1)
       'go',
-      // Control Flow (5)
+      // Control Flow (7)
       'if',
       'repeat',
       'break',
       'continue',
       'halt',
+      'return',
+      'exit',
+      // Phase 6-2: Data & Execution (5)
+      'bind',
+      'call',
+      'append',
     ],
   };
 }
