@@ -83,6 +83,10 @@ export { ThrowCommand, createThrowCommand } from './control-flow/throw';
 export { BeepCommand, createBeepCommand } from './utility/beep';
 export { InstallCommand, createInstallCommand } from './behaviors/install';
 
+// Final Commands - Phase 6-6
+export { TakeCommand, createTakeCommand } from './animation/take';
+export { RenderCommand, createRenderCommand } from './templates/render';
+
 // Export raw input types for documentation
 export type { HideCommandRawInput } from './dom/hide';
 export type { ShowCommandRawInput } from './dom/show';
@@ -125,3 +129,5 @@ export type { PickCommandInput } from './utility/pick';
 export type { ThrowCommandInput } from './control-flow/throw';
 export type { BeepCommandInput } from './utility/beep';
 export type { InstallCommandInput } from './behaviors/install';
+export type { TakeCommandInput } from './animation/take';
+export type { RenderCommandInput } from './templates/render';
