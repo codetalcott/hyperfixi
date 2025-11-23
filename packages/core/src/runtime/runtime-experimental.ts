@@ -85,6 +85,14 @@ import { createDefaultCommand } from '../commands-v2/data/default';
 // Execution Commands - Phase 6-4 (1)
 import { createPseudoCommand } from '../commands-v2/execution/pseudo-command';
 
+// Utility & Specialized - Phase 6-5 (6)
+import { createTellCommand } from '../commands-v2/utility/tell';
+import { createCopyCommand } from '../commands-v2/utility/copy';
+import { createPickCommand } from '../commands-v2/utility/pick';
+import { createThrowCommand } from '../commands-v2/control-flow/throw';
+import { createBeepCommand } from '../commands-v2/utility/beep';
+import { createInstallCommand } from '../commands-v2/behaviors/install';
+
 export interface RuntimeExperimentalOptions {
   /**
    * Enable lazy loading of expressions
@@ -120,22 +128,22 @@ export interface RuntimeExperimentalOptions {
 /**
  * RuntimeExperimental - Test runtime for tree-shaking validation
  *
- * This runtime extends RuntimeBase and pre-registers all 35 V2 commands from
- * commands-v2/ for testing purposes (Phase 5 + Phase 6-1 + Phase 6-2 + Phase 6-3 + Phase 6-4).
+ * This runtime extends RuntimeBase and pre-registers all 41 V2 commands from
+ * commands-v2/ for testing purposes (Phase 5 + Phase 6-1 + Phase 6-2 + Phase 6-3 + Phase 6-4 + Phase 6-5).
  *
  * Key differences from Runtime:
  * - Uses RuntimeBase (generic AST traversal)
  * - Uses EnhancedCommandRegistryV2 (generic adapter)
  * - Uses commands-v2 (with parseInput())
- * - Registers 35 V2 commands by default (16 Phase 5 + 5 Phase 6-1 + 5 Phase 6-2 + 4 Phase 6-3 + 5 Phase 6-4)
- * - Much smaller bundle size (estimated ~210KB vs 368KB baseline, 43% reduction)
+ * - Registers 41 V2 commands by default (16 Phase 5 + 5 Phase 6-1 + 5 Phase 6-2 + 4 Phase 6-3 + 5 Phase 6-4 + 6 Phase 6-5)
+ * - Much smaller bundle size (estimated ~215KB vs 368KB baseline, 42% reduction)
  */
 export class RuntimeExperimental extends RuntimeBase {
   constructor(options: RuntimeExperimentalOptions = {}) {
     // Create or use provided registry
     const registry = options.registry || new EnhancedCommandRegistryV2();
 
-    // If no custom registry provided, register all 30 V2 commands
+    // If no custom registry provided, register all 41 V2 commands
     if (!options.registry) {
       // DOM Commands (7)
       registry.register(createHideCommand());
@@ -192,7 +200,15 @@ export class RuntimeExperimental extends RuntimeBase {
       registry.register(createDefaultCommand());
       registry.register(createPseudoCommand());
 
-      console.log('RuntimeExperimental: Registered 35 V2 commands (Phase 5 + Phase 6-1 + Phase 6-2 + Phase 6-3 + Phase 6-4)');
+      // Phase 6-5 Commands (6)
+      registry.register(createTellCommand());
+      registry.register(createCopyCommand());
+      registry.register(createPickCommand());
+      registry.register(createThrowCommand());
+      registry.register(createBeepCommand());
+      registry.register(createInstallCommand());
+
+      console.log('RuntimeExperimental: Registered 41 V2 commands (Phase 5 + Phase 6-1 + Phase 6-2 + Phase 6-3 + Phase 6-4 + Phase 6-5)');
     }
 
     // Create expression evaluator (lazy or standard)

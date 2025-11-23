@@ -75,6 +75,14 @@ export { DefaultCommand, createDefaultCommand } from './data/default';
 // Execution Commands - Phase 6-4
 export { PseudoCommand, createPseudoCommand } from './execution/pseudo-command';
 
+// Utility & Specialized - Phase 6-5
+export { TellCommand, createTellCommand } from './utility/tell';
+export { CopyCommand, createCopyCommand } from './utility/copy';
+export { PickCommand, createPickCommand } from './utility/pick';
+export { ThrowCommand, createThrowCommand } from './control-flow/throw';
+export { BeepCommand, createBeepCommand } from './utility/beep';
+export { InstallCommand, createInstallCommand } from './behaviors/install';
+
 // Export raw input types for documentation
 export type { HideCommandRawInput } from './dom/hide';
 export type { ShowCommandRawInput } from './dom/show';
@@ -111,3 +119,9 @@ export type { AsyncCommandInput } from './advanced/async';
 export type { UnlessCommandInput } from './control-flow/unless';
 export type { DefaultCommandInput } from './data/default';
 export type { PseudoCommandInput } from './execution/pseudo-command';
+export type { TellCommandInput } from './utility/tell';
+export type { CopyCommandInput } from './utility/copy';
+export type { PickCommandInput } from './utility/pick';
+export type { ThrowCommandInput } from './control-flow/throw';
+export type { BeepCommandInput } from './utility/beep';
+export type { InstallCommandInput } from './behaviors/install';
