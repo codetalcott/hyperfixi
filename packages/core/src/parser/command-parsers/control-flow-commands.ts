@@ -478,6 +478,11 @@ export function parseIfCommand(
       }
     }
 
+    // Validate: error if then block is empty and we're at end of input (incomplete statement)
+    if (thenCommands.length === 0 && ctx.isAtEnd()) {
+      throw new Error("Expected command after 'then' in if statement - incomplete conditional");
+    }
+
     // Add then block
     args.push({
       type: 'block',

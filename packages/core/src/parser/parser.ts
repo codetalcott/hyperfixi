@@ -199,6 +199,18 @@ export class Parser {
             debug.parse(
               `✅ PARSER: Finished parsing, creating Program node with ${statements.length} statements`
             );
+
+            // Check if any errors were accumulated during parsing
+            if (this.error) {
+              return {
+                success: false,
+                node: this.createProgramNode(statements),
+                tokens: this.tokens,
+                error: this.error,
+                warnings: this.warnings,
+              };
+            }
+
             // Return a program node containing both commands and event handlers
             return {
               success: true,
@@ -216,6 +228,17 @@ export class Parser {
               node: commandSequence || this.createErrorNode(),
               tokens: this.tokens,
               error: this.error!,
+            };
+          }
+
+          // Check if any errors were accumulated during parsing (e.g., unclosed parentheses)
+          if (this.error) {
+            return {
+              success: false,
+              node: commandSequence,
+              tokens: this.tokens,
+              error: this.error,
+              warnings: this.warnings,
             };
           }
 
@@ -2246,13 +2269,25 @@ export class Parser {
         // Use parseCommand() instead of parseFullCommand() to handle special commands like 'repeat'
         const cmd = this.parseCommand();
 
-        // Check if an error was added during parsing (even if no exception was thrown)
+        // Check if an error was added during parsing
+        // Only restore error state for non-critical errors - preserve structural/syntax errors
+        // Note: Be careful about what's considered "critical" - nested conditionals can trigger
+        // temporary errors during parsing that get resolved
         if (this.error && this.error !== savedError) {
-          debug.parse(
-            '⚠️  parseCommandSequence: Command parsing added error, restoring error state. Error was:',
-            this.error.message
-          );
-          this.error = savedError;
+          // Only treat unclosed parentheses as critical (not 'Expected end' which can be false positive)
+          const isCriticalError =
+            this.error.message.includes("Expected closing parenthesis") ||
+            this.error.message.includes("Expected ')'") ||
+            this.error.message.includes('unclosed parenthes') ||
+            this.error.message.includes('Unclosed parenthes');
+
+          if (!isCriticalError) {
+            debug.parse(
+              '⚠️  parseCommandSequence: Command parsing added non-critical error, restoring error state. Error was:',
+              this.error.message
+            );
+            this.error = savedError;
+          }
         }
 
         commands.push(cmd);
