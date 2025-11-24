@@ -2628,53 +2628,7 @@ export class Parser {
 
     // Special handling for increment/decrement commands with 'global' and 'by' syntax
     if ((commandName === 'increment' || commandName === 'decrement') && !this.isAtEnd()) {
-      // Check for 'global' keyword first
-      let hasGlobal = false;
-      if (this.check('global')) {
-        hasGlobal = true;
-        this.advance(); // consume 'global'
-      }
-
-      // Parse the target (variable name or element reference)
-      const target = this.parseExpression();
-      if (target) {
-        args.push(target);
-      }
-
-      // Check for 'by' keyword followed by amount
-      if (this.check('by')) {
-        this.advance(); // consume 'by'
-        const amount = this.parseExpression();
-        if (amount) {
-          args.push(amount);
-        }
-      }
-
-      // Add global scope indicator if present
-      if (hasGlobal) {
-        args.push({
-          type: 'literal',
-          value: 'global',
-          dataType: 'string',
-          start: commandToken.start,
-          end: commandToken.end,
-          line: commandToken.line,
-          column: commandToken.column,
-          raw: 'global',
-        });
-      }
-
-      // Return early for increment/decrement to avoid general parsing
-      return {
-        type: 'command',
-        name: commandName,
-        args: args as ExpressionNode[],
-        isBlocking: false,
-        start: commandToken.start,
-        end: this.previous().end,
-        line: commandToken.line,
-        column: commandToken.column,
-      };
+      return variableCommands.parseIncrementDecrementCommand(this.getContext(), commandToken);
     }
 
     // Parse command arguments - continue until we hit a separator, end, or another command

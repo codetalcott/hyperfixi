@@ -10,7 +10,7 @@
  */
 
 import type { ParserContext, IdentifierNode } from '../parser-types';
-import type { ASTNode, ExpressionNode } from '../../types/core';
+import type { ASTNode, ExpressionNode, Token } from '../../types/core';
 import { TokenType } from '../tokenizer';
 
 /**
@@ -239,4 +239,89 @@ export function parseSetCommand(
   };
 
   return result;
+}
+
+/**
+ * Parse increment or decrement command
+ *
+ * Syntax:
+ *   - increment <variable>
+ *   - increment <variable> by <amount>
+ *   - increment global <variable>
+ *   - increment global <variable> by <amount>
+ *   - decrement <variable>
+ *   - decrement <variable> by <amount>
+ *   - decrement global <variable>
+ *   - decrement global <variable> by <amount>
+ *
+ * This command increments or decrements a variable's value with support for:
+ * - Global scope modifier
+ * - Custom increment/decrement amount via 'by' keyword
+ * - Default increment/decrement of 1
+ *
+ * Examples:
+ *   - increment count
+ *   - increment count by 5
+ *   - increment global counter
+ *   - decrement value by 2
+ *
+ * @param ctx - Parser context providing access to parser state and methods
+ * @param commandToken - The 'increment' or 'decrement' command token
+ * @returns CommandNode representing the increment/decrement command
+ *
+ * Phase 9-3b: Extracted from Parser.parseCommand (special handling section)
+ */
+export function parseIncrementDecrementCommand(
+  ctx: ParserContext,
+  commandToken: Token
+) {
+  const args: ASTNode[] = [];
+  const commandName = commandToken.value;
+
+  // Check for 'global' keyword first
+  let hasGlobal = false;
+  if (ctx.check('global')) {
+    hasGlobal = true;
+    ctx.advance(); // consume 'global'
+  }
+
+  // Parse the target (variable name or element reference)
+  const target = ctx.parseExpression();
+  if (target) {
+    args.push(target);
+  }
+
+  // Check for 'by' keyword followed by amount
+  if (ctx.check('by')) {
+    ctx.advance(); // consume 'by'
+    const amount = ctx.parseExpression();
+    if (amount) {
+      args.push(amount);
+    }
+  }
+
+  // Add global scope indicator if present
+  if (hasGlobal) {
+    args.push({
+      type: 'literal',
+      value: 'global',
+      dataType: 'string',
+      start: commandToken.start,
+      end: commandToken.end,
+      line: commandToken.line,
+      column: commandToken.column,
+      raw: 'global',
+    } as any);
+  }
+
+  return {
+    type: 'command' as const,
+    name: commandName,
+    args: args as ExpressionNode[],
+    isBlocking: false,
+    start: commandToken.start,
+    end: ctx.previous().end,
+    line: commandToken.line,
+    column: commandToken.column,
+  };
 }
