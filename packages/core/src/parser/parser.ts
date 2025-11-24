@@ -31,80 +31,35 @@ import {
 import { CommandNodeBuilder } from './command-node-builder';
 import { TokenConsumer } from './token-consumer';
 
+// Phase 9-2: Import helper modules and types
+import type {
+  // ParserContext, Position - Will be used in Phase 9-3 for command extraction
+  IdentifierNode,
+  LiteralNode,
+  BinaryExpressionNode,
+  UnaryExpressionNode,
+  CallExpressionNode,
+  MemberExpressionNode,
+  SelectorNode,
+  PossessiveExpressionNode,
+} from './parser-types';
+// import * as tokenHelpers from './helpers/token-helpers'; // Will be used in Phase 9-3
+import * as astHelpers from './helpers/ast-helpers';
+import * as parsingHelpers from './helpers/parsing-helpers';
+
+// Phase 9-3a: Import command parser modules
+import * as eventCommands from './command-parsers/event-commands';
+import * as controlFlowCommands from './command-parsers/control-flow-commands';
+import * as animationCommands from './command-parsers/animation-commands';
+import * as domCommands from './command-parsers/dom-commands';
+import * as asyncCommands from './command-parsers/async-commands';
+
 // Use core types for consistency
 export type ParseResult = CoreParseResult;
 export type ParseError = CoreParseError;
 
-// Additional AST node types for hyperscript-specific constructs
-interface LiteralNode extends ASTNode {
-  type: 'literal';
-  value: unknown;
-  raw: string;
-}
-
-interface IdentifierNode extends ASTNode {
-  type: 'identifier';
-  name: string;
-}
-
-interface BinaryExpressionNode extends ASTNode {
-  type: 'binaryExpression';
-  operator: string;
-  left: ASTNode;
-  right: ASTNode;
-}
-
-interface UnaryExpressionNode extends ASTNode {
-  type: 'unaryExpression';
-  operator: string;
-  argument: ASTNode;
-  prefix: boolean;
-}
-
-interface CallExpressionNode extends ASTNode {
-  type: 'callExpression';
-  callee: ASTNode;
-  arguments: ASTNode[];
-}
-
-interface MemberExpressionNode extends ASTNode {
-  type: 'memberExpression';
-  object: ASTNode;
-  property: ASTNode;
-  computed: boolean;
-}
-
-interface SelectorNode extends ASTNode {
-  type: 'selector';
-  value: string;
-}
-
-interface PossessiveExpressionNode extends ASTNode {
-  type: 'possessiveExpression';
-  object: ASTNode;
-  property: ASTNode;
-}
-
-// interface ObjectLiteralNode extends ASTNode {
-//   type: 'objectLiteral';
-//   properties: Array<{ key: ASTNode; value: ASTNode }>;
-// }
-
-// Multi-word command pattern definitions
-// These patterns define which keywords indicate modifiers for specific commands
-interface MultiWordPattern {
-  command: string;
-  keywords: string[];
-  syntax: string;
-}
-
-const MULTI_WORD_PATTERNS: MultiWordPattern[] = [
-  { command: 'append', keywords: ['to'], syntax: 'append <value> [to <target>]' },
-  { command: 'fetch', keywords: ['as', 'with'], syntax: 'fetch <url> [as <type>] [with <options>]' },
-  { command: 'make', keywords: ['a', 'an'], syntax: 'make (a|an) <type>' },
-  { command: 'send', keywords: ['to'], syntax: 'send <event> to <target>' },
-  { command: 'throw', keywords: [], syntax: 'throw <error>' },
-];
+// AST node types are now imported from parser-types.ts (Phase 9-2)
+// Multi-word patterns are now imported from parsing-helpers.ts (Phase 9-2 Day 6)
 
 export class Parser {
   private tokens: Token[];
@@ -1003,197 +958,31 @@ export class Parser {
     return result;
   }
 
+  /**
+   * Parse halt command
+   *
+   * Phase 9-3b: Delegated to extracted command parser
+   */
   private parseHaltCommand(identifierNode: IdentifierNode): CommandNode | null {
-    // Parse "halt" or "halt the event"
-    // We need to keep "the" and "event" as separate tokens for the command adapter
-    const args: ASTNode[] = [];
-
-    // Check if next tokens are "the event"
-    if (this.check('the')) {
-      const theToken = this.advance();
-      args.push({
-        type: 'identifier',
-        name: 'the',
-        start: theToken.start,
-        end: theToken.end,
-        line: theToken.line,
-        column: theToken.column,
-      } as IdentifierNode);
-
-      // Check if followed by "event"
-      if (this.check('event')) {
-        const eventToken = this.advance();
-        args.push({
-          type: 'identifier',
-          name: 'event',
-          start: eventToken.start,
-          end: eventToken.end,
-          line: eventToken.line,
-          column: eventToken.column,
-        } as IdentifierNode);
-      }
-    }
-
-    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
-    return CommandNodeBuilder.fromIdentifier(identifierNode)
-      .withArgs(...args)
-      .endingAt(this.getPosition())
-      .build();
+    return controlFlowCommands.parseHaltCommand(this.getContext(), identifierNode);
   }
 
+  /**
+   * Parse measure command
+   *
+   * Phase 9-3b: Delegated to extracted command parser
+   */
   private parseMeasureCommand(identifierNode: IdentifierNode): CommandNode | null {
-    // Parse measure command with multi-argument syntax
-    // Patterns:
-    //   measure width                          → 1 arg (property)
-    //   measure <#element/> width              → 2 args (target, property)
-    //   measure <#element/> *opacity           → 2 args (target, CSS property)
-    //   measure <#element/> *opacity and set x → 2 args + modifier
-    const args: ASTNode[] = [];
-    const modifiers: Record<string, ExpressionNode> = {};
-
-    // Parse optional target (selector or expression)
-    // If next token is a selector, identifier, or context var, parse it as target
-    if (
-      this.checkTokenType(TokenType.CSS_SELECTOR) ||
-      this.checkTokenType(TokenType.ID_SELECTOR) ||
-      this.checkTokenType(TokenType.CLASS_SELECTOR) ||
-      this.checkTokenType(TokenType.QUERY_REFERENCE) ||
-      this.checkTokenType(TokenType.CONTEXT_VAR) ||
-      this.match('<')
-    ) {
-      // Parse the target element expression
-      const target = this.parsePrimary();
-      args.push(target);
-
-      // After parsing target, check for property
-      // Property can be:
-      // - Simple identifier: width, height, top, left
-      // - CSS property with *: *opacity, *background-color
-
-      // Check for CSS property shorthand: * followed by identifier
-      if (this.match('*')) {
-        // Next token should be the CSS property name
-        if (this.checkTokenType(TokenType.IDENTIFIER)) {
-          const propName = this.advance();
-          // Create identifier node with * prefix
-          args.push({
-            type: 'identifier',
-            name: '*' + propName.value,
-            start: propName.start - 1, // Include the *
-            end: propName.end,
-            line: propName.line,
-            column: propName.column,
-          } as IdentifierNode);
-        }
-      } else if (
-        this.checkTokenType(TokenType.IDENTIFIER) ||
-        this.checkTokenType(TokenType.KEYWORD)
-      ) {
-        const property = this.parsePrimary();
-        args.push(property);
-      }
-    } else if (
-      this.checkTokenType(TokenType.IDENTIFIER) ||
-      this.checkTokenType(TokenType.KEYWORD)
-    ) {
-      // Just a property name without target: "measure width"
-      const property = this.parsePrimary();
-      args.push(property);
-    }
-
-    // Parse optional "and set <variable>" modifier
-    if (this.match('and')) {
-      if (this.match('set')) {
-        if (this.checkTokenType(TokenType.IDENTIFIER)) {
-          const variableName = this.advance();
-          modifiers['set'] = {
-            type: 'identifier',
-            name: variableName.value,
-            start: variableName.start,
-            end: variableName.end,
-            line: variableName.line,
-            column: variableName.column,
-          } as IdentifierNode;
-        }
-      }
-    }
-
-    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
-    const builder = CommandNodeBuilder.fromIdentifier(identifierNode)
-      .withArgs(...args)
-      .endingAt(this.getPosition());
-
-    if (Object.keys(modifiers).length > 0) {
-      builder.withModifiers(modifiers);
-    }
-
-    return builder.build();
+    return animationCommands.parseMeasureCommand(this.getContext(), identifierNode);
   }
 
+  /**
+   * Parse trigger command
+   *
+   * Phase 9-3a: Delegated to extracted command parser
+   */
   private parseTriggerCommand(identifierNode: IdentifierNode): CommandNode | null {
-    // debug.parse('🔍 PARSER: parseTriggerCommand started', {
-    // commandName: identifierNode.name,
-    // currentToken: this.peek(),
-    // remainingTokens: this.tokens.slice(this.current).map(t => t.value)
-    // });
-
-    // Use the same flexible approach as put/set commands
-    const allArgs: ASTNode[] = [];
-
-    while (
-      !this.isAtEnd() &&
-      !this.check('then') &&
-      !this.check('and') &&
-      !this.check('else') &&
-      !this.check('end') &&
-      !this.checkTokenType(TokenType.COMMAND)
-    ) {
-      allArgs.push(this.parsePrimary());
-    }
-
-    // debug.parse('🔍 PARSER: collected all arguments for trigger', {
-    // allArgs: allArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
-    // });
-
-    // Find the 'on' keyword
-    let operationIndex = -1;
-    for (let i = 0; i < allArgs.length; i++) {
-      const arg = allArgs[i];
-      if (
-        (arg.type === 'identifier' || arg.type === 'literal' || arg.type === 'keyword') &&
-        ((arg as any).name === 'on' || (arg as any).value === 'on')
-      ) {
-        operationIndex = i;
-        // debug.parse('🔍 PARSER: found "on" keyword', { arg, type: arg.type });
-        break;
-      }
-    }
-
-    const finalArgs: ASTNode[] = [];
-
-    if (operationIndex === -1) {
-      // debug.parse('⚠️ PARSER: no "on" keyword found in trigger command');
-      finalArgs.push(...allArgs);
-    } else {
-      // Restructure: event + 'on' + target
-      const eventArgs = allArgs.slice(0, operationIndex);
-      const targetArgs = allArgs.slice(operationIndex + 1);
-
-      finalArgs.push(...eventArgs);
-      finalArgs.push(this.createIdentifier('on'));
-      finalArgs.push(...targetArgs);
-    }
-
-    // debug.parse('✅ PARSER: parseTriggerCommand completed', {
-    // argCount: finalArgs.length,
-    // finalArgs: finalArgs.map(a => ({ type: a.type, value: (a as any).value || (a as any).name }))
-    // });
-
-    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
-    return CommandNodeBuilder.fromIdentifier(identifierNode)
-      .withArgs(...finalArgs)
-      .endingAt(this.getPosition())
-      .build();
+    return eventCommands.parseTriggerCommand(this.getContext(), identifierNode);
   }
 
   /**
@@ -1547,147 +1336,13 @@ export class Parser {
    *   wait for <event> from <target>                (wait for event from target)
    *   wait for <event> or <event> from <target>     (multiple events from target)
    */
+  /**
+   * Parse wait command
+   *
+   * Phase 9-3b: Delegated to extracted command parser
+   */
   private parseWaitCommand(commandToken: Token): CommandNode {
-    const args: ASTNode[] = [];
-
-    // Check if this is a simple time-based wait (e.g., "wait 1s")
-    if (this.checkTokenType(TokenType.TIME_EXPRESSION) || this.checkTokenType(TokenType.NUMBER)) {
-      // Simple wait with time
-      const timeExpr = this.parsePrimary();
-      args.push(timeExpr);
-
-      return {
-        type: 'command',
-        name: 'wait',
-        args: args as ExpressionNode[],
-        isBlocking: true,
-        start: commandToken.start || 0,
-        end: this.getPosition().end,
-        line: commandToken.line || 1,
-        column: commandToken.column || 1,
-      };
-    }
-
-    // Check for 'for' keyword (event-based wait)
-    if (this.check('for')) {
-      this.advance(); // consume 'for'
-
-      // Parse event specifications (can be multiple with 'or')
-      const events: Array<{ name: string; params: string[] }> = [];
-
-      do {
-        // Parse event name
-        const eventToken = this.peek();
-        if (eventToken.type !== TokenType.IDENTIFIER) {
-          throw new Error('Expected event name after "for"');
-        }
-        const eventName = eventToken.value;
-        this.advance();
-
-        // Parse optional parameters: (param1, param2)
-        const eventParams: string[] = [];
-        if (this.check('(')) {
-          this.advance(); // consume '('
-
-          // Parse parameter list
-          while (!this.isAtEnd() && !this.check(')')) {
-            const paramToken = this.peek();
-            if (paramToken.type === TokenType.IDENTIFIER) {
-              eventParams.push(paramToken.value);
-              this.advance();
-
-              // Check for comma separator
-              if (this.check(',')) {
-                this.advance();
-              }
-            } else {
-              break;
-            }
-          }
-
-          // Consume closing parenthesis
-          if (!this.check(')')) {
-            throw new Error('Expected ")" after event parameters');
-          }
-          this.advance();
-        }
-
-        events.push({ name: eventName, params: eventParams });
-
-        // Check for 'or' to continue with more events
-        if (this.check('or')) {
-          this.advance(); // consume 'or'
-          continue;
-        } else {
-          break;
-        }
-      } while (!this.isAtEnd());
-
-      // Parse optional 'from <target>' clause
-      let eventTarget: ASTNode | null = null;
-      if (this.check('from')) {
-        this.advance(); // consume 'from'
-
-        // Optional 'the' before target
-        if (this.check('the')) {
-          this.advance();
-        }
-
-        // Parse the target expression
-        eventTarget = this.parsePrimary();
-      }
-
-      // Build args array
-      // Format: [eventList, target?]
-      args.push({
-        type: 'arrayLiteral',
-        elements: events.map(
-          event =>
-            ({
-              type: 'objectLiteral',
-              properties: [
-                {
-                  key: { type: 'identifier', name: 'name' } as IdentifierNode,
-                  value: {
-                    type: 'literal',
-                    value: event.name,
-                    raw: `"${event.name}"`,
-                  } as LiteralNode,
-                },
-                {
-                  key: { type: 'identifier', name: 'args' } as IdentifierNode,
-                  value: {
-                    type: 'arrayLiteral',
-                    elements: event.params.map(
-                      param =>
-                        ({
-                          type: 'literal',
-                          value: param,
-                          raw: `"${param}"`,
-                        }) as LiteralNode
-                    ),
-                  } as any,
-                },
-              ],
-            }) as any
-        ),
-        start: commandToken.start,
-        end: this.getPosition().end,
-        line: commandToken.line,
-        column: commandToken.column,
-      } as any);
-
-      if (eventTarget) {
-        args.push(eventTarget);
-      }
-    }
-
-    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
-    return CommandNodeBuilder.from(commandToken)
-      .withArgs(...args)
-      .blocking() // wait is a blocking command
-      .endingAt(this.getPosition())
-      .build();
+    return asyncCommands.parseWaitCommand(this.getContext(), commandToken);
   }
 
   /**
@@ -1803,89 +1458,13 @@ export class Parser {
    *     to `hsl(${rand} 100% 90%)`
    *     over 250ms
    */
+  /**
+   * Parse transition command
+   *
+   * Phase 9-3b: Delegated to extracted command parser
+   */
   private parseTransitionCommand(commandToken: Token): CommandNode {
-    const args: ASTNode[] = [];
-
-    // Parse optional target (if it looks like a selector or identifier followed by a property)
-    let property: ASTNode | null = null;
-
-    // Look ahead to determine if first token is a target or property
-    const firstToken = this.peek();
-
-    // Parse property (required)
-    // Property can be:
-    // - identifier (opacity, width, etc.)
-    // - identifier with * prefix (*background-color)
-    if (firstToken.type === TokenType.IDENTIFIER || firstToken.value === '*') {
-      let propertyValue = '';
-
-      // Handle wildcard prefix
-      if (this.check('*')) {
-        propertyValue = '*';
-        this.advance();
-      }
-
-      // Get property name
-      if (this.checkTokenType(TokenType.IDENTIFIER)) {
-        propertyValue += this.peek().value;
-        this.advance();
-
-        // Handle hyphenated properties (background-color)
-        while (this.check('-') && !this.isAtEnd()) {
-          propertyValue += '-';
-          this.advance();
-          if (this.checkTokenType(TokenType.IDENTIFIER)) {
-            propertyValue += this.peek().value;
-            this.advance();
-          }
-        }
-
-        property = {
-          type: 'string',
-          value: propertyValue,
-          start: firstToken.start || 0,
-          end: this.getPosition().end,
-          line: firstToken.line,
-          column: firstToken.column,
-        };
-      }
-    }
-
-    if (!property) {
-      throw new Error('Transition command requires a CSS property');
-    }
-
-    args.push(property);
-
-    // Parse 'to' keyword and value (required)
-    if (!this.check('to')) {
-      throw new Error('Expected "to" keyword after property in transition command');
-    }
-    this.advance(); // consume 'to'
-
-    // Parse target value (can be template string, number, color, etc.)
-    const value = this.parsePrimary();
-    args.push(value);
-
-    // Parse optional 'over <duration>'
-    if (this.check('over')) {
-      this.advance(); // consume 'over'
-      const duration = this.parsePrimary();
-      args.push(duration);
-    }
-
-    // Parse optional 'with <timing-function>'
-    if (this.check('with')) {
-      this.advance(); // consume 'with'
-      const timingFunction = this.parsePrimary();
-      args.push(timingFunction);
-    }
-
-    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
-    return CommandNodeBuilder.from(commandToken)
-      .withArgs(...args)
-      .endingAt(this.getPosition())
-      .build();
+    return animationCommands.parseTransitionCommand(this.getContext(), commandToken);
   }
 
   /**
@@ -1895,34 +1474,13 @@ export class Parser {
    * - add { left: 10px, top: 20px } to me
    * - add { background: 'red' }
    */
+  /**
+   * Parse add command
+   *
+   * Phase 9-3b: Delegated to extracted command parser
+   */
   private parseAddCommand(commandToken: Token): CommandNode {
-    const args: ASTNode[] = [];
-
-    // Parse first argument - can be classes (string/identifier) or CSS object literal
-    if (this.match('{')) {
-      // Parse CSS-style object literal for inline styles
-      // Syntax: { left: ${x}px; top: ${y}px; }
-      args.push(this.parseCSSObjectLiteral());
-    } else if (!this.isAtEnd() && !this.check('to')) {
-      // Parse regular class expression
-      args.push(this.parsePrimary());
-    }
-
-    // Parse optional 'to <target>'
-    if (this.check('to')) {
-      this.advance(); // consume 'to'
-
-      // Parse target element
-      if (!this.isAtEnd() && !this.check('then') && !this.check('and')) {
-        args.push(this.parsePrimary());
-      }
-    }
-
-    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
-    return CommandNodeBuilder.from(commandToken)
-      .withArgs(...args)
-      .endingAt(this.getPosition())
-      .build();
+    return domCommands.parseAddCommand(this.getContext(), commandToken);
   }
 
   /**
@@ -2165,75 +1723,22 @@ export class Parser {
     };
   }
 
+  /**
+   * Parse remove command
+   *
+   * Phase 9-3b: Delegated to extracted command parser
+   */
   private parseRemoveCommand(identifierNode: IdentifierNode): CommandNode | null {
-    // Phase 1 Refactoring: Use constants and CommandNodeBuilder
-    const args: ASTNode[] = [];
-
-    // Parse: remove <class> from <target>
-    // First argument: class
-    if (!this.isAtEnd() && !this.check(KEYWORDS.FROM) && !this.check(KEYWORDS.END)) {
-      args.push(this.parsePrimary());
-    }
-
-    // Expect 'from' keyword
-    if (this.check(KEYWORDS.FROM)) {
-      this.advance(); // consume 'from'
-      args.push(this.createIdentifier(KEYWORDS.FROM)); // Add 'from' as an argument
-    }
-
-    // Third argument: target
-    if (
-      !this.isAtEnd() &&
-      !this.check(KEYWORDS.THEN) &&
-      !this.check(KEYWORDS.AND) &&
-      !this.check(KEYWORDS.ELSE) &&
-      !this.check(KEYWORDS.END)
-    ) {
-      args.push(this.parsePrimary());
-    }
-
-    // Phase 1: Use CommandNodeBuilder
-    return CommandNodeBuilder.fromIdentifier(identifierNode)
-      .withArgs(...args)
-      .endingAt(this.getPosition())
-      .build();
+    return domCommands.parseRemoveCommand(this.getContext(), identifierNode);
   }
 
+  /**
+   * Parse toggle command
+   *
+   * Phase 9-3b: Delegated to extracted command parser
+   */
   private parseToggleCommand(identifierNode: IdentifierNode): CommandNode | null {
-    const args: ASTNode[] = [];
-
-    // Parse: toggle <class> from <target> OR toggle <class> on <target>
-    // Support both 'from' (HyperFixi) and 'on' (official _hyperscript) for compatibility
-
-    // Parse first argument (class) until 'from' or 'on'
-    if (!this.isAtEnd() && !this.check('from') && !this.check('on') && !this.check('end')) {
-      args.push(this.parsePrimary());
-    }
-
-    // Accept either 'from' or 'on' keyword for target specification
-    // Note: We add the preposition as an argument for backwards compatibility
-    if (this.check('from') || this.check('on')) {
-      const preposition = this.peek().value; // 'from' or 'on'
-      this.advance(); // consume the preposition
-      args.push(this.createIdentifier(preposition)); // Add preposition as an argument
-
-      // Parse target
-      if (
-        !this.isAtEnd() &&
-        !this.check('then') &&
-        !this.check('and') &&
-        !this.check('else') &&
-        !this.check('end')
-      ) {
-        args.push(this.parsePrimary());
-      }
-    }
-
-    // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction
-    return CommandNodeBuilder.fromIdentifier(identifierNode)
-      .withArgs(...args)
-      .endingAt(this.getPosition())
-      .build();
+    return domCommands.parseToggleCommand(this.getContext(), identifierNode);
   }
 
   private parseRegularCommand(identifierNode: IdentifierNode): CommandNode | null {
@@ -3754,16 +3259,15 @@ export class Parser {
   /**
    * Get multi-word pattern definition for a command
    */
-  private getMultiWordPattern(commandName: string): MultiWordPattern | null {
-    return MULTI_WORD_PATTERNS.find(p => p.command === commandName.toLowerCase()) || null;
+  private getMultiWordPattern(commandName: string): parsingHelpers.MultiWordPattern | null {
+    return parsingHelpers.getMultiWordPattern(commandName);
   }
 
   /**
    * Check if current token is one of the specified keywords
    */
   private isKeyword(token: Token | undefined, keywords: string[]): boolean {
-    if (!token) return false;
-    return keywords.some(kw => token.value === kw || token.value.toLowerCase() === kw);
+    return parsingHelpers.isKeyword(token, keywords);
   }
 
   /**
@@ -4293,30 +3797,13 @@ export class Parser {
     return this.createCallExpression(callee, args);
   }
 
-  // Helper methods for AST node creation
+  // Helper methods for AST node creation (Phase 9-2: using ast-helpers module)
   private createLiteral(value: unknown, raw: string): LiteralNode {
-    const pos = this.getPosition();
-    return {
-      type: 'literal',
-      value,
-      raw,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
+    return astHelpers.createLiteral(value, raw, this.getPosition());
   }
 
   private createIdentifier(name: string): IdentifierNode {
-    const pos = this.getPosition();
-    return {
-      type: 'identifier',
-      name,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
+    return astHelpers.createIdentifier(name, this.getPosition());
   }
 
   private createBinaryExpression(
@@ -4324,17 +3811,7 @@ export class Parser {
     left: ASTNode,
     right: ASTNode
   ): BinaryExpressionNode {
-    const pos = this.getPosition();
-    return {
-      type: 'binaryExpression',
-      operator,
-      left,
-      right,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
+    return astHelpers.createBinaryExpression(operator, left, right, this.getPosition());
   }
 
   private createUnaryExpression(
@@ -4342,30 +3819,11 @@ export class Parser {
     argument: ASTNode,
     prefix: boolean
   ): UnaryExpressionNode {
-    const pos = this.getPosition();
-    return {
-      type: 'unaryExpression',
-      operator,
-      argument,
-      prefix,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
+    return astHelpers.createUnaryExpression(operator, argument, prefix, this.getPosition());
   }
 
   private createCallExpression(callee: ASTNode, args: ASTNode[]): CallExpressionNode {
-    const pos = this.getPosition();
-    return {
-      type: 'callExpression',
-      callee,
-      arguments: args,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
+    return astHelpers.createCallExpression(callee, args, this.getPosition());
   }
 
   private createMemberExpression(
@@ -4373,54 +3831,19 @@ export class Parser {
     property: ASTNode,
     computed: boolean
   ): MemberExpressionNode {
-    const pos = this.getPosition();
-    return {
-      type: 'memberExpression',
-      object,
-      property,
-      computed,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
+    return astHelpers.createMemberExpression(object, property, computed, this.getPosition());
   }
 
   private createSelector(value: string): SelectorNode {
-    const pos = this.getPosition();
-    return {
-      type: 'selector',
-      value,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
+    return astHelpers.createSelector(value, this.getPosition());
   }
 
   private createPossessiveExpression(object: ASTNode, property: ASTNode): PossessiveExpressionNode {
-    const pos = this.getPosition();
-    return {
-      type: 'possessiveExpression',
-      object,
-      property,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
+    return astHelpers.createPossessiveExpression(object, property, this.getPosition());
   }
 
   private createErrorNode(): IdentifierNode {
-    const pos = this.getPosition();
-    return {
-      type: 'identifier',
-      name: '__ERROR__',
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
+    return astHelpers.createErrorNode(this.getPosition());
   }
 
   /**
@@ -4428,31 +3851,7 @@ export class Parser {
    * (e.g., commands followed by event handlers)
    */
   private createProgramNode(statements: ASTNode[]): ASTNode {
-    debug.parse(`✅ createProgramNode: Called with ${statements.length} statements`);
-
-    if (statements.length === 0) {
-      debug.parse(`✅ createProgramNode: Returning error node (0 statements)`);
-      return this.createErrorNode();
-    }
-
-    if (statements.length === 1) {
-      debug.parse(`✅ createProgramNode: Returning single statement (type=${statements[0].type})`);
-      return statements[0];
-    }
-
-    const programNode = {
-      type: 'Program',
-      statements,
-      start: statements[0]?.start || 0,
-      end: statements[statements.length - 1]?.end || 0,
-      line: statements[0]?.line || 1,
-      column: statements[0]?.column || 1,
-    } as any;
-
-    debug.parse(
-      `✅ createProgramNode: Returning Program node with ${statements.length} statements, type=${programNode.type}`
-    );
-    return programNode;
+    return astHelpers.createProgramNode(statements);
   }
 
   // Token manipulation methods
@@ -4668,6 +4067,89 @@ export class Parser {
       end: token.end || 0,
       line: token.line || 1,
       column: token.column || 1,
+    };
+  }
+
+  /**
+   * Get ParserContext for command parsers
+   *
+   * This method creates a ParserContext object that exposes parser functionality
+   * to command parsers without exposing the Parser class internals.
+   * All methods are bound to the Parser instance.
+   *
+   * Phase 9-3a: ParserContext Implementation
+   */
+  getContext(): import('./parser-types').ParserContext {
+    return {
+      // Token Stream Access (Read-Only)
+      tokens: this.tokens,
+      current: this.current,
+
+      // Token Navigation Methods (10 methods)
+      advance: this.advance.bind(this),
+      peek: this.peek.bind(this),
+      previous: this.previous.bind(this),
+      consume: this.consume.bind(this),
+      check: this.check.bind(this),
+      checkTokenType: this.checkTokenType.bind(this),
+      match: this.match.bind(this),
+      matchTokenType: this.matchTokenType.bind(this),
+      matchOperator: this.matchOperator.bind(this),
+      isAtEnd: this.isAtEnd.bind(this),
+
+      // AST Node Creation (11 methods)
+      createIdentifier: this.createIdentifier.bind(this),
+      createLiteral: this.createLiteral.bind(this),
+      createSelector: this.createSelector.bind(this),
+      createBinaryExpression: this.createBinaryExpression.bind(this),
+      createUnaryExpression: this.createUnaryExpression.bind(this),
+      createMemberExpression: this.createMemberExpression.bind(this),
+      createPossessiveExpression: this.createPossessiveExpression.bind(this),
+      createCallExpression: this.createCallExpression.bind(this),
+      createErrorNode: this.createErrorNode.bind(this),
+      createProgramNode: this.createProgramNode.bind(this),
+      createCommandFromIdentifier: this.createCommandFromIdentifier.bind(this),
+
+      // Expression Parsing (18 methods)
+      parseExpression: this.parseExpression.bind(this),
+      parsePrimary: this.parsePrimary.bind(this),
+      parseCall: this.parseCall.bind(this),
+      parseAssignment: this.parseAssignment.bind(this),
+      parseLogicalOr: this.parseLogicalOr.bind(this),
+      parseLogicalAnd: this.parseLogicalAnd.bind(this),
+      parseEquality: this.parseEquality.bind(this),
+      parseComparison: this.parseComparison.bind(this),
+      parseAddition: this.parseAddition.bind(this),
+      parseMultiplication: this.parseMultiplication.bind(this),
+      parseImplicitBinary: this.parseImplicitBinary.bind(this),
+      parseConditional: this.parseConditional.bind(this),
+      parseConditionalBranch: this.parseConditionalBranch.bind(this),
+      parseEventHandler: this.parseEventHandler.bind(this),
+      parseBehaviorDefinition: this.parseBehaviorDefinition.bind(this),
+      parseNavigationFunction: this.parseNavigationFunction.bind(this),
+      parseMyPropertyAccess: this.parseMyPropertyAccess.bind(this),
+      parseDollarExpression: this.parseDollarExpression.bind(this),
+      parseHyperscriptSelector: this.parseHyperscriptSelector.bind(this),
+      parseAttributeOrArrayLiteral: this.parseAttributeOrArrayLiteral.bind(this),
+      parseObjectLiteral: this.parseObjectLiteral.bind(this),
+      parseCSSObjectLiteral: this.parseCSSObjectLiteral.bind(this),
+
+      // Command Sequence Parsing (2 methods)
+      parseCommandSequence: this.parseCommandSequence.bind(this),
+      parseCommandListUntilEnd: this.parseCommandListUntilEnd.bind(this),
+
+      // Position Tracking (1 method)
+      getPosition: this.getPosition.bind(this),
+
+      // Error Handling (2 methods)
+      addError: this.addError.bind(this),
+      addWarning: this.addWarning.bind(this),
+
+      // Utility Functions (4 methods)
+      isCommand: this.isCommand.bind(this),
+      isCompoundCommand: this.isCompoundCommand.bind(this),
+      isKeyword: this.isKeyword.bind(this),
+      getMultiWordPattern: this.getMultiWordPattern.bind(this),
     };
   }
 }
