@@ -102,7 +102,22 @@ export class RemoveCommand {
 
     // First arg determines the type
     const firstArg = raw.args[0];
-    const firstValue = await evaluator.evaluate(firstArg, context);
+
+    // Handle CSS selector nodes directly without evaluation
+    // For "remove .active", .active is a selector node with value='.active'
+    // not evaluated as a DOM query (which would return an empty NodeList)
+    let firstValue: unknown;
+    const argValue = firstArg['value'];
+    if (
+      (firstArg.type === 'selector' || firstArg.type === 'cssSelector' || firstArg.type === 'classSelector') &&
+      typeof argValue === 'string' &&
+      argValue.startsWith('.')
+    ) {
+      // Use value directly for class names (includes the leading dot)
+      firstValue = argValue;
+    } else {
+      firstValue = await evaluator.evaluate(firstArg, context);
+    }
 
     // Check for string-based patterns
     if (typeof firstValue === 'string') {

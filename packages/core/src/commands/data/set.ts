@@ -141,7 +141,41 @@ export class SetCommand {
 
     // Extract first argument
     const firstArg = raw.args[0];
-    const firstValue = await evaluator.evaluate(firstArg, context);
+
+    // Handle identifier nodes directly without evaluation
+    // For "set x to 42", x is an identifier node that should become a variable name
+    // not evaluated as a variable lookup (which would return undefined)
+    let firstValue: unknown;
+    const argName = firstArg['name'];
+
+    // Handle memberExpression for possessive property access: "set my innerHTML to X"
+    // Parser creates: { type: 'memberExpression', object: {name: 'me'}, property: {name: 'innerHTML'} }
+    if (firstArg.type === 'memberExpression') {
+      const objectNode = firstArg['object'] as { type: string; name?: string } | undefined;
+      const propertyNode = firstArg['property'] as { type: string; name?: string } | undefined;
+
+      if (objectNode?.name && propertyNode?.name) {
+        const objectName = objectNode.name.toLowerCase();
+        // Check if object is a possessive context reference
+        if (['me', 'my', 'it', 'its', 'you', 'your'].includes(objectName)) {
+          const element = this.resolvePossessive(objectName, context);
+          const value = await this.extractValue(raw, evaluator, context);
+          return {
+            type: 'property',
+            element,
+            property: propertyNode.name,
+            value,
+          };
+        }
+      }
+    }
+
+    if (firstArg.type === 'identifier' && typeof argName === 'string') {
+      // Use identifier name directly for variable assignment
+      firstValue = argName;
+    } else {
+      firstValue = await evaluator.evaluate(firstArg, context);
+    }
 
     // Check for object literal: set { x: 1, y: 2 } on element
     if (this.isPlainObject(firstValue)) {
@@ -349,12 +383,26 @@ export class SetCommand {
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<unknown> {
+    // Check modifiers.to first (some parsers put value there)
     if (raw.modifiers.to) {
       return await evaluator.evaluate(raw.modifiers.to, context);
     }
+
+    // Parser puts args as [target, 'to', value] - find the 'to' marker and get value after it
+    const toIndex = raw.args.findIndex(
+      arg => arg.type === 'identifier' && arg['name'] === 'to'
+    );
+
+    if (toIndex >= 0 && raw.args.length > toIndex + 1) {
+      // Value is after the 'to' keyword
+      return await evaluator.evaluate(raw.args[toIndex + 1], context);
+    }
+
+    // Fallback: if no 'to' marker, try second arg (legacy format)
     if (raw.args.length >= 2) {
       return await evaluator.evaluate(raw.args[1], context);
     }
+
     throw new Error('set command requires a value (use "to" keyword)');
   }
 
