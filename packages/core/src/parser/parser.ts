@@ -2600,6 +2600,11 @@ export class Parser {
 
     if (!this.check(')')) {
       do {
+        // Check for invalid syntax: leading or consecutive commas
+        if (this.check(',')) {
+          this.addError('Unexpected token in function arguments');
+          return this.createCallExpression(callee, [this.createErrorNode()]);
+        }
         args.push(this.parseExpression());
       } while (this.match(','));
     }
@@ -2806,6 +2811,7 @@ export class Parser {
       message,
       line: Math.max(1, line),
       column: Math.max(1, column),
+      position: Math.max(0, position),
     };
   }
 
@@ -2939,7 +2945,8 @@ export class Parser {
       parseObjectLiteral: this.parseObjectLiteral.bind(this),
       parseCSSObjectLiteral: this.parseCSSObjectLiteral.bind(this),
 
-      // Command Sequence Parsing (2 methods)
+      // Command Sequence Parsing (3 methods)
+      parseCommand: this.parseCommand.bind(this),
       parseCommandSequence: this.parseCommandSequence.bind(this),
       parseCommandListUntilEnd: this.parseCommandListUntilEnd.bind(this),
 

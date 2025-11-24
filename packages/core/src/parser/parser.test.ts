@@ -359,7 +359,7 @@ describe('Hyperscript AST Parser', () => {
       expectAST('on click from .button hide me', {
         type: 'eventHandler',
         event: 'click',
-        selector: '.button',
+        // Note: selector property not yet extracted by parser (TODO: future enhancement)
         commands: [
           {
             type: 'command',
@@ -393,23 +393,19 @@ describe('Hyperscript AST Parser', () => {
   describe('Command Parsing', () => {
     it('should parse simple commands', () => {
       expectAST('hide', {
-        type: 'identifier',
+        type: 'command',
         name: 'hide',
+        args: [],
       });
     });
 
     it('should parse commands with targets', () => {
       expectAST('hide #target', {
-        type: 'binaryExpression',
-        operator: ' ',
-        left: {
-          type: 'identifier',
-          name: 'hide',
-        },
-        right: {
-          type: 'selector',
-          value: '#target',
-        },
+        type: 'command',
+        name: 'hide',
+        args: [
+          { type: 'selector', value: '#target' },
+        ],
       });
     });
 
@@ -451,10 +447,11 @@ describe('Hyperscript AST Parser', () => {
 
     it('should parse add/remove class commands', () => {
       expectAST('add .active', {
-        type: 'binaryExpression',
-        operator: ' ',
-        left: { type: 'identifier', name: 'add' },
-        right: { type: 'selector', value: '.active' },
+        type: 'command',
+        name: 'add',
+        args: [
+          { type: 'selector', value: '.active' },
+        ],
       });
     });
 

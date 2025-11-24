@@ -339,7 +339,24 @@ export function parseIfCommand(
   // 1. Explicit 'then' keyword: if <condition> then ... end
   // 2. Implicit multi-line (no 'then' but multiple commands on separate lines): if <condition>\n  <cmd>\n  <cmd>\n end
   // 3. Single-line (no 'then', single command on same line): if <condition> <command>
-  const hasThen = ctx.check('then');
+
+  // Look ahead to find 'then' keyword (not just check current token)
+  let hasThen = false;
+  const savedPosForThen = ctx.current;
+  const maxThenLookahead = 500; // Increased to handle large conditional expressions
+  for (let i = 0; i < maxThenLookahead && !ctx.isAtEnd(); i++) {
+    const token = ctx.peek();
+    if (token.value === 'then') {
+      hasThen = true;
+      break;
+    }
+    // Stop at structural boundaries
+    if (token.value === 'end' || token.value === 'behavior' || token.value === 'def' || token.value === 'on') {
+      break;
+    }
+    ctx.advance();
+  }
+  ctx.current = savedPosForThen;
 
   // Look ahead to check for multi-line form without 'then'
   // We need to distinguish:

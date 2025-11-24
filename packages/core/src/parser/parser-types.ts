@@ -287,6 +287,9 @@ export interface ParserContext {
   // Command Sequence Parsing
   // ==========================================
 
+  /** Parse a single command */
+  parseCommand(): CommandNode;
+
   /** Parse a command sequence */
   parseCommandSequence(): ASTNode;
 
