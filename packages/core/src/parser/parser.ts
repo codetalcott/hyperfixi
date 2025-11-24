@@ -2316,66 +2316,6 @@ export class Parser {
     };
   }
 
-  // @ts-expect-error - Reserved for future command parsing
-  private _parseFullCommand(): CommandNode {
-    const commandToken = this.previous();
-    let commandName = commandToken.value;
-
-    // Handle special case for beep! command
-    if (commandName === 'beep' && this.check('!')) {
-      this.advance(); // consume the !
-      commandName = 'beep!';
-    }
-
-    const args: ASTNode[] = [];
-
-    // Use command-specific parsing instead of parseExpression to preserve natural language syntax
-    while (!this.isAtEnd() && !this.check('then')) {
-      // Parse individual tokens/primitives instead of full expressions
-      // This prevents "add .highlight to #element" from being split into separate expressions
-      if (
-        this.checkTokenType(TokenType.CSS_SELECTOR) ||
-        this.checkTokenType(TokenType.ID_SELECTOR) ||
-        this.checkTokenType(TokenType.CLASS_SELECTOR) ||
-        this.checkTokenType(TokenType.CONTEXT_VAR) ||
-        this.checkTokenType(TokenType.IDENTIFIER) ||
-        this.checkTokenType(TokenType.KEYWORD) ||
-        this.checkTokenType(TokenType.STRING) ||
-        this.checkTokenType(TokenType.NUMBER) ||
-        this.checkTokenType(TokenType.TIME_EXPRESSION) ||
-        this.checkTokenType(TokenType.OPERATOR) ||
-        this.match('<')
-      ) {
-        args.push(this.parsePrimary());
-      } else {
-        // Unknown token type - break to avoid infinite loop
-        break;
-      }
-
-      // For comma-separated arguments, consume the comma and continue
-      if (this.match(',')) {
-        continue;
-      }
-
-      // If we hit another command (not preceded by 'then'), we've gone too far
-      if (this.checkTokenType(TokenType.COMMAND) && !this.check('then')) {
-        break;
-      }
-    }
-
-    const pos = this.getPosition();
-    return {
-      type: 'command',
-      name: commandName,
-      args: args as ExpressionNode[],
-      isBlocking: false,
-      start: pos.start,
-      end: pos.end,
-      line: pos.line,
-      column: pos.column,
-    };
-  }
-
   /**
    * Get multi-word pattern definition for a command
    */
