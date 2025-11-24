@@ -10,10 +10,74 @@
  */
 
 import type { ParserContext, IdentifierNode } from '../parser-types';
-import type { ASTNode, Token, ExpressionNode } from '../../types/core';
+import type { ASTNode, Token, ExpressionNode, CommandNode } from '../../types/core';
 import { TokenType } from '../tokenizer';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { isKeyword } from '../helpers/parsing-helpers';
+
+// Import command parsers from other modules for compound command routing
+import * as eventCommands from './event-commands';
+import * as controlFlowCommands from './control-flow-commands';
+import * as animationCommands from './animation-commands';
+import * as domCommands from './dom-commands';
+import * as variableCommands from './variable-commands';
+
+/**
+ * Parse compound command
+ *
+ * Syntax: <command-name> [args...]
+ *
+ * This is a dispatcher function that routes specific command names to their
+ * specialized parsers. Compound commands have special parsing logic beyond
+ * simple argument collection.
+ *
+ * Supported commands:
+ * - put: DOM insertion operations (into, before, after, at start/end of)
+ * - trigger: Event dispatching
+ * - remove: Class removal
+ * - toggle: Class toggling
+ * - set: Variable assignment with scoping
+ * - halt: Control flow interruption
+ * - measure: Element property measurement
+ *
+ * Examples:
+ *   - put <div/> into <body/>
+ *   - trigger click on <button/>
+ *   - set :localVar to "value"
+ *   - measure <#element/> width
+ *
+ * @param ctx - Parser context providing access to parser state and methods
+ * @param identifierNode - The command identifier node
+ * @returns CommandNode representing the command, or result of parseRegularCommand for unknown commands
+ *
+ * Phase 9-3b: Extracted from Parser.parseCompoundCommand
+ */
+export function parseCompoundCommand(
+  ctx: ParserContext,
+  identifierNode: IdentifierNode
+): CommandNode | null {
+  const commandName = identifierNode.name.toLowerCase();
+
+  switch (commandName) {
+    case 'put':
+      return domCommands.parsePutCommand(ctx, identifierNode);
+    case 'trigger':
+      return eventCommands.parseTriggerCommand(ctx, identifierNode);
+    case 'remove':
+      return domCommands.parseRemoveCommand(ctx, identifierNode);
+    case 'toggle':
+      return domCommands.parseToggleCommand(ctx, identifierNode);
+    case 'set':
+      return variableCommands.parseSetCommand(ctx, identifierNode);
+    case 'halt':
+      return controlFlowCommands.parseHaltCommand(ctx, identifierNode);
+    case 'measure':
+      return animationCommands.parseMeasureCommand(ctx, identifierNode);
+    default:
+      // Fallback to regular parsing
+      return parseRegularCommand(ctx, identifierNode);
+  }
+}
 
 /**
  * Parse regular command
