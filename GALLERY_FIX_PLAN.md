@@ -1,135 +1,156 @@
 # Gallery Test Remaining Issues - Fix Plan
 
-## Current Status (After Session Fixes)
+## Current Status (Updated)
 
-**Completed Fixes:**
+**Session 1 Completed Fixes:**
 - CSS selector property mismatch in add/remove/toggle commands
 - Keyword preposition filtering in resolveTargets
 - Install command identifier evaluation
 - If command args-based format support
 - Set command variable node type support
 
-**Test Results:**
+**Session 2 Completed Fixes:**
+- Put command variable assignment detection (distinguish variables from CSS selectors)
+- Repeat command loop type detection from args[0] identifier
+
+**Test Results (After Session 2):**
 - Basics: 5/5 (100%)
-- Intermediate: 4/6 (67%)
-- Advanced: 4/5 (80%)
+- Intermediate: 4/6 (67%) - Form Validation, Fetch Data failing
+- Advanced: 3/5 (60%) - Color Cycling, State Machine failing
 
 ## Remaining Issues
 
-### 1. Fetch Data - Put Command Variable Handling
+### 1. Form Validation - `contains` Operator Not Working
 
-**Error:**
-```
-Invalid CSS selector: "todoData" - No elements found matching selector: "todoData"
-```
+**Symptom:** Email input doesn't get `.error` class when typing invalid text
 
-**Root Cause:**
-The `put` command in `put todoData into #result` is treating `todoData` (a variable) as a CSS selector instead of evaluating it as a variable reference.
-
-**Fix Location:** `packages/core/src/commands/data/put.ts`
-
-**Solution:**
-Similar to the set command fix - detect identifier/variable nodes and evaluate them as variable references rather than CSS selectors:
-```typescript
-// In parseInput, check if value arg is an identifier node
-const valueArg = raw.args[0] as any;
-if (valueArg?.type === 'identifier' && typeof valueArg.name === 'string') {
-  // Look up variable value from context
-  value = context.locals?.get(valueArg.name) ??
-          context.globals?.get(valueArg.name) ??
-          context.variables?.get(valueArg.name);
-} else {
-  value = await evaluator.evaluate(valueArg, context);
-}
-```
-
-**Priority:** High - affects common data binding patterns
-
----
-
-### 2. Color Cycling - Repeat Forever Loop Type
-
-**Error:**
-```
-repeat command requires a loop type (for/times/while/until/forever)
+**Test Code:**
+```hyperscript
+on input
+  if my value contains '@'
+    add .valid to me
+  else
+    add .error to me
+  end
 ```
 
 **Root Cause:**
-The V2 repeat command's `parseInput` method doesn't recognize the `forever` keyword from the parsed AST.
-
-**Fix Location:** `packages/core/src/commands/control-flow/repeat.ts`
-
-**Solution:**
-Check for `forever` in the loop type detection logic. The parser likely outputs this differently than expected:
-```typescript
-// In parseInput, add forever detection
-const loopTypeArg = raw.args[0] as any;
-if (loopTypeArg?.type === 'identifier' && loopTypeArg.name === 'forever') {
-  return { type: 'forever', body: raw.args[1] };
-}
-// Also check modifiers
-if (raw.modifiers?.forever) {
-  return { type: 'forever', body: thenBlock };
-}
-```
-
-**Priority:** High - affects animation and polling patterns
-
----
-
-### 3. Form Validation - Unknown Issue
-
-**Error:** Test fails but no error logged
+The `contains` operator in `if my value contains '@'` is not evaluating correctly.
+The condition appears to always be falsy, so neither branch executes properly.
 
 **Investigation Needed:**
-1. Check what hyperscript is used in the form validation example
-2. Run with verbose logging to capture the specific failure point
-3. Likely related to form element handling or validation API calls
+1. Check how `contains` is implemented in expression evaluator
+2. Verify `my value` returns the input element's value
+3. Test `contains` operator in isolation
 
-**Fix Location:** TBD after investigation
+**Fix Location:** Likely `packages/core/src/core/expression-evaluator.ts` or comparison logic
 
-**Priority:** Medium - requires investigation first
+**Priority:** High - affects common string matching patterns
 
 ---
 
-### 4. State Machine - Timeout/Hanging
+### 2. Fetch Data - Template Literal Interpolation Not Working
 
-**Error:** Test never completes
+**Symptom:** Template literals render literally instead of being evaluated
+
+**Output:**
+```html
+<h3>Todo #todoData.id</h3>
+<p>Title: todoData.title</p>
+```
+
+**Expected:**
+```html
+<h3>Todo #1</h3>
+<p>Title: delectus aut autem</p>
+```
+
+**Test Code:**
+```hyperscript
+put it.data into todoData
+put `<h3>Todo #${todoData.id}</h3>...` into #native-output
+```
+
+**Root Cause:**
+Template literal strings with `${...}` syntax are not being interpolated with
+the current execution context. The `put` command receives the raw template
+string without evaluation.
+
+**Investigation Needed:**
+1. Check how parser handles template literals
+2. Verify expression evaluator handles template string interpolation
+3. May need to add template literal evaluation in put command or globally
+
+**Fix Location:** Parser template literal handling or expression evaluator
+
+**Priority:** High - affects dynamic content rendering
+
+---
+
+### 3. Color Cycling - Transition Command Inside Repeat Block
+
+**Error:**
+```
+transition command requires "to <value>" modifier
+```
+
+**Note:** The repeat `until-event` loop type is now working! The issue is the
+`transition` command inside the loop not recognizing its modifiers.
+
+**Test Code:**
+```hyperscript
+repeat until event pointerup from the document
+  set rand to Math.random() * 360
+  transition
+    *background-color
+    to `hsl(${rand} 100% 90%)`
+    over 250ms
+end
+```
+
+**Root Cause:**
+The `transition` command's `parseInput` method doesn't find the `to` modifier
+when the command is parsed within a repeat block. The parser may be structuring
+the command differently when it's nested.
+
+**Investigation Needed:**
+1. Check how transition command parses `to` modifier
+2. Compare AST structure of standalone vs nested transition commands
+3. May need same args-based detection pattern used in other commands
+
+**Fix Location:** `packages/core/src/commands/animation/transition.ts`
+
+**Priority:** High - affects animations and visual feedback
+
+---
+
+### 4. State Machine - Test Timeout
+
+**Error:** Test never completes (times out)
 
 **Root Cause (Suspected):**
-- Infinite loop in state transition
-- Async operation never resolving
-- Event listener not properly triggering
+- Complex state machine logic may have infinite loop
+- Event listeners not properly triggering state transitions
+- Async operations not resolving
 
-**Investigation Needed:**
-1. Check state machine example for `wait for` or `repeat until` patterns
-2. Verify event dispatching works correctly
-3. Add timeout guards to prevent infinite loops
-
-**Fix Location:** TBD after investigation
-
-**Priority:** Medium - complex debugging required
+**Priority:** Low - complex debugging, other issues more impactful
 
 ---
 
-## Implementation Order
+## Implementation Order (Recommended)
 
-1. **Put Command** (Fetch Data) - Similar pattern to set command fix, quick win
-2. **Repeat Forever** (Color Cycling) - Localized fix in repeat.ts
-3. **Form Validation** - Investigate first, then fix
-4. **State Machine** - Deep investigation, may require multiple fixes
+1. **Template Literal Interpolation** - Root cause affects multiple examples
+2. **Contains Operator** - Common string operation, should be straightforward
+3. **Transition Command Modifiers** - Same pattern as other command fixes
+4. **State Machine** - Requires deeper investigation
 
-## Estimated Effort
+## Progress Summary
 
-| Issue | Effort | Confidence |
-|-------|--------|------------|
-| Put Command | 30 min | High |
-| Repeat Forever | 30 min | High |
-| Form Validation | 1-2 hr | Medium |
-| State Machine | 2-4 hr | Low |
-
-## Notes
-
-- All fixes follow the same pattern: V2 commands need to handle AST node types correctly
-- The parser creates consistent node structures, but V2 commands weren't updated to match
-- Consider creating a shared utility for identifier/variable node evaluation
+| Issue | Status | Notes |
+|-------|--------|-------|
+| Put Variable Assignment | ✅ Fixed | Variable vs CSS selector detection |
+| Repeat Loop Type | ✅ Fixed | Args-based loop type detection |
+| Form Validation | ❌ Pending | `contains` operator issue |
+| Fetch Data Template | ❌ Pending | Template literal interpolation |
+| Color Cycling Transition | ❌ Pending | Modifier parsing in nested blocks |
+| State Machine | ❌ Pending | Timeout/hanging, needs investigation |

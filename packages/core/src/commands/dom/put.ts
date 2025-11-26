@@ -45,7 +45,9 @@ export interface PutCommandInput {
   value: any;
   targets: HTMLElement[];
   position: InsertPosition;
-  memberPath?: string;
+  memberPath?: string | undefined;
+  /** Variable name for variable assignment (e.g., "put value into varName") */
+  variableName?: string | undefined;
 }
 
 /**
@@ -184,6 +186,7 @@ export class PutCommand {
     // Handle target resolution with special cases
     let targetSelector: string | null = null;
     let memberPath: string | undefined;
+    let variableName: string | undefined;
 
     if (targetArg) {
       const targetType = nodeType(targetArg);
@@ -217,28 +220,53 @@ export class PutCommand {
       else if (targetType === 'identifier' && (targetArg as any).name === 'me') {
         targetSelector = null; // Will use context.me
       }
-      // Handle other identifiers as strings (for CSS selectors)
-      else if (targetType === 'identifier') {
-        targetSelector = (targetArg as any).name;
+      // Handle selectors (CSS selectors - starts with #, ., [, or is a tag)
+      else if (targetType === 'selector' || targetType === 'cssSelector') {
+        targetSelector = (targetArg as any).value || (targetArg as any).selector;
       }
-      // Handle literals (string selectors)
+      // Handle literals (string selectors or values)
       else if (targetType === 'literal') {
-        targetSelector = (targetArg as any).value;
+        const literalValue = (targetArg as any).value;
+        // Check if it looks like a CSS selector
+        if (typeof literalValue === 'string' && this.looksLikeCssSelector(literalValue)) {
+          targetSelector = literalValue;
+        } else {
+          // Treat as variable name
+          variableName = String(literalValue);
+        }
       }
-      // Handle selectors (CSS selectors)
-      else if (targetType === 'selector') {
-        targetSelector = (targetArg as any).value;
+      // Handle identifiers - distinguish between CSS selectors and variable names
+      else if (targetType === 'identifier') {
+        const identName = (targetArg as any).name;
+        // Check if it looks like a CSS selector (starts with special chars)
+        // or is a known DOM element reference
+        if (this.looksLikeCssSelector(identName)) {
+          targetSelector = identName;
+        } else {
+          // Simple identifier = variable assignment
+          variableName = identName;
+        }
       }
       // For other types, evaluate them
       else {
         const evaluated = await evaluator.evaluate(targetArg, context);
         if (typeof evaluated === 'string') {
-          targetSelector = evaluated;
+          // Check if evaluated result looks like a CSS selector
+          if (this.looksLikeCssSelector(evaluated)) {
+            targetSelector = evaluated;
+          } else {
+            variableName = evaluated;
+          }
         }
       }
     }
 
-    // Resolve targets
+    // If variable assignment, don't resolve targets
+    if (variableName) {
+      return { value, targets: [], position, memberPath, variableName };
+    }
+
+    // Resolve targets for DOM operations
     const targets = await this.resolveTargets(targetSelector, context);
 
     return { value, targets, position, memberPath };
@@ -248,17 +276,27 @@ export class PutCommand {
    * Execute the put command
    *
    * Inserts content into target elements or properties.
-   * Handles both DOM insertion and property assignment.
+   * Handles both DOM insertion, property assignment, and variable assignment.
    *
    * @param input - Typed command input from parseInput()
    * @param context - Typed execution context
-   * @returns Array of modified elements
+   * @returns Array of modified elements (or empty array for variable assignment)
    */
   async execute(
     input: PutCommandInput,
     context: TypedExecutionContext
   ): Promise<HTMLElement[]> {
-    const { value, targets, position, memberPath } = input;
+    const { value, targets, position, memberPath, variableName } = input;
+
+    // Handle variable assignment (e.g., "put value into varName")
+    if (variableName) {
+      if (context.locals) {
+        context.locals.set(variableName, value);
+      }
+      // Also set on context for broader access
+      (context as any)[variableName] = value;
+      return [];
+    }
 
     if (memberPath) {
       // Handle memberExpression: element's property.path
@@ -414,6 +452,36 @@ export class PutCommand {
         target.insertAdjacentText(position, content);
       }
     }
+  }
+
+  /**
+   * Check if a string looks like a CSS selector
+   *
+   * CSS selectors typically start with special characters or are HTML tag names.
+   * Variable names are plain identifiers without these patterns.
+   *
+   * @param str - String to check
+   * @returns true if it looks like a CSS selector
+   */
+  private looksLikeCssSelector(str: string): boolean {
+    if (!str || typeof str !== 'string') return false;
+
+    // Starts with CSS selector characters
+    if (/^[#.\[]/.test(str)) return true;
+
+    // Contains CSS combinator characters
+    if (/[>+~\s]/.test(str) && str.length > 1) return true;
+
+    // Is a common HTML tag name (likely targeting elements)
+    const htmlTags = [
+      'div', 'span', 'p', 'a', 'button', 'input', 'form', 'ul', 'li', 'ol',
+      'table', 'tr', 'td', 'th', 'thead', 'tbody', 'img', 'h1', 'h2', 'h3',
+      'h4', 'h5', 'h6', 'section', 'article', 'header', 'footer', 'nav',
+      'main', 'aside', 'dialog', 'label', 'select', 'option', 'textarea'
+    ];
+    if (htmlTags.includes(str.toLowerCase())) return true;
+
+    return false;
   }
 
   /**

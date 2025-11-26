@@ -163,35 +163,64 @@ export class RepeatCommand {
     // Extract commands (usually in a block or modifier)
     commands = raw.modifiers?.block || raw.modifiers?.commands;
 
-    // Detect loop type based on modifiers and args
-    if (raw.modifiers?.for || (raw as any).loopType === 'for') {
+    // CRITICAL FIX: Check args[0] for loop type identifier from parser
+    // Parser puts loop type as first arg: { type: 'identifier', name: 'for'|'times'|'while'|'until'|'until-event'|'forever' }
+    const firstArg = raw.args[0] as any;
+    const loopTypeFromArg = firstArg?.type === 'identifier' ? firstArg.name : null;
+
+    // Find the commands block in args (last arg is usually the block)
+    if (!commands) {
+      for (let i = raw.args.length - 1; i >= 0; i--) {
+        const arg = raw.args[i] as any;
+        if (arg?.type === 'block' && arg.commands) {
+          commands = arg;
+          break;
+        }
+      }
+    }
+
+    // Detect loop type based on args[0] identifier, modifiers, or loopType property
+    if (loopTypeFromArg === 'for' || raw.modifiers?.for || (raw as any).loopType === 'for') {
       // For-in loop: repeat for <var> in <collection>
       type = 'for';
-      variable = (raw as any).variable || (await evaluator.evaluate(raw.args[0], context));
-      collection = (raw as any).collection || (await evaluator.evaluate(raw.args[1] || raw.modifiers?.in, context));
-    } else if (raw.modifiers?.times || (raw as any).loopType === 'times') {
+      // Variable is in args[1] (string node with value)
+      const varArg = raw.args[1] as any;
+      variable = varArg?.value || varArg?.name || (raw as any).variable;
+      // Collection is in args[2]
+      collection = raw.args[2] ? await evaluator.evaluate(raw.args[2], context) : (raw as any).collection;
+    } else if (loopTypeFromArg === 'times' || raw.modifiers?.times || (raw as any).loopType === 'times') {
       // Counted loop: repeat <count> times
       type = 'times';
-      const countValue = (raw as any).count || (await evaluator.evaluate(raw.args[0], context));
+      // Count is in args[1]
+      const countArg = raw.args[1] as any;
+      const countValue = countArg ? await evaluator.evaluate(countArg, context) : (raw as any).count;
       count = typeof countValue === 'number' ? countValue : parseInt(String(countValue), 10);
-    } else if (raw.modifiers?.while || (raw as any).loopType === 'while') {
+    } else if (loopTypeFromArg === 'while' || raw.modifiers?.while || (raw as any).loopType === 'while') {
       // While loop: repeat while <condition>
       type = 'while';
-      condition = (raw as any).condition || raw.modifiers?.while;
-    } else if (raw.modifiers?.until || (raw as any).loopType === 'until') {
-      // Until loop or event-driven loop
-      const untilValue = raw.modifiers?.until || (raw as any).condition;
-
-      // Check if it's an event-driven loop (until <event> from <target>)
-      if (raw.modifiers?.from || (raw as any).eventTarget) {
-        type = 'until-event';
-        eventName = typeof untilValue === 'string' ? untilValue : await evaluator.evaluate(untilValue, context);
-        eventTarget = (raw as any).eventTarget || (await evaluator.evaluate(raw.modifiers?.from, context));
-      } else {
-        type = 'until';
-        condition = untilValue;
+      // Condition is in args[1]
+      condition = raw.args[1] || (raw as any).condition || raw.modifiers?.while;
+    } else if (loopTypeFromArg === 'until-event' || (loopTypeFromArg === 'until' && raw.modifiers?.from) || (raw as any).loopType === 'until-event') {
+      // Event-driven loop: repeat until event <eventName> from <target>
+      type = 'until-event';
+      // Event name is in args[1] (string node)
+      const eventArg = raw.args[1] as any;
+      eventName = eventArg?.value || eventArg?.name;
+      // Event target is in args[2]
+      if (raw.args[2]) {
+        eventTarget = await evaluator.evaluate(raw.args[2], context);
       }
-    } else if (raw.modifiers?.forever || (raw as any).loopType === 'forever') {
+      // Check for index variable in args[3]
+      const indexArg = raw.args[3] as any;
+      if (indexArg?.type === 'string' && indexArg.value) {
+        indexVariable = indexArg.value;
+      }
+    } else if (loopTypeFromArg === 'until' || raw.modifiers?.until || (raw as any).loopType === 'until') {
+      // Until loop: repeat until <condition>
+      type = 'until';
+      // Condition is in args[1]
+      condition = raw.args[1] || (raw as any).condition || raw.modifiers?.until;
+    } else if (loopTypeFromArg === 'forever' || raw.modifiers?.forever || (raw as any).loopType === 'forever') {
       // Forever loop: repeat forever
       type = 'forever';
     } else {
