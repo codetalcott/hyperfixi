@@ -117,6 +117,7 @@ const COMMANDS = new Set([
   'default',
   'exit',
   'fetch',
+  'for',
   'get',
   'go',
   'halt',

@@ -550,3 +550,143 @@ export function parseIfCommand(
     .endingAt(ctx.getPosition())
     .build();
 }
+
+/**
+ * Parse for command (standalone for-in loop)
+ *
+ * Syntax:
+ *   - for <var> in <collection> ... end
+ *   - for each <var> in <collection> ... end
+ *
+ * This command creates a for-in loop, which is equivalent to `repeat for <var> in <collection>`.
+ * The standalone `for` syntax is more natural for Python users and matches _hyperscript.
+ *
+ * Examples:
+ *   - for item in items log item end
+ *   - for each entry in :history put entry into #list end
+ *   - for user in users
+ *       log user's name
+ *     end
+ *
+ * @param ctx - Parser context providing access to parser state and methods
+ * @param commandToken - The 'for' command token
+ * @returns CommandNode representing the for command (uses 'repeat' internally for execution)
+ *
+ * Natural English support: "for each item in the list"
+ */
+export function parseForCommand(
+  ctx: ParserContext,
+  commandToken: Token
+): CommandNode {
+  const args: ASTNode[] = [];
+  let variable: string | null = null;
+  let collection: ASTNode | null = null;
+
+  // Support optional 'each' keyword: "for each item in items"
+  if (ctx.check('each')) {
+    ctx.advance(); // consume 'each'
+  }
+
+  // Parse: <identifier> in <expression>
+  const identToken = ctx.peek();
+  if (identToken.type === TokenType.IDENTIFIER) {
+    variable = identToken.value;
+    ctx.advance();
+  } else {
+    throw new Error('Expected variable name after "for"');
+  }
+
+  // Expect 'in' keyword
+  if (!ctx.check('in')) {
+    throw new Error('Expected "in" after variable name in for loop');
+  }
+  ctx.advance(); // consume 'in'
+
+  // Parse collection expression
+  collection = ctx.parseExpression();
+  if (!collection) {
+    throw new Error('Expected collection expression after "in"');
+  }
+
+  // Parse optional index variable (same as repeat)
+  let indexVariable: string | null = null;
+  if (ctx.check('with')) {
+    const nextToken =
+      ctx.current + 1 < ctx.tokens.length ? ctx.tokens[ctx.current + 1] : null;
+    if (nextToken && nextToken.value.toLowerCase() === 'index') {
+      ctx.advance(); // consume 'with'
+      ctx.advance(); // consume 'index'
+      indexVariable = 'index';
+    }
+  } else if (ctx.check('index')) {
+    ctx.advance(); // consume 'index'
+    const indexToken = ctx.peek();
+    if (indexToken.type === TokenType.IDENTIFIER) {
+      indexVariable = indexToken.value;
+      ctx.advance();
+    } else {
+      indexVariable = 'index';
+    }
+  }
+
+  // Parse command block until 'end'
+  const commands: ASTNode[] = ctx.parseCommandListUntilEnd();
+
+  // Build args array to match repeat command's 'for' loop type structure:
+  // args[0] = loop type identifier ('for')
+  // args[1] = variable name (string)
+  // args[2] = collection expression
+  // args[3] = index variable (optional)
+  // args[last] = commands block
+
+  args.push({
+    type: 'identifier',
+    name: 'for',
+    start: commandToken.start,
+    end: commandToken.end,
+    line: commandToken.line,
+    column: commandToken.column,
+  } as IdentifierNode);
+
+  args.push({
+    type: 'string',
+    value: variable,
+    start: commandToken.start,
+    end: commandToken.end,
+    line: commandToken.line,
+    column: commandToken.column,
+  } as any);
+
+  args.push(collection);
+
+  if (indexVariable) {
+    args.push({
+      type: 'string',
+      value: indexVariable,
+      start: commandToken.start,
+      end: commandToken.end,
+      line: commandToken.line,
+      column: commandToken.column,
+    } as any);
+  }
+
+  // Add commands as a block
+  args.push({
+    type: 'block',
+    commands: commands,
+    start: commandToken.start,
+    end: commandToken.end || 0,
+    line: commandToken.line,
+    column: commandToken.column,
+  } as any);
+
+  // Create command node with 'repeat' as the command name
+  // This allows reuse of the existing RepeatCommand implementation
+  return CommandNodeBuilder.from({
+    ...commandToken,
+    value: 'repeat', // Use 'repeat' so RepeatCommand handles execution
+  })
+    .withArgs(...args)
+    .endingAt(ctx.getPosition())
+    .build();
+}

@@ -2,96 +2,88 @@
 
 ## Summary
 
-After fixing the MeasureCommand AST node handling, the gallery tests show:
+After multiple sessions of parser fixes, the gallery tests show:
 - Basics: 5/5 ✅
 - Intermediate: 6/6 ✅
-- Advanced: 4/5 ✅ (Draggable now works!)
+- Advanced: 4/5 ✅ (Color Cycling, Draggable, Sortable, Infinite Scroll pass)
 
-Two categories of remaining issues exist, neither are regressions:
+Two remaining issues:
 
-## Issue 1: State Machine Test Timeout (Test Infrastructure)
+## Issue 1: State Machine Test Timeout (Runtime Issue)
 
-**Status**: Test infrastructure issue, not a code bug
+**Status**: Runtime execution issue, not a parsing issue
 
-**Symptoms**: The State Machine test times out in automated Playwright testing
+**Symptoms**: The State Machine page times out during DOM content load in Playwright testing. The page HTML loads successfully (commit), and HyperFixi runtime registers, but execution hangs.
 
-**Root Cause**: The state machine example requires user interaction (button clicks) that the current test harness doesn't simulate properly within the timeout window.
+**Root Cause**: Unknown - likely an infinite loop or blocking operation during hyperscript execution. The parsing works correctly (verified via `npx tsx` tests).
+
+**Investigation Notes**:
+- Page commit succeeds
+- Runtime V2 registers successfully (43 commands)
+- Execution hangs after that
+- TypeScript source parses the state machine code correctly
 
 **Solution Options**:
 
-1. **Increase timeout** for state machine tests specifically
-2. **Add programmatic triggers** - Dispatch click events in the test script
-3. **Add data-testid attributes** to make automated interaction easier
-4. **Skip in automated suite** - Mark as manual-only test
+1. **Debug runtime execution** - Add logging to trace where execution hangs
+2. **Simplify state machine code** - Remove complex features one by one to isolate issue
+3. **Skip in automated suite** - Mark as manual-only test
 
-**Recommended Approach**: Option 2 - Add programmatic triggers in the test script that simulate the state transitions, similar to how `debug-draggable.mjs` dispatches pointer events.
-
-**Priority**: Low (test infrastructure, not user-facing)
+**Priority**: Low (does not affect other functionality)
 
 ## Issue 2: Parser Syntax Gaps
 
-**Status**: Pre-existing parser limitations for advanced _hyperscript features
+**Status**: Most issues resolved in Sessions 14-15
 
-**Affected Examples**:
-- Sortable List (`for item in`)
-- Infinite Scroll (`init` blocks, `for item in`)
+**Resolved**:
+
+- ✅ `for item in` loops (Session 14)
+- ✅ `init` block comments (Session 15)
+- ✅ Comments in event handlers (Session 15)
+- ✅ `end` keyword in top-level event handlers (Session 15)
+
+**Remaining**:
 
 ### 2a. `for item in collection` Loop Syntax
 
-**Current Parser Support**: The parser supports `repeat` loops but not the `for item in` iteration syntax.
+**Status**: ✅ RESOLVED (Session 14)
 
-**_hyperscript Syntax**:
+**Implementation Completed**:
+- Added `for` to COMMANDS set in `tokenizer.ts` and `parser-constants.ts`
+- Created `parseForCommand()` in `control-flow-commands.ts`
+- Reuses RepeatCommand execution for iteration
+- Supports: `for item in collection`, `for each item in collection`, `for item in collection index i`
+- Unit tests: 5/5 passing in `packages/core/src/parser/for-in.test.ts`
+
+**Syntax Supported**:
 ```hyperscript
 for item in items
-  append item to #list
+  log item
+end
+
+for each entry in :history
+  append entry to #list
+end
+
+for box in .state-box index i
+  log i
+  remove .active from box
 end
 ```
 
-**Current Workaround**: Use `repeat for` with index access:
-```hyperscript
-repeat for i from 0 to items.length - 1
-  set item to items[i]
-  append item to #list
-end
-```
+### 2b. `init` Block Comment Parsing
 
-**Implementation Plan**:
-1. Add `for` keyword to lexer
-2. Parse `for <identifier> in <expression>` as ForInNode
-3. Implement ForInCommand that iterates and binds the variable
-4. Add tests for array, NodeList, and object iteration
+**Status**: ✅ RESOLVED (Session 15)
 
-**Estimated Complexity**: Medium (new control flow command)
+**Fix Applied**: Added `checkTokenType(TokenType.COMMENT)` handling in both `parseTopLevelInitBlock()` and `parseEventHandler()` to skip comment tokens.
 
-### 2b. `init` Block in Behaviors
-
-**Current Parser Support**: Behaviors parse but `init` blocks aren't executed on installation.
-
-**_hyperscript Syntax**:
-```hyperscript
-behavior Draggable(dragHandle)
-  init
-    if no dragHandle set the dragHandle to me
-  end
-  on pointerdown ...
-end
-```
-
-**Current Status**: The `init` keyword is recognized but the block execution during `install` isn't fully wired up.
-
-**Implementation Plan**:
-1. Ensure BehaviorNode stores init commands
-2. In InstallCommand, execute init block after behavior installation
-3. Ensure init block has access to behavior parameters
-4. Add tests for init with conditionals and variable setup
-
-**Estimated Complexity**: Medium (behavior system enhancement)
+**Unit Tests**: 5/5 passing in `packages/core/src/parser/init-block.test.ts`
 
 ## Priority Order
 
-1. **`init` blocks** - Higher priority because Draggable behavior uses this pattern
-2. **`for item in`** - Medium priority for iteration patterns
-3. **State Machine timeout** - Low priority (test-only issue)
+1. ~~**`init` block comments**~~ - ✅ RESOLVED (Session 15)
+2. ~~**`for item in`**~~ - ✅ RESOLVED (Session 14)
+3. **State Machine timeout** - Runtime execution issue (needs investigation)
 
 ## Related Files
 

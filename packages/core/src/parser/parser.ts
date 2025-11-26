@@ -124,6 +124,67 @@ export class Parser {
         };
       }
 
+      // Check if this starts with init, on, or a comment (top-level features)
+      if (this.check('init') || this.check('on') || this.checkTokenType(TokenType.COMMENT)) {
+        const statements: ASTNode[] = [];
+
+        // Parse all top-level features (init blocks and event handlers), skipping comments
+        while (!this.isAtEnd()) {
+          // Skip any top-level comments
+          if (this.checkTokenType(TokenType.COMMENT)) {
+            this.advance();
+            continue;
+          }
+
+          // Check for init or on
+          if (this.check('init')) {
+            this.advance(); // consume 'init'
+            const initBlock = this.parseTopLevelInitBlock();
+            if (initBlock) {
+              statements.push(initBlock);
+            }
+          } else if (this.check('on')) {
+            this.advance(); // consume 'on'
+            const eventHandler = this.parseEventHandler();
+            if (eventHandler) {
+              statements.push(eventHandler);
+            }
+          } else {
+            // Not a feature we recognize, break out
+            break;
+          }
+        }
+
+        // Check for unexpected tokens
+        if (!this.isAtEnd()) {
+          this.addError(`Unexpected token: ${this.peek().value}`);
+          return {
+            success: false,
+            node: this.createProgramNode(statements),
+            tokens: this.tokens,
+            error: this.error!,
+            warnings: this.warnings,
+          };
+        }
+
+        if (this.error) {
+          return {
+            success: false,
+            node: this.createProgramNode(statements),
+            tokens: this.tokens,
+            error: this.error,
+            warnings: this.warnings,
+          };
+        }
+
+        return {
+          success: true,
+          node: this.createProgramNode(statements),
+          tokens: this.tokens,
+          warnings: this.warnings,
+        };
+      }
+
       // Check if this looks like a command sequence (starts with command)
       // debug.parse('🔍 PARSER: checking if command sequence', {
       // isCommandToken: this.checkTokenType(TokenType.COMMAND),
@@ -810,6 +871,10 @@ export class Parser {
     return controlFlowCommands.parseRepeatCommand(this.getContext(), commandToken);
   }
 
+  private parseForCommand(commandToken: Token): CommandNode {
+    return controlFlowCommands.parseForCommand(this.getContext(), commandToken);
+  }
+
   /**
    * Parse wait command with support for events and time expressions
    *
@@ -1486,6 +1551,46 @@ export class Parser {
     };
   }
 
+  /**
+   * Parse a top-level init block (not inside a behavior)
+   * Handles comments properly by skipping COMMENT tokens
+   */
+  private parseTopLevelInitBlock(): ASTNode {
+    const pos = this.getPosition();
+    const initCommands: CommandNode[] = [];
+
+    // Parse commands until 'end', skipping comments
+    while (!this.isAtEnd() && !this.check('end')) {
+      // Skip any comment tokens
+      if (this.checkTokenType(TokenType.COMMENT)) {
+        this.advance();
+        continue;
+      }
+
+      // Check if this is a command
+      if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(this.peek().value)) {
+        this.advance();
+        const cmd = this.parseCommand();
+        initCommands.push(cmd);
+      } else {
+        // Unexpected token in init block
+        break;
+      }
+    }
+
+    // Consume the 'end' keyword
+    this.consume('end', "Expected 'end' after init block");
+
+    return {
+      type: 'initBlock',
+      commands: initCommands,
+      start: pos.start,
+      end: this.getPosition().end,
+      line: pos.line,
+      column: pos.column,
+    };
+  }
+
   private parseEventHandler(): EventHandlerNode {
     debug.parse(`🔧 parseEventHandler: ENTRY - parsing event handler`);
 
@@ -1541,6 +1646,21 @@ export class Parser {
 
     debug.parse(`🔧 parseEventHandler: Total events parsed: ${eventNames.join(', ')}`);
 
+    // Check for parameter syntax: (param1, param2, ...)
+    // This is used for custom events like "on addHistory(action)"
+    let eventParams: string[] = [];
+    if (this.match('(')) {
+      // Parse parameter names
+      if (!this.check(')')) {
+        do {
+          const paramToken = this.advance();
+          eventParams.push(paramToken.value);
+        } while (this.match(','));
+      }
+      this.consume(')', "Expected ')' after event parameters");
+      debug.parse(`🔧 parseEventHandler: Parsed event parameters: ${eventParams.join(', ')}`);
+    }
+
     // Check for conditional syntax: [condition]
     let condition: ASTNode | undefined;
     if (this.match('[')) {
@@ -1594,6 +1714,22 @@ export class Parser {
         debug.parse(
           `✅ parseEventHandler: Stopping command parsing, found next event handler 'on'`
         );
+        break;
+      }
+
+      // Skip comment tokens inside event handlers
+      if (this.checkTokenType(TokenType.COMMENT)) {
+        debug.parse(`✅ parseEventHandler: Skipping comment token: ${this.peek().value}`);
+        this.advance();
+        continue;
+      }
+
+      // Stop parsing commands if we encounter 'end' (for top-level event handlers)
+      if (this.check('end')) {
+        debug.parse(
+          `✅ parseEventHandler: Stopping command parsing, found 'end' keyword`
+        );
+        this.advance(); // consume the 'end' keyword
         break;
       }
 
@@ -2011,6 +2147,7 @@ export class Parser {
       event: eventNames.length === 1 ? eventNames[0] : eventNames.join('|'),
       events: eventNames, // Store all event names for runtime
       commands,
+      ...(eventParams.length > 0 && { params: eventParams }), // Add event parameters
       start: pos.start,
       end: pos.end,
       line: pos.line,
@@ -2361,7 +2498,7 @@ export class Parser {
   /**
    * Check if current token is one of the specified keywords
    */
-  private isKeyword(token: Token | undefined, keywords: string[]): boolean {
+  private isTokenKeyword(token: Token | undefined, keywords: string[]): boolean {
     return parsingHelpers.isKeyword(token, keywords);
   }
 
@@ -2394,6 +2531,9 @@ export class Parser {
     const lowerName = commandName.toLowerCase();
     if (lowerName === 'repeat') {
       return this.parseRepeatCommand(commandToken);
+    }
+    if (lowerName === 'for') {
+      return this.parseForCommand(commandToken);
     }
     if (lowerName === 'if' || lowerName === 'unless') {
       return this.parseIfCommand(commandToken);
@@ -2926,10 +3066,11 @@ export class Parser {
    * Phase 9-3a: ParserContext Implementation
    */
   getContext(): import('./parser-types').ParserContext {
-    return {
+    const parser = this;
+    const ctx = {
       // Token Stream Access (Read-Only)
       tokens: this.tokens,
-      current: this.current,
+      // Note: 'current' is added below via Object.defineProperty for getter/setter
 
       // Token Navigation Methods (10 methods)
       advance: this.advance.bind(this),
@@ -2997,7 +3138,20 @@ export class Parser {
       isCompoundCommand: this.isCompoundCommand.bind(this),
       isKeyword: this.isKeyword.bind(this),
       getMultiWordPattern: this.getMultiWordPattern.bind(this),
-    };
+    } as import('./parser-types').ParserContext;
+
+    // Add 'current' as getter/setter that syncs with parser's position
+    // This fixes the bug where ctx.current = savedPosition didn't restore parser state
+    Object.defineProperty(ctx, 'current', {
+      get: () => parser.current,
+      set: (value: number) => {
+        parser.current = value;
+      },
+      enumerable: true,
+      configurable: true,
+    });
+
+    return ctx;
   }
 }
 
