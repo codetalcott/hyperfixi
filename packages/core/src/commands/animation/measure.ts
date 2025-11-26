@@ -116,28 +116,58 @@ export class MeasureCommand {
 
     // Parse arguments (optional target and/or property)
     if (raw.args && raw.args.length > 0) {
-      const firstArg = await evaluator.evaluate(raw.args[0], context);
+      const firstArgNode = raw.args[0] as any;
 
-      // Check if first arg is a target element
-      if (
-        firstArg instanceof HTMLElement ||
-        (typeof firstArg === 'string' && (
-          firstArg.startsWith('#') ||
-          firstArg.startsWith('.') ||
-          firstArg === 'me' ||
-          firstArg === 'it' ||
-          firstArg === 'you'
-        ))
-      ) {
-        target = firstArg as string | HTMLElement;
-
-        // Second arg is property
-        if (raw.args.length > 1) {
-          property = String(await evaluator.evaluate(raw.args[1], context));
+      // For measure, identifiers like 'x', 'y', 'width' are property names, not variable lookups
+      // So we need to check the node type first
+      if (firstArgNode.type === 'identifier' && firstArgNode.name) {
+        const name = firstArgNode.name.toLowerCase();
+        // Check if it's a special context reference that should resolve to an element
+        if (name === 'me' || name === 'it' || name === 'you') {
+          const evaluated = await evaluator.evaluate(firstArgNode, context);
+          if (evaluated instanceof HTMLElement) {
+            target = evaluated;
+            // Second arg is property
+            if (raw.args.length > 1) {
+              const secondArg = raw.args[1] as any;
+              if (secondArg.type === 'identifier' && secondArg.name) {
+                property = secondArg.name;
+              } else {
+                property = String(await evaluator.evaluate(secondArg, context));
+              }
+            }
+          }
+        } else {
+          // It's a property name like 'x', 'y', 'width', etc.
+          property = firstArgNode.name;
         }
       } else {
-        // First arg is property
-        property = String(firstArg);
+        // Not an identifier - evaluate it
+        const firstArg = await evaluator.evaluate(firstArgNode, context);
+
+        // Check if first arg is a target element
+        if (
+          firstArg instanceof HTMLElement ||
+          (typeof firstArg === 'string' && (
+            firstArg.startsWith('#') ||
+            firstArg.startsWith('.')
+          ))
+        ) {
+          target = firstArg as string | HTMLElement;
+
+          // Second arg is property
+          if (raw.args.length > 1) {
+            const secondArgNode = raw.args[1] as any;
+            if (secondArgNode.type === 'identifier' && secondArgNode.name) {
+              property = secondArgNode.name;
+            } else {
+              property = String(await evaluator.evaluate(secondArgNode, context));
+            }
+          }
+        } else if (typeof firstArg === 'string') {
+          // First arg is property as a string
+          property = firstArg;
+        }
       }
     }
 
@@ -190,7 +220,12 @@ export class MeasureCommand {
     // Set the result in context.it
     Object.assign(context, { it: measurement.value });
 
+    // Return format that runtime unwraps properly: { result, wasAsync }
+    // This ensures context.it is set to the numeric value, not the full metadata object
     return {
+      result: measurement.value,
+      wasAsync: false,
+      // Metadata for debugging/tooling
       element: targetElement,
       property: measureProperty,
       value: measurement.value,

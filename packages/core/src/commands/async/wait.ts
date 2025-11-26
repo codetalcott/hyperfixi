@@ -142,6 +142,13 @@ export class WaitCommand {
       return this.parseEventWait(raw.modifiers.for, raw.modifiers.from, evaluator, context);
     }
 
+    // Handle parser-produced AST format: args[0] = arrayLiteral of event objects
+    // This happens when parser handles "wait for event" syntax
+    const firstArg = raw.args[0] as any;
+    if (firstArg.type === 'arrayLiteral' && firstArg.elements) {
+      return this.parseEventArrayWait(firstArg.elements, raw.args[1], evaluator, context);
+    }
+
     // Otherwise, this is time waiting: wait 2s, wait 500ms
     return this.parseTimeWait(raw.args[0], evaluator, context);
   }
@@ -198,11 +205,23 @@ export class WaitCommand {
       }
 
       case 'race': {
-        const result = await this.waitForRace(input.conditions, context);
+        const { result, winningCondition } = await this.waitForRace(input.conditions, context);
         const duration = Date.now() - startTime;
 
         // Update context.it with the result
         Object.assign(context, { it: result });
+
+        // Handle event destructuring if the winning condition was an event
+        if (result instanceof Event && winningCondition?.type === 'event') {
+          const eventCondition = winningCondition as WaitEventInput;
+          if (eventCondition.destructure && eventCondition.destructure.length > 0) {
+            for (const prop of eventCondition.destructure) {
+              if (prop in result) {
+                context.locals.set(prop, (result as any)[prop]);
+              }
+            }
+          }
+        }
 
         return {
           type: result instanceof Event ? 'event' : 'time',
@@ -353,6 +372,89 @@ export class WaitCommand {
       eventName,
       target,
       destructure,
+    };
+  }
+
+  /**
+   * Parse event wait from parser's arrayLiteral format
+   *
+   * Handles the AST structure produced by parseWaitCommand:
+   * args[0] = arrayLiteral of objectLiteral elements with {name, args} properties
+   * args[1] = optional target expression
+   *
+   * Supports both single event and multiple events (race condition):
+   * - wait for click → single event
+   * - wait for pointermove or pointerup → race condition
+   *
+   * @param elements - Array of event object AST nodes
+   * @param targetArg - Optional target AST node
+   * @param evaluator - Expression evaluator
+   * @param context - Execution context
+   * @returns WaitEventInput or WaitRaceInput
+   */
+  private async parseEventArrayWait(
+    elements: ASTNode[],
+    targetArg: ASTNode | undefined,
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<WaitEventInput | WaitRaceInput> {
+    // Extract event info from object literals
+    const events: { name: string; params: string[] }[] = [];
+
+    for (const element of elements) {
+      const obj = element as any;
+      if (obj.type === 'objectLiteral' && obj.properties) {
+        let name = '';
+        let params: string[] = [];
+
+        for (const prop of obj.properties) {
+          const key = prop.key?.name || prop.key?.value;
+          if (key === 'name' && prop.value) {
+            name = prop.value.value || '';
+          } else if (key === 'args' && prop.value?.elements) {
+            params = prop.value.elements.map((e: any) => e.value || e.name || '');
+          }
+        }
+
+        if (name) {
+          events.push({ name, params });
+        }
+      }
+    }
+
+    // Evaluate target if provided
+    let target: EventTarget | undefined;
+    if (targetArg) {
+      const evaluatedTarget = await evaluator.evaluate(targetArg, context);
+      if (evaluatedTarget && typeof evaluatedTarget === 'object' && 'addEventListener' in evaluatedTarget) {
+        target = evaluatedTarget as EventTarget;
+      }
+    }
+    if (!target) {
+      target = context.me;
+    }
+
+    // Single event
+    if (events.length === 1) {
+      return {
+        type: 'event',
+        eventName: events[0].name,
+        target,
+        destructure: events[0].params.length > 0 ? events[0].params : undefined,
+      };
+    }
+
+    // Multiple events = race condition
+    const conditions: WaitEventInput[] = events.map(evt => ({
+      type: 'event' as const,
+      eventName: evt.name,
+      target,
+      destructure: evt.params.length > 0 ? evt.params : undefined,
+    }));
+
+    return {
+      type: 'race',
+      conditions,
     };
   }
 
@@ -523,19 +625,26 @@ export class WaitCommand {
    *
    * @param conditions - Array of conditions to race
    * @param context - Execution context
-   * @returns Promise that resolves with first result (Event or number)
+   * @returns Promise that resolves with first result and winning condition
    */
   private async waitForRace(
     conditions: (WaitTimeInput | WaitEventInput)[],
     context: TypedExecutionContext
-  ): Promise<Event | number> {
-    const promises = conditions.map(condition => {
+  ): Promise<{ result: Event | number; winningCondition: WaitTimeInput | WaitEventInput | null }> {
+    // Create promises that return both the result and which condition won
+    const promises = conditions.map((condition, index) => {
       if (condition.type === 'time') {
-        return this.waitForTime(condition.milliseconds).then(() => condition.milliseconds);
+        return this.waitForTime(condition.milliseconds).then(() => ({
+          result: condition.milliseconds as number,
+          winningCondition: condition,
+        }));
       } else {
         // Event condition
         const targetToUse = condition.target !== undefined ? condition.target : context.me;
-        return this.waitForEvent(condition.eventName, targetToUse);
+        return this.waitForEvent(condition.eventName, targetToUse).then(event => ({
+          result: event as Event,
+          winningCondition: condition,
+        }));
       }
     });
 
