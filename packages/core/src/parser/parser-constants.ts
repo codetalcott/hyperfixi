@@ -167,12 +167,17 @@ export const PUT_OPERATIONS = {
 
 /**
  * Valid PUT operation keywords (used for validation)
+ * Includes both simple and compound prepositions for tokenizer compatibility
  */
 export const PUT_OPERATION_KEYWORDS = [
   PUT_OPERATIONS.INTO,
   PUT_OPERATIONS.BEFORE,
   PUT_OPERATIONS.AFTER,
   PUT_OPERATIONS.AT,
+  PUT_OPERATIONS.AT_START_OF,
+  PUT_OPERATIONS.AT_END_OF,
+  'at the start of',  // Include "the" variant
+  'at the end of',    // Include "the" variant
 ] as const;
 
 /**

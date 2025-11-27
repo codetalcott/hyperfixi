@@ -228,10 +228,18 @@ export function parsePutCommand(
     return null;
   }
 
-  let operation = ctx.advance().value;  // consume 'into', 'before', 'after', or 'at'
+  let operation = ctx.advance().value;  // consume 'into', 'before', 'after', 'at', or compound keyword
 
-  // Handle "at start of" / "at end of" multi-word operations
-  if (operation === PUT_OPERATIONS.AT) {
+  // Handle compound keywords from tokenizer (e.g., "at start of", "at the start of")
+  // These are tokenized as single keywords, so we just need to normalize them
+  const operationLower = operation.toLowerCase();
+  if (operationLower === 'at start of' || operationLower === 'at the start of') {
+    operation = PUT_OPERATIONS.AT_START_OF;
+  } else if (operationLower === 'at end of' || operationLower === 'at the end of') {
+    operation = PUT_OPERATIONS.AT_END_OF;
+  } else if (operation === PUT_OPERATIONS.AT) {
+    // Fallback: Handle separate tokens for backwards compatibility
+    // This handles cases where tokenizer produces individual tokens
     if (ctx.check(KEYWORDS.START) || ctx.check(KEYWORDS.THE)) {
       if (ctx.check(KEYWORDS.THE)) {
         ctx.advance();  // consume 'the'

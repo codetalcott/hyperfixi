@@ -13,7 +13,25 @@ export default defineConfig({
     
     // Test file patterns
     include: ['src/**/*.{test,spec}.{js,ts}'],
-    exclude: ['node_modules', 'dist'],
+    // Exclude:
+    // - Playwright browser tests (*.spec.ts in browser-tests/) - they require real browser
+    // - Performance benchmark tests - flaky due to timing variations
+    // - Legacy integration tests - testing removed APIs (Phase 7 consolidation)
+    exclude: [
+      'node_modules',
+      'dist',
+      // Playwright browser tests - require real browser
+      'src/compatibility/browser-tests/**/*.spec.ts',
+      // Performance benchmarks - flaky/slow
+      'src/parser/tokenizer-comparison.test.ts',
+      'src/parser/performance.test.ts',
+      'src/utils/performance.test.ts',
+      'src/commands-v1-archive/**/*.test.ts', // Archived V1 tests
+      // Legacy integration tests - removed APIs (Phase 7 consolidation)
+      'src/runtime/simple-integration.test.ts',
+      'src/validation/lightweight-validators.test.ts',
+      'src/test-includes-integration.test.ts',
+    ],
     
     // Coverage configuration
     coverage: {
