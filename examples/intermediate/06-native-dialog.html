@@ -347,9 +347,7 @@
         <div class="demo">
             <h2>Demo 1: Using Call Command</h2>
 
-            <button _="on click
-                          get #info-dialog
-                          call it.showModal()">
+            <button _="on click call #info-dialog.showModal()">
                 Open Info Dialog
             </button>
 
@@ -357,9 +355,7 @@
                 <div class="dialog-header">
                     <h3>ℹ️ Information</h3>
                     <button class="close-btn"
-                            _="on click
-                                  get #info-dialog
-                                  call it.close()">×</button>
+                            _="on click call #info-dialog.close()">×</button>
                 </div>
                 <div class="dialog-body">
                     <p>

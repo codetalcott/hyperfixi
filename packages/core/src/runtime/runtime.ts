@@ -42,8 +42,9 @@ import { createMakeCommand } from '../commands/dom/make';
 import { createWaitCommand } from '../commands/async/wait';
 import { createFetchCommand } from '../commands/async/fetch';
 
-// Data Commands (3)
+// Data Commands (4)
 import { createSetCommand } from '../commands/data/set';
+import { createGetCommand } from '../commands/data/get';
 import { createIncrementCommand } from '../commands/data/increment';
 import { createDecrementCommand } from '../commands/data/decrement';
 
@@ -191,8 +192,9 @@ export class Runtime extends RuntimeBase {
       registry.register(createWaitCommand());
       registry.register(createFetchCommand());
 
-      // Data Commands (3)
+      // Data Commands (4)
       registry.register(createSetCommand());
+      registry.register(createGetCommand());
       registry.register(createIncrementCommand());
       registry.register(createDecrementCommand());
 
