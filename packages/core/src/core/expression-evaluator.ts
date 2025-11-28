@@ -119,6 +119,9 @@ export class ExpressionEvaluator {
       case 'objectLiteral':
         return this.evaluateObjectLiteral(node as any, context);
 
+      case 'conditionalExpression':
+        return this.evaluateConditionalExpression(node as any, context);
+
       default:
         throw new Error(`Unsupported AST node type for evaluation: ${node.type}`);
     }
@@ -173,6 +176,22 @@ export class ExpressionEvaluator {
     }
 
     return result;
+  }
+
+  /**
+   * Evaluate conditional expressions (if-then-else / ternary)
+   * Example: condition ? consequent : alternate
+   */
+  private async evaluateConditionalExpression(node: any, context: ExecutionContext): Promise<any> {
+    const test = await this.evaluate(node.test, context);
+
+    if (test) {
+      return this.evaluate(node.consequent, context);
+    } else if (node.alternate) {
+      return this.evaluate(node.alternate, context);
+    }
+
+    return undefined;
   }
 
   /**
@@ -413,7 +432,22 @@ export class ExpressionEvaluator {
   ): Promise<any> {
     const { name, scope } = node;
 
-    // Check if it's a built-in reference expression
+    // Handle context references FIRST - these return the element directly
+    // (before checking registry, since 'my'/'your'/'its' expressions expect property args)
+    if (name === 'me' || name === 'my' || name === 'I') {
+      return context.me;
+    }
+    if (name === 'you' || name === 'your') {
+      return context.you;
+    }
+    if (name === 'it' || name === 'its') {
+      return context.it;
+    }
+    if (name === 'result') {
+      return context.result;
+    }
+
+    // Check if it's a built-in reference expression (for other expressions)
     const expression = this.expressionRegistry.get(name);
     if (expression) {
       return expression.evaluate(context);
@@ -515,13 +549,38 @@ export class ExpressionEvaluator {
       // For property access like obj.property
       const propertyName = property.name || property;
 
-      // Special handling for possessive syntax (element's property)
-      if (propertyName && this.expressionRegistry.has('possessive')) {
-        const possessiveExpr = this.expressionRegistry.get('possessive');
-        return possessiveExpr.evaluate(context, objectValue, propertyName);
+      // Handle special property access patterns
+      if (typeof propertyName === 'string') {
+        // Handle computed style access (parser converts *background-color to computed-background-color)
+        if (propertyName.startsWith('computed-')) {
+          const styleProp = propertyName.substring('computed-'.length);
+          if (objectValue && typeof window !== 'undefined' && objectValue instanceof Element) {
+            const computedStyle = window.getComputedStyle(objectValue);
+            return computedStyle.getPropertyValue(styleProp);
+          }
+          return undefined;
+        }
+
+        // Handle attribute access (@data-attr becomes getAttribute)
+        if (propertyName.startsWith('@')) {
+          const attrName = propertyName.substring(1);
+          if (objectValue && typeof objectValue.getAttribute === 'function') {
+            return objectValue.getAttribute(attrName);
+          }
+          return undefined;
+        }
       }
 
-      return objectValue[propertyName];
+      // Direct property access (possessive 's syntax is handled by parser)
+      const value = objectValue?.[propertyName];
+
+      // Bind functions to the object for proper 'this' context
+      // Critical for DOM methods like insertBefore(), closest(), etc.
+      if (typeof value === 'function') {
+        return value.bind(objectValue);
+      }
+
+      return value;
     }
   }
 
@@ -547,6 +606,77 @@ export class ExpressionEvaluator {
       // Convert NodeList to Array for easier manipulation in hyperscript
       const nodeList = contextElement.querySelectorAll(selector);
       return Array.from(nodeList);
+    }
+
+    // Special handling for positional expressions with 'in' scope
+    // Pattern: first .selector in #scope OR last .selector in #scope
+    // This can come as positionalExpression OR as memberExpression (parser inconsistency)
+    if (operator === 'in') {
+      let positionalOp: string | null = null;
+      let selector: string | null = null;
+
+      // Case 1: left is positionalExpression (e.g., { type: 'positionalExpression', operator: 'first', argument: {...} })
+      if (left.type === 'positionalExpression') {
+        positionalOp = left.operator;
+        const selectorArg = left.argument;
+
+        if (selectorArg?.type === 'cssSelector') {
+          selector = selectorArg.selector;
+        } else if (selectorArg?.type === 'selector') {
+          selector = selectorArg.value;
+        } else if (selectorArg?.type === 'classSelector') {
+          selector = '.' + selectorArg.className;
+        } else if (selectorArg?.type === 'idSelector') {
+          selector = '#' + selectorArg.id;
+        } else if (selectorArg) {
+          selector = String(await this.evaluate(selectorArg, context));
+        }
+      }
+      // Case 2: left is memberExpression where object is 'first' or 'last'
+      // e.g., { type: 'memberExpression', object: { type: 'identifier', name: 'first' }, property: { name: 'dragging' } }
+      else if (
+        left.type === 'memberExpression' &&
+        left.object?.type === 'identifier' &&
+        (left.object.name === 'first' || left.object.name === 'last')
+      ) {
+        positionalOp = left.object.name;
+        // The property is the class name (without the dot)
+        if (left.property?.type === 'identifier' && left.property.name) {
+          selector = '.' + left.property.name;
+        }
+      }
+
+      // If we detected a positional pattern, handle it
+      if (positionalOp && selector) {
+        // Evaluate the scope element (right side)
+        let scopeElement = await this.evaluate(right, context);
+
+        // Unwrap arrays/NodeLists to single element (selectors return arrays)
+        if (Array.isArray(scopeElement) && scopeElement.length > 0) {
+          scopeElement = scopeElement[0];
+        } else if (scopeElement instanceof NodeList && scopeElement.length > 0) {
+          scopeElement = scopeElement[0];
+        }
+
+        // Verify we have a valid DOM element as scope
+        if (!scopeElement || typeof scopeElement.querySelectorAll !== 'function') {
+          // If scope is not a DOM element, return undefined
+          return undefined;
+        }
+
+        // Query for matching elements within the scope
+        const nodeList = scopeElement.querySelectorAll(selector);
+        const elements = Array.from(nodeList);
+
+        // Return first or last based on positional operator
+        if (positionalOp === 'first') {
+          return elements.length > 0 ? elements[0] : undefined;
+        } else if (positionalOp === 'last') {
+          return elements.length > 0 ? elements[elements.length - 1] : undefined;
+        }
+
+        return elements;
+      }
     }
 
     // Special handling for 'matches' operator - use selector string directly
@@ -847,9 +977,11 @@ export class ExpressionEvaluator {
         }
         return false;
 
+      case 'match':
       case 'matches':
         // Check if DOM element matches a CSS selector
         // Syntax: "target matches .selector" or "element matches .class"
+        // Note: 'match' is an alias for 'matches' in _hyperscript
         if (leftValue && typeof leftValue.matches === 'function') {
           const selectorStr = typeof rightValue === 'string' ? rightValue : String(rightValue);
           try {
@@ -979,47 +1111,22 @@ export class ExpressionEvaluator {
       // Evaluate the object to use as 'this' context
       let thisContext = await this.evaluate(callee.object, context);
 
-      const objectKeys = thisContext ? Object.keys(thisContext) : [];
-      console.log('[EXPR-EVAL DEBUG] Before array extraction:', {
-        isArray: Array.isArray(thisContext),
-        length: Array.isArray(thisContext) ? thisContext.length : 'N/A',
-        type: typeof thisContext,
-        constructor: thisContext?.constructor?.name,
-        keysCount: objectKeys.length,
-        keys: objectKeys,
-        id: thisContext?.id,
-        tagName: thisContext?.tagName
-      });
-      console.log('[EXPR-EVAL DEBUG] Full object:', thisContext);
-
       // If thisContext is an array (from selector evaluation), extract the first element
       // This handles cases like: call showModal() where #dialog evaluates to [HTMLDialogElement]
       if (Array.isArray(thisContext) && thisContext.length > 0) {
         thisContext = thisContext[0];
-        console.log('[EXPR-EVAL DEBUG] After array extraction:', {
-          type: typeof thisContext,
-          value: thisContext,
-          constructor: thisContext?.constructor?.name
-        });
       }
 
       // Get property name
       const propertyName = callee.property?.name || callee.property;
-      console.log('[EXPR-EVAL DEBUG] Looking for property:', propertyName);
 
       // Access the method/property from the object
       const func = thisContext?.[propertyName];
-      console.log('[EXPR-EVAL DEBUG] Method lookup result:', {
-        methodType: typeof func,
-        methodExists: func !== undefined,
-        method: func
-      });
 
       if (typeof func === 'function') {
         const evaluatedArgs = await Promise.all(
           args.map((arg: any) => this.evaluate(arg, context))
         );
-        console.log('[EXPR-EVAL DEBUG] Calling method with args:', evaluatedArgs);
         // Call with proper 'this' binding
         return func.apply(thisContext, evaluatedArgs);
       }
@@ -1153,6 +1260,15 @@ export class ExpressionEvaluator {
         const attrName = propertyName.substring(1);
         if (objectValue && typeof objectValue.getAttribute === 'function') {
           return objectValue.getAttribute(attrName);
+        }
+      }
+
+      // Handle computed style access (parser converts *background-color to computed-background-color)
+      if (propertyName.startsWith('computed-')) {
+        const styleProp = propertyName.substring('computed-'.length);
+        if (objectValue && typeof window !== 'undefined' && objectValue instanceof Element) {
+          const computedStyle = window.getComputedStyle(objectValue);
+          return computedStyle.getPropertyValue(styleProp);
         }
       }
 

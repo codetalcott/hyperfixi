@@ -453,7 +453,8 @@ export class SetCommand {
 
     if (toIndex >= 0 && raw.args.length > toIndex + 1) {
       // Value is after the 'to' keyword
-      return await evaluator.evaluate(raw.args[toIndex + 1], context);
+      const valueNode = raw.args[toIndex + 1];
+      return await evaluator.evaluate(valueNode, context);
     }
 
     // Fallback: if no 'to' marker, try second arg (legacy format)

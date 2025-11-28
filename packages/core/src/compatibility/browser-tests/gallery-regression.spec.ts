@@ -173,4 +173,36 @@ test.describe('Gallery Example Regression Tests', () => {
       expect(activeTabs).toBe(1);
     });
   });
+
+  test.describe('Color Cycling Example (01-color-cycling.html)', () => {
+    test('computed style access should work for my *property syntax', async ({ page }) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', err => {
+        pageErrors.push(err.message);
+      });
+
+      await page.goto(`${BASE_URL}/examples/advanced/01-color-cycling.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(300);
+
+      // Get the color box and interact with it
+      const colorBox = page.locator('#color-box');
+      const box = await colorBox.boundingBox();
+
+      if (box) {
+        // Move to element and simulate mouse press/hold/release
+        await page.mouse.move(box.x + box.width/2, box.y + box.height/2);
+        await page.mouse.down();
+        await page.waitForTimeout(1000); // Hold for a bit
+        await page.mouse.up();
+      }
+
+      await page.waitForTimeout(500);
+
+      // Should have no page errors (especially not "requires a target value")
+      expect(pageErrors.length).toBe(0);
+    });
+  });
 });
