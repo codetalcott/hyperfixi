@@ -325,8 +325,9 @@
     <div class="code">
 &lt;button _="on click
             toggle #chainDialog modal
-            then add .pulse to me"&gt;
-  Open & Pulse
+            then wait 100ms
+            then log 'Dialog toggled!'"&gt;
+  Open with Logging
 &lt;/button&gt;
     </div>
 
@@ -402,7 +403,7 @@
   </div>
 
   <!-- Load HyperFixi -->
-  <script src="../../dist/hyperfixi-browser.js"></script>
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
   <script>
     console.log('HyperFixi loaded with dialog toggle support!');
     console.log('Try opening the dialogs and watch for events in the console.');
