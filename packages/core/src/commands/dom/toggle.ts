@@ -169,38 +169,57 @@ export class ToggleCommand {
     // Evaluate first argument to determine toggle type
     const firstArg = raw.args[0];
 
-    // CRITICAL: Check for selector nodes before evaluating
-    // Selector nodes (type: 'selector') should extract their value directly
-    // rather than being evaluated as DOM queries (which return empty NodeList)
+    // CRITICAL: Check for CLASS selector nodes before evaluating
+    // Class selector nodes should extract their value directly to avoid DOM queries
+    // that return empty NodeList (no elements match the class at parse time)
+    //
+    // ID selectors (#id) should be EVALUATED to get the actual DOM element
+    // because they reference specific elements that exist in the DOM
     //
     // Parser creates TWO different node types:
     // - { type: 'selector', value: '.active' } - uses 'value' property
     // - { type: 'cssSelector', selectorType: 'class', selector: '.active' } - uses 'selector' property
     let firstValue: unknown;
     const argValue = (firstArg as any)?.value || (firstArg as any)?.selector;
+    const isClassSelector = typeof argValue === 'string' && argValue.startsWith('.');
     if (
       ((firstArg as any)?.type === 'selector' ||
        (firstArg as any)?.type === 'cssSelector' ||
        (firstArg as any)?.type === 'classSelector') &&
-      typeof argValue === 'string'
+      typeof argValue === 'string' &&
+      isClassSelector  // Only extract CLASS selectors directly, not ID selectors
     ) {
-      // Extract value directly from selector node
+      // Extract value directly from class selector node
       firstValue = argValue;
     } else {
-      // Evaluate normally for other node types
+      // Evaluate normally for ID selectors and other node types
+      // This allows #myDialog to resolve to the actual DOM element
       firstValue = await evaluator.evaluate(firstArg, context);
     }
 
     // Pattern detection:
     // 1. Check if first value is an HTMLElement (smart element toggle)
     // 2. Check if it's a string starting with special characters (@, *, ., #)
-    // 3. Determine targets (either from explicit target arg or context.me)
+    // 3. Check if firstArg is a bare identifier for smart element tag name (details, dialog, etc.)
+    // 4. Determine targets (either from explicit target arg or context.me)
 
     let expressionType: 'class' | 'attribute' | 'css-property' | 'element' | 'unknown' = 'unknown';
     let expression = '';
 
+    // Check if firstArg is a bare identifier for smart element tag names
+    // e.g., "toggle details" where 'details' is an identifier node
+    const firstArgName = (firstArg as any)?.name;
+    const isBareSmartElementTag =
+      (firstArg as any)?.type === 'identifier' &&
+      typeof firstArgName === 'string' &&
+      this.isSmartElementSelector(firstArgName);
+
     if (firstValue instanceof HTMLElement || Array.isArray(firstValue) && firstValue.every(el => el instanceof HTMLElement)) {
       expressionType = 'element';
+    } else if (isBareSmartElementTag) {
+      // Bare tag name like "details", "dialog" - use as tag selector
+      expressionType = 'element';
+      expression = firstArgName;  // Use the tag name for DOM query
     } else if (typeof firstValue === 'string') {
       expression = firstValue.trim();
 
@@ -245,6 +264,12 @@ export class ToggleCommand {
           elements = [firstValue];
         } else if (Array.isArray(firstValue) && firstValue.every(el => el instanceof HTMLElement)) {
           elements = firstValue;
+        } else if (isBareSmartElementTag && expression) {
+          // Bare tag name like "details" - query directly by tag name
+          const selected = document.querySelectorAll(expression);
+          elements = Array.from(selected).filter(
+            (el): el is HTMLElement => el instanceof HTMLElement
+          );
         } else {
           // Resolve from selector
           elements = await this.resolveTargets([firstArg], evaluator, context);
@@ -268,7 +293,17 @@ export class ToggleCommand {
         if (smartType === 'dialog') {
           return { type: 'dialog', mode, targets: elements as HTMLDialogElement[] };
         } else if (smartType === 'details') {
-          return { type: 'details', targets: elements as HTMLDetailsElement[] };
+          // Handle SUMMARY elements - need to get parent DETAILS
+          let detailsElements: HTMLDetailsElement[];
+          if (elements.length > 0 && elements[0].tagName === 'SUMMARY') {
+            // Summary elements: find parent details
+            detailsElements = elements
+              .map(el => el.closest('details'))
+              .filter((parent): parent is HTMLDetailsElement => parent !== null);
+          } else {
+            detailsElements = elements as HTMLDetailsElement[];
+          }
+          return { type: 'details', targets: detailsElements };
         } else if (smartType === 'select') {
           return { type: 'select', targets: elements as HTMLSelectElement[] };
         } else {
@@ -724,6 +759,9 @@ export class ToggleCommand {
   /**
    * Toggle select dropdown
    *
+   * Uses the modern showPicker() API when available, with fallbacks.
+   * Note: Programmatically opening select dropdowns is limited by browser security.
+   *
    * @param select - Select element
    */
   private toggleSelect(select: HTMLSelectElement): void {
@@ -731,7 +769,19 @@ export class ToggleCommand {
       select.blur();
     } else {
       select.focus();
-      const clickEvent = new MouseEvent('mousedown', {
+
+      // Try modern showPicker() API first (Chrome 99+, Safari 16+, Firefox 101+)
+      if ('showPicker' in select && typeof (select as any).showPicker === 'function') {
+        try {
+          (select as any).showPicker();
+          return;
+        } catch {
+          // showPicker() may throw if not triggered by user gesture
+        }
+      }
+
+      // Fallback: dispatch click event (more reliable than mousedown)
+      const clickEvent = new MouseEvent('click', {
         view: window,
         bubbles: true,
         cancelable: true,
