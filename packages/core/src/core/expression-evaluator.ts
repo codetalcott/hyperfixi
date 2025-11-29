@@ -1142,8 +1142,21 @@ export class ExpressionEvaluator {
     // Check if it's a registered expression function
     const expression = this.expressionRegistry.get(functionName);
     if (expression) {
-      // Evaluate arguments
-      const evaluatedArgs = await Promise.all(args.map((arg: any) => this.evaluate(arg, context)));
+      // Navigation functions (closest, first, last, previous, next) expect selector strings
+      // not evaluated DOM elements, so pass selector node values directly
+      const navigationFunctions = ['closest', 'first', 'last', 'previous', 'next'];
+      const isNavigationFunction = navigationFunctions.includes(functionName);
+
+      // Evaluate arguments, but for navigation functions pass selector strings
+      const evaluatedArgs = await Promise.all(
+        args.map((arg: any) => {
+          // For navigation functions, if arg is a selector node, pass the string value
+          if (isNavigationFunction && arg && arg.type === 'selector' && typeof arg.value === 'string') {
+            return arg.value;
+          }
+          return this.evaluate(arg, context);
+        })
+      );
 
       return expression.evaluate(context, ...evaluatedArgs);
     }

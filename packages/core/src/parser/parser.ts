@@ -1277,10 +1277,41 @@ export class Parser {
         if (
           this.check('(') ||
           this.checkTokenType(TokenType.CSS_SELECTOR) ||
+          this.checkTokenType(TokenType.CLASS_SELECTOR) ||
+          this.checkTokenType(TokenType.ID_SELECTOR) ||
           this.check('<') ||
           this.checkTokenType(TokenType.QUERY_REFERENCE)
         ) {
           return this.parseNavigationFunction(token.value);
+        }
+        // Special case: handle `.className` that was tokenized as '.' + 'identifier'
+        // This happens because the tokenizer doesn't recognize class selectors after identifiers
+        if (this.check('.')) {
+          const dotPos = this.current;
+          this.advance(); // consume '.'
+          if (this.checkTokenType(TokenType.IDENTIFIER)) {
+            // It's a class selector like `.sortable-item`
+            const className = this.advance().value;
+            const selector = '.' + className;
+            const selectorNode = this.createSelector(selector);
+            return this.createCallExpression(this.createIdentifier(token.value), [selectorNode]);
+          }
+          // Not a class selector, backtrack
+          this.current = dotPos;
+        }
+        // Also handle `#id` that was tokenized as '#' + 'identifier'
+        if (this.check('#')) {
+          const hashPos = this.current;
+          this.advance(); // consume '#'
+          if (this.checkTokenType(TokenType.IDENTIFIER)) {
+            // It's an ID selector like `#my-element`
+            const idName = this.advance().value;
+            const selector = '#' + idName;
+            const selectorNode = this.createSelector(selector);
+            return this.createCallExpression(this.createIdentifier(token.value), [selectorNode]);
+          }
+          // Not an ID selector, backtrack
+          this.current = hashPos;
         }
         return this.createIdentifier(token.value);
       }

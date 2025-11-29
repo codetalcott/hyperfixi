@@ -305,24 +305,27 @@
 
             <div style="margin: 20px 0;">
                 <button _="on click
-                          set list to #task-list
-                          set items to Array.from(list.children)
-                          call items.reverse()
-                          for item in items
-                            call list.appendChild(item)
+                          js
+                            var list = document.getElementById('task-list');
+                            var items = Array.from(list.children);
+                            items.reverse();
+                            items.forEach(function(item) { list.appendChild(item); });
                           end">
                     🔄 Reverse Order
                 </button>
                 <button class="secondary" _="on click
-                                              set list to #task-list
-                                              for item in Array.from(list.children)
-                                                call item.remove()
+                                              js
+                                                var list = document.getElementById('task-list');
+                                                while (list.firstChild) { list.removeChild(list.firstChild); }
                                               end">
                     🗑️ Clear All
                 </button>
                 <button class="success" _="on click
-                                            set list to #task-list
-                                            set count to list.children.length
+                                            js
+                                              var list = document.getElementById('task-list');
+                                              return list.children.length;
+                                            end
+                                            set count to it
                                             put 'Total items: ' + count into #status
                                             add .show to #status
                                             wait 3s

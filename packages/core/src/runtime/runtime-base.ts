@@ -481,6 +481,10 @@ export class RuntimeBase {
                         if ('result' in valObj && 'wasAsync' in valObj) {
                             val = valObj.result;
                         }
+                        // JsCommand returns { result, executed, codeLength, parameters }
+                        else if ('result' in valObj && 'executed' in valObj) {
+                            val = valObj.result;
+                        }
                         // RepeatCommand/IfCommand returns { type, lastResult } or { conditionResult, executedBranch }
                         else if ('lastResult' in valObj && 'type' in valObj) {
                             val = valObj.lastResult;

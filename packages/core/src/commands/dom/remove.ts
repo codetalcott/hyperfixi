@@ -1,24 +1,24 @@
 /**
  * RemoveCommand - Standalone V2 Implementation
  *
- * Removes CSS classes from HTML elements
+ * Removes CSS classes from HTML elements or removes elements from the DOM
  *
  * This is a standalone implementation with NO V1 dependencies,
  * enabling true tree-shaking by inlining essential utilities.
- *
- * **Scope**: CSS classes only (most common use case)
- * **Not included**: Attributes, inline styles (can be added in future if needed)
  *
  * Syntax:
  *   remove .active                     # Remove single class from me
  *   remove .active from <target>       # Remove single class from target
  *   remove "active selected"           # Remove multiple classes
- *   remove .active .selected           # Remove multiple classes
+ *   remove closest .item               # Remove element from DOM
+ *   remove me                          # Remove current element from DOM
+ *   remove <.items/>                   # Remove multiple elements from DOM
  *
  * @example
  *   remove .highlighted from me
  *   remove "active selected" from <button/>
  *   remove .loading from #submit-btn
+ *   remove closest .sortable-item      # Delete parent list item
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
@@ -43,6 +43,10 @@ export type RemoveCommandInput =
   | {
       type: 'styles';
       properties: string[];
+      targets: HTMLElement[];
+    }
+  | {
+      type: 'element';
       targets: HTMLElement[];
     };
 
@@ -123,6 +127,17 @@ export class RemoveCommand {
       firstValue = await evaluator.evaluate(firstArg, context);
     }
 
+    // Check if we're removing an element from the DOM (e.g., "remove closest .item")
+    // When firstValue is an HTMLElement, we remove it from the DOM entirely
+    if (firstValue instanceof HTMLElement) {
+      return { type: 'element', targets: [firstValue] };
+    }
+
+    // Check if we're removing multiple elements (e.g., "remove <.items/>")
+    if (Array.isArray(firstValue) && firstValue.length > 0 && firstValue[0] instanceof HTMLElement) {
+      return { type: 'element', targets: firstValue.filter((el): el is HTMLElement => el instanceof HTMLElement) };
+    }
+
     // Check for string-based patterns
     if (typeof firstValue === 'string') {
       const trimmed = firstValue.trim();
@@ -197,6 +212,13 @@ export class RemoveCommand {
           }
         }
         break;
+
+      case 'element':
+        // Remove elements from the DOM entirely
+        for (const element of input.targets) {
+          element.remove();
+        }
+        break;
     }
   }
 
@@ -214,7 +236,7 @@ export class RemoveCommand {
     const typed = input as Partial<RemoveCommandInput>;
 
     // Check type discriminator
-    if (!typed.type || !['classes', 'attribute', 'styles'].includes(typed.type)) {
+    if (!typed.type || !['classes', 'attribute', 'styles', 'element'].includes(typed.type)) {
       return false;
     }
 
