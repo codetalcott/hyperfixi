@@ -139,6 +139,7 @@ export const COMPOUND_COMMANDS = new Set([
   'add',
   'halt',
   'measure',
+  'js',
 ]);
 
 /**
