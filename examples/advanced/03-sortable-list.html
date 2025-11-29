@@ -305,20 +305,24 @@
 
             <div style="margin: 20px 0;">
                 <button _="on click
-                          call #task-list.children.reverse()
-                          for item in #task-list.children
-                            call #task-list.appendChild(item)
+                          set list to #task-list
+                          set items to Array.from(list.children)
+                          call items.reverse()
+                          for item in items
+                            call list.appendChild(item)
                           end">
                     🔄 Reverse Order
                 </button>
                 <button class="secondary" _="on click
-                                              for item in #task-list.children
+                                              set list to #task-list
+                                              for item in Array.from(list.children)
                                                 call item.remove()
                                               end">
                     🗑️ Clear All
                 </button>
                 <button class="success" _="on click
-                                            set count to #task-list.children.length
+                                            set list to #task-list
+                                            set count to list.children.length
                                             put 'Total items: ' + count into #status
                                             add .show to #status
                                             wait 3s
@@ -441,22 +445,38 @@
 
             <div id="status" class="status-message"></div>
 
+            <!-- Hidden template for new items -->
+            <template id="task-template">
+                <li class="sortable-item" draggable="true">
+                    <span class="drag-handle">☰</span>
+                    <span class="item-number"></span>
+                    <div class="item-content">
+                        <div class="item-title"></div>
+                        <div class="item-description">New task added</div>
+                    </div>
+                    <button class="delete-btn" _="on click remove closest .sortable-item">×</button>
+                </li>
+            </template>
+
             <div class="add-item-form">
                 <input type="text" id="new-item-input" placeholder="Add a new task...">
                 <button _="on click
-                          get #new-item-input's value
-                          if result is not ''
-                            make an <li class='sortable-item' draggable='true'>
-                              <span class='drag-handle'>☰</span>
-                              <span class='item-number'>{#task-list.children.length + 1}</span>
-                              <div class='item-content'>
-                                <div class='item-title'>{result}</div>
-                                <div class='item-description'>New task added</div>
-                              </div>
-                              <button class='delete-btn'>×</button>
-                            </li> called newItem
-                            put newItem at end of #task-list
-                            set #new-item-input's value to ''
+                          set input to #new-item-input
+                          set title to input.value
+                          if title is not '' then
+                            set list to #task-list
+                            set num to list.children.length + 1
+                            js(list, title, num)
+                              var template = document.getElementById('task-template');
+                              var clone = template.content.firstElementChild.cloneNode(true);
+                              clone.querySelector('.item-number').textContent = num;
+                              clone.querySelector('.item-title').textContent = title;
+                              list.appendChild(clone);
+                              return clone;
+                            end
+                            set newItem to it
+                            call window.hyperfixi.processElement(newItem)
+                            put '' into input
                           end">
                     ➕ Add Task
                 </button>
