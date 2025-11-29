@@ -466,12 +466,13 @@
                           if title is not '' then
                             set list to first #task-list
                             set num to list.children.length + 1
-                            js(list, title, num)
+                            js(title, num)
                               var template = document.getElementById('task-template');
+                              var listEl = document.getElementById('task-list');
                               var clone = template.content.firstElementChild.cloneNode(true);
                               clone.querySelector('.item-number').textContent = num;
                               clone.querySelector('.item-title').textContent = title;
-                              list.appendChild(clone);
+                              listEl.appendChild(clone);
                               return clone;
                             end
                             set newItem to it
