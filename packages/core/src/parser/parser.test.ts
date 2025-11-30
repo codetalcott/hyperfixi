@@ -193,6 +193,72 @@ describe('Hyperscript AST Parser', () => {
       });
     });
 
+    it('should parse chained context possessive (my value\'s length)', () => {
+      expectAST("my value's length", {
+        type: 'possessiveExpression',
+        object: {
+          type: 'memberExpression',
+          object: {
+            type: 'identifier',
+            name: 'me',
+          },
+          property: {
+            type: 'identifier',
+            name: 'value',
+          },
+          computed: false,
+        },
+        property: {
+          type: 'identifier',
+          name: 'length',
+        },
+      });
+    });
+
+    it('should parse chained context possessive (its data\'s items)', () => {
+      expectAST("its data's items", {
+        type: 'possessiveExpression',
+        object: {
+          type: 'memberExpression',
+          object: {
+            type: 'identifier',
+            name: 'it',
+          },
+          property: {
+            type: 'identifier',
+            name: 'data',
+          },
+          computed: false,
+        },
+        property: {
+          type: 'identifier',
+          name: 'items',
+        },
+      });
+    });
+
+    it('should parse chained context possessive (your name\'s first)', () => {
+      expectAST("your name's first", {
+        type: 'possessiveExpression',
+        object: {
+          type: 'memberExpression',
+          object: {
+            type: 'identifier',
+            name: 'you',
+          },
+          property: {
+            type: 'identifier',
+            name: 'name',
+          },
+          computed: false,
+        },
+        property: {
+          type: 'identifier',
+          name: 'first',
+        },
+      });
+    });
+
     it('should parse chained property access', () => {
       expectAST('window.location.href', {
         type: 'memberExpression',

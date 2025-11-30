@@ -1316,10 +1316,16 @@ export class Parser {
         return this.createIdentifier(token.value);
       }
 
-      // Handle "my" property access (but only for space syntax, not dot syntax)
+      // Handle "my", "its", "your" property access (but only for space syntax, not dot syntax)
       // For dot syntax (my.prop), let it fall through to be handled by parseCall()
       if (token.value === 'my' && !this.check('.')) {
-        return this.parseMyPropertyAccess();
+        return this.parseContextPropertyAccess('me');
+      }
+      if (token.value === 'its' && !this.check('.')) {
+        return this.parseContextPropertyAccess('it');
+      }
+      if (token.value === 'your' && !this.check('.')) {
+        return this.parseContextPropertyAccess('you');
       }
 
       return this.createIdentifier(token.value);
@@ -2785,9 +2791,9 @@ export class Parser {
     return this.createCallExpression(this.createIdentifier(funcName), args);
   }
 
-  private parseMyPropertyAccess(): MemberExpressionNode {
-    // Check for CSS property syntax: my *background-color
-    const hasCssPrefix = this.match('*');
+  private parseContextPropertyAccess(contextVar: 'me' | 'it' | 'you'): MemberExpressionNode {
+    // Check for CSS property syntax: my *background-color (only applies to 'me')
+    const hasCssPrefix = contextVar === 'me' && this.match('*');
 
     if (hasCssPrefix) {
       // Parse CSS property name with hyphens (e.g., background-color)
@@ -2796,7 +2802,7 @@ export class Parser {
       if (!this.checkTokenType(TokenType.IDENTIFIER)) {
         this.addError("Expected property name after 'my *'");
         return this.createMemberExpression(
-          this.createIdentifier('me'),
+          this.createIdentifier(contextVar),
           this.createIdentifier(''),
           false
         );
@@ -2822,19 +2828,25 @@ export class Parser {
       // This tells the evaluator to use getComputedStyle
       const cssPropertyName = `computed-${propertyName}`;
       return this.createMemberExpression(
-        this.createIdentifier('me'),
+        this.createIdentifier(contextVar),
         this.createIdentifier(cssPropertyName),
         false
       );
     } else {
-      // Standard JavaScript property access: my className
-      const property = this.consume(TokenType.IDENTIFIER, "Expected property name after 'my'");
+      // Standard JavaScript property access: my className, its value, your name
+      const contextLabels = { me: 'my', it: 'its', you: 'your' };
+      const property = this.consume(TokenType.IDENTIFIER, `Expected property name after '${contextLabels[contextVar]}'`);
       return this.createMemberExpression(
-        this.createIdentifier('me'),
+        this.createIdentifier(contextVar),
         this.createIdentifier(property.value),
         false
       );
     }
+  }
+
+  // Alias for backward compatibility
+  private parseMyPropertyAccess(): MemberExpressionNode {
+    return this.parseContextPropertyAccess('me');
   }
 
   private finishCall(callee: ASTNode): CallExpressionNode {

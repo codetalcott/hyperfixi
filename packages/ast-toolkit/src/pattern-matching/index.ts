@@ -73,14 +73,64 @@ export function matchPattern(
  */
 export function matchWildcard(ast: ASTNode, pattern: string): boolean {
   const patternTokens = pattern.split(/\s+/);
-  const astString = astToString(ast);
-  
-  // Convert wildcards to regex
-  const regexPattern = patternTokens
-    .map(token => token === '*' ? '\\S+' : escapeRegex(token))
-    .join('\\s+');
-  
-  return new RegExp(regexPattern, 'i').test(astString);
+  const astValues = extractAstValues(ast);
+
+  // Syntactic keywords that map to AST structure rather than appearing in values
+  const syntacticKeywords = new Set(['on', 'to', 'from', 'into', 'then', 'else', 'in', 'at', 'of', 'with']);
+
+  let patternIdx = 0;
+  let astIdx = 0;
+
+  while (patternIdx < patternTokens.length && astIdx <= astValues.length) {
+    const token = patternTokens[patternIdx];
+    if (!token) break;
+
+    // Skip syntactic keywords that don't appear in AST values
+    if (syntacticKeywords.has(token.toLowerCase())) {
+      patternIdx++;
+      continue;
+    }
+
+    if (astIdx >= astValues.length) {
+      // Remaining pattern tokens must all be syntactic keywords
+      if (!syntacticKeywords.has(token.toLowerCase())) {
+        return false;
+      }
+      patternIdx++;
+      continue;
+    }
+
+    const value = astValues[astIdx];
+
+    if (token === '*') {
+      // Wildcard matches any value
+      patternIdx++;
+      astIdx++;
+    } else if (value?.toLowerCase() === token.toLowerCase()) {
+      // Exact match
+      patternIdx++;
+      astIdx++;
+    } else {
+      // Try to find this token later in AST values
+      const found = astValues.slice(astIdx).some(v => v?.toLowerCase() === token.toLowerCase());
+      if (found) {
+        astIdx++;
+      } else {
+        return false;
+      }
+    }
+  }
+
+  // All non-syntactic pattern tokens should be matched
+  while (patternIdx < patternTokens.length) {
+    const token = patternTokens[patternIdx];
+    if (token && !syntacticKeywords.has(token.toLowerCase())) {
+      return false;
+    }
+    patternIdx++;
+  }
+
+  return true;
 }
 
 /**
@@ -321,7 +371,7 @@ function matchTokensToAst(
 
 function extractAstValues(ast: ASTNode): string[] {
   const values: string[] = [];
-  
+
   const visitor = new ASTVisitor({
     enter(node) {
       // Extract meaningful values from node
@@ -331,7 +381,7 @@ function extractAstValues(ast: ASTNode): string[] {
       if ((node as any).operator) values.push((node as any).operator);
     }
   });
-  
+
   visit(ast, visitor);
   return values;
 }

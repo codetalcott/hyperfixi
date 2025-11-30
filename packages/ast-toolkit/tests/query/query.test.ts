@@ -346,13 +346,18 @@ describe('Query Selector Parser', () => {
 
   it('should parse combinators', () => {
     const selectors = parseSelector('eventHandler > command + selector');
-    
+
+    // All selectors have consistent shape with attributes and pseudos arrays
     expect(selectors).toEqual({
       type: 'eventHandler',
+      attributes: [],
+      pseudos: [],
       combinator: {
         type: '>',
         right: {
           type: 'command',
+          attributes: [],
+          pseudos: [],
           combinator: {
             type: '+',
             right: {

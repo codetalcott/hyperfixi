@@ -74,7 +74,7 @@ export function queryAll(ast: ASTNode | null, selector: string): QueryMatch[] {
         matches.push({
           node,
           path: [...path],
-          matches: extractCaptures(node, parsedSelector)
+          matches: extractCaptures(node, parsedSelector, queryContext)
         });
       }
 
@@ -130,55 +130,79 @@ function parseSingleSelector(selector: string): ParsedSelector {
     pseudos: [],
     combinator: null
   };
-  
+
   // Remove leading/trailing whitespace
   selector = selector.trim();
-  
-  // Handle combinators (>, +, ~, space)
-  const combinatorMatch = selector.match(/^(.+?)\s*([>+~]|\s)\s*(.+)$/);
+
+  // Validate selector syntax - check for invalid patterns
+  if (/\[\[/.test(selector)) {
+    throw new Error(`Invalid selector syntax: "${selector}" - unexpected [[`);
+  }
+  if (/([>+~])\s*([>+~])/.test(selector)) {
+    throw new Error(`Invalid selector syntax: "${selector}" - consecutive combinators`);
+  }
+
+  // Handle combinators (>, +, ~, space) - use non-greedy match and be more careful
+  // Look for the first combinator from left to right
+  const combinatorMatch = selector.match(/^([^\s>+~]+(?:\[[^\]]*\])*(?::[a-zA-Z-]+(?:\([^)]*\))?)*)\s*([>+~]|\s)\s*(.+)$/);
   if (combinatorMatch) {
     const [, left, combinator, right] = combinatorMatch;
     if (combinator && left && right) {
       result.combinator = {
-        type: combinator.trim() || ' ' as any,
+        type: (combinator.trim() || ' ') as any,
         right: parseSingleSelector(right)
       };
       selector = left.trim();
     }
   }
-  
+
   // Extract type (everything before first [ or :)
   const typeMatch = selector.match(/^([a-zA-Z_][a-zA-Z0-9_-]*)/);
   if (typeMatch) {
     result.type = typeMatch[1] ?? null;
     selector = selector.substring(typeMatch[0].length);
   }
-  
-  // Extract attributes [name="value"] or [name]
-  const attributeRegex = /\[([^=\]]+)(?:([=!^$*|~]=?)([^\]]*))?\]/g;
-  let attributeMatch;
-  while ((attributeMatch = attributeRegex.exec(selector)) !== null) {
-    const [, name, operator = 'exists', value] = attributeMatch;
-    if (name) {
-      result.attributes.push({
-        name: name.trim(),
-        operator: operator === '=' ? '=' : operator as any,
-        value: value ? parseAttributeValue(value.trim()) : null
-      });
-    }
-  }
-  
-  // Extract pseudo selectors :name or :name(arg)
-  const pseudoRegex = /:([a-zA-Z-]+)(?:\(([^)]*)\))?/g;
+
+  // Extract pseudo selectors FIRST (before attributes)
+  // This prevents parsing attributes inside pseudo arguments like :not([name="add"])
+  // Use a more sophisticated regex that handles nested brackets
+  const pseudoRegex = /:([a-zA-Z-]+)(?:\(([^)]*(?:\([^)]*\))*[^)]*)\))?/g;
   let pseudoMatch;
+  const pseudoRanges: Array<[number, number]> = [];
   while ((pseudoMatch = pseudoRegex.exec(selector)) !== null) {
-    const [, name, argument] = pseudoMatch;
+    const [fullMatch, name, argument] = pseudoMatch;
     result.pseudos.push({
       name: name ?? '',
       argument: argument || null
     });
+    pseudoRanges.push([pseudoMatch.index, pseudoMatch.index + fullMatch.length]);
   }
-  
+
+  // Extract attributes [name="value"] or [name], but skip those inside pseudo arguments
+  // Fixed regex: name is a valid identifier, operator includes ^=, $=, *=, |=, ~=, !=, =
+  const attributeRegex = /\[([a-zA-Z_][a-zA-Z0-9_-]*)(?:(\^=|\$=|\*=|\|=|~=|!=|=)([^\]]*))?\]/g;
+  let attributeMatch;
+  while ((attributeMatch = attributeRegex.exec(selector)) !== null) {
+    const matchStart = attributeMatch.index;
+    const matchEnd = matchStart + attributeMatch[0].length;
+
+    // Skip if this attribute is inside a pseudo selector argument
+    const insidePseudo = pseudoRanges.some(([start, end]) =>
+      matchStart >= start && matchEnd <= end
+    );
+
+    if (insidePseudo) continue;
+
+    const [, name, operator, value] = attributeMatch;
+    if (name) {
+      result.attributes.push({
+        name: name.trim(),
+        operator: (operator || 'exists') as any,
+        value: value !== undefined ? parseAttributeValue(value.trim()) : null
+      });
+    }
+  }
+
   return result;
 }
 
@@ -214,25 +238,77 @@ function matchesSelector(node: ASTNode, selector: ParsedSelector, context: any):
   // For 'eventHandler command': selector.type = 'eventHandler', combinator.right.type = 'command'
   // We want to find nodes that match the RIGHTMOST part and have proper ancestor/sibling relationship
   if (selector.combinator) {
-    // First check if current node matches the right side of the combinator
-    if (!matchesSimpleSelector(node, selector.combinator.right)) {
+    // Get the rightmost selector in the chain
+    const rightmost = getRightmostSelector(selector);
+
+    // First check if current node matches the rightmost selector (simple match, no combinator)
+    if (!matchesSimpleSelector(node, rightmost)) {
       return false;
     }
 
-    // Build the left side selector from the current selector (without the rightmost combinator)
-    const leftSide: ParsedSelector = {
-      type: selector.type,
-      attributes: selector.attributes,
-      pseudos: selector.pseudos,
-      combinator: null
-    };
-
-    // Check combinator relationship with the left side
-    return checkCombinatorRelationship(node, selector.combinator.type, leftSide, context);
+    // Now check the combinator chain from right to left
+    return checkCombinatorChain(node, selector, context);
   }
 
   // Simple selector matching
   return matchesSimpleSelector(node, selector, context);
+}
+
+/**
+ * Get the rightmost selector in a combinator chain
+ */
+function getRightmostSelector(selector: ParsedSelector): ParsedSelector {
+  if (selector.combinator) {
+    return getRightmostSelector(selector.combinator.right);
+  }
+  return selector;
+}
+
+/**
+ * Check the entire combinator chain from right to left
+ */
+function checkCombinatorChain(node: ASTNode, selector: ParsedSelector, context: any): boolean {
+  if (!selector.combinator) {
+    // No combinator, just check simple match (already done in matchesSelector)
+    return true;
+  }
+
+  // Build the immediate left selector (the part before the rightmost combinator)
+  // For "a b c", if selector represents "a b c", we need to check:
+  // 1. Current node matches "c"
+  // 2. Some ancestor/sibling matches "b" based on combinator type
+  // 3. Some ancestor/sibling of that matches "a" based on combinator type
+
+  // Get the combinator type between left and right
+  const combinatorType = selector.combinator.type;
+  const rightSelector = selector.combinator.right;
+  const leftSelector: ParsedSelector = {
+    type: selector.type,
+    attributes: selector.attributes,
+    pseudos: selector.pseudos,
+    combinator: null
+  };
+
+  // If the right side also has a combinator, we need to recursively check
+  if (rightSelector.combinator) {
+    // First, verify the right side's combinator chain is satisfied
+    if (!checkCombinatorChain(node, rightSelector, context)) {
+      return false;
+    }
+
+    // Now check the relationship between left and the immediate right
+    const immediateRight: ParsedSelector = {
+      type: rightSelector.type,
+      attributes: rightSelector.attributes,
+      pseudos: rightSelector.pseudos,
+      combinator: null
+    };
+
+    return checkCombinatorRelationship(node, combinatorType, leftSelector, context, immediateRight);
+  }
+
+  // Simple case: no further nesting
+  return checkCombinatorRelationship(node, combinatorType, leftSelector, context);
 }
 
 function matchesSimpleSelector(node: ASTNode, selector: ParsedSelector, context?: any): boolean {
@@ -321,20 +397,71 @@ function matchesPseudoSimple(node: ASTNode, pseudo: PseudoSelector): boolean {
   }
 }
 
-function checkCombinatorRelationship(node: ASTNode, combinatorType: string, leftSelector: ParsedSelector, context: any): boolean {
+function checkCombinatorRelationship(
+  node: ASTNode,
+  combinatorType: string,
+  leftSelector: ParsedSelector,
+  context: any,
+  intermediateSelector?: ParsedSelector
+): boolean {
   switch (combinatorType) {
     case '>': // Direct child - parent must match the left side
       const parent = context.getParent();
-      return parent ? matchesSimpleSelector(parent, leftSelector) : false;
+      if (!parent) return false;
+      if (intermediateSelector) {
+        // For chained combinator: check if parent matches intermediate
+        // and has an ancestor matching left
+        return matchesSimpleSelector(parent, intermediateSelector) &&
+               hasAncestorMatching(parent, context, leftSelector);
+      }
+      return matchesSimpleSelector(parent, leftSelector);
     case '+': // Adjacent sibling - previous sibling must match the left side
       return hasPreviousSiblingMatching(node, context, leftSelector);
     case '~': // General sibling - any previous sibling must match the left side
       return hasAnyPreviousSiblingMatching(node, context, leftSelector);
     case ' ': // Descendant - any ancestor must match the left side
+      if (intermediateSelector) {
+        // For "a b c" where node matches "c", we need to find:
+        // 1. An ancestor matching "b" (intermediate)
+        // 2. And that ancestor has an ancestor matching "a" (left)
+        return hasAncestorMatchingWithFurtherAncestor(node, context, intermediateSelector, leftSelector);
+      }
       return hasAncestorMatching(node, context, leftSelector);
     default:
       return false;
   }
+}
+
+/**
+ * Check if node has an ancestor matching intermediateSelector that itself
+ * has an ancestor matching leftSelector
+ */
+function hasAncestorMatchingWithFurtherAncestor(
+  node: ASTNode,
+  context: any,
+  intermediateSelector: ParsedSelector,
+  leftSelector: ParsedSelector
+): boolean {
+  if (!context.getAncestors) {
+    return false;
+  }
+
+  const ancestors = context.getAncestors();
+  // Ancestors are stored root-first, so we iterate from the end (closest ancestor)
+  // to find intermediate, then look earlier (further up) for left
+  for (let i = ancestors.length - 1; i >= 0; i--) {
+    const ancestor = ancestors[i];
+    if (matchesSimpleSelector(ancestor, intermediateSelector)) {
+      // Found intermediate match (e.g., binaryExpression), now check if any
+      // EARLIER ancestor (further up the tree) matches left (e.g., conditional)
+      for (let j = i - 1; j >= 0; j--) {
+        if (matchesSimpleSelector(ancestors[j], leftSelector)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 // ============================================================================
@@ -388,9 +515,16 @@ function hasDescendant(node: ASTNode, selector: string): boolean {
 }
 
 function containsText(node: ASTNode, text: string): boolean {
+  // Strip quotes from the search text if present
+  let searchText = text;
+  if ((text.startsWith('"') && text.endsWith('"')) ||
+      (text.startsWith("'") && text.endsWith("'"))) {
+    searchText = text.slice(1, -1);
+  }
+
   // Check if any property contains the text
   const nodeStr = JSON.stringify(node);
-  return nodeStr.includes(text);
+  return nodeStr.includes(searchText);
 }
 
 function isAdjacentSibling(node: ASTNode, parent: ASTNode, selector: ParsedSelector): boolean {
@@ -474,18 +608,63 @@ function hasAnyPreviousSiblingMatching(node: ASTNode, context: any, selector: Pa
   return false;
 }
 
-function extractCaptures(node: ASTNode, selector: ParsedSelector): Record<string, any> {
+function extractCaptures(node: ASTNode, selector: ParsedSelector, context?: any): Record<string, any> {
   const captures: Record<string, any> = {};
-  
-  // Extract captured attribute values
-  for (const attr of selector.attributes) {
+
+  // Extract captured attribute values from the matched node (rightmost selector)
+  const rightmost = getRightmostSelector(selector);
+  for (const attr of rightmost.attributes) {
     if (attr.operator === '=' || attr.operator === 'exists') {
-      const key = selector.type ? `${selector.type}[${attr.name}]` : `[${attr.name}]`;
+      const key = rightmost.type ? `${rightmost.type}[${attr.name}]` : `[${attr.name}]`;
       captures[key] = (node as any)[attr.name];
     }
   }
-  
+
+  // If there's a combinator, also extract from parent selectors
+  if (selector.combinator && context?.getAncestors) {
+    const ancestors = context.getAncestors();
+    extractCapturesFromCombinatorChain(selector, ancestors, captures);
+  }
+
   return captures;
+}
+
+/**
+ * Extract captures from the entire combinator chain by matching against ancestors
+ */
+function extractCapturesFromCombinatorChain(
+  selector: ParsedSelector,
+  ancestors: ASTNode[],
+  captures: Record<string, any>
+): void {
+  if (!selector.combinator) return;
+
+  // Current selector represents the left part, combinator.right is the next part
+  const leftSelector: ParsedSelector = {
+    type: selector.type,
+    attributes: selector.attributes,
+    pseudos: selector.pseudos,
+    combinator: null
+  };
+
+  // Find an ancestor that matches the left selector
+  for (const ancestor of ancestors) {
+    if (matchesSimpleSelector(ancestor, leftSelector)) {
+      // Extract attributes from this ancestor
+      for (const attr of leftSelector.attributes) {
+        if (attr.operator === '=' || attr.operator === 'exists') {
+          const key = leftSelector.type ? `${leftSelector.type}[${attr.name}]` : `[${attr.name}]`;
+          captures[key] = (ancestor as any)[attr.name];
+        }
+      }
+      break; // Found the matching ancestor
+    }
+  }
+
+  // Recursively process the right side if it has combinators
+  if (selector.combinator.right.combinator) {
+    extractCapturesFromCombinatorChain(selector.combinator.right, ancestors, captures);
+  }
 }
 
 // ============================================================================

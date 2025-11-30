@@ -480,6 +480,8 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
         ...(left.start !== undefined && { start: left.start }),
         ...(property.end !== undefined && { end: property.end }),
       };
+      // Continue loop to handle chained possessive (my prop's subprop)
+      continue;
     }
     // Handle "the X of Y" pattern (the property of element)
     else if (
