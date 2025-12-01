@@ -24,6 +24,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for AddCommand
@@ -240,7 +241,7 @@ export class AddCommand {
     // Validate targets (required for all types)
     if (!Array.isArray(typed.targets)) return false;
     if (typed.targets.length === 0) return false; // Must have at least one target
-    if (!typed.targets.every(t => t instanceof HTMLElement)) return false;
+    if (!typed.targets.every(t => isHTMLElement(t))) return false;
 
     // Type-specific validation
     if (typed.type === 'classes') {
@@ -435,10 +436,10 @@ export class AddCommand {
       if (!context.me) {
         throw new Error('add command: no target specified and context.me is null');
       }
-      if (!(context.me instanceof HTMLElement)) {
+      if (!isHTMLElement(context.me)) {
         throw new Error('add command: context.me must be an HTMLElement');
       }
-      return [context.me];
+      return [context.me as HTMLElement];
     }
 
     const targets: HTMLElement[] = [];
@@ -446,26 +447,29 @@ export class AddCommand {
     for (const arg of filteredArgs) {
       const evaluated = await evaluator.evaluate(arg, context);
 
+      // Skip empty strings - treat as "no target specified"
+      if (evaluated === '' || (typeof evaluated === 'string' && evaluated.trim() === '')) {
+        continue;
+      }
+
       // Check for HTMLElement - use duck typing for cross-realm compatibility
-      if (evaluated instanceof HTMLElement ||
-          (evaluated && typeof evaluated === 'object' &&
-           'classList' in evaluated && 'tagName' in evaluated)) {
+      if (isHTMLElement(evaluated)) {
         targets.push(evaluated as HTMLElement);
       } else if (evaluated instanceof NodeList) {
         const elements = Array.from(evaluated).filter(
-          (el): el is HTMLElement => el instanceof HTMLElement
+          (el): el is HTMLElement => isHTMLElement(el)
         );
         targets.push(...elements);
       } else if (Array.isArray(evaluated)) {
         const elements = evaluated.filter(
-          (el): el is HTMLElement => el instanceof HTMLElement
+          (el): el is HTMLElement => isHTMLElement(el)
         );
         targets.push(...elements);
       } else if (typeof evaluated === 'string') {
         try {
           const selected = document.querySelectorAll(evaluated);
           const elements = Array.from(selected).filter(
-            (el): el is HTMLElement => el instanceof HTMLElement
+            (el): el is HTMLElement => isHTMLElement(el)
           );
           targets.push(...elements);
         } catch (error) {
@@ -480,8 +484,15 @@ export class AddCommand {
       }
     }
 
+    // If no valid targets found after filtering, default to context.me
     if (targets.length === 0) {
-      throw new Error('add command: no valid targets found');
+      if (!context.me) {
+        throw new Error('add command: no target specified and context.me is null');
+      }
+      if (!isHTMLElement(context.me)) {
+        throw new Error('add command: context.me must be an HTMLElement');
+      }
+      return [context.me as HTMLElement];
     }
 
     return targets;

@@ -13,6 +13,7 @@
 
 import type { ASTNode, ExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Raw input from RuntimeBase (before evaluation)
@@ -328,22 +329,23 @@ export class DecrementCommand {
     }
 
     // Handle HTMLElement
-    if (target instanceof HTMLElement) {
+    if (isHTMLElement(target)) {
+      const element = target as HTMLElement;
       if (property) {
         // Get element property or attribute
         if (
           property.startsWith('data-') ||
           ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)
         ) {
-          const value = target.getAttribute(property);
+          const value = element.getAttribute(property);
           return this.convertToNumber(value);
         } else {
-          const value = (target as any)[property];
+          const value = (element as any)[property];
           return this.convertToNumber(value);
         }
       } else {
         // Use element's text content or value
-        const value = (target as any).value || target.textContent;
+        const value = (element as any).value || element.textContent;
         return this.convertToNumber(value);
       }
     }
@@ -422,23 +424,24 @@ export class DecrementCommand {
     context: ExecutionContext
   ): void {
     // Handle HTMLElement
-    if (target instanceof HTMLElement) {
+    if (isHTMLElement(target)) {
+      const element = target as HTMLElement;
       if (property) {
         // Set element property or attribute
         if (
           property.startsWith('data-') ||
           ['id', 'class', 'title', 'alt', 'src', 'href'].includes(property)
         ) {
-          target.setAttribute(property, String(newValue));
+          element.setAttribute(property, String(newValue));
         } else {
-          (target as any)[property] = newValue;
+          (element as any)[property] = newValue;
         }
       } else {
         // Set element's text content or value
-        if ('value' in target && (target as any).value !== undefined) {
-          (target as any).value = String(newValue);
+        if ('value' in element && (element as any).value !== undefined) {
+          (element as any).value = String(newValue);
         } else {
-          target.textContent = String(newValue);
+          element.textContent = String(newValue);
         }
       }
       return;

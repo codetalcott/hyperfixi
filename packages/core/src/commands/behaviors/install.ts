@@ -30,6 +30,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for InstallCommand
@@ -232,20 +233,20 @@ export class InstallCommand {
     // If no target specified, use 'me' (current element)
     if (target === undefined || target === null) {
       const me = context.me || context.locals.get('me');
-      if (me instanceof HTMLElement) {
-        return [me];
+      if (isHTMLElement(me)) {
+        return [me as HTMLElement];
       }
       throw new Error('No target specified and "me" is not available in context');
     }
 
     // If already an HTMLElement
-    if (target instanceof HTMLElement) {
-      return [target];
+    if (isHTMLElement(target)) {
+      return [target as HTMLElement];
     }
 
     // If array of elements
     if (Array.isArray(target)) {
-      const elements = target.filter((t) => t instanceof HTMLElement);
+      const elements = target.filter((t): t is HTMLElement => isHTMLElement(t));
       if (elements.length === 0) {
         throw new Error('Target array contains no valid HTMLElements');
       }
@@ -256,8 +257,8 @@ export class InstallCommand {
     if (typeof target === 'string') {
       if (target === 'me') {
         const me = context.me || context.locals.get('me');
-        if (me instanceof HTMLElement) {
-          return [me];
+        if (isHTMLElement(me)) {
+          return [me as HTMLElement];
         }
         throw new Error('"me" is not available in context');
       }
@@ -266,12 +267,12 @@ export class InstallCommand {
       if (typeof document !== 'undefined') {
         const elements = document.querySelectorAll(target);
         const htmlElements = Array.from(elements).filter(
-          (el) => el instanceof HTMLElement
+          (el): el is HTMLElement => isHTMLElement(el)
         );
         if (htmlElements.length === 0) {
           throw new Error(`No elements found matching selector: "${target}"`);
         }
-        return htmlElements as HTMLElement[];
+        return htmlElements;
       }
       throw new Error('document is not available (not in browser environment)');
     }
@@ -279,7 +280,7 @@ export class InstallCommand {
     // Handle NodeList
     if (target && typeof target === 'object' && 'length' in target) {
       const elements = Array.from(target as any).filter(
-        (t) => t instanceof HTMLElement
+        (t): t is HTMLElement => isHTMLElement(t)
       );
       if (elements.length === 0) {
         throw new Error('Target collection contains no valid HTMLElements');
@@ -290,8 +291,8 @@ export class InstallCommand {
     // If it's an object with element property (some wrapper type)
     if (typeof target === 'object' && 'element' in target) {
       const element = (target as any).element;
-      if (element instanceof HTMLElement) {
-        return [element];
+      if (isHTMLElement(element)) {
+        return [element as HTMLElement];
       }
     }
 

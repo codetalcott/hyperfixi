@@ -27,6 +27,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for BindCommand
@@ -156,7 +157,7 @@ export class BindCommand {
       const targetExpr = raw.modifiers.to || raw.modifiers.from;
       const targetValue = await evaluator.evaluate(targetExpr, context);
 
-      if (targetValue instanceof HTMLElement) {
+      if (isHTMLElement(targetValue)) {
         target = targetValue;
       } else if (typeof targetValue === 'string') {
         // Parse property from string (e.g., "my.value" → target=me, property=value)
@@ -362,7 +363,7 @@ export class BindCommand {
     context: ExecutionContext
   ): Promise<HTMLElement | null> {
     // If already an element, return it
-    if (target instanceof HTMLElement) {
+    if (isHTMLElement(target)) {
       return target;
     }
 
@@ -378,7 +379,7 @@ export class BindCommand {
         return context.me as HTMLElement;
       }
       if (target === 'it' || target === 'its') {
-        return context.it instanceof HTMLElement ? context.it : null;
+        return isHTMLElement(context.it) ? (context.it as HTMLElement) : null;
       }
       if (target === 'you' || target === 'your') {
         return context.you as HTMLElement;
@@ -529,13 +530,13 @@ export class BindCommand {
     eventName: string,
     detail: Record<string, any>
   ): void {
-    if (context.me instanceof HTMLElement) {
+    if (isHTMLElement(context.me)) {
       const event = new CustomEvent(eventName, {
         detail,
         bubbles: true,
         cancelable: false,
       });
-      context.me.dispatchEvent(event);
+      (context.me as HTMLElement).dispatchEvent(event);
     }
   }
 }

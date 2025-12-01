@@ -27,6 +27,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for CopyCommand
@@ -211,17 +212,19 @@ export class CopyCommand {
     }
 
     // Handle element source
-    if (source instanceof HTMLElement) {
+    if (isHTMLElement(source)) {
+      const element = source as HTMLElement;
       if (format === 'html') {
-        return source.outerHTML;
+        return element.outerHTML;
       } else {
-        return source.textContent || '';
+        return element.textContent || '';
       }
     }
 
     // Handle context references (me, it, you)
-    if (source === context.me && context.me instanceof HTMLElement) {
-      return format === 'html' ? context.me.outerHTML : (context.me.textContent || '');
+    if (source === context.me && isHTMLElement(context.me)) {
+      const element = context.me as HTMLElement;
+      return format === 'html' ? element.outerHTML : (element.textContent || '');
     }
 
     // Fallback: convert to string
@@ -282,13 +285,14 @@ export class CopyCommand {
     eventName: string,
     detail: Record<string, any>
   ): void {
-    if (context.me instanceof HTMLElement) {
+    if (isHTMLElement(context.me)) {
+      const element = context.me as HTMLElement;
       const event = new CustomEvent(eventName, {
         detail,
         bubbles: true,
         cancelable: false,
       });
-      context.me.dispatchEvent(event);
+      element.dispatchEvent(event);
     }
   }
 }

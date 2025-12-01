@@ -21,6 +21,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/ast';
 import type { ExpressionEvaluator } from '../../runtime/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for HideCommand
@@ -117,7 +118,7 @@ export class HideCommand {
     const typed = input as Partial<HideCommandInput>;
 
     if (!Array.isArray(typed.targets)) return false;
-    if (!typed.targets.every(t => t instanceof HTMLElement)) return false;
+    if (!typed.targets.every(t => isHTMLElement(t))) return false;
 
     return true;
   }
@@ -145,7 +146,13 @@ export class HideCommand {
   ): Promise<HTMLElement[]> {
     // Default to context.me if no args
     if (!args || args.length === 0) {
-      return [context.me];
+      if (!context.me) {
+        throw new Error('hide command: no target specified and context.me is null');
+      }
+      if (!isHTMLElement(context.me)) {
+        throw new Error('hide command: context.me must be an HTMLElement');
+      }
+      return [context.me as HTMLElement];
     }
 
     const targets: HTMLElement[] = [];
@@ -153,19 +160,24 @@ export class HideCommand {
     for (const arg of args) {
       const evaluated = await evaluator.evaluate(arg, context);
 
-      if (evaluated instanceof HTMLElement) {
+      // Skip empty strings - treat as "no target specified"
+      if (evaluated === '' || (typeof evaluated === 'string' && evaluated.trim() === '')) {
+        continue;
+      }
+
+      if (isHTMLElement(evaluated)) {
         // Single element
-        targets.push(evaluated);
+        targets.push(evaluated as HTMLElement);
       } else if (evaluated instanceof NodeList) {
         // NodeList from querySelector
         const elements = Array.from(evaluated).filter(
-          (el): el is HTMLElement => el instanceof HTMLElement
+          (el): el is HTMLElement => isHTMLElement(el)
         );
         targets.push(...elements);
       } else if (Array.isArray(evaluated)) {
         // Array of elements
         const elements = evaluated.filter(
-          (el): el is HTMLElement => el instanceof HTMLElement
+          (el): el is HTMLElement => isHTMLElement(el)
         );
         targets.push(...elements);
       } else if (typeof evaluated === 'string') {
@@ -173,7 +185,7 @@ export class HideCommand {
         try {
           const selected = document.querySelectorAll(evaluated);
           const elements = Array.from(selected).filter(
-            (el): el is HTMLElement => el instanceof HTMLElement
+            (el): el is HTMLElement => isHTMLElement(el)
           );
           targets.push(...elements);
         } catch (error) {
@@ -188,8 +200,15 @@ export class HideCommand {
       }
     }
 
+    // If no valid targets found after filtering, default to context.me
     if (targets.length === 0) {
-      throw new Error('hide command: no valid targets found');
+      if (!context.me) {
+        throw new Error('hide command: no target specified and context.me is null');
+      }
+      if (!isHTMLElement(context.me)) {
+        throw new Error('hide command: context.me must be an HTMLElement');
+      }
+      return [context.me as HTMLElement];
     }
 
     return targets;

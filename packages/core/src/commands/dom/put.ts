@@ -31,6 +31,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Insertion position types
@@ -360,17 +361,17 @@ export class PutCommand {
       if (!context.me) {
         throw new Error('put command: no target specified and context.me is null');
       }
-      if (!(context.me instanceof HTMLElement)) {
+      if (!isHTMLElement(context.me)) {
         throw new Error('put command: context.me must be an HTMLElement');
       }
-      return [context.me];
+      return [context.me as HTMLElement];
     }
 
     // Resolve from CSS selector
     try {
       const selected = document.querySelectorAll(selector);
       const elements = Array.from(selected).filter(
-        (el): el is HTMLElement => el instanceof HTMLElement
+        (el): el is HTMLElement => isHTMLElement(el)
       );
 
       if (elements.length === 0) {
@@ -394,8 +395,8 @@ export class PutCommand {
    * @returns Parsed content (string or HTMLElement)
    */
   private parseValue(value: any): string | HTMLElement {
-    if (value instanceof HTMLElement) {
-      return value;
+    if (isHTMLElement(value)) {
+      return value as HTMLElement;
     }
 
     if (value == null) {
@@ -427,9 +428,9 @@ export class PutCommand {
   ): void {
     // Handle 'replace' position - clear content first, then set
     if (position === 'replace') {
-      if (content instanceof HTMLElement) {
+      if (isHTMLElement(content)) {
         target.innerHTML = '';
-        target.appendChild(content);
+        target.appendChild(content as HTMLElement);
       } else {
         // Check if content contains HTML
         const containsHTML = content.includes('<') && content.includes('>');
@@ -442,20 +443,21 @@ export class PutCommand {
       return;
     }
 
-    if (content instanceof HTMLElement) {
+    if (isHTMLElement(content)) {
       // Insert element
+      const el = content as HTMLElement;
       switch (position) {
         case 'beforebegin':
-          target.parentElement?.insertBefore(content, target);
+          target.parentElement?.insertBefore(el, target);
           break;
         case 'afterbegin':
-          target.insertBefore(content, target.firstChild);
+          target.insertBefore(el, target.firstChild);
           break;
         case 'beforeend':
-          target.appendChild(content);
+          target.appendChild(el);
           break;
         case 'afterend':
-          target.parentElement?.insertBefore(content, target.nextSibling);
+          target.parentElement?.insertBefore(el, target.nextSibling);
           break;
       }
     } else {

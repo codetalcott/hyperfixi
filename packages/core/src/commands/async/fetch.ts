@@ -32,6 +32,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Response type options for fetch command
@@ -574,8 +575,8 @@ export class FetchCommand {
     });
 
     // If single element, return that element
-    if (fragment.childNodes.length === 1 && fragment.firstChild instanceof HTMLElement) {
-      return fragment.firstChild;
+    if (fragment.childNodes.length === 1 && isHTMLElement(fragment.firstChild)) {
+      return fragment.firstChild as HTMLElement;
     }
 
     return fragment;

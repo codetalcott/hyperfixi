@@ -30,6 +30,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for SettleCommand
@@ -109,7 +110,7 @@ export class SettleCommand {
 
       // Check if this is a target element
       if (
-        firstArg instanceof HTMLElement ||
+        isHTMLElement(firstArg) ||
         (typeof firstArg === 'string' && (
           firstArg.startsWith('#') ||
           firstArg.startsWith('.') ||
@@ -188,8 +189,8 @@ export class SettleCommand {
     context: TypedExecutionContext
   ): Promise<HTMLElement> {
     // If target is already an HTMLElement, return it
-    if (target instanceof HTMLElement) {
-      return target;
+    if (isHTMLElement(target)) {
+      return target as HTMLElement;
     }
 
     // If no target specified, use context.me
@@ -214,10 +215,10 @@ export class SettleCommand {
       }
 
       if (trimmed === 'it') {
-        if (!(context.it instanceof HTMLElement)) {
+        if (!isHTMLElement(context.it)) {
           throw new Error('Context reference "it" is not an HTMLElement');
         }
-        return context.it;
+        return context.it as HTMLElement;
       }
 
       if (trimmed === 'you') {
@@ -233,10 +234,10 @@ export class SettleCommand {
         if (!element) {
           throw new Error(`Element not found with selector: ${trimmed}`);
         }
-        if (!(element instanceof HTMLElement)) {
+        if (!isHTMLElement(element)) {
           throw new Error(`Element found but is not an HTMLElement: ${trimmed}`);
         }
-        return element;
+        return element as HTMLElement;
       }
 
       throw new Error('DOM not available - cannot resolve element selector');
@@ -253,8 +254,8 @@ export class SettleCommand {
    * @throws Error if value is not an HTMLElement
    */
   private asHTMLElement(value: unknown): HTMLElement {
-    if (value instanceof HTMLElement) {
-      return value;
+    if (isHTMLElement(value)) {
+      return value as HTMLElement;
     }
     throw new Error('Value is not an HTMLElement');
   }

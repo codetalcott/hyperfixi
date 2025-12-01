@@ -27,6 +27,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for AppendCommand
@@ -169,12 +170,12 @@ export class AppendCommand {
       // Check if this is a context reference
       if (target === 'me' || target === 'it' || target === 'you') {
         const contextTarget = this.resolveContextReference(target, context);
-        if (contextTarget instanceof HTMLElement) {
-          contextTarget.innerHTML += contentStr;
+        if (isHTMLElement(contextTarget)) {
+          (contextTarget as HTMLElement).innerHTML += contentStr;
           return {
             result: contextTarget,
             targetType: 'element',
-            target: contextTarget,
+            target: contextTarget as HTMLElement,
           };
         }
       }
@@ -219,13 +220,13 @@ export class AppendCommand {
         result: target,
         targetType: 'array',
       };
-    } else if (target instanceof HTMLElement) {
+    } else if (isHTMLElement(target)) {
       // Direct element target
-      target.innerHTML += contentStr;
+      (target as HTMLElement).innerHTML += contentStr;
       return {
         result: target,
         targetType: 'element',
-        target,
+        target: target as HTMLElement,
       };
     } else {
       // Handle other object types by converting to string

@@ -35,6 +35,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for ToggleCommand
@@ -214,7 +215,7 @@ export class ToggleCommand {
       typeof firstArgName === 'string' &&
       this.isSmartElementSelector(firstArgName);
 
-    if (firstValue instanceof HTMLElement || Array.isArray(firstValue) && firstValue.every(el => el instanceof HTMLElement)) {
+    if (isHTMLElement(firstValue) || Array.isArray(firstValue) && firstValue.every(el => isHTMLElement(el))) {
       expressionType = 'element';
     } else if (isBareSmartElementTag) {
       // Bare tag name like "details", "dialog" - use as tag selector
@@ -260,15 +261,15 @@ export class ToggleCommand {
         // Smart element toggle: detect element type and handle accordingly
         let elements: HTMLElement[];
 
-        if (firstValue instanceof HTMLElement) {
-          elements = [firstValue];
-        } else if (Array.isArray(firstValue) && firstValue.every(el => el instanceof HTMLElement)) {
-          elements = firstValue;
+        if (isHTMLElement(firstValue)) {
+          elements = [firstValue as HTMLElement];
+        } else if (Array.isArray(firstValue) && firstValue.every(el => isHTMLElement(el))) {
+          elements = firstValue as HTMLElement[];
         } else if (isBareSmartElementTag && expression) {
           // Bare tag name like "details" - query directly by tag name
           const selected = document.querySelectorAll(expression);
           elements = Array.from(selected).filter(
-            (el): el is HTMLElement => el instanceof HTMLElement
+            (el): el is HTMLElement => isHTMLElement(el)
           );
         } else {
           // Resolve from selector
@@ -463,10 +464,10 @@ export class ToggleCommand {
       if (!context.me) {
         throw new Error('toggle command: no target specified and context.me is null');
       }
-      if (!(context.me instanceof HTMLElement)) {
+      if (!isHTMLElement(context.me)) {
         throw new Error('toggle command: context.me must be an HTMLElement');
       }
-      return [context.me];
+      return [context.me as HTMLElement];
     }
 
     const targets: HTMLElement[] = [];
@@ -474,23 +475,28 @@ export class ToggleCommand {
     for (const arg of filteredArgs) {
       const evaluated = await evaluator.evaluate(arg, context);
 
-      if (evaluated instanceof HTMLElement) {
-        targets.push(evaluated);
+      // Skip empty strings - treat as "no target specified"
+      if (evaluated === '' || (typeof evaluated === 'string' && evaluated.trim() === '')) {
+        continue;
+      }
+
+      if (isHTMLElement(evaluated)) {
+        targets.push(evaluated as HTMLElement);
       } else if (evaluated instanceof NodeList) {
         const elements = Array.from(evaluated).filter(
-          (el): el is HTMLElement => el instanceof HTMLElement
+          (el): el is HTMLElement => isHTMLElement(el)
         );
         targets.push(...elements);
       } else if (Array.isArray(evaluated)) {
         const elements = evaluated.filter(
-          (el): el is HTMLElement => el instanceof HTMLElement
+          (el): el is HTMLElement => isHTMLElement(el)
         );
         targets.push(...elements);
       } else if (typeof evaluated === 'string') {
         try {
           const selected = document.querySelectorAll(evaluated);
           const elements = Array.from(selected).filter(
-            (el): el is HTMLElement => el instanceof HTMLElement
+            (el): el is HTMLElement => isHTMLElement(el)
           );
           targets.push(...elements);
         } catch (error) {
@@ -505,8 +511,15 @@ export class ToggleCommand {
       }
     }
 
+    // If no valid targets found after filtering, default to context.me
     if (targets.length === 0) {
-      throw new Error('toggle command: no valid targets found');
+      if (!context.me) {
+        throw new Error('toggle command: no target specified and context.me is null');
+      }
+      if (!isHTMLElement(context.me)) {
+        throw new Error('toggle command: context.me must be an HTMLElement');
+      }
+      return [context.me as HTMLElement];
     }
 
     return targets;

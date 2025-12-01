@@ -27,6 +27,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for TakeCommand
@@ -207,8 +208,8 @@ export class TakeCommand {
     context: TypedExecutionContext
   ): HTMLElement | null {
     // Handle HTMLElement directly
-    if (element instanceof HTMLElement) {
-      return element;
+    if (isHTMLElement(element)) {
+      return element as HTMLElement;
     }
 
     // Handle string (CSS selector or context reference)
@@ -216,21 +217,21 @@ export class TakeCommand {
       const trimmed = element.trim();
 
       // Handle context references
-      if (trimmed === 'me' && context.me instanceof HTMLElement) {
-        return context.me;
+      if (trimmed === 'me' && isHTMLElement(context.me)) {
+        return context.me as HTMLElement;
       }
-      if (trimmed === 'it' && context.it instanceof HTMLElement) {
-        return context.it;
+      if (trimmed === 'it' && isHTMLElement(context.it)) {
+        return context.it as HTMLElement;
       }
-      if (trimmed === 'you' && context.you instanceof HTMLElement) {
+      if (trimmed === 'you' && isHTMLElement(context.you)) {
         return context.you as HTMLElement;
       }
 
       // Handle CSS selector
       if (typeof document !== 'undefined') {
         const found = document.querySelector(trimmed);
-        if (found instanceof HTMLElement) {
-          return found;
+        if (isHTMLElement(found)) {
+          return found as HTMLElement;
         }
       }
     }

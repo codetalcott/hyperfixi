@@ -28,6 +28,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for BeepCommand
@@ -210,7 +211,7 @@ export class BeepCommand {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
     if (Array.isArray(value)) return 'array';
-    if (value instanceof HTMLElement) return 'HTMLElement';
+    if (isHTMLElement(value)) return 'HTMLElement';
     if (value instanceof Element) return 'Element';
     if (value instanceof Node) return 'Node';
     if (value instanceof Error) return 'Error';
@@ -234,10 +235,11 @@ export class BeepCommand {
       return `Array(${value.length}) [${value.slice(0, 3).map(v => this.getRepresentation(v)).join(', ')}${value.length > 3 ? '...' : ''}]`;
     }
 
-    if (value instanceof HTMLElement) {
-      const tag = value.tagName.toLowerCase();
-      const id = value.id ? `#${value.id}` : '';
-      const classes = value.className ? `.${value.className.split(' ').join('.')}` : '';
+    if (isHTMLElement(value)) {
+      const element = value as HTMLElement;
+      const tag = element.tagName.toLowerCase();
+      const id = element.id ? `#${element.id}` : '';
+      const classes = element.className ? `.${element.className.split(' ').join('.')}` : '';
       return `<${tag}${id}${classes}/>`;
     }
 

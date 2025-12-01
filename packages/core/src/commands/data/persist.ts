@@ -34,6 +34,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for PersistCommand
@@ -436,13 +437,13 @@ export class PersistCommand {
     eventName: string,
     detail: Record<string, any>
   ): void {
-    if (context.me instanceof HTMLElement) {
+    if (isHTMLElement(context.me)) {
       const event = new CustomEvent(eventName, {
         detail,
         bubbles: true,
         cancelable: false,
       });
-      context.me.dispatchEvent(event);
+      (context.me as HTMLElement).dispatchEvent(event);
     }
   }
 }

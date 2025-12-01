@@ -13,6 +13,7 @@
 
 import type { ASTNode, ExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Raw input from RuntimeBase (before evaluation)
@@ -192,8 +193,8 @@ export class MakeCommand {
     constructorArgs: any[],
     context: ExecutionContext
   ): any {
-    if (className instanceof HTMLElement) {
-      return className;
+    if (isHTMLElement(className)) {
+      return className as HTMLElement;
     }
 
     const classNameStr = String(className);

@@ -34,6 +34,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Event options for custom events
@@ -285,20 +286,20 @@ export class SendCommand {
       }
 
       // Handle HTMLElement
-      if (evaluated instanceof HTMLElement) {
-        targets.push(evaluated);
+      if (isHTMLElement(evaluated)) {
+        targets.push(evaluated as HTMLElement);
       }
       // Handle NodeList
       else if (evaluated instanceof NodeList) {
         const elements = Array.from(evaluated).filter(
-          (el): el is HTMLElement => el instanceof HTMLElement
+          (el): el is HTMLElement => isHTMLElement(el)
         );
         targets.push(...elements);
       }
       // Handle Array
       else if (Array.isArray(evaluated)) {
         const elements = evaluated.filter(
-          (el): el is HTMLElement => el instanceof HTMLElement
+          (el): el is HTMLElement => isHTMLElement(el)
         );
         targets.push(...elements);
       }
@@ -307,7 +308,7 @@ export class SendCommand {
         try {
           const selected = document.querySelectorAll(evaluated);
           const elements = Array.from(selected).filter(
-            (el): el is HTMLElement => el instanceof HTMLElement
+            (el): el is HTMLElement => isHTMLElement(el)
           );
 
           if (elements.length === 0) {

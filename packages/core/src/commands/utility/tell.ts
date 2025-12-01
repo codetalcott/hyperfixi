@@ -26,6 +26,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for TellCommand
@@ -179,12 +180,12 @@ export class TellCommand {
   ): HTMLElement[] {
     // Handle array of elements
     if (Array.isArray(target)) {
-      return target.filter((el) => el instanceof HTMLElement);
+      return target.filter((el): el is HTMLElement => isHTMLElement(el));
     }
 
     // Handle single element
-    if (target instanceof HTMLElement) {
-      return [target];
+    if (isHTMLElement(target)) {
+      return [target as HTMLElement];
     }
 
     // Handle CSS selector string
@@ -194,12 +195,12 @@ export class TellCommand {
       }
 
       const elements = document.querySelectorAll(target);
-      return Array.from(elements).filter((el) => el instanceof HTMLElement) as HTMLElement[];
+      return Array.from(elements).filter((el): el is HTMLElement => isHTMLElement(el));
     }
 
     // Handle NodeList
     if (target && typeof target === 'object' && 'length' in target) {
-      return Array.from(target as any).filter((el) => el instanceof HTMLElement);
+      return Array.from(target as any).filter((el): el is HTMLElement => isHTMLElement(el));
     }
 
     return [];

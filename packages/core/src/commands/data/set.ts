@@ -29,6 +29,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types.ts';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator.ts';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for SetCommand (Discriminated Union)
@@ -167,7 +168,7 @@ export class SetCommand {
         element = element[0];
       }
 
-      if (!(element instanceof HTMLElement)) {
+      if (!isHTMLElement(element)) {
         throw new Error('set command: possessive object must resolve to an HTMLElement');
       }
 
@@ -388,15 +389,15 @@ export class SetCommand {
       if (typeof varInput.name !== 'string' || varInput.name.length === 0) return false;
     } else if (typed.type === 'attribute') {
       const attrInput = input as Partial<{ type: 'attribute'; element: unknown; name: string; value: unknown }>;
-      if (!(attrInput.element instanceof HTMLElement)) return false;
+      if (!isHTMLElement(attrInput.element)) return false;
       if (typeof attrInput.name !== 'string' || attrInput.name.length === 0) return false;
     } else if (typed.type === 'property') {
       const propInput = input as Partial<{ type: 'property'; element: unknown; property: string; value: unknown }>;
-      if (!(propInput.element instanceof HTMLElement)) return false;
+      if (!isHTMLElement(propInput.element)) return false;
       if (typeof propInput.property !== 'string' || propInput.property.length === 0) return false;
     } else if (typed.type === 'style') {
       const styleInput = input as Partial<{ type: 'style'; element: unknown; property: string; value: unknown }>;
-      if (!(styleInput.element instanceof HTMLElement)) return false;
+      if (!isHTMLElement(styleInput.element)) return false;
       if (typeof styleInput.property !== 'string' || styleInput.property.length === 0) return false;
       if (typeof styleInput.value !== 'string') return false;
     } else if (typed.type === 'object-literal') {
@@ -404,7 +405,7 @@ export class SetCommand {
       if (typeof objInput.properties !== 'object' || objInput.properties === null) return false;
       if (!Array.isArray(objInput.targets)) return false;
       if (objInput.targets.length === 0) return false;
-      if (!objInput.targets.every(t => t instanceof HTMLElement)) return false;
+      if (!objInput.targets.every(t => isHTMLElement(t))) return false;
     }
 
     return true;
@@ -421,7 +422,7 @@ export class SetCommand {
   private isPlainObject(value: unknown): boolean {
     if (typeof value !== 'object' || value === null) return false;
     if (Array.isArray(value)) return false;
-    if (value instanceof HTMLElement) return false;
+    if (isHTMLElement(value)) return false;
     if (value instanceof Node) return false;
     // Check if it's a plain object (not a class instance)
     const proto = Object.getPrototypeOf(value);
@@ -481,15 +482,15 @@ export class SetCommand {
     if (!onModifier) {
       // Default to context.me
       if (!context.me) throw new Error('No element context available');
-      if (!(context.me instanceof HTMLElement)) throw new Error('context.me is not an HTMLElement');
-      return context.me;
+      if (!isHTMLElement(context.me)) throw new Error('context.me is not an HTMLElement');
+      return context.me as HTMLElement;
     }
 
     const evaluated = await evaluator.evaluate(onModifier, context);
-    if (!(evaluated instanceof HTMLElement)) {
+    if (!isHTMLElement(evaluated)) {
       throw new Error('Target element must be an HTMLElement');
     }
-    return evaluated;
+    return evaluated as HTMLElement;
   }
 
   /**
@@ -508,20 +509,20 @@ export class SetCommand {
     if (!onModifier) {
       // Default to context.me
       if (!context.me) throw new Error('No element context available');
-      if (!(context.me instanceof HTMLElement)) throw new Error('context.me is not an HTMLElement');
-      return [context.me];
+      if (!isHTMLElement(context.me)) throw new Error('context.me is not an HTMLElement');
+      return [context.me as HTMLElement];
     }
 
     const evaluated = await evaluator.evaluate(onModifier, context);
 
-    if (evaluated instanceof HTMLElement) {
-      return [evaluated];
+    if (isHTMLElement(evaluated)) {
+      return [evaluated as HTMLElement];
     }
     if (evaluated instanceof NodeList) {
-      return Array.from(evaluated).filter((el): el is HTMLElement => el instanceof HTMLElement);
+      return Array.from(evaluated).filter((el): el is HTMLElement => isHTMLElement(el));
     }
     if (Array.isArray(evaluated)) {
-      return evaluated.filter((el): el is HTMLElement => el instanceof HTMLElement);
+      return evaluated.filter((el): el is HTMLElement => isHTMLElement(el));
     }
 
     throw new Error('Target must be an HTMLElement, NodeList, or array');
@@ -554,22 +555,22 @@ export class SetCommand {
     // For now, simple implementation - could be enhanced to parse target as AST node
     let element: HTMLElement;
     if (targetExpr === 'me') {
-      if (!context.me || !(context.me instanceof HTMLElement)) {
+      if (!context.me || !isHTMLElement(context.me)) {
         throw new Error('No "me" element in context');
       }
-      element = context.me;
+      element = context.me as HTMLElement;
     } else if (targetExpr === 'it') {
-      if (!context.it || !(context.it instanceof HTMLElement)) {
+      if (!context.it || !isHTMLElement(context.it)) {
         throw new Error('No "it" element in context');
       }
-      element = context.it;
+      element = context.it as HTMLElement;
     } else {
       // Try to query as CSS selector
       const queried = document.querySelector(targetExpr);
-      if (!(queried instanceof HTMLElement)) {
+      if (!isHTMLElement(queried)) {
         throw new Error(`Cannot find element: ${targetExpr}`);
       }
-      element = queried;
+      element = queried as HTMLElement;
     }
 
     const value = await this.extractValue(raw, evaluator, context);
@@ -599,20 +600,20 @@ export class SetCommand {
       case 'my':
       case 'me':
         if (!context.me) throw new Error('No "me" element in context');
-        if (!(context.me instanceof HTMLElement)) throw new Error('context.me is not an HTMLElement');
-        return context.me;
+        if (!isHTMLElement(context.me)) throw new Error('context.me is not an HTMLElement');
+        return context.me as HTMLElement;
 
       case 'its':
       case 'it':
         if (!context.it) throw new Error('No "it" value in context');
-        if (!(context.it instanceof HTMLElement)) throw new Error('context.it is not an HTMLElement');
-        return context.it;
+        if (!isHTMLElement(context.it)) throw new Error('context.it is not an HTMLElement');
+        return context.it as HTMLElement;
 
       case 'your':
       case 'you':
         if (!context.you) throw new Error('No "you" element in context');
-        if (!(context.you instanceof HTMLElement)) throw new Error('context.you is not an HTMLElement');
-        return context.you;
+        if (!isHTMLElement(context.you)) throw new Error('context.you is not an HTMLElement');
+        return context.you as HTMLElement;
 
       default:
         throw new Error(`Unknown possessive: ${possessive}`);

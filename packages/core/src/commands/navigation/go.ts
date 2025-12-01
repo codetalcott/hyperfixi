@@ -12,6 +12,7 @@
 
 import type { ASTNode, ExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Raw input from RuntimeBase (before evaluation)
@@ -475,18 +476,18 @@ export class GoCommand {
     }
 
     // Handle context references
-    if (target === 'me' && context.me instanceof HTMLElement) {
-      return context.me;
-    } else if (target === 'it' && context.it instanceof HTMLElement) {
-      return context.it;
-    } else if (target === 'you' && context.you instanceof HTMLElement) {
+    if (target === 'me' && isHTMLElement(context.me)) {
+      return context.me as HTMLElement;
+    } else if (target === 'it' && isHTMLElement(context.it)) {
+      return context.it as HTMLElement;
+    } else if (target === 'you' && isHTMLElement(context.you)) {
       return context.you as HTMLElement;
     }
 
     // Handle variable references
     const variable = this.getVariableValue(String(target), context);
-    if (variable instanceof HTMLElement) {
-      return variable;
+    if (isHTMLElement(variable)) {
+      return variable as HTMLElement;
     }
 
     // Handle CSS selectors and tag names

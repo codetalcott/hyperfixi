@@ -26,6 +26,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { isHTMLElement } from '../../utils/element-check';
 
 /**
  * Typed input for DefaultCommand
@@ -149,8 +150,8 @@ export class DefaultCommand {
     }
 
     // Handle HTML element
-    if (target instanceof HTMLElement) {
-      return this.defaultElementValue(context, target, value);
+    if (isHTMLElement(target)) {
+      return this.defaultElementValue(context, target as HTMLElement, value);
     }
 
     throw new Error(`Invalid target type: ${typeof target}`);
@@ -270,8 +271,8 @@ export class DefaultCommand {
         break;
       case 'its':
       case 'it':
-        if (!(context.it instanceof HTMLElement)) throw new Error('Context "it" is not an element');
-        targetElement = context.it;
+        if (!isHTMLElement(context.it)) throw new Error('Context "it" is not an element');
+        targetElement = context.it as HTMLElement;
         break;
       case 'your':
       case 'you':
@@ -354,7 +355,7 @@ export class DefaultCommand {
    */
   private asHTMLElement(element: Element | null | undefined): HTMLElement | null {
     if (!element) return null;
-    if (element instanceof HTMLElement) return element;
+    if (isHTMLElement(element)) return element as HTMLElement;
     return null;
   }
 
