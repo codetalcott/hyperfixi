@@ -110,19 +110,5 @@ describe('Exponentiation Operators - TDD Fix', () => {
     });
   });
 
-  describe('Current Behavior Documentation', () => {
-    it('documents current ^ operator parsing failure', async () => {
-      // Currently fails with "Unexpected token: ^"
-      await expect(parseAndEvaluateExpression('2 ^ 3', context)).rejects.toThrow(
-        /Unexpected token.*\^/
-      );
-    });
-
-    it('documents current ** operator parsing failure', async () => {
-      // Currently fails with "Unexpected token: *"
-      await expect(parseAndEvaluateExpression('2 ** 3', context)).rejects.toThrow(
-        /Unexpected token.*\*/
-      );
-    });
-  });
+  // Note: "Current Behavior Documentation" tests removed - exponentiation operators now work correctly
 });

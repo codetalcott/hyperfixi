@@ -10,12 +10,12 @@ This document outlines the strategy for resolving remaining test failures in the
 | Existence Operators | ~~7~~ 0 | ✅ COMPLETE | Fixed `no` operator |
 | Expression Property Access | ~~15~~ 0 | ✅ COMPLETE | Fixed type casing |
 | Tokenizer Classification | ~~2~~ 0 | ✅ COMPLETE | Updated expectations |
-| Precedence/Operators | 8 | Pending | Medium priority |
+| Precedence/Operators | ~~8~~ 0 | ✅ COMPLETE | Fixed comparison eval args |
 | CSS Selectors/Queries | 6 | Pending | Medium priority |
 | Template Interpolation | 3 | Pending | Low priority |
 | Null Coalescing | 2 | Pending | Low priority |
-| Runtime Evaluator | 4 | Pending | Medium priority |
-| **TOTAL** | **~44** | - | ~24 fixed this session |
+| Runtime Evaluator | ~~4~~ 0 | ✅ COMPLETE | Fixed extractValue + await |
+| **TOTAL** | **~30** | - | ~38 fixed across sessions |
 
 ---
 
@@ -68,32 +68,31 @@ This document outlines the strategy for resolving remaining test failures in the
 
 ---
 
-## Phase 3: Operator Precedence (Est. 2-3 hours)
+## ✅ COMPLETED: Phase 3 Operator Precedence
 
-### 3.1 Fix Mixed Math + Comparison Precedence
+### 3.1 Fix Comparison Operator Evaluation - DONE
 **Files**:
-- `src/parser/precedence-fix.test.ts`
-- `src/parser/exponentiation-fix.test.ts`
+- `src/parser/expression-parser.ts` (lines 1456-1486)
+- `src/parser/exponentiation-fix.test.ts` (removed outdated tests)
 
-**Failures**: ~8
+**Issue**: Comparison operators were passed `{ left, right }` as single object instead of separate args
 
-**Issue**: Expressions like `2 + 3 > 4` or `2 + 3 * 4 > 10` evaluate incorrectly
+**Changes Made**:
+1. Changed `logicalExpressions.greaterThan.evaluate(context, { left, right })` to `...evaluate(context, left, right)`
+2. Fixed all comparison operators: `>`, `<`, `>=`, `<=`, `==`, `!=`
+3. Removed outdated "Current Behavior Documentation" tests that expected failures for working exponentiation
 
-**Required Fixes**:
-1. Ensure math operators (`+`, `-`, `*`, `/`) bind tighter than comparison (`>`, `<`, `>=`, `<=`)
-2. Implement exponentiation operator (`^` or `**`)
+### 3.2 Fix Runtime Evaluator - DONE
+**File**: `src/parser/runtime.ts`
 
-**Location**: `src/parser/expression-parser.ts` - precedence climbing algorithm
+**Issues**:
+1. Mathematical expressions returned TypedResult objects but values weren't extracted
+2. Reference expression evaluations weren't awaited (async functions)
 
-### 3.2 Fix Comparison Type Coercion
-**File**: `src/expressions/comparison-operators-fix.test.ts`
-**Failures**: 3
-
-**Issue**: `==` (loose equality) not performing type coercion
-
-**Tests Failing**:
-- `"1" == 1` should be `true` (string/number coercion)
-- Boolean coercion edge cases
+**Changes Made**:
+1. Added `extractValue()` helper function to extract `.value` from TypedResult objects
+2. Wrapped all `specialExpressions` calls with `extractValue()`
+3. Added `await` to all `referencesExpressions` calls (me, you, it, window, document)
 
 ---
 

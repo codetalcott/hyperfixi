@@ -1457,12 +1457,12 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     case 'equals':
     case '==':
       return await extractValue(
-        logicalExpressions.equals.evaluate(toTypedContext(context), { left, right })
+        logicalExpressions.equals.evaluate(toTypedContext(context), left, right)
       );
     case 'is not':
     case '!=':
       return await extractValue(
-        logicalExpressions.notEquals.evaluate(toTypedContext(context), { left, right })
+        logicalExpressions.notEquals.evaluate(toTypedContext(context), left, right)
       );
     case '===':
       return left === right;
@@ -1470,19 +1470,19 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
       return left !== right;
     case '>':
       return await extractValue(
-        logicalExpressions.greaterThan.evaluate(toTypedContext(context), { left, right })
+        logicalExpressions.greaterThan.evaluate(toTypedContext(context), left, right)
       );
     case '<':
       return await extractValue(
-        logicalExpressions.lessThan.evaluate(toTypedContext(context), { left, right })
+        logicalExpressions.lessThan.evaluate(toTypedContext(context), left, right)
       );
     case '>=':
       return await extractValue(
-        logicalExpressions.greaterThanOrEqual.evaluate(toTypedContext(context), { left, right })
+        logicalExpressions.greaterThanOrEqual.evaluate(toTypedContext(context), left, right)
       );
     case '<=':
       return await extractValue(
-        logicalExpressions.lessThanOrEqual.evaluate(toTypedContext(context), { left, right })
+        logicalExpressions.lessThanOrEqual.evaluate(toTypedContext(context), left, right)
       );
     case '+':
       return evaluateAddition(left, right);

@@ -20,6 +20,32 @@ const specialExpressions = {
   ...mathematicalExpressions,
 };
 
+/**
+ * Helper to extract value from TypedResult objects
+ * Mathematical expressions return { success: true, value: X } format
+ */
+async function extractValue(result: any): Promise<any> {
+  // If it's a Promise, await it first
+  if (result && typeof result.then === 'function') {
+    result = await result;
+  }
+
+  // If it's a TypedResult object, extract the value
+  if (result && typeof result === 'object' && 'success' in result && 'value' in result) {
+    if (result.success) {
+      return result.value;
+    } else {
+      // If the result failed, throw an error
+      const errors = result.errors || [];
+      const errorMessage = errors.length > 0 ? errors[0].message : 'Expression evaluation failed';
+      throw new Error(errorMessage);
+    }
+  }
+
+  // Otherwise, return the result as-is
+  return result;
+}
+
 // ============================================================================
 // Performance Optimizations
 // ============================================================================
@@ -147,15 +173,15 @@ async function evaluateIdentifier(node: any, context: ExecutionContext): Promise
   // Handle context variables using Phase 3 reference expressions
   // Note: 'I' is a _hyperscript alias for 'me' (case-sensitive to avoid conflict with loop var 'i')
   if (name === 'me' || name === 'I') {
-    value = referencesExpressions.me.evaluate(context);
+    value = await referencesExpressions.me.evaluate(context);
   } else if (name === 'you') {
-    value = referencesExpressions.you.evaluate(context);
+    value = await referencesExpressions.you.evaluate(context);
   } else if (name === 'it') {
-    value = referencesExpressions.it.evaluate(context);
+    value = await referencesExpressions.it.evaluate(context);
   } else if (name === 'window') {
-    value = referencesExpressions.window.evaluate(context);
+    value = await referencesExpressions.window.evaluate(context);
   } else if (name === 'document') {
-    value = referencesExpressions.document.evaluate(context);
+    value = await referencesExpressions.document.evaluate(context);
   } else if (context.locals && context.locals.has(name)) {
     // Check if identifier exists in context scope
     value = context.locals.get(name);
@@ -205,16 +231,16 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
   // Delegate to Phase 3 expression system based on operator
   switch (operator) {
     case '+':
-      return specialExpressions.addition.evaluate(context as any, { left, right });
+      return extractValue(specialExpressions.addition.evaluate(context as any, { left, right }));
     case '-':
-      return specialExpressions.subtraction.evaluate(context as any, { left, right });
+      return extractValue(specialExpressions.subtraction.evaluate(context as any, { left, right }));
     case '*':
-      return specialExpressions.multiplication.evaluate(context as any, { left, right });
+      return extractValue(specialExpressions.multiplication.evaluate(context as any, { left, right }));
     case '/':
-      return specialExpressions.division.evaluate(context as any, { left, right });
+      return extractValue(specialExpressions.division.evaluate(context as any, { left, right }));
     case '%':
     case 'mod':
-      return specialExpressions.modulo.evaluate(context as any, { left, right });
+      return extractValue(specialExpressions.modulo.evaluate(context as any, { left, right }));
 
     case '>':
       return logicalExpressions.greaterThan.evaluate(context, left, right);
