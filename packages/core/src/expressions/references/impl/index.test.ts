@@ -314,7 +314,8 @@ describe('Enhanced Reference Expressions', () => {
       const invalidInput = { selector: '', single: false };
       const invalidResult = selectorExpression.validate(invalidInput);
       expect(invalidResult.isValid).toBe(false);
-      expect(invalidResult.errors[0].message).toContain('cannot be empty');
+      // Zod returns "String must be at least 1 character" for min(1) validation
+      expect(invalidResult.errors[0].message).toMatch(/cannot be empty|at least 1 character/);
 
       const wrongTypeInput = { selector: 123, single: false };
       const wrongTypeResult = selectorExpression.validate(wrongTypeInput);
