@@ -1790,11 +1790,10 @@ async function evaluateQueryReference(node: any, _context: ExecutionContext): Pr
   const selector = node.selector;
 
   // Remove the < and /> wrapper to get the actual selector
-  let cleanSelector = selector.slice(1, -2); // Remove '<' and '/>'
+  const cleanSelector = selector.slice(1, -2); // Remove '<' and '/>'
 
-  // Escape special characters in CSS selectors (like colons)
-  // This is needed for selectors like <.foo:bar/>
-  cleanSelector = cleanSelector.replace(/:/g, '\\:');
+  // Note: Do NOT escape colons - they are valid in CSS pseudo-classes like :not(), :first-child
+  // The previous code escaped all colons which broke standard CSS selectors
 
   // Query references ALWAYS return NodeList (not arrays)
   // This is the key difference from other CSS selector expressions

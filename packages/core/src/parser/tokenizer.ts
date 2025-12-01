@@ -1165,6 +1165,7 @@ function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
     }
 
     // If we find content that looks like selector syntax
+    // Note: CSS attribute selectors use operators like *=, ^=, $=, ~=, |=
     if (
       isAlphaNumeric(char) ||
       char === '.' ||
@@ -1179,7 +1180,15 @@ function looksLikeQueryReference(tokenizer: Tokenizer): boolean {
       char === '"' ||
       char === "'" ||
       char === '(' ||
-      char === ')'
+      char === ')' ||
+      char === '*' || // For [attr*="value"]
+      char === '^' || // For [attr^="value"]
+      char === '$' || // For [attr$="value"]
+      char === '~' || // For [attr~="value"]
+      char === '|' || // For [attr|="value"]
+      char === '>' || // For child combinator
+      char === '+' || // For adjacent sibling combinator
+      char === ',' // For multiple selectors
     ) {
       foundValidContent = true;
       pos++;
