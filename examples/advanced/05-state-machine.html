@@ -326,8 +326,8 @@
                         timestamp: new Date().toLocaleTimeString(),
                         action: 'Initialized'
                       })
-                      call updateHistory()
-                      call updateUI()
+                      send updateHistory
+                      send updateUI
                     end
 
                     -- Helper to add history entry
@@ -337,7 +337,7 @@
                         timestamp: new Date().toLocaleTimeString(),
                         action: action
                       })
-                      call updateHistory()
+                      send updateHistory
                     end
 
                     -- Helper to update history display
@@ -358,18 +358,24 @@
                       for box in .state-box
                         remove .active from box
                       end
-                      add .active to #state-{:state}
+                      -- Dynamic selector: get element by id using state variable
+                      call document.getElementById('state-' + :state)
+                      add .active to it
 
-                      -- Update current state display
-                      set stateNames to {
-                        cart: 'Shopping Cart',
-                        checkout: 'Checkout',
-                        payment: 'Payment',
-                        processing: 'Processing',
-                        completed: 'Completed',
-                        cancelled: 'Cancelled'
-                      }
-                      put stateNames[:state] into #current-state
+                      -- Update current state display using if/else for state names
+                      if :state is 'cart'
+                        put 'Shopping Cart' into #current-state
+                      else if :state is 'checkout'
+                        put 'Checkout' into #current-state
+                      else if :state is 'payment'
+                        put 'Payment' into #current-state
+                      else if :state is 'processing'
+                        put 'Processing' into #current-state
+                      else if :state is 'completed'
+                        put 'Completed' into #current-state
+                      else if :state is 'cancelled'
+                        put 'Cancelled' into #current-state
+                      end
 
                       -- Enable/disable buttons based on state
                       if :state is 'cart'

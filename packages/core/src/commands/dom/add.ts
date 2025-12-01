@@ -446,8 +446,11 @@ export class AddCommand {
     for (const arg of filteredArgs) {
       const evaluated = await evaluator.evaluate(arg, context);
 
-      if (evaluated instanceof HTMLElement) {
-        targets.push(evaluated);
+      // Check for HTMLElement - use duck typing for cross-realm compatibility
+      if (evaluated instanceof HTMLElement ||
+          (evaluated && typeof evaluated === 'object' &&
+           'classList' in evaluated && 'tagName' in evaluated)) {
+        targets.push(evaluated as HTMLElement);
       } else if (evaluated instanceof NodeList) {
         const elements = Array.from(evaluated).filter(
           (el): el is HTMLElement => el instanceof HTMLElement

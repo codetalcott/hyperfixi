@@ -248,17 +248,59 @@ export class RuntimeBase {
 
     let lastResult: unknown = undefined;
 
+    // Separate statements into categories for proper execution order
+    // Event handlers MUST be registered before init blocks run
+    // This ensures that events sent during init are properly received
+    const eventHandlers: any[] = [];
+    const initBlocks: any[] = [];
+    const otherStatements: any[] = [];
+
     for (const statement of node.statements) {
+      if (statement.type === 'eventHandler') {
+        eventHandlers.push(statement);
+      } else if (statement.type === 'initBlock') {
+        initBlocks.push(statement);
+      } else {
+        otherStatements.push(statement);
+      }
+    }
+
+    // Phase 1: Register all event handlers first
+    for (const handler of eventHandlers) {
       try {
-        lastResult = await this.execute(statement, context);
+        await this.execute(handler, context);
       } catch (error) {
-        // Propagate Halt/Return/Exit signals up
         if (error instanceof Error && ((error as any).isHalt || (error as any).isExit)) {
            break;
         }
         throw error;
       }
     }
+
+    // Phase 2: Execute init blocks (now handlers are registered)
+    for (const init of initBlocks) {
+      try {
+        lastResult = await this.execute(init, context);
+      } catch (error) {
+        if (error instanceof Error && ((error as any).isHalt || (error as any).isExit)) {
+           break;
+        }
+        throw error;
+      }
+    }
+
+    // Phase 3: Execute other statements
+    for (const statement of otherStatements) {
+      try {
+        lastResult = await this.execute(statement, context);
+      } catch (error) {
+        if (error instanceof Error && ((error as any).isHalt || (error as any).isExit)) {
+           break;
+        }
+        throw error;
+      }
+    }
+
     return lastResult;
   }
 
