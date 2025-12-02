@@ -919,7 +919,7 @@ export {
   EnhancedAndExpression,
   EnhancedOrExpression,
   EnhancedNotExpression,
-  createEnhancedAndExpression,
-  createEnhancedOrExpression,
-  createEnhancedNotExpression,
+  createAndExpression,
+  createOrExpression,
+  createNotExpression,
 } from './impl/index';

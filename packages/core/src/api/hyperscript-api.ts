@@ -47,28 +47,41 @@ export interface HyperscriptAPI {
 }
 
 // ============================================================================
-// Internal Runtime Instance
+// Internal Runtime Instance (Lazy Initialization)
 // ============================================================================
 
-// Browser runtime uses eager loading for maximum compatibility
-// Lazy loading causes race conditions since preloading is async but constructor is sync
-const defaultRuntime = new Runtime({
-  lazyLoad: false, // Eager load all expressions synchronously
-});
+// Lazy initialization to avoid loading all 43 commands at import time
+// Runtime is only created when first API call is made
+let _defaultRuntime: Runtime | null = null;
 
-// Expose default runtime globally for behavior registration/lookup
-// This allows behaviors defined in <script type="text/hyperscript"> to be found by install command
-if (typeof globalThis !== 'undefined') {
-  (globalThis as any)._hyperscript = (globalThis as any)._hyperscript || {};
-  (globalThis as any)._hyperscript.runtime = defaultRuntime;
-  // Create a behaviors object with both Map-like has() and install() methods
-  (globalThis as any)._hyperscript.behaviors = {
-    has: (name: string) => defaultRuntime.behaviorRegistry.has(name),
-    get: (name: string) => defaultRuntime.behaviorRegistry.get(name),
-    install: async (name: string, element: HTMLElement, params: Record<string, any>) => {
-      return await (defaultRuntime as any).installBehaviorOnElement(name, element, params);
-    },
-  };
+/**
+ * Get the default runtime instance, creating it lazily if needed
+ * This defers command registration until actual usage
+ */
+function getDefaultRuntime(): Runtime {
+  if (!_defaultRuntime) {
+    // Browser runtime uses eager loading for maximum compatibility
+    // Lazy loading causes race conditions since preloading is async but constructor is sync
+    _defaultRuntime = new Runtime({
+      lazyLoad: false, // Eager load all expressions synchronously
+    });
+
+    // Expose default runtime globally for behavior registration/lookup
+    // This allows behaviors defined in <script type="text/hyperscript"> to be found by install command
+    if (typeof globalThis !== 'undefined') {
+      (globalThis as any)._hyperscript = (globalThis as any)._hyperscript || {};
+      (globalThis as any)._hyperscript.runtime = _defaultRuntime;
+      // Create a behaviors object with both Map-like has() and install() methods
+      (globalThis as any)._hyperscript.behaviors = {
+        has: (name: string) => _defaultRuntime!.behaviorRegistry.has(name),
+        get: (name: string) => _defaultRuntime!.behaviorRegistry.get(name),
+        install: async (name: string, element: HTMLElement, params: Record<string, any>) => {
+          return await (_defaultRuntime as any).installBehaviorOnElement(name, element, params);
+        },
+      };
+    }
+  }
+  return _defaultRuntime;
 }
 
 // ============================================================================
@@ -229,7 +242,7 @@ async function execute(ast: ASTNode, context?: ExecutionContext): Promise<unknow
   }
 
   const executionContext = context || createContext();
-  return await defaultRuntime.execute(ast, executionContext);
+  return await getDefaultRuntime().execute(ast, executionContext);
 }
 
 /**
@@ -297,24 +310,24 @@ async function executeWithCompatibility(
   // Pattern 2: Direct commands (hide me, show #element, toggle .class, etc.)
   if (isDirectCommandPattern(originalCode)) {
     debug.runtime('Detected direct command pattern');
-    return await defaultRuntime.execute(ast, context);
+    return await getDefaultRuntime().execute(ast, context);
   }
 
   // Pattern 3: Expression evaluation (5 + 3, my.value, etc.)
   if (isExpressionPattern(originalCode)) {
     debug.runtime('Detected expression pattern');
-    return await defaultRuntime.execute(ast, context);
+    return await getDefaultRuntime().execute(ast, context);
   }
 
   // Pattern 4: Complex hyperscript (if/then, fetch, etc.)
   if (isComplexPattern(originalCode)) {
     debug.runtime('Detected complex hyperscript pattern');
-    return await defaultRuntime.execute(ast, context);
+    return await getDefaultRuntime().execute(ast, context);
   }
 
   // Default: Execute normally
   debug.runtime('Using default execution');
-  return await defaultRuntime.execute(ast, context);
+  return await getDefaultRuntime().execute(ast, context);
 }
 
 /**
@@ -380,7 +393,7 @@ async function handleEventHandlerPattern(
       debug.event('Setting up event handler on element:', context.me);
 
       // Process the event handler AST to set up listeners
-      await defaultRuntime.execute(ast, context);
+      await getDefaultRuntime().execute(ast, context);
 
       // Event handlers return undefined (they set up listeners)
       return undefined;
@@ -388,7 +401,7 @@ async function handleEventHandlerPattern(
 
     // If no element context, this might be a standalone evaluation
     // Execute normally and let the runtime handle it
-    return await defaultRuntime.execute(ast, context);
+    return await getDefaultRuntime().execute(ast, context);
   } catch (error) {
     console.error('❌ Error in event handler setup:', error);
     throw error;
@@ -667,7 +680,7 @@ function extractEventInfo(ast: ASTNode): { eventType: string; body: ASTNode } | 
  */
 async function executeHyperscriptAST(ast: ASTNode, context: ExecutionContext): Promise<unknown> {
   try {
-    return await defaultRuntime.execute(ast, context);
+    return await getDefaultRuntime().execute(ast, context);
   } catch (error) {
     console.error('Error executing hyperscript AST:', error);
     throw error;

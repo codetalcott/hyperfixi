@@ -10,7 +10,7 @@
 import { v, z } from '../../validation/lightweight-validators';
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 import { IfDirective } from './directives/if-directive';
 import { ElseDirective } from './directives/else-directive';
 import { RepeatDirective } from './directives/repeat-directive';
@@ -83,14 +83,14 @@ export class RenderCommand
   private readonly repeatDirective = new RepeatDirective();
 
   public readonly validation = {
-    validate: (input: unknown): UnifiedValidationResult<RenderCommandInput> =>
+    validate: (input: unknown): ValidationResult<RenderCommandInput> =>
       this.validateInput(input),
   };
 
   /**
    * Validate input using Zod schema
    */
-  validateInput(input: unknown): UnifiedValidationResult<RenderCommandInput> {
+  validateInput(input: unknown): ValidationResult<RenderCommandInput> {
     try {
       const result = RenderCommandInputSchema.safeParse(input);
 

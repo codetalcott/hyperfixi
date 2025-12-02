@@ -276,23 +276,31 @@ export type TypedResult<T = unknown> =
 
 /**
  * Expression metadata for documentation and tooling
+ * Only category and complexity are required for runtime; rest is for tooling/docs
  */
 export interface ExpressionMetadata {
   readonly category: string;
   readonly complexity: 'simple' | 'medium' | 'complex';
-  readonly sideEffects: string[];
-  readonly dependencies: string[];
-  readonly returnTypes: EvaluationType[];
-  readonly examples: Array<{
+  // Optional documentation fields (stripped from production bundle)
+  readonly sideEffects?: string[];
+  readonly dependencies?: string[];
+  readonly returnTypes?: EvaluationType[];
+  readonly examples?: Array<{
     input: string;
     description: string;
     expectedOutput: unknown;
     context?: Record<string, unknown>;
   }>;
-  readonly relatedExpressions: string[];
-  readonly performance: {
+  readonly relatedExpressions?: string[];
+  readonly performance?: {
     averageTime: number;
     complexity: string;
+  };
+  // Environment requirements for runtime introspection
+  readonly environmentRequirements?: {
+    browser?: boolean;
+    server?: boolean;
+    dom?: boolean;
   };
 }
 
@@ -335,7 +343,8 @@ export interface BaseTypedExpression<T = unknown> {
   readonly outputType: EvaluationType;
   readonly inputSchema: RuntimeValidator;
   readonly metadata: ExpressionMetadata;
-  readonly documentation: LLMDocumentation;
+  readonly documentation?: LLMDocumentation; // Optional - for tooling only
+  readonly description?: string; // Optional short description
 
   evaluate(context: TypedExecutionContext, input: unknown): Promise<EvaluationResult<T>>;
   validate(input: unknown): ValidationResult;
@@ -377,7 +386,7 @@ export interface BaseTypedFeature<TInput = unknown, TOutput = unknown> {
   readonly inputSchema: RuntimeValidator<TInput>;
   readonly outputType: EvaluationType;
   readonly metadata: FeatureMetadata;
-  readonly documentation: LLMDocumentation;
+  readonly documentation?: LLMDocumentation; // Optional
 
   initialize(context: TypedExecutionContext): Promise<TypedResult<void>>;
   execute(context: TypedExecutionContext, input: TInput): Promise<TypedResult<TOutput>>;

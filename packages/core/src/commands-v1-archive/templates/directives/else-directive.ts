@@ -14,13 +14,13 @@ import type {
 } from '../../../types/template-types';
 import { ElseDirectiveInputSchema } from '../../../types/template-types';
 import type { EvaluationResult, ExpressionMetadata } from '../../../types/base-types';
-import type { UnifiedValidationResult, UnifiedValidationError } from '../../../types/unified-types';
+import type { ValidationResult, ValidationError } from '../../../types/unified-types';
 import { TemplateContextUtils } from '../template-context';
 
 /**
  * Enhanced @else directive with full type safety for LLM agents
  */
-export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInput, string> {
+export class ElseDirective implements TemplateDirective<ElseDirectiveInput, string> {
   public readonly name = '@else' as const;
   public readonly category = 'Template';
   public readonly syntax = '@else';
@@ -268,7 +268,7 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
   /**
    * Validate input according to schema
    */
-  validate(input: unknown): UnifiedValidationResult {
+  validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
 
@@ -333,8 +333,8 @@ export class ElseDirective implements EnhancedTemplateDirective<ElseDirectiveInp
   validateTemplateContext(
     context: TemplateExecutionContext,
     _input: ElseDirectiveInput
-  ): UnifiedValidationResult {
-    const errors: UnifiedValidationError[] = [];
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
 
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {

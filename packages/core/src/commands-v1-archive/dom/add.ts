@@ -13,7 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types.ts';
+import type { ValidationResult } from '../../types/unified-types.ts';
 import { resolveTargets } from '../../utils/dom-utils.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { debug } from '../../utils/debug';
@@ -553,7 +553,7 @@ export class AddCommand
     return cssClassNameRegex.test(className.trim());
   }
 
-  validate(args: unknown[]): UnifiedValidationResult {
+  validate(args: unknown[]): ValidationResult {
     try {
       // Schema validation
       const parsed = AddCommandInputSchema.safeParse(args);

@@ -1,5 +1,5 @@
 /**
- * Enhanced Mathematical Expressions - Deep TypeScript Integration
+ * Mathematical Expressions - Deep TypeScript Integration
  * Implements arithmetic operations (+, -, *, /, mod) with comprehensive validation
  * Enhanced for LLM code agents with full type safety
  */
@@ -8,11 +8,11 @@ import { v } from '../../validation/lightweight-validators';
 import type {
   ValidationResult,
   TypedExecutionContext as TypedExpressionContext,
-  UnifiedEvaluationType as EvaluationType,
-  UnifiedExpressionMetadata as ExpressionMetadata,
-  UnifiedTypedResult as TypedResult,
-  UnifiedLLMDocumentation as LLMDocumentation,
-  UnifiedExpressionCategory as ExpressionCategory,
+  EvaluationType as EvaluationType,
+  ExpressionMetadata as ExpressionMetadata,
+  TypedResult as TypedResult,
+  LLMDocumentation as LLMDocumentation,
+  ExpressionCategory as ExpressionCategory,
 } from '../../types/index';
 
 // Define BaseTypedExpression locally for now
@@ -40,10 +40,10 @@ const BinaryOperationInputSchema = v.object({
 type BinaryOperationInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced Addition Expression
+// Addition Expression
 // ============================================================================
 
-export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
+export class AdditionExpression implements BaseTypedExpression<number> {
   public readonly name = 'addition';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left + right';
@@ -54,91 +54,9 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['number'],
-    examples: [
-      {
-        input: '5 + 3',
-        description: 'Add two numbers',
-        expectedOutput: 8,
-      },
-      {
-        input: '"10" + "20"',
-        description: 'Add numeric strings (auto-converted)',
-        expectedOutput: 30,
-      },
-      {
-        input: 'price + tax',
-        description: 'Add variables containing numbers',
-        expectedOutput: 125.5,
-        context: {
-          locals: new Map([
-            ['price', 100],
-            ['tax', 25.5],
-          ]),
-        },
-      },
-    ],
-    relatedExpressions: ['subtraction', 'multiplication', 'division', 'modulo'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Performs mathematical addition of two numeric values with automatic type conversion',
-    parameters: [
-      {
-        name: 'left',
-        type: 'number',
-        description: 'Left operand - number or numeric string',
-        optional: false,
-        examples: ['5', '"10"', 'price', 'count + 1'],
-      },
-      {
-        name: 'right',
-        type: 'number',
-        description: 'Right operand - number or numeric string',
-        optional: false,
-        examples: ['3', '"20"', 'tax', 'increment'],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'Sum of left and right operands',
-      examples: ['8', '30', '125.50'],
-    },
-    examples: [
-      {
-        title: 'Basic addition',
-        code: '5 + 3',
-        explanation: 'Adds two literal numbers',
-        output: '8',
-      },
-      {
-        title: 'String number addition',
-        code: '"10" + "5"',
-        explanation: 'Automatically converts string numbers and adds them',
-        output: '15',
-      },
-      {
-        title: 'Variable addition',
-        code: 'basePrice + shipping',
-        explanation: 'Adds values from context variables',
-        output: '134.99',
-      },
-      {
-        title: 'Complex expression',
-        code: '(price * quantity) + tax',
-        explanation: 'Addition as part of larger mathematical expression',
-        output: '108.50',
-      },
-    ],
-    seeAlso: ['subtraction', 'multiplication', 'division', 'modulo', 'number conversion'],
-    tags: ['mathematical', 'arithmetic', 'addition', 'numbers', 'calculation'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -360,10 +278,10 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
 }
 
 // ============================================================================
-// Enhanced Subtraction Expression
+// Subtraction Expression
 // ============================================================================
 
-export class EnhancedSubtractionExpression implements BaseTypedExpression<number> {
+export class SubtractionExpression implements BaseTypedExpression<number> {
   public readonly name = 'subtraction';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left - right';
@@ -374,80 +292,9 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<number
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['number'],
-    examples: [
-      {
-        input: '10 - 3',
-        description: 'Subtract two numbers',
-        expectedOutput: 7,
-      },
-      {
-        input: 'total - discount',
-        description: 'Calculate final price with discount',
-        expectedOutput: 85,
-        context: {
-          locals: new Map([
-            ['total', 100],
-            ['discount', 15],
-          ]),
-        },
-      },
-    ],
-    relatedExpressions: ['addition', 'multiplication', 'division', 'modulo'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Performs mathematical subtraction of right operand from left operand',
-    parameters: [
-      {
-        name: 'left',
-        type: 'number',
-        description: 'Left operand (minuend) - number or numeric string',
-        optional: false,
-        examples: ['10', '"100"', 'total', 'balance'],
-      },
-      {
-        name: 'right',
-        type: 'number',
-        description: 'Right operand (subtrahend) - number or numeric string',
-        optional: false,
-        examples: ['3', '"15"', 'discount', 'deduction'],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'Difference of left minus right operands',
-      examples: ['7', '85', '-5'],
-    },
-    examples: [
-      {
-        title: 'Basic subtraction',
-        code: '10 - 3',
-        explanation: 'Subtracts 3 from 10',
-        output: '7',
-      },
-      {
-        title: 'Price calculation',
-        code: 'originalPrice - discount',
-        explanation: 'Calculate discounted price',
-        output: '85',
-      },
-      {
-        title: 'Negative result',
-        code: '5 - 8',
-        explanation: 'Subtraction can result in negative numbers',
-        output: '-3',
-      },
-    ],
-    seeAlso: ['addition', 'multiplication', 'division', 'modulo'],
-    tags: ['mathematical', 'arithmetic', 'subtraction', 'numbers', 'calculation'],
-  };
+  
 
   async evaluate(
     _context: TypedExpressionContext,
@@ -514,10 +361,10 @@ export class EnhancedSubtractionExpression implements BaseTypedExpression<number
 }
 
 // ============================================================================
-// Enhanced Multiplication Expression
+// Multiplication Expression
 // ============================================================================
 
-export class EnhancedMultiplicationExpression implements BaseTypedExpression<number> {
+export class MultiplicationExpression implements BaseTypedExpression<number> {
   public readonly name = 'multiplication';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left * right';
@@ -528,80 +375,9 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['number'],
-    examples: [
-      {
-        input: '6 * 7',
-        description: 'Multiply two numbers',
-        expectedOutput: 42,
-      },
-      {
-        input: 'price * quantity',
-        description: 'Calculate total cost',
-        expectedOutput: 150,
-        context: {
-          locals: new Map([
-            ['price', 25],
-            ['quantity', 6],
-          ]),
-        },
-      },
-    ],
-    relatedExpressions: ['addition', 'subtraction', 'division', 'modulo'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Performs mathematical multiplication of two numeric values',
-    parameters: [
-      {
-        name: 'left',
-        type: 'number',
-        description: 'Left operand (multiplicand) - number or numeric string',
-        optional: false,
-        examples: ['6', '"25"', 'price', 'rate'],
-      },
-      {
-        name: 'right',
-        type: 'number',
-        description: 'Right operand (multiplier) - number or numeric string',
-        optional: false,
-        examples: ['7', '"6"', 'quantity', 'factor'],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'Product of left and right operands',
-      examples: ['42', '150', '0'],
-    },
-    examples: [
-      {
-        title: 'Basic multiplication',
-        code: '6 * 7',
-        explanation: 'Multiplies 6 by 7',
-        output: '42',
-      },
-      {
-        title: 'Price calculation',
-        code: 'unitPrice * quantity',
-        explanation: 'Calculate total price for multiple items',
-        output: '150',
-      },
-      {
-        title: 'Zero result',
-        code: '5 * 0',
-        explanation: 'Multiplication by zero results in zero',
-        output: '0',
-      },
-    ],
-    seeAlso: ['addition', 'subtraction', 'division', 'modulo'],
-    tags: ['mathematical', 'arithmetic', 'multiplication', 'numbers', 'calculation'],
-  };
+  
 
   async evaluate(
     _context: TypedExpressionContext,
@@ -664,10 +440,10 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
 }
 
 // ============================================================================
-// Enhanced Division Expression
+// Division Expression
 // ============================================================================
 
-export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
+export class DivisionExpression implements BaseTypedExpression<number> {
   public readonly name = 'division';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left / right';
@@ -679,80 +455,9 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['number'],
-    examples: [
-      {
-        input: '15 / 3',
-        description: 'Divide two numbers',
-        expectedOutput: 5,
-      },
-      {
-        input: 'total / count',
-        description: 'Calculate average',
-        expectedOutput: 25,
-        context: {
-          locals: new Map([
-            ['total', 100],
-            ['count', 4],
-          ]),
-        },
-      },
-    ],
-    relatedExpressions: ['addition', 'subtraction', 'multiplication', 'modulo'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Performs mathematical division with protection against division by zero',
-    parameters: [
-      {
-        name: 'left',
-        type: 'number',
-        description: 'Left operand (dividend) - number or numeric string',
-        optional: false,
-        examples: ['15', '"100"', 'total', 'numerator'],
-      },
-      {
-        name: 'right',
-        type: 'number',
-        description: 'Right operand (divisor) - number or numeric string, must not be zero',
-        optional: false,
-        examples: ['3', '"4"', 'count', 'denominator'],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'Quotient of left divided by right operands',
-      examples: ['5', '25', '2.5'],
-    },
-    examples: [
-      {
-        title: 'Basic division',
-        code: '15 / 3',
-        explanation: 'Divides 15 by 3',
-        output: '5',
-      },
-      {
-        title: 'Average calculation',
-        code: 'totalScore / numberOfTests',
-        explanation: 'Calculate average score',
-        output: '87.5',
-      },
-      {
-        title: 'Decimal result',
-        code: '10 / 4',
-        explanation: 'Division can result in decimal numbers',
-        output: '2.5',
-      },
-    ],
-    seeAlso: ['addition', 'subtraction', 'multiplication', 'modulo'],
-    tags: ['mathematical', 'arithmetic', 'division', 'numbers', 'calculation'],
-  };
+  
 
   async evaluate(
     _context: TypedExpressionContext,
@@ -804,10 +509,10 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
 }
 
 // ============================================================================
-// Enhanced Modulo Expression
+// Modulo Expression
 // ============================================================================
 
-export class EnhancedModuloExpression implements BaseTypedExpression<number> {
+export class ModuloExpression implements BaseTypedExpression<number> {
   public readonly name = 'modulo';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left mod right';
@@ -818,80 +523,9 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['number'],
-    examples: [
-      {
-        input: '10 mod 3',
-        description: 'Calculate remainder of 10 divided by 3',
-        expectedOutput: 1,
-      },
-      {
-        input: 'index mod batchSize',
-        description: 'Check if index is at batch boundary',
-        expectedOutput: 2,
-        context: {
-          locals: new Map([
-            ['index', 17],
-            ['batchSize', 5],
-          ]),
-        },
-      },
-    ],
-    relatedExpressions: ['addition', 'subtraction', 'multiplication', 'division'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Calculates the remainder after division (modulo operation)',
-    parameters: [
-      {
-        name: 'left',
-        type: 'number',
-        description: 'Left operand (dividend) - number or numeric string',
-        optional: false,
-        examples: ['10', '"17"', 'index', 'value'],
-      },
-      {
-        name: 'right',
-        type: 'number',
-        description: 'Right operand (divisor) - number or numeric string, must not be zero',
-        optional: false,
-        examples: ['3', '"5"', 'batchSize', 'modulus'],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'Remainder of left divided by right operands',
-      examples: ['1', '2', '0'],
-    },
-    examples: [
-      {
-        title: 'Basic modulo',
-        code: '10 mod 3',
-        explanation: 'Calculate remainder: 10 ÷ 3 = 3 remainder 1',
-        output: '1',
-      },
-      {
-        title: 'Even/odd check',
-        code: 'number mod 2',
-        explanation: 'Check if number is even (remainder 0) or odd (remainder 1)',
-        output: '1',
-      },
-      {
-        title: 'Batch processing',
-        code: 'index mod batchSize',
-        explanation: 'Determine position within current batch',
-        output: '2',
-      },
-    ],
-    seeAlso: ['addition', 'subtraction', 'multiplication', 'division'],
-    tags: ['mathematical', 'arithmetic', 'modulo', 'remainder', 'calculation'],
-  };
+  
 
   async evaluate(
     _context: TypedExpressionContext,
@@ -976,23 +610,23 @@ export class EnhancedModuloExpression implements BaseTypedExpression<number> {
 // Factory Functions
 // ============================================================================
 
-export function createEnhancedAdditionExpression(): EnhancedAdditionExpression {
+export function createAdditionExpression(): EnhancedAdditionExpression {
   return new EnhancedAdditionExpression();
 }
 
-export function createEnhancedSubtractionExpression(): EnhancedSubtractionExpression {
+export function createSubtractionExpression(): EnhancedSubtractionExpression {
   return new EnhancedSubtractionExpression();
 }
 
-export function createEnhancedMultiplicationExpression(): EnhancedMultiplicationExpression {
+export function createMultiplicationExpression(): EnhancedMultiplicationExpression {
   return new EnhancedMultiplicationExpression();
 }
 
-export function createEnhancedDivisionExpression(): EnhancedDivisionExpression {
+export function createDivisionExpression(): EnhancedDivisionExpression {
   return new EnhancedDivisionExpression();
 }
 
-export function createEnhancedModuloExpression(): EnhancedModuloExpression {
+export function createModuloExpression(): EnhancedModuloExpression {
   return new EnhancedModuloExpression();
 }
 
@@ -1001,9 +635,9 @@ export function createEnhancedModuloExpression(): EnhancedModuloExpression {
 // ============================================================================
 
 export const mathematicalExpressions = {
-  addition: createEnhancedAdditionExpression(),
-  subtraction: createEnhancedSubtractionExpression(),
-  multiplication: createEnhancedMultiplicationExpression(),
-  division: createEnhancedDivisionExpression(),
-  modulo: createEnhancedModuloExpression(),
+  addition: createAdditionExpression(),
+  subtraction: createSubtractionExpression(),
+  multiplication: createMultiplicationExpression(),
+  division: createDivisionExpression(),
+  modulo: createModuloExpression(),
 } as const;

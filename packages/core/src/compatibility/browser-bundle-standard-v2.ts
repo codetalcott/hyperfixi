@@ -4,7 +4,7 @@
  *
  * This bundle uses the experimental RuntimeExperimental class which:
  * - Extends RuntimeBase (generic, zero direct command imports)
- * - Uses EnhancedCommandRegistryV2 (parseInput() adapter)
+ * - Uses CommandRegistryV2 (parseInput() adapter)
  * - Imports V2 commands with parseInput() methods
  *
  * Commands included (16 standard):

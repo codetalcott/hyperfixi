@@ -1,5 +1,5 @@
 /**
- * Enhanced Reference Expressions - Deep TypeScript Integration
+ * Reference Expressions - Deep TypeScript Integration
  * Handles me, you, it, CSS selectors, and DOM element references
  * Enhanced for LLM code agents with full type safety
  */
@@ -14,18 +14,17 @@ import type {
 import type {
   EvaluationResult,
   ValidationResult,
-  LLMDocumentation,
   HyperScriptValueType,
 } from '../../../types/command-types';
 
 // ============================================================================
-// Enhanced Me Expression
+// Me Expression
 // ============================================================================
 
 /**
  * Enhanced "me" expression - current element reference with type safety
  */
-export class EnhancedMeExpression
+export class MeExpression
   implements TypedExpressionImplementation<undefined, HTMLElement | null, TypedExpressionContext>
 {
   public readonly name = 'me' as const;
@@ -38,67 +37,9 @@ export class EnhancedMeExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Reference',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Element', 'Null'],
-    examples: [
-      {
-        input: 'me',
-        description: 'Get the current element',
-        expectedOutput: null, // Will be an HTMLElement in practice
-        context: { me: null }, // Simplified for example
-      },
-      {
-        input: 'me.className',
-        description: 'Access current element properties',
-        expectedOutput: 'button active',
-        context: { me: null },
-      },
-    ],
-    relatedExpressions: ['you', 'it', 'my', 'myself'],
-    performance: {
-      averageTime: 0.001,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'References the current HTML element in the execution context',
-    parameters: [],
-    returns: {
-      type: 'Element',
-      description: 'The current HTMLElement, or null if no element is set',
-      examples: ['<div>', '<button>', 'null'],
-    },
-    examples: [
-      {
-        title: 'Basic element reference',
-        code: 'me',
-        explanation: 'Returns the current element that the hyperscript is attached to',
-        output: '<div _="...">Current Element</div>',
-      },
-      {
-        title: 'Property access',
-        code: 'me.textContent',
-        explanation: 'Access properties of the current element',
-        output: 'Current Element',
-      },
-      {
-        title: 'Method calls',
-        code: 'me.classList.add("active")',
-        explanation: 'Call methods on the current element',
-        output: undefined,
-      },
-      {
-        title: 'In event handlers',
-        code: 'on click add .clicked to me',
-        explanation: 'Use "me" to reference the element receiving the event',
-        output: undefined,
-      },
-    ],
-    seeAlso: ['you', 'it', 'my', 'target'],
-    tags: ['context', 'element', 'reference', 'dom'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -171,13 +112,13 @@ export class EnhancedMeExpression
 }
 
 // ============================================================================
-// Enhanced You Expression
+// You Expression
 // ============================================================================
 
 /**
  * Enhanced "you" expression - target element reference with validation
  */
-export class EnhancedYouExpression
+export class YouExpression
   implements TypedExpressionImplementation<undefined, HTMLElement | null, TypedExpressionContext>
 {
   public readonly name = 'you' as const;
@@ -191,62 +132,9 @@ export class EnhancedYouExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Reference',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Element', 'Null'],
-    examples: [
-      {
-        input: 'you',
-        description: 'Get the target element',
-        expectedOutput: null,
-        context: { you: null },
-      },
-      {
-        input: 'you.value',
-        description: 'Access target element properties',
-        expectedOutput: 'input value',
-        context: { you: null },
-      },
-    ],
-    relatedExpressions: ['me', 'it', 'target', 'your'],
-    performance: {
-      averageTime: 0.001,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'References the target element in the current context, often the event target or command target',
-    parameters: [],
-    returns: {
-      type: 'Element',
-      description: 'The target HTMLElement, or null if no target is set',
-      examples: ['<input>', '<button>', 'null'],
-    },
-    examples: [
-      {
-        title: 'Event target reference',
-        code: 'on click from <button/> log you.textContent',
-        explanation: 'In this context, "you" refers to the clicked button',
-        output: 'Button Text',
-      },
-      {
-        title: 'Command target',
-        code: 'send myEvent to <input/> then log you.value',
-        explanation: 'Here "you" refers to the input element that received the event',
-        output: 'input value',
-      },
-      {
-        title: 'Form validation',
-        code: 'if you.value is empty then add .error to you',
-        explanation: 'Validate and style the target element',
-        output: undefined,
-      },
-    ],
-    seeAlso: ['me', 'it', 'target', 'your'],
-    tags: ['context', 'element', 'reference', 'target', 'event'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -316,13 +204,13 @@ export class EnhancedYouExpression
 }
 
 // ============================================================================
-// Enhanced It Expression
+// It Expression
 // ============================================================================
 
 /**
  * Enhanced "it" expression - context variable reference with type awareness
  */
-export class EnhancedItExpression
+export class ItExpression
   implements TypedExpressionImplementation<undefined, unknown, TypedExpressionContext>
 {
   public readonly name = 'it' as const;
@@ -336,68 +224,9 @@ export class EnhancedItExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Reference',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: 'it',
-        description: 'Get the current context variable',
-        expectedOutput: 'some value',
-        context: { it: 'some value' },
-      },
-      {
-        input: 'it.length',
-        description: 'Access properties of context variable',
-        expectedOutput: 5,
-        context: { it: 'hello' },
-      },
-    ],
-    relatedExpressions: ['me', 'you', 'result', 'its'],
-    performance: {
-      averageTime: 0.001,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'References the current context variable, typically the result of the previous operation or current loop iteration',
-    parameters: [],
-    returns: {
-      type: 'Any',
-      description: 'The current context value, which can be any type',
-      examples: ['string', '42', 'true', '["array", "values"]', '{"object": "data"}'],
-    },
-    examples: [
-      {
-        title: 'Command result reference',
-        code: 'get /api/data then put it into #output',
-        explanation: '"it" contains the result of the fetch operation',
-        output: '{"data": "from api"}',
-      },
-      {
-        title: 'Loop iteration',
-        code: 'for item in items put it into .container',
-        explanation: '"it" refers to each item during loop iteration',
-        output: 'current item',
-      },
-      {
-        title: 'Chained operations',
-        code: 'get my.value then increment it then set my.value to it',
-        explanation: '"it" carries the value through the operation chain',
-        output: undefined,
-      },
-      {
-        title: 'Conditional logic',
-        code: 'if it > 10 then add .large else add .small',
-        explanation: 'Use "it" in conditional expressions',
-        output: undefined,
-      },
-    ],
-    seeAlso: ['me', 'you', 'result', 'its'],
-    tags: ['context', 'variable', 'reference', 'result', 'iteration'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -489,7 +318,7 @@ type CSSSelectorInput = any; // Inferred from RuntimeValidator
 /**
  * Enhanced CSS selector expression with validation and error handling
  */
-export class EnhancedCSSSelectorExpression
+export class CSSSelectorExpression
   implements
     TypedExpressionImplementation<
       CSSSelectorInput,
@@ -507,81 +336,9 @@ export class EnhancedCSSSelectorExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Reference',
     complexity: 'medium',
-    sideEffects: ['dom-query'],
-    dependencies: [],
-    returnTypes: ['Element', 'ElementList', 'Null'],
-    examples: [
-      {
-        input: '<.button/>',
-        description: 'Select all elements with class "button"',
-        expectedOutput: [], // HTMLElement[]
-      },
-      {
-        input: '<#main/>',
-        description: 'Select element with id "main"',
-        expectedOutput: null, // HTMLElement
-      },
-    ],
-    relatedExpressions: ['closest', 'first', 'last'],
-    performance: {
-      averageTime: 0.5,
-      complexity: 'O(n)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Queries DOM elements using CSS selectors with comprehensive validation and error handling',
-    parameters: [
-      {
-        name: 'selector',
-        type: 'string',
-        description: 'Valid CSS selector string',
-        optional: false,
-        examples: ['.class', '#id', 'div', '[data-value]', '.class > .child'],
-      },
-      {
-        name: 'single',
-        type: 'boolean',
-        description: 'Whether to return single element (true) or all matches (false)',
-        optional: true,
-        examples: ['true', 'false'],
-      },
-    ],
-    returns: {
-      type: 'ElementList | Element | Null',
-      description: 'Matching DOM elements, single element, or null if no matches',
-      examples: ['[<div>, <span>]', '<button>', 'null'],
-    },
-    examples: [
-      {
-        title: 'Class selector',
-        code: '<.button/>',
-        explanation: 'Select all elements with class "button"',
-        output: '[HTMLElement, HTMLElement]',
-      },
-      {
-        title: 'ID selector',
-        code: '<#navbar/>',
-        explanation: 'Select element with id "navbar"',
-        output: 'HTMLElement',
-      },
-      {
-        title: 'Attribute selector',
-        code: '<[data-role="tab"]/>',
-        explanation: 'Select elements with specific data attribute',
-        output: '[HTMLElement]',
-      },
-      {
-        title: 'Complex selector',
-        code: '<.container .item:first-child/>',
-        explanation: 'Select first child items within containers',
-        output: '[HTMLElement]',
-      },
-    ],
-    seeAlso: ['closest', 'first', 'last', 'me', 'you'],
-    tags: ['dom', 'selector', 'query', 'css'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -751,19 +508,19 @@ export const referenceExpressions = {
 /**
  * Factory functions for creating enhanced reference expressions
  */
-export function createEnhancedMeExpression(): EnhancedMeExpression {
+export function createMeExpression(): EnhancedMeExpression {
   return new EnhancedMeExpression();
 }
 
-export function createEnhancedYouExpression(): EnhancedYouExpression {
+export function createYouExpression(): EnhancedYouExpression {
   return new EnhancedYouExpression();
 }
 
-export function createEnhancedItExpression(): EnhancedItExpression {
+export function createItExpression(): EnhancedItExpression {
   return new EnhancedItExpression();
 }
 
-export function createEnhancedCSSSelectorExpression(): EnhancedCSSSelectorExpression {
+export function createCSSSelectorExpression(): EnhancedCSSSelectorExpression {
   return new EnhancedCSSSelectorExpression();
 }
 

@@ -851,7 +851,7 @@ export class LazyCommandRegistry {
  * Enhanced Command Registry
  * Manages enhanced commands and their runtime adapters
  */
-export class EnhancedCommandRegistry {
+export class CommandRegistry {
   private adapters = new Map<string, CommandAdapter>();
   private implementations = new Map<string, any>();
 
@@ -938,8 +938,8 @@ export class EnhancedCommandRegistry {
    * Create registry with all enhanced commands pre-registered
    * @deprecated Use createWithLazyLoading() for better performance and smaller bundles
    */
-  static createWithDefaults(): EnhancedCommandRegistry {
-    const registry = new EnhancedCommandRegistry();
+  static createWithDefaults(): CommandRegistry {
+    const registry = new CommandRegistry();
 
     // Import and register all enhanced commands from the enhanced command registry
     try {
@@ -968,6 +968,6 @@ export class EnhancedCommandRegistry {
 /**
  * Factory function to create enhanced command adapters
  */
-export function createEnhancedAdapter(impl: any): CommandAdapter {
+export function createAdapter(impl: any): CommandAdapter {
   return new CommandAdapter(impl);
 }

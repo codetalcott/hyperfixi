@@ -46,10 +46,10 @@ type ContainsInput = any; // Inferred from RuntimeValidator
 type InInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced Matches Expression
+// Matches Expression
 // ============================================================================
 
-export class EnhancedMatchesExpression
+export class MatchesExpression
   implements TypedExpressionImplementation<PatternMatchInput, boolean>
 {
   public readonly name = 'matches';
@@ -62,92 +62,9 @@ export class EnhancedMatchesExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'medium',
-    sideEffects: ['dom-query'], // For CSS selector matching
-    dependencies: [],
-    returnTypes: ['Boolean'],
-    examples: [
-      {
-        input: 'element matches .active',
-        description: 'CSS selector matching',
-        expectedOutput: true,
-      },
-      {
-        input: '"hello@example.com" matches /\\S+@\\S+\\.\\S+/',
-        description: 'Email regex validation',
-        expectedOutput: true,
-      },
-      {
-        input: '"hello world" matches "hello"',
-        description: 'String contains matching',
-        expectedOutput: true,
-      },
-    ],
-    relatedExpressions: ['contains', 'in', 'querySelector'],
-    performance: {
-      averageTime: 0.5,
-      complexity: 'O(n)', // Depends on pattern complexity
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Tests if a value matches a pattern using CSS selectors, regular expressions, or string matching',
-    parameters: [
-      {
-        name: 'value',
-        type: 'any',
-        description: 'Value to test against the pattern',
-        optional: false,
-        examples: ['element', '"email@example.com"', '"hello world"', 'user.name'],
-      },
-      {
-        name: 'pattern',
-        type: 'string | RegExp',
-        description: 'Pattern to match against (CSS selector, regex, or substring)',
-        optional: false,
-        examples: ['.active', '/\\d+/', '"hello"', '#container > .item'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if value matches pattern, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'CSS selector matching',
-        code: 'element matches .active',
-        explanation: 'Check if element has "active" class',
-        output: 'true',
-      },
-      {
-        title: 'Email validation',
-        code: 'email matches /\\S+@\\S+\\.\\S+/',
-        explanation: 'Validate email format with regex',
-        output: 'true',
-      },
-      {
-        title: 'String substring matching',
-        code: '"hello world" matches "world"',
-        explanation: 'Check if string contains substring',
-        output: 'true',
-      },
-      {
-        title: 'Complex CSS selector',
-        code: 'element matches "#main .content > .item:first-child"',
-        explanation: 'Test against complex CSS selector',
-        output: 'false',
-      },
-      {
-        title: 'Number pattern matching',
-        code: 'phoneNumber matches /^\\d{3}-\\d{3}-\\d{4}$/',
-        explanation: 'Validate phone number format',
-        output: 'true',
-      },
-    ],
-    seeAlso: ['contains', 'in', 'querySelector', 'regular expressions'],
-    tags: ['pattern', 'matching', 'css', 'regex', 'validation'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -325,10 +242,10 @@ export class EnhancedMatchesExpression
 }
 
 // ============================================================================
-// Enhanced Contains Expression
+// Contains Expression
 // ============================================================================
 
-export class EnhancedContainsExpression
+export class ContainsExpression
   implements TypedExpressionImplementation<ContainsInput, boolean>
 {
   public readonly name = 'contains';
@@ -341,85 +258,9 @@ export class EnhancedContainsExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Boolean'],
-    examples: [
-      {
-        input: '[1, 2, 3] contains 2',
-        description: 'Array contains value',
-        expectedOutput: true,
-      },
-      {
-        input: '"hello world" contains "world"',
-        description: 'String contains substring',
-        expectedOutput: true,
-      },
-      {
-        input: 'user contains "name"',
-        description: 'Object contains property',
-        expectedOutput: true,
-      },
-    ],
-    relatedExpressions: ['matches', 'in', 'includes'],
-    performance: {
-      averageTime: 0.2,
-      complexity: 'O(n)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Tests if a container (array, string, or object) contains a specific item or property',
-    parameters: [
-      {
-        name: 'container',
-        type: 'array | string | object',
-        description: 'Container to search in',
-        optional: false,
-        examples: ['[1, 2, 3]', '"hello world"', 'user', 'items'],
-      },
-      {
-        name: 'item',
-        type: 'any',
-        description: 'Item to search for',
-        optional: false,
-        examples: ['2', '"world"', '"name"', 'value'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if container contains item, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Array membership',
-        code: '[1, 2, 3] contains 2',
-        explanation: 'Check if array contains specific value',
-        output: 'true',
-      },
-      {
-        title: 'String substring',
-        code: '"hello world" contains "world"',
-        explanation: 'Check if string contains substring',
-        output: 'true',
-      },
-      {
-        title: 'Object property',
-        code: 'user contains "email"',
-        explanation: 'Check if object has property',
-        output: 'true',
-      },
-      {
-        title: 'Case-sensitive string search',
-        code: '"Hello World" contains "hello"',
-        explanation: 'String search is case-sensitive',
-        output: 'false',
-      },
-    ],
-    seeAlso: ['matches', 'in', 'includes', 'hasOwnProperty'],
-    tags: ['contains', 'membership', 'search', 'array', 'string', 'object'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -534,10 +375,10 @@ export class EnhancedContainsExpression
 }
 
 // ============================================================================
-// Enhanced In Expression
+// In Expression
 // ============================================================================
 
-export class EnhancedInExpression implements TypedExpressionImplementation<InInput, boolean> {
+export class InExpression implements TypedExpressionImplementation<InInput, boolean> {
   public readonly name = 'in';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'item in container';
@@ -548,75 +389,9 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Boolean'],
-    examples: [
-      {
-        input: '2 in [1, 2, 3]',
-        description: 'Value in array',
-        expectedOutput: true,
-      },
-      {
-        input: '"world" in "hello world"',
-        description: 'Substring in string',
-        expectedOutput: true,
-      },
-    ],
-    relatedExpressions: ['contains', 'matches'],
-    performance: {
-      averageTime: 0.2,
-      complexity: 'O(n)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Tests if an item is present in a container (array, string, or object) - reverse syntax of contains',
-    parameters: [
-      {
-        name: 'item',
-        type: 'any',
-        description: 'Item to search for',
-        optional: false,
-        examples: ['2', '"world"', '"name"', 'value'],
-      },
-      {
-        name: 'container',
-        type: 'array | string | object',
-        description: 'Container to search in',
-        optional: false,
-        examples: ['[1, 2, 3]', '"hello world"', 'user', 'items'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if item is in container, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Array membership',
-        code: '2 in [1, 2, 3]',
-        explanation: 'Check if value is in array',
-        output: 'true',
-      },
-      {
-        title: 'String substring',
-        code: '"world" in "hello world"',
-        explanation: 'Check if substring is in string',
-        output: 'true',
-      },
-      {
-        title: 'Object property',
-        code: '"email" in user',
-        explanation: 'Check if property is in object',
-        output: 'true',
-      },
-    ],
-    seeAlso: ['contains', 'matches', 'includes'],
-    tags: ['in', 'membership', 'search', 'array', 'string', 'object'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -725,15 +500,15 @@ export class EnhancedInExpression implements TypedExpressionImplementation<InInp
 // Factory Functions
 // ============================================================================
 
-export function createEnhancedMatchesExpression(): EnhancedMatchesExpression {
+export function createMatchesExpression(): EnhancedMatchesExpression {
   return new EnhancedMatchesExpression();
 }
 
-export function createEnhancedContainsExpression(): EnhancedContainsExpression {
+export function createContainsExpression(): EnhancedContainsExpression {
   return new EnhancedContainsExpression();
 }
 
-export function createEnhancedInExpression(): EnhancedInExpression {
+export function createInExpression(): EnhancedInExpression {
   return new EnhancedInExpression();
 }
 
@@ -742,7 +517,7 @@ export function createEnhancedInExpression(): EnhancedInExpression {
 // ============================================================================
 
 export const enhancedPatternMatchingExpressions = {
-  matches: createEnhancedMatchesExpression(),
-  contains: createEnhancedContainsExpression(),
-  in: createEnhancedInExpression(),
+  matches: createMatchesExpression(),
+  contains: createContainsExpression(),
+  in: createInExpression(),
 } as const;

@@ -1,5 +1,5 @@
 /**
- * Enhanced Positional Expressions for HyperScript
+ * Positional Expressions for HyperScript
  * Provides deep TypeScript integration for positional navigation expressions
  */
 
@@ -8,7 +8,6 @@ import type {
   TypedExpressionContext,
   EvaluationType,
   ValidationResult,
-  LLMDocumentation,
   EvaluationResult,
 } from '../../../types/base-types';
 import { evaluationToHyperScriptType } from '../../../types/base-types';
@@ -46,10 +45,10 @@ type IndexInput = any; // Inferred from RuntimeValidator
 type RandomInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced First Expression
+// First Expression
 // ============================================================================
 
-export class EnhancedFirstExpression
+export class FirstExpression
   implements TypedExpressionImplementation<CollectionInput, unknown>
 {
   public readonly name = 'first';
@@ -62,78 +61,9 @@ export class EnhancedFirstExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Positional',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: 'first in [1, 2, 3]',
-        description: 'Get first element from array',
-        expectedOutput: 1,
-      },
-      {
-        input: 'first in <div/>',
-        description: 'Get first element from NodeList',
-        expectedOutput: 'HTMLElement',
-      },
-      {
-        input: 'first in "hello"',
-        description: 'Get first character from string',
-        expectedOutput: 'h',
-      },
-    ],
-    relatedExpressions: ['last', 'at', 'slice'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Retrieves the first element from a collection (array, NodeList, or string)',
-    parameters: [
-      {
-        name: 'collection',
-        type: 'array | NodeList | string',
-        description: 'Collection to get first element from',
-        optional: false,
-        examples: ['[1, 2, 3]', 'document.querySelectorAll("div")', '"hello"', 'items'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'First element of collection, or undefined if empty',
-      examples: ['1', 'HTMLElement', '"h"', 'undefined'],
-    },
-    examples: [
-      {
-        title: 'Array first element',
-        code: 'first in [1, 2, 3]',
-        explanation: 'Get first number from array',
-        output: '1',
-      },
-      {
-        title: 'DOM element selection',
-        code: 'first in <.item/>',
-        explanation: 'Get first element matching CSS selector',
-        output: 'HTMLElement',
-      },
-      {
-        title: 'String first character',
-        code: 'first in "hello world"',
-        explanation: 'Get first character of string',
-        output: '"h"',
-      },
-      {
-        title: 'Empty collection handling',
-        code: 'first in []',
-        explanation: 'Returns undefined for empty collections',
-        output: 'undefined',
-      },
-    ],
-    seeAlso: ['last', 'at', 'slice', 'random'],
-    tags: ['positional', 'array', 'collection', 'navigation', 'first'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -265,10 +195,10 @@ export class EnhancedFirstExpression
 }
 
 // ============================================================================
-// Enhanced Last Expression
+// Last Expression
 // ============================================================================
 
-export class EnhancedLastExpression
+export class LastExpression
   implements TypedExpressionImplementation<CollectionInput, unknown>
 {
   public readonly name = 'last';
@@ -281,67 +211,9 @@ export class EnhancedLastExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Positional',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: 'last in [1, 2, 3]',
-        description: 'Get last element from array',
-        expectedOutput: 3,
-      },
-      {
-        input: 'last in "hello"',
-        description: 'Get last character from string',
-        expectedOutput: 'o',
-      },
-    ],
-    relatedExpressions: ['first', 'at', 'slice'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Returns the last element from a collection (array, NodeList, or string)',
-    parameters: [
-      {
-        name: 'collection',
-        type: 'array | NodeList | string',
-        description: 'Collection to get last element from',
-        optional: false,
-        examples: ['[1, 2, 3]', 'document.querySelectorAll("div")', '"hello"'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'Last element of collection, or undefined if empty',
-      examples: ['3', 'HTMLElement', '"o"', 'undefined'],
-    },
-    examples: [
-      {
-        title: 'Array last element',
-        code: 'last in [1, 2, 3]',
-        explanation: 'Get last number from array',
-        output: '3',
-      },
-      {
-        title: 'String last character',
-        code: 'last in "hello"',
-        explanation: 'Get last character of string',
-        output: '"o"',
-      },
-      {
-        title: 'DOM elements',
-        code: 'last in <.item/>',
-        explanation: 'Get last element matching selector',
-        output: 'HTMLElement',
-      },
-    ],
-    seeAlso: ['first', 'at', 'slice', 'random'],
-    tags: ['positional', 'array', 'collection', 'navigation', 'last'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -472,10 +344,10 @@ export class EnhancedLastExpression
 }
 
 // ============================================================================
-// Enhanced At Expression (Index Access)
+// At Expression (Index Access)
 // ============================================================================
 
-export class EnhancedAtExpression implements TypedExpressionImplementation<IndexInput, unknown> {
+export class AtExpression implements TypedExpressionImplementation<IndexInput, unknown> {
   public readonly name = 'at';
   public readonly category: ExpressionCategory = 'Positional';
   public readonly syntax = 'collection[index] or collection at index';
@@ -486,80 +358,9 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
   public readonly metadata: ExpressionMetadata = {
     category: 'Positional',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: '[1, 2, 3] at 1',
-        description: 'Get element at index 1',
-        expectedOutput: 2,
-      },
-      {
-        input: '"hello" at 0',
-        description: 'Get character at index 0',
-        expectedOutput: 'h',
-      },
-    ],
-    relatedExpressions: ['first', 'last', 'slice'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Retrieves element at specific index from a collection with negative index support',
-    parameters: [
-      {
-        name: 'collection',
-        type: 'array | NodeList | string',
-        description: 'Collection to access',
-        optional: false,
-        examples: ['[1, 2, 3]', '"hello"', 'items'],
-      },
-      {
-        name: 'index',
-        type: 'number',
-        description: 'Index position (supports negative indexing)',
-        optional: false,
-        examples: ['0', '1', '-1', '-2'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'Element at specified index, or undefined if out of bounds',
-      examples: ['2', '"h"', 'HTMLElement', 'undefined'],
-    },
-    examples: [
-      {
-        title: 'Positive index',
-        code: '[1, 2, 3] at 1',
-        explanation: 'Get second element (index 1)',
-        output: '2',
-      },
-      {
-        title: 'Negative index',
-        code: '[1, 2, 3] at -1',
-        explanation: 'Get last element using negative index',
-        output: '3',
-      },
-      {
-        title: 'String character access',
-        code: '"hello" at 0',
-        explanation: 'Get first character of string',
-        output: '"h"',
-      },
-      {
-        title: 'Out of bounds',
-        code: '[1, 2] at 5',
-        explanation: 'Returns undefined for invalid index',
-        output: 'undefined',
-      },
-    ],
-    seeAlso: ['first', 'last', 'slice', 'length'],
-    tags: ['positional', 'array', 'index', 'access', 'negative-index'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -697,10 +498,10 @@ export class EnhancedAtExpression implements TypedExpressionImplementation<Index
 }
 
 // ============================================================================
-// Enhanced Random Expression
+// Random Expression
 // ============================================================================
 
-export class EnhancedRandomExpression
+export class RandomExpression
   implements TypedExpressionImplementation<RandomInput, unknown>
 {
   public readonly name = 'random';
@@ -713,74 +514,9 @@ export class EnhancedRandomExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Positional',
     complexity: 'simple',
-    sideEffects: ['random-generation'],
-    dependencies: [],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: 'random in [1, 2, 3]',
-        description: 'Get random element from array',
-        expectedOutput: 'random number 1-3',
-      },
-      {
-        input: 'random in "abc"',
-        description: 'Get random character from string',
-        expectedOutput: 'random character a-c',
-      },
-    ],
-    relatedExpressions: ['first', 'last', 'at'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Selects a random element from a collection using cryptographically secure randomness when available',
-    parameters: [
-      {
-        name: 'collection',
-        type: 'array | NodeList | string',
-        description: 'Collection to select random element from',
-        optional: false,
-        examples: ['[1, 2, 3]', '"abc"', 'items', 'document.querySelectorAll("div")'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'Random element from collection, or undefined if empty',
-      examples: ['2', '"b"', 'HTMLElement', 'undefined'],
-    },
-    examples: [
-      {
-        title: 'Random array element',
-        code: 'random in [1, 2, 3, 4, 5]',
-        explanation: 'Get random number from array',
-        output: 'random number 1-5',
-      },
-      {
-        title: 'Random character',
-        code: 'random in "abcdef"',
-        explanation: 'Get random character from string',
-        output: 'random character a-f',
-      },
-      {
-        title: 'Random DOM element',
-        code: 'random in <.item/>',
-        explanation: 'Get random element matching selector',
-        output: 'random HTMLElement',
-      },
-      {
-        title: 'Empty collection',
-        code: 'random in []',
-        explanation: 'Returns undefined for empty collections',
-        output: 'undefined',
-      },
-    ],
-    seeAlso: ['first', 'last', 'at', 'shuffle'],
-    tags: ['positional', 'random', 'selection', 'array', 'collection'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -937,19 +673,19 @@ export class EnhancedRandomExpression
 // Factory Functions
 // ============================================================================
 
-export function createEnhancedFirstExpression(): EnhancedFirstExpression {
+export function createFirstExpression(): EnhancedFirstExpression {
   return new EnhancedFirstExpression();
 }
 
-export function createEnhancedLastExpression(): EnhancedLastExpression {
+export function createLastExpression(): EnhancedLastExpression {
   return new EnhancedLastExpression();
 }
 
-export function createEnhancedAtExpression(): EnhancedAtExpression {
+export function createAtExpression(): EnhancedAtExpression {
   return new EnhancedAtExpression();
 }
 
-export function createEnhancedRandomExpression(): EnhancedRandomExpression {
+export function createRandomExpression(): EnhancedRandomExpression {
   return new EnhancedRandomExpression();
 }
 
@@ -958,10 +694,10 @@ export function createEnhancedRandomExpression(): EnhancedRandomExpression {
 // ============================================================================
 
 export const positionalExpressions = {
-  first: createEnhancedFirstExpression(),
-  last: createEnhancedLastExpression(),
-  at: createEnhancedAtExpression(),
-  random: createEnhancedRandomExpression(),
+  first: createFirstExpression(),
+  last: createLastExpression(),
+  at: createAtExpression(),
+  random: createRandomExpression(),
 } as const;
 
 export type PositionalExpressionName = keyof typeof positionalExpressions;

@@ -70,7 +70,7 @@ export interface TypedContextImplementation<TInput, TOutput> {
   /** Context metadata for tooling */
   readonly metadata: ContextMetadata;
   /** LLM-compatible documentation */
-  readonly documentation: LLMDocumentation;
+  readonly documentation?: LLMDocumentation; // Optional
 
   /** Initialize context with validated input */
   initialize(input: TInput): Promise<EvaluationResult<TOutput>>;
@@ -86,7 +86,7 @@ export interface TypedContextImplementation<TInput, TOutput> {
 // Enhanced Context Base Class
 // ============================================================================
 
-export abstract class EnhancedContextBase<TInput, TOutput>
+export abstract class ContextBase<TInput, TOutput>
   implements TypedContextImplementation<TInput, TOutput>
 {
   abstract readonly name: string;
@@ -95,7 +95,7 @@ export abstract class EnhancedContextBase<TInput, TOutput>
   abstract readonly inputSchema: RuntimeValidator<TInput>;
   abstract readonly outputType: EvaluationType;
   abstract readonly metadata: ContextMetadata;
-  abstract readonly documentation: LLMDocumentation;
+  abstract readonly documentation?: LLMDocumentation; // Optional
 
   /** Evaluation history for performance tracking */
   protected evaluationHistory: Array<{

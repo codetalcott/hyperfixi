@@ -11,7 +11,6 @@ import type {
   EvaluationResult,
   TypedExpressionContext,
   TypedExpressionImplementation,
-  LLMDocumentation,
   ValidationResult,
   ExpressionCategory,
   ExpressionAnalysisInfo,
@@ -68,76 +67,12 @@ export type FunctionCallExpressionInput = any; // Inferred from RuntimeValidator
  * Enhanced function call expression for JavaScript interoperability
  * Provides comprehensive function invocation with async support
  */
-export class EnhancedFunctionCallExpression
+export class FunctionCallExpression
   implements TypedExpressionImplementation<HyperScriptValue, TypedExpressionContext>
 {
   public readonly inputSchema = FunctionCallExpressionInputSchema;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Invokes JavaScript functions with comprehensive argument handling and async support',
-    parameters: [
-      {
-        name: 'functionReference',
-        type: 'string',
-        description: 'Function name (for globals) or object.method path (for methods)',
-        optional: false,
-        examples: ['identity', 'obj.getValue', 'utils.formatDate', 'Math.max'],
-      },
-      {
-        name: 'arguments',
-        type: 'array',
-        description: 'Array of arguments to pass to the function',
-        optional: true,
-        defaultValue: [],
-        examples: ['["hello"]', '[42, true]', '[obj, "key"]'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'The return value of the invoked function, properly awaited if async',
-      examples: ['"result"', '42', 'Promise<value>', 'null'],
-    },
-    examples: [
-      {
-        title: 'Global function call',
-        code: 'identity("hello")',
-        explanation: 'Calls window.identity with string argument',
-        output: '"hello"',
-      },
-      {
-        title: 'Method call on object',
-        code: 'obj.getValue()',
-        explanation: 'Calls getValue method on obj with proper this binding',
-        output: '"foo"',
-      },
-      {
-        title: 'Function with multiple arguments',
-        code: 'Math.max(1, 5, 3)',
-        explanation: 'Calls Math.max with multiple numeric arguments',
-        output: 5,
-      },
-      {
-        title: 'Constructor call',
-        code: 'new Date()',
-        explanation: 'Creates new Date instance using constructor',
-        output: 'Date object',
-      },
-      {
-        title: 'Constructor with arguments',
-        code: 'new Array(10)',
-        explanation: 'Creates new Array with specified length using constructor',
-        output: 'Array of length 10',
-      },
-      {
-        title: 'Async function call',
-        code: 'fetchData("url")',
-        explanation: 'Calls async function and awaits the result',
-        output: 'Promise<data>',
-      },
-    ],
-    seeAlso: ['call command', 'method chaining', 'async operations'],
-    tags: ['function', 'interoperability', 'javascript', 'async', 'method'],
-  };
+  
 
   // Required TypedExpressionImplementation properties
   public readonly name = 'functionCall';

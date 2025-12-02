@@ -1,5 +1,5 @@
 /**
- * Enhanced Some Expression - Existence and Non-emptiness Check
+ * Some Expression - Existence and Non-emptiness Check
  * Implements comprehensive 'some' expression functionality with TypeScript integration
  * Handles existence checking for values, arrays, and DOM query results
  */
@@ -9,7 +9,6 @@ import type {
   HyperScriptValue,
   EvaluationResult,
   TypedExpressionImplementation,
-  LLMDocumentation,
   ValidationResult,
   TypedExecutionContext,
 } from '../../types/command-types';
@@ -28,14 +27,14 @@ export const SomeExpressionInputSchema = v.tuple([
 export type SomeExpressionInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced Some Expression Implementation
+// Some Expression Implementation
 // ============================================================================
 
 /**
  * Enhanced 'some' expression for existence and non-emptiness checking
  * Provides comprehensive existence testing for values, arrays, and DOM elements
  */
-export class EnhancedSomeExpression implements TypedExpressionImplementation<boolean> {
+export class SomeExpression implements TypedExpressionImplementation<boolean> {
   public readonly name = 'some';
   public readonly category = 'logical' as const;
   public readonly precedence = 8; // Medium precedence for existence checks
@@ -51,51 +50,7 @@ export class EnhancedSomeExpression implements TypedExpressionImplementation<boo
 
   public readonly inputSchema = SomeExpressionInputSchema;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Tests for existence and non-emptiness of values, arrays, and DOM query results',
-    parameters: [
-      {
-        name: 'value',
-        type: 'object',
-        description: 'Value to check for existence (arrays, selectors, or any value)',
-        optional: false,
-        examples: ['null', '"hello"', '[]', '[1, 2, 3]', '<div/>', '.myClass'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if value exists and is non-empty, false otherwise',
-      examples: [true, false],
-    },
-    examples: [
-      {
-        title: 'Null check',
-        code: 'some null',
-        explanation: 'Returns false (null does not exist)',
-        output: false,
-      },
-      {
-        title: 'Non-null value',
-        code: 'some "hello"',
-        explanation: 'Returns true (string exists)',
-        output: true,
-      },
-      {
-        title: 'Empty array check',
-        code: 'some []',
-        explanation: 'Returns false (array is empty)',
-        output: false,
-      },
-      {
-        title: 'Non-empty array',
-        code: 'some [1, 2, 3]',
-        explanation: 'Returns true (array has elements)',
-        output: true,
-      },
-    ],
-    seeAlso: ['array methods', 'DOM queries', 'existence checks'],
-    tags: ['existence', 'check', 'array', 'dom', 'empty'],
-  };
+  
 
   /**
    * Validate 'some' expression arguments

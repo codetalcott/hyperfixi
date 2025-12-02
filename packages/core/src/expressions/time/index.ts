@@ -1,5 +1,5 @@
 /**
- * Enhanced Time Expressions - Deep TypeScript Integration
+ * Time Expressions - Deep TypeScript Integration
  * Comprehensive time and duration handling with full type safety and validation
  * Enhanced for LLM code agents with maximum type safety
  */
@@ -9,7 +9,6 @@ import type {
   TypedExecutionContext,
   HyperScriptValue,
   EvaluationResult,
-  LLMDocumentation,
 } from '../../types/command-types';
 
 // ============================================================================
@@ -19,7 +18,7 @@ import type {
 /**
  * Enhanced time parsing expression with comprehensive validation
  */
-export class EnhancedTimeParsingExpression implements TypedExpressionImplementation<number> {
+export class TimeParsingExpression implements TypedExpressionImplementation<number> {
   public readonly name = 'time-parse';
   public readonly category = 'conversion' as const;
   public readonly precedence = 1;
@@ -33,59 +32,7 @@ export class EnhancedTimeParsingExpression implements TypedExpressionImplementat
     dependencies: [],
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Parses hyperscript time literals into milliseconds with comprehensive validation',
-    parameters: [
-      {
-        name: 'timeString',
-        type: 'string',
-        description: 'Time string in hyperscript format (2s, 500ms, 1 minute, etc.)',
-        optional: false,
-        examples: ['2s', '500ms', '1 minute', '2.5h', '1 day', '3 weeks'],
-      },
-      {
-        name: 'defaultUnit',
-        type: 'string',
-        description: 'Default unit to use for pure numbers',
-        optional: true,
-        defaultValue: 'ms',
-        examples: ['ms', 's', 'm', 'h', 'd', 'w'],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'Time duration in milliseconds',
-      examples: ['2000', '500', '60000', '9000000', '86400000', '1814400000'],
-    },
-    examples: [
-      {
-        title: 'Seconds conversion',
-        code: 'parseTime("2s")',
-        explanation: 'Convert 2 seconds to milliseconds',
-        output: 2000,
-      },
-      {
-        title: 'Milliseconds',
-        code: 'parseTime("500ms")',
-        explanation: 'Parse milliseconds directly',
-        output: 500,
-      },
-      {
-        title: 'Long format',
-        code: 'parseTime("1 minute")',
-        explanation: 'Handle long time format',
-        output: 60000,
-      },
-      {
-        title: 'Decimal values',
-        code: 'parseTime("2.5h")',
-        explanation: 'Support decimal time values',
-        output: 9000000,
-      },
-    ],
-    seeAlso: ['time-format', 'time-add', 'time-subtract'],
-    tags: ['time', 'parsing', 'duration', 'conversion'],
-  };
+  
 
   private readonly timeUnits = [
     { pattern: /([-\d.]+)\s*ms\b/i, multiplier: 1, name: 'milliseconds' },
@@ -210,7 +157,7 @@ export class EnhancedTimeParsingExpression implements TypedExpressionImplementat
 /**
  * Enhanced duration formatting expression
  */
-export class EnhancedDurationFormattingExpression implements TypedExpressionImplementation<string> {
+export class DurationFormattingExpression implements TypedExpressionImplementation<string> {
   public readonly name = 'duration-format';
   public readonly category = 'conversion' as const;
   public readonly precedence = 1;
@@ -224,67 +171,7 @@ export class EnhancedDurationFormattingExpression implements TypedExpressionImpl
     dependencies: [],
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Formats milliseconds into readable duration strings with various format options',
-    parameters: [
-      {
-        name: 'milliseconds',
-        type: 'number',
-        description: 'Duration in milliseconds to format',
-        optional: false,
-        examples: ['2000', '90000', '3661000', '86400000'],
-      },
-      {
-        name: 'format',
-        type: 'string',
-        description: 'Output format style',
-        optional: true,
-        defaultValue: 'default',
-        examples: ['default', 'long', 'short', 'precise'],
-      },
-      {
-        name: 'maxUnits',
-        type: 'number',
-        description: 'Maximum number of time units to display',
-        optional: true,
-        defaultValue: 6,
-        examples: ['1', '2', '3'],
-      },
-    ],
-    returns: {
-      type: 'string',
-      description: 'Formatted duration string',
-      examples: ['2s', '1m 30s', '1 hour 1 minute 1 second', '1d', '2.5s'],
-    },
-    examples: [
-      {
-        title: 'Default format',
-        code: 'formatDuration(2000)',
-        explanation: 'Format 2 seconds in default style',
-        output: '2s',
-      },
-      {
-        title: 'Long format',
-        code: 'formatDuration(90000, "long")',
-        explanation: 'Format 1.5 minutes in long style',
-        output: '1 minute 30 seconds',
-      },
-      {
-        title: 'Short format',
-        code: 'formatDuration(3661000, "short")',
-        explanation: 'Format 1h 1m 1s showing only first 2 units',
-        output: '1h 1m',
-      },
-      {
-        title: 'Precise format',
-        code: 'formatDuration(2500, "precise")',
-        explanation: 'Include milliseconds for precise timing',
-        output: '2.5s',
-      },
-    ],
-    seeAlso: ['time-parse', 'time-add', 'time-subtract'],
-    tags: ['time', 'formatting', 'duration', 'display'],
-  };
+  
 
   private readonly units = [
     { name: 'w', longName: 'week', value: 604800000 },
@@ -402,7 +289,7 @@ export class EnhancedDurationFormattingExpression implements TypedExpressionImpl
 /**
  * Enhanced time arithmetic with validation
  */
-export class EnhancedTimeArithmeticExpression implements TypedExpressionImplementation<number> {
+export class TimeArithmeticExpression implements TypedExpressionImplementation<number> {
   public readonly name = 'time-arithmetic';
   public readonly category = 'arithmetic' as const;
   public readonly precedence = 6;
@@ -416,59 +303,7 @@ export class EnhancedTimeArithmeticExpression implements TypedExpressionImplemen
     dependencies: ['time-parse'],
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Performs arithmetic operations on time durations with automatic parsing',
-    parameters: [
-      {
-        name: 'operation',
-        type: 'string',
-        description: 'Arithmetic operation to perform',
-        optional: false,
-        examples: ['add', 'subtract', 'multiply', 'divide'],
-      },
-      {
-        name: 'time1',
-        type: 'string | number',
-        description: 'First time value (string or milliseconds)',
-        optional: false,
-        examples: ['2s', '1000', '1 minute', '90000'],
-      },
-      {
-        name: 'time2',
-        type: 'string | number',
-        description: 'Second time value (string or milliseconds)',
-        optional: false,
-        examples: ['500ms', '500', '30s', '30000'],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'Result of time arithmetic in milliseconds',
-      examples: ['2500', '1500', '180000', '2000'],
-    },
-    examples: [
-      {
-        title: 'Add durations',
-        code: 'timeArithmetic("add", "2s", "500ms")',
-        explanation: 'Add 2 seconds and 500 milliseconds',
-        output: 2500,
-      },
-      {
-        title: 'Subtract durations',
-        code: 'timeArithmetic("subtract", "1 minute", "30s")',
-        explanation: 'Subtract 30 seconds from 1 minute',
-        output: 30000,
-      },
-      {
-        title: 'Multiply duration',
-        code: 'timeArithmetic("multiply", "1s", 2)',
-        explanation: 'Multiply 1 second by 2',
-        output: 2000,
-      },
-    ],
-    seeAlso: ['time-parse', 'duration-format'],
-    tags: ['time', 'arithmetic', 'calculation', 'duration'],
-  };
+  
 
   async evaluate(
     context: TypedExecutionContext,
@@ -586,15 +421,15 @@ export const enhancedTimeExpressions = {
 /**
  * Factory functions for creating enhanced time expressions
  */
-export function createEnhancedTimeParsing(): EnhancedTimeParsingExpression {
+export function createTimeParsing(): EnhancedTimeParsingExpression {
   return new EnhancedTimeParsingExpression();
 }
 
-export function createEnhancedDurationFormatting(): EnhancedDurationFormattingExpression {
+export function createDurationFormatting(): EnhancedDurationFormattingExpression {
   return new EnhancedDurationFormattingExpression();
 }
 
-export function createEnhancedTimeArithmetic(): EnhancedTimeArithmeticExpression {
+export function createTimeArithmetic(): EnhancedTimeArithmeticExpression {
   return new EnhancedTimeArithmeticExpression();
 }
 

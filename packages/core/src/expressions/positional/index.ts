@@ -489,6 +489,6 @@ export {
 export {
   EnhancedFirstExpression,
   EnhancedLastExpression,
-  createEnhancedFirstExpression,
-  createEnhancedLastExpression,
+  createFirstExpression,
+  createLastExpression,
 } from './impl/index';

@@ -750,38 +750,6 @@ function tokenizeSymbol(tokenizer: Tokenizer): void {
   addToken(tokenizer, TokenType.SYMBOL, value, start);
 }
 
-// Reserved for future use - object literal tokenization
-// function _tokenizeObjectLiteral(tokenizer: Tokenizer): void {
-//   const start = tokenizer.position;
-//   let value = '';
-//   let braceCount = 0;
-//
-//   do {
-//     const char = advance(tokenizer);
-//     value += char;
-//     if (char === '{') braceCount++;
-//     if (char === '}') braceCount--;
-//   } while (braceCount > 0 && tokenizer.position < tokenizer.input.length);
-//
-//   addToken(tokenizer, TokenType.OBJECT_LITERAL, value, start);
-// }
-
-// Reserved for future use - array literal tokenization
-// function _tokenizeArrayLiteral(tokenizer: Tokenizer): void {
-//   const start = tokenizer.position;
-//   let value = '';
-//   let bracketCount = 0;
-//
-//   do {
-//     const char = advance(tokenizer);
-//     value += char;
-//     if (char === '[') bracketCount++;
-//     if (char === ']') bracketCount--;
-//   } while (bracketCount > 0 && tokenizer.position < tokenizer.input.length);
-//
-//   addToken(tokenizer, TokenType.ARRAY_LITERAL, value, start);
-// }
-
 function tokenizeOperator(tokenizer: Tokenizer): void {
   const start = tokenizer.position;
   let value = '';
@@ -1220,11 +1188,6 @@ function classifyIdentifier(value: string): TokenType {
 function isAlpha(char: string): boolean {
   return /[a-zA-Z]/.test(char);
 }
-
-// Reserved for future use
-// function _isDigit(char: string): boolean {
-//   return /[0-9]/.test(char);
-// }
 
 function isAlphaNumeric(char: string): boolean {
   return /[a-zA-Z0-9]/.test(char);

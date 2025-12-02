@@ -9,7 +9,7 @@
 
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 import { asHTMLElement } from '../../utils/dom-utils';
 
 // Input type definition
@@ -50,7 +50,7 @@ export class DefaultCommand
   };
 
   validation = {
-    validate(input: unknown): UnifiedValidationResult<DefaultCommandInput> {
+    validate(input: unknown): ValidationResult<DefaultCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,

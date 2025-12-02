@@ -278,7 +278,7 @@ export interface TemplateContextBridge {
  * Template directive registry for managing enhanced directives
  */
 export interface TemplateDirectiveRegistry {
-  register<T extends EnhancedTemplateDirective>(directive: T): void;
+  register<T extends TemplateDirective>(directive: T): void;
   get(directiveType: TemplateDirectiveType): EnhancedTemplateDirective | undefined;
   has(directiveType: TemplateDirectiveType): boolean;
   list(): TemplateDirectiveType[];

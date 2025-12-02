@@ -701,80 +701,42 @@ export class ExpressionEvaluator {
     const rightValue = await this.evaluate(right, context);
 
     // Map operators to expression implementations
+    // Simple operators are inlined for performance (no registry lookup needed)
     switch (operator) {
+      // Comparison operators - inlined for performance
       case '>':
-        const greaterThanExpr = this.expressionRegistry.get('greaterThan');
-        return greaterThanExpr
-          ? greaterThanExpr.evaluate(context, leftValue, rightValue)
-          : leftValue > rightValue;
-
-      case '<':
-        const lessThanExpr = this.expressionRegistry.get('lessThan');
-        return lessThanExpr
-          ? lessThanExpr.evaluate(context, leftValue, rightValue)
-          : leftValue < rightValue;
-
-      case '>=':
-        const gteExpr = this.expressionRegistry.get('greaterThanOrEqual');
-        return gteExpr ? gteExpr.evaluate(context, leftValue, rightValue) : leftValue >= rightValue;
-
-      case '<=':
-        const lteExpr = this.expressionRegistry.get('lessThanOrEqual');
-        return lteExpr ? lteExpr.evaluate(context, leftValue, rightValue) : leftValue <= rightValue;
-
-      case '==':
-      case 'equals':
-        const equalsExpr = this.expressionRegistry.get('equals');
-        return equalsExpr
-          ? equalsExpr.evaluate(context, leftValue, rightValue)
-          : leftValue == rightValue;
-
-      case '===':
-        const strictEqualsExpr = this.expressionRegistry.get('strictEquals');
-        return strictEqualsExpr
-          ? strictEqualsExpr.evaluate(context, leftValue, rightValue)
-          : leftValue === rightValue;
-
-      case 'is equal to':
-        // Same as regular equals - loose equality
-        return leftValue == rightValue;
-
-      case 'is really equal to':
-      case 'really equals':
-        // Strict equality - type and value must match
-        return leftValue === rightValue;
-
-      case 'is not equal to':
-        // Negated loose equality
-        return leftValue != rightValue;
-
-      case 'is not really equal to':
-        // Negated strict equality
-        return leftValue !== rightValue;
-
       case 'is greater than':
         return leftValue > rightValue;
 
+      case '<':
       case 'is less than':
         return leftValue < rightValue;
 
+      case '>=':
       case 'is greater than or equal to':
         return leftValue >= rightValue;
 
+      case '<=':
       case 'is less than or equal to':
         return leftValue <= rightValue;
 
+      case '==':
+      case 'equals':
+      case 'is equal to':
+        return leftValue == rightValue;
+
+      case '===':
+      case 'is really equal to':
+      case 'really equals':
+        return leftValue === rightValue;
+
       case '!=':
-        const notEqualsExpr = this.expressionRegistry.get('notEquals');
-        return notEqualsExpr
-          ? notEqualsExpr.evaluate(context, leftValue, rightValue)
-          : leftValue != rightValue;
+      case 'is not equal to':
+        return leftValue != rightValue;
 
       case '!==':
-        const strictNotEqualsExpr = this.expressionRegistry.get('strictNotEquals');
-        return strictNotEqualsExpr
-          ? strictNotEqualsExpr.evaluate(context, leftValue, rightValue)
-          : leftValue !== rightValue;
+      case 'is not really equal to':
+        return leftValue !== rightValue;
 
       case '+':
         // Smart operator resolution: choose between numeric addition and string concatenation
@@ -807,31 +769,22 @@ export class ExpressionEvaluator {
         debug.expressions('Using fallback + operation for:', { leftValue, rightValue });
         return leftValue + rightValue;
 
+      // Arithmetic operators - inlined for performance
       case '-':
-        const subtractExpr = this.expressionRegistry.get('subtract');
-        return subtractExpr
-          ? subtractExpr.evaluate(context, leftValue, rightValue)
-          : leftValue - rightValue;
+        return leftValue - rightValue;
 
       case '*':
-        const multiplyExpr = this.expressionRegistry.get('multiply');
-        return multiplyExpr
-          ? multiplyExpr.evaluate(context, leftValue, rightValue)
-          : leftValue * rightValue;
+        return leftValue * rightValue;
 
       case '/':
-        const divideExpr = this.expressionRegistry.get('divide');
-        return divideExpr
-          ? divideExpr.evaluate(context, leftValue, rightValue)
-          : leftValue / rightValue;
+        return leftValue / rightValue;
 
       case '%':
       case 'mod':
-        const modExpr = this.expressionRegistry.get('modulo');
-        return modExpr ? modExpr.evaluate(context, leftValue, rightValue) : leftValue % rightValue;
+        return leftValue % rightValue;
 
       case 'as':
-        // Type conversion - right operand should be a type name
+        // Type conversion - right operand should be a type name (keep complex logic)
         const typeName =
           typeof rightValue === 'string'
             ? rightValue
@@ -843,22 +796,20 @@ export class ExpressionEvaluator {
         const asExpr = this.expressionRegistry.get('as');
         return asExpr ? asExpr.evaluate(context, leftValue, typeName) : leftValue;
 
+      // Logical operators - inlined for performance
       case '&&':
       case 'and':
-        const andExpr = this.expressionRegistry.get('and');
-        return andExpr ? andExpr.evaluate(context, leftValue, rightValue) : leftValue && rightValue;
+        return leftValue && rightValue;
 
       case '||':
       case 'or':
-        const orExpr = this.expressionRegistry.get('or');
-        return orExpr ? orExpr.evaluate(context, leftValue, rightValue) : leftValue || rightValue;
+        return leftValue || rightValue;
 
+      // Identity operators - inlined for performance
       case 'is':
-        // Identity comparison - strict equality (bypass registry for binary comparison)
         return leftValue === rightValue;
 
       case 'is not':
-        // Negative identity comparison - strict inequality
         return leftValue !== rightValue;
 
       case 'is a':

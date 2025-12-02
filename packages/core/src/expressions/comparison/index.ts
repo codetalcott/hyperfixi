@@ -1,5 +1,5 @@
 /**
- * Enhanced Comparison Expressions - Deep TypeScript Integration
+ * Comparison Expressions - Deep TypeScript Integration
  * Implements comparison operations (>, <, >=, <=, ==, !=) with comprehensive validation
  * Enhanced for LLM code agents with full type safety
  */
@@ -8,11 +8,11 @@ import { v } from '../../validation/lightweight-validators';
 import type {
   ValidationResult,
   TypedExecutionContext as TypedExpressionContext,
-  UnifiedEvaluationType as EvaluationType,
-  UnifiedExpressionMetadata as ExpressionMetadata,
-  UnifiedTypedResult as TypedResult,
-  UnifiedLLMDocumentation as LLMDocumentation,
-  UnifiedExpressionCategory as ExpressionCategory,
+  EvaluationType as EvaluationType,
+  ExpressionMetadata as ExpressionMetadata,
+  TypedResult as TypedResult,
+  LLMDocumentation as LLMDocumentation,
+  ExpressionCategory as ExpressionCategory,
 } from '../../types/index';
 
 // Define BaseTypedExpression locally for now
@@ -43,7 +43,7 @@ type ComparisonInput = any; // Inferred from RuntimeValidator
 // Enhanced Greater Than Expression
 // ============================================================================
 
-export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolean> {
+export class GreaterThanExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'greaterThan';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left > right';
@@ -54,93 +54,9 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['boolean'],
-    examples: [
-      {
-        input: '10 > 5',
-        description: 'Compare two numbers',
-        expectedOutput: true,
-      },
-      {
-        input: '"b" > "a"',
-        description: 'Compare strings lexicographically',
-        expectedOutput: true,
-      },
-      {
-        input: 'age > 18',
-        description: 'Check if person is adult',
-        expectedOutput: true,
-        context: { locals: new Map([['age', 25]]) },
-      },
-    ],
-    relatedExpressions: [
-      'lessThan',
-      'greaterThanOrEqual',
-      'lessThanOrEqual',
-      'equals',
-      'notEquals',
-    ],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Compares two values to determine if the left operand is greater than the right operand',
-    parameters: [
-      {
-        name: 'left',
-        type: 'number',
-        description: 'Left operand - number, string, or comparable value',
-        optional: false,
-        examples: ['10', '"b"', 'age', 'score'],
-      },
-      {
-        name: 'right',
-        type: 'number',
-        description: 'Right operand - number, string, or comparable value',
-        optional: false,
-        examples: ['5', '"a"', '18', 'threshold'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if left is greater than right, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Numeric comparison',
-        code: '25 > 18',
-        explanation: 'Check if 25 is greater than 18',
-        output: 'true',
-      },
-      {
-        title: 'String comparison',
-        code: '"zebra" > "apple"',
-        explanation: 'Compare strings lexicographically',
-        output: 'true',
-      },
-      {
-        title: 'Variable comparison',
-        code: 'currentScore > bestScore',
-        explanation: 'Compare variables containing numbers',
-        output: 'false',
-      },
-      {
-        title: 'Age verification',
-        code: 'userAge > 21',
-        explanation: 'Check if user meets age requirement',
-        output: 'true',
-      },
-    ],
-    seeAlso: ['lessThan', 'greaterThanOrEqual', 'equals', 'mathematical operations'],
-    tags: ['comparison', 'logical', 'greater', 'boolean', 'conditional'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -308,7 +224,7 @@ export class EnhancedGreaterThanExpression implements BaseTypedExpression<boolea
 // Enhanced Less Than Expression
 // ============================================================================
 
-export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> {
+export class LessThanExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'lessThan';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left < right';
@@ -319,69 +235,9 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['boolean'],
-    examples: [
-      {
-        input: '5 < 10',
-        description: 'Compare two numbers',
-        expectedOutput: true,
-      },
-      {
-        input: 'temperature < 32',
-        description: 'Check if below freezing',
-        expectedOutput: true,
-        context: { locals: new Map([['temperature', 25]]) },
-      },
-    ],
-    relatedExpressions: ['greaterThan', 'lessThanOrEqual', 'greaterThanOrEqual', 'equals'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Compares two values to determine if the left operand is less than the right operand',
-    parameters: [
-      {
-        name: 'left',
-        type: 'number',
-        description: 'Left operand - number, string, or comparable value',
-        optional: false,
-        examples: ['5', '"a"', 'temperature', 'count'],
-      },
-      {
-        name: 'right',
-        type: 'number',
-        description: 'Right operand - number, string, or comparable value',
-        optional: false,
-        examples: ['10', '"z"', '32', 'limit'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if left is less than right, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Numeric comparison',
-        code: '15 < 20',
-        explanation: 'Check if 15 is less than 20',
-        output: 'true',
-      },
-      {
-        title: 'Temperature check',
-        code: 'currentTemp < freezingPoint',
-        explanation: 'Check if temperature is below freezing',
-        output: 'true',
-      },
-    ],
-    seeAlso: ['greaterThan', 'lessThanOrEqual', 'equals'],
-    tags: ['comparison', 'logical', 'less', 'boolean', 'conditional'],
-  };
+  
 
   async evaluate(
     _context: TypedExpressionContext,
@@ -480,7 +336,7 @@ export class EnhancedLessThanExpression implements BaseTypedExpression<boolean> 
 // Enhanced Greater Than Or Equal Expression
 // ============================================================================
 
-export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression<boolean> {
+export class GreaterThanOrEqualExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'greaterThanOrEqual';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left >= right';
@@ -492,75 +348,9 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['boolean'],
-    examples: [
-      {
-        input: '10 >= 10',
-        description: 'Equal values should return true',
-        expectedOutput: true,
-      },
-      {
-        input: 'score >= passingGrade',
-        description: 'Check if student passed',
-        expectedOutput: true,
-        context: {
-          locals: new Map([
-            ['score', 85],
-            ['passingGrade', 70],
-          ]),
-        },
-      },
-    ],
-    relatedExpressions: ['greaterThan', 'lessThan', 'lessThanOrEqual', 'equals'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Compares two values to determine if the left operand is greater than or equal to the right operand',
-    parameters: [
-      {
-        name: 'left',
-        type: 'number',
-        description: 'Left operand - number, string, or comparable value',
-        optional: false,
-        examples: ['10', 'score', 'currentValue'],
-      },
-      {
-        name: 'right',
-        type: 'number',
-        description: 'Right operand - number, string, or comparable value',
-        optional: false,
-        examples: ['10', 'passingGrade', 'minimumValue'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if left is greater than or equal to right, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Passing grade check',
-        code: 'studentScore >= 70',
-        explanation: 'Check if student scored 70 or above',
-        output: 'true',
-      },
-      {
-        title: 'Minimum requirement',
-        code: 'age >= minimumAge',
-        explanation: 'Check if age meets minimum requirement',
-        output: 'true',
-      },
-    ],
-    seeAlso: ['greaterThan', 'lessThanOrEqual', 'equals'],
-    tags: ['comparison', 'logical', 'greater-equal', 'boolean', 'conditional'],
-  };
+  
 
   async evaluate(
     _context: TypedExpressionContext,
@@ -648,7 +438,7 @@ export class EnhancedGreaterThanOrEqualExpression implements BaseTypedExpression
 // Enhanced Less Than Or Equal Expression
 // ============================================================================
 
-export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<boolean> {
+export class LessThanOrEqualExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'lessThanOrEqual';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left <= right';
@@ -659,75 +449,9 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['boolean'],
-    examples: [
-      {
-        input: '5 <= 10',
-        description: 'Check if value is within limit',
-        expectedOutput: true,
-      },
-      {
-        input: 'usage <= quota',
-        description: 'Check if under quota',
-        expectedOutput: true,
-        context: {
-          locals: new Map([
-            ['usage', 75],
-            ['quota', 100],
-          ]),
-        },
-      },
-    ],
-    relatedExpressions: ['lessThan', 'greaterThan', 'greaterThanOrEqual', 'equals'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Compares two values to determine if the left operand is less than or equal to the right operand',
-    parameters: [
-      {
-        name: 'left',
-        type: 'number',
-        description: 'Left operand - number, string, or comparable value',
-        optional: false,
-        examples: ['5', 'usage', 'currentAmount'],
-      },
-      {
-        name: 'right',
-        type: 'number',
-        description: 'Right operand - number, string, or comparable value',
-        optional: false,
-        examples: ['10', 'quota', 'maximumAmount'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if left is less than or equal to right, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Quota check',
-        code: 'currentUsage <= monthlyQuota',
-        explanation: 'Check if usage is within monthly quota',
-        output: 'true',
-      },
-      {
-        title: 'Budget constraint',
-        code: 'totalCost <= budget',
-        explanation: 'Check if cost is within budget',
-        output: 'false',
-      },
-    ],
-    seeAlso: ['lessThan', 'greaterThanOrEqual', 'equals'],
-    tags: ['comparison', 'logical', 'less-equal', 'boolean', 'conditional'],
-  };
+  
 
   async evaluate(
     _context: TypedExpressionContext,
@@ -812,10 +536,10 @@ export class EnhancedLessThanOrEqualExpression implements BaseTypedExpression<bo
 }
 
 // ============================================================================
-// Enhanced Equality Expression
+// Equality Expression
 // ============================================================================
 
-export class EnhancedEqualityExpression implements BaseTypedExpression<boolean> {
+export class EqualityExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'equals';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left == right';
@@ -826,75 +550,9 @@ export class EnhancedEqualityExpression implements BaseTypedExpression<boolean> 
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['boolean'],
-    examples: [
-      {
-        input: '5 == "5"',
-        description: 'Type coercion equality',
-        expectedOutput: true,
-      },
-      {
-        input: 'status == "complete"',
-        description: 'String equality check',
-        expectedOutput: true,
-        context: { locals: new Map([['status', 'complete']]) },
-      },
-    ],
-    relatedExpressions: ['notEquals', 'greaterThan', 'lessThan', 'strictEquals'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Compares two values for equality with automatic type coercion',
-    parameters: [
-      {
-        name: 'left',
-        type: 'any',
-        description: 'Left operand - any value',
-        optional: false,
-        examples: ['5', '"hello"', 'true', 'variable'],
-      },
-      {
-        name: 'right',
-        type: 'any',
-        description: 'Right operand - any value',
-        optional: false,
-        examples: ['"5"', '"hello"', 'false', 'otherVariable'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if values are equal (with type coercion), false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Numeric equality with strings',
-        code: '42 == "42"',
-        explanation: 'Numbers and numeric strings are equal',
-        output: 'true',
-      },
-      {
-        title: 'Boolean coercion',
-        code: '1 == true',
-        explanation: 'Number 1 equals boolean true',
-        output: 'true',
-      },
-      {
-        title: 'String comparison',
-        code: 'userRole == "admin"',
-        explanation: 'Check if user has admin role',
-        output: 'false',
-      },
-    ],
-    seeAlso: ['notEquals', 'strictEquals', 'comparison operations'],
-    tags: ['comparison', 'logical', 'equality', 'boolean', 'type-coercion'],
-  };
+  
 
   async evaluate(
     _context: TypedExpressionContext,
@@ -978,10 +636,10 @@ export class EnhancedEqualityExpression implements BaseTypedExpression<boolean> 
 }
 
 // ============================================================================
-// Enhanced Inequality Expression
+// Inequality Expression
 // ============================================================================
 
-export class EnhancedInequalityExpression implements BaseTypedExpression<boolean> {
+export class InequalityExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'notEquals';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'left != right';
@@ -992,69 +650,9 @@ export class EnhancedInequalityExpression implements BaseTypedExpression<boolean
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['boolean'],
-    examples: [
-      {
-        input: '5 != 3',
-        description: 'Numbers are not equal',
-        expectedOutput: true,
-      },
-      {
-        input: 'status != "pending"',
-        description: 'Check if not pending',
-        expectedOutput: true,
-        context: { locals: new Map([['status', 'complete']]) },
-      },
-    ],
-    relatedExpressions: ['equals', 'greaterThan', 'lessThan'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Compares two values for inequality (not equal)',
-    parameters: [
-      {
-        name: 'left',
-        type: 'any',
-        description: 'Left operand - any value',
-        optional: false,
-        examples: ['5', '"hello"', 'status'],
-      },
-      {
-        name: 'right',
-        type: 'any',
-        description: 'Right operand - any value',
-        optional: false,
-        examples: ['3', '"world"', '"pending"'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if values are not equal, false if they are equal',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Different numbers',
-        code: '10 != 5',
-        explanation: 'Check if numbers are different',
-        output: 'true',
-      },
-      {
-        title: 'Status check',
-        code: 'currentStatus != "error"',
-        explanation: 'Check if status is not error',
-        output: 'true',
-      },
-    ],
-    seeAlso: ['equals', 'comparison operations'],
-    tags: ['comparison', 'logical', 'inequality', 'boolean', 'not-equal'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -1103,27 +701,27 @@ export class EnhancedInequalityExpression implements BaseTypedExpression<boolean
 // Factory Functions
 // ============================================================================
 
-export function createEnhancedGreaterThanExpression(): EnhancedGreaterThanExpression {
+export function createGreaterThanExpression(): EnhancedGreaterThanExpression {
   return new EnhancedGreaterThanExpression();
 }
 
-export function createEnhancedLessThanExpression(): EnhancedLessThanExpression {
+export function createLessThanExpression(): EnhancedLessThanExpression {
   return new EnhancedLessThanExpression();
 }
 
-export function createEnhancedGreaterThanOrEqualExpression(): EnhancedGreaterThanOrEqualExpression {
+export function createGreaterThanOrEqualExpression(): EnhancedGreaterThanOrEqualExpression {
   return new EnhancedGreaterThanOrEqualExpression();
 }
 
-export function createEnhancedLessThanOrEqualExpression(): EnhancedLessThanOrEqualExpression {
+export function createLessThanOrEqualExpression(): EnhancedLessThanOrEqualExpression {
   return new EnhancedLessThanOrEqualExpression();
 }
 
-export function createEnhancedEqualityExpression(): EnhancedEqualityExpression {
+export function createEqualityExpression(): EnhancedEqualityExpression {
   return new EnhancedEqualityExpression();
 }
 
-export function createEnhancedInequalityExpression(): EnhancedInequalityExpression {
+export function createInequalityExpression(): EnhancedInequalityExpression {
   return new EnhancedInequalityExpression();
 }
 
@@ -1132,10 +730,10 @@ export function createEnhancedInequalityExpression(): EnhancedInequalityExpressi
 // ============================================================================
 
 export const comparisonExpressions = {
-  greaterThan: createEnhancedGreaterThanExpression(),
-  lessThan: createEnhancedLessThanExpression(),
-  greaterThanOrEqual: createEnhancedGreaterThanOrEqualExpression(),
-  lessThanOrEqual: createEnhancedLessThanOrEqualExpression(),
-  equals: createEnhancedEqualityExpression(),
-  notEquals: createEnhancedInequalityExpression(),
+  greaterThan: createGreaterThanExpression(),
+  lessThan: createLessThanExpression(),
+  greaterThanOrEqual: createGreaterThanOrEqualExpression(),
+  lessThanOrEqual: createLessThanOrEqualExpression(),
+  equals: createEqualityExpression(),
+  notEquals: createInequalityExpression(),
 } as const;

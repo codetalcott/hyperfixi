@@ -97,7 +97,7 @@ export type BackendContextOutput = any; // Inferred from RuntimeValidator
 // Backend Context Implementation
 // ============================================================================
 
-export class TypedBackendContextImplementation extends EnhancedContextBase<
+export class TypedBackendContextImplementation extends ContextBase<
   BackendContextInput,
   BackendContextOutput
 > {
@@ -223,23 +223,23 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<
 
         // Enhanced request handling
         request: {
-          get: this.createEnhancedRequestGetter(input.request),
-          validate: this.createEnhancedRequestValidator(input.request),
+          get: this.createRequestGetter(input.request),
+          validate: this.createRequestValidator(input.request),
         },
 
         // Enhanced response building
         response: {
-          json: this.createEnhancedJsonResponse(input.response),
-          html: this.createEnhancedHtmlResponse(input.response),
-          redirect: this.createEnhancedRedirect(input.response),
-          status: this.createEnhancedStatusSetter(input.response),
+          json: this.createJsonResponse(input.response),
+          html: this.createHtmlResponse(input.response),
+          redirect: this.createRedirect(input.response),
+          status: this.createStatusSetter(input.response),
         },
 
         // Enhanced service access
         services: {
-          db: this.createEnhancedDatabaseAccess(input.services?.database),
-          cache: this.createEnhancedCacheAccess(input.services?.cache),
-          logger: this.createEnhancedLogger(input.services?.logger),
+          db: this.createDatabaseAccess(input.services?.database),
+          cache: this.createCacheAccess(input.services?.cache),
+          logger: this.createLogger(input.services?.logger),
         },
       };
 
@@ -275,7 +275,7 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<
   // Enhanced Helper Methods (following enhanced expression pattern)
   // ============================================================================
 
-  private createEnhancedRequestGetter(request?: any) {
+  private createRequestGetter(request?: any) {
     return (key: string) => {
       if (!request) return undefined;
 
@@ -290,7 +290,7 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedRequestValidator(request?: any) {
+  private createRequestValidator(request?: any) {
     return (schema: any) => {
       if (!request) return { isValid: false, errors: ['No request data available'] };
 
@@ -306,7 +306,7 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedJsonResponse(response?: any) {
+  private createJsonResponse(response?: any) {
     return (data: any, statusCode = 200) => {
       if (response && typeof response.json === 'function') {
         response.status(statusCode).json(data);
@@ -319,7 +319,7 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedHtmlResponse(response?: any) {
+  private createHtmlResponse(response?: any) {
     return (html: string, statusCode = 200) => {
       if (response) {
         if (typeof response.send === 'function') {
@@ -334,7 +334,7 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedRedirect(response?: any) {
+  private createRedirect(response?: any) {
     return (url: string, statusCode = 302) => {
       if (response && typeof response.redirect === 'function') {
         response.redirect(statusCode, url);
@@ -347,7 +347,7 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedStatusSetter(response?: any) {
+  private createStatusSetter(response?: any) {
     return (code: number) => {
       if (response) {
         if (typeof response.status === 'function') {
@@ -360,7 +360,7 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedDatabaseAccess(database?: any) {
+  private createDatabaseAccess(database?: any) {
     return {
       query: async (sql: string, params?: any[]) => {
         if (!database) throw new Error('Database not available in backend context');
@@ -383,7 +383,7 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedCacheAccess(cache?: any) {
+  private createCacheAccess(cache?: any) {
     return {
       get: async (key: string) => {
         if (!cache) return null;
@@ -414,7 +414,7 @@ export class TypedBackendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedLogger(logger?: any) {
+  private createLogger(logger?: any) {
     return {
       info: (message: string, ...args: any[]) => {
         if (logger && typeof logger.info === 'function') {

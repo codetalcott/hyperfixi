@@ -1,5 +1,5 @@
 /**
- * Enhanced Form Expressions - Deep TypeScript Integration
+ * Form Expressions - Deep TypeScript Integration
  * Comprehensive form handling and validation with full type safety
  * Enhanced for LLM code agents with maximum type safety
  */
@@ -8,7 +8,6 @@ import type {
   TypedExpressionImplementation,
   TypedExecutionContext,
   EvaluationResult,
-  LLMDocumentation,
 } from '../../types/command-types';
 
 // ============================================================================
@@ -18,7 +17,7 @@ import type {
 /**
  * Enhanced form values extraction with comprehensive validation
  */
-export class EnhancedFormValuesExpression
+export class FormValuesExpression
   implements TypedExpressionImplementation<Record<string, unknown>>
 {
   public readonly name = 'form-values';
@@ -34,45 +33,7 @@ export class EnhancedFormValuesExpression
     dependencies: ['DOM'],
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Extracts all form field values as a structured object with type validation',
-    parameters: [
-      {
-        name: 'formElement',
-        type: 'element',
-        description: 'Form element or container with form fields',
-        optional: false,
-        examples: ['<form>', '<div>', 'document.querySelector("form")'],
-      },
-    ],
-    returns: {
-      type: 'object',
-      description: 'Object containing all form field values',
-      examples: ['{"name": "John", "email": "john@example.com"}', '{"checked": true}'],
-    },
-    examples: [
-      {
-        title: 'Basic form extraction',
-        code: 'formValues(myForm)',
-        explanation: 'Extract all field values from a form',
-        output: '{"username": "john", "password": "***"}',
-      },
-      {
-        title: 'Checkbox handling',
-        code: 'formValues(form)',
-        explanation: 'Properly handles checked/unchecked states',
-        output: '{"notifications": true, "marketing": false}',
-      },
-      {
-        title: 'Complex form',
-        code: 'formValues(#signupForm)',
-        explanation: 'Handle various input types in one form',
-        output: '{"name": "Jane", "age": 25, "country": "US"}',
-      },
-    ],
-    seeAlso: ['form-data', 'form-validate', 'serialize'],
-    tags: ['form', 'extraction', 'values', 'fields'],
-  };
+  
 
   async evaluate(
     _context: TypedExecutionContext,
@@ -203,7 +164,7 @@ export class EnhancedFormValuesExpression
 /**
  * Enhanced form validation with custom rules
  */
-export class EnhancedFormValidationExpression implements TypedExpressionImplementation<boolean> {
+export class FormValidationExpression implements TypedExpressionImplementation<boolean> {
   public readonly name = 'form-validate';
   public readonly category = 'logical' as const;
   public readonly precedence = 1;
@@ -217,52 +178,7 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
     dependencies: ['DOM'],
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Validates form fields according to HTML5 validation rules and custom criteria',
-    parameters: [
-      {
-        name: 'formElement',
-        type: 'element',
-        description: 'Form element to validate',
-        optional: false,
-        examples: ['<form>', 'document.querySelector("#myForm")'],
-      },
-      {
-        name: 'customRules',
-        type: 'object',
-        description: 'Custom validation rules (optional)',
-        optional: true,
-        examples: ['{"email": "required|email", "age": "min:18"}'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if form is valid, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'HTML5 validation',
-        code: 'formValidate(myForm)',
-        explanation: 'Use built-in HTML5 validation',
-        output: true,
-      },
-      {
-        title: 'Custom validation rules',
-        code: 'formValidate(form, {"password": "min:8"})',
-        explanation: 'Add custom validation rules',
-        output: false,
-      },
-      {
-        title: 'Required field check',
-        code: 'formValidate(#signupForm)',
-        explanation: 'Check all required fields are filled',
-        output: true,
-      },
-    ],
-    seeAlso: ['form-values', 'form-errors'],
-    tags: ['form', 'validation', 'rules', 'html5'],
-  };
+  
 
   async evaluate(
     _context: TypedExecutionContext,
@@ -394,7 +310,7 @@ export class EnhancedFormValidationExpression implements TypedExpressionImplemen
 /**
  * Enhanced form serialization for API submission
  */
-export class EnhancedFormSerializationExpression implements TypedExpressionImplementation<string> {
+export class FormSerializationExpression implements TypedExpressionImplementation<string> {
   public readonly name = 'form-serialize';
   public readonly category = 'conversion' as const;
   public readonly precedence = 1;
@@ -408,47 +324,7 @@ export class EnhancedFormSerializationExpression implements TypedExpressionImple
     dependencies: ['DOM'],
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Serializes form data into URL-encoded string or JSON format',
-    parameters: [
-      {
-        name: 'formElement',
-        type: 'element',
-        description: 'Form element to serialize',
-        optional: false,
-        examples: ['<form>', 'document.querySelector("form")'],
-      },
-      {
-        name: 'format',
-        type: 'string',
-        description: 'Serialization format',
-        optional: true,
-        defaultValue: 'urlencoded',
-        examples: ['urlencoded', 'json'],
-      },
-    ],
-    returns: {
-      type: 'string',
-      description: 'Serialized form data',
-      examples: ['name=John&email=john@example.com', '{"name":"John","email":"john@example.com"}'],
-    },
-    examples: [
-      {
-        title: 'URL encoding',
-        code: 'formSerialize(myForm)',
-        explanation: 'Serialize as URL-encoded string',
-        output: 'name=John&email=john%40example.com',
-      },
-      {
-        title: 'JSON format',
-        code: 'formSerialize(myForm, "json")',
-        explanation: 'Serialize as JSON string',
-        output: '{"name":"John","email":"john@example.com"}',
-      },
-    ],
-    seeAlso: ['form-values', 'form-data'],
-    tags: ['form', 'serialization', 'json', 'urlencoded'],
-  };
+  
 
   async evaluate(
     context: TypedExecutionContext,
@@ -534,15 +410,15 @@ export const enhancedFormExpressions = {
 /**
  * Factory functions for creating enhanced form expressions
  */
-export function createEnhancedFormValues(): EnhancedFormValuesExpression {
+export function createFormValues(): EnhancedFormValuesExpression {
   return new EnhancedFormValuesExpression();
 }
 
-export function createEnhancedFormValidation(): EnhancedFormValidationExpression {
+export function createFormValidation(): EnhancedFormValidationExpression {
   return new EnhancedFormValidationExpression();
 }
 
-export function createEnhancedFormSerialization(): EnhancedFormSerializationExpression {
+export function createFormSerialization(): EnhancedFormSerializationExpression {
   return new EnhancedFormSerializationExpression();
 }
 

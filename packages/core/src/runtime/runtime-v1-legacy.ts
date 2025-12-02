@@ -24,7 +24,7 @@ function nodeType(node: ASTNode): string {
 }
 
 // Enhanced command imports
-import { EnhancedCommandRegistry } from './command-adapter';
+import { CommandRegistry } from './command-adapter';
 import { asHTMLElement } from '../utils/dom-utils';
 import { debug, debugGroup } from '../utils/debug';
 import { createHideCommand } from '../commands/dom/hide';
@@ -103,7 +103,7 @@ export class Runtime {
   private options: RuntimeOptions;
   private expressionEvaluator: ExpressionEvaluator | LazyExpressionEvaluator;
   private putCommand: PutCommand;
-  private enhancedRegistry: EnhancedCommandRegistry;
+  private commandRegistry: CommandRegistry;
   private behaviorRegistry: Map<string, any>;
   private behaviorAPI: any;
   private globalVariables: Map<string, any>; // Shared globals across all executions
@@ -148,13 +148,13 @@ export class Runtime {
     // Initialize command registry based on loading strategy
     if (this.options.lazyLoad) {
       // Lazy loading mode (default) - commands loaded on first use
-      // Note: LazyCommandRegistry implements same interface as EnhancedCommandRegistry
-      this.enhancedRegistry = EnhancedCommandRegistry.createWithLazyLoading(
+      // Note: LazyCommandRegistry implements same interface as CommandRegistry
+      this.commandRegistry = CommandRegistry.createWithLazyLoading(
         this.options.commands ? { commands: this.options.commands } : undefined
-      ) as unknown as EnhancedCommandRegistry;
+      ) as unknown as CommandRegistry;
     } else {
       // Legacy eager loading mode - all commands loaded upfront
-      this.enhancedRegistry = EnhancedCommandRegistry.createWithDefaults();
+      this.commandRegistry = CommandRegistry.createWithDefaults();
       this.initializeEnhancedCommands();
     }
   }
@@ -175,41 +175,41 @@ export class Runtime {
 
     try {
       // Register DOM commands
-      this.enhancedRegistry.register(createHideCommand());
-      this.enhancedRegistry.register(createShowCommand());
-      this.enhancedRegistry.register(createToggleCommand());
-      this.enhancedRegistry.register(createAddCommand());
-      this.enhancedRegistry.register(createRemoveCommand());
-      this.enhancedRegistry.register(createPutCommand());
+      this.commandRegistry.register(createHideCommand());
+      this.commandRegistry.register(createShowCommand());
+      this.commandRegistry.register(createToggleCommand());
+      this.commandRegistry.register(createAddCommand());
+      this.commandRegistry.register(createRemoveCommand());
+      this.commandRegistry.register(createPutCommand());
 
       // Register event commands
-      this.enhancedRegistry.register(createSendCommand());
-      this.enhancedRegistry.register(createTriggerCommand());
+      this.commandRegistry.register(createSendCommand());
+      this.commandRegistry.register(createTriggerCommand());
 
       // Register data commands (enhanced)
       try {
         const setCommand = createSetCommand();
-        this.enhancedRegistry.register(setCommand);
+        this.commandRegistry.register(setCommand);
       } catch (e) {
         // console.error('❌ Failed to register Enhanced SET command:', e);
       }
 
       // Register async commands
       // Legacy commands excluded - TODO: Implement enhanced versions
-      // this.enhancedRegistry.register(createWaitCommand());
-      this.enhancedRegistry.register(createFetchCommand());
+      // this.commandRegistry.register(createWaitCommand());
+      this.commandRegistry.register(createFetchCommand());
 
       // Register data commands (enhanced)
       try {
         const incrementCommand = createIncrementCommand();
-        this.enhancedRegistry.register(incrementCommand);
+        this.commandRegistry.register(incrementCommand);
       } catch (e) {
         // console.error('❌ Failed to register Enhanced INCREMENT command:', e);
       }
 
       try {
         const decrementCommand = createDecrementCommand();
-        this.enhancedRegistry.register(decrementCommand);
+        this.commandRegistry.register(decrementCommand);
       } catch (e) {
         // console.error('❌ Failed to register Enhanced DECREMENT command:', e);
       }
@@ -217,7 +217,7 @@ export class Runtime {
       // Register utility commands (enhanced)
       try {
         const logCommand = createLogCommand();
-        this.enhancedRegistry.register(logCommand);
+        this.commandRegistry.register(logCommand);
       } catch (e) {
         // console.error('❌ Failed to register Enhanced LOG command:', e);
       }
@@ -237,14 +237,14 @@ export class Runtime {
       // PickCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 3)
 
       // Register navigation commands (has TypedCommandImplementation)
-      this.enhancedRegistry.register(new GoCommand());
+      this.commandRegistry.register(new GoCommand());
 
       // Register control flow commands
       // Note: halt, break, continue migrated to enhanced pattern (Phase 2)
       // Note: return, throw migrated to enhanced pattern (Phase 4)
       // Note: if, unless migrated to enhanced pattern (Phase 5)
       // All control flow commands now registered via ENHANCED_COMMAND_FACTORIES
-      // RepeatCommand is now registered as enhanced command via EnhancedCommandRegistry
+      // RepeatCommand is now registered as enhanced command via CommandRegistry
 
       // Register animation commands
       // MeasureCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 7)
@@ -260,10 +260,10 @@ export class Runtime {
         debug.command('Transition command name:', transitionCommand.metadata?.name);
 
         debug.command('About to register transition command...');
-        this.enhancedRegistry.register(transitionCommand);
+        this.commandRegistry.register(transitionCommand);
         debug.command('Transition command registered in enhanced registry');
-        debug.command('Available enhanced commands:', this.enhancedRegistry.getCommandNames());
-        debug.command('Verify transition is in registry:', this.enhancedRegistry.has('transition'));
+        debug.command('Available enhanced commands:', this.commandRegistry.getCommandNames());
+        debug.command('Verify transition is in registry:', this.commandRegistry.has('transition'));
       } catch (e) {
         console.error('❌ Failed to register transition command:', e);
         console.error('❌ Error details:', {
@@ -279,13 +279,13 @@ export class Runtime {
       // DefaultCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 3)
 
       // Register advanced commands
-      this.enhancedRegistry.register(new BeepCommand());
+      this.commandRegistry.register(new BeepCommand());
       // AsyncCommand now registered via ENHANCED_COMMAND_FACTORIES (Phase 6)
 
       // Register template commands (enhanced)
       try {
         const renderCommand = createRenderCommand();
-        this.enhancedRegistry.register(renderCommand);
+        this.commandRegistry.register(renderCommand);
       } catch (e) {
         // console.error('❌ Failed to register Enhanced RENDER command:', e);
         // Phase 9: Legacy fallback removed - all commands use enhanced pattern
@@ -717,7 +717,7 @@ export class Runtime {
     modifiers: Record<string, ExpressionNode>,
     context: ExecutionContext
   ): Promise<unknown> {
-    const adapter = await this.enhancedRegistry.getAdapter(name);
+    const adapter = await this.commandRegistry.getAdapter(name);
     if (!adapter) {
       throw new Error(`Enhanced command not found: ${name}`);
     }
@@ -1614,7 +1614,7 @@ export class Runtime {
     const commandName = command.toLowerCase();
 
     // Try enhanced commands first if available
-    if (this.options.useEnhancedCommands && this.enhancedRegistry.has(commandName)) {
+    if (this.options.useEnhancedCommands && this.commandRegistry.has(commandName)) {
       // For pattern-based execution, we need to handle different command types
       let args: ASTNode[];
       if (commandName === 'remove' || commandName === 'add') {
@@ -1667,7 +1667,7 @@ export class Runtime {
       hasModifiers: !!modifiers,
       modifierKeys: modifiers ? Object.keys(modifiers) : [],
       useEnhanced: this.options.useEnhancedCommands,
-      hasEnhanced: this.enhancedRegistry.has(name.toLowerCase()),
+      hasEnhanced: this.commandRegistry.has(name.toLowerCase()),
     });
 
     // Debug logging for transition command
@@ -1675,13 +1675,13 @@ export class Runtime {
       debug.command('TRANSITION command check:', {
         name,
         useEnhancedCommands: this.options.useEnhancedCommands,
-        hasInRegistry: this.enhancedRegistry.has(name.toLowerCase()),
-        availableCommands: this.enhancedRegistry.getCommandNames(),
+        hasInRegistry: this.commandRegistry.has(name.toLowerCase()),
+        availableCommands: this.commandRegistry.getCommandNames(),
       });
     }
 
     // Try enhanced commands first if enabled
-    if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
+    if (this.options.useEnhancedCommands && this.commandRegistry.has(name.toLowerCase())) {
       return await this.executeEnhancedCommand(
         name.toLowerCase(),
         (args || []) as ExpressionNode[],
@@ -2910,7 +2910,7 @@ export class Runtime {
 
     // Add enhanced commands
     if (this.options.useEnhancedCommands) {
-      this.enhancedRegistry.getCommandNames().forEach((name: string) => commands.add(name));
+      this.commandRegistry.getCommandNames().forEach((name: string) => commands.add(name));
     }
 
     // Add legacy commands
@@ -2929,8 +2929,8 @@ export class Runtime {
     input: unknown
   ): { valid: boolean; error?: string; suggestions?: string[] } {
     // Try enhanced validation first
-    if (this.options.useEnhancedCommands && this.enhancedRegistry.has(name.toLowerCase())) {
-      const result = this.enhancedRegistry.validateCommand(name.toLowerCase(), input);
+    if (this.options.useEnhancedCommands && this.commandRegistry.has(name.toLowerCase())) {
+      const result = this.commandRegistry.validateCommand(name.toLowerCase(), input);
       const returnObj: { valid: boolean; error?: string; suggestions?: string[] } = {
         valid: result.success ?? false,
       };
@@ -2959,8 +2959,8 @@ export class Runtime {
   /**
    * Get enhanced command registry (for debugging/inspection)
    */
-  getEnhancedRegistry(): EnhancedCommandRegistry {
-    return this.enhancedRegistry;
+  getRegistry(): CommandRegistry {
+    return this.commandRegistry;
   }
 
   /**

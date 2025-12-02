@@ -70,6 +70,14 @@ export class Parser {
   private error: ParseError | undefined;
   private warnings: ParseWarning[] = [];
 
+  // Postfix unary operators that do NOT take a right operand
+  private static readonly POSTFIX_UNARY_OPERATORS = new Set([
+    'exists',
+    'does not exist',
+    'is empty',
+    'is not empty',
+  ]);
+
   constructor(tokens: Token[]) {
     this.tokens = tokens;
   }
@@ -406,14 +414,6 @@ export class Parser {
   private parseEquality(): ASTNode {
     let expr = this.parseComparison();
 
-    // Define postfix unary operators that do NOT take a right operand
-    const POSTFIX_UNARY_OPERATORS = new Set([
-      'exists',
-      'does not exist',
-      'is empty',
-      'is not empty',
-    ]);
-
     while (
       this.matchTokenType(TokenType.COMPARISON_OPERATOR) ||
       this.match('is', 'match', 'matches', 'contains', 'include', 'includes', 'in', 'of', 'as', 'really')
@@ -421,7 +421,7 @@ export class Parser {
       const operator = this.previous().value;
 
       // Handle postfix unary operators (no right operand)
-      if (POSTFIX_UNARY_OPERATORS.has(operator)) {
+      if (Parser.POSTFIX_UNARY_OPERATORS.has(operator)) {
         expr = this.createUnaryExpression(operator, expr, false); // false = postfix
         continue;
       }
@@ -436,19 +436,11 @@ export class Parser {
   private parseComparison(): ASTNode {
     let expr = this.parseAddition();
 
-    // Define postfix unary operators that do NOT take a right operand
-    const POSTFIX_UNARY_OPERATORS = new Set([
-      'exists',
-      'does not exist',
-      'is empty',
-      'is not empty',
-    ]);
-
     while (this.matchTokenType(TokenType.COMPARISON_OPERATOR)) {
       const operator = this.previous().value;
 
       // Handle postfix unary operators (no right operand)
-      if (POSTFIX_UNARY_OPERATORS.has(operator)) {
+      if (Parser.POSTFIX_UNARY_OPERATORS.has(operator)) {
         expr = this.createUnaryExpression(operator, expr, false); // false = postfix
         continue;
       }

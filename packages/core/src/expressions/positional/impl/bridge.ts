@@ -1,5 +1,5 @@
 /**
- * Bridge between Enhanced Positional Expressions and Existing Expression Evaluator
+ * Bridge between Positional Expressions and Existing Expression Evaluator
  * Enables gradual migration from legacy to enhanced expressions while maintaining compatibility
  */
 
@@ -58,7 +58,7 @@ export function updateExecutionContext(
 /**
  * Enhanced expression adapter that wraps enhanced expressions for use in legacy systems
  */
-export class EnhancedPositionalAdapter {
+export class PositionalAdapter {
   /**
    * Evaluate enhanced 'first' expression with legacy context
    */

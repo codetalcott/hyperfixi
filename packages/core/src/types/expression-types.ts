@@ -66,7 +66,7 @@ export interface BaseTypedExpression<T> {
   readonly outputType: string;
   readonly inputSchema: RuntimeValidator<unknown>;
   readonly metadata: ExpressionMetadata;
-  readonly documentation: LLMDocumentation;
+  readonly documentation?: LLMDocumentation; // Optional - for tooling only
 
   evaluate(context: TypedExpressionContext, input: unknown): Promise<EvaluationResult<T>>;
   validate(input: unknown): ValidationResult;
@@ -88,21 +88,23 @@ export interface ExpressionEvaluation {
 
 /**
  * Expression metadata for LLM understanding and tooling
+ * Only category and complexity are required; rest is optional documentation
  */
 export interface ExpressionMetadata {
   category: ExpressionCategory;
   complexity: 'simple' | 'medium' | 'complex';
-  sideEffects: string[]; // e.g., ['dom-query', 'context-modification']
-  dependencies: string[]; // Other expressions this depends on
-  returnTypes: EvaluationType[]; // Possible return types
-  examples: {
+  // Optional documentation fields
+  sideEffects?: string[]; // e.g., ['dom-query', 'context-modification']
+  dependencies?: string[]; // Other expressions this depends on
+  returnTypes?: EvaluationType[]; // Possible return types
+  examples?: {
     input: string;
     description: string;
     expectedOutput: any;
     context?: Partial<ExecutionContext>;
   }[];
-  relatedExpressions: string[];
-  performance: {
+  relatedExpressions?: string[];
+  performance?: {
     averageTime: number; // Average execution time in ms
     complexity: 'O(1)' | 'O(n)' | 'O(log n)' | 'O(n²)';
   };
@@ -123,7 +125,7 @@ export interface TypedExpressionImplementation<
   readonly inputSchema: RuntimeValidator<TInput>;
   readonly outputType: EvaluationType;
   readonly metadata: ExpressionMetadata;
-  readonly documentation: LLMDocumentation;
+  readonly documentation?: LLMDocumentation; // Optional - for tooling only
 
   /**
    * Evaluate expression with typed context and input

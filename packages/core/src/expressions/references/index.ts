@@ -487,7 +487,7 @@ export {
   EnhancedYouExpression,
   EnhancedItExpression,
   EnhancedCSSSelectorExpression,
-  createEnhancedMeExpression,
-  createEnhancedYouExpression,
-  createEnhancedItExpression,
+  createMeExpression,
+  createYouExpression,
+  createItExpression,
 } from './impl/index';

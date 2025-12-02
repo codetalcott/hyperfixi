@@ -1,5 +1,5 @@
 /**
- * Enhanced Object Expression - Object Literal Operations
+ * Object Expression - Object Literal Operations
  * Implements comprehensive object literal creation with TypeScript integration
  * Handles object creation, dynamic field names, and type safety
  */
@@ -9,7 +9,6 @@ import type {
   HyperScriptValue,
   HyperScriptValueType,
   EvaluationResult,
-  LLMDocumentation,
   ValidationResult,
 } from '../../types/command-types';
 import type { ValidationError, TypedExpressionContext } from '../../types/base-types';
@@ -52,7 +51,7 @@ export type ObjectLiteralInput = any; // Inferred from RuntimeValidator
  * Enhanced object literal expression for object creation
  * Provides comprehensive object literal creation with dynamic field names and type safety
  */
-export class EnhancedObjectLiteralExpression
+export class ObjectLiteralExpression
   implements TypedExpressionImplementation<Record<string, HyperScriptValue>>
 {
   public readonly name = 'ObjectLiteral';
@@ -81,51 +80,7 @@ export class EnhancedObjectLiteralExpression
     performance: { averageTime: 0.2, complexity: 'O(n)' as const },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Creates object literals with comprehensive field handling, dynamic keys, and type safety',
-    parameters: [
-      {
-        name: 'fields',
-        type: 'array',
-        description: 'Array of field definitions with keys and values',
-        optional: false,
-        defaultValue: [],
-        examples: [
-          '[]',
-          '[{key: "foo", value: true}]',
-          '[{key: "name", value: "John", isDynamic: false}]',
-        ],
-      },
-    ],
-    returns: {
-      type: 'object',
-      description: 'A new object containing the specified fields',
-      examples: [{}, { foo: true }, { name: 'John', age: 30 }],
-    },
-    examples: [
-      {
-        title: 'Empty object literal',
-        code: '{}',
-        explanation: 'Creates an empty object',
-        output: {},
-      },
-      {
-        title: 'Simple object literal',
-        code: '{foo: true, bar: false}',
-        explanation: 'Creates an object with static field names',
-        output: { foo: true, bar: false },
-      },
-      {
-        title: 'Dynamic field names',
-        code: '{[expression]: value}',
-        explanation: 'Creates an object with computed field names',
-        output: { computedKey: 'value' },
-      },
-    ],
-    seeAlso: ['property access', 'object methods', 'dynamic property access'],
-    tags: ['object', 'literal', 'creation', 'dynamic', 'fields'],
-  };
+  
 
   /**
    * Validate object literal expression arguments

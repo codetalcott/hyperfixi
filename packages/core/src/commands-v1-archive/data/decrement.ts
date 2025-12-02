@@ -9,7 +9,7 @@
 
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 
 // Input type definition
 export interface DecrementCommandInput {
@@ -53,7 +53,7 @@ export class DecrementCommand
   };
 
   validation = {
-    validate(input: unknown): UnifiedValidationResult<DecrementCommandInput> {
+    validate(input: unknown): ValidationResult<DecrementCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,

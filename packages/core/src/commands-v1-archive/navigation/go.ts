@@ -13,7 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types.ts';
+import type { ValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { asHTMLElement } from '../../utils/dom-utils';
 
@@ -242,7 +242,7 @@ export class GoCommand
     }
   }
 
-  validate(args: unknown[]): UnifiedValidationResult {
+  validate(args: unknown[]): ValidationResult {
     try {
       // Schema validation
       const parsed = this.inputSchema.safeParse(args);
@@ -951,7 +951,7 @@ export class GoCommand
     }
   }
 
-  private validateUrlNavigation(args: unknown[]): UnifiedValidationResult {
+  private validateUrlNavigation(args: unknown[]): ValidationResult {
     const urlIndex = args.findIndex(arg => arg === 'url');
     if (urlIndex === -1) {
       return {
@@ -1009,7 +1009,7 @@ export class GoCommand
     };
   }
 
-  private validateElementScrolling(args: unknown[]): UnifiedValidationResult {
+  private validateElementScrolling(args: unknown[]): ValidationResult {
     // Element scrolling is very flexible, so minimal validation
     // Most patterns are allowed: go to top of <element>, go to <element>, etc.
 

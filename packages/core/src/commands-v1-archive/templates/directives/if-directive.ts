@@ -14,13 +14,13 @@ import type {
 } from '../../../types/template-types.ts';
 import { IfDirectiveInputSchema } from '../../../types/template-types';
 import type { EvaluationResult, ExpressionMetadata } from '../../../types/base-types';
-import type { UnifiedValidationResult } from '../../../types/unified-types.ts';
+import type { ValidationResult } from '../../../types/unified-types.ts';
 import { TemplateContextUtils } from '../template-context';
 
 /**
  * Enhanced @if directive with full type safety for LLM agents
  */
-export class IfDirective implements EnhancedTemplateDirective<IfDirectiveInput, string> {
+export class IfDirective implements TemplateDirective<IfDirectiveInput, string> {
   public readonly name = '@if' as const;
   public readonly category = 'Template';
   public readonly syntax = '@if <condition>';
@@ -276,7 +276,7 @@ export class IfDirective implements EnhancedTemplateDirective<IfDirectiveInput, 
   /**
    * Validate input according to schema
    */
-  validate(input: unknown): UnifiedValidationResult {
+  validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
 
@@ -343,8 +343,8 @@ export class IfDirective implements EnhancedTemplateDirective<IfDirectiveInput, 
   validateTemplateContext(
     context: TemplateExecutionContext,
     _input: IfDirectiveInput
-  ): UnifiedValidationResult {
-    const errors: UnifiedValidationResult['errors'] = [];
+  ): ValidationResult {
+    const errors: ValidationResult['errors'] = [];
 
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {

@@ -1123,7 +1123,7 @@ export function createOnFeature(_eventManager?: unknown): TypedOnFeatureImplemen
   return new TypedOnFeatureImplementation();
 }
 
-export async function createEnhancedOn(
+export async function createOn(
   event: Partial<EnhancedOnInput['event']>,
   commands: any[],
   options?: Partial<EnhancedOnInput>

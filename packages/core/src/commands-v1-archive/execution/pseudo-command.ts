@@ -16,7 +16,7 @@
 
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 import type { ValidationError } from '../../types/base-types';
 
 export interface PseudoCommandInput {
@@ -59,7 +59,7 @@ export class PseudoCommand
   };
 
   validation = {
-    validate(input: unknown): UnifiedValidationResult<PseudoCommandInput> {
+    validate(input: unknown): ValidationResult<PseudoCommandInput> {
       const errors: ValidationError[] = [];
 
       if (!input || typeof input !== 'object') {

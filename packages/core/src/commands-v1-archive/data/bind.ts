@@ -20,7 +20,7 @@
 import { v } from '../../validation/lightweight-validators';
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 
 /**
  * Zod schema for BIND command input validation
@@ -387,7 +387,7 @@ export class BindCommand implements CommandImplementation<
     }
   }
 
-  validate(input: unknown): UnifiedValidationResult<BindCommandInputType> {
+  validate(input: unknown): ValidationResult<BindCommandInputType> {
     try {
       // Normalize input to ensure defaults are applied and types are correct
       let normalizedInput: any = input;

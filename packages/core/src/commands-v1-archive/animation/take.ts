@@ -12,7 +12,7 @@ import type {
   LLMDocumentation,
 } from '../../types/command-types';
 import type { RuntimeValidator } from '../../validation/lightweight-validators';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 import { dispatchCustomEvent } from '../../core/events';
 import {
   createTupleValidator,
@@ -240,7 +240,7 @@ export class TakeCommand
     }
   }
 
-  validate(args: unknown[]): UnifiedValidationResult {
+  validate(args: unknown[]): ValidationResult {
     try {
       // Use lightweight validator for basic validation
       const validationResult = this.inputSchema.validate(args);

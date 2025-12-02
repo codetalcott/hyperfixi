@@ -20,7 +20,7 @@
 
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 import type { ValidationError } from '../../types/base-types';
 
 // Input type definition
@@ -65,7 +65,7 @@ export class InstallCommand
   };
 
   validation = {
-    validate(input: unknown): UnifiedValidationResult<InstallCommandInput> {
+    validate(input: unknown): ValidationResult<InstallCommandInput> {
       const errors: ValidationError[] = [];
 
       if (!input || typeof input !== 'object') {

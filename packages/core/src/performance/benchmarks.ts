@@ -43,7 +43,7 @@ export interface BenchmarkSuite {
 /**
  * Core benchmarking utility for enhanced implementations
  */
-export class EnhancedBenchmark {
+export class Benchmark {
   private results: BenchmarkResult[] = [];
 
   async benchmark<T>(

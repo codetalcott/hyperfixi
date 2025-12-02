@@ -1,5 +1,5 @@
 /**
- * Enhanced As Expression - Type Conversion and Casting
+ * As Expression - Type Conversion and Casting
  * Implements comprehensive 'as' expression functionality with TypeScript integration
  * Handles type conversions like 'value as String', 'data as JSON', 'form as Values'
  */
@@ -10,7 +10,6 @@ import type {
   HyperScriptValueType,
   EvaluationResult,
   TypedExpressionImplementation,
-  LLMDocumentation,
   TypedExecutionContext,
 } from '../../types/command-types';
 import type { ValidationResult, ValidationError } from '../../types/base-types';
@@ -66,14 +65,14 @@ export const SUPPORTED_CONVERSION_TYPES = {
 } as const;
 
 // ============================================================================
-// Enhanced As Expression Implementation
+// As Expression Implementation
 // ============================================================================
 
 /**
  * Enhanced 'as' expression for type conversion and casting
  * Supports all _hyperscript conversion types with comprehensive error handling
  */
-export class EnhancedAsExpression implements TypedExpressionImplementation<HyperScriptValue> {
+export class AsExpression implements TypedExpressionImplementation<HyperScriptValue> {
   public readonly name = 'as';
   public readonly category = 'conversion' as const;
   public readonly precedence = 5; // Medium precedence for type conversion
@@ -89,58 +88,7 @@ export class EnhancedAsExpression implements TypedExpressionImplementation<Hyper
 
   public readonly inputSchema = AsExpressionInputSchema;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Converts values between different types using comprehensive type conversion system',
-    parameters: [
-      {
-        name: 'value',
-        type: 'object',
-        description: 'Value to convert to target type',
-        optional: false,
-        examples: ['42', '"hello"', 'formElement', '[1, 2, 3]', 'null'],
-      },
-      {
-        name: 'targetType',
-        type: 'string',
-        description: 'Target type for conversion',
-        optional: false,
-        examples: ['String', 'Int', 'JSON', 'Values', 'HTML', 'Boolean', 'Fixed:2'],
-      },
-    ],
-    returns: {
-      type: 'object',
-      description: 'Converted value in target type format',
-      examples: ['"42"', '42', '{"key": "value"}', 'true', '<div>content</div>'],
-    },
-    examples: [
-      {
-        title: 'String conversion',
-        code: '42 as String',
-        explanation: 'Converts number to string representation',
-        output: '"42"',
-      },
-      {
-        title: 'Integer conversion',
-        code: '"10.7" as Int',
-        explanation: 'Converts string to integer (truncated)',
-        output: '10',
-      },
-      {
-        title: 'JSON conversion',
-        code: 'object as JSON',
-        explanation: 'Converts object to JSON string',
-        output: '{"name": "value"}',
-      },
-      {
-        title: 'Form values extraction',
-        code: 'form as Values',
-        explanation: 'Extracts form data as key-value object',
-        output: '{"name": "John", "email": "john@example.com"}',
-      },
-    ],
-    seeAlso: ['type conversion', 'form processing', 'JSON serialization', 'HTML generation'],
-    tags: ['conversion', 'casting', 'type', 'form', 'json', 'html'],
-  };
+  
 
   /**
    * Validate 'as' expression arguments

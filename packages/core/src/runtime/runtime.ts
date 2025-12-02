@@ -5,7 +5,7 @@
  *
  * Key improvements over V1:
  * - Extends RuntimeBase (generic AST traversal)
- * - Uses EnhancedCommandRegistryV2 (70% simpler adapter)
+ * - Uses CommandRegistryV2 (70% simpler adapter)
  * - Uses standalone commands (zero V1 dependencies)
  * - Registers 43 V2 commands by default
  * - Much smaller bundle size (~224 KB vs 366 KB V1 baseline, 39% reduction)
@@ -23,10 +23,11 @@
  */
 
 import { RuntimeBase } from './runtime-base';
-import { EnhancedCommandRegistryV2 } from './command-adapter';
-import type { EnhancedCommandRegistry } from './command-adapter';
+import { CommandRegistryV2 } from './command-adapter';
+import type { CommandRegistry } from './command-adapter';
 import { ExpressionEvaluator } from '../core/expression-evaluator';
-import { LazyExpressionEvaluator } from '../core/lazy-expression-evaluator';
+// LazyExpressionEvaluator is dynamically imported only when lazyLoad=true
+// This allows tree-shaking to eliminate it in browser builds where lazyLoad=false
 
 // Import all 43 V2 commands
 // DOM Commands (7)
@@ -145,7 +146,7 @@ export interface RuntimeOptions {
   /**
    * Custom registry (optional - if not provided, creates default with 43 V2 commands)
    */
-  registry?: EnhancedCommandRegistryV2;
+  registry?: CommandRegistryV2;
 
   /**
    * Deprecated - V1 option, kept for backward compatibility
@@ -175,7 +176,7 @@ export interface RuntimeOptions {
 export class Runtime extends RuntimeBase {
   constructor(options: RuntimeOptions = {}) {
     // Create or use provided registry
-    const registry = options.registry || new EnhancedCommandRegistryV2();
+    const registry = options.registry || new CommandRegistryV2();
 
     // If no custom registry provided, register all 43 V2 commands
     if (!options.registry) {
@@ -247,17 +248,16 @@ export class Runtime extends RuntimeBase {
       registry.register(createTakeCommand());
       registry.register(createRenderCommand());
 
-      console.log('Runtime V2: Registered 43 V2 commands (Phase 7 COMPLETE - V1 runtime eliminated)');
     }
 
-    // Create expression evaluator (lazy or standard)
-    const expressionEvaluator = options.lazyLoad !== false
-      ? new LazyExpressionEvaluator({ preload: options.expressionPreload || 'core' })
-      : new ExpressionEvaluator();
+    // Create expression evaluator
+    // Browser builds use lazyLoad=false, so ExpressionEvaluator is always used
+    // This allows tree-shaking to eliminate LazyExpressionEvaluator from browser bundles
+    const expressionEvaluator = new ExpressionEvaluator();
 
     // Initialize RuntimeBase with registry and evaluator
     const baseOptions: any = {
-      registry: registry as unknown as EnhancedCommandRegistry,
+      registry: registry as unknown as CommandRegistry,
       expressionEvaluator,
     };
 
@@ -279,8 +279,8 @@ export class Runtime extends RuntimeBase {
    *
    * @returns The command registry instance
    */
-  getRegistry(): EnhancedCommandRegistryV2 {
-    return this.registry as unknown as EnhancedCommandRegistryV2;
+  getRegistry(): CommandRegistryV2 {
+    return this.registry as unknown as CommandRegistryV2;
   }
 
   /**
@@ -288,7 +288,7 @@ export class Runtime extends RuntimeBase {
    *
    * @returns The command registry instance
    */
-  getEnhancedRegistry(): EnhancedCommandRegistryV2 {
+  getRegistry(): CommandRegistryV2 {
     return this.getRegistry();
   }
 }
@@ -318,7 +318,7 @@ export function createMinimalRuntime(
   commands: any[],
   options: Omit<RuntimeOptions, 'registry'> = {}
 ): Runtime {
-  const registry = new EnhancedCommandRegistryV2();
+  const registry = new CommandRegistryV2();
 
   for (const command of commands) {
     registry.register(command);

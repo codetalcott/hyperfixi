@@ -98,7 +98,7 @@ export interface CommandExecutionOptions {
 /**
  * Base error class for enhanced commands
  */
-export class EnhancedCommandError extends Error {
+export class CommandError extends Error {
   constructor(
     message: string,
     public readonly commandName: string,
@@ -113,7 +113,7 @@ export class EnhancedCommandError extends Error {
 /**
  * Validation error for command input
  */
-export class CommandValidationError extends EnhancedCommandError {
+export class CommandValidationError extends CommandError {
   constructor(
     commandName: string,
     input: unknown,
@@ -129,7 +129,7 @@ export class CommandValidationError extends EnhancedCommandError {
 /**
  * Execution timeout error
  */
-export class CommandTimeoutError extends EnhancedCommandError {
+export class CommandTimeoutError extends CommandError {
   constructor(commandName: string, timeout: number) {
     const message = `Command ${commandName} timed out after ${timeout}ms`;
     super(message, commandName);
@@ -233,7 +233,7 @@ export function createCommandBuilder<
  * Enhanced command registry interface
  * Provides type-safe command registration and retrieval
  */
-export interface IEnhancedCommandRegistry {
+export interface ICommandRegistry {
   register<TInput, TOutput, TContext extends TypedExecutionContext>(
     impl: TypedCommandImplementation<TInput, TOutput, TContext>
   ): void;

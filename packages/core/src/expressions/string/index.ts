@@ -1,5 +1,5 @@
 /**
- * Enhanced String Expressions - Deep TypeScript Integration
+ * String Expressions - Deep TypeScript Integration
  * Comprehensive string manipulation with full type safety and validation
  * Enhanced for LLM code agents with maximum type safety
  */
@@ -9,7 +9,6 @@ import type {
   TypedExecutionContext,
   HyperScriptValue,
   EvaluationResult,
-  LLMDocumentation,
 } from '../../types/command-types';
 
 // ============================================================================
@@ -21,7 +20,7 @@ import type {
 /**
  * Enhanced string interpolation expression with comprehensive variable substitution
  */
-export class EnhancedStringInterpolationExpression
+export class StringInterpolationExpression
   implements TypedExpressionImplementation<string>
 {
   public readonly name = 'string-interpolation';
@@ -37,52 +36,7 @@ export class EnhancedStringInterpolationExpression
     dependencies: ['context-variables'],
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Interpolates variables and expressions in template strings using ${variable} syntax',
-    parameters: [
-      {
-        name: 'template',
-        type: 'string',
-        description: 'Template string with ${variable} placeholders',
-        optional: false,
-        examples: ['Hello ${name}!', 'User: ${user.name} (${user.age} years old)'],
-      },
-      {
-        name: 'variables',
-        type: 'object',
-        description: 'Optional variables to use for interpolation',
-        optional: true,
-        examples: ['{"name": "John"}', '{"user": {"name": "Jane", "age": 30}}'],
-      },
-    ],
-    returns: {
-      type: 'string',
-      description: 'String with variables interpolated',
-      examples: ['Hello John!', 'User: Jane (30 years old)'],
-    },
-    examples: [
-      {
-        title: 'Basic variable interpolation',
-        code: 'Hello ${name}!',
-        explanation: 'Substitutes the name variable into the template',
-        output: 'Hello John!',
-      },
-      {
-        title: 'Context variable access',
-        code: 'Element: ${me.tagName}',
-        explanation: 'Access current element properties',
-        output: 'Element: DIV',
-      },
-      {
-        title: 'Complex object access',
-        code: 'User: ${user.name} (${user.age})',
-        explanation: 'Access nested object properties',
-        output: 'User: Jane (30)',
-      },
-    ],
-    seeAlso: ['string-concat', 'string-format'],
-    tags: ['string', 'template', 'interpolation', 'variables'],
-  };
+  
 
   async evaluate(
     context: TypedExecutionContext,
@@ -182,7 +136,7 @@ export class EnhancedStringInterpolationExpression
 /**
  * Enhanced string concatenation with type coercion
  */
-export class EnhancedStringConcatenationExpression
+export class StringConcatenationExpression
   implements TypedExpressionImplementation<string>
 {
   public readonly name = 'string-concat';
@@ -198,45 +152,7 @@ export class EnhancedStringConcatenationExpression
     dependencies: [],
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Concatenates multiple values into a single string with automatic type conversion',
-    parameters: [
-      {
-        name: 'values',
-        type: 'array',
-        description: 'Values to concatenate (will be converted to strings)',
-        optional: false,
-        examples: ['["Hello", " ", "World"]', '[42, " items"]', '[null, undefined, "text"]'],
-      },
-    ],
-    returns: {
-      type: 'string',
-      description: 'Concatenated string result',
-      examples: ['Hello World', '42 items', 'nullundefinedtext'],
-    },
-    examples: [
-      {
-        title: 'Simple concatenation',
-        code: 'concat("Hello", " ", "World")',
-        explanation: 'Joins multiple strings together',
-        output: 'Hello World',
-      },
-      {
-        title: 'Mixed type concatenation',
-        code: 'concat("Count: ", 42)',
-        explanation: 'Automatically converts numbers to strings',
-        output: 'Count: 42',
-      },
-      {
-        title: 'Null/undefined handling',
-        code: 'concat("Value: ", null, " End")',
-        explanation: 'Handles null and undefined values',
-        output: 'Value: null End',
-      },
-    ],
-    seeAlso: ['string-interpolation', 'string-join'],
-    tags: ['string', 'concatenation', 'join', 'type-conversion'],
-  };
+  
 
   async evaluate(
     _context: TypedExecutionContext,
@@ -283,7 +199,7 @@ export class EnhancedStringConcatenationExpression
 /**
  * Enhanced string length with validation
  */
-export class EnhancedStringLengthExpression implements TypedExpressionImplementation<number> {
+export class StringLengthExpression implements TypedExpressionImplementation<number> {
   public readonly name = 'string-length';
   public readonly category = 'string' as const;
   public readonly precedence = 10;
@@ -297,45 +213,7 @@ export class EnhancedStringLengthExpression implements TypedExpressionImplementa
     dependencies: [],
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Returns the length of a string with type validation',
-    parameters: [
-      {
-        name: 'value',
-        type: 'string',
-        description: 'String to measure (non-strings will be converted)',
-        optional: false,
-        examples: ['Hello', '""', '   '],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'Length of the string',
-      examples: ['5', '0', '3'],
-    },
-    examples: [
-      {
-        title: 'Basic length',
-        code: 'length("Hello")',
-        explanation: 'Get length of a string',
-        output: 5,
-      },
-      {
-        title: 'Empty string',
-        code: 'length("")',
-        explanation: 'Empty string has length 0',
-        output: 0,
-      },
-      {
-        title: 'Type conversion',
-        code: 'length(123)',
-        explanation: 'Numbers are converted to strings first',
-        output: 3,
-      },
-    ],
-    seeAlso: ['string-empty', 'string-trim'],
-    tags: ['string', 'length', 'measure', 'validation'],
-  };
+  
 
   async evaluate(
     _context: TypedExecutionContext,
@@ -385,15 +263,15 @@ export const enhancedStringExpressions = {
 /**
  * Factory functions for creating enhanced string expressions
  */
-export function createEnhancedStringInterpolation(): EnhancedStringInterpolationExpression {
+export function createStringInterpolation(): EnhancedStringInterpolationExpression {
   return new EnhancedStringInterpolationExpression();
 }
 
-export function createEnhancedStringConcatenation(): EnhancedStringConcatenationExpression {
+export function createStringConcatenation(): EnhancedStringConcatenationExpression {
   return new EnhancedStringConcatenationExpression();
 }
 
-export function createEnhancedStringLength(): EnhancedStringLengthExpression {
+export function createStringLength(): EnhancedStringLengthExpression {
   return new EnhancedStringLengthExpression();
 }
 

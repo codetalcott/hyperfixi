@@ -1,5 +1,5 @@
 /**
- * Enhanced Conversion Expressions for HyperScript
+ * Conversion Expressions for HyperScript
  * Provides deep TypeScript integration for type conversion expressions with comprehensive validation
  */
 
@@ -10,7 +10,6 @@ import type {
   ExpressionMetadata,
   BaseTypedExpression,
   ValidationResult,
-  LLMDocumentation,
 } from '../../../types/base-types';
 
 // ============================================================================
@@ -352,7 +351,7 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
 };
 
 // ============================================================================
-// Enhanced Conversion Expression Implementation
+// Conversion Expression Implementation
 // ============================================================================
 
 /**
@@ -366,7 +365,7 @@ const AsExpressionInputSchema = v.object({
 /**
  * Enhanced implementation of the 'as' conversion expression
  */
-export class EnhancedAsExpression implements BaseTypedExpression<unknown> {
+export class AsExpression implements BaseTypedExpression<unknown> {
   readonly name = 'as';
   readonly category = 'Conversion';
   readonly syntax = 'value as Type';
@@ -661,7 +660,7 @@ const IsExpressionInputSchema = v.object({
 /**
  * Enhanced implementation of the 'is' type checking expression
  */
-export class EnhancedIsExpression implements BaseTypedExpression<boolean> {
+export class IsExpression implements BaseTypedExpression<boolean> {
   readonly name = 'is';
   readonly category = 'Conversion';
   readonly syntax = 'value is Type';
@@ -975,11 +974,11 @@ export type ConversionExpressionName = keyof typeof conversionExpressions;
 // Factory Functions
 // ============================================================================
 
-export function createEnhancedAsExpression(): EnhancedAsExpression {
+export function createAsExpression(): EnhancedAsExpression {
   return new EnhancedAsExpression();
 }
 
-export function createEnhancedIsExpression(): EnhancedIsExpression {
+export function createIsExpression(): EnhancedIsExpression {
   return new EnhancedIsExpression();
 }
 

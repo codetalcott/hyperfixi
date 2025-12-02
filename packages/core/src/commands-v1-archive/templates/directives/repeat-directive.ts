@@ -16,8 +16,8 @@ import type {
 import { RepeatDirectiveInputSchema } from '../../../types/template-types';
 import type { EvaluationResult, ExpressionMetadata } from '../../../types/base-types';
 import type {
-  UnifiedValidationResult,
-  UnifiedValidationError,
+  ValidationResult,
+  ValidationError,
 } from '../../../types/unified-types.ts';
 import type { HyperScriptValue } from '../../../types/command-types.ts';
 import { TemplateContextUtils } from '../template-context';
@@ -25,7 +25,7 @@ import { TemplateContextUtils } from '../template-context';
 /**
  * Enhanced @repeat directive with full type safety for LLM agents
  */
-export class RepeatDirective implements EnhancedTemplateDirective<RepeatDirectiveInput, string> {
+export class RepeatDirective implements TemplateDirective<RepeatDirectiveInput, string> {
   public readonly name = '@repeat' as const;
   public readonly category = 'Template';
   public readonly syntax = '@repeat in <collection>';
@@ -333,7 +333,7 @@ export class RepeatDirective implements EnhancedTemplateDirective<RepeatDirectiv
   /**
    * Validate input according to schema
    */
-  validate(input: unknown): UnifiedValidationResult {
+  validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
 
@@ -400,8 +400,8 @@ export class RepeatDirective implements EnhancedTemplateDirective<RepeatDirectiv
   validateTemplateContext(
     context: TemplateExecutionContext,
     _input: RepeatDirectiveInput
-  ): UnifiedValidationResult {
-    const errors: UnifiedValidationError[] = [];
+  ): ValidationResult {
+    const errors: ValidationError[] = [];
 
     // Check template buffer exists
     if (!Array.isArray(context.templateBuffer)) {
@@ -431,7 +431,7 @@ export class RepeatDirective implements EnhancedTemplateDirective<RepeatDirectiv
   /**
    * Validate that collection is iterable
    */
-  private validateIterable(collection: unknown): UnifiedValidationResult {
+  private validateIterable(collection: unknown): ValidationResult {
     // Check for null/undefined
     if (collection == null) {
       return {

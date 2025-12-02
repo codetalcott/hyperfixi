@@ -80,7 +80,7 @@ export interface TypedFeatureImplementation<
   readonly inputSchema: RuntimeValidator<TInput>;
   readonly outputType: string;
   readonly metadata: FeatureMetadata;
-  readonly documentation: LLMDocumentation;
+  readonly documentation?: LLMDocumentation; // Optional
 
   /**
    * Parse feature syntax string into typed input

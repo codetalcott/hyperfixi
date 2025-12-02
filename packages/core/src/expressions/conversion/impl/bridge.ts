@@ -1,5 +1,5 @@
 /**
- * Bridge between Enhanced Conversion Expressions and Existing Expression Evaluator
+ * Bridge between Conversion Expressions and Existing Expression Evaluator
  * Enables gradual migration from legacy to enhanced expressions while maintaining compatibility
  */
 
@@ -58,7 +58,7 @@ export function updateExecutionContext(
 /**
  * Enhanced expression adapter that wraps enhanced expressions for use in legacy systems
  */
-export class EnhancedConversionAdapter {
+export class ConversionAdapter {
   /**
    * Evaluate enhanced 'as' expression with legacy context
    */

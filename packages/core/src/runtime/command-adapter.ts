@@ -213,7 +213,7 @@ export class CommandAdapterV2 implements RuntimeCommand {
  * Registry that uses CommandAdapterV2 for all commands.
  * Much simpler than V1 because it doesn't need command-specific logic.
  */
-export class EnhancedCommandRegistryV2 {
+export class CommandRegistryV2 {
   private adapters = new Map<string, CommandAdapterV2>();
   private implementations = new Map<string, CommandWithParseInput>();
 
@@ -223,7 +223,7 @@ export class EnhancedCommandRegistryV2 {
   register(impl: CommandWithParseInput): void {
     const name = (impl.name || impl.metadata?.name).toLowerCase();
 
-    debug.runtime(`EnhancedCommandRegistryV2: Registering command '${name}'`);
+    debug.runtime(`CommandRegistryV2: Registering command '${name}'`);
 
     this.implementations.set(name, impl);
     this.adapters.set(name, new CommandAdapterV2(impl));
@@ -291,8 +291,8 @@ export class EnhancedCommandRegistryV2 {
  * Factory function for creating a pre-populated registry
  * (For backward compatibility with V1)
  */
-export function createEnhancedCommandRegistryV2(commands: CommandWithParseInput[]): EnhancedCommandRegistryV2 {
-  const registry = new EnhancedCommandRegistryV2();
+export function createCommandRegistryV2(commands: CommandWithParseInput[]): CommandRegistryV2 {
+  const registry = new CommandRegistryV2();
 
   for (const command of commands) {
     registry.register(command);

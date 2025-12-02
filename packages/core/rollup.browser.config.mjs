@@ -28,7 +28,18 @@ export default {
         pure_getters: true,
         unsafe: true,
         unsafe_comps: true,
-        drop_console: false // Keep console.log for now
+        drop_console: true,
+        pure_funcs: [
+          'debug.command',
+          'debug.event',
+          'debug.parse',
+          'debug.expr',
+          'debug.expressions',
+          'debug.style',
+          'debug.runtime',
+          'debug.loop',
+          'debug.async'
+        ]
       },
       mangle: {
         properties: false // Keep property names for compatibility

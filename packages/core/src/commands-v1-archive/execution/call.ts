@@ -11,7 +11,7 @@
 
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 
 // Input type definition
 export interface CallCommandInput {
@@ -49,7 +49,7 @@ export class CallCommand
   };
 
   validation = {
-    validate(input: unknown): UnifiedValidationResult<CallCommandInput> {
+    validate(input: unknown): ValidationResult<CallCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,
@@ -171,7 +171,7 @@ export class CallCommand
 /**
  * Enhanced Get Command (alias for Call)
  */
-export class EnhancedGetCommand extends CallCommand {
+export class GetCommand extends CallCommand {
   override metadata = {
     ...(this.constructor as any).prototype.metadata,
     name: 'get',
@@ -197,7 +197,7 @@ export function createCallCommand(): CallCommand {
 /**
  * Factory function to create the enhanced get command
  */
-export function createEnhancedGetCommand(): EnhancedGetCommand {
+export function createGetCommand(): EnhancedGetCommand {
   return new EnhancedGetCommand();
 }
 

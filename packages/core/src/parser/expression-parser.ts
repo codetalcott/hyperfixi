@@ -1425,32 +1425,16 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
 function resolveIdentifier(name: string, context: ExecutionContext): any {
   // Official _hyperscript variable resolution order: Meta → Local → Element → Global
 
-  // Special debugging for 'it' identifier
-  if (name === 'it') {
-    console.debug(`resolveIdentifier: Looking up 'it'`);
-    console.debug(`  context.it:`, context.it);
-    console.debug(`  context.locals has 'it':`, context.locals.has('it'));
-    console.debug(`  context.locals.get('it'):`, context.locals.get('it'));
-  }
-
   // 1. Meta scope - template variables and internal hyperscript state
   if (context.meta && typeof context.meta === 'object') {
     if (context.meta.hasOwnProperty(name)) {
-      const value = (context.meta as any)[name];
-      if (name === 'it') {
-        console.debug(`  Found 'it' in meta:`, value);
-      }
-      return value;
+      return (context.meta as any)[name];
     }
   }
 
   // 2. Local scope - variables from template arguments and function parameters
   if (context.locals && context.locals.has(name)) {
-    const value = context.locals.get(name);
-    if (name === 'it') {
-      console.debug(`  Found 'it' in locals:`, value);
-    }
-    return value;
+    return context.locals.get(name);
   }
 
   // 3. Element scope - context variables (me, I, you, it, result)
@@ -1462,11 +1446,7 @@ function resolveIdentifier(name: string, context: ExecutionContext): any {
 
   // 4. Global scope - global variables
   if (context.globals && context.globals.has(name)) {
-    const value = context.globals.get(name);
-    if (name === 'it') {
-      console.debug(`  Found 'it' in globals:`, value);
-    }
-    return value;
+    return context.globals.get(name);
   }
 
   // 5. JavaScript global objects (Date, Math, Object, Array, etc.)
@@ -1475,9 +1455,6 @@ function resolveIdentifier(name: string, context: ExecutionContext): any {
   }
 
   // Return undefined for unknown identifiers
-  if (name === 'it') {
-    console.debug(`  'it' not found anywhere, returning undefined`);
-  }
   return undefined;
 }
 

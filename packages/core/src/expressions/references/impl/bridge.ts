@@ -1,5 +1,5 @@
 /**
- * Bridge between Enhanced Reference Expressions and Existing Expression Evaluator
+ * Bridge between Reference Expressions and Existing Expression Evaluator
  * Enables gradual migration from legacy to enhanced expressions while maintaining compatibility
  */
 
@@ -58,7 +58,7 @@ export function updateExecutionContext(
 /**
  * Enhanced expression adapter that wraps enhanced expressions for use in legacy systems
  */
-export class EnhancedExpressionAdapter {
+export class ExpressionAdapter {
   /**
    * Evaluate enhanced 'me' expression with legacy context
    */
@@ -213,7 +213,7 @@ export class LegacyCompatibilityLayer {
   /**
    * Enhanced version for CSS selector queries
    */
-  static createEnhancedQuerySelector(single: boolean = true) {
+  static createQuerySelector(single: boolean = true) {
     return {
       name: single ? 'querySelector' : 'querySelectorAll',
       category: 'Reference' as const,

@@ -1,5 +1,5 @@
 /**
- * Enhanced Possessive Expression - Property and Attribute Access
+ * Possessive Expression - Property and Attribute Access
  * Implements comprehensive possessive expression functionality with TypeScript integration
  * Handles 'my property', 'element's attribute', style access, and attribute bracket notation
  */
@@ -10,7 +10,6 @@ import type {
   HyperScriptValueType,
   EvaluationResult,
   TypedExpressionImplementation,
-  LLMDocumentation,
   TypedExecutionContext,
 } from '../../types/command-types';
 import type { ValidationResult, ValidationError } from '../../types/base-types';
@@ -37,14 +36,14 @@ export const PossessiveExpressionInputSchema = v.tuple([
 export type PossessiveExpressionInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced Possessive Expression Implementation
+// Possessive Expression Implementation
 // ============================================================================
 
 /**
  * Enhanced possessive expression for property and attribute access
  * Supports style properties (*property), attribute brackets ([@attr]), and possessive chaining
  */
-export class EnhancedPossessiveExpression
+export class PossessiveExpression
   implements TypedExpressionImplementation<HyperScriptValue>
 {
   public readonly name = 'possessive';
@@ -62,59 +61,7 @@ export class EnhancedPossessiveExpression
 
   public readonly inputSchema = PossessiveExpressionInputSchema;
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Accesses properties, attributes, and styles from objects and DOM elements using possessive syntax',
-    parameters: [
-      {
-        name: 'object',
-        type: 'object',
-        description: 'Object or element to access property from',
-        optional: false,
-        examples: ['element', 'my', 'its', '#selector', '.class'],
-      },
-      {
-        name: 'property',
-        type: 'string',
-        description: 'Property, attribute, or style name to access',
-        optional: false,
-        examples: ['value', '@data-foo', '*color', '[@data-attr]', '*computed-width'],
-      },
-    ],
-    returns: {
-      type: 'object',
-      description: 'Property value, attribute string, or style value',
-      examples: ['string', 'number', 'boolean', 'array', 'CSSStyleDeclaration'],
-    },
-    examples: [
-      {
-        title: 'Simple property access',
-        code: "element's value",
-        explanation: 'Returns the value property of element',
-        output: 'Property value',
-      },
-      {
-        title: 'Attribute access',
-        code: "element's @data-foo",
-        explanation: 'Returns data-foo attribute value',
-        output: 'Attribute value',
-      },
-      {
-        title: 'Style property access',
-        code: "element's *color",
-        explanation: 'Returns CSS color property value',
-        output: 'rgb(255, 0, 0)',
-      },
-      {
-        title: 'Bracket attribute notation',
-        code: "element's [@data-name]",
-        explanation: 'Returns attribute using bracket notation',
-        output: 'Attribute value',
-      },
-    ],
-    seeAlso: ['property access', 'DOM attributes', 'CSS styles', 'object properties'],
-    tags: ['possessive', 'property', 'attribute', 'style', 'dom'],
-  };
+  
 
   /**
    * Validate possessive expression arguments

@@ -1,5 +1,5 @@
 /**
- * Enhanced Property Expressions for HyperScript
+ * Property Expressions for HyperScript
  * Provides deep TypeScript integration for property access, possessive syntax, and attributes
  */
 
@@ -10,7 +10,6 @@ import type {
   EvaluationType,
   ExpressionMetadata,
   ValidationResult,
-  LLMDocumentation,
   EvaluationResult,
 } from '../../../types/base-types';
 import { evaluationToHyperScriptType } from '../../../types/base-types';
@@ -54,10 +53,10 @@ type ContextPropertyInput = any; // Inferred from RuntimeValidator
 type AttributeWithValueInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced Possessive Expression (element's property)
+// Possessive Expression (element's property)
 // ============================================================================
 
-export class EnhancedPossessiveExpression implements BaseTypedExpression<unknown> {
+export class PossessiveExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'possessive';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = "element's property";
@@ -68,85 +67,9 @@ export class EnhancedPossessiveExpression implements BaseTypedExpression<unknown
   public readonly metadata: ExpressionMetadata = {
     category: 'Property',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: "user's name",
-        description: 'Get name property from user object',
-        expectedOutput: 'John',
-      },
-      {
-        input: "element's className",
-        description: 'Get className from DOM element',
-        expectedOutput: 'active button',
-      },
-      {
-        input: "form's elements",
-        description: 'Get form elements collection',
-        expectedOutput: 'HTMLFormControlsCollection',
-      },
-    ],
-    relatedExpressions: ['my', 'its', 'your', 'of'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Accesses properties of objects or DOM elements using possessive syntax',
-    parameters: [
-      {
-        name: 'element',
-        type: 'object | Element',
-        description: 'The object or element to access property from',
-        optional: false,
-        examples: ['user', 'document.body', 'myForm', 'element'],
-      },
-      {
-        name: 'property',
-        type: 'string',
-        description: 'The property name to access',
-        optional: false,
-        examples: ['name', 'className', 'value', 'id', 'children'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'The value of the requested property, or undefined if not found',
-      examples: ['\"John\"', 'HTMLElement', '42', 'true', 'undefined'],
-    },
-    examples: [
-      {
-        title: 'Object property access',
-        code: "user's name",
-        explanation: 'Get the name property from user object',
-        output: '\"John Doe\"',
-      },
-      {
-        title: 'DOM element property',
-        code: "button's disabled",
-        explanation: 'Check if button is disabled',
-        output: 'false',
-      },
-      {
-        title: 'Element attribute access',
-        code: "input's value",
-        explanation: 'Get current value of input element',
-        output: '\"hello world\"',
-      },
-      {
-        title: 'CSS class access',
-        code: "div's className",
-        explanation: 'Get CSS classes of element',
-        output: '\"container active\"',
-      },
-    ],
-    seeAlso: ['my', 'its', 'your', 'of', '@'],
-    tags: ['property', 'possessive', 'object', 'element', 'access'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -324,10 +247,10 @@ export class EnhancedPossessiveExpression implements BaseTypedExpression<unknown
 }
 
 // ============================================================================
-// Enhanced My Expression (my property)
+// My Expression (my property)
 // ============================================================================
 
-export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
+export class MyExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'my';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'my property';
@@ -338,67 +261,9 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Property',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: ['context-me'],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: 'my id',
-        description: 'Get ID of current element',
-        expectedOutput: 'button-123',
-      },
-      {
-        input: 'my className',
-        description: 'Get CSS classes of current element',
-        expectedOutput: 'btn btn-primary',
-      },
-    ],
-    relatedExpressions: ['possessive', 'its', 'your'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Accesses properties of the current element (me) in the execution context',
-    parameters: [
-      {
-        name: 'property',
-        type: 'string',
-        description: 'The property name to access from the current element',
-        optional: false,
-        examples: ['id', 'className', 'value', 'checked', 'disabled'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'The value of the requested property from the current element',
-      examples: ['\"button-123\"', 'true', '\"hello\"', 'HTMLElement'],
-    },
-    examples: [
-      {
-        title: 'Element ID',
-        code: 'my id',
-        explanation: 'Get the ID attribute of the current element',
-        output: '\"submit-button\"',
-      },
-      {
-        title: 'Input value',
-        code: 'my value',
-        explanation: 'Get the current value of an input element',
-        output: '\"user input text\"',
-      },
-      {
-        title: 'CSS classes',
-        code: 'my className',
-        explanation: 'Get all CSS classes of the current element',
-        output: '\"btn btn-primary active\"',
-      },
-    ],
-    seeAlso: ['possessive', 'its', 'your', 'me'],
-    tags: ['property', 'context', 'current', 'element', 'me'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -509,10 +374,10 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
 }
 
 // ============================================================================
-// Enhanced Its Expression (its property)
+// Its Expression (its property)
 // ============================================================================
 
-export class EnhancedItsExpression implements BaseTypedExpression<unknown> {
+export class ItsExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'its';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'its property';
@@ -523,56 +388,9 @@ export class EnhancedItsExpression implements BaseTypedExpression<unknown> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Property',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: ['context-it'],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: 'its length',
-        description: 'Get length property of it reference',
-        expectedOutput: 5,
-      },
-    ],
-    relatedExpressions: ['possessive', 'my', 'your'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Accesses properties of the "it" reference in the execution context',
-    parameters: [
-      {
-        name: 'property',
-        type: 'string',
-        description: 'The property name to access from the it reference',
-        optional: false,
-        examples: ['length', 'name', 'value', 'id'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'The value of the requested property from the it reference',
-      examples: ['5', '\"array item\"', 'true'],
-    },
-    examples: [
-      {
-        title: 'Array length',
-        code: 'its length',
-        explanation: 'Get length of array referenced by it',
-        output: '3',
-      },
-      {
-        title: 'Object property',
-        code: 'its name',
-        explanation: 'Get name property of object referenced by it',
-        output: '\"John\"',
-      },
-    ],
-    seeAlso: ['possessive', 'my', 'your', 'it'],
-    tags: ['property', 'context', 'reference', 'it'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -683,10 +501,10 @@ export class EnhancedItsExpression implements BaseTypedExpression<unknown> {
 }
 
 // ============================================================================
-// Enhanced Your Expression (your property)
+// Your Expression (your property)
 // ============================================================================
 
-export class EnhancedYourExpression implements BaseTypedExpression<unknown> {
+export class YourExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'your';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'your property';
@@ -697,56 +515,9 @@ export class EnhancedYourExpression implements BaseTypedExpression<unknown> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Property',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: ['context-you'],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: 'your value',
-        description: 'Get value from you reference',
-        expectedOutput: 'target value',
-      },
-    ],
-    relatedExpressions: ['possessive', 'my', 'its'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Accesses properties of the "you" reference in the execution context',
-    parameters: [
-      {
-        name: 'property',
-        type: 'string',
-        description: 'The property name to access from the you reference',
-        optional: false,
-        examples: ['value', 'id', 'className', 'checked'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'The value of the requested property from the you reference',
-      examples: ['\"target element\"', 'true', '42'],
-    },
-    examples: [
-      {
-        title: 'Target element value',
-        code: 'your value',
-        explanation: 'Get value of element referenced by you',
-        output: '\"form input\"',
-      },
-      {
-        title: 'Target element ID',
-        code: 'your id',
-        explanation: 'Get ID of element referenced by you',
-        output: '\"target-element\"',
-      },
-    ],
-    seeAlso: ['possessive', 'my', 'its', 'you'],
-    tags: ['property', 'context', 'reference', 'you', 'target'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -857,10 +628,10 @@ export class EnhancedYourExpression implements BaseTypedExpression<unknown> {
 }
 
 // ============================================================================
-// Enhanced Attribute Expression (@attribute)
+// Attribute Expression (@attribute)
 // ============================================================================
 
-export class EnhancedAttributeExpression implements BaseTypedExpression<string | null> {
+export class AttributeExpression implements BaseTypedExpression<string | null> {
   public readonly name = 'attribute';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = '@attribute or @attribute of element';
@@ -871,74 +642,9 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<string |
   public readonly metadata: ExpressionMetadata = {
     category: 'Property',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['String', 'Null'],
-    examples: [
-      {
-        input: '@data-id',
-        description: 'Get data-id attribute',
-        expectedOutput: 'user-123',
-      },
-      {
-        input: '@class',
-        description: 'Get class attribute',
-        expectedOutput: 'btn btn-primary',
-      },
-    ],
-    relatedExpressions: ['possessive', 'attributeWithValue'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Retrieves HTML attribute values from DOM elements',
-    parameters: [
-      {
-        name: 'element',
-        type: 'Element',
-        description: 'The DOM element to access attribute from',
-        optional: false,
-        examples: ['document.getElementById("btn")', 'targetElement', 'me'],
-      },
-      {
-        name: 'attribute',
-        type: 'string',
-        description: 'The attribute name to access',
-        optional: false,
-        examples: ['id', 'class', 'data-value', 'aria-label', 'href'],
-      },
-    ],
-    returns: {
-      type: 'string | null',
-      description: 'The attribute value, or null if attribute does not exist',
-      examples: ['\"button-123\"', '\"btn primary\"', 'null'],
-    },
-    examples: [
-      {
-        title: 'Data attribute',
-        code: '@data-id',
-        explanation: 'Get data-id attribute value',
-        output: '\"user-123\"',
-      },
-      {
-        title: 'ARIA attribute',
-        code: '@aria-label',
-        explanation: 'Get accessibility label',
-        output: '\"Close dialog\"',
-      },
-      {
-        title: 'Standard attribute',
-        code: '@href',
-        explanation: 'Get link URL',
-        output: '\"https://example.com\"',
-      },
-    ],
-    seeAlso: ['possessive', '@=', 'className', 'id'],
-    tags: ['attribute', 'DOM', 'element', 'HTML', 'data'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -1047,7 +753,7 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<string |
 // Enhanced Attribute With Value Expression (@attribute=value)
 // ============================================================================
 
-export class EnhancedAttributeWithValueExpression implements BaseTypedExpression<boolean> {
+export class AttributeWithValueExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'attributeWithValue';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = '@attribute=value';
@@ -1058,70 +764,9 @@ export class EnhancedAttributeWithValueExpression implements BaseTypedExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Property',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Boolean'],
-    examples: [
-      {
-        input: '@data-state="active"',
-        description: 'Check if data-state equals active',
-        expectedOutput: true,
-      },
-    ],
-    relatedExpressions: ['attribute', 'possessive'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Checks if a DOM element has an attribute with a specific value',
-    parameters: [
-      {
-        name: 'element',
-        type: 'Element',
-        description: 'The DOM element to check',
-        optional: false,
-        examples: ['button', 'input', 'me'],
-      },
-      {
-        name: 'attribute',
-        type: 'string',
-        description: 'The attribute name to check',
-        optional: false,
-        examples: ['data-state', 'class', 'type'],
-      },
-      {
-        name: 'value',
-        type: 'string',
-        description: 'The expected attribute value',
-        optional: false,
-        examples: ['active', 'btn-primary', 'submit'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if attribute equals the expected value, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'State checking',
-        code: '@data-state="loading"',
-        explanation: 'Check if element is in loading state',
-        output: 'true',
-      },
-      {
-        title: 'Type validation',
-        code: '@type="submit"',
-        explanation: 'Check if input is submit type',
-        output: 'false',
-      },
-    ],
-    seeAlso: ['@', 'possessive', 'matches'],
-    tags: ['attribute', 'validation', 'comparison', 'DOM'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -1234,27 +879,27 @@ export class EnhancedAttributeWithValueExpression implements BaseTypedExpression
 // Factory Functions
 // ============================================================================
 
-export function createEnhancedPossessiveExpression(): EnhancedPossessiveExpression {
+export function createPossessiveExpression(): EnhancedPossessiveExpression {
   return new EnhancedPossessiveExpression();
 }
 
-export function createEnhancedMyExpression(): EnhancedMyExpression {
+export function createMyExpression(): EnhancedMyExpression {
   return new EnhancedMyExpression();
 }
 
-export function createEnhancedItsExpression(): EnhancedItsExpression {
+export function createItsExpression(): EnhancedItsExpression {
   return new EnhancedItsExpression();
 }
 
-export function createEnhancedYourExpression(): EnhancedYourExpression {
+export function createYourExpression(): EnhancedYourExpression {
   return new EnhancedYourExpression();
 }
 
-export function createEnhancedAttributeExpression(): EnhancedAttributeExpression {
+export function createAttributeExpression(): EnhancedAttributeExpression {
   return new EnhancedAttributeExpression();
 }
 
-export function createEnhancedAttributeWithValueExpression(): EnhancedAttributeWithValueExpression {
+export function createAttributeWithValueExpression(): EnhancedAttributeWithValueExpression {
   return new EnhancedAttributeWithValueExpression();
 }
 
@@ -1263,12 +908,12 @@ export function createEnhancedAttributeWithValueExpression(): EnhancedAttributeW
 // ============================================================================
 
 export const propertyExpressions = {
-  possessive: createEnhancedPossessiveExpression(),
-  my: createEnhancedMyExpression(),
-  its: createEnhancedItsExpression(),
-  your: createEnhancedYourExpression(),
-  attribute: createEnhancedAttributeExpression(),
-  attributeWithValue: createEnhancedAttributeWithValueExpression(),
+  possessive: createPossessiveExpression(),
+  my: createMyExpression(),
+  its: createItsExpression(),
+  your: createYourExpression(),
+  attribute: createAttributeExpression(),
+  attributeWithValue: createAttributeWithValueExpression(),
 } as const;
 
 export type PropertyExpressionName = keyof typeof propertyExpressions;

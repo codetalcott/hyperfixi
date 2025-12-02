@@ -1,5 +1,5 @@
 /**
- * Enhanced Not Expression - Logical Negation
+ * Not Expression - Logical Negation
  * Implements comprehensive 'not' expression functionality with TypeScript integration
  * Handles boolean negation, truthiness evaluation, and type coercion
  */
@@ -9,7 +9,6 @@ import type {
   HyperScriptValue,
   EvaluationResult,
   TypedExpressionImplementation,
-  LLMDocumentation,
   ValidationResult,
   TypedExecutionContext,
 } from '../../types/command-types';
@@ -26,14 +25,14 @@ export const NotExpressionInputSchema = v.tuple([v.unknown().describe('Value to 
 export type NotExpressionInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced Not Expression Implementation
+// Not Expression Implementation
 // ============================================================================
 
 /**
  * Enhanced 'not' expression for logical negation
  * Provides comprehensive boolean negation with truthiness evaluation
  */
-export class EnhancedNotExpression implements TypedExpressionImplementation<boolean> {
+export class NotExpression implements TypedExpressionImplementation<boolean> {
   public readonly name = 'not';
   public readonly category = 'logical' as const;
   public readonly precedence = 9; // High precedence for unary operators
@@ -49,45 +48,7 @@ export class EnhancedNotExpression implements TypedExpressionImplementation<bool
 
   public readonly inputSchema = NotExpressionInputSchema;
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Performs logical negation with comprehensive truthiness evaluation and type coercion',
-    parameters: [
-      {
-        name: 'value',
-        type: 'object',
-        description: 'Value to negate (evaluated for truthiness)',
-        optional: false,
-        examples: ['true', 'false', '0', '""', 'null', 'undefined', '[]', '{}'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'Negated boolean value based on truthiness evaluation',
-      examples: [true, false],
-    },
-    examples: [
-      {
-        title: 'Simple boolean negation',
-        code: 'not true',
-        explanation: 'Returns false',
-        output: false,
-      },
-      {
-        title: 'Falsy value negation',
-        code: 'not 0',
-        explanation: 'Returns true (0 is falsy)',
-        output: true,
-      },
-      {
-        title: 'Double negation',
-        code: 'not not true',
-        explanation: 'Returns true (double negation)',
-        output: true,
-      },
-    ],
-    seeAlso: ['logical operators', 'boolean expressions', 'truthiness evaluation'],
-    tags: ['logical', 'negation', 'boolean', 'unary'],
-  };
+  
 
   /**
    * Validate 'not' expression arguments

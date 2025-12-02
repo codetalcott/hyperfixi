@@ -1,5 +1,5 @@
 /**
- * Enhanced In Expression - Membership Testing and DOM Queries
+ * In Expression - Membership Testing and DOM Queries
  * Implements comprehensive 'in' expression functionality with TypeScript integration
  * Handles array membership, DOM element queries, and advanced filtering
  */
@@ -9,7 +9,6 @@ import type {
   HyperScriptValue,
   HyperScriptValueType,
   EvaluationResult,
-  LLMDocumentation,
   ValidationResult,
 } from '../../types/command-types';
 import type { ValidationError, TypedExpressionContext } from '../../types/base-types';
@@ -30,14 +29,14 @@ export const InExpressionInputSchema = v.tuple([
 export type InExpressionInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced In Expression Implementation
+// In Expression Implementation
 // ============================================================================
 
 /**
  * Enhanced 'in' expression for membership testing and DOM queries
  * Provides comprehensive search functionality for arrays and DOM elements
  */
-export class EnhancedInExpression implements TypedExpressionImplementation<HyperScriptValue[]> {
+export class InExpression implements TypedExpressionImplementation<HyperScriptValue[]> {
   public readonly name = 'InExpression';
   public readonly category = 'Logical' as const;
   public readonly syntax = '<value> in <collection>';
@@ -60,53 +59,7 @@ export class EnhancedInExpression implements TypedExpressionImplementation<Hyper
     performance: { averageTime: 0.5, complexity: 'O(n)' as const },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Tests membership in collections and performs DOM queries with comprehensive filtering',
-    parameters: [
-      {
-        name: 'searchValue',
-        type: 'any',
-        description: 'Value or array of values to search for',
-        optional: false,
-        examples: ['1', '[1, 3]', '<p.foo/>', '#myId'],
-      },
-      {
-        name: 'container',
-        type: 'any',
-        description: 'Container to search in (array, NodeList, or DOM element)',
-        optional: false,
-        examples: ['[1, 2, 3]', 'document', '#container', '<div/>'],
-      },
-    ],
-    returns: {
-      type: 'array',
-      description: 'Array of found values/elements, empty array if nothing found',
-      examples: [[1], [1, 3], [], ['<p class="foo"></p>']],
-    },
-    examples: [
-      {
-        title: 'Array membership test',
-        code: '1 in [1, 2, 3]',
-        explanation: 'Returns [1] if 1 is found in the array',
-        output: [1],
-      },
-      {
-        title: 'Multiple value search',
-        code: '[1, 3] in [1, 2, 3]',
-        explanation: 'Returns [1, 3] for values found in the array',
-        output: [1, 3],
-      },
-      {
-        title: 'DOM query',
-        code: '<p/> in #container',
-        explanation: 'Returns array of matching <p> elements within #container',
-        output: ['<p elements>'],
-      },
-    ],
-    seeAlso: ['CSS selectors', 'DOM queries', 'array methods'],
-    tags: ['membership', 'search', 'dom', 'query', 'filter'],
-  };
+  
 
   /**
    * Validate 'in' expression arguments

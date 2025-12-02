@@ -14,7 +14,7 @@ import type { RuntimeValidator } from '../validation/lightweight-validators';
 /**
  * Unified validation error interface - replaces all fragmented error types
  */
-export interface UnifiedValidationError {
+export interface ValidationError {
   readonly type:
     | 'type-mismatch'
     | 'missing-argument'
@@ -37,9 +37,9 @@ export interface UnifiedValidationError {
 /**
  * Unified validation result interface - replaces all ValidationResult variants
  */
-export interface UnifiedValidationResult<T = unknown> {
+export interface ValidationResult<T = unknown> {
   readonly isValid: boolean;
-  readonly errors: UnifiedValidationError[];
+  readonly errors: ValidationError[];
   readonly suggestions: string[];
   readonly data?: T;
 }
@@ -51,7 +51,7 @@ export interface UnifiedValidationResult<T = unknown> {
 /**
  * Unified HyperScript value type - consolidates all value type definitions
  */
-export type UnifiedHyperScriptValueType =
+export type HyperScriptValueType =
   | 'string'
   | 'number'
   | 'boolean'
@@ -71,8 +71,8 @@ export type UnifiedHyperScriptValueType =
 /**
  * Unified evaluation type - consolidates EvaluationType definitions
  */
-export type UnifiedEvaluationType =
-  | UnifiedHyperScriptValueType
+export type EvaluationType =
+  | HyperScriptValueType
   | 'Any'
   | 'Context'
   | 'Command'
@@ -81,7 +81,7 @@ export type UnifiedEvaluationType =
 /**
  * Unified HyperScript value - actual value container
  */
-export type UnifiedHyperScriptValue =
+export type HyperScriptValue =
   | string
   | number
   | boolean
@@ -103,7 +103,7 @@ export type UnifiedHyperScriptValue =
 /**
  * Unified execution context - consolidates all context definitions
  */
-export interface UnifiedExecutionContext {
+export interface ExecutionContext {
   readonly me: HTMLElement | null;
   it: unknown;
   readonly you: HTMLElement | null;
@@ -125,9 +125,9 @@ export interface UnifiedExecutionContext {
 /**
  * Enhanced execution context with additional typing information
  */
-export interface UnifiedTypedExecutionContext extends UnifiedExecutionContext {
+export interface TypedExecutionContext extends ExecutionContext {
   readonly typeRegistry: Map<string, RuntimeValidator>;
-  readonly validationCache: Map<string, UnifiedValidationResult>;
+  readonly validationCache: Map<string, ValidationResult>;
 }
 
 // ============================================================================
@@ -137,7 +137,7 @@ export interface UnifiedTypedExecutionContext extends UnifiedExecutionContext {
 /**
  * Unified result type for operations that can succeed or fail
  */
-export interface UnifiedResult<T = unknown> {
+export interface Result<T = unknown> {
   readonly success: boolean;
   readonly value?: T;
   readonly error?: {
@@ -152,8 +152,8 @@ export interface UnifiedResult<T = unknown> {
 /**
  * Unified typed result with validation information
  */
-export interface UnifiedTypedResult<T = unknown> extends UnifiedResult<T> {
-  readonly errors?: UnifiedValidationError[];
+export interface TypedResult<T = unknown> extends Result<T> {
+  readonly errors?: ValidationError[];
   readonly suggestions?: string[];
 }
 
@@ -164,7 +164,7 @@ export interface UnifiedTypedResult<T = unknown> extends UnifiedResult<T> {
 /**
  * Unified command category - consolidates all command categories
  */
-export type UnifiedCommandCategory =
+export type CommandCategory =
   | 'dom-manipulation'
   | 'event-handling'
   | 'data-processing'
@@ -179,7 +179,7 @@ export type UnifiedCommandCategory =
 /**
  * Unified side effect types
  */
-export type UnifiedSideEffect =
+export type SideEffect =
   | 'dom-mutation'
   | 'network-request'
   | 'local-storage'
@@ -199,7 +199,7 @@ export type UnifiedSideEffect =
 /**
  * Unified expression category
  */
-export type UnifiedExpressionCategory =
+export type ExpressionCategory =
   | 'Reference'
   | 'Property'
   | 'Logical'
@@ -210,21 +210,23 @@ export type UnifiedExpressionCategory =
 
 /**
  * Unified expression metadata
+ * Only category and complexity are required; rest is optional documentation
  */
-export interface UnifiedExpressionMetadata {
-  readonly category: UnifiedExpressionCategory;
+export interface ExpressionMetadata {
+  readonly category: ExpressionCategory;
   readonly complexity: 'simple' | 'medium' | 'complex';
-  readonly sideEffects: UnifiedSideEffect[];
-  readonly dependencies: string[];
-  readonly returnTypes: UnifiedEvaluationType[];
-  readonly examples: Array<{
+  // Optional documentation fields
+  readonly sideEffects?: SideEffect[];
+  readonly dependencies?: string[];
+  readonly returnTypes?: EvaluationType[];
+  readonly examples?: Array<{
     readonly input: string;
     readonly description: string;
     readonly expectedOutput: unknown;
-    readonly context?: Partial<UnifiedExecutionContext>;
+    readonly context?: Partial<ExecutionContext>;
   }>;
-  readonly relatedExpressions: string[];
-  readonly performance: {
+  readonly relatedExpressions?: string[];
+  readonly performance?: {
     readonly averageTime: number;
     readonly complexity: string;
   };
@@ -237,7 +239,7 @@ export interface UnifiedExpressionMetadata {
 /**
  * Unified AST node interface
  */
-export interface UnifiedASTNode {
+export interface ASTNode {
   readonly type: string;
   readonly line?: number;
   readonly column?: number;
@@ -250,7 +252,7 @@ export interface UnifiedASTNode {
 /**
  * Unified parse error interface
  */
-export interface UnifiedParseError {
+export interface ParseError {
   readonly name: string;
   readonly message: string;
   readonly line: number;
@@ -265,7 +267,7 @@ export interface UnifiedParseError {
 /**
  * Unified LLM documentation interface
  */
-export interface UnifiedLLMDocumentation {
+export interface LLMDocumentation {
   readonly summary: string;
   readonly parameters: Array<{
     readonly name: string;
@@ -296,11 +298,11 @@ export interface UnifiedLLMDocumentation {
 /**
  * Unified validator class for consistent validation across codebase
  */
-export class UnifiedValidator {
+export class Validator {
   /**
    * Validate input against a Zod schema with unified error formatting
    */
-  static validateInput<T>(input: unknown, schema: RuntimeValidator<T>): UnifiedValidationResult<T> {
+  static validateInput<T>(input: unknown, schema: RuntimeValidator<T>): ValidationResult<T> {
     try {
       const parsed = schema.safeParse(input);
 
@@ -347,12 +349,12 @@ export class UnifiedValidator {
    * Create a validation error with consistent format
    */
   static createValidationError(
-    type: UnifiedValidationError['type'],
+    type: ValidationError['type'],
     message: string,
     suggestions: string[] = [],
     path?: string,
     code?: string
-  ): UnifiedValidationError {
+  ): ValidationError {
     return {
       type,
       message,
@@ -365,7 +367,7 @@ export class UnifiedValidator {
   /**
    * Create a validation result for success cases
    */
-  static createSuccessResult<T>(data: T): UnifiedValidationResult<T> {
+  static createSuccessResult<T>(data: T): ValidationResult<T> {
     return {
       isValid: true,
       errors: [],
@@ -378,9 +380,9 @@ export class UnifiedValidator {
    * Create a validation result for error cases
    */
   static createErrorResult<T>(
-    errors: UnifiedValidationError[],
+    errors: ValidationError[],
     suggestions: string[] = []
-  ): UnifiedValidationResult<T> {
+  ): ValidationResult<T> {
     return {
       isValid: false,
       errors,
@@ -394,9 +396,9 @@ export class UnifiedValidator {
 // ============================================================================
 
 /**
- * Type guard for UnifiedValidationResult
+ * Type guard for ValidationResult
  */
-export function isUnifiedValidationResult<T>(value: unknown): value is UnifiedValidationResult<T> {
+export function isValidationResult<T>(value: unknown): value is ValidationResult<T> {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -410,9 +412,9 @@ export function isUnifiedValidationResult<T>(value: unknown): value is UnifiedVa
 }
 
 /**
- * Type guard for UnifiedExecutionContext
+ * Type guard for ExecutionContext
  */
-export function isUnifiedExecutionContext(value: unknown): value is UnifiedExecutionContext {
+export function isExecutionContext(value: unknown): value is ExecutionContext {
   return (
     typeof value === 'object' &&
     value !== null &&
@@ -430,7 +432,7 @@ export function isUnifiedExecutionContext(value: unknown): value is UnifiedExecu
 // ============================================================================
 
 export default {
-  UnifiedValidator,
-  isUnifiedValidationResult,
-  isUnifiedExecutionContext,
+  Validator,
+  isValidationResult,
+  isExecutionContext,
 };

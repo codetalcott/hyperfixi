@@ -405,7 +405,7 @@ export class CommandDebugger {
 /**
  * Main Unified Command System
  */
-export class UnifiedCommandSystem {
+export class CommandSystem {
   private contextManager = new CommandContextManager();
   private asyncExecutor = new AsyncCommandExecutor();
   private errorHandler = new CommandErrorHandler();
@@ -580,7 +580,7 @@ export class UnifiedCommandSystem {
 }
 
 // Export singleton instance
-export const commandSystem = new UnifiedCommandSystem();
+export const commandSystem = new CommandSystem();
 
 // Note: CommandContextManager, AsyncCommandExecutor, CommandErrorHandler, and CommandDebugger
 // are already exported via 'export class' declarations above

@@ -10,7 +10,7 @@
 import { v } from '../../validation/lightweight-validators';
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 
 /**
  * Zod schema for LOG command input validation
@@ -76,7 +76,7 @@ export class LogCommand
     };
   }
 
-  validate(input: unknown): UnifiedValidationResult<LogCommandInputType> {
+  validate(input: unknown): ValidationResult<LogCommandInputType> {
     try {
       const validInput = this.inputSchema.parse(input);
       return {

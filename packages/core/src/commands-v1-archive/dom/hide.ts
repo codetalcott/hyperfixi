@@ -14,7 +14,7 @@ import type {
   LLMDocumentation,
 } from '../../types/command-types';
 // Removed TypedResult import '../../types/base-types.ts';
-import type { UnifiedValidationResult } from '../../types/unified-types.ts';
+import type { ValidationResult } from '../../types/unified-types.ts';
 import { resolveTargets } from '../../utils/dom-utils.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { ErrorCodes, createError, getSuggestions } from '../../types/error-codes.ts';
@@ -230,7 +230,7 @@ export class HideCommand
     }
   }
 
-  validate(args: unknown[]): UnifiedValidationResult {
+  validate(args: unknown[]): ValidationResult {
     try {
       // Schema validation
       const parsed = HideCommandInputSchema.safeParse(args);

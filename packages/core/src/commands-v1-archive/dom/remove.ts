@@ -14,7 +14,7 @@ import type {
   LLMDocumentation,
 } from '../../types/command-types';
 // Removed TypedResult import '../../types/base-types.ts';
-import type { UnifiedValidationResult } from '../../types/unified-types.ts';
+import type { ValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { resolveTargets } from '../../utils/dom-utils.ts';
 
@@ -320,7 +320,7 @@ export class RemoveCommand
     return cssClassNameRegex.test(className.trim());
   }
 
-  validate(args: unknown[]): UnifiedValidationResult {
+  validate(args: unknown[]): ValidationResult {
     try {
       // Schema validation
       const parsed = RemoveCommandInputSchema.safeParse(args);

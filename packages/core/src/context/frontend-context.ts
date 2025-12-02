@@ -75,7 +75,7 @@ export type FrontendContextOutput = any; // Inferred from RuntimeValidator
 // Frontend Context Implementation
 // ============================================================================
 
-export class TypedFrontendContextImplementation extends EnhancedContextBase<
+export class TypedFrontendContextImplementation extends ContextBase<
   FrontendContextInput,
   FrontendContextOutput
 > {
@@ -191,16 +191,16 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<
         state: 'ready',
 
         // Enhanced DOM query function
-        query: this.createEnhancedQuery(input.dom?.document),
+        query: this.createQuery(input.dom?.document),
 
         // Enhanced event handling
-        on: this.createEnhancedEventHandler(),
+        on: this.createEventHandler(),
 
         // Enhanced browser APIs
         apis: {
-          fetch: this.createEnhancedFetch(input.apis?.fetch),
-          storage: this.createEnhancedStorage(input.apis?.localStorage, input.apis?.sessionStorage),
-          navigation: this.createEnhancedNavigation(input.apis?.location),
+          fetch: this.createFetch(input.apis?.fetch),
+          storage: this.createStorage(input.apis?.localStorage, input.apis?.sessionStorage),
+          navigation: this.createNavigation(input.apis?.location),
         },
       };
 
@@ -236,7 +236,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<
   // Enhanced Helper Methods (following enhanced expression pattern)
   // ============================================================================
 
-  private createEnhancedQuery(document?: any) {
+  private createQuery(document?: any) {
     return (selector: string) => {
       if (!document) {
         throw new Error('DOM document not available in frontend context');
@@ -245,7 +245,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedEventHandler() {
+  private createEventHandler() {
     return (element: any, event: string, handler: Function) => {
       if (element && typeof element.addEventListener === 'function') {
         element.addEventListener(event, handler);
@@ -253,7 +253,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedFetch(fetchApi?: Function) {
+  private createFetch(fetchApi?: Function) {
     return async (url: string, options?: any) => {
       if (!fetchApi) {
         throw new Error('Fetch API not available in frontend context');
@@ -262,7 +262,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedStorage(localStorage?: any, sessionStorage?: any) {
+  private createStorage(localStorage?: any, sessionStorage?: any) {
     return {
       get: (key: string, useSession = false) => {
         const storage = useSession ? sessionStorage : localStorage;
@@ -279,7 +279,7 @@ export class TypedFrontendContextImplementation extends EnhancedContextBase<
     };
   }
 
-  private createEnhancedNavigation(location?: any) {
+  private createNavigation(location?: any) {
     return {
       navigate: (path: string) => {
         if (location) location.href = path;

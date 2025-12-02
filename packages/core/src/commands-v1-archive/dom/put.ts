@@ -13,7 +13,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types.ts';
+import type { ValidationResult } from '../../types/unified-types.ts';
 import { dispatchCustomEvent } from '../../core/events';
 import { asHTMLElement } from '../../utils/dom-utils';
 import { debug } from '../../utils/debug';
@@ -262,7 +262,7 @@ export class PutCommand
     }
   }
 
-  validate(args: unknown[]): UnifiedValidationResult {
+  validate(args: unknown[]): ValidationResult {
     try {
       // Schema validation - the schema expects a tuple, so we need to validate the args as a tuple
       const parsed = this.inputSchema.safeParse(args.slice(0, 3)); // Take first 3 args for tuple validation

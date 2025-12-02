@@ -3,7 +3,7 @@
  */
 
 import type { ExecutionContext } from '../types/base-types';
-import type { UnifiedExecutionContext } from '../types/unified-types';
+import type { ExecutionContext } from '../types/unified-types';
 
 /**
  * Create a minimal ExecutionContext for testing
@@ -26,12 +26,12 @@ export function createTestExecutionContext(
 }
 
 /**
- * Create a UnifiedExecutionContext for testing
+ * Create a ExecutionContext for testing
  */
-export function createTestUnifiedContext(
-  overrides?: Partial<UnifiedExecutionContext>
-): UnifiedExecutionContext {
-  const context: UnifiedExecutionContext = {
+export function createTestContext(
+  overrides?: Partial<ExecutionContext>
+): ExecutionContext {
+  const context: ExecutionContext = {
     me: null,
     you: null,
     it: null,
@@ -48,10 +48,10 @@ export function createTestUnifiedContext(
 
 /**
  * Create a mutable context wrapper for testing that allows property mutations
- * Includes all properties from UnifiedExecutionContext for maximum compatibility
+ * Includes all properties from ExecutionContext for maximum compatibility
  */
 export function createMutableTestContext(
-  baseContext?: Partial<UnifiedExecutionContext>
+  baseContext?: Partial<ExecutionContext>
 ): Record<string, unknown> & {
   me: Element | null;
   you: Element | null;

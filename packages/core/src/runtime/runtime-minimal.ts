@@ -15,7 +15,7 @@
  */
 
 import { RuntimeBase, type RuntimeBaseOptions } from './runtime-base';
-import { EnhancedCommandRegistry } from './command-adapter';
+import { CommandRegistry } from './command-adapter';
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 
 // Import standalone V2 commands (zero V1 dependencies)
@@ -33,7 +33,7 @@ import { LogCommand } from '../commands/utility/log-standalone';
  */
 export function createMinimalRuntime(): RuntimeBase {
   // Create empty registry
-  const registry = new EnhancedCommandRegistry();
+  const registry = new CommandRegistry();
 
   // Register standalone V2 commands
   registry.register(new HideCommand());
@@ -55,7 +55,7 @@ export function createMinimalRuntime(): RuntimeBase {
 /**
  * Export individual components for advanced usage
  */
-export { RuntimeBase, EnhancedCommandRegistry, ExpressionEvaluator };
+export { RuntimeBase, CommandRegistry, ExpressionEvaluator };
 export { HideCommand, ShowCommand, LogCommand };
 
 /**

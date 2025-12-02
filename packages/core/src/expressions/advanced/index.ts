@@ -1,5 +1,5 @@
 /**
- * Enhanced Advanced Expressions - Deep TypeScript Integration
+ * Advanced Expressions - Deep TypeScript Integration
  * Lambda expressions, async expressions, error handling expressions with full type safety
  * Enhanced for LLM code agents with maximum type safety
  */
@@ -9,11 +9,11 @@ import { v } from '../../validation/lightweight-validators';
 import type {
   ValidationResult,
   TypedExecutionContext,
-  UnifiedTypedResult as TypedResult,
-  UnifiedLLMDocumentation as LLMDocumentation,
-  UnifiedEvaluationType as EvaluationType,
-  UnifiedExpressionMetadata as ExpressionMetadata,
-  UnifiedExpressionCategory as ExpressionCategory,
+  TypedResult as TypedResult,
+  LLMDocumentation as LLMDocumentation,
+  EvaluationType as EvaluationType,
+  ExpressionMetadata as ExpressionMetadata,
+  ExpressionCategory as ExpressionCategory,
 } from '../../types/index';
 
 // Define BaseTypedExpression locally for now
@@ -30,13 +30,13 @@ interface BaseTypedExpression<T> {
 }
 
 // ============================================================================
-// Enhanced Lambda Expression
+// Lambda Expression
 // ============================================================================
 
 /**
  * Enhanced lambda expression with type-safe function creation
  */
-export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
+export class LambdaExpression implements BaseTypedExpression<Function> {
   public readonly name = 'lambda';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = '\\(params) -> expression';
@@ -49,15 +49,6 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'medium',
-    sideEffects: [],
-    dependencies: ['context'],
-    returnTypes: ['Any'],
-    examples: [],
-    relatedExpressions: [],
-    performance: {
-      averageTime: 1,
-      complexity: 'O(1)',
-    },
   };
 
   public readonly analysisInfo = {
@@ -67,46 +58,7 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
     dependencies: ['context'],
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Creates lambda function with parameters and body expression',
-    parameters: [
-      {
-        name: 'parameters',
-        type: 'array',
-        description: 'Function parameter names',
-        optional: false,
-        examples: ['["x", "y"]', '["item"]', '[]'],
-      },
-      {
-        name: 'body',
-        type: 'string',
-        description: 'Function body expression',
-        optional: false,
-        examples: ['x + y', 'item.name', 'true'],
-      },
-    ],
-    returns: {
-      type: 'function',
-      description: 'Lambda function that can be called with arguments',
-      examples: ['function(x, y) { return x + y; }'],
-    },
-    examples: [
-      {
-        title: 'Simple arithmetic lambda',
-        code: 'lambda(["x", "y"], "x + y")',
-        explanation: 'Create function that adds two numbers',
-        output: 'function(x, y) { return x + y; }',
-      },
-      {
-        title: 'Property accessor lambda',
-        code: 'lambda(["item"], "item.name")',
-        explanation: 'Create function that extracts name property',
-        output: 'function(item) { return item.name; }',
-      },
-    ],
-    seeAlso: ['apply', 'curry', 'compose'],
-    tags: ['function', 'lambda', 'closure', 'higher-order'],
-  };
+  
 
   validate(input: unknown): ValidationResult {
     try {
@@ -240,13 +192,13 @@ export class EnhancedLambdaExpression implements BaseTypedExpression<Function> {
 }
 
 // ============================================================================
-// Enhanced Promise Expression
+// Promise Expression
 // ============================================================================
 
 /**
  * Enhanced promise creation with type safety
  */
-export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<unknown>> {
+export class PromiseExpression implements BaseTypedExpression<Promise<unknown>> {
   public readonly name = 'promise';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'promise(executor)';
@@ -258,50 +210,9 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'medium',
-    sideEffects: ['async'],
-    dependencies: [],
-    returnTypes: ['Any'],
-    examples: [],
-    relatedExpressions: ['await'],
-    performance: {
-      averageTime: 1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Creates a promise with executor function for async operations',
-    parameters: [
-      {
-        name: 'executor',
-        type: 'string',
-        description: 'Executor expression (resolve/reject calls)',
-        optional: false,
-        examples: ['resolve(42)', 'reject("error")', 'setTimeout(() => resolve("done"), 1000)'],
-      },
-    ],
-    returns: {
-      type: 'promise',
-      description: 'Promise that resolves or rejects based on executor',
-      examples: ['Promise.resolve(42)', 'Promise.reject("error")'],
-    },
-    examples: [
-      {
-        title: 'Resolve promise',
-        code: 'promise("resolve(42)")',
-        explanation: 'Create promise that resolves with value 42',
-        output: 'Promise.resolve(42)',
-      },
-      {
-        title: 'Reject promise',
-        code: 'promise("reject(\\"error\\")")',
-        explanation: 'Create promise that rejects with error',
-        output: 'Promise.reject("error")',
-      },
-    ],
-    seeAlso: ['await', 'then', 'catch'],
-    tags: ['async', 'promise', 'concurrent'],
-  };
+  
 
   validate(input: unknown): ValidationResult {
     try {
@@ -414,13 +325,13 @@ export class EnhancedPromiseExpression implements BaseTypedExpression<Promise<un
 }
 
 // ============================================================================
-// Enhanced Await Expression
+// Await Expression
 // ============================================================================
 
 /**
  * Enhanced await expression with proper error handling
  */
-export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
+export class AwaitExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'await';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'await promise';
@@ -432,50 +343,9 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'medium',
-    sideEffects: ['async'],
-    dependencies: ['promise'],
-    returnTypes: ['Any'],
-    examples: [],
-    relatedExpressions: ['promise'],
-    performance: {
-      averageTime: 1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Awaits a promise and returns its resolved value or handles rejection',
-    parameters: [
-      {
-        name: 'promise',
-        type: 'promise',
-        description: 'Promise to await',
-        optional: false,
-        examples: ['fetch("/api/data")', 'promise("resolve(42)")', 'delay(1000)'],
-      },
-    ],
-    returns: {
-      type: 'unknown',
-      description: 'Resolved value of the promise',
-      examples: ['42', '{"data": "value"}', 'null'],
-    },
-    examples: [
-      {
-        title: 'Await simple promise',
-        code: 'await promise("resolve(42)")',
-        explanation: 'Wait for promise to resolve and return value',
-        output: 42,
-      },
-      {
-        title: 'Await with error handling',
-        code: 'await fetch("/api/data")',
-        explanation: 'Await API response',
-        output: '{"success": true}',
-      },
-    ],
-    seeAlso: ['promise', 'then', 'catch'],
-    tags: ['async', 'await', 'promise'],
-  };
+  
 
   validate(input: unknown): ValidationResult {
     try {
@@ -535,13 +405,13 @@ export class EnhancedAwaitExpression implements BaseTypedExpression<unknown> {
 }
 
 // ============================================================================
-// Enhanced Error Expression
+// Error Expression
 // ============================================================================
 
 /**
  * Enhanced error creation with comprehensive error handling
  */
-export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
+export class ErrorExpression implements BaseTypedExpression<Error> {
   public readonly name = 'error';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'error(message, name?, code?)';
@@ -555,64 +425,9 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Any'],
-    examples: [],
-    relatedExpressions: [],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Creates error objects with customizable properties',
-    parameters: [
-      {
-        name: 'message',
-        type: 'string',
-        description: 'Error message',
-        optional: false,
-        examples: ['"Something went wrong"', '"Validation failed"', '"Network error"'],
-      },
-      {
-        name: 'name',
-        type: 'string',
-        description: 'Error name/type',
-        optional: true,
-        examples: ['"ValidationError"', '"NetworkError"', '"TypeError"'],
-      },
-      {
-        name: 'code',
-        type: 'string',
-        description: 'Error code',
-        optional: true,
-        examples: ['"E001"', '"NETWORK_TIMEOUT"', '"INVALID_INPUT"'],
-      },
-    ],
-    returns: {
-      type: 'error',
-      description: 'Error object with specified properties',
-      examples: ['Error("Something went wrong")', 'ValidationError("Invalid input")'],
-    },
-    examples: [
-      {
-        title: 'Basic error',
-        code: 'error("Something went wrong")',
-        explanation: 'Create simple error with message',
-        output: 'Error("Something went wrong")',
-      },
-      {
-        title: 'Typed error',
-        code: 'error("Invalid input", "ValidationError")',
-        explanation: 'Create error with custom type',
-        output: 'ValidationError("Invalid input")',
-      },
-    ],
-    seeAlso: ['throw', 'try', 'catch'],
-    tags: ['error', 'exception', 'validation'],
-  };
+  
 
   validate(input: unknown): ValidationResult {
     try {
@@ -683,7 +498,7 @@ export class EnhancedErrorExpression implements BaseTypedExpression<Error> {
 /**
  * Enhanced typeof expression with comprehensive type checking
  */
-export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
+export class TypeofExpression implements BaseTypedExpression<string> {
   public readonly name = 'typeof';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'typeof value';
@@ -695,50 +510,9 @@ export class EnhancedTypeofExpression implements BaseTypedExpression<string> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['string'],
-    examples: [],
-    relatedExpressions: [],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Returns detailed type information about a value',
-    parameters: [
-      {
-        name: 'value',
-        type: 'unknown',
-        description: 'Value to check type of',
-        optional: false,
-        examples: ['42', '"hello"', 'true', 'null', '[]', '{}'],
-      },
-    ],
-    returns: {
-      type: 'string',
-      description: 'Type string with detailed information',
-      examples: ['"number"', '"string"', '"boolean"', '"null"', '"array"', '"object"'],
-    },
-    examples: [
-      {
-        title: 'Number type',
-        code: 'typeof 42',
-        explanation: 'Check type of number',
-        output: '"number"',
-      },
-      {
-        title: 'Array type',
-        code: 'typeof []',
-        explanation: 'Check type of array',
-        output: '"array"',
-      },
-    ],
-    seeAlso: ['instanceof', 'isError', 'isArray'],
-    tags: ['type', 'check', 'validation'],
-  };
+  
 
   validate(input: unknown): ValidationResult {
     try {
@@ -823,23 +597,23 @@ export const enhancedAdvancedExpressions = {
 /**
  * Factory functions for creating enhanced advanced expressions
  */
-export function createEnhancedLambda(): EnhancedLambdaExpression {
+export function createLambda(): EnhancedLambdaExpression {
   return new EnhancedLambdaExpression();
 }
 
-export function createEnhancedPromise(): EnhancedPromiseExpression {
+export function createPromise(): EnhancedPromiseExpression {
   return new EnhancedPromiseExpression();
 }
 
-export function createEnhancedAwait(): EnhancedAwaitExpression {
+export function createAwait(): EnhancedAwaitExpression {
   return new EnhancedAwaitExpression();
 }
 
-export function createEnhancedError(): EnhancedErrorExpression {
+export function createError(): EnhancedErrorExpression {
   return new EnhancedErrorExpression();
 }
 
-export function createEnhancedTypeof(): EnhancedTypeofExpression {
+export function createTypeof(): EnhancedTypeofExpression {
   return new EnhancedTypeofExpression();
 }
 

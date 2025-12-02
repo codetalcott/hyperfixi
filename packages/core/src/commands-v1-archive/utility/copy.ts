@@ -18,7 +18,7 @@
 import { v } from '../../validation/lightweight-validators';
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 
 /**
  * Zod schema for COPY command input validation
@@ -226,7 +226,7 @@ export class CopyCommand implements CommandImplementation<
     }
   }
 
-  validate(input: unknown): UnifiedValidationResult<CopyCommandInputType> {
+  validate(input: unknown): ValidationResult<CopyCommandInputType> {
     try {
       // Handle both direct input (string/element) and object format
       let normalizedInput: any;

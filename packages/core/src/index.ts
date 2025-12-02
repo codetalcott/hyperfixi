@@ -41,7 +41,7 @@ export {
 export {
   TypedOnFeatureImplementation,
   createOnFeature,
-  createEnhancedOn,
+  createOn,
   enhancedOnImplementation,
   type EnhancedOnInput,
   type EnhancedOnOutput,

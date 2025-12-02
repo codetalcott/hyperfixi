@@ -10,7 +10,7 @@
 import { debug } from '../../utils/debug';
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 
 // Input type definition
 export interface IncrementCommandInput {
@@ -54,7 +54,7 @@ export class IncrementCommand
   };
 
   validation = {
-    validate(input: unknown): UnifiedValidationResult<IncrementCommandInput> {
+    validate(input: unknown): ValidationResult<IncrementCommandInput> {
       if (!input || typeof input !== 'object') {
         return {
           isValid: false,

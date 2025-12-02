@@ -1,5 +1,5 @@
 /**
- * Enhanced Symbol Expression - Variable Resolution
+ * Symbol Expression - Variable Resolution
  * Implements comprehensive symbol (variable) resolution with TypeScript integration
  * Handles local, element, and global variable resolution with enhanced error handling
  */
@@ -11,7 +11,6 @@ import type {
   EvaluationResult,
   TypedExpressionContext,
   TypedExpressionImplementation,
-  LLMDocumentation,
   ValidationResult,
   ExpressionCategory,
   ExpressionAnalysisInfo,
@@ -32,58 +31,19 @@ export const SymbolExpressionInputSchema = v.tuple([
 export type SymbolExpressionInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced Symbol Expression Implementation
+// Symbol Expression Implementation
 // ============================================================================
 
 /**
  * Enhanced symbol expression for variable resolution
  * Provides comprehensive context-aware variable lookup
  */
-export class EnhancedSymbolExpression
+export class SymbolExpression
   implements TypedExpressionImplementation<HyperScriptValue, TypedExpressionContext>
 {
   public readonly inputSchema = SymbolExpressionInputSchema;
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Resolves variables from hyperscript execution context with comprehensive scope chain lookup',
-    parameters: [
-      {
-        name: 'symbolName',
-        type: 'string',
-        description: 'Name of the variable to resolve from context',
-        optional: false,
-        examples: ['foo', 'userName', 'count', 'element'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'The resolved variable value from context, or undefined if not found',
-      examples: ['42', '"hello"', 'HTMLElement', 'null'],
-    },
-    examples: [
-      {
-        title: 'Local variable resolution',
-        code: 'foo',
-        explanation: 'Resolves "foo" from local context variables',
-        output: 42,
-      },
-      {
-        title: 'Global variable resolution',
-        code: 'document',
-        explanation: 'Resolves "document" from global context (browser)',
-        output: 'HTMLDocument',
-      },
-      {
-        title: 'Element property resolution',
-        code: 'className',
-        explanation: 'Resolves "className" from current element context',
-        output: '"nav-item active"',
-      },
-    ],
-    seeAlso: ['my expression', 'property access', 'context variables'],
-    tags: ['variable', 'context', 'resolution', 'scope'],
-  };
+  
 
   // Required TypedExpressionImplementation properties
   public readonly name = 'symbol';

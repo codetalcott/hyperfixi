@@ -19,7 +19,7 @@ import { createAppendCommand, AppendCommand } from './content/append';
 // Execution Commands
 import {
   createCallCommand,
-  createEnhancedGetCommand,
+  createGetCommand,
   CallCommand,
   EnhancedGetCommand,
 } from './execution/call';
@@ -98,7 +98,7 @@ export {
 
   // Execution Commands
   createCallCommand,
-  createEnhancedGetCommand,
+  createGetCommand,
   CallCommand,
   EnhancedGetCommand,
   createPseudoCommand,
@@ -208,7 +208,7 @@ export const ENHANCED_COMMAND_FACTORIES = {
 
   // Execution Commands
   call: createCallCommand,
-  get: createEnhancedGetCommand,
+  get: createGetCommand,
   'pseudo-command': createPseudoCommand,
 
   // Control Flow Commands
@@ -273,7 +273,7 @@ export function getEnhancedCommandNames(): string[] {
 /**
  * Create an enhanced command by name
  */
-export function createEnhancedCommand(
+export function createCommand(
   name: string
 ): CommandImplementation<unknown, unknown, TypedExecutionContext> | null {
   const factory = ENHANCED_COMMAND_FACTORIES[name as keyof typeof ENHANCED_COMMAND_FACTORIES];
@@ -354,6 +354,6 @@ export function getAllCommandMetadata(): CommandMetadata[] {
  * Get metadata for a specific command
  */
 export function getCommandMetadata(name: string): CommandMetadata | null {
-  const command = createEnhancedCommand(name);
+  const command = createCommand(name);
   return command ? command.metadata : null;
 }

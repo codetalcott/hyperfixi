@@ -1,5 +1,5 @@
 /**
- * Enhanced Special Expressions for HyperScript
+ * Special Expressions for HyperScript
  * Provides deep TypeScript integration for literals and mathematical operations
  */
 
@@ -11,7 +11,6 @@ import type {
   ExpressionMetadata,
   ValidationResult,
   EvaluationResult,
-  LLMDocumentation,
 } from '../../types/base-types';
 import type { ExpressionCategory } from '../../types/expression-types';
 
@@ -53,7 +52,7 @@ type BinaryOperationInput = any; // Inferred from RuntimeValidator
 // Enhanced String Literal Expression
 // ============================================================================
 
-export class EnhancedStringLiteralExpression implements BaseTypedExpression<string> {
+export class StringLiteralExpression implements BaseTypedExpression<string> {
   public readonly name = 'stringLiteral';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = '"string" or \'string\'';
@@ -64,67 +63,9 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['String'],
-    examples: [
-      {
-        input: '"hello world"',
-        description: 'Simple string literal',
-        expectedOutput: 'hello world',
-      },
-      {
-        input: '"Hello ${name}!"',
-        description: 'Template string with interpolation',
-        expectedOutput: 'Hello John!',
-      },
-    ],
-    relatedExpressions: ['numberLiteral', 'booleanLiteral'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(n)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Creates string literals with optional template interpolation support',
-    parameters: [
-      {
-        name: 'value',
-        type: 'string',
-        description: 'The string literal value',
-        optional: false,
-        examples: ['"hello"', '"world"', '"Hello ${name}!"', '"Value: ${count}"'],
-      },
-    ],
-    returns: {
-      type: 'string',
-      description: 'The string value, with any template interpolation resolved',
-      examples: ['"hello"', '"Hello John!"', '"Value: 42"'],
-    },
-    examples: [
-      {
-        title: 'Simple string',
-        code: '"hello world"',
-        explanation: 'Create a simple string literal',
-        output: '"hello world"',
-      },
-      {
-        title: 'Template interpolation',
-        code: '"Hello ${user.name}!"',
-        explanation: 'String with variable interpolation',
-        output: '"Hello John!"',
-      },
-      {
-        title: 'Numeric interpolation',
-        code: '"Count: ${items.length}"',
-        explanation: 'String with numeric value interpolation',
-        output: '"Count: 5"',
-      },
-    ],
-    seeAlso: ['numberLiteral', 'booleanLiteral', 'objectLiteral'],
-    tags: ['literal', 'string', 'template', 'interpolation'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -298,7 +239,7 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
 // Enhanced Number Literal Expression
 // ============================================================================
 
-export class EnhancedNumberLiteralExpression implements BaseTypedExpression<number> {
+export class NumberLiteralExpression implements BaseTypedExpression<number> {
   public readonly name = 'numberLiteral';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = '123 or 3.14';
@@ -309,67 +250,9 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Number'],
-    examples: [
-      {
-        input: '42',
-        description: 'Integer literal',
-        expectedOutput: 42,
-      },
-      {
-        input: '3.14159',
-        description: 'Decimal literal',
-        expectedOutput: 3.14159,
-      },
-    ],
-    relatedExpressions: ['stringLiteral', 'booleanLiteral'],
-    performance: {
-      averageTime: 0.05,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Creates numeric literals with validation for finite numbers',
-    parameters: [
-      {
-        name: 'value',
-        type: 'number',
-        description: 'The numeric literal value',
-        optional: false,
-        examples: ['42', '3.14', '-17', '0'],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'The numeric value',
-      examples: ['42', '3.14', '-17', '0'],
-    },
-    examples: [
-      {
-        title: 'Integer literal',
-        code: '42',
-        explanation: 'Create an integer literal',
-        output: '42',
-      },
-      {
-        title: 'Decimal literal',
-        code: '3.14159',
-        explanation: 'Create a decimal literal',
-        output: '3.14159',
-      },
-      {
-        title: 'Negative number',
-        code: '-17',
-        explanation: 'Create a negative number literal',
-        output: '-17',
-      },
-    ],
-    seeAlso: ['stringLiteral', 'addition', 'multiplication'],
-    tags: ['literal', 'number', 'numeric', 'integer', 'decimal'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -503,7 +386,7 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
 // Enhanced Boolean Literal Expression
 // ============================================================================
 
-export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boolean> {
+export class BooleanLiteralExpression implements BaseTypedExpression<boolean> {
   public readonly name = 'booleanLiteral';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'true or false';
@@ -514,61 +397,9 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Boolean'],
-    examples: [
-      {
-        input: 'true',
-        description: 'True boolean literal',
-        expectedOutput: true,
-      },
-      {
-        input: 'false',
-        description: 'False boolean literal',
-        expectedOutput: false,
-      },
-    ],
-    relatedExpressions: ['stringLiteral', 'numberLiteral'],
-    performance: {
-      averageTime: 0.05,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Creates boolean literal values (true or false)',
-    parameters: [
-      {
-        name: 'value',
-        type: 'boolean',
-        description: 'The boolean literal value',
-        optional: false,
-        examples: ['true', 'false'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'The boolean value',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'True literal',
-        code: 'true',
-        explanation: 'Create a true boolean literal',
-        output: 'true',
-      },
-      {
-        title: 'False literal',
-        code: 'false',
-        explanation: 'Create a false boolean literal',
-        output: 'false',
-      },
-    ],
-    seeAlso: ['and', 'or', 'not', 'equals'],
-    tags: ['literal', 'boolean', 'true', 'false', 'logic'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -672,10 +503,10 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
 }
 
 // ============================================================================
-// Enhanced Addition Expression
+// Addition Expression
 // ============================================================================
 
-export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
+export class AdditionExpression implements BaseTypedExpression<number> {
   public readonly name = 'addition';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left + right';
@@ -686,75 +517,9 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Number'],
-    examples: [
-      {
-        input: '5 + 3',
-        description: 'Add two numbers',
-        expectedOutput: 8,
-      },
-      {
-        input: 'age + 1',
-        description: 'Add variable and literal',
-        expectedOutput: 31,
-        context: { locals: new Map([['age', 30]]) },
-      },
-    ],
-    relatedExpressions: ['subtraction', 'multiplication', 'division'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Performs addition of two numeric values with automatic type conversion',
-    parameters: [
-      {
-        name: 'left',
-        type: 'any',
-        description: 'Left operand (converted to number)',
-        optional: false,
-        examples: ['5', 'age', '"10"', 'true'],
-      },
-      {
-        name: 'right',
-        type: 'any',
-        description: 'Right operand (converted to number)',
-        optional: false,
-        examples: ['3', '1', '"5"', 'false'],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'Sum of the two operands',
-      examples: ['8', '31', '15'],
-    },
-    examples: [
-      {
-        title: 'Integer addition',
-        code: '5 + 3',
-        explanation: 'Add two integers',
-        output: '8',
-      },
-      {
-        title: 'Decimal addition',
-        code: '3.14 + 2.86',
-        explanation: 'Add two decimal numbers',
-        output: '6',
-      },
-      {
-        title: 'Mixed types',
-        code: '5 + "3"',
-        explanation: 'Add number and string (converted to number)',
-        output: '8',
-      },
-    ],
-    seeAlso: ['-', '*', '/', 'mod'],
-    tags: ['arithmetic', 'addition', 'math', 'binary', 'operator'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -893,7 +658,7 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
 // Enhanced String Concatenation Expression
 // ============================================================================
 
-export class EnhancedStringConcatenationExpression implements BaseTypedExpression<string> {
+export class StringConcatenationExpression implements BaseTypedExpression<string> {
   public readonly name = 'stringConcatenation';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left + right (string concatenation)';
@@ -904,79 +669,9 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['String'],
-    examples: [
-      {
-        input: '"Hello " + "World"',
-        description: 'Concatenate two strings',
-        expectedOutput: 'Hello World',
-      },
-      {
-        input: '"Count: " + 42',
-        description: 'Concatenate string and number',
-        expectedOutput: 'Count: 42',
-      },
-      {
-        input: '"Time: " + (new Date()).toLocaleTimeString()',
-        description: 'Concatenate string and function result',
-        expectedOutput: 'Time: 3:45:30 PM',
-      },
-    ],
-    relatedExpressions: ['stringLiteral', 'addition'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(n)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Performs string concatenation of two values by converting them to strings',
-    parameters: [
-      {
-        name: 'left',
-        type: 'any',
-        description: 'Left operand (converted to string)',
-        optional: false,
-        examples: ['"Hello"', '42', 'true', 'new Date()'],
-      },
-      {
-        name: 'right',
-        type: 'any',
-        description: 'Right operand (converted to string)',
-        optional: false,
-        examples: ['"World"', '123', 'false', 'variable'],
-      },
-    ],
-    returns: {
-      type: 'string',
-      description: 'Concatenated string result',
-      examples: ['"Hello World"', '"Count: 42"', '"Time: 3:45:30 PM"'],
-    },
-    examples: [
-      {
-        title: 'Basic string concatenation',
-        code: '"Hello " + "World"',
-        explanation: 'Concatenate two string literals',
-        output: '"Hello World"',
-      },
-      {
-        title: 'String and number',
-        code: '"Count: " + count',
-        explanation: 'Concatenate string with variable',
-        output: '"Count: 5"',
-      },
-      {
-        title: 'Function result concatenation',
-        code: '"Time: " + (new Date()).toLocaleTimeString()',
-        explanation: 'Concatenate string with function call result',
-        output: '"Time: 3:45:30 PM"',
-      },
-    ],
-    seeAlso: ['stringLiteral', 'addition', 'templateString'],
-    tags: ['string', 'concatenation', 'join', 'binary', 'operator'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -1088,10 +783,10 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
 }
 
 // ============================================================================
-// Enhanced Multiplication Expression
+// Multiplication Expression
 // ============================================================================
 
-export class EnhancedMultiplicationExpression implements BaseTypedExpression<number> {
+export class MultiplicationExpression implements BaseTypedExpression<number> {
   public readonly name = 'multiplication';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left * right';
@@ -1102,80 +797,9 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
   public readonly metadata: ExpressionMetadata = {
     category: 'Special',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Number'],
-    examples: [
-      {
-        input: '5 * 3',
-        description: 'Multiply two numbers',
-        expectedOutput: 15,
-      },
-      {
-        input: 'width * height',
-        description: 'Multiply variables',
-        expectedOutput: 100,
-        context: {
-          locals: new Map([
-            ['width', 10],
-            ['height', 10],
-          ]),
-        },
-      },
-    ],
-    relatedExpressions: ['addition', 'subtraction', 'division'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Performs multiplication of two numeric values with automatic type conversion',
-    parameters: [
-      {
-        name: 'left',
-        type: 'any',
-        description: 'Left operand (converted to number)',
-        optional: false,
-        examples: ['5', 'width', '"10"', 'true'],
-      },
-      {
-        name: 'right',
-        type: 'any',
-        description: 'Right operand (converted to number)',
-        optional: false,
-        examples: ['3', 'height', '"5"', 'false'],
-      },
-    ],
-    returns: {
-      type: 'number',
-      description: 'Product of the two operands',
-      examples: ['15', '100', '50'],
-    },
-    examples: [
-      {
-        title: 'Integer multiplication',
-        code: '5 * 3',
-        explanation: 'Multiply two integers',
-        output: '15',
-      },
-      {
-        title: 'Decimal multiplication',
-        code: '3.14 * 2',
-        explanation: 'Multiply decimal and integer',
-        output: '6.28',
-      },
-      {
-        title: 'Boolean multiplication',
-        code: '5 * true',
-        explanation: 'Multiply number and boolean (true = 1)',
-        output: '5',
-      },
-    ],
-    seeAlso: ['+', '-', '/', 'mod', '^'],
-    tags: ['arithmetic', 'multiplication', 'math', 'binary', 'operator'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -1314,27 +938,27 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
 // Factory Functions
 // ============================================================================
 
-export function createEnhancedStringLiteralExpression(): EnhancedStringLiteralExpression {
+export function createStringLiteralExpression(): EnhancedStringLiteralExpression {
   return new EnhancedStringLiteralExpression();
 }
 
-export function createEnhancedNumberLiteralExpression(): EnhancedNumberLiteralExpression {
+export function createNumberLiteralExpression(): EnhancedNumberLiteralExpression {
   return new EnhancedNumberLiteralExpression();
 }
 
-export function createEnhancedBooleanLiteralExpression(): EnhancedBooleanLiteralExpression {
+export function createBooleanLiteralExpression(): EnhancedBooleanLiteralExpression {
   return new EnhancedBooleanLiteralExpression();
 }
 
-export function createEnhancedAdditionExpression(): EnhancedAdditionExpression {
+export function createAdditionExpression(): EnhancedAdditionExpression {
   return new EnhancedAdditionExpression();
 }
 
-export function createEnhancedStringConcatenationExpression(): EnhancedStringConcatenationExpression {
+export function createStringConcatenationExpression(): EnhancedStringConcatenationExpression {
   return new EnhancedStringConcatenationExpression();
 }
 
-export function createEnhancedMultiplicationExpression(): EnhancedMultiplicationExpression {
+export function createMultiplicationExpression(): EnhancedMultiplicationExpression {
   return new EnhancedMultiplicationExpression();
 }
 
@@ -1343,12 +967,12 @@ export function createEnhancedMultiplicationExpression(): EnhancedMultiplication
 // ============================================================================
 
 export const specialExpressions = {
-  stringLiteral: createEnhancedStringLiteralExpression(),
-  numberLiteral: createEnhancedNumberLiteralExpression(),
-  booleanLiteral: createEnhancedBooleanLiteralExpression(),
-  addition: createEnhancedAdditionExpression(),
-  stringConcatenation: createEnhancedStringConcatenationExpression(),
-  multiplication: createEnhancedMultiplicationExpression(),
+  stringLiteral: createStringLiteralExpression(),
+  numberLiteral: createNumberLiteralExpression(),
+  booleanLiteral: createBooleanLiteralExpression(),
+  addition: createAdditionExpression(),
+  stringConcatenation: createStringConcatenationExpression(),
+  multiplication: createMultiplicationExpression(),
 } as const;
 
 // specialExpressions already exported above

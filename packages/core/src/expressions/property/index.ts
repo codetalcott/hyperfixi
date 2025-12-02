@@ -8,12 +8,12 @@ import { v } from '../../validation/lightweight-validators';
 import type {
   ValidationResult,
   TypedExecutionContext as TypedExpressionContext,
-  UnifiedEvaluationType as EvaluationType,
-  UnifiedExpressionMetadata as ExpressionMetadata,
-  UnifiedTypedResult as TypedResult,
-  UnifiedLLMDocumentation as LLMDocumentation,
-  UnifiedExpressionCategory as ExpressionCategory,
-  UnifiedHyperScriptValue as HyperScriptValue,
+  EvaluationType as EvaluationType,
+  ExpressionMetadata as ExpressionMetadata,
+  TypedResult as TypedResult,
+  LLMDocumentation as LLMDocumentation,
+  ExpressionCategory as ExpressionCategory,
+  HyperScriptValue as HyperScriptValue,
 } from '../../types/index';
 
 // Define BaseTypedExpression locally for now
@@ -58,10 +58,10 @@ type PossessiveAccessInput = any; // Inferred from RuntimeValidator
 type AttributeAccessInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced My Expression (Context Property Access)
+// My Expression (Context Property Access)
 // ============================================================================
 
-export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
+export class MyExpression implements BaseTypedExpression<unknown> {
   public readonly name = 'my';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'my property';
@@ -73,85 +73,9 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
   public readonly metadata: ExpressionMetadata = {
     category: 'Property',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: ['me'],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: 'my id',
-        description: 'Get the id attribute of the current element',
-        expectedOutput: 'button-1',
-      },
-      {
-        input: 'my className',
-        description: 'Get the CSS classes of the current element',
-        expectedOutput: 'btn btn-primary',
-      },
-      {
-        input: 'my dataset.value',
-        description: 'Access data attributes through dataset',
-        expectedOutput: '42',
-      },
-    ],
-    relatedExpressions: ['its', 'possessive', 'attribute'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Accesses properties and attributes of the current context element (me) with comprehensive validation',
-    parameters: [
-      {
-        name: 'property',
-        type: 'string',
-        description: 'Property name to access from the current element',
-        optional: false,
-        examples: ['id', 'className', 'textContent', 'dataset.value', 'style.color'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'Value of the specified property, or undefined if not found',
-      examples: ['"button-1"', '"btn btn-primary"', '"Hello World"', '42', 'undefined'],
-    },
-    examples: [
-      {
-        title: 'Element ID access',
-        code: 'my id',
-        explanation: 'Get the id attribute of the current element',
-        output: '"submit-button"',
-      },
-      {
-        title: 'CSS class access',
-        code: 'my className',
-        explanation: 'Get the CSS class string of the current element',
-        output: '"btn btn-primary active"',
-      },
-      {
-        title: 'Text content access',
-        code: 'my textContent',
-        explanation: 'Get the text content of the current element',
-        output: '"Click me!"',
-      },
-      {
-        title: 'Data attribute access',
-        code: 'my dataset.userId',
-        explanation: 'Access data-user-id attribute through dataset',
-        output: '"12345"',
-      },
-      {
-        title: 'Style property access',
-        code: 'my style.display',
-        explanation: 'Get computed style property value',
-        output: '"block"',
-      },
-    ],
-    seeAlso: ['its', 'possessive syntax', 'attribute access', 'element properties'],
-    tags: ['property', 'context', 'element', 'attribute', 'my'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -342,10 +266,10 @@ export class EnhancedMyExpression implements BaseTypedExpression<unknown> {
 }
 
 // ============================================================================
-// Enhanced Its Expression (Generic Property Access)
+// Its Expression (Generic Property Access)
 // ============================================================================
 
-export class EnhancedItsExpression implements BaseTypedExpression<HyperScriptValue> {
+export class ItsExpression implements BaseTypedExpression<HyperScriptValue> {
   public readonly name = 'its';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'target its property';
@@ -356,81 +280,9 @@ export class EnhancedItsExpression implements BaseTypedExpression<HyperScriptVal
   public readonly metadata: ExpressionMetadata = {
     category: 'Property',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Any'],
-    examples: [
-      {
-        input: 'element its id',
-        description: 'Get the id property of an element',
-        expectedOutput: 'form-1',
-      },
-      {
-        input: 'user its name',
-        description: 'Access object property',
-        expectedOutput: 'John Doe',
-        context: { locals: new Map([['user', { name: 'John Doe' }]]) },
-      },
-    ],
-    relatedExpressions: ['my', 'possessive', 'property'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Generic possessive property access for any object or element with validation',
-    parameters: [
-      {
-        name: 'target',
-        type: 'any',
-        description: 'Target object or element to access property from',
-        optional: false,
-        examples: ['element', 'user', 'window', 'document'],
-      },
-      {
-        name: 'property',
-        type: 'string',
-        description: 'Property name to access from the target',
-        optional: false,
-        examples: ['id', 'name', 'length', 'dataset.value'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'Value of the specified property, or undefined if not found',
-      examples: ['"form-1"', '"John Doe"', '42', 'undefined'],
-    },
-    examples: [
-      {
-        title: 'Element property access',
-        code: 'button its textContent',
-        explanation: 'Get the text content of a button element',
-        output: '"Submit"',
-      },
-      {
-        title: 'Object property access',
-        code: 'user its email',
-        explanation: 'Access a property of a JavaScript object',
-        output: '"john@example.com"',
-      },
-      {
-        title: 'Array length access',
-        code: 'items its length',
-        explanation: 'Get the length property of an array',
-        output: '5',
-      },
-      {
-        title: 'Nested property access',
-        code: 'config its api.baseUrl',
-        explanation: 'Access nested object properties',
-        output: '"https://api.example.com"',
-      },
-    ],
-    seeAlso: ['my', 'possessive syntax', 'object properties'],
-    tags: ['property', 'possessive', 'object', 'access', 'its'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -570,10 +422,10 @@ export class EnhancedItsExpression implements BaseTypedExpression<HyperScriptVal
 }
 
 // ============================================================================
-// Enhanced Attribute Expression (@attribute syntax)
+// Attribute Expression (@attribute syntax)
 // ============================================================================
 
-export class EnhancedAttributeExpression implements BaseTypedExpression<string | null> {
+export class AttributeExpression implements BaseTypedExpression<string | null> {
   public readonly name = 'attribute';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = '@attribute or element@attribute';
@@ -584,80 +436,9 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<string |
   public readonly metadata: ExpressionMetadata = {
     category: 'Property',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['string', 'null'],
-    examples: [
-      {
-        input: '@data-value',
-        description: 'Get data attribute from current element',
-        expectedOutput: '42',
-      },
-      {
-        input: 'button@disabled',
-        description: 'Check if button has disabled attribute',
-        expectedOutput: null,
-      },
-    ],
-    relatedExpressions: ['my', 'its', 'property'],
-    performance: {
-      averageTime: 0.05,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Accesses HTML attributes from DOM elements with proper null handling',
-    parameters: [
-      {
-        name: 'element',
-        type: 'Element',
-        description: 'DOM element to access attribute from (or current element if not specified)',
-        optional: false,
-        examples: ['button', 'input', 'div', 'me'],
-      },
-      {
-        name: 'attribute',
-        type: 'string',
-        description: 'HTML attribute name to access',
-        optional: false,
-        examples: ['id', 'class', 'data-value', 'disabled', 'href'],
-      },
-    ],
-    returns: {
-      type: 'string | null',
-      description: 'Attribute value as string, or null if attribute does not exist',
-      examples: ['"submit-button"', '"btn btn-primary"', '"42"', 'null'],
-    },
-    examples: [
-      {
-        title: 'Data attribute access',
-        code: '@data-user-id',
-        explanation: 'Get data-user-id attribute from current element',
-        output: '"12345"',
-      },
-      {
-        title: 'Class attribute access',
-        code: 'button@class',
-        explanation: 'Get class attribute from a button element',
-        output: '"btn btn-primary"',
-      },
-      {
-        title: 'Boolean attribute check',
-        code: 'input@disabled',
-        explanation: 'Check if input has disabled attribute',
-        output: '""',
-      },
-      {
-        title: 'Missing attribute',
-        code: '@nonexistent',
-        explanation: 'Access non-existent attribute returns null',
-        output: 'null',
-      },
-    ],
-    seeAlso: ['my', 'DOM attributes', 'element properties'],
-    tags: ['attribute', 'DOM', 'element', 'HTML', '@'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -821,15 +602,15 @@ export class EnhancedAttributeExpression implements BaseTypedExpression<string |
 // Factory Functions
 // ============================================================================
 
-export function createEnhancedMyExpression(): EnhancedMyExpression {
+export function createMyExpression(): EnhancedMyExpression {
   return new EnhancedMyExpression();
 }
 
-export function createEnhancedItsExpression(): EnhancedItsExpression {
+export function createItsExpression(): EnhancedItsExpression {
   return new EnhancedItsExpression();
 }
 
-export function createEnhancedAttributeExpression(): EnhancedAttributeExpression {
+export function createAttributeExpression(): EnhancedAttributeExpression {
   return new EnhancedAttributeExpression();
 }
 
@@ -838,7 +619,7 @@ export function createEnhancedAttributeExpression(): EnhancedAttributeExpression
 // ============================================================================
 
 export const propertyExpressions = {
-  my: createEnhancedMyExpression(),
-  its: createEnhancedItsExpression(),
-  attribute: createEnhancedAttributeExpression(),
+  my: createMyExpression(),
+  its: createItsExpression(),
+  attribute: createAttributeExpression(),
 } as const;

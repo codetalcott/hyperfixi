@@ -110,7 +110,7 @@ export type LLMGenerationOutput = any; // Inferred from RuntimeValidator
 // LLM Generation Context Implementation
 // ============================================================================
 
-export class TypedLLMGenerationContextImplementation extends EnhancedContextBase<
+export class TypedLLMGenerationContextImplementation extends ContextBase<
   LLMGenerationInput,
   LLMGenerationOutput
 > {

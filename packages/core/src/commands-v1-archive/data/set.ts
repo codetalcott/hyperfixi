@@ -11,7 +11,7 @@ import { v, z } from '../../validation/lightweight-validators';
 import { validators } from '../../validation/common-validators.ts';
 import type { CommandImplementation } from '../../types/core';
 import type { TypedExecutionContext } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 import { asHTMLElement } from '../../utils/dom-utils';
 
 /**
@@ -80,14 +80,14 @@ export class SetCommand
   };
 
   public readonly validation = {
-    validate: (input: unknown): UnifiedValidationResult<SetCommandInput> =>
+    validate: (input: unknown): ValidationResult<SetCommandInput> =>
       this.validateInput(input),
   };
 
   /**
    * Validate input using Zod schema
    */
-  validateInput(input: unknown): UnifiedValidationResult<SetCommandInput> {
+  validateInput(input: unknown): ValidationResult<SetCommandInput> {
     try {
       const result = SetCommandInputSchema.safeParse(input);
 

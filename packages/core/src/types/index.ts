@@ -18,28 +18,28 @@ import type {
 // ============================================================================
 
 export type {
-  UnifiedValidationError,
-  UnifiedValidationResult,
-  UnifiedHyperScriptValueType,
-  UnifiedEvaluationType,
-  UnifiedHyperScriptValue,
-  UnifiedExecutionContext,
-  UnifiedTypedExecutionContext,
-  UnifiedResult,
-  UnifiedTypedResult,
-  UnifiedCommandCategory,
-  UnifiedSideEffect,
-  UnifiedExpressionCategory,
-  UnifiedExpressionMetadata,
-  UnifiedASTNode,
-  UnifiedParseError,
-  UnifiedLLMDocumentation,
+  ValidationError,
+  ValidationResult,
+  HyperScriptValueType,
+  EvaluationType,
+  HyperScriptValue,
+  ExecutionContext,
+  TypedExecutionContext,
+  Result,
+  TypedResult,
+  CommandCategory,
+  SideEffect,
+  ExpressionCategory,
+  ExpressionMetadata,
+  ASTNode,
+  ParseError,
+  LLMDocumentation,
 } from './unified-types';
 
 export {
-  UnifiedValidator,
-  isUnifiedValidationResult,
-  isUnifiedExecutionContext,
+  Validator,
+  isValidationResult,
+  isExecutionContext,
 } from './unified-types';
 
 // ============================================================================
@@ -117,4 +117,4 @@ export type AsyncValidationFunction<T> = (input: unknown) => Promise<ValidationR
 // Default Exports
 // ============================================================================
 
-export { default as UnifiedTypes } from './unified-types';
+export { default as CoreTypes } from './unified-types';

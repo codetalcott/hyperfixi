@@ -4,7 +4,7 @@
  * This is an experimental runtime for testing the tree-shaking refactoring.
  * It uses:
  * - RuntimeBase (generic, zero command imports)
- * - EnhancedCommandRegistryV2 (generic adapter)
+ * - CommandRegistryV2 (generic adapter)
  * - Commands from commands/ (with parseInput() methods)
  *
  * This runtime is for validation and testing only. DO NOT use in production
@@ -12,8 +12,8 @@
  */
 
 import { RuntimeBase } from './runtime-base';
-import { EnhancedCommandRegistryV2 } from './command-adapter';
-import type { EnhancedCommandRegistry } from './command-adapter';
+import { CommandRegistryV2 } from './command-adapter';
+import type { CommandRegistry } from './command-adapter';
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { LazyExpressionEvaluator } from '../core/lazy-expression-evaluator';
 
@@ -111,7 +111,7 @@ export interface RuntimeExperimentalOptions {
   /**
    * Custom registry (optional - if not provided, creates default with 5 core commands)
    */
-  registry?: EnhancedCommandRegistryV2;
+  registry?: CommandRegistryV2;
 
   /**
    * Enable async command execution
@@ -137,7 +137,7 @@ export interface RuntimeExperimentalOptions {
  *
  * Key differences from Runtime:
  * - Uses RuntimeBase (generic AST traversal)
- * - Uses EnhancedCommandRegistryV2 (generic adapter)
+ * - Uses CommandRegistryV2 (generic adapter)
  * - Uses standalone commands (with parseInput())
  * - Registers 43 V2 commands by default (16 Phase 5 + 5 Phase 6-1 + 5 Phase 6-2 + 4 Phase 6-3 + 5 Phase 6-4 + 6 Phase 6-5 + 2 Phase 6-6)
  * - Much smaller bundle size (estimated ~218KB vs 368KB baseline, 41% reduction)
@@ -145,7 +145,7 @@ export interface RuntimeExperimentalOptions {
 export class RuntimeExperimental extends RuntimeBase {
   constructor(options: RuntimeExperimentalOptions = {}) {
     // Create or use provided registry
-    const registry = options.registry || new EnhancedCommandRegistryV2();
+    const registry = options.registry || new CommandRegistryV2();
 
     // If no custom registry provided, register all 43 V2 commands
     if (!options.registry) {
@@ -225,10 +225,10 @@ export class RuntimeExperimental extends RuntimeBase {
       : new ExpressionEvaluator();
 
     // Initialize RuntimeBase with registry and evaluator
-    // Note: Cast registry to EnhancedCommandRegistry for type compatibility
-    // EnhancedCommandRegistryV2 implements the same interface
+    // Note: Cast registry to CommandRegistry for type compatibility
+    // CommandRegistryV2 implements the same interface
     const baseOptions: any = {
-      registry: registry as unknown as EnhancedCommandRegistry,
+      registry: registry as unknown as CommandRegistry,
       expressionEvaluator,
     };
 
@@ -271,7 +271,7 @@ export function createMinimalRuntime(
   commands: any[],
   options: Omit<RuntimeExperimentalOptions, 'registry'> = {}
 ): RuntimeExperimental {
-  const registry = new EnhancedCommandRegistryV2();
+  const registry = new CommandRegistryV2();
 
   for (const command of commands) {
     registry.register(command);

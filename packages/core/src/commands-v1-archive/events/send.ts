@@ -15,7 +15,7 @@ import type {
   CommandMetadata,
   LLMDocumentation,
 } from '../../types/command-types';
-import type { UnifiedValidationResult } from '../../types/unified-types';
+import type { ValidationResult } from '../../types/unified-types';
 import { asHTMLElement } from '../../utils/dom-utils';
 
 /**
@@ -417,7 +417,7 @@ export class SendCommand
     }
   }
 
-  validate(args: unknown[]): UnifiedValidationResult {
+  validate(args: unknown[]): ValidationResult {
     try {
       // Basic argument validation
       if (args.length === 0) {

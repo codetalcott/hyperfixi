@@ -1,5 +1,5 @@
 /**
- * Enhanced Array Expressions - Array Literal and Index Operations
+ * Array Expressions - Array Literal and Index Operations
  * Implements comprehensive array handling with TypeScript integration
  * Handles array creation, indexing, range operations, and type safety
  */
@@ -9,7 +9,6 @@ import type {
   HyperScriptValue,
   HyperScriptValueType,
   EvaluationResult,
-  LLMDocumentation,
 } from '../../types/command-types';
 import type {
   ValidationResult,
@@ -59,7 +58,7 @@ export type ArrayIndexInput = any; // Inferred from RuntimeValidator
  * Enhanced array literal expression for array creation
  * Provides comprehensive array literal creation with type safety
  */
-export class EnhancedArrayLiteralExpression
+export class ArrayLiteralExpression
   implements TypedExpressionImplementation<HyperScriptValue[]>
 {
   public readonly name = 'ArrayLiteral';
@@ -84,46 +83,7 @@ export class EnhancedArrayLiteralExpression
     performance: { averageTime: 0.1, complexity: 'O(n)' as const },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Creates array literals with comprehensive element handling and type safety',
-    parameters: [
-      {
-        name: 'elements',
-        type: 'array',
-        description: 'Array of elements to include in the literal',
-        optional: false,
-        defaultValue: [],
-        examples: ['[]', '[1, 2, 3]', '["a", "b", "c"]', '[true, 42, "mixed"]'],
-      },
-    ],
-    returns: {
-      type: 'array',
-      description: 'A new array containing the specified elements',
-      examples: [[], [1, 2, 3], ['hello', 'world']],
-    },
-    examples: [
-      {
-        title: 'Empty array literal',
-        code: '[]',
-        explanation: 'Creates an empty array',
-        output: [],
-      },
-      {
-        title: 'Numeric array literal',
-        code: '[1, 2, 3]',
-        explanation: 'Creates an array with numeric elements',
-        output: [1, 2, 3],
-      },
-      {
-        title: 'Mixed type array literal',
-        code: '[true, 42, "hello"]',
-        explanation: 'Creates an array with elements of different types',
-        output: [true, 42, 'hello'],
-      },
-    ],
-    seeAlso: ['array indexing', 'array methods', 'collection operations'],
-    tags: ['array', 'literal', 'collection', 'creation'],
-  };
+  
 
   /**
    * Validate array literal expression arguments
@@ -269,7 +229,7 @@ export class EnhancedArrayLiteralExpression
  * Enhanced array index expression for array element access
  * Provides comprehensive indexing including ranges and bounds checking
  */
-export class EnhancedArrayIndexExpression
+export class ArrayIndexExpression
   implements TypedExpressionImplementation<HyperScriptValue>
 {
   public readonly name = 'ArrayIndex';
@@ -293,53 +253,7 @@ export class EnhancedArrayIndexExpression
     performance: { averageTime: 0.05, complexity: 'O(1)' as const },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Accesses array elements with comprehensive indexing including ranges and bounds checking',
-    parameters: [
-      {
-        name: 'target',
-        type: 'array',
-        description: 'Array or array-like object to index',
-        optional: false,
-        examples: ['[1, 2, 3]', 'myArray', 'document.querySelectorAll("div")'],
-      },
-      {
-        name: 'index',
-        type: 'number',
-        description: 'Index or range specification for element access',
-        optional: false,
-        examples: ['0', '1', '-1', '{start: 1, end: 3}'],
-      },
-    ],
-    returns: {
-      type: 'any',
-      description: 'The element at the specified index, or array slice for ranges',
-      examples: [42, 'hello', [1, 2, 3]],
-    },
-    examples: [
-      {
-        title: 'Basic array indexing',
-        code: 'arr[0]',
-        explanation: 'Gets the first element of the array',
-        output: 'first-element',
-      },
-      {
-        title: 'Negative indexing',
-        code: 'arr[-1]',
-        explanation: 'Gets the last element of the array',
-        output: 'last-element',
-      },
-      {
-        title: 'Range slicing',
-        code: 'arr[1..3]',
-        explanation: 'Gets elements from index 1 to 3 (inclusive)',
-        output: [2, 3, 4],
-      },
-    ],
-    seeAlso: ['array literals', 'first/last expressions', 'array methods'],
-    tags: ['array', 'indexing', 'access', 'slice', 'range'],
-  };
+  
 
   /**
    * Validate array index expression arguments

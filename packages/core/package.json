@@ -42,6 +42,7 @@
     "build:browser:esm:minimal": "rollup -c rollup.browser-minimal-esm.config.mjs",
     "build:browser:esm:standard": "rollup -c rollup.browser-standard-esm.config.mjs",
     "build:browser:esm:all": "npm run build:browser:esm && npm run build:browser:esm:minimal && npm run build:browser:esm:standard",
+    "build:browser:modular": "rollup -c rollup.browser-modular.config.mjs",
     "dev": "rollup -c -w",
     "test": "vitest run",
     "test:watch": "vitest",

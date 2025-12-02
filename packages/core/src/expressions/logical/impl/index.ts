@@ -1,5 +1,5 @@
 /**
- * Enhanced Logical Expressions - Deep TypeScript Integration
+ * Logical Expressions - Deep TypeScript Integration
  * Implements logical operations (and, or, not) with comprehensive validation
  * Enhanced for LLM code agents with full type safety
  */
@@ -9,7 +9,6 @@ import type {
   TypedExpressionContext,
   EvaluationType,
   ValidationResult,
-  LLMDocumentation,
   EvaluationResult,
 } from '../../../types/base-types';
 import type {
@@ -39,10 +38,10 @@ type BinaryLogicalInput = any; // Inferred from RuntimeValidator
 type UnaryLogicalInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
-// Enhanced And Expression
+// And Expression
 // ============================================================================
 
-export class EnhancedAndExpression
+export class AndExpression
   implements TypedExpressionImplementation<BinaryLogicalInput, boolean>
 {
   public readonly name = 'and';
@@ -55,95 +54,9 @@ export class EnhancedAndExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Boolean'],
-    examples: [
-      {
-        input: 'true and false',
-        description: 'Basic boolean AND operation',
-        expectedOutput: false,
-      },
-      {
-        input: 'value > 0 and value < 100',
-        description: 'Range validation with logical AND',
-        expectedOutput: true,
-        context: { locals: new Map([['value', 50]]) },
-      },
-      {
-        input: 'user.isActive and user.hasPermission',
-        description: 'Object property AND evaluation',
-        expectedOutput: true,
-        context: { locals: new Map([['user', { isActive: true, hasPermission: true }]]) },
-      },
-    ],
-    relatedExpressions: ['or', 'not', 'equals', 'greaterThan'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Performs logical AND operation with short-circuit evaluation and comprehensive type coercion',
-    parameters: [
-      {
-        name: 'left',
-        type: 'any',
-        description: 'Left operand - any value that can be coerced to boolean',
-        optional: false,
-        examples: ['true', '1', '"hello"', 'user.isActive', 'count > 0'],
-      },
-      {
-        name: 'right',
-        type: 'any',
-        description:
-          'Right operand - any value that can be coerced to boolean (only evaluated if left is truthy)',
-        optional: false,
-        examples: ['false', '0', '""', 'user.hasPermission', 'status == "active"'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if both operands are truthy, false otherwise',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Basic boolean AND',
-        code: 'true and false',
-        explanation: 'Returns false because the second operand is false',
-        output: 'false',
-      },
-      {
-        title: 'Truthy value coercion',
-        code: '"hello" and 42',
-        explanation: 'Non-empty string and non-zero number are both truthy',
-        output: 'true',
-      },
-      {
-        title: 'Short-circuit evaluation',
-        code: 'false and someExpensiveFunction()',
-        explanation: 'Right operand is not evaluated when left is falsy',
-        output: 'false',
-      },
-      {
-        title: 'Range validation',
-        code: 'age >= 18 and age <= 65',
-        explanation: 'Check if age is within valid range',
-        output: 'true',
-      },
-      {
-        title: 'Object property validation',
-        code: 'user and user.isActive',
-        explanation: 'Check if user exists and is active',
-        output: 'true',
-      },
-    ],
-    seeAlso: ['or', 'not', 'boolean coercion', 'conditional logic'],
-    tags: ['logical', 'boolean', 'and', 'conditional', 'short-circuit'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -284,10 +197,10 @@ export class EnhancedAndExpression
 }
 
 // ============================================================================
-// Enhanced Or Expression
+// Or Expression
 // ============================================================================
 
-export class EnhancedOrExpression
+export class OrExpression
   implements TypedExpressionImplementation<BinaryLogicalInput, boolean>
 {
   public readonly name = 'or';
@@ -300,95 +213,9 @@ export class EnhancedOrExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Boolean'],
-    examples: [
-      {
-        input: 'false or true',
-        description: 'Basic boolean OR operation',
-        expectedOutput: true,
-      },
-      {
-        input: 'user.isGuest or user.isAdmin',
-        description: 'User permission check with OR',
-        expectedOutput: true,
-        context: { locals: new Map([['user', { isGuest: false, isAdmin: true }]]) },
-      },
-      {
-        input: 'value < 0 or value > 100',
-        description: 'Range exclusion validation',
-        expectedOutput: false,
-        context: { locals: new Map([['value', 50]]) },
-      },
-    ],
-    relatedExpressions: ['and', 'not', 'equals', 'greaterThan'],
-    performance: {
-      averageTime: 0.1,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary:
-      'Performs logical OR operation with short-circuit evaluation and comprehensive type coercion',
-    parameters: [
-      {
-        name: 'left',
-        type: 'any',
-        description: 'Left operand - any value that can be coerced to boolean',
-        optional: false,
-        examples: ['false', '0', '""', 'user.isGuest', 'count <= 0'],
-      },
-      {
-        name: 'right',
-        type: 'any',
-        description:
-          'Right operand - any value that can be coerced to boolean (only evaluated if left is falsy)',
-        optional: false,
-        examples: ['true', '1', '"fallback"', 'user.isAdmin', 'hasDefault'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if either operand is truthy, false if both are falsy',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Basic boolean OR',
-        code: 'false or true',
-        explanation: 'Returns true because the second operand is true',
-        output: 'true',
-      },
-      {
-        title: 'Falsy value coercion',
-        code: '0 or ""',
-        explanation: 'Both operands are falsy, so result is false',
-        output: 'false',
-      },
-      {
-        title: 'Short-circuit evaluation',
-        code: 'true or someExpensiveFunction()',
-        explanation: 'Right operand is not evaluated when left is truthy',
-        output: 'true',
-      },
-      {
-        title: 'Default value pattern',
-        code: 'userInput or "default"',
-        explanation: 'Use default value when user input is empty',
-        output: 'true',
-      },
-      {
-        title: 'Permission check',
-        code: 'user.isOwner or user.isAdmin',
-        explanation: 'Check if user has either owner or admin permissions',
-        output: 'true',
-      },
-    ],
-    seeAlso: ['and', 'not', 'boolean coercion', 'default values'],
-    tags: ['logical', 'boolean', 'or', 'conditional', 'short-circuit', 'fallback'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -477,10 +304,10 @@ export class EnhancedOrExpression
 }
 
 // ============================================================================
-// Enhanced Not Expression
+// Not Expression
 // ============================================================================
 
-export class EnhancedNotExpression
+export class NotExpression
   implements TypedExpressionImplementation<UnaryLogicalInput, boolean>
 {
   public readonly name = 'not';
@@ -493,86 +320,9 @@ export class EnhancedNotExpression
   public readonly metadata: ExpressionMetadata = {
     category: 'Logical',
     complexity: 'simple',
-    sideEffects: [],
-    dependencies: [],
-    returnTypes: ['Boolean'],
-    examples: [
-      {
-        input: 'not true',
-        description: 'Basic boolean NOT operation',
-        expectedOutput: false,
-      },
-      {
-        input: 'not user.isBlocked',
-        description: 'Negate user blocked status',
-        expectedOutput: true,
-        context: { locals: new Map([['user', { isBlocked: false }]]) },
-      },
-      {
-        input: 'not (value > 100)',
-        description: 'Negate comparison result',
-        expectedOutput: true,
-        context: { locals: new Map([['value', 50]]) },
-      },
-    ],
-    relatedExpressions: ['and', 'or', 'equals', 'greaterThan'],
-    performance: {
-      averageTime: 0.05,
-      complexity: 'O(1)',
-    },
   };
 
-  public readonly documentation: LLMDocumentation = {
-    summary: 'Performs logical NOT operation (negation) with comprehensive type coercion',
-    parameters: [
-      {
-        name: 'operand',
-        type: 'any',
-        description: 'Operand to negate - any value that can be coerced to boolean',
-        optional: false,
-        examples: ['true', 'false', '0', '""', 'user.isActive', 'count > 0'],
-      },
-    ],
-    returns: {
-      type: 'boolean',
-      description: 'True if operand is falsy, false if operand is truthy',
-      examples: ['true', 'false'],
-    },
-    examples: [
-      {
-        title: 'Basic negation',
-        code: 'not true',
-        explanation: 'Negates true to false',
-        output: 'false',
-      },
-      {
-        title: 'Falsy value negation',
-        code: 'not 0',
-        explanation: 'Zero is falsy, so its negation is true',
-        output: 'true',
-      },
-      {
-        title: 'String negation',
-        code: 'not ""',
-        explanation: 'Empty string is falsy, so its negation is true',
-        output: 'true',
-      },
-      {
-        title: 'Complex expression negation',
-        code: 'not (age < 18)',
-        explanation: 'Negate the result of age comparison',
-        output: 'true',
-      },
-      {
-        title: 'Property access negation',
-        code: 'not user.isBlocked',
-        explanation: 'Check if user is not blocked',
-        output: 'true',
-      },
-    ],
-    seeAlso: ['and', 'or', 'boolean coercion', 'negation'],
-    tags: ['logical', 'boolean', 'not', 'negation', 'inverse'],
-  };
+  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -681,15 +431,15 @@ export class EnhancedNotExpression
 // Factory Functions
 // ============================================================================
 
-export function createEnhancedAndExpression(): EnhancedAndExpression {
+export function createAndExpression(): EnhancedAndExpression {
   return new EnhancedAndExpression();
 }
 
-export function createEnhancedOrExpression(): EnhancedOrExpression {
+export function createOrExpression(): EnhancedOrExpression {
   return new EnhancedOrExpression();
 }
 
-export function createEnhancedNotExpression(): EnhancedNotExpression {
+export function createNotExpression(): EnhancedNotExpression {
   return new EnhancedNotExpression();
 }
 
@@ -698,7 +448,7 @@ export function createEnhancedNotExpression(): EnhancedNotExpression {
 // ============================================================================
 
 export const logicalExpressions = {
-  and: createEnhancedAndExpression(),
-  or: createEnhancedOrExpression(),
-  not: createEnhancedNotExpression(),
+  and: createAndExpression(),
+  or: createOrExpression(),
+  not: createNotExpression(),
 } as const;

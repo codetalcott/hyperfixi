@@ -13,7 +13,7 @@ import type {
 
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { LazyExpressionEvaluator } from '../core/lazy-expression-evaluator';
-import { EnhancedCommandRegistry } from './command-adapter';
+import { CommandRegistry } from './command-adapter';
 import { getSharedGlobals } from '../core/context';
 import { asHTMLElement } from '../utils/dom-utils';
 import { debug } from '../utils/debug';
@@ -28,7 +28,7 @@ export interface RuntimeBaseOptions {
    * The registry instance containing allowed commands.
    * MUST be provided externally to enable tree-shaking.
    */
-  registry: EnhancedCommandRegistry;
+  registry: CommandRegistry;
   
   enableAsyncCommands?: boolean;
   commandTimeout?: number; // Default 10000ms
@@ -42,7 +42,7 @@ export interface RuntimeBaseOptions {
 
 export class RuntimeBase {
   protected options: RuntimeBaseOptions;
-  protected registry: EnhancedCommandRegistry;
+  protected registry: CommandRegistry;
   protected expressionEvaluator: ExpressionEvaluator | LazyExpressionEvaluator;
   protected behaviorRegistry: Map<string, any>;
   protected behaviorAPI: any;
