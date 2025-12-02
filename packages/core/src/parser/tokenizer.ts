@@ -806,7 +806,7 @@ function tokenizeOperator(tokenizer: Tokenizer): void {
     advance(tokenizer);
     advance(tokenizer);
   } else if (
-    ['==', '!=', '<=', '>=', '&&', '||', '**', '~=', '|=', '^=', '$=', '*='].includes(twoChar)
+    ['==', '!=', '<=', '>=', '&&', '||', '**', '~=', '|=', '^=', '$=', '*=', '?.'].includes(twoChar)
   ) {
     value = twoChar;
     advance(tokenizer);

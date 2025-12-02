@@ -546,6 +546,32 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
       // Continue loop to handle chained property access (obj.prop1.prop2)
       continue;
     }
+    // Handle optional chaining (obj?.property)
+    else if (token.type === TokenType.OPERATOR && token.value === '?.') {
+      state.position++; // consume '?.'
+
+      // Next token should be an identifier for the property name
+      const propertyToken = advance(state);
+      if (!propertyToken || propertyToken.type !== TokenType.IDENTIFIER) {
+        throw new ExpressionParseError('Expected property name after "?."');
+      }
+
+      left = {
+        type: 'optionalChain',
+        object: left,
+        property: {
+          type: 'identifier',
+          name: propertyToken.value,
+          start: propertyToken.start,
+          end: propertyToken.end,
+        },
+        optional: true,
+        ...(left.start !== undefined && { start: left.start }),
+        end: propertyToken.end,
+      };
+      // Continue loop to handle chained access (obj?.prop1?.prop2)
+      continue;
+    }
     // Handle array access (arr[index])
     else if (token.type === TokenType.OPERATOR && token.value === '[') {
       state.position++; // consume '['
@@ -1343,6 +1369,9 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
     case 'propertyAccess':
       return evaluatePropertyAccess(node, context);
 
+    case 'optionalChain':
+      return evaluateOptionalChain(node, context);
+
     case 'asExpression':
       return evaluateAsExpression(node, context);
 
@@ -1615,6 +1644,22 @@ async function evaluatePossessiveExpression(node: any, context: ExecutionContext
   // Handle different types of property access
   if (propertyNode.type === 'identifier') {
     const propertyName = propertyNode.name;
+
+    // Check if property starts with '*' (CSS property access like *opacity)
+    if (typeof propertyName === 'string' && propertyName.startsWith('*')) {
+      const cssPropertyName = propertyName.slice(1); // Remove '*'
+      // Get element (handle NodeList/arrays by taking first element)
+      let element = object;
+      if (object && typeof object === 'object' && 'length' in object && typeof object[0] !== 'undefined') {
+        element = object[0];
+      }
+      // Use duck-typing for Element check (cross-realm compatible)
+      if (element && typeof element === 'object' && 'style' in element && element.style) {
+        return element.style[cssPropertyName as keyof CSSStyleDeclaration];
+      }
+      return null;
+    }
+
     return await extractValue(
       propertyExpressions.its.evaluate(toTypedContext(context), {
         target: object,
@@ -1622,10 +1667,18 @@ async function evaluatePossessiveExpression(node: any, context: ExecutionContext
       })
     );
   } else if (propertyNode.type === 'attributeAccess') {
-    // Handle [@attr] syntax - access attribute on the object
+    // Handle @attr syntax - access attribute on the object
     const attributeName = propertyNode.attributeName;
-    if (object && object instanceof Element) {
-      return object.getAttribute(attributeName);
+
+    // Get element (handle NodeList/arrays by taking first element)
+    let element = object;
+    if (object && typeof object === 'object' && 'length' in object && typeof object[0] !== 'undefined') {
+      element = object[0];
+    }
+
+    // Use duck-typing for Element check (cross-realm compatible with Happy-DOM)
+    if (element && typeof element === 'object' && typeof element.getAttribute === 'function') {
+      return element.getAttribute(attributeName);
     }
     return null;
   } else if (propertyNode.type === 'bracketExpression') {
@@ -1733,6 +1786,37 @@ async function evaluatePropertyOfExpression(node: any, context: ExecutionContext
 }
 
 /**
+ * Evaluate optional chaining expressions (obj?.property)
+ * Returns undefined if the object is null/undefined instead of throwing
+ */
+async function evaluateOptionalChain(node: any, context: ExecutionContext): Promise<any> {
+  const object = await evaluateASTNode(node.object, context);
+
+  // If object is null/undefined, return undefined (don't throw)
+  if (object === null || object === undefined) {
+    return undefined;
+  }
+
+  // Otherwise access the property normally
+  const propertyNode = node.property;
+  const propertyName = propertyNode.name || propertyNode.value;
+
+  try {
+    const value = object[propertyName];
+
+    // Handle method calls - if it's a function, bind it to the object
+    if (typeof value === 'function') {
+      return value.bind(object);
+    }
+
+    return value;
+  } catch {
+    // If property access fails for any reason, return undefined
+    return undefined;
+  }
+}
+
+/**
  * Evaluate dot notation property access (obj.property)
  */
 async function evaluatePropertyAccess(node: any, context: ExecutionContext): Promise<any> {
@@ -1789,11 +1873,17 @@ async function evaluateCSSSelector(node: any, _context: ExecutionContext): Promi
     const id = selector.startsWith('#') ? selector.slice(1) : selector;
     return document.getElementById(id);
   } else if (node.selectorType === 'class') {
-    // Class selector returns array of elements
-    // Use querySelectorAll with escaped special characters for compatibility
-    // Escape colons and other CSS special characters
+    // Class selector - use querySelectorAll with escaped special characters
+    // Escape colons and other CSS special characters for compatibility
     const escapedSelector = selector.replace(/:/g, '\\:');
-    return Array.from(document.querySelectorAll(escapedSelector));
+    const elements = Array.from(document.querySelectorAll(escapedSelector));
+
+    // Return single element when only one match (convenience for common case)
+    // Return array when multiple matches (consistent with _hyperscript collections)
+    if (elements.length === 1) {
+      return elements[0];
+    }
+    return elements;
   }
 
   throw new ExpressionParseError(`Unknown CSS selector type: ${node.selectorType}`);
