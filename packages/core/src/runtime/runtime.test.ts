@@ -214,7 +214,8 @@ describe('Hyperscript Runtime', () => {
       context.me = null;
       const ast = parse('hide me').node!;
 
-      await expect(runtime.execute(ast, context)).rejects.toThrow('Context element "me" is null');
+      // V2 commands provide more descriptive error messages about invalid targets
+      await expect(runtime.execute(ast, context)).rejects.toThrow('Invalid hide target');
     });
   });
 

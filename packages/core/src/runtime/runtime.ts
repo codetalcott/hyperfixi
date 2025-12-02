@@ -273,6 +273,24 @@ export class Runtime extends RuntimeBase {
 
     super(baseOptions);
   }
+
+  /**
+   * Get the command registry for introspection
+   *
+   * @returns The command registry instance
+   */
+  getRegistry(): EnhancedCommandRegistryV2 {
+    return this.registry as unknown as EnhancedCommandRegistryV2;
+  }
+
+  /**
+   * Alias for getRegistry() - backward compatible with tests
+   *
+   * @returns The command registry instance
+   */
+  getEnhancedRegistry(): EnhancedCommandRegistryV2 {
+    return this.getRegistry();
+  }
 }
 
 /**
