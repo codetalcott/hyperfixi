@@ -6,6 +6,9 @@
 import type { ExecutionContext, ExpressionImplementation } from '../../types/core';
 import { getElementProperty } from '../property-access-utils';
 
+// Re-export for use in tests and external consumers
+export { getElementProperty };
+
 // ============================================================================
 // Possessive Expressions
 // ============================================================================

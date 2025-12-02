@@ -57,6 +57,7 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
   public readonly name = 'stringLiteral';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = '"string" or \'string\'';
+  public readonly description = 'String literals with template interpolation support';
   public readonly outputType: EvaluationType = 'String';
   public readonly inputSchema = StringLiteralInputSchema;
 
@@ -136,13 +137,13 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
+          errors: [{
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          },
+          }],
         };
       }
 
@@ -158,20 +159,20 @@ export class EnhancedStringLiteralExpression implements BaseTypedExpression<stri
       return {
         success: true,
         value: result,
-        type: 'string',
+        type: 'String',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: {
+        errors: [{
           name: 'StringEvaluationError',
           type: 'runtime-error',
           code: 'STRING_EVALUATION_FAILED',
           message: `String literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
           suggestions: [],
-        },
+        }],
       };
     }
   }
@@ -381,26 +382,26 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
+          errors: [{
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          },
+          }],
         };
       }
 
       if (!isFinite(input.value)) {
         return {
           success: false,
-          error: {
+          errors: [{
             name: 'NumberValidationError',
             type: 'invalid-argument',
             code: 'NUMBER_NOT_FINITE',
             message: 'Number literal must be finite',
             suggestions: [],
-          },
+          }],
         };
       }
 
@@ -409,20 +410,20 @@ export class EnhancedNumberLiteralExpression implements BaseTypedExpression<numb
       return {
         success: true,
         value: input.value,
-        type: 'number',
+        type: 'Number',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: {
+        errors: [{
           name: 'NumberEvaluationError',
           type: 'runtime-error',
           code: 'NUMBER_EVALUATION_FAILED',
           message: `Number literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
           suggestions: [],
-        },
+        }],
       };
     }
   }
@@ -580,13 +581,13 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
+          errors: [{
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          },
+          }],
         };
       }
 
@@ -595,20 +596,20 @@ export class EnhancedBooleanLiteralExpression implements BaseTypedExpression<boo
       return {
         success: true,
         value: input.value,
-        type: 'boolean',
+        type: 'Boolean',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: {
+        errors: [{
           name: 'BooleanEvaluationError',
           type: 'runtime-error',
           code: 'BOOLEAN_EVALUATION_FAILED',
           message: `Boolean literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
           suggestions: [],
-        },
+        }],
       };
     }
   }
@@ -766,13 +767,13 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
+          errors: [{
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          },
+          }],
         };
       }
 
@@ -786,20 +787,20 @@ export class EnhancedAdditionExpression implements BaseTypedExpression<number> {
       return {
         success: true,
         value: result,
-        type: 'number',
+        type: 'Number',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: {
+        errors: [{
           name: 'AdditionError',
           type: 'runtime-error',
           code: 'ADDITION_FAILED',
           message: `Addition failed: ${error instanceof Error ? error.message : String(error)}`,
           suggestions: [],
-        },
+        }],
       };
     }
   }
@@ -988,14 +989,13 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
+          errors: [{
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors[0]?.message || 'Invalid input',
             code: 'STRING_CONCATENATION_VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          },
-          type: 'error',
+          }],
         };
       }
 
@@ -1010,21 +1010,20 @@ export class EnhancedStringConcatenationExpression implements BaseTypedExpressio
       return {
         success: true,
         value: result,
-        type: 'string',
+        type: 'String',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: {
+        errors: [{
           name: 'StringConcatenationError',
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'String concatenation failed',
           code: 'STRING_CONCATENATION_ERROR',
           suggestions: ['Check that operands can be converted to strings'],
-        },
-        type: 'error',
+        }],
       };
     }
   }
@@ -1189,13 +1188,13 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
       if (!validation.isValid) {
         return {
           success: false,
-          error: {
+          errors: [{
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          },
+          }],
         };
       }
 
@@ -1209,20 +1208,20 @@ export class EnhancedMultiplicationExpression implements BaseTypedExpression<num
       return {
         success: true,
         value: result,
-        type: 'number',
+        type: 'Number',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: {
+        errors: [{
           name: 'MultiplicationError',
           type: 'runtime-error',
           code: 'MULTIPLICATION_FAILED',
           message: `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`,
           suggestions: [],
-        },
+        }],
       };
     }
   }

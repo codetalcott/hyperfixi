@@ -51,25 +51,26 @@ describe('Enhanced Function Call Expression', () => {
     test('rejects empty function name', async () => {
       const result = await functionCallExpression.validate(['', []]);
       expect(result.isValid).toBe(false);
-      expect(result.errors[0]).toContain('Function name cannot be empty');
+      expect(result.errors[0].message).toContain('Function name cannot be empty');
     });
 
     test('rejects invalid function path', async () => {
       const result = await functionCallExpression.validate(['obj..method', []]);
       expect(result.isValid).toBe(false);
-      expect(result.errors[0]).toContain('consecutive dots');
+      expect(result.errors[0].message).toContain('consecutive dots');
     });
 
     test('warns about dangerous functions', async () => {
       const result = await functionCallExpression.validate(['eval', ['code']]);
       expect(result.isValid).toBe(false);
-      expect(result.errors[0]).toContain('security risks');
+      expect(result.errors[0].message).toContain('security risks');
     });
 
     test('rejects invalid arguments format', async () => {
       const result = await functionCallExpression.validate(['testFunc', 'not-an-array']);
       expect(result.isValid).toBe(false);
-      expect(result.errors[0]).toContain('Array must contain at most');
+      // Schema validation catches invalid format before custom validation
+      expect(result.errors[0].message).toContain('does not match');
     });
   });
 
@@ -364,13 +365,13 @@ describe('Enhanced Function Call Expression', () => {
     test('rejects empty constructor name', async () => {
       const result = await functionCallExpression.validate(['new', '', []]);
       expect(result.isValid).toBe(false);
-      expect(result.errors[0]).toContain('Constructor name cannot be empty');
+      expect(result.errors[0].message).toContain('Constructor name cannot be empty');
     });
 
     test('warns about dangerous constructors', async () => {
       const result = await functionCallExpression.validate(['new', 'Function', ['code']]);
       expect(result.isValid).toBe(false);
-      expect(result.errors[0]).toContain('security risks');
+      expect(result.errors[0].message).toContain('security risks');
     });
 
     test('calls Date constructor', async () => {

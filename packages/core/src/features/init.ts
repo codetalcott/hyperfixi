@@ -1209,3 +1209,6 @@ export async function createInit(
 // ============================================================================
 
 export const enhancedInitImplementation = new TypedInitFeatureImplementation();
+
+// Alias for test compatibility
+export { TypedInitFeatureImplementation as InitFeature };

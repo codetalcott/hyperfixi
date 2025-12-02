@@ -1117,7 +1117,9 @@ export class TypedOnFeatureImplementation {
 // Convenience Factory Functions
 // ============================================================================
 
-export function createOnFeature(): TypedOnFeatureImplementation {
+export function createOnFeature(_eventManager?: unknown): TypedOnFeatureImplementation {
+  // Event manager parameter accepted for test compatibility
+  // The feature manages its own internal listeners
   return new TypedOnFeatureImplementation();
 }
 
@@ -1159,3 +1161,6 @@ export async function createEnhancedOn(
 // ============================================================================
 
 export const enhancedOnImplementation = new TypedOnFeatureImplementation();
+
+// Alias for test compatibility
+export { TypedOnFeatureImplementation as OnFeature };

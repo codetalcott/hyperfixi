@@ -913,3 +913,13 @@ export const logicalExpressions = {
 } as const;
 
 export type LogicalExpressionName = keyof typeof logicalExpressions;
+
+// Re-export enhanced implementations for tests
+export {
+  EnhancedAndExpression,
+  EnhancedOrExpression,
+  EnhancedNotExpression,
+  createEnhancedAndExpression,
+  createEnhancedOrExpression,
+  createEnhancedNotExpression,
+} from './impl/index';
