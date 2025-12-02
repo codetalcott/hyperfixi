@@ -392,13 +392,13 @@ export class ItsExpression implements BaseTypedExpression<HyperScriptValue> {
 
   private getPropertyValue(target: any, propertyPath: string): HyperScriptValue {
     // Reuse the same logic as MyExpression
-    const myExpr = new EnhancedMyExpression();
+    const myExpr = new MyExpression();
     return myExpr['getPropertyValue'](target, propertyPath);
   }
 
   private inferType(value: unknown): EvaluationType {
     // Reuse the same logic as MyExpression
-    const myExpr = new EnhancedMyExpression();
+    const myExpr = new MyExpression();
     return myExpr['inferType'](value);
   }
 
@@ -602,16 +602,16 @@ export class AttributeExpression implements BaseTypedExpression<string | null> {
 // Factory Functions
 // ============================================================================
 
-export function createMyExpression(): EnhancedMyExpression {
-  return new EnhancedMyExpression();
+export function createMyExpression(): MyExpression {
+  return new MyExpression();
 }
 
-export function createItsExpression(): EnhancedItsExpression {
-  return new EnhancedItsExpression();
+export function createItsExpression(): ItsExpression {
+  return new ItsExpression();
 }
 
-export function createAttributeExpression(): EnhancedAttributeExpression {
-  return new EnhancedAttributeExpression();
+export function createAttributeExpression(): AttributeExpression {
+  return new AttributeExpression();
 }
 
 // ============================================================================

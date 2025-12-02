@@ -168,7 +168,7 @@ export class LegacyCompatibilityLayer {
     evaluatesTo: 'Element' as const,
 
     async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
-      return EnhancedExpressionAdapter.evaluateMe(context);
+      return ExpressionAdapter.evaluateMe(context);
     },
 
     validate() {
@@ -185,7 +185,7 @@ export class LegacyCompatibilityLayer {
     evaluatesTo: 'Element' as const,
 
     async evaluate(context: ExecutionContext): Promise<HTMLElement | null> {
-      return EnhancedExpressionAdapter.evaluateYou(context);
+      return ExpressionAdapter.evaluateYou(context);
     },
 
     validate() {
@@ -202,7 +202,7 @@ export class LegacyCompatibilityLayer {
     evaluatesTo: 'Any' as const,
 
     async evaluate(context: ExecutionContext): Promise<unknown> {
-      return EnhancedExpressionAdapter.evaluateIt(context);
+      return ExpressionAdapter.evaluateIt(context);
     },
 
     validate() {
@@ -223,7 +223,7 @@ export class LegacyCompatibilityLayer {
         context: ExecutionContext,
         selector: string
       ): Promise<HTMLElement | HTMLElement[] | null> {
-        return EnhancedExpressionAdapter.evaluateCSSSelector(context, selector, single);
+        return ExpressionAdapter.evaluateCSSSelector(context, selector, single);
       },
 
       validate(args: any[]): string | null {
@@ -295,7 +295,7 @@ export class ExpressionMigrationUtility {
 export default {
   createTypedExpressionContext,
   updateExecutionContext,
-  EnhancedExpressionAdapter,
+  ExpressionAdapter,
   LegacyCompatibilityLayer,
   ExpressionMigrationUtility,
 };

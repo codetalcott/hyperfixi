@@ -7,12 +7,12 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createTypedExecutionContext } from '../../test-setup';
 import type { TypedExpressionContext } from '../../../types/expression-types';
 import {
-  EnhancedEqualsExpression,
-  EnhancedNotEqualsExpression,
-  EnhancedGreaterThanExpression,
-  EnhancedLessThanExpression,
-  EnhancedGreaterThanOrEqualExpression,
-  EnhancedLessThanOrEqualExpression,
+  EqualsExpression,
+  NotEqualsExpression,
+  GreaterThanExpression,
+  LessThanExpression,
+  GreaterThanOrEqualExpression,
+  LessThanOrEqualExpression,
   comparisonExpressions,
 } from './comparisons';
 
@@ -23,11 +23,11 @@ describe('Enhanced Comparison Expressions', () => {
     context = createTypedExecutionContext();
   });
 
-  describe('EnhancedEqualsExpression', () => {
-    let expression: EnhancedEqualsExpression;
+  describe('EqualsExpression', () => {
+    let expression: EqualsExpression;
 
     beforeEach(() => {
-      expression = new EnhancedEqualsExpression();
+      expression = new EqualsExpression();
     });
 
     it('should have correct metadata', () => {
@@ -158,11 +158,11 @@ describe('Enhanced Comparison Expressions', () => {
     });
   });
 
-  describe('EnhancedNotEqualsExpression', () => {
-    let expression: EnhancedNotEqualsExpression;
+  describe('NotEqualsExpression', () => {
+    let expression: NotEqualsExpression;
 
     beforeEach(() => {
-      expression = new EnhancedNotEqualsExpression();
+      expression = new NotEqualsExpression();
     });
 
     it('should compare different numbers', async () => {
@@ -208,11 +208,11 @@ describe('Enhanced Comparison Expressions', () => {
     });
   });
 
-  describe('EnhancedGreaterThanExpression', () => {
-    let expression: EnhancedGreaterThanExpression;
+  describe('GreaterThanExpression', () => {
+    let expression: GreaterThanExpression;
 
     beforeEach(() => {
-      expression = new EnhancedGreaterThanExpression();
+      expression = new GreaterThanExpression();
     });
 
     it('should compare greater numbers', async () => {
@@ -286,11 +286,11 @@ describe('Enhanced Comparison Expressions', () => {
     });
   });
 
-  describe('EnhancedLessThanExpression', () => {
-    let expression: EnhancedLessThanExpression;
+  describe('LessThanExpression', () => {
+    let expression: LessThanExpression;
 
     beforeEach(() => {
-      expression = new EnhancedLessThanExpression();
+      expression = new LessThanExpression();
     });
 
     it('should compare lesser numbers', async () => {
@@ -322,11 +322,11 @@ describe('Enhanced Comparison Expressions', () => {
     });
   });
 
-  describe('EnhancedGreaterThanOrEqualExpression', () => {
-    let expression: EnhancedGreaterThanOrEqualExpression;
+  describe('GreaterThanOrEqualExpression', () => {
+    let expression: GreaterThanOrEqualExpression;
 
     beforeEach(() => {
-      expression = new EnhancedGreaterThanOrEqualExpression();
+      expression = new GreaterThanOrEqualExpression();
     });
 
     it('should compare greater numbers', async () => {
@@ -372,11 +372,11 @@ describe('Enhanced Comparison Expressions', () => {
     });
   });
 
-  describe('EnhancedLessThanOrEqualExpression', () => {
-    let expression: EnhancedLessThanOrEqualExpression;
+  describe('LessThanOrEqualExpression', () => {
+    let expression: LessThanOrEqualExpression;
 
     beforeEach(() => {
-      expression = new EnhancedLessThanOrEqualExpression();
+      expression = new LessThanOrEqualExpression();
     });
 
     it('should compare lesser numbers', async () => {
@@ -424,15 +424,15 @@ describe('Enhanced Comparison Expressions', () => {
 
   describe('Expression Registry', () => {
     it('should export all enhanced comparison expressions', () => {
-      expect(comparisonExpressions.equals).toBeInstanceOf(EnhancedEqualsExpression);
-      expect(comparisonExpressions.notEquals).toBeInstanceOf(EnhancedNotEqualsExpression);
-      expect(comparisonExpressions.greaterThan).toBeInstanceOf(EnhancedGreaterThanExpression);
-      expect(comparisonExpressions.lessThan).toBeInstanceOf(EnhancedLessThanExpression);
+      expect(comparisonExpressions.equals).toBeInstanceOf(EqualsExpression);
+      expect(comparisonExpressions.notEquals).toBeInstanceOf(NotEqualsExpression);
+      expect(comparisonExpressions.greaterThan).toBeInstanceOf(GreaterThanExpression);
+      expect(comparisonExpressions.lessThan).toBeInstanceOf(LessThanExpression);
       expect(comparisonExpressions.greaterThanOrEqual).toBeInstanceOf(
-        EnhancedGreaterThanOrEqualExpression
+        GreaterThanOrEqualExpression
       );
       expect(comparisonExpressions.lessThanOrEqual).toBeInstanceOf(
-        EnhancedLessThanOrEqualExpression
+        LessThanOrEqualExpression
       );
     });
 
@@ -452,7 +452,7 @@ describe('Enhanced Comparison Expressions', () => {
 
   describe('Performance and Error Handling', () => {
     it('should handle mixed type comparisons gracefully', async () => {
-      const expression = new EnhancedEqualsExpression();
+      const expression = new EqualsExpression();
 
       // Test various mixed type scenarios
       const testCases = [
@@ -478,7 +478,7 @@ describe('Enhanced Comparison Expressions', () => {
     });
 
     it('should validate input structure correctly', () => {
-      const expression = new EnhancedEqualsExpression();
+      const expression = new EqualsExpression();
 
       // Valid input
       const validResult = expression.validate({
@@ -505,7 +505,7 @@ describe('Enhanced Comparison Expressions', () => {
     });
 
     it('should provide helpful error messages', async () => {
-      const expression = new EnhancedEqualsExpression();
+      const expression = new EqualsExpression();
 
       // Test invalid input
       const result = await expression.evaluate(context, {
@@ -521,7 +521,7 @@ describe('Enhanced Comparison Expressions', () => {
     });
 
     it('should complete evaluations quickly', async () => {
-      const expression = new EnhancedGreaterThanExpression();
+      const expression = new GreaterThanExpression();
 
       const startTime = Date.now();
       await expression.evaluate(context, {
@@ -538,7 +538,7 @@ describe('Enhanced Comparison Expressions', () => {
 
   describe('Edge Cases', () => {
     it('should handle NaN comparisons', async () => {
-      const expression = new EnhancedEqualsExpression();
+      const expression = new EqualsExpression();
 
       const result = await expression.evaluate(context, {
         left: NaN,
@@ -554,7 +554,7 @@ describe('Enhanced Comparison Expressions', () => {
     });
 
     it('should handle infinity comparisons', async () => {
-      const expression = new EnhancedGreaterThanExpression();
+      const expression = new GreaterThanExpression();
 
       const result = await expression.evaluate(context, {
         left: Infinity,
@@ -569,7 +569,7 @@ describe('Enhanced Comparison Expressions', () => {
     });
 
     it('should handle object comparisons', async () => {
-      const expression = new EnhancedEqualsExpression();
+      const expression = new EqualsExpression();
 
       const obj1 = { a: 1 };
       const obj2 = { a: 1 };

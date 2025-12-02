@@ -409,7 +409,7 @@ export class InExpression implements TypedExpressionImplementation<InInput, bool
       }
 
       // Delegate to contains expression with swapped parameters
-      const containsExpr = new EnhancedContainsExpression();
+      const containsExpr = new ContainsExpression();
       const containsResult = await containsExpr.evaluate(context, {
         container: input.container,
         item: input.item,
@@ -500,16 +500,16 @@ export class InExpression implements TypedExpressionImplementation<InInput, bool
 // Factory Functions
 // ============================================================================
 
-export function createMatchesExpression(): EnhancedMatchesExpression {
-  return new EnhancedMatchesExpression();
+export function createMatchesExpression(): MatchesExpression {
+  return new MatchesExpression();
 }
 
-export function createContainsExpression(): EnhancedContainsExpression {
-  return new EnhancedContainsExpression();
+export function createContainsExpression(): ContainsExpression {
+  return new ContainsExpression();
 }
 
-export function createInExpression(): EnhancedInExpression {
-  return new EnhancedInExpression();
+export function createInExpression(): InExpression {
+  return new InExpression();
 }
 
 // ============================================================================

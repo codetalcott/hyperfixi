@@ -5,8 +5,8 @@
 
 import { describe, test, expect, beforeEach } from 'vitest';
 import {
-  EnhancedArrayLiteralExpression,
-  EnhancedArrayIndexExpression,
+  ArrayLiteralExpression,
+  ArrayIndexExpression,
   createArrayLiteralExpression,
   createArrayIndexExpression,
   createArray,
@@ -15,13 +15,13 @@ import {
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
 describe('Enhanced Array Expressions', () => {
-  let arrayLiteralExpression: EnhancedArrayLiteralExpression;
-  let arrayIndexExpression: EnhancedArrayIndexExpression;
+  let arrayLiteralExpression: ArrayLiteralExpression;
+  let arrayIndexExpression: ArrayIndexExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    arrayLiteralExpression = new EnhancedArrayLiteralExpression();
-    arrayIndexExpression = new EnhancedArrayIndexExpression();
+    arrayLiteralExpression = new ArrayLiteralExpression();
+    arrayIndexExpression = new ArrayIndexExpression();
     context = createTypedExpressionContext();
   });
 
@@ -387,8 +387,8 @@ describe('Enhanced Array Expressions', () => {
       const arrayLiteral = createArrayLiteralExpression();
       const arrayIndex = createArrayIndexExpression();
 
-      expect(arrayLiteral).toBeInstanceOf(EnhancedArrayLiteralExpression);
-      expect(arrayIndex).toBeInstanceOf(EnhancedArrayIndexExpression);
+      expect(arrayLiteral).toBeInstanceOf(ArrayLiteralExpression);
+      expect(arrayIndex).toBeInstanceOf(ArrayIndexExpression);
     });
 
     test('createArray utility works', async () => {

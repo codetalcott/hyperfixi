@@ -6,9 +6,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { TypedExpressionContext } from '../../../types/enhanced-expressions.ts';
 import {
-  EnhancedAndExpression,
-  EnhancedOrExpression,
-  EnhancedNotExpression,
+  AndExpression,
+  OrExpression,
+  NotExpression,
   logicalExpressions,
 } from './index.ts';
 
@@ -42,12 +42,12 @@ function createTestContext(
 // And Expression Tests
 // ============================================================================
 
-describe('EnhancedAndExpression', () => {
-  let andExpr: EnhancedAndExpression;
+describe('AndExpression', () => {
+  let andExpr: AndExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    andExpr = new EnhancedAndExpression();
+    andExpr = new AndExpression();
     context = createTestContext();
   });
 
@@ -209,12 +209,12 @@ describe('EnhancedAndExpression', () => {
 // Or Expression Tests
 // ============================================================================
 
-describe('EnhancedOrExpression', () => {
-  let orExpr: EnhancedOrExpression;
+describe('OrExpression', () => {
+  let orExpr: OrExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    orExpr = new EnhancedOrExpression();
+    orExpr = new OrExpression();
     context = createTestContext();
   });
 
@@ -341,12 +341,12 @@ describe('EnhancedOrExpression', () => {
 // Not Expression Tests
 // ============================================================================
 
-describe('EnhancedNotExpression', () => {
-  let notExpr: EnhancedNotExpression;
+describe('NotExpression', () => {
+  let notExpr: NotExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    notExpr = new EnhancedNotExpression();
+    notExpr = new NotExpression();
     context = createTestContext();
   });
 
@@ -456,9 +456,9 @@ describe('Enhanced Logical Expressions Integration', () => {
 
   describe('Expression registry', () => {
     it('should provide all logical expressions', () => {
-      expect(logicalExpressions.and).toBeInstanceOf(EnhancedAndExpression);
-      expect(logicalExpressions.or).toBeInstanceOf(EnhancedOrExpression);
-      expect(logicalExpressions.not).toBeInstanceOf(EnhancedNotExpression);
+      expect(logicalExpressions.and).toBeInstanceOf(AndExpression);
+      expect(logicalExpressions.or).toBeInstanceOf(OrExpression);
+      expect(logicalExpressions.not).toBeInstanceOf(NotExpression);
     });
   });
 

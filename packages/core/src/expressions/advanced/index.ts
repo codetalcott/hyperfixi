@@ -587,34 +587,34 @@ export class TypeofExpression implements BaseTypedExpression<string> {
  * Enhanced advanced expressions registry
  */
 export const enhancedAdvancedExpressions = {
-  lambda: new EnhancedLambdaExpression(),
-  promise: new EnhancedPromiseExpression(),
-  await: new EnhancedAwaitExpression(),
-  error: new EnhancedErrorExpression(),
-  typeof: new EnhancedTypeofExpression(),
+  lambda: new LambdaExpression(),
+  promise: new PromiseExpression(),
+  await: new AwaitExpression(),
+  error: new ErrorExpression(),
+  typeof: new TypeofExpression(),
 } as const;
 
 /**
  * Factory functions for creating enhanced advanced expressions
  */
-export function createLambda(): EnhancedLambdaExpression {
-  return new EnhancedLambdaExpression();
+export function createLambda(): LambdaExpression {
+  return new LambdaExpression();
 }
 
-export function createPromise(): EnhancedPromiseExpression {
-  return new EnhancedPromiseExpression();
+export function createPromise(): PromiseExpression {
+  return new PromiseExpression();
 }
 
-export function createAwait(): EnhancedAwaitExpression {
-  return new EnhancedAwaitExpression();
+export function createAwait(): AwaitExpression {
+  return new AwaitExpression();
 }
 
-export function createError(): EnhancedErrorExpression {
-  return new EnhancedErrorExpression();
+export function createError(): ErrorExpression {
+  return new ErrorExpression();
 }
 
-export function createTypeof(): EnhancedTypeofExpression {
-  return new EnhancedTypeofExpression();
+export function createTypeof(): TypeofExpression {
+  return new TypeofExpression();
 }
 
 /**
@@ -625,7 +625,7 @@ export async function createLambda(
   body: string,
   context: TypedExecutionContext
 ): Promise<TypedResult<Function>> {
-  const expr = new EnhancedLambdaExpression();
+  const expr = new LambdaExpression();
   return expr.evaluate(context, { parameters, body });
 }
 
@@ -633,7 +633,7 @@ export async function createPromise(
   executor: string,
   context: TypedExecutionContext
 ): Promise<TypedResult<Promise<unknown>>> {
-  const expr = new EnhancedPromiseExpression();
+  const expr = new PromiseExpression();
   return expr.evaluate(context, executor);
 }
 
@@ -641,7 +641,7 @@ export async function awaitPromise(
   promise: unknown,
   context: TypedExecutionContext
 ): Promise<TypedResult<unknown>> {
-  const expr = new EnhancedAwaitExpression();
+  const expr = new AwaitExpression();
   return expr.evaluate(context, promise);
 }
 
@@ -651,7 +651,7 @@ export async function createError(
   name?: string,
   code?: string
 ): Promise<TypedResult<Error>> {
-  const expr = new EnhancedErrorExpression();
+  const expr = new ErrorExpression();
   return expr.evaluate(context, message, name, code);
 }
 
@@ -659,7 +659,7 @@ export async function getTypeOf(
   value: unknown,
   context: TypedExecutionContext
 ): Promise<TypedResult<string>> {
-  const expr = new EnhancedTypeofExpression();
+  const expr = new TypeofExpression();
   return expr.evaluate(context, value);
 }
 

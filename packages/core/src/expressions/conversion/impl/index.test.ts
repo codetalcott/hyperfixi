@@ -7,8 +7,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createTypedExecutionContext } from '../../test-setup';
 import type { TypedExpressionContext } from '../../../types/expression-types';
 import {
-  EnhancedAsExpression,
-  EnhancedIsExpression,
+  AsExpression,
+  IsExpression,
   conversionExpressions,
   enhancedConverters,
 } from './index';
@@ -44,11 +44,11 @@ describe('Enhanced Conversion Expressions', () => {
     }
   });
 
-  describe('EnhancedAsExpression', () => {
-    let expression: EnhancedAsExpression;
+  describe('AsExpression', () => {
+    let expression: AsExpression;
 
     beforeEach(() => {
-      expression = new EnhancedAsExpression();
+      expression = new AsExpression();
     });
 
     it('should have correct metadata', () => {
@@ -588,11 +588,11 @@ describe('Enhanced Conversion Expressions', () => {
     });
   });
 
-  describe('EnhancedIsExpression', () => {
-    let expression: EnhancedIsExpression;
+  describe('IsExpression', () => {
+    let expression: IsExpression;
 
     beforeEach(() => {
-      expression = new EnhancedIsExpression();
+      expression = new IsExpression();
     });
 
     it('should have correct metadata', () => {
@@ -932,8 +932,8 @@ describe('Enhanced Conversion Expressions', () => {
 
   describe('Expression Registry', () => {
     it('should export all enhanced conversion expressions', () => {
-      expect(conversionExpressions.as).toBeInstanceOf(EnhancedAsExpression);
-      expect(conversionExpressions.is).toBeInstanceOf(EnhancedIsExpression);
+      expect(conversionExpressions.as).toBeInstanceOf(AsExpression);
+      expect(conversionExpressions.is).toBeInstanceOf(IsExpression);
     });
 
     it('should have consistent metadata across all expressions', () => {
@@ -979,7 +979,7 @@ describe('Enhanced Conversion Expressions', () => {
 
   describe('Integration Scenarios', () => {
     it('should handle chained conversions', async () => {
-      const asExpr = new EnhancedAsExpression();
+      const asExpr = new AsExpression();
 
       // Convert number to string, then back to number
       const stringResult = await asExpr.evaluate(context, {
@@ -1013,7 +1013,7 @@ describe('Enhanced Conversion Expressions', () => {
       `;
       document.body.appendChild(complexForm);
 
-      const asExpr = new EnhancedAsExpression();
+      const asExpr = new AsExpression();
       const result = await asExpr.evaluate(context, {
         value: complexForm,
         type: 'Values',
@@ -1034,7 +1034,7 @@ describe('Enhanced Conversion Expressions', () => {
 
     it('should maintain performance with large datasets', async () => {
       const largeArray = Array.from({ length: 1000 }, (_, i) => i);
-      const asExpr = new EnhancedAsExpression();
+      const asExpr = new AsExpression();
 
       const startTime = Date.now();
       const result = await asExpr.evaluate(context, {

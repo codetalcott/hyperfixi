@@ -255,24 +255,24 @@ export class StringLengthExpression implements TypedExpressionImplementation<num
  * Enhanced string expressions registry
  */
 export const enhancedStringExpressions = {
-  'string-interpolation': new EnhancedStringInterpolationExpression(),
-  'string-concat': new EnhancedStringConcatenationExpression(),
-  'string-length': new EnhancedStringLengthExpression(),
+  'string-interpolation': new StringInterpolationExpression(),
+  'string-concat': new StringConcatenationExpression(),
+  'string-length': new StringLengthExpression(),
 } as const;
 
 /**
  * Factory functions for creating enhanced string expressions
  */
-export function createStringInterpolation(): EnhancedStringInterpolationExpression {
-  return new EnhancedStringInterpolationExpression();
+export function createStringInterpolation(): StringInterpolationExpression {
+  return new StringInterpolationExpression();
 }
 
-export function createStringConcatenation(): EnhancedStringConcatenationExpression {
-  return new EnhancedStringConcatenationExpression();
+export function createStringConcatenation(): StringConcatenationExpression {
+  return new StringConcatenationExpression();
 }
 
-export function createStringLength(): EnhancedStringLengthExpression {
-  return new EnhancedStringLengthExpression();
+export function createStringLength(): StringLengthExpression {
+  return new StringLengthExpression();
 }
 
 /**
@@ -283,7 +283,7 @@ export async function interpolateString(
   context: TypedExecutionContext,
   variables?: Record<string, unknown>
 ): Promise<EvaluationResult<string>> {
-  const expr = new EnhancedStringInterpolationExpression();
+  const expr = new StringInterpolationExpression();
   return expr.evaluate(context, template, variables);
 }
 
@@ -291,7 +291,7 @@ export async function concatenateStrings(
   context: TypedExecutionContext,
   ...values: HyperScriptValue[]
 ): Promise<EvaluationResult<string>> {
-  const expr = new EnhancedStringConcatenationExpression();
+  const expr = new StringConcatenationExpression();
   return expr.evaluate(context, ...values);
 }
 
@@ -299,7 +299,7 @@ export async function getStringLength(
   value: HyperScriptValue,
   context: TypedExecutionContext
 ): Promise<EvaluationResult<number>> {
-  const expr = new EnhancedStringLengthExpression();
+  const expr = new StringLengthExpression();
   return expr.evaluate(context, value);
 }
 

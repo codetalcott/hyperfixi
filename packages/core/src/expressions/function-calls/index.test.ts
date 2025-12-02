@@ -5,7 +5,7 @@
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import {
-  EnhancedFunctionCallExpression,
+  FunctionCallExpression,
   createFunctionCallExpression,
   callFunction,
 } from './index';
@@ -13,11 +13,11 @@ import { createTypedExpressionContext } from '../../test-utilities';
 import type { TypedExpressionContext } from '../../types/command-types';
 
 describe('Enhanced Function Call Expression', () => {
-  let functionCallExpression: EnhancedFunctionCallExpression;
+  let functionCallExpression: FunctionCallExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    functionCallExpression = new EnhancedFunctionCallExpression();
+    functionCallExpression = new FunctionCallExpression();
     context = createTypedExpressionContext();
   });
 
@@ -554,7 +554,7 @@ describe('Enhanced Function Call Expression', () => {
   describe('Utility Functions', () => {
     test('createFunctionCallExpression factory works', () => {
       const expr = createFunctionCallExpression();
-      expect(expr).toBeInstanceOf(EnhancedFunctionCallExpression);
+      expect(expr).toBeInstanceOf(FunctionCallExpression);
     });
 
     test('callFunction utility works', async () => {

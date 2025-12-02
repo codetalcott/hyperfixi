@@ -403,8 +403,8 @@ export class ObjectLiteralExpression
 /**
  * Factory function for creating enhanced object expression
  */
-export function createObjectLiteralExpression(): EnhancedObjectLiteralExpression {
-  return new EnhancedObjectLiteralExpression();
+export function createObjectLiteralExpression(): ObjectLiteralExpression {
+  return new ObjectLiteralExpression();
 }
 
 /**
@@ -455,9 +455,9 @@ export async function createObject(
   fields: ObjectField[],
   context: TypedExpressionContext
 ): Promise<EvaluationResult<Record<string, HyperScriptValue>>> {
-  const expression = new EnhancedObjectLiteralExpression();
+  const expression = new ObjectLiteralExpression();
   return expression.evaluate(context, ...fields);
 }
 
 // Default exports
-export { EnhancedObjectLiteralExpression as default };
+export { ObjectLiteralExpression as default };

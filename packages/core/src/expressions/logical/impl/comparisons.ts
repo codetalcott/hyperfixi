@@ -854,28 +854,28 @@ export class LessThanOrEqualExpression implements BaseTypedExpression<boolean> {
 // Factory Functions
 // ============================================================================
 
-export function createEqualsExpression(): EnhancedEqualsExpression {
-  return new EnhancedEqualsExpression();
+export function createEqualsExpression(): EqualsExpression {
+  return new EqualsExpression();
 }
 
-export function createNotEqualsExpression(): EnhancedNotEqualsExpression {
-  return new EnhancedNotEqualsExpression();
+export function createNotEqualsExpression(): NotEqualsExpression {
+  return new NotEqualsExpression();
 }
 
-export function createGreaterThanExpression(): EnhancedGreaterThanExpression {
-  return new EnhancedGreaterThanExpression();
+export function createGreaterThanExpression(): GreaterThanExpression {
+  return new GreaterThanExpression();
 }
 
-export function createLessThanExpression(): EnhancedLessThanExpression {
-  return new EnhancedLessThanExpression();
+export function createLessThanExpression(): LessThanExpression {
+  return new LessThanExpression();
 }
 
-export function createGreaterThanOrEqualExpression(): EnhancedGreaterThanOrEqualExpression {
-  return new EnhancedGreaterThanOrEqualExpression();
+export function createGreaterThanOrEqualExpression(): GreaterThanOrEqualExpression {
+  return new GreaterThanOrEqualExpression();
 }
 
-export function createLessThanOrEqualExpression(): EnhancedLessThanOrEqualExpression {
-  return new EnhancedLessThanOrEqualExpression();
+export function createLessThanOrEqualExpression(): LessThanOrEqualExpression {
+  return new LessThanOrEqualExpression();
 }
 
 // ============================================================================

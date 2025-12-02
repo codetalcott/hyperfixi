@@ -26,6 +26,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { evaluateCondition } from '../helpers/condition-helpers';
 
 /**
  * Typed input for IfCommand
@@ -165,7 +166,7 @@ export class IfCommand {
     const { condition, thenCommands, elseCommands } = input;
 
     // Evaluate condition to boolean
-    const conditionResult = this.evaluateCondition(condition, context);
+    const conditionResult = evaluateCondition(condition, context);
 
     let executedBranch: 'then' | 'else' | 'none';
     let result: any = undefined;
@@ -191,62 +192,6 @@ export class IfCommand {
   }
 
   // ========== Private Utility Methods ==========
-
-  /**
-   * Evaluate condition to boolean
-   *
-   * Handles various condition types:
-   * - boolean: direct value
-   * - string: variable lookup or truthy check
-   * - number: JavaScript truthiness (0 = false, non-zero = true)
-   * - object: truthy (except null)
-   * - function: truthy (but not called to avoid side effects)
-   * - Promise: error (must be awaited before if command)
-   *
-   * @param condition - Condition value to evaluate
-   * @param context - Execution context for variable lookup
-   * @returns Boolean result
-   */
-  private evaluateCondition(condition: any, context: TypedExecutionContext): boolean {
-    // Handle boolean directly
-    if (typeof condition === 'boolean') {
-      return condition;
-    }
-
-    // Handle functions (truthy, but don't call them)
-    if (typeof condition === 'function') {
-      return true;
-    }
-
-    // Handle Promises (error - must be awaited)
-    if (condition instanceof Promise) {
-      throw new Error(
-        'if command does not support async conditions - use await in the condition expression'
-      );
-    }
-
-    // Handle string conditions (variable names or literal strings)
-    if (typeof condition === 'string') {
-      // Check context references
-      if (condition === 'me') return Boolean(context.me);
-      if (condition === 'it') return Boolean(context.it);
-      if (condition === 'you') return Boolean(context.you);
-
-      // Try variable lookup
-      const value = this.getVariableValue(condition, context);
-
-      // If variable exists, use its truthiness
-      if (value !== undefined) {
-        return Boolean(value);
-      }
-
-      // Otherwise, non-empty string is truthy
-      return Boolean(condition);
-    }
-
-    // For numbers, objects, etc., use JavaScript truthiness
-    return Boolean(condition);
-  }
 
   /**
    * Execute commands or block node
@@ -340,37 +285,6 @@ export class IfCommand {
     }
 
     return lastResult;
-  }
-
-  /**
-   * Get variable value from context
-   *
-   * Searches in order:
-   * 1. Local variables (context.locals)
-   * 2. Global variables (context.globals)
-   * 3. General variables (context.variables)
-   *
-   * @param name - Variable name to look up
-   * @param context - Execution context
-   * @returns Variable value or undefined if not found
-   */
-  private getVariableValue(name: string, context: TypedExecutionContext): any {
-    // Check local variables first
-    if (context.locals && context.locals.has(name)) {
-      return context.locals.get(name);
-    }
-
-    // Check global variables
-    if (context.globals && context.globals.has(name)) {
-      return context.globals.get(name);
-    }
-
-    // Check general variables
-    if (context.variables && context.variables.has(name)) {
-      return context.variables.get(name);
-    }
-
-    return undefined;
   }
 }
 

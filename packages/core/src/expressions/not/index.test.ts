@@ -4,15 +4,15 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { EnhancedNotExpression, createNotExpression, evaluateNot } from './index.ts';
+import { NotExpression, createNotExpression, evaluateNot } from './index.ts';
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
 describe('Enhanced Not Expression', () => {
-  let notExpression: EnhancedNotExpression;
+  let notExpression: NotExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    notExpression = new EnhancedNotExpression();
+    notExpression = new NotExpression();
     context = createTypedExpressionContext();
   });
 
@@ -282,7 +282,7 @@ describe('Enhanced Not Expression', () => {
   describe('Utility Functions', () => {
     test('factory function works correctly', () => {
       const notExpr = createNotExpression();
-      expect(notExpr).toBeInstanceOf(EnhancedNotExpression);
+      expect(notExpr).toBeInstanceOf(NotExpression);
     });
 
     test('evaluateNot utility works', async () => {

@@ -482,6 +482,6 @@ export { getFormValues, getFormValuesProcessed, getInputValue, parseFixedPrecisi
 
 // Re-export enhanced implementations for tests
 export {
-  EnhancedAsExpression,
+  AsExpression,
   createAsExpression,
 } from './impl/index';

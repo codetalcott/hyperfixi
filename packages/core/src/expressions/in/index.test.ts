@@ -4,15 +4,15 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { EnhancedInExpression, createInExpression, searchIn } from './index.ts';
+import { InExpression, createInExpression, searchIn } from './index.ts';
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
 describe('Enhanced In Expression', () => {
-  let inExpression: EnhancedInExpression;
+  let inExpression: InExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    inExpression = new EnhancedInExpression();
+    inExpression = new InExpression();
     context = createTypedExpressionContext();
   });
 
@@ -325,7 +325,7 @@ describe('Enhanced In Expression', () => {
   describe('Utility Functions', () => {
     test('factory function works correctly', () => {
       const inExpr = createInExpression();
-      expect(inExpr).toBeInstanceOf(EnhancedInExpression);
+      expect(inExpr).toBeInstanceOf(InExpression);
     });
 
     test('searchIn utility works', async () => {

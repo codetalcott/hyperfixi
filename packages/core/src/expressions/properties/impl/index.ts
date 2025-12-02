@@ -289,7 +289,7 @@ export class MyExpression implements BaseTypedExpression<unknown> {
         };
       }
 
-      const possessiveExpr = new EnhancedPossessiveExpression();
+      const possessiveExpr = new PossessiveExpression();
       const result = await possessiveExpr.evaluate(context, {
         element: context.me,
         property: input.property,
@@ -416,7 +416,7 @@ export class ItsExpression implements BaseTypedExpression<unknown> {
         };
       }
 
-      const possessiveExpr = new EnhancedPossessiveExpression();
+      const possessiveExpr = new PossessiveExpression();
       const result = await possessiveExpr.evaluate(context, {
         element: context.it,
         property: input.property,
@@ -543,7 +543,7 @@ export class YourExpression implements BaseTypedExpression<unknown> {
         };
       }
 
-      const possessiveExpr = new EnhancedPossessiveExpression();
+      const possessiveExpr = new PossessiveExpression();
       const result = await possessiveExpr.evaluate(context, {
         element: context.you,
         property: input.property,
@@ -879,28 +879,28 @@ export class AttributeWithValueExpression implements BaseTypedExpression<boolean
 // Factory Functions
 // ============================================================================
 
-export function createPossessiveExpression(): EnhancedPossessiveExpression {
-  return new EnhancedPossessiveExpression();
+export function createPossessiveExpression(): PossessiveExpression {
+  return new PossessiveExpression();
 }
 
-export function createMyExpression(): EnhancedMyExpression {
-  return new EnhancedMyExpression();
+export function createMyExpression(): MyExpression {
+  return new MyExpression();
 }
 
-export function createItsExpression(): EnhancedItsExpression {
-  return new EnhancedItsExpression();
+export function createItsExpression(): ItsExpression {
+  return new ItsExpression();
 }
 
-export function createYourExpression(): EnhancedYourExpression {
-  return new EnhancedYourExpression();
+export function createYourExpression(): YourExpression {
+  return new YourExpression();
 }
 
-export function createAttributeExpression(): EnhancedAttributeExpression {
-  return new EnhancedAttributeExpression();
+export function createAttributeExpression(): AttributeExpression {
+  return new AttributeExpression();
 }
 
-export function createAttributeWithValueExpression(): EnhancedAttributeWithValueExpression {
-  return new EnhancedAttributeWithValueExpression();
+export function createAttributeWithValueExpression(): AttributeWithValueExpression {
+  return new AttributeWithValueExpression();
 }
 
 // ============================================================================

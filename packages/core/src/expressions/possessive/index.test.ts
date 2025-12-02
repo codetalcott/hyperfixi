@@ -5,18 +5,18 @@
 
 import { describe, test, expect, beforeEach } from 'vitest';
 import {
-  EnhancedPossessiveExpression,
+  PossessiveExpression,
   createPossessiveExpression,
   evaluatePossessive,
 } from './index.ts';
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
 describe('Enhanced Possessive Expression', () => {
-  let possessiveExpression: EnhancedPossessiveExpression;
+  let possessiveExpression: PossessiveExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    possessiveExpression = new EnhancedPossessiveExpression();
+    possessiveExpression = new PossessiveExpression();
     context = createTypedExpressionContext();
   });
 
@@ -470,7 +470,7 @@ describe('Enhanced Possessive Expression', () => {
   describe('Utility Functions', () => {
     test('factory function works correctly', () => {
       const possessiveExpr = createPossessiveExpression();
-      expect(possessiveExpr).toBeInstanceOf(EnhancedPossessiveExpression);
+      expect(possessiveExpr).toBeInstanceOf(PossessiveExpression);
     });
 
     test('evaluatePossessive utility works', async () => {

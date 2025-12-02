@@ -238,8 +238,8 @@ export class PossessiveExpression
 /**
  * Factory function for creating enhanced possessive expression
  */
-export function createPossessiveExpression(): EnhancedPossessiveExpression {
-  return new EnhancedPossessiveExpression();
+export function createPossessiveExpression(): PossessiveExpression {
+  return new PossessiveExpression();
 }
 
 /**
@@ -264,9 +264,9 @@ export function evaluatePossessive(
   property: string,
   context: TypedExecutionContext
 ): Promise<EvaluationResult<HyperScriptValue>> {
-  const expression = new EnhancedPossessiveExpression();
+  const expression = new PossessiveExpression();
   return expression.evaluate(context, object, property);
 }
 
 // Default exports
-export { EnhancedPossessiveExpression as default };
+export { PossessiveExpression as default };

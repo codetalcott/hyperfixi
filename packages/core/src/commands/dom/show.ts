@@ -22,6 +22,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/ast';
 import type { ExpressionEvaluator } from '../../runtime/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
+import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 
 /**
  * Typed input for ShowCommand
@@ -81,8 +82,8 @@ export class ShowCommand {
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ShowCommandInput> {
-    // Resolve target elements
-    const targets = await this.resolveTargets(raw.args, evaluator, context);
+    // Resolve target elements using shared helper
+    const targets = await resolveTargetsFromArgs(raw.args, evaluator, context, 'show');
 
     // Default display is 'block' (matches V1 behavior)
     const defaultDisplay = 'block';
@@ -130,95 +131,6 @@ export class ShowCommand {
   }
 
   // ========== Private Utility Methods ==========
-
-  /**
-   * Resolve target elements from AST args
-   *
-   * Inline version of dom-utils.resolveTargets
-   * Handles: context.me default, HTMLElement, NodeList, CSS selectors
-   *
-   * This is a simplified, self-contained version that avoids importing
-   * from shared utilities, enabling true tree-shaking.
-   *
-   * @param args - Raw AST arguments
-   * @param evaluator - Expression evaluator
-   * @param context - Execution context
-   * @returns Array of resolved HTMLElements
-   */
-  private async resolveTargets(
-    args: ASTNode[],
-    evaluator: ExpressionEvaluator,
-    context: ExecutionContext
-  ): Promise<HTMLElement[]> {
-    // Default to context.me if no args
-    if (!args || args.length === 0) {
-      if (!context.me) {
-        throw new Error('show command: no target specified and context.me is null');
-      }
-      if (!isHTMLElement(context.me)) {
-        throw new Error('show command: context.me must be an HTMLElement');
-      }
-      return [context.me as HTMLElement];
-    }
-
-    const targets: HTMLElement[] = [];
-
-    for (const arg of args) {
-      const evaluated = await evaluator.evaluate(arg, context);
-
-      // Skip empty strings - treat as "no target specified"
-      if (evaluated === '' || (typeof evaluated === 'string' && evaluated.trim() === '')) {
-        continue;
-      }
-
-      if (isHTMLElement(evaluated)) {
-        // Single element
-        targets.push(evaluated as HTMLElement);
-      } else if (evaluated instanceof NodeList) {
-        // NodeList from querySelector
-        const elements = Array.from(evaluated).filter(
-          (el): el is HTMLElement => isHTMLElement(el)
-        );
-        targets.push(...elements);
-      } else if (Array.isArray(evaluated)) {
-        // Array of elements
-        const elements = evaluated.filter(
-          (el): el is HTMLElement => isHTMLElement(el)
-        );
-        targets.push(...elements);
-      } else if (typeof evaluated === 'string') {
-        // CSS selector string
-        try {
-          const selected = document.querySelectorAll(evaluated);
-          const elements = Array.from(selected).filter(
-            (el): el is HTMLElement => isHTMLElement(el)
-          );
-          targets.push(...elements);
-        } catch (error) {
-          throw new Error(
-            `Invalid CSS selector: "${evaluated}" - ${error instanceof Error ? error.message : String(error)}`
-          );
-        }
-      } else {
-        throw new Error(
-          `Invalid show target: expected HTMLElement or CSS selector, got ${typeof evaluated}`
-        );
-      }
-    }
-
-    // If no valid targets found after filtering, default to context.me
-    if (targets.length === 0) {
-      if (!context.me) {
-        throw new Error('show command: no target specified and context.me is null');
-      }
-      if (!isHTMLElement(context.me)) {
-        throw new Error('show command: context.me must be an HTMLElement');
-      }
-      return [context.me as HTMLElement];
-    }
-
-    return targets;
-  }
 
   /**
    * Show a single element

@@ -36,6 +36,10 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
+import { resolveTargetsFromArgs } from '../helpers/element-resolution';
+import { parseClasses } from '../helpers/class-manipulation';
+import { parseAttribute } from '../helpers/attribute-manipulation';
+import { parseDuration } from '../helpers/duration-parsing';
 
 /**
  * Typed input for ToggleCommand
@@ -156,7 +160,7 @@ export class ToggleCommand {
         duration = durationValue;
       } else if (typeof durationValue === 'string') {
         // Parse duration strings like "2s", "500ms"
-        duration = this.parseDuration(durationValue);
+        duration = parseDuration(durationValue);
       }
     }
 
@@ -241,9 +245,9 @@ export class ToggleCommand {
     // Parse based on detected type
     switch (expressionType) {
       case 'attribute': {
-        const { name, value } = this.parseAttribute(expression);
+        const { name, value } = parseAttribute(expression);
         const targetArgs = raw.args.slice(1);
-        const targets = await this.resolveTargets(targetArgs, evaluator, context);
+        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true });
         return { type: 'attribute', name, value, targets, duration, untilEvent };
       }
 
@@ -253,7 +257,7 @@ export class ToggleCommand {
           throw new Error(`Invalid CSS property: ${expression}`);
         }
         const targetArgs = raw.args.slice(1);
-        const targets = await this.resolveTargets(targetArgs, evaluator, context);
+        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true });
         return { type: 'css-property', property, targets };
       }
 
@@ -273,7 +277,7 @@ export class ToggleCommand {
           );
         } else {
           // Resolve from selector
-          elements = await this.resolveTargets([firstArg], evaluator, context);
+          elements = await resolveTargetsFromArgs([firstArg], evaluator, context, 'toggle', { filterPrepositions: true });
         }
 
         // Check for mode specifier (e.g., "as modal" or "modal")
@@ -329,7 +333,7 @@ export class ToggleCommand {
           return { type: 'select', targets: elements as HTMLSelectElement[] };
         } else {
           // Fallback to class toggle for non-smart elements
-          const classes = this.parseClasses(expression);
+          const classes = parseClasses(expression);
           return { type: 'classes', classes, targets: elements, duration, untilEvent };
         }
       }
@@ -337,12 +341,12 @@ export class ToggleCommand {
       case 'class':
       default: {
         // Class toggle
-        const classes = this.parseClasses(expression || firstValue);
+        const classes = parseClasses(expression || firstValue);
         if (classes.length === 0) {
           throw new Error('toggle command: no valid class names found');
         }
         const targetArgs = raw.args.slice(1);
-        const targets = await this.resolveTargets(targetArgs, evaluator, context);
+        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true });
         return { type: 'classes', classes, targets, duration, untilEvent };
       }
     }
@@ -430,199 +434,6 @@ export class ToggleCommand {
   }
 
   // ========== Private Utility Methods ==========
-
-  /**
-   * Resolve target elements from AST args
-   *
-   * Inline version of dom-utils.resolveTargets
-   * Handles: context.me default, HTMLElement, NodeList, CSS selectors
-   *
-   * @param args - Raw AST arguments
-   * @param evaluator - Expression evaluator
-   * @param context - Execution context
-   * @returns Array of resolved HTMLElements
-   */
-  private async resolveTargets(
-    args: ASTNode[],
-    evaluator: ExpressionEvaluator,
-    context: ExecutionContext
-  ): Promise<HTMLElement[]> {
-    // Filter out keyword identifiers (on, from, to, etc.) that are prepositions in syntax
-    // For "toggle .active on #box", args would be ['.active', 'on', '#box']
-    // We need to skip the 'on' identifier
-    const KEYWORD_PREPOSITIONS = ['on', 'from', 'to', 'in', 'with', 'at'];
-    const filteredArgs = args.filter(arg => {
-      const argAny = arg as any;
-      if (argAny?.type === 'identifier' && typeof argAny.name === 'string') {
-        return !KEYWORD_PREPOSITIONS.includes(argAny.name.toLowerCase());
-      }
-      return true;
-    });
-
-    // Default to context.me if no target args
-    if (!filteredArgs || filteredArgs.length === 0) {
-      if (!context.me) {
-        throw new Error('toggle command: no target specified and context.me is null');
-      }
-      if (!isHTMLElement(context.me)) {
-        throw new Error('toggle command: context.me must be an HTMLElement');
-      }
-      return [context.me as HTMLElement];
-    }
-
-    const targets: HTMLElement[] = [];
-
-    for (const arg of filteredArgs) {
-      const evaluated = await evaluator.evaluate(arg, context);
-
-      // Skip empty strings - treat as "no target specified"
-      if (evaluated === '' || (typeof evaluated === 'string' && evaluated.trim() === '')) {
-        continue;
-      }
-
-      if (isHTMLElement(evaluated)) {
-        targets.push(evaluated as HTMLElement);
-      } else if (evaluated instanceof NodeList) {
-        const elements = Array.from(evaluated).filter(
-          (el): el is HTMLElement => isHTMLElement(el)
-        );
-        targets.push(...elements);
-      } else if (Array.isArray(evaluated)) {
-        const elements = evaluated.filter(
-          (el): el is HTMLElement => isHTMLElement(el)
-        );
-        targets.push(...elements);
-      } else if (typeof evaluated === 'string') {
-        try {
-          const selected = document.querySelectorAll(evaluated);
-          const elements = Array.from(selected).filter(
-            (el): el is HTMLElement => isHTMLElement(el)
-          );
-          targets.push(...elements);
-        } catch (error) {
-          throw new Error(
-            `Invalid CSS selector: "${evaluated}" - ${error instanceof Error ? error.message : String(error)}`
-          );
-        }
-      } else {
-        throw new Error(
-          `Invalid toggle target: expected HTMLElement or CSS selector, got ${typeof evaluated}`
-        );
-      }
-    }
-
-    // If no valid targets found after filtering, default to context.me
-    if (targets.length === 0) {
-      if (!context.me) {
-        throw new Error('toggle command: no target specified and context.me is null');
-      }
-      if (!isHTMLElement(context.me)) {
-        throw new Error('toggle command: context.me must be an HTMLElement');
-      }
-      return [context.me as HTMLElement];
-    }
-
-    return targets;
-  }
-
-  /**
-   * Parse class names from various input formats
-   *
-   * Handles:
-   * - Single class: ".active" or "active"
-   * - Multiple classes: "active selected" or ".active .selected"
-   * - Array of classes: [".active", "selected"]
-   *
-   * @param classValue - Class value from AST
-   * @returns Array of clean class names (no leading dots)
-   */
-  private parseClasses(classValue: unknown): string[] {
-    if (!classValue) {
-      return [];
-    }
-
-    if (typeof classValue === 'string') {
-      return classValue
-        .trim()
-        .split(/[\s,]+/)
-        .map(cls => {
-          const trimmed = cls.trim();
-          return trimmed.startsWith('.') ? trimmed.substring(1) : trimmed;
-        })
-        .filter(cls => cls.length > 0 && this.isValidClassName(cls));
-    }
-
-    if (Array.isArray(classValue)) {
-      return classValue
-        .map(cls => {
-          const str = String(cls).trim();
-          return str.startsWith('.') ? str.substring(1) : str;
-        })
-        .filter(cls => cls.length > 0 && this.isValidClassName(cls));
-    }
-
-    const str = String(classValue).trim();
-    const cleanStr = str.startsWith('.') ? str.substring(1) : str;
-    return cleanStr.length > 0 && this.isValidClassName(cleanStr) ? [cleanStr] : [];
-  }
-
-  /**
-   * Validate CSS class name
-   *
-   * @param className - Class name to validate
-   * @returns true if valid CSS class name
-   */
-  private isValidClassName(className: string): boolean {
-    if (!className || className.trim().length === 0) {
-      return false;
-    }
-
-    const cssClassNameRegex = /^[a-zA-Z_-][a-zA-Z0-9_-]*$/;
-    return cssClassNameRegex.test(className.trim());
-  }
-
-  /**
-   * Parse attribute name and value from expression
-   *
-   * Supports:
-   * - [@attr="value"] → { name: "attr", value: "value" }
-   * - [@attr] → { name: "attr", value: undefined }
-   * - @attr → { name: "attr", value: undefined }
-   *
-   * @param expression - Attribute expression to parse
-   * @returns Object with name and optional value
-   */
-  private parseAttribute(expression: string): { name: string; value?: string } {
-    const trimmed = expression.trim();
-
-    // Handle bracket syntax: [@attr="value"]
-    if (trimmed.startsWith('[@') && trimmed.endsWith(']')) {
-      const inner = trimmed.slice(2, -1);
-      const equalIndex = inner.indexOf('=');
-
-      if (equalIndex === -1) {
-        return { name: inner.trim() };
-      }
-
-      const name = inner.slice(0, equalIndex).trim();
-      let value = inner.slice(equalIndex + 1).trim();
-
-      // Remove quotes
-      if ((value.startsWith('"') && value.endsWith('"')) ||
-          (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-
-      return { name, value };
-    }
-
-    // Handle direct syntax: @attr
-    if (trimmed.startsWith('@')) {
-      return { name: trimmed.substring(1).trim() };
-    }
-
-    throw new Error(`Invalid attribute syntax: ${expression}`);
-  }
 
   /**
    * Toggle attribute on element
@@ -821,29 +632,6 @@ export class ToggleCommand {
       });
       select.dispatchEvent(clickEvent);
     }
-  }
-
-  /**
-   * Parse duration string to milliseconds
-   *
-   * Supports: "2s", "500ms", "1.5s"
-   *
-   * @param duration - Duration string
-   * @returns Duration in milliseconds
-   */
-  private parseDuration(duration: string): number {
-    const trimmed = duration.trim();
-
-    if (trimmed.endsWith('ms')) {
-      return parseFloat(trimmed);
-    }
-
-    if (trimmed.endsWith('s')) {
-      return parseFloat(trimmed) * 1000;
-    }
-
-    // Default to milliseconds
-    return parseFloat(trimmed);
   }
 
   /**

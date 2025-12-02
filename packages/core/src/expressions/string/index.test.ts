@@ -5,9 +5,9 @@
 
 import { describe, test, expect, beforeEach } from 'vitest';
 import {
-  EnhancedStringInterpolationExpression,
-  EnhancedStringConcatenationExpression,
-  EnhancedStringLengthExpression,
+  StringInterpolationExpression,
+  StringConcatenationExpression,
+  StringLengthExpression,
   enhancedStringExpressions,
   interpolateString,
   concatenateStrings,
@@ -40,11 +40,11 @@ function createMockContext(): TypedExecutionContext {
 }
 
 describe('Enhanced String Interpolation Expression', () => {
-  let expression: EnhancedStringInterpolationExpression;
+  let expression: StringInterpolationExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedStringInterpolationExpression();
+    expression = new StringInterpolationExpression();
     context = createMockContext();
 
     // Set up element properties for testing
@@ -172,11 +172,11 @@ describe('Enhanced String Interpolation Expression', () => {
 });
 
 describe('Enhanced String Concatenation Expression', () => {
-  let expression: EnhancedStringConcatenationExpression;
+  let expression: StringConcatenationExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedStringConcatenationExpression();
+    expression = new StringConcatenationExpression();
     context = createMockContext();
   });
 
@@ -252,11 +252,11 @@ describe('Enhanced String Concatenation Expression', () => {
 });
 
 describe('Enhanced String Length Expression', () => {
-  let expression: EnhancedStringLengthExpression;
+  let expression: StringLengthExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedStringLengthExpression();
+    expression = new StringLengthExpression();
     context = createMockContext();
   });
 
@@ -329,13 +329,13 @@ describe('Enhanced String Length Expression', () => {
 describe('Expression Registry', () => {
   test('exports all enhanced string expressions', () => {
     expect(enhancedStringExpressions['string-interpolation']).toBeInstanceOf(
-      EnhancedStringInterpolationExpression
+      StringInterpolationExpression
     );
     expect(enhancedStringExpressions['string-concat']).toBeInstanceOf(
-      EnhancedStringConcatenationExpression
+      StringConcatenationExpression
     );
     expect(enhancedStringExpressions['string-length']).toBeInstanceOf(
-      EnhancedStringLengthExpression
+      StringLengthExpression
     );
   });
 });
@@ -383,7 +383,7 @@ describe('Performance Characteristics', () => {
   });
 
   test('handles large string interpolation efficiently', async () => {
-    const expression = new EnhancedStringInterpolationExpression();
+    const expression = new StringInterpolationExpression();
     const largeTemplate = 'Name: ${name} '.repeat(1000);
 
     const startTime = performance.now();
@@ -395,7 +395,7 @@ describe('Performance Characteristics', () => {
   });
 
   test('handles many concatenations efficiently', async () => {
-    const expression = new EnhancedStringConcatenationExpression();
+    const expression = new StringConcatenationExpression();
     const manyValues = Array(1000).fill('test');
 
     const startTime = performance.now();

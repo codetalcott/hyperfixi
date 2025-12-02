@@ -4,16 +4,16 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { EnhancedSymbolExpression, createSymbolExpression, resolveSymbol } from './index';
+import { SymbolExpression, createSymbolExpression, resolveSymbol } from './index';
 import { createTypedExpressionContext } from '../../test-utilities';
 import type { TypedExpressionContext } from '../../types/command-types';
 
 describe('Enhanced Symbol Expression', () => {
-  let symbolExpression: EnhancedSymbolExpression;
+  let symbolExpression: SymbolExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    symbolExpression = new EnhancedSymbolExpression();
+    symbolExpression = new SymbolExpression();
     context = createTypedExpressionContext({
       // Test data in context
       testValue: 42,
@@ -285,7 +285,7 @@ describe('Enhanced Symbol Expression', () => {
   describe('Utility Functions', () => {
     test('createSymbolExpression factory works', () => {
       const expr = createSymbolExpression();
-      expect(expr).toBeInstanceOf(EnhancedSymbolExpression);
+      expect(expr).toBeInstanceOf(SymbolExpression);
     });
 
     test('resolveSymbol utility function works', async () => {

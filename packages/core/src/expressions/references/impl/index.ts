@@ -499,29 +499,29 @@ export class CSSSelectorExpression
  * Enhanced reference expressions registry
  */
 export const referenceExpressions = {
-  me: new EnhancedMeExpression(),
-  you: new EnhancedYouExpression(),
-  it: new EnhancedItExpression(),
-  'css-selector': new EnhancedCSSSelectorExpression(),
+  me: new MeExpression(),
+  you: new YouExpression(),
+  it: new ItExpression(),
+  'css-selector': new CSSSelectorExpression(),
 } as const;
 
 /**
- * Factory functions for creating enhanced reference expressions
+ * Factory functions for creating reference expressions
  */
-export function createMeExpression(): EnhancedMeExpression {
-  return new EnhancedMeExpression();
+export function createMeExpression(): MeExpression {
+  return new MeExpression();
 }
 
-export function createYouExpression(): EnhancedYouExpression {
-  return new EnhancedYouExpression();
+export function createYouExpression(): YouExpression {
+  return new YouExpression();
 }
 
-export function createItExpression(): EnhancedItExpression {
-  return new EnhancedItExpression();
+export function createItExpression(): ItExpression {
+  return new ItExpression();
 }
 
-export function createCSSSelectorExpression(): EnhancedCSSSelectorExpression {
-  return new EnhancedCSSSelectorExpression();
+export function createCSSSelectorExpression(): CSSSelectorExpression {
+  return new CSSSelectorExpression();
 }
 
 export default referenceExpressions;

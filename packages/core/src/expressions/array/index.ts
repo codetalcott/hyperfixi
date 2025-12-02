@@ -602,12 +602,12 @@ export class ArrayIndexExpression
 /**
  * Factory functions for creating enhanced array expressions
  */
-export function createArrayLiteralExpression(): EnhancedArrayLiteralExpression {
-  return new EnhancedArrayLiteralExpression();
+export function createArrayLiteralExpression(): ArrayLiteralExpression {
+  return new ArrayLiteralExpression();
 }
 
-export function createArrayIndexExpression(): EnhancedArrayIndexExpression {
-  return new EnhancedArrayIndexExpression();
+export function createArrayIndexExpression(): ArrayIndexExpression {
+  return new ArrayIndexExpression();
 }
 
 /**
@@ -638,7 +638,7 @@ export async function createArray(
   elements: unknown[],
   context: TypedExpressionContext
 ): Promise<EvaluationResult<HyperScriptValue[]>> {
-  const expression = new EnhancedArrayLiteralExpression();
+  const expression = new ArrayLiteralExpression();
   return expression.evaluate(context, ...elements);
 }
 
@@ -647,9 +647,9 @@ export async function indexArray(
   index: number | string | { start?: number; end?: number },
   context: TypedExpressionContext
 ): Promise<EvaluationResult<HyperScriptValue>> {
-  const expression = new EnhancedArrayIndexExpression();
+  const expression = new ArrayIndexExpression();
   return expression.evaluate(context, target, index);
 }
 
 // Default exports
-export { EnhancedArrayLiteralExpression as default };
+export { ArrayLiteralExpression as default };

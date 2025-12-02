@@ -488,8 +488,8 @@ export class InExpression implements TypedExpressionImplementation<HyperScriptVa
 /**
  * Factory function for creating enhanced in expression
  */
-export function createInExpression(): EnhancedInExpression {
-  return new EnhancedInExpression();
+export function createInExpression(): InExpression {
+  return new InExpression();
 }
 
 /**
@@ -512,9 +512,9 @@ export async function searchIn(
   container: unknown,
   context: TypedExpressionContext
 ): Promise<EvaluationResult<HyperScriptValue[]>> {
-  const expression = new EnhancedInExpression();
+  const expression = new InExpression();
   return expression.evaluate(context, searchValue, container);
 }
 
 // Default exports
-export { EnhancedInExpression as default };
+export { InExpression as default };

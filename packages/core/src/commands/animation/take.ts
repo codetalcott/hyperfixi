@@ -28,6 +28,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
+import { resolveElement } from '../helpers/element-resolution';
 
 /**
  * Typed input for TakeCommand
@@ -167,17 +168,20 @@ export class TakeCommand {
     const { property, source, target } = input;
 
     // Resolve source element
-    const sourceElement = this.resolveElement(source, context);
-    if (!sourceElement) {
+    let sourceElement: HTMLElement;
+    try {
+      sourceElement = resolveElement(source as string | HTMLElement | undefined, context);
+    } catch {
       throw new Error('Source element not found or invalid');
     }
 
     // Resolve target element (defaults to context.me)
-    const targetElement = target
-      ? this.resolveElement(target, context)
-      : (context.me as HTMLElement);
-
-    if (!targetElement) {
+    let targetElement: HTMLElement;
+    try {
+      targetElement = target
+        ? resolveElement(target as string | HTMLElement | undefined, context)
+        : resolveElement(undefined, context);
+    } catch {
       throw new Error('Target element not found or invalid');
     }
 
@@ -195,49 +199,6 @@ export class TakeCommand {
   }
 
   // ========== Private Utility Methods ==========
-
-  /**
-   * Resolve element from unknown value
-   *
-   * @param element - Unknown value to resolve
-   * @param context - Execution context
-   * @returns HTMLElement or null
-   */
-  private resolveElement(
-    element: unknown,
-    context: TypedExecutionContext
-  ): HTMLElement | null {
-    // Handle HTMLElement directly
-    if (isHTMLElement(element)) {
-      return element as HTMLElement;
-    }
-
-    // Handle string (CSS selector or context reference)
-    if (typeof element === 'string') {
-      const trimmed = element.trim();
-
-      // Handle context references
-      if (trimmed === 'me' && isHTMLElement(context.me)) {
-        return context.me as HTMLElement;
-      }
-      if (trimmed === 'it' && isHTMLElement(context.it)) {
-        return context.it as HTMLElement;
-      }
-      if (trimmed === 'you' && isHTMLElement(context.you)) {
-        return context.you as HTMLElement;
-      }
-
-      // Handle CSS selector
-      if (typeof document !== 'undefined') {
-        const found = document.querySelector(trimmed);
-        if (isHTMLElement(found)) {
-          return found as HTMLElement;
-        }
-      }
-    }
-
-    return null;
-  }
 
   /**
    * Take property from element and remove it

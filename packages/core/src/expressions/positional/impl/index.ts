@@ -673,20 +673,20 @@ export class RandomExpression
 // Factory Functions
 // ============================================================================
 
-export function createFirstExpression(): EnhancedFirstExpression {
-  return new EnhancedFirstExpression();
+export function createFirstExpression(): FirstExpression {
+  return new FirstExpression();
 }
 
-export function createLastExpression(): EnhancedLastExpression {
-  return new EnhancedLastExpression();
+export function createLastExpression(): LastExpression {
+  return new LastExpression();
 }
 
-export function createAtExpression(): EnhancedAtExpression {
-  return new EnhancedAtExpression();
+export function createAtExpression(): AtExpression {
+  return new AtExpression();
 }
 
-export function createRandomExpression(): EnhancedRandomExpression {
-  return new EnhancedRandomExpression();
+export function createRandomExpression(): RandomExpression {
+  return new RandomExpression();
 }
 
 // ============================================================================

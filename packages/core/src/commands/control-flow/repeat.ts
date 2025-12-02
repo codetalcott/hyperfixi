@@ -33,6 +33,7 @@
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
+import { evaluateCondition } from '../helpers/condition-helpers';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 
@@ -490,7 +491,7 @@ export class RepeatCommand {
     let interrupted = false;
     const maxIterations = 10000; // Safety limit
 
-    while (this.evaluateCondition(condition, context) && iterations < maxIterations) {
+    while (evaluateCondition(condition, context) && iterations < maxIterations) {
       // Set index variable
       if (indexVariable && context.locals) {
         context.locals.set(indexVariable, iterations);
@@ -533,7 +534,7 @@ export class RepeatCommand {
     let interrupted = false;
     const maxIterations = 10000; // Safety limit
 
-    while (!this.evaluateCondition(condition, context) && iterations < maxIterations) {
+    while (!evaluateCondition(condition, context) && iterations < maxIterations) {
       // Set index variable
       if (indexVariable && context.locals) {
         context.locals.set(indexVariable, iterations);
@@ -684,44 +685,6 @@ export class RepeatCommand {
   }
 
   // ========== Private Utility Methods ==========
-
-  /**
-   * Evaluate condition to boolean
-   *
-   * Handles various condition types:
-   * - boolean: direct value
-   * - function: call with context
-   * - string: variable lookup
-   * - other: JavaScript truthiness
-   *
-   * @param condition - Condition value to evaluate
-   * @param context - Execution context for variable lookup
-   * @returns Boolean result
-   */
-  private evaluateCondition(condition: any, context: TypedExecutionContext): boolean {
-    if (typeof condition === 'boolean') {
-      return condition;
-    }
-
-    if (typeof condition === 'function') {
-      try {
-        return Boolean(condition(context));
-      } catch {
-        return false;
-      }
-    }
-
-    // Check variables
-    if (typeof condition === 'string') {
-      const value =
-        context.locals?.get(condition) ||
-        context.globals?.get(condition) ||
-        context.variables?.get(condition);
-      return Boolean(value);
-    }
-
-    return Boolean(condition);
-  }
 
   /**
    * Execute commands block or array

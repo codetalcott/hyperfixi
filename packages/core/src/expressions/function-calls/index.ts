@@ -727,8 +727,8 @@ export class FunctionCallExpression
 /**
  * Factory function for creating enhanced function call expressions
  */
-export function createFunctionCallExpression(): EnhancedFunctionCallExpression {
-  return new EnhancedFunctionCallExpression();
+export function createFunctionCallExpression(): FunctionCallExpression {
+  return new FunctionCallExpression();
 }
 
 /**
@@ -751,9 +751,9 @@ export async function callFunction(
   args: unknown[],
   context: TypedExpressionContext
 ): Promise<EvaluationResult<HyperScriptValue>> {
-  const expression = new EnhancedFunctionCallExpression();
+  const expression = new FunctionCallExpression();
   return expression.evaluate(context, functionReference, args);
 }
 
 // Default export
-export default EnhancedFunctionCallExpression;
+export default FunctionCallExpression;

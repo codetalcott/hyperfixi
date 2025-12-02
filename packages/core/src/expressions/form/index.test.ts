@@ -5,9 +5,9 @@
 
 import { describe, test, expect, beforeEach } from 'vitest';
 import {
-  EnhancedFormValuesExpression,
-  EnhancedFormValidationExpression,
-  EnhancedFormSerializationExpression,
+  FormValuesExpression,
+  FormValidationExpression,
+  FormSerializationExpression,
   enhancedFormExpressions,
   extractFormValues,
   validateForm,
@@ -112,11 +112,11 @@ function createMockForm(): HTMLFormElement {
 }
 
 describe('Enhanced Form Values Expression', () => {
-  let expression: EnhancedFormValuesExpression;
+  let expression: FormValuesExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedFormValuesExpression();
+    expression = new FormValuesExpression();
     context = createMockContext();
   });
 
@@ -336,11 +336,11 @@ describe('Enhanced Form Values Expression', () => {
 });
 
 describe('Enhanced Form Validation Expression', () => {
-  let expression: EnhancedFormValidationExpression;
+  let expression: FormValidationExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedFormValidationExpression();
+    expression = new FormValidationExpression();
     context = createMockContext();
   });
 
@@ -489,11 +489,11 @@ describe('Enhanced Form Validation Expression', () => {
 });
 
 describe('Enhanced Form Serialization Expression', () => {
-  let expression: EnhancedFormSerializationExpression;
+  let expression: FormSerializationExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedFormSerializationExpression();
+    expression = new FormSerializationExpression();
     context = createMockContext();
   });
 
@@ -630,12 +630,12 @@ describe('Enhanced Form Serialization Expression', () => {
 
 describe('Expression Registry', () => {
   test('exports all enhanced form expressions', () => {
-    expect(enhancedFormExpressions['form-values']).toBeInstanceOf(EnhancedFormValuesExpression);
+    expect(enhancedFormExpressions['form-values']).toBeInstanceOf(FormValuesExpression);
     expect(enhancedFormExpressions['form-validate']).toBeInstanceOf(
-      EnhancedFormValidationExpression
+      FormValidationExpression
     );
     expect(enhancedFormExpressions['form-serialize']).toBeInstanceOf(
-      EnhancedFormSerializationExpression
+      FormSerializationExpression
     );
   });
 });
@@ -698,7 +698,7 @@ describe('Performance Characteristics', () => {
       form.appendChild(input);
     }
 
-    const expr = new EnhancedFormValuesExpression();
+    const expr = new FormValuesExpression();
     const startTime = performance.now();
     const result = await expr.evaluate(context, form);
     const endTime = performance.now();
@@ -716,7 +716,7 @@ describe('Performance Characteristics', () => {
     const forms = Array(50)
       .fill(0)
       .map(() => createMockForm());
-    const expr = new EnhancedFormValidationExpression();
+    const expr = new FormValidationExpression();
 
     const startTime = performance.now();
     const promises = forms.map(form => expr.evaluate(context, form));

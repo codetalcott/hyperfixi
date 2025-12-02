@@ -7,10 +7,10 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createTypedExecutionContext } from '../../test-setup';
 import type { TypedExpressionContext } from '../../../types/expression-types';
 import {
-  EnhancedFirstExpression,
-  EnhancedLastExpression,
-  EnhancedAtExpression,
-  EnhancedRandomExpression,
+  FirstExpression,
+  LastExpression,
+  AtExpression,
+  RandomExpression,
   positionalExpressions,
 } from './index';
 
@@ -43,11 +43,11 @@ describe('Enhanced Positional Expressions', () => {
     testElements = [];
   });
 
-  describe('EnhancedFirstExpression', () => {
-    let expression: EnhancedFirstExpression;
+  describe('FirstExpression', () => {
+    let expression: FirstExpression;
 
     beforeEach(() => {
-      expression = new EnhancedFirstExpression();
+      expression = new FirstExpression();
     });
 
     it('should have correct metadata', () => {
@@ -262,11 +262,11 @@ describe('Enhanced Positional Expressions', () => {
     });
   });
 
-  describe('EnhancedLastExpression', () => {
-    let expression: EnhancedLastExpression;
+  describe('LastExpression', () => {
+    let expression: LastExpression;
 
     beforeEach(() => {
-      expression = new EnhancedLastExpression();
+      expression = new LastExpression();
     });
 
     it('should have correct metadata', () => {
@@ -370,11 +370,11 @@ describe('Enhanced Positional Expressions', () => {
     });
   });
 
-  describe('EnhancedAtExpression', () => {
-    let expression: EnhancedAtExpression;
+  describe('AtExpression', () => {
+    let expression: AtExpression;
 
     beforeEach(() => {
-      expression = new EnhancedAtExpression();
+      expression = new AtExpression();
     });
 
     it('should have correct metadata', () => {
@@ -603,11 +603,11 @@ describe('Enhanced Positional Expressions', () => {
     });
   });
 
-  describe('EnhancedRandomExpression', () => {
-    let expression: EnhancedRandomExpression;
+  describe('RandomExpression', () => {
+    let expression: RandomExpression;
 
     beforeEach(() => {
-      expression = new EnhancedRandomExpression();
+      expression = new RandomExpression();
     });
 
     it('should have correct metadata', () => {
@@ -781,10 +781,10 @@ describe('Enhanced Positional Expressions', () => {
 
   describe('Expression Registry', () => {
     it('should export all enhanced positional expressions', () => {
-      expect(positionalExpressions.first).toBeInstanceOf(EnhancedFirstExpression);
-      expect(positionalExpressions.last).toBeInstanceOf(EnhancedLastExpression);
-      expect(positionalExpressions.at).toBeInstanceOf(EnhancedAtExpression);
-      expect(positionalExpressions.random).toBeInstanceOf(EnhancedRandomExpression);
+      expect(positionalExpressions.first).toBeInstanceOf(FirstExpression);
+      expect(positionalExpressions.last).toBeInstanceOf(LastExpression);
+      expect(positionalExpressions.at).toBeInstanceOf(AtExpression);
+      expect(positionalExpressions.random).toBeInstanceOf(RandomExpression);
     });
 
     it('should have consistent metadata across all expressions', () => {
@@ -819,7 +819,7 @@ describe('Enhanced Positional Expressions', () => {
       const nodeList = container.querySelectorAll('.item');
 
       // Test first
-      const firstExpr = new EnhancedFirstExpression();
+      const firstExpr = new FirstExpression();
       const firstResult = await firstExpr.evaluate(context, {
         collection: nodeList,
       });
@@ -830,7 +830,7 @@ describe('Enhanced Positional Expressions', () => {
       }
 
       // Test last
-      const lastExpr = new EnhancedLastExpression();
+      const lastExpr = new LastExpression();
       const lastResult = await lastExpr.evaluate(context, {
         collection: nodeList,
       });
@@ -841,7 +841,7 @@ describe('Enhanced Positional Expressions', () => {
       }
 
       // Test at
-      const atExpr = new EnhancedAtExpression();
+      const atExpr = new AtExpression();
       const atResult = await atExpr.evaluate(context, {
         collection: nodeList,
         index: 1,
@@ -859,10 +859,10 @@ describe('Enhanced Positional Expressions', () => {
       const largeArray = Array.from({ length: 10000 }, (_, i) => i);
 
       const testCases = [
-        { expr: new EnhancedFirstExpression(), input: { collection: largeArray } },
-        { expr: new EnhancedLastExpression(), input: { collection: largeArray } },
-        { expr: new EnhancedAtExpression(), input: { collection: largeArray, index: 5000 } },
-        { expr: new EnhancedRandomExpression(), input: { collection: largeArray } },
+        { expr: new FirstExpression(), input: { collection: largeArray } },
+        { expr: new LastExpression(), input: { collection: largeArray } },
+        { expr: new AtExpression(), input: { collection: largeArray, index: 5000 } },
+        { expr: new RandomExpression(), input: { collection: largeArray } },
       ];
 
       for (const testCase of testCases) {
@@ -878,7 +878,7 @@ describe('Enhanced Positional Expressions', () => {
     it('should maintain type consistency across operations', async () => {
       const mixedArray = [1, 'string', true, { key: 'value' }, [1, 2, 3]];
 
-      const firstExpr = new EnhancedFirstExpression();
+      const firstExpr = new FirstExpression();
       const firstResult = await firstExpr.evaluate(context, {
         collection: mixedArray,
       });
@@ -889,7 +889,7 @@ describe('Enhanced Positional Expressions', () => {
         expect(firstResult.type).toBe('Number');
       }
 
-      const atExpr = new EnhancedAtExpression();
+      const atExpr = new AtExpression();
       const atResult = await atExpr.evaluate(context, {
         collection: mixedArray,
         index: 1,
@@ -920,7 +920,7 @@ describe('Enhanced Positional Expressions', () => {
         ['b', 2],
         ['c', 3],
       ]);
-      const firstExpr = new EnhancedFirstExpression();
+      const firstExpr = new FirstExpression();
       const mapResult = await firstExpr.evaluate(context, {
         collection: testMap,
       });
@@ -948,7 +948,7 @@ describe('Enhanced Positional Expressions', () => {
 
   describe('Performance and Memory', () => {
     it('should not leak memory with large collections', async () => {
-      const expression = new EnhancedRandomExpression();
+      const expression = new RandomExpression();
 
       // Create and process many large collections
       for (let i = 0; i < 100; i++) {
@@ -970,7 +970,7 @@ describe('Enhanced Positional Expressions', () => {
 
       for (let i = 0; i < 10; i++) {
         const startTime = Date.now();
-        const result = await new EnhancedAtExpression().evaluate(context, {
+        const result = await new AtExpression().evaluate(context, {
           collection,
           index: Math.floor(Math.random() * collection.length),
         });

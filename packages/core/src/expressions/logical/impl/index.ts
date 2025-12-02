@@ -274,13 +274,13 @@ export class OrExpression
 
   validate(input: unknown): ValidationResult {
     // Reuse AND validation logic
-    const andExpr = new EnhancedAndExpression();
+    const andExpr = new AndExpression();
     return andExpr.validate(input);
   }
 
   private toBoolean(value: unknown): boolean {
     // Reuse AND boolean conversion logic
-    const andExpr = new EnhancedAndExpression();
+    const andExpr = new AndExpression();
     return andExpr['toBoolean'](value);
   }
 
@@ -404,7 +404,7 @@ export class NotExpression
 
   private toBoolean(value: unknown): boolean {
     // Reuse AND boolean conversion logic
-    const andExpr = new EnhancedAndExpression();
+    const andExpr = new AndExpression();
     return andExpr['toBoolean'](value);
   }
 
@@ -431,16 +431,16 @@ export class NotExpression
 // Factory Functions
 // ============================================================================
 
-export function createAndExpression(): EnhancedAndExpression {
-  return new EnhancedAndExpression();
+export function createAndExpression(): AndExpression {
+  return new AndExpression();
 }
 
-export function createOrExpression(): EnhancedOrExpression {
-  return new EnhancedOrExpression();
+export function createOrExpression(): OrExpression {
+  return new OrExpression();
 }
 
-export function createNotExpression(): EnhancedNotExpression {
-  return new EnhancedNotExpression();
+export function createNotExpression(): NotExpression {
+  return new NotExpression();
 }
 
 // ============================================================================

@@ -7,12 +7,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createTypedExecutionContext } from '../../test-setup';
 import type { TypedExpressionContext } from '../../../types/expression-types';
 import {
-  EnhancedPossessiveExpression,
-  EnhancedMyExpression,
-  EnhancedItsExpression,
-  EnhancedYourExpression,
-  EnhancedAttributeExpression,
-  EnhancedAttributeWithValueExpression,
+  PossessiveExpression,
+  MyExpression,
+  ItsExpression,
+  YourExpression,
+  AttributeExpression,
+  AttributeWithValueExpression,
   propertyExpressions,
 } from './index';
 
@@ -64,11 +64,11 @@ describe('Enhanced Property Expressions', () => {
     });
   });
 
-  describe('EnhancedPossessiveExpression', () => {
-    let expression: EnhancedPossessiveExpression;
+  describe('PossessiveExpression', () => {
+    let expression: PossessiveExpression;
 
     beforeEach(() => {
-      expression = new EnhancedPossessiveExpression();
+      expression = new PossessiveExpression();
     });
 
     it('should have correct metadata', () => {
@@ -363,11 +363,11 @@ describe('Enhanced Property Expressions', () => {
     });
   });
 
-  describe('EnhancedMyExpression', () => {
-    let expression: EnhancedMyExpression;
+  describe('MyExpression', () => {
+    let expression: MyExpression;
 
     beforeEach(() => {
-      expression = new EnhancedMyExpression();
+      expression = new MyExpression();
     });
 
     it('should have correct metadata', () => {
@@ -433,11 +433,11 @@ describe('Enhanced Property Expressions', () => {
     });
   });
 
-  describe('EnhancedItsExpression', () => {
-    let expression: EnhancedItsExpression;
+  describe('ItsExpression', () => {
+    let expression: ItsExpression;
 
     beforeEach(() => {
-      expression = new EnhancedItsExpression();
+      expression = new ItsExpression();
     });
 
     it('should have correct metadata', () => {
@@ -497,11 +497,11 @@ describe('Enhanced Property Expressions', () => {
     });
   });
 
-  describe('EnhancedYourExpression', () => {
-    let expression: EnhancedYourExpression;
+  describe('YourExpression', () => {
+    let expression: YourExpression;
 
     beforeEach(() => {
-      expression = new EnhancedYourExpression();
+      expression = new YourExpression();
     });
 
     it('should have correct metadata', () => {
@@ -548,11 +548,11 @@ describe('Enhanced Property Expressions', () => {
     });
   });
 
-  describe('EnhancedAttributeExpression', () => {
-    let expression: EnhancedAttributeExpression;
+  describe('AttributeExpression', () => {
+    let expression: AttributeExpression;
 
     beforeEach(() => {
-      expression = new EnhancedAttributeExpression();
+      expression = new AttributeExpression();
     });
 
     it('should have correct metadata', () => {
@@ -648,11 +648,11 @@ describe('Enhanced Property Expressions', () => {
     });
   });
 
-  describe('EnhancedAttributeWithValueExpression', () => {
-    let expression: EnhancedAttributeWithValueExpression;
+  describe('AttributeWithValueExpression', () => {
+    let expression: AttributeWithValueExpression;
 
     beforeEach(() => {
-      expression = new EnhancedAttributeWithValueExpression();
+      expression = new AttributeWithValueExpression();
     });
 
     it('should have correct metadata', () => {
@@ -759,13 +759,13 @@ describe('Enhanced Property Expressions', () => {
 
   describe('Expression Registry', () => {
     it('should export all enhanced property expressions', () => {
-      expect(propertyExpressions.possessive).toBeInstanceOf(EnhancedPossessiveExpression);
-      expect(propertyExpressions.my).toBeInstanceOf(EnhancedMyExpression);
-      expect(propertyExpressions.its).toBeInstanceOf(EnhancedItsExpression);
-      expect(propertyExpressions.your).toBeInstanceOf(EnhancedYourExpression);
-      expect(propertyExpressions.attribute).toBeInstanceOf(EnhancedAttributeExpression);
+      expect(propertyExpressions.possessive).toBeInstanceOf(PossessiveExpression);
+      expect(propertyExpressions.my).toBeInstanceOf(MyExpression);
+      expect(propertyExpressions.its).toBeInstanceOf(ItsExpression);
+      expect(propertyExpressions.your).toBeInstanceOf(YourExpression);
+      expect(propertyExpressions.attribute).toBeInstanceOf(AttributeExpression);
       expect(propertyExpressions.attributeWithValue).toBeInstanceOf(
-        EnhancedAttributeWithValueExpression
+        AttributeWithValueExpression
       );
     });
 
@@ -801,7 +801,7 @@ describe('Enhanced Property Expressions', () => {
       container.appendChild(header);
       document.body.appendChild(container);
 
-      const possessiveExpr = new EnhancedPossessiveExpression();
+      const possessiveExpr = new PossessiveExpression();
 
       // Test nested property access
       const containerResult = await possessiveExpr.evaluate(context, {
@@ -857,7 +857,7 @@ describe('Enhanced Property Expressions', () => {
       form.appendChild(select);
       document.body.appendChild(form);
 
-      const possessiveExpr = new EnhancedPossessiveExpression();
+      const possessiveExpr = new PossessiveExpression();
 
       const checkboxResult = await possessiveExpr.evaluate(context, {
         element: checkbox,
@@ -888,7 +888,7 @@ describe('Enhanced Property Expressions', () => {
         largeObject[`prop${i}`] = `value${i}`;
       }
 
-      const possessiveExpr = new EnhancedPossessiveExpression();
+      const possessiveExpr = new PossessiveExpression();
 
       const startTime = Date.now();
       const result = await possessiveExpr.evaluate(context, {
@@ -911,9 +911,9 @@ describe('Enhanced Property Expressions', () => {
       context.it = { data: { nested: 'value' } };
       context.you = testInput;
 
-      const myExpr = new EnhancedMyExpression();
-      const itsExpr = new EnhancedItsExpression();
-      const yourExpr = new EnhancedYourExpression();
+      const myExpr = new MyExpression();
+      const itsExpr = new ItsExpression();
+      const yourExpr = new YourExpression();
 
       const [myResult, itsResult, yourResult] = await Promise.all([
         myExpr.evaluate(context, { property: 'id' }),
@@ -941,7 +941,7 @@ describe('Enhanced Property Expressions', () => {
 
   describe('Performance and Memory', () => {
     it('should not leak memory with repeated property access', async () => {
-      const possessiveExpr = new EnhancedPossessiveExpression();
+      const possessiveExpr = new PossessiveExpression();
 
       // Perform many property accesses
       for (let i = 0; i < 100; i++) {
@@ -958,7 +958,7 @@ describe('Enhanced Property Expressions', () => {
     });
 
     it('should maintain consistent performance', async () => {
-      const possessiveExpr = new EnhancedPossessiveExpression();
+      const possessiveExpr = new PossessiveExpression();
       const durations: number[] = [];
 
       for (let i = 0; i < 10; i++) {

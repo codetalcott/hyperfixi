@@ -603,8 +603,8 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
 /**
  * Factory function for creating enhanced as expression
  */
-export function createAsExpression(): EnhancedAsExpression {
-  return new EnhancedAsExpression();
+export function createAsExpression(): AsExpression {
+  return new AsExpression();
 }
 
 /**
@@ -627,9 +627,9 @@ export function evaluateAs(
   targetType: string,
   context: TypedExecutionContext
 ): Promise<EvaluationResult<HyperScriptValue>> {
-  const expression = new EnhancedAsExpression();
+  const expression = new AsExpression();
   return expression.evaluate(context, value, targetType);
 }
 
 // Default exports
-export { EnhancedAsExpression as default };
+export { AsExpression as default };

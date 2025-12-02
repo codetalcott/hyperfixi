@@ -19,7 +19,7 @@ export type {
   ContextFilter,
   BaseContextInput,
   BaseContextOutput,
-  EnhancedTypedExpressionContext,
+  TypedExpressionContext,
 } from '../types/context-types';
 
 export type { ValidationResult } from '../types/base-types';

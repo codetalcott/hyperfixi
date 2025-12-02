@@ -247,7 +247,7 @@ export class FormValidationExpression implements TypedExpressionImplementation<b
   }
 
   private async getFormValues(formElement: HTMLElement): Promise<Record<string, unknown>> {
-    const valuesExpr = new EnhancedFormValuesExpression();
+    const valuesExpr = new FormValuesExpression();
     const result = await valuesExpr.evaluate({} as TypedExecutionContext, formElement);
     return result.success ? (result.value ?? {}) : {};
   }
@@ -347,7 +347,7 @@ export class FormSerializationExpression implements TypedExpressionImplementatio
       }
 
       // Get form values
-      const valuesExpr = new EnhancedFormValuesExpression();
+      const valuesExpr = new FormValuesExpression();
       const valuesResult = await valuesExpr.evaluate(context, formElement);
 
       if (!valuesResult.success) {
@@ -402,24 +402,24 @@ export class FormSerializationExpression implements TypedExpressionImplementatio
  * Enhanced form expressions registry
  */
 export const enhancedFormExpressions = {
-  'form-values': new EnhancedFormValuesExpression(),
-  'form-validate': new EnhancedFormValidationExpression(),
-  'form-serialize': new EnhancedFormSerializationExpression(),
+  'form-values': new FormValuesExpression(),
+  'form-validate': new FormValidationExpression(),
+  'form-serialize': new FormSerializationExpression(),
 } as const;
 
 /**
  * Factory functions for creating enhanced form expressions
  */
-export function createFormValues(): EnhancedFormValuesExpression {
-  return new EnhancedFormValuesExpression();
+export function createFormValues(): FormValuesExpression {
+  return new FormValuesExpression();
 }
 
-export function createFormValidation(): EnhancedFormValidationExpression {
-  return new EnhancedFormValidationExpression();
+export function createFormValidation(): FormValidationExpression {
+  return new FormValidationExpression();
 }
 
-export function createFormSerialization(): EnhancedFormSerializationExpression {
-  return new EnhancedFormSerializationExpression();
+export function createFormSerialization(): FormSerializationExpression {
+  return new FormSerializationExpression();
 }
 
 /**
@@ -429,7 +429,7 @@ export async function extractFormValues(
   formElement: HTMLElement,
   context: TypedExecutionContext
 ): Promise<EvaluationResult<Record<string, unknown>>> {
-  const expr = new EnhancedFormValuesExpression();
+  const expr = new FormValuesExpression();
   return expr.evaluate(context, formElement);
 }
 
@@ -438,7 +438,7 @@ export async function validateForm(
   context: TypedExecutionContext,
   customRules?: Record<string, string>
 ): Promise<EvaluationResult<boolean>> {
-  const expr = new EnhancedFormValidationExpression();
+  const expr = new FormValidationExpression();
   return expr.evaluate(context, formElement, customRules);
 }
 
@@ -447,7 +447,7 @@ export async function serializeForm(
   context: TypedExecutionContext,
   format: string = 'urlencoded'
 ): Promise<EvaluationResult<string>> {
-  const expr = new EnhancedFormSerializationExpression();
+  const expr = new FormSerializationExpression();
   return expr.evaluate(context, formElement, format);
 }
 

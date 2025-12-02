@@ -25,6 +25,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { evaluateCondition } from '../helpers/condition-helpers';
 
 /**
  * Typed input for UnlessCommand
@@ -123,7 +124,7 @@ export class UnlessCommand {
     const { condition, commands } = input;
 
     // Evaluate the condition
-    const conditionResult = this.evaluateCondition(condition, context);
+    const conditionResult = evaluateCondition(condition, context);
 
     // Unless logic: execute commands only if condition is FALSE
     if (conditionResult) {
@@ -165,47 +166,6 @@ export class UnlessCommand {
   }
 
   // ========== Private Utility Methods ==========
-
-  /**
-   * Evaluate condition as boolean
-   *
-   * @param condition - Condition value to evaluate
-   * @param context - Execution context
-   * @returns Boolean result
-   */
-  private evaluateCondition(condition: any, context: TypedExecutionContext): boolean {
-    // Handle boolean conditions
-    if (typeof condition === 'boolean') {
-      return condition;
-    }
-
-    // Handle function conditions
-    if (typeof condition === 'function') {
-      try {
-        return Boolean(condition(context));
-      } catch {
-        return false;
-      }
-    }
-
-    // Handle string variable references
-    if (typeof condition === 'string') {
-      const value =
-        context.locals?.get(condition) ||
-        context.globals?.get(condition) ||
-        context.variables?.get(condition);
-      return Boolean(value);
-    }
-
-    // Handle object conditions (check for truthy properties)
-    if (typeof condition === 'object' && condition !== null) {
-      // Simple object truthiness check
-      return Object.keys(condition).length > 0;
-    }
-
-    // Default: evaluate as boolean
-    return Boolean(condition);
-  }
 
   /**
    * Execute a command

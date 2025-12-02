@@ -28,12 +28,14 @@ export {
 export {
   resolveElement,
   resolveElements,
+  resolveTargetsFromArgs,
   asHTMLElement,
   isContextRef,
   isCSSSelector,
   findClosest,
   findAll,
 } from './element-resolution';
+export type { ResolveTargetsOptions } from './element-resolution';
 
 // Duration parsing helpers
 export {
@@ -45,3 +47,32 @@ export {
   kebabToCamel,
   formatDuration,
 } from './duration-parsing';
+
+// Class manipulation helpers
+export {
+  parseClasses,
+  isValidClassName,
+  normalizeClassName,
+} from './class-manipulation';
+
+// Attribute manipulation helpers
+export {
+  isAttributeSyntax,
+  parseAttribute,
+  parseAttributeName,
+  parseAttributeWithValue,
+} from './attribute-manipulation';
+
+// Event helpers
+export {
+  createCustomEvent,
+  parseEventValue,
+  dispatchCustomEvent,
+} from './event-helpers';
+export type { EventOptions } from './event-helpers';
+
+// Condition helpers
+export {
+  evaluateCondition,
+  isTruthy,
+} from './condition-helpers';

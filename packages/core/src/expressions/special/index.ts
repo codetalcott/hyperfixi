@@ -938,28 +938,28 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
 // Factory Functions
 // ============================================================================
 
-export function createStringLiteralExpression(): EnhancedStringLiteralExpression {
-  return new EnhancedStringLiteralExpression();
+export function createStringLiteralExpression(): StringLiteralExpression {
+  return new StringLiteralExpression();
 }
 
-export function createNumberLiteralExpression(): EnhancedNumberLiteralExpression {
-  return new EnhancedNumberLiteralExpression();
+export function createNumberLiteralExpression(): NumberLiteralExpression {
+  return new NumberLiteralExpression();
 }
 
-export function createBooleanLiteralExpression(): EnhancedBooleanLiteralExpression {
-  return new EnhancedBooleanLiteralExpression();
+export function createBooleanLiteralExpression(): BooleanLiteralExpression {
+  return new BooleanLiteralExpression();
 }
 
-export function createAdditionExpression(): EnhancedAdditionExpression {
-  return new EnhancedAdditionExpression();
+export function createAdditionExpression(): AdditionExpression {
+  return new AdditionExpression();
 }
 
-export function createStringConcatenationExpression(): EnhancedStringConcatenationExpression {
-  return new EnhancedStringConcatenationExpression();
+export function createStringConcatenationExpression(): StringConcatenationExpression {
+  return new StringConcatenationExpression();
 }
 
-export function createMultiplicationExpression(): EnhancedMultiplicationExpression {
-  return new EnhancedMultiplicationExpression();
+export function createMultiplicationExpression(): MultiplicationExpression {
+  return new MultiplicationExpression();
 }
 
 // ============================================================================

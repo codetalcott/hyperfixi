@@ -6,9 +6,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { TypedExpressionContext } from '../../types/enhanced-expressions.ts';
 import {
-  EnhancedMyExpression,
-  EnhancedItsExpression,
-  EnhancedAttributeExpression,
+  MyExpression,
+  ItsExpression,
+  AttributeExpression,
   propertyExpressions,
 } from './index.ts';
 
@@ -66,12 +66,12 @@ function createMockElement(
 // My Expression Tests
 // ============================================================================
 
-describe('EnhancedMyExpression', () => {
-  let myExpr: EnhancedMyExpression;
+describe('MyExpression', () => {
+  let myExpr: MyExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    myExpr = new EnhancedMyExpression();
+    myExpr = new MyExpression();
     context = createTestContext();
   });
 
@@ -270,12 +270,12 @@ describe('EnhancedMyExpression', () => {
 // Its Expression Tests
 // ============================================================================
 
-describe('EnhancedItsExpression', () => {
-  let itsExpr: EnhancedItsExpression;
+describe('ItsExpression', () => {
+  let itsExpr: ItsExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    itsExpr = new EnhancedItsExpression();
+    itsExpr = new ItsExpression();
     context = createTestContext();
   });
 
@@ -451,12 +451,12 @@ describe('EnhancedItsExpression', () => {
 // Attribute Expression Tests
 // ============================================================================
 
-describe('EnhancedAttributeExpression', () => {
-  let attrExpr: EnhancedAttributeExpression;
+describe('AttributeExpression', () => {
+  let attrExpr: AttributeExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    attrExpr = new EnhancedAttributeExpression();
+    attrExpr = new AttributeExpression();
     context = createTestContext();
   });
 
@@ -651,9 +651,9 @@ describe('Enhanced Property Expressions Integration', () => {
 
   describe('Expression registry', () => {
     it('should provide all property expressions', () => {
-      expect(propertyExpressions.my).toBeInstanceOf(EnhancedMyExpression);
-      expect(propertyExpressions.its).toBeInstanceOf(EnhancedItsExpression);
-      expect(propertyExpressions.attribute).toBeInstanceOf(EnhancedAttributeExpression);
+      expect(propertyExpressions.my).toBeInstanceOf(MyExpression);
+      expect(propertyExpressions.its).toBeInstanceOf(ItsExpression);
+      expect(propertyExpressions.attribute).toBeInstanceOf(AttributeExpression);
     });
   });
 

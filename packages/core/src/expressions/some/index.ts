@@ -389,8 +389,8 @@ export class SomeExpression implements TypedExpressionImplementation<boolean> {
 /**
  * Factory function for creating enhanced some expression
  */
-export function createSomeExpression(): EnhancedSomeExpression {
-  return new EnhancedSomeExpression();
+export function createSomeExpression(): SomeExpression {
+  return new SomeExpression();
 }
 
 /**
@@ -412,9 +412,9 @@ export function evaluateSome(
   value: HyperScriptValue,
   context: TypedExecutionContext
 ): Promise<EvaluationResult<boolean>> {
-  const expression = new EnhancedSomeExpression();
+  const expression = new SomeExpression();
   return expression.evaluate(context, value);
 }
 
 // Default exports
-export { EnhancedSomeExpression as default };
+export { SomeExpression as default };

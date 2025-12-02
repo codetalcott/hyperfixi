@@ -301,7 +301,7 @@ export class SubtractionExpression implements BaseTypedExpression<number> {
     input: BinaryOperationInput
   ): Promise<TypedResult<number>> {
     // Reuse the same logic as addition but with subtraction operation
-    const additionExpr = new EnhancedAdditionExpression();
+    const additionExpr = new AdditionExpression();
 
     try {
       // Validate using the same validation logic
@@ -355,7 +355,7 @@ export class SubtractionExpression implements BaseTypedExpression<number> {
 
   validate(input: unknown): ValidationResult {
     // Reuse addition validation logic
-    const additionExpr = new EnhancedAdditionExpression();
+    const additionExpr = new AdditionExpression();
     return additionExpr.validate(input);
   }
 }
@@ -383,7 +383,7 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
     _context: TypedExpressionContext,
     input: BinaryOperationInput
   ): Promise<TypedResult<number>> {
-    const additionExpr = new EnhancedAdditionExpression();
+    const additionExpr = new AdditionExpression();
 
     try {
       const validation = this.validate(input);
@@ -434,7 +434,7 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
   }
 
   validate(input: unknown): ValidationResult {
-    const additionExpr = new EnhancedAdditionExpression();
+    const additionExpr = new AdditionExpression();
     return additionExpr.validate(input);
   }
 }
@@ -463,7 +463,7 @@ export class DivisionExpression implements BaseTypedExpression<number> {
     _context: TypedExpressionContext,
     input: BinaryOperationInput
   ): Promise<TypedResult<number>> {
-    const additionExpr = new EnhancedAdditionExpression();
+    const additionExpr = new AdditionExpression();
 
     try {
       const validation = this.validate(input);
@@ -503,7 +503,7 @@ export class DivisionExpression implements BaseTypedExpression<number> {
   }
 
   validate(input: unknown): ValidationResult {
-    const additionExpr = new EnhancedAdditionExpression();
+    const additionExpr = new AdditionExpression();
     return additionExpr.validate(input);
   }
 }
@@ -531,7 +531,7 @@ export class ModuloExpression implements BaseTypedExpression<number> {
     _context: TypedExpressionContext,
     input: BinaryOperationInput
   ): Promise<TypedResult<number>> {
-    const additionExpr = new EnhancedAdditionExpression();
+    const additionExpr = new AdditionExpression();
 
     try {
       const validation = this.validate(input);
@@ -601,7 +601,7 @@ export class ModuloExpression implements BaseTypedExpression<number> {
   }
 
   validate(input: unknown): ValidationResult {
-    const additionExpr = new EnhancedAdditionExpression();
+    const additionExpr = new AdditionExpression();
     return additionExpr.validate(input);
   }
 }
@@ -610,24 +610,24 @@ export class ModuloExpression implements BaseTypedExpression<number> {
 // Factory Functions
 // ============================================================================
 
-export function createAdditionExpression(): EnhancedAdditionExpression {
-  return new EnhancedAdditionExpression();
+export function createAdditionExpression(): AdditionExpression {
+  return new AdditionExpression();
 }
 
-export function createSubtractionExpression(): EnhancedSubtractionExpression {
-  return new EnhancedSubtractionExpression();
+export function createSubtractionExpression(): SubtractionExpression {
+  return new SubtractionExpression();
 }
 
-export function createMultiplicationExpression(): EnhancedMultiplicationExpression {
-  return new EnhancedMultiplicationExpression();
+export function createMultiplicationExpression(): MultiplicationExpression {
+  return new MultiplicationExpression();
 }
 
-export function createDivisionExpression(): EnhancedDivisionExpression {
-  return new EnhancedDivisionExpression();
+export function createDivisionExpression(): DivisionExpression {
+  return new DivisionExpression();
 }
 
-export function createModuloExpression(): EnhancedModuloExpression {
-  return new EnhancedModuloExpression();
+export function createModuloExpression(): ModuloExpression {
+  return new ModuloExpression();
 }
 
 // ============================================================================

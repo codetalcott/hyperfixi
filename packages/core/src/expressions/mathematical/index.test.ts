@@ -6,11 +6,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { TypedExpressionContext } from '../../types/enhanced-expressions.ts';
 import {
-  EnhancedAdditionExpression,
-  EnhancedSubtractionExpression,
-  EnhancedMultiplicationExpression,
-  EnhancedDivisionExpression,
-  EnhancedModuloExpression,
+  AdditionExpression,
+  SubtractionExpression,
+  MultiplicationExpression,
+  DivisionExpression,
+  ModuloExpression,
   mathematicalExpressions,
 } from './index.ts';
 
@@ -44,12 +44,12 @@ function createTestContext(
 // Addition Expression Tests
 // ============================================================================
 
-describe('EnhancedAdditionExpression', () => {
-  let additionExpr: EnhancedAdditionExpression;
+describe('AdditionExpression', () => {
+  let additionExpr: AdditionExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    additionExpr = new EnhancedAdditionExpression();
+    additionExpr = new AdditionExpression();
     context = createTestContext();
   });
 
@@ -202,12 +202,12 @@ describe('EnhancedAdditionExpression', () => {
 // Subtraction Expression Tests
 // ============================================================================
 
-describe('EnhancedSubtractionExpression', () => {
-  let subtractionExpr: EnhancedSubtractionExpression;
+describe('SubtractionExpression', () => {
+  let subtractionExpr: SubtractionExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    subtractionExpr = new EnhancedSubtractionExpression();
+    subtractionExpr = new SubtractionExpression();
     context = createTestContext();
   });
 
@@ -270,12 +270,12 @@ describe('EnhancedSubtractionExpression', () => {
 // Multiplication Expression Tests
 // ============================================================================
 
-describe('EnhancedMultiplicationExpression', () => {
-  let multiplicationExpr: EnhancedMultiplicationExpression;
+describe('MultiplicationExpression', () => {
+  let multiplicationExpr: MultiplicationExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    multiplicationExpr = new EnhancedMultiplicationExpression();
+    multiplicationExpr = new MultiplicationExpression();
     context = createTestContext();
   });
 
@@ -338,12 +338,12 @@ describe('EnhancedMultiplicationExpression', () => {
 // Division Expression Tests
 // ============================================================================
 
-describe('EnhancedDivisionExpression', () => {
-  let divisionExpr: EnhancedDivisionExpression;
+describe('DivisionExpression', () => {
+  let divisionExpr: DivisionExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    divisionExpr = new EnhancedDivisionExpression();
+    divisionExpr = new DivisionExpression();
     context = createTestContext();
   });
 
@@ -418,12 +418,12 @@ describe('EnhancedDivisionExpression', () => {
 // Modulo Expression Tests
 // ============================================================================
 
-describe('EnhancedModuloExpression', () => {
-  let moduloExpr: EnhancedModuloExpression;
+describe('ModuloExpression', () => {
+  let moduloExpr: ModuloExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    moduloExpr = new EnhancedModuloExpression();
+    moduloExpr = new ModuloExpression();
     context = createTestContext();
   });
 
@@ -510,13 +510,13 @@ describe('Enhanced Mathematical Expressions Integration', () => {
 
   describe('Expression registry', () => {
     it('should provide all mathematical expressions', () => {
-      expect(mathematicalExpressions.addition).toBeInstanceOf(EnhancedAdditionExpression);
-      expect(mathematicalExpressions.subtraction).toBeInstanceOf(EnhancedSubtractionExpression);
+      expect(mathematicalExpressions.addition).toBeInstanceOf(AdditionExpression);
+      expect(mathematicalExpressions.subtraction).toBeInstanceOf(SubtractionExpression);
       expect(mathematicalExpressions.multiplication).toBeInstanceOf(
-        EnhancedMultiplicationExpression
+        MultiplicationExpression
       );
-      expect(mathematicalExpressions.division).toBeInstanceOf(EnhancedDivisionExpression);
-      expect(mathematicalExpressions.modulo).toBeInstanceOf(EnhancedModuloExpression);
+      expect(mathematicalExpressions.division).toBeInstanceOf(DivisionExpression);
+      expect(mathematicalExpressions.modulo).toBeInstanceOf(ModuloExpression);
     });
   });
 

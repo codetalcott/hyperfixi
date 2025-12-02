@@ -28,6 +28,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core.ts';
 import type { ASTNode, ExpressionNode } from '../../types/base-types.ts';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator.ts';
+import { parseDurationStrict } from '../helpers/duration-parsing';
 
 /**
  * Time-based wait input
@@ -308,7 +309,7 @@ export class WaitCommand {
     const value = await evaluator.evaluate(arg, context);
 
     // Parse time value
-    const milliseconds = this.parseTimeValue(value);
+    const milliseconds = parseDurationStrict(value);
 
     return {
       type: 'time',
@@ -498,7 +499,7 @@ export class WaitCommand {
     for (const value of orValues) {
       // Try to parse as time first
       try {
-        const milliseconds = this.parseTimeValue(value);
+        const milliseconds = parseDurationStrict(value);
         conditions.push({ type: 'time', milliseconds });
       } catch {
         // Not a time value, try as event name
@@ -531,51 +532,6 @@ export class WaitCommand {
       type: 'race',
       conditions,
     };
-  }
-
-  /**
-   * Parse time value from various formats
-   *
-   * Supports:
-   * - "2s", "2 s", "2sec", "2 seconds" -> 2000ms
-   * - "500ms", "500 ms", "500 milliseconds" -> 500ms
-   * - 100 (number) -> 100ms
-   *
-   * @param value - Time value to parse
-   * @returns Milliseconds
-   */
-  private parseTimeValue(value: unknown): number {
-    // Handle number (already in milliseconds)
-    if (typeof value === 'number') {
-      if (value < 0) throw new Error('wait: time must be >= 0');
-      return Math.floor(value);
-    }
-
-    // Handle string with suffix
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-
-      // Match patterns like "2s", "500ms", "2 seconds", etc.
-      const match = trimmed.match(/^(\d+(?:\.\d+)?)\s*(s|ms|sec|seconds?|milliseconds?)?$/i);
-
-      if (!match) {
-        throw new Error(`wait: invalid time format "${value}"`);
-      }
-
-      const number = parseFloat(match[1]);
-      const unit = (match[2] || 'ms').toLowerCase();
-
-      // Convert to milliseconds
-      if (unit === 'ms' || unit === 'millisecond' || unit === 'milliseconds') {
-        return Math.floor(number);
-      } else if (unit === 's' || unit === 'sec' || unit === 'second' || unit === 'seconds') {
-        return Math.floor(number * 1000);
-      }
-
-      throw new Error(`wait: unknown time unit "${unit}"`);
-    }
-
-    throw new Error(`wait: invalid time value type ${typeof value}`);
   }
 
   /**

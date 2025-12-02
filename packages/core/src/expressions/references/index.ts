@@ -481,12 +481,12 @@ export const referencesExpressions = {
 
 export type ReferenceExpressionName = keyof typeof referencesExpressions;
 
-// Re-export enhanced implementations for tests
+// Re-export implementations for tests
 export {
-  EnhancedMeExpression,
-  EnhancedYouExpression,
-  EnhancedItExpression,
-  EnhancedCSSSelectorExpression,
+  MeExpression,
+  YouExpression,
+  ItExpression,
+  CSSSelectorExpression,
   createMeExpression,
   createYouExpression,
   createItExpression,

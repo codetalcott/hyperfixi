@@ -4,15 +4,15 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { EnhancedSomeExpression, createSomeExpression, evaluateSome } from './index.ts';
+import { SomeExpression, createSomeExpression, evaluateSome } from './index.ts';
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
 describe('Enhanced Some Expression', () => {
-  let someExpression: EnhancedSomeExpression;
+  let someExpression: SomeExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    someExpression = new EnhancedSomeExpression();
+    someExpression = new SomeExpression();
     context = createTypedExpressionContext();
 
     // Restore console.log for debugging
@@ -391,7 +391,7 @@ describe('Enhanced Some Expression', () => {
   describe('Utility Functions', () => {
     test('factory function works correctly', () => {
       const someExpr = createSomeExpression();
-      expect(someExpr).toBeInstanceOf(EnhancedSomeExpression);
+      expect(someExpr).toBeInstanceOf(SomeExpression);
     });
 
     test('evaluateSome utility works', async () => {

@@ -300,8 +300,8 @@ export class SymbolExpression
 /**
  * Factory function for creating enhanced symbol expressions
  */
-export function createSymbolExpression(): EnhancedSymbolExpression {
-  return new EnhancedSymbolExpression();
+export function createSymbolExpression(): SymbolExpression {
+  return new SymbolExpression();
 }
 
 /**
@@ -323,9 +323,9 @@ export async function resolveSymbol(
   symbolName: string,
   context: TypedExpressionContext
 ): Promise<EvaluationResult<HyperScriptValue>> {
-  const expression = new EnhancedSymbolExpression();
+  const expression = new SymbolExpression();
   return expression.evaluate(context, symbolName);
 }
 
 // Default export
-export default EnhancedSymbolExpression;
+export default SymbolExpression;

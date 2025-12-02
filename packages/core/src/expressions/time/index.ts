@@ -312,7 +312,7 @@ export class TimeArithmeticExpression implements TypedExpressionImplementation<n
     time2: HyperScriptValue
   ): Promise<EvaluationResult<number>> {
     try {
-      const parser = new EnhancedTimeParsingExpression();
+      const parser = new TimeParsingExpression();
 
       // Parse first time value
       let ms1: number;
@@ -413,24 +413,24 @@ export class TimeArithmeticExpression implements TypedExpressionImplementation<n
  * Enhanced time expressions registry
  */
 export const enhancedTimeExpressions = {
-  'time-parse': new EnhancedTimeParsingExpression(),
-  'duration-format': new EnhancedDurationFormattingExpression(),
-  'time-arithmetic': new EnhancedTimeArithmeticExpression(),
+  'time-parse': new TimeParsingExpression(),
+  'duration-format': new DurationFormattingExpression(),
+  'time-arithmetic': new TimeArithmeticExpression(),
 } as const;
 
 /**
  * Factory functions for creating enhanced time expressions
  */
-export function createTimeParsing(): EnhancedTimeParsingExpression {
-  return new EnhancedTimeParsingExpression();
+export function createTimeParsing(): TimeParsingExpression {
+  return new TimeParsingExpression();
 }
 
-export function createDurationFormatting(): EnhancedDurationFormattingExpression {
-  return new EnhancedDurationFormattingExpression();
+export function createDurationFormatting(): DurationFormattingExpression {
+  return new DurationFormattingExpression();
 }
 
-export function createTimeArithmetic(): EnhancedTimeArithmeticExpression {
-  return new EnhancedTimeArithmeticExpression();
+export function createTimeArithmetic(): TimeArithmeticExpression {
+  return new TimeArithmeticExpression();
 }
 
 /**
@@ -441,7 +441,7 @@ export async function parseTime(
   context: TypedExecutionContext,
   defaultUnit: string = 'ms'
 ): Promise<EvaluationResult<number>> {
-  const expr = new EnhancedTimeParsingExpression();
+  const expr = new TimeParsingExpression();
   return expr.evaluate(context, timeString, defaultUnit);
 }
 
@@ -451,7 +451,7 @@ export async function formatDuration(
   format: string = 'default',
   maxUnits: number = 6
 ): Promise<EvaluationResult<string>> {
-  const expr = new EnhancedDurationFormattingExpression();
+  const expr = new DurationFormattingExpression();
   return expr.evaluate(context, milliseconds, format, maxUnits);
 }
 
@@ -461,7 +461,7 @@ export async function performTimeArithmetic(
   time2: HyperScriptValue,
   context: TypedExecutionContext
 ): Promise<EvaluationResult<number>> {
-  const expr = new EnhancedTimeArithmeticExpression();
+  const expr = new TimeArithmeticExpression();
   return expr.evaluate(context, operation, time1, time2);
 }
 

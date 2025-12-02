@@ -244,7 +244,7 @@ export class LessThanExpression implements BaseTypedExpression<boolean> {
     input: ComparisonInput
   ): Promise<TypedResult<boolean>> {
     // Reuse greater than logic but invert the comparison
-    const greaterThanExpr = new EnhancedGreaterThanExpression();
+    const greaterThanExpr = new GreaterThanExpression();
 
     try {
       const validation = this.validate(input);
@@ -279,7 +279,7 @@ export class LessThanExpression implements BaseTypedExpression<boolean> {
   }
 
   validate(input: unknown): ValidationResult {
-    const greaterThanExpr = new EnhancedGreaterThanExpression();
+    const greaterThanExpr = new GreaterThanExpression();
     return greaterThanExpr.validate(input);
   }
 
@@ -389,7 +389,7 @@ export class GreaterThanOrEqualExpression implements BaseTypedExpression<boolean
   }
 
   validate(input: unknown): ValidationResult {
-    const greaterThanExpr = new EnhancedGreaterThanExpression();
+    const greaterThanExpr = new GreaterThanExpression();
     return greaterThanExpr.validate(input);
   }
 
@@ -490,7 +490,7 @@ export class LessThanOrEqualExpression implements BaseTypedExpression<boolean> {
   }
 
   validate(input: unknown): ValidationResult {
-    const greaterThanExpr = new EnhancedGreaterThanExpression();
+    const greaterThanExpr = new GreaterThanExpression();
     return greaterThanExpr.validate(input);
   }
 
@@ -591,7 +591,7 @@ export class EqualityExpression implements BaseTypedExpression<boolean> {
   }
 
   validate(input: unknown): ValidationResult {
-    const greaterThanExpr = new EnhancedGreaterThanExpression();
+    const greaterThanExpr = new GreaterThanExpression();
     return greaterThanExpr.validate(input);
   }
 
@@ -660,7 +660,7 @@ export class InequalityExpression implements BaseTypedExpression<boolean> {
   ): Promise<TypedResult<boolean>> {
     try {
       // Use equality expression and invert the result
-      const equalityExpr = new EnhancedEqualityExpression();
+      const equalityExpr = new EqualityExpression();
       const equalityResult = await equalityExpr.evaluate(context, input);
 
       if (!equalityResult.success) {
@@ -692,7 +692,7 @@ export class InequalityExpression implements BaseTypedExpression<boolean> {
   }
 
   validate(input: unknown): ValidationResult {
-    const equalityExpr = new EnhancedEqualityExpression();
+    const equalityExpr = new EqualityExpression();
     return equalityExpr.validate(input);
   }
 }
@@ -701,28 +701,28 @@ export class InequalityExpression implements BaseTypedExpression<boolean> {
 // Factory Functions
 // ============================================================================
 
-export function createGreaterThanExpression(): EnhancedGreaterThanExpression {
-  return new EnhancedGreaterThanExpression();
+export function createGreaterThanExpression(): GreaterThanExpression {
+  return new GreaterThanExpression();
 }
 
-export function createLessThanExpression(): EnhancedLessThanExpression {
-  return new EnhancedLessThanExpression();
+export function createLessThanExpression(): LessThanExpression {
+  return new LessThanExpression();
 }
 
-export function createGreaterThanOrEqualExpression(): EnhancedGreaterThanOrEqualExpression {
-  return new EnhancedGreaterThanOrEqualExpression();
+export function createGreaterThanOrEqualExpression(): GreaterThanOrEqualExpression {
+  return new GreaterThanOrEqualExpression();
 }
 
-export function createLessThanOrEqualExpression(): EnhancedLessThanOrEqualExpression {
-  return new EnhancedLessThanOrEqualExpression();
+export function createLessThanOrEqualExpression(): LessThanOrEqualExpression {
+  return new LessThanOrEqualExpression();
 }
 
-export function createEqualityExpression(): EnhancedEqualityExpression {
-  return new EnhancedEqualityExpression();
+export function createEqualityExpression(): EqualityExpression {
+  return new EqualityExpression();
 }
 
-export function createInequalityExpression(): EnhancedInequalityExpression {
-  return new EnhancedInequalityExpression();
+export function createInequalityExpression(): InequalityExpression {
+  return new InequalityExpression();
 }
 
 // ============================================================================

@@ -199,8 +199,8 @@ export class NotExpression implements TypedExpressionImplementation<boolean> {
 /**
  * Factory function for creating enhanced not expression
  */
-export function createNotExpression(): EnhancedNotExpression {
-  return new EnhancedNotExpression();
+export function createNotExpression(): NotExpression {
+  return new NotExpression();
 }
 
 /**
@@ -222,9 +222,9 @@ export function evaluateNot(
   value: HyperScriptValue,
   context: TypedExecutionContext
 ): Promise<EvaluationResult<boolean>> {
-  const expression = new EnhancedNotExpression();
+  const expression = new NotExpression();
   return expression.evaluate(context, value);
 }
 
 // Default exports
-export { EnhancedNotExpression as default };
+export { NotExpression as default };

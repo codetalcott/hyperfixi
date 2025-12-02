@@ -5,9 +5,9 @@
 
 import { describe, test, expect, beforeEach } from 'vitest';
 import {
-  EnhancedTimeParsingExpression,
-  EnhancedDurationFormattingExpression,
-  EnhancedTimeArithmeticExpression,
+  TimeParsingExpression,
+  DurationFormattingExpression,
+  TimeArithmeticExpression,
   enhancedTimeExpressions,
   parseTime,
   formatDuration,
@@ -33,11 +33,11 @@ function createMockContext(): TypedExecutionContext {
 }
 
 describe('Enhanced Time Parsing Expression', () => {
-  let expression: EnhancedTimeParsingExpression;
+  let expression: TimeParsingExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedTimeParsingExpression();
+    expression = new TimeParsingExpression();
     context = createMockContext();
   });
 
@@ -203,11 +203,11 @@ describe('Enhanced Time Parsing Expression', () => {
 });
 
 describe('Enhanced Duration Formatting Expression', () => {
-  let expression: EnhancedDurationFormattingExpression;
+  let expression: DurationFormattingExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedDurationFormattingExpression();
+    expression = new DurationFormattingExpression();
     context = createMockContext();
   });
 
@@ -335,11 +335,11 @@ describe('Enhanced Duration Formatting Expression', () => {
 });
 
 describe('Enhanced Time Arithmetic Expression', () => {
-  let expression: EnhancedTimeArithmeticExpression;
+  let expression: TimeArithmeticExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedTimeArithmeticExpression();
+    expression = new TimeArithmeticExpression();
     context = createMockContext();
   });
 
@@ -501,12 +501,12 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
 describe('Expression Registry', () => {
   test('exports all enhanced time expressions', () => {
-    expect(enhancedTimeExpressions['time-parse']).toBeInstanceOf(EnhancedTimeParsingExpression);
+    expect(enhancedTimeExpressions['time-parse']).toBeInstanceOf(TimeParsingExpression);
     expect(enhancedTimeExpressions['duration-format']).toBeInstanceOf(
-      EnhancedDurationFormattingExpression
+      DurationFormattingExpression
     );
     expect(enhancedTimeExpressions['time-arithmetic']).toBeInstanceOf(
-      EnhancedTimeArithmeticExpression
+      TimeArithmeticExpression
     );
   });
 });
@@ -554,7 +554,7 @@ describe('Performance Characteristics', () => {
   });
 
   test('handles many time parsing operations efficiently', async () => {
-    const parseExpr = new EnhancedTimeParsingExpression();
+    const parseExpr = new TimeParsingExpression();
     const timeStrings = Array(1000)
       .fill(0)
       .map((_, i) => `${i}s`);
@@ -574,7 +574,7 @@ describe('Performance Characteristics', () => {
   });
 
   test('handles many formatting operations efficiently', async () => {
-    const formatExpr = new EnhancedDurationFormattingExpression();
+    const formatExpr = new DurationFormattingExpression();
     const durations = Array(1000)
       .fill(0)
       .map((_, i) => i * 1000);
@@ -594,7 +594,7 @@ describe('Performance Characteristics', () => {
   });
 
   test('handles complex arithmetic operations efficiently', async () => {
-    const arithmeticExpr = new EnhancedTimeArithmeticExpression();
+    const arithmeticExpr = new TimeArithmeticExpression();
     const operations = ['add', 'subtract', 'multiply', 'divide'];
 
     const startTime = performance.now();

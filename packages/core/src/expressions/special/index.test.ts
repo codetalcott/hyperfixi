@@ -7,11 +7,11 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createTypedExecutionContext } from '../../test-setup';
 import type { TypedExpressionContext } from '../../types/expression-types';
 import {
-  EnhancedStringLiteralExpression,
-  EnhancedNumberLiteralExpression,
-  EnhancedBooleanLiteralExpression,
-  EnhancedAdditionExpression,
-  EnhancedMultiplicationExpression,
+  StringLiteralExpression,
+  NumberLiteralExpression,
+  BooleanLiteralExpression,
+  AdditionExpression,
+  MultiplicationExpression,
   specialExpressions,
 } from './index';
 
@@ -37,11 +37,11 @@ describe('Enhanced Special Expressions', () => {
     ]);
   });
 
-  describe('EnhancedStringLiteralExpression', () => {
-    let expression: EnhancedStringLiteralExpression;
+  describe('StringLiteralExpression', () => {
+    let expression: StringLiteralExpression;
 
     beforeEach(() => {
-      expression = new EnhancedStringLiteralExpression();
+      expression = new StringLiteralExpression();
     });
 
     it('should have correct metadata', () => {
@@ -276,11 +276,11 @@ describe('Enhanced Special Expressions', () => {
     });
   });
 
-  describe('EnhancedNumberLiteralExpression', () => {
-    let expression: EnhancedNumberLiteralExpression;
+  describe('NumberLiteralExpression', () => {
+    let expression: NumberLiteralExpression;
 
     beforeEach(() => {
-      expression = new EnhancedNumberLiteralExpression();
+      expression = new NumberLiteralExpression();
     });
 
     it('should have correct metadata', () => {
@@ -402,11 +402,11 @@ describe('Enhanced Special Expressions', () => {
     });
   });
 
-  describe('EnhancedBooleanLiteralExpression', () => {
-    let expression: EnhancedBooleanLiteralExpression;
+  describe('BooleanLiteralExpression', () => {
+    let expression: BooleanLiteralExpression;
 
     beforeEach(() => {
-      expression = new EnhancedBooleanLiteralExpression();
+      expression = new BooleanLiteralExpression();
     });
 
     it('should have correct metadata', () => {
@@ -459,11 +459,11 @@ describe('Enhanced Special Expressions', () => {
     });
   });
 
-  describe('EnhancedAdditionExpression', () => {
-    let expression: EnhancedAdditionExpression;
+  describe('AdditionExpression', () => {
+    let expression: AdditionExpression;
 
     beforeEach(() => {
-      expression = new EnhancedAdditionExpression();
+      expression = new AdditionExpression();
     });
 
     it('should have correct metadata', () => {
@@ -620,11 +620,11 @@ describe('Enhanced Special Expressions', () => {
     });
   });
 
-  describe('EnhancedMultiplicationExpression', () => {
-    let expression: EnhancedMultiplicationExpression;
+  describe('MultiplicationExpression', () => {
+    let expression: MultiplicationExpression;
 
     beforeEach(() => {
-      expression = new EnhancedMultiplicationExpression();
+      expression = new MultiplicationExpression();
     });
 
     it('should have correct metadata', () => {
@@ -726,11 +726,11 @@ describe('Enhanced Special Expressions', () => {
 
   describe('Expression Registry', () => {
     it('should export all enhanced special expressions', () => {
-      expect(specialExpressions.stringLiteral).toBeInstanceOf(EnhancedStringLiteralExpression);
-      expect(specialExpressions.numberLiteral).toBeInstanceOf(EnhancedNumberLiteralExpression);
-      expect(specialExpressions.booleanLiteral).toBeInstanceOf(EnhancedBooleanLiteralExpression);
-      expect(specialExpressions.addition).toBeInstanceOf(EnhancedAdditionExpression);
-      expect(specialExpressions.multiplication).toBeInstanceOf(EnhancedMultiplicationExpression);
+      expect(specialExpressions.stringLiteral).toBeInstanceOf(StringLiteralExpression);
+      expect(specialExpressions.numberLiteral).toBeInstanceOf(NumberLiteralExpression);
+      expect(specialExpressions.booleanLiteral).toBeInstanceOf(BooleanLiteralExpression);
+      expect(specialExpressions.addition).toBeInstanceOf(AdditionExpression);
+      expect(specialExpressions.multiplication).toBeInstanceOf(MultiplicationExpression);
     });
 
     it('should have consistent metadata across all expressions', () => {
@@ -748,7 +748,7 @@ describe('Enhanced Special Expressions', () => {
 
   describe('Integration Scenarios', () => {
     it('should work with complex template interpolation', async () => {
-      const stringExpr = new EnhancedStringLiteralExpression();
+      const stringExpr = new StringLiteralExpression();
 
       // Set up complex context
       context.locals?.set('user', { name: 'Jane', scores: [95, 87, 92] });
@@ -765,8 +765,8 @@ describe('Enhanced Special Expressions', () => {
     });
 
     it('should combine multiple expressions for calculations', async () => {
-      const addExpr = new EnhancedAdditionExpression();
-      const mulExpr = new EnhancedMultiplicationExpression();
+      const addExpr = new AdditionExpression();
+      const mulExpr = new MultiplicationExpression();
 
       // First calculate 5 + 3 = 8
       const addResult = await addExpr.evaluate(context, {
@@ -791,7 +791,7 @@ describe('Enhanced Special Expressions', () => {
     });
 
     it('should handle large-scale operations efficiently', async () => {
-      const addExpr = new EnhancedAdditionExpression();
+      const addExpr = new AdditionExpression();
 
       const startTime = Date.now();
 
@@ -813,9 +813,9 @@ describe('Enhanced Special Expressions', () => {
     });
 
     it('should work with all literal types together', async () => {
-      const stringExpr = new EnhancedStringLiteralExpression();
-      const numberExpr = new EnhancedNumberLiteralExpression();
-      const booleanExpr = new EnhancedBooleanLiteralExpression();
+      const stringExpr = new StringLiteralExpression();
+      const numberExpr = new NumberLiteralExpression();
+      const booleanExpr = new BooleanLiteralExpression();
 
       const [stringResult, numberResult, booleanResult] = await Promise.all([
         stringExpr.evaluate(context, { value: 'Hello ${name}!' }),
@@ -837,7 +837,7 @@ describe('Enhanced Special Expressions', () => {
 
   describe('Performance and Memory', () => {
     it('should not leak memory with repeated evaluations', async () => {
-      const stringExpr = new EnhancedStringLiteralExpression();
+      const stringExpr = new StringLiteralExpression();
 
       // Perform many string interpolations
       for (let i = 0; i < 100; i++) {
@@ -853,7 +853,7 @@ describe('Enhanced Special Expressions', () => {
     });
 
     it('should maintain consistent performance', async () => {
-      const addExpr = new EnhancedAdditionExpression();
+      const addExpr = new AdditionExpression();
       const durations: number[] = [];
 
       for (let i = 0; i < 10; i++) {
@@ -875,7 +875,7 @@ describe('Enhanced Special Expressions', () => {
     });
 
     it('should track performance history correctly', async () => {
-      const addExpr = new EnhancedAdditionExpression();
+      const addExpr = new AdditionExpression();
       const initialHistoryLength = context.evaluationHistory.length;
 
       await addExpr.evaluate(context, { left: 1, right: 2 });

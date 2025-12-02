@@ -5,11 +5,11 @@
 
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import {
-  EnhancedLambdaExpression,
-  EnhancedPromiseExpression,
-  EnhancedAwaitExpression,
-  EnhancedErrorExpression,
-  EnhancedTypeofExpression,
+  LambdaExpression,
+  PromiseExpression,
+  AwaitExpression,
+  ErrorExpression,
+  TypeofExpression,
   enhancedAdvancedExpressions,
   createLambda,
   createPromise,
@@ -45,11 +45,11 @@ function createMockContext(): TypedExecutionContext {
 }
 
 describe('Enhanced Lambda Expression', () => {
-  let expression: EnhancedLambdaExpression;
+  let expression: LambdaExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedLambdaExpression();
+    expression = new LambdaExpression();
     context = createMockContext();
   });
 
@@ -147,11 +147,11 @@ describe('Enhanced Lambda Expression', () => {
 });
 
 describe('Enhanced Promise Expression', () => {
-  let expression: EnhancedPromiseExpression;
+  let expression: PromiseExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedPromiseExpression();
+    expression = new PromiseExpression();
     context = createMockContext();
   });
 
@@ -250,11 +250,11 @@ describe('Enhanced Promise Expression', () => {
 });
 
 describe('Enhanced Await Expression', () => {
-  let expression: EnhancedAwaitExpression;
+  let expression: AwaitExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedAwaitExpression();
+    expression = new AwaitExpression();
     context = createMockContext();
   });
 
@@ -327,11 +327,11 @@ describe('Enhanced Await Expression', () => {
 });
 
 describe('Enhanced Error Expression', () => {
-  let expression: EnhancedErrorExpression;
+  let expression: ErrorExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedErrorExpression();
+    expression = new ErrorExpression();
     context = createMockContext();
   });
 
@@ -413,11 +413,11 @@ describe('Enhanced Error Expression', () => {
 });
 
 describe('Enhanced Typeof Expression', () => {
-  let expression: EnhancedTypeofExpression;
+  let expression: TypeofExpression;
   let context: TypedExecutionContext;
 
   beforeEach(() => {
-    expression = new EnhancedTypeofExpression();
+    expression = new TypeofExpression();
     context = createMockContext();
   });
 
@@ -550,11 +550,11 @@ describe('Enhanced Typeof Expression', () => {
 
 describe('Expression Registry', () => {
   test('exports all enhanced advanced expressions', () => {
-    expect(enhancedAdvancedExpressions['lambda']).toBeInstanceOf(EnhancedLambdaExpression);
-    expect(enhancedAdvancedExpressions['promise']).toBeInstanceOf(EnhancedPromiseExpression);
-    expect(enhancedAdvancedExpressions['await']).toBeInstanceOf(EnhancedAwaitExpression);
-    expect(enhancedAdvancedExpressions['error']).toBeInstanceOf(EnhancedErrorExpression);
-    expect(enhancedAdvancedExpressions['typeof']).toBeInstanceOf(EnhancedTypeofExpression);
+    expect(enhancedAdvancedExpressions['lambda']).toBeInstanceOf(LambdaExpression);
+    expect(enhancedAdvancedExpressions['promise']).toBeInstanceOf(PromiseExpression);
+    expect(enhancedAdvancedExpressions['await']).toBeInstanceOf(AwaitExpression);
+    expect(enhancedAdvancedExpressions['error']).toBeInstanceOf(ErrorExpression);
+    expect(enhancedAdvancedExpressions['typeof']).toBeInstanceOf(TypeofExpression);
   });
 });
 
@@ -625,7 +625,7 @@ describe('Performance Characteristics', () => {
   });
 
   test('handles many lambda creations efficiently', async () => {
-    const expr = new EnhancedLambdaExpression();
+    const expr = new LambdaExpression();
     const lambdaCount = 100;
 
     const startTime = performance.now();
@@ -645,7 +645,7 @@ describe('Performance Characteristics', () => {
   });
 
   test('handles many type checks efficiently', async () => {
-    const expr = new EnhancedTypeofExpression();
+    const expr = new TypeofExpression();
     const values = [42, 'string', true, [], {}, null, new Date(), /regex/];
     const iterations = 50;
 
@@ -671,8 +671,8 @@ describe('Performance Characteristics', () => {
   });
 
   test('handles async operations efficiently', async () => {
-    const promiseExpr = new EnhancedPromiseExpression();
-    const awaitExpr = new EnhancedAwaitExpression();
+    const promiseExpr = new PromiseExpression();
+    const awaitExpr = new AwaitExpression();
 
     const startTime = performance.now();
 

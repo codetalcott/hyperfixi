@@ -213,3 +213,113 @@ export function findAll(element: HTMLElement, selector: string): HTMLElement[] {
   const results = element.querySelectorAll(selector);
   return Array.from(results).filter(isHTMLElement) as HTMLElement[];
 }
+
+/** Default keyword prepositions to filter out */
+const KEYWORD_PREPOSITIONS = ['on', 'from', 'to', 'in', 'with', 'at'];
+
+/**
+ * Options for resolveTargetsFromArgs
+ */
+export interface ResolveTargetsOptions {
+  /** Filter out keyword prepositions (on, from, to, etc.) - default false */
+  filterPrepositions?: boolean;
+}
+
+/**
+ * Resolve target elements from raw AST arguments
+ *
+ * This is a higher-level helper that combines AST evaluation with element resolution.
+ * Used by show, hide, add, remove, toggle commands that take AST args.
+ *
+ * Pattern:
+ * 1. If no args, return [context.me]
+ * 2. For each arg, evaluate with evaluator
+ * 3. Skip empty strings
+ * 4. Handle HTMLElement, NodeList, Array, CSS selector string
+ * 5. If no valid targets found, return [context.me]
+ *
+ * @param args - Raw AST arguments
+ * @param evaluator - Expression evaluator with evaluate() method
+ * @param context - Execution context
+ * @param commandName - Command name for error messages
+ * @param options - Additional options (filterPrepositions, etc.)
+ * @returns Array of resolved HTMLElements
+ * @throws Error if no valid targets and context.me is unavailable
+ */
+export async function resolveTargetsFromArgs(
+  args: unknown[],
+  evaluator: { evaluate: (arg: unknown, context: unknown) => Promise<unknown> },
+  context: ExecutionContext | TypedExecutionContext,
+  commandName: string,
+  options: ResolveTargetsOptions = {}
+): Promise<HTMLElement[]> {
+  // Filter out keyword prepositions if requested
+  let processedArgs = args;
+  if (options.filterPrepositions && args) {
+    processedArgs = args.filter(arg => {
+      const argAny = arg as Record<string, unknown>;
+      if (argAny?.type === 'identifier' && typeof argAny.name === 'string') {
+        return !KEYWORD_PREPOSITIONS.includes((argAny.name as string).toLowerCase());
+      }
+      return true;
+    });
+  }
+  // Default to context.me if no args
+  if (!processedArgs || processedArgs.length === 0) {
+    if (!context.me) {
+      throw new Error(`${commandName} command: no target specified and context.me is null`);
+    }
+    if (!isHTMLElement(context.me)) {
+      throw new Error(`${commandName} command: context.me must be an HTMLElement`);
+    }
+    return [context.me as HTMLElement];
+  }
+
+  const targets: HTMLElement[] = [];
+
+  for (const arg of processedArgs) {
+    const evaluated = await evaluator.evaluate(arg, context);
+
+    // Skip empty strings - treat as "no target specified"
+    if (evaluated === '' || (typeof evaluated === 'string' && evaluated.trim() === '')) {
+      continue;
+    }
+
+    if (isHTMLElement(evaluated)) {
+      targets.push(evaluated as HTMLElement);
+    } else if (evaluated instanceof NodeList) {
+      const elements = Array.from(evaluated).filter(isHTMLElement) as HTMLElement[];
+      targets.push(...elements);
+    } else if (Array.isArray(evaluated)) {
+      const elements = evaluated.filter(isHTMLElement) as HTMLElement[];
+      targets.push(...elements);
+    } else if (typeof evaluated === 'string') {
+      try {
+        const selected = document.querySelectorAll(evaluated);
+        const elements = Array.from(selected).filter(isHTMLElement) as HTMLElement[];
+        targets.push(...elements);
+      } catch (error) {
+        throw new Error(
+          `Invalid CSS selector: "${evaluated}" - ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    } else {
+      throw new Error(
+        `Invalid ${commandName} target: expected HTMLElement or CSS selector, got ${typeof evaluated}`
+      );
+    }
+  }
+
+  // If no valid targets found after filtering, default to context.me
+  if (targets.length === 0) {
+    if (!context.me) {
+      throw new Error(`${commandName} command: no target specified and context.me is null`);
+    }
+    if (!isHTMLElement(context.me)) {
+      throw new Error(`${commandName} command: context.me must be an HTMLElement`);
+    }
+    return [context.me as HTMLElement];
+  }
+
+  return targets;
+}

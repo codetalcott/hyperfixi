@@ -487,8 +487,8 @@ export {
 
 // Re-export enhanced implementations for tests
 export {
-  EnhancedFirstExpression,
-  EnhancedLastExpression,
+  FirstExpression,
+  LastExpression,
   createFirstExpression,
   createLastExpression,
 } from './impl/index';

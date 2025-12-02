@@ -964,8 +964,8 @@ function extractInputValue(
 // ============================================================================
 
 export const conversionExpressions = {
-  as: new EnhancedAsExpression(),
-  is: new EnhancedIsExpression(),
+  as: new AsExpression(),
+  is: new IsExpression(),
 } as const;
 
 export type ConversionExpressionName = keyof typeof conversionExpressions;
@@ -974,12 +974,12 @@ export type ConversionExpressionName = keyof typeof conversionExpressions;
 // Factory Functions
 // ============================================================================
 
-export function createAsExpression(): EnhancedAsExpression {
-  return new EnhancedAsExpression();
+export function createAsExpression(): AsExpression {
+  return new AsExpression();
 }
 
-export function createIsExpression(): EnhancedIsExpression {
-  return new EnhancedIsExpression();
+export function createIsExpression(): IsExpression {
+  return new IsExpression();
 }
 
 // Classes are already exported above with export class declarations

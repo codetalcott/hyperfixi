@@ -7,9 +7,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createTypedExecutionContext } from '../../test-setup';
 import type { TypedExpressionContext } from '../../../types/expression-types';
 import {
-  EnhancedMatchesExpression,
-  EnhancedContainsExpression,
-  EnhancedInExpression,
+  MatchesExpression,
+  ContainsExpression,
+  InExpression,
   enhancedPatternMatchingExpressions,
 } from './pattern-matching';
 
@@ -28,11 +28,11 @@ describe('Enhanced Pattern Matching Expressions', () => {
     document.body.appendChild(testElement);
   });
 
-  describe('EnhancedMatchesExpression', () => {
-    let expression: EnhancedMatchesExpression;
+  describe('MatchesExpression', () => {
+    let expression: MatchesExpression;
 
     beforeEach(() => {
-      expression = new EnhancedMatchesExpression();
+      expression = new MatchesExpression();
     });
 
     it('should have correct metadata', () => {
@@ -193,11 +193,11 @@ describe('Enhanced Pattern Matching Expressions', () => {
     });
   });
 
-  describe('EnhancedContainsExpression', () => {
-    let expression: EnhancedContainsExpression;
+  describe('ContainsExpression', () => {
+    let expression: ContainsExpression;
 
     beforeEach(() => {
-      expression = new EnhancedContainsExpression();
+      expression = new ContainsExpression();
     });
 
     it('should have correct metadata', () => {
@@ -325,11 +325,11 @@ describe('Enhanced Pattern Matching Expressions', () => {
     });
   });
 
-  describe('EnhancedInExpression', () => {
-    let expression: EnhancedInExpression;
+  describe('InExpression', () => {
+    let expression: InExpression;
 
     beforeEach(() => {
-      expression = new EnhancedInExpression();
+      expression = new InExpression();
     });
 
     it('should have correct metadata', () => {
@@ -393,8 +393,8 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
     it('should delegate to contains expression correctly', async () => {
       // Test that in expression works the same as contains with parameters swapped
-      const containsExpr = new EnhancedContainsExpression();
-      const inExpr = new EnhancedInExpression();
+      const containsExpr = new ContainsExpression();
+      const inExpr = new InExpression();
 
       const containsResult = await containsExpr.evaluate(context, {
         container: [1, 2, 3],
@@ -415,11 +415,11 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
   describe('Expression Registry', () => {
     it('should export all enhanced pattern matching expressions', () => {
-      expect(enhancedPatternMatchingExpressions.matches).toBeInstanceOf(EnhancedMatchesExpression);
+      expect(enhancedPatternMatchingExpressions.matches).toBeInstanceOf(MatchesExpression);
       expect(enhancedPatternMatchingExpressions.contains).toBeInstanceOf(
-        EnhancedContainsExpression
+        ContainsExpression
       );
-      expect(enhancedPatternMatchingExpressions.in).toBeInstanceOf(EnhancedInExpression);
+      expect(enhancedPatternMatchingExpressions.in).toBeInstanceOf(InExpression);
     });
 
     it('should have consistent metadata across all expressions', () => {
@@ -449,7 +449,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
       container.appendChild(item);
       document.body.appendChild(container);
 
-      const expression = new EnhancedMatchesExpression();
+      const expression = new MatchesExpression();
 
       // Test complex selector
       const result = await expression.evaluate(context, {
@@ -467,7 +467,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
     });
 
     it('should handle regex with special characters', async () => {
-      const expression = new EnhancedMatchesExpression();
+      const expression = new MatchesExpression();
 
       const testCases = [
         { value: '123-456-7890', pattern: /^\d{3}-\d{3}-\d{4}$/, expected: true },
@@ -490,7 +490,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
     });
 
     it('should handle nested array contains', async () => {
-      const expression = new EnhancedContainsExpression();
+      const expression = new ContainsExpression();
 
       const nestedArray = [
         [1, 2],
@@ -514,8 +514,8 @@ describe('Enhanced Pattern Matching Expressions', () => {
     });
 
     it('should handle case sensitivity in string matching', async () => {
-      const matchesExpr = new EnhancedMatchesExpression();
-      const containsExpr = new EnhancedContainsExpression();
+      const matchesExpr = new MatchesExpression();
+      const containsExpr = new ContainsExpression();
 
       const testCases = [
         { value: 'Hello World', pattern: 'hello', expected: false }, // matches does case-sensitive substring search
@@ -553,7 +553,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
   describe('Error Handling', () => {
     it('should handle invalid CSS selectors gracefully', async () => {
-      const expression = new EnhancedMatchesExpression();
+      const expression = new MatchesExpression();
 
       const result = await expression.evaluate(context, {
         value: testElement,
@@ -568,7 +568,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
     });
 
     it('should provide helpful validation messages', () => {
-      const expression = new EnhancedContainsExpression();
+      const expression = new ContainsExpression();
 
       const result = expression.validate({
         container: 'test',
@@ -586,7 +586,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
     });
 
     it('should handle evaluation errors gracefully', async () => {
-      const expression = new EnhancedMatchesExpression();
+      const expression = new MatchesExpression();
 
       // Create a scenario that might cause errors
       const result = await expression.evaluate(context, {

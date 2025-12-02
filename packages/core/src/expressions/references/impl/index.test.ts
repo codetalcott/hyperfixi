@@ -6,10 +6,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 import {
-  EnhancedMeExpression,
-  EnhancedYouExpression,
-  EnhancedItExpression,
-  EnhancedCSSSelectorExpression,
+  MeExpression,
+  YouExpression,
+  ItExpression,
+  CSSSelectorExpression,
   referenceExpressions,
 } from './index';
 import type { TypedExpressionContext } from '../../../types/expression-types';
@@ -61,11 +61,11 @@ describe('Enhanced Reference Expressions', () => {
     document.body.appendChild(mockTargetElement);
   });
 
-  describe('EnhancedMeExpression', () => {
-    let meExpression: EnhancedMeExpression;
+  describe('MeExpression', () => {
+    let meExpression: MeExpression;
 
     beforeEach(() => {
-      meExpression = new EnhancedMeExpression();
+      meExpression = new MeExpression();
     });
 
     it('should have correct metadata', () => {
@@ -126,11 +126,11 @@ describe('Enhanced Reference Expressions', () => {
     });
   });
 
-  describe('EnhancedYouExpression', () => {
-    let youExpression: EnhancedYouExpression;
+  describe('YouExpression', () => {
+    let youExpression: YouExpression;
 
     beforeEach(() => {
-      youExpression = new EnhancedYouExpression();
+      youExpression = new YouExpression();
     });
 
     it('should have correct metadata', () => {
@@ -177,11 +177,11 @@ describe('Enhanced Reference Expressions', () => {
     });
   });
 
-  describe('EnhancedItExpression', () => {
-    let itExpression: EnhancedItExpression;
+  describe('ItExpression', () => {
+    let itExpression: ItExpression;
 
     beforeEach(() => {
-      itExpression = new EnhancedItExpression();
+      itExpression = new ItExpression();
     });
 
     it('should have correct metadata', () => {
@@ -236,11 +236,11 @@ describe('Enhanced Reference Expressions', () => {
     });
   });
 
-  describe('EnhancedCSSSelectorExpression', () => {
-    let selectorExpression: EnhancedCSSSelectorExpression;
+  describe('CSSSelectorExpression', () => {
+    let selectorExpression: CSSSelectorExpression;
 
     beforeEach(() => {
-      selectorExpression = new EnhancedCSSSelectorExpression();
+      selectorExpression = new CSSSelectorExpression();
 
       // Add more elements to DOM for testing
       const button1 = document.createElement('button');
@@ -346,24 +346,24 @@ describe('Enhanced Reference Expressions', () => {
 
   describe('Expression Registry', () => {
     it('should export all enhanced reference expressions', () => {
-      expect(referenceExpressions.me).toBeInstanceOf(EnhancedMeExpression);
-      expect(referenceExpressions.you).toBeInstanceOf(EnhancedYouExpression);
-      expect(referenceExpressions.it).toBeInstanceOf(EnhancedItExpression);
-      expect(referenceExpressions['css-selector']).toBeInstanceOf(EnhancedCSSSelectorExpression);
+      expect(referenceExpressions.me).toBeInstanceOf(MeExpression);
+      expect(referenceExpressions.you).toBeInstanceOf(YouExpression);
+      expect(referenceExpressions.it).toBeInstanceOf(ItExpression);
+      expect(referenceExpressions['css-selector']).toBeInstanceOf(CSSSelectorExpression);
     });
 
     it('should provide factory functions', async () => {
       const {
-        createEnhancedMeExpression,
-        createEnhancedYouExpression,
-        createEnhancedItExpression,
-        createEnhancedCSSSelectorExpression,
+        createMeExpression,
+        createYouExpression,
+        createItExpression,
+        createCSSSelectorExpression,
       } = await import('./index');
 
-      expect(createEnhancedMeExpression()).toBeInstanceOf(EnhancedMeExpression);
-      expect(createEnhancedYouExpression()).toBeInstanceOf(EnhancedYouExpression);
-      expect(createEnhancedItExpression()).toBeInstanceOf(EnhancedItExpression);
-      expect(createEnhancedCSSSelectorExpression()).toBeInstanceOf(EnhancedCSSSelectorExpression);
+      expect(createMeExpression()).toBeInstanceOf(MeExpression);
+      expect(createYouExpression()).toBeInstanceOf(YouExpression);
+      expect(createItExpression()).toBeInstanceOf(ItExpression);
+      expect(createCSSSelectorExpression()).toBeInstanceOf(CSSSelectorExpression);
     });
   });
 

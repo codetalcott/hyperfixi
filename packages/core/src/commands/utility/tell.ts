@@ -27,6 +27,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
+import { resolveElements } from '../helpers/element-resolution';
 
 /**
  * Typed input for TellCommand
@@ -123,7 +124,7 @@ export class TellCommand {
     const { target, commands } = input;
 
     // Resolve target to HTMLElement array
-    const targetElements = this.resolveTargets(target, context);
+    const targetElements = resolveElements(target, context);
 
     if (targetElements.length === 0) {
       throw new Error('tell command found no target elements');
@@ -166,45 +167,6 @@ export class TellCommand {
   }
 
   // ========== Private Utility Methods ==========
-
-  /**
-   * Resolve target to array of HTMLElements
-   *
-   * @param target - Target element(s) or selector
-   * @param context - Execution context
-   * @returns Array of HTMLElements
-   */
-  private resolveTargets(
-    target: HTMLElement | HTMLElement[] | string,
-    context: TypedExecutionContext
-  ): HTMLElement[] {
-    // Handle array of elements
-    if (Array.isArray(target)) {
-      return target.filter((el): el is HTMLElement => isHTMLElement(el));
-    }
-
-    // Handle single element
-    if (isHTMLElement(target)) {
-      return [target as HTMLElement];
-    }
-
-    // Handle CSS selector string
-    if (typeof target === 'string') {
-      if (typeof document === 'undefined') {
-        return [];
-      }
-
-      const elements = document.querySelectorAll(target);
-      return Array.from(elements).filter((el): el is HTMLElement => isHTMLElement(el));
-    }
-
-    // Handle NodeList
-    if (target && typeof target === 'object' && 'length' in target) {
-      return Array.from(target as any).filter((el): el is HTMLElement => isHTMLElement(el));
-    }
-
-    return [];
-  }
 
   /**
    * Execute a command

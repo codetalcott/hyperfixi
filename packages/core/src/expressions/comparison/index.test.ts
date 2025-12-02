@@ -6,12 +6,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { TypedExpressionContext } from '../../types/enhanced-expressions.ts';
 import {
-  EnhancedGreaterThanExpression,
-  EnhancedLessThanExpression,
-  EnhancedGreaterThanOrEqualExpression,
-  EnhancedLessThanOrEqualExpression,
-  EnhancedEqualityExpression,
-  EnhancedInequalityExpression,
+  GreaterThanExpression,
+  LessThanExpression,
+  GreaterThanOrEqualExpression,
+  LessThanOrEqualExpression,
+  EqualityExpression,
+  InequalityExpression,
   comparisonExpressions,
 } from './index.ts';
 
@@ -45,12 +45,12 @@ function createTestContext(
 // Greater Than Expression Tests
 // ============================================================================
 
-describe('EnhancedGreaterThanExpression', () => {
-  let greaterThanExpr: EnhancedGreaterThanExpression;
+describe('GreaterThanExpression', () => {
+  let greaterThanExpr: GreaterThanExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    greaterThanExpr = new EnhancedGreaterThanExpression();
+    greaterThanExpr = new GreaterThanExpression();
     context = createTestContext();
   });
 
@@ -206,12 +206,12 @@ describe('EnhancedGreaterThanExpression', () => {
 // Less Than Expression Tests
 // ============================================================================
 
-describe('EnhancedLessThanExpression', () => {
-  let lessThanExpr: EnhancedLessThanExpression;
+describe('LessThanExpression', () => {
+  let lessThanExpr: LessThanExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    lessThanExpr = new EnhancedLessThanExpression();
+    lessThanExpr = new LessThanExpression();
     context = createTestContext();
   });
 
@@ -264,12 +264,12 @@ describe('EnhancedLessThanExpression', () => {
 // Greater Than Or Equal Expression Tests
 // ============================================================================
 
-describe('EnhancedGreaterThanOrEqualExpression', () => {
-  let greaterOrEqualExpr: EnhancedGreaterThanOrEqualExpression;
+describe('GreaterThanOrEqualExpression', () => {
+  let greaterOrEqualExpr: GreaterThanOrEqualExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    greaterOrEqualExpr = new EnhancedGreaterThanOrEqualExpression();
+    greaterOrEqualExpr = new GreaterThanOrEqualExpression();
     context = createTestContext();
   });
 
@@ -322,12 +322,12 @@ describe('EnhancedGreaterThanOrEqualExpression', () => {
 // Less Than Or Equal Expression Tests
 // ============================================================================
 
-describe('EnhancedLessThanOrEqualExpression', () => {
-  let lessOrEqualExpr: EnhancedLessThanOrEqualExpression;
+describe('LessThanOrEqualExpression', () => {
+  let lessOrEqualExpr: LessThanOrEqualExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    lessOrEqualExpr = new EnhancedLessThanOrEqualExpression();
+    lessOrEqualExpr = new LessThanOrEqualExpression();
     context = createTestContext();
   });
 
@@ -368,12 +368,12 @@ describe('EnhancedLessThanOrEqualExpression', () => {
 // Equality Expression Tests
 // ============================================================================
 
-describe('EnhancedEqualityExpression', () => {
-  let equalityExpr: EnhancedEqualityExpression;
+describe('EqualityExpression', () => {
+  let equalityExpr: EqualityExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    equalityExpr = new EnhancedEqualityExpression();
+    equalityExpr = new EqualityExpression();
     context = createTestContext();
   });
 
@@ -490,12 +490,12 @@ describe('EnhancedEqualityExpression', () => {
 // Inequality Expression Tests
 // ============================================================================
 
-describe('EnhancedInequalityExpression', () => {
-  let inequalityExpr: EnhancedInequalityExpression;
+describe('InequalityExpression', () => {
+  let inequalityExpr: InequalityExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    inequalityExpr = new EnhancedInequalityExpression();
+    inequalityExpr = new InequalityExpression();
     context = createTestContext();
   });
 
@@ -559,16 +559,16 @@ describe('Enhanced Comparison Expressions Integration', () => {
 
   describe('Expression registry', () => {
     it('should provide all comparison expressions', () => {
-      expect(comparisonExpressions.greaterThan).toBeInstanceOf(EnhancedGreaterThanExpression);
-      expect(comparisonExpressions.lessThan).toBeInstanceOf(EnhancedLessThanExpression);
+      expect(comparisonExpressions.greaterThan).toBeInstanceOf(GreaterThanExpression);
+      expect(comparisonExpressions.lessThan).toBeInstanceOf(LessThanExpression);
       expect(comparisonExpressions.greaterThanOrEqual).toBeInstanceOf(
-        EnhancedGreaterThanOrEqualExpression
+        GreaterThanOrEqualExpression
       );
       expect(comparisonExpressions.lessThanOrEqual).toBeInstanceOf(
-        EnhancedLessThanOrEqualExpression
+        LessThanOrEqualExpression
       );
-      expect(comparisonExpressions.equals).toBeInstanceOf(EnhancedEqualityExpression);
-      expect(comparisonExpressions.notEquals).toBeInstanceOf(EnhancedInequalityExpression);
+      expect(comparisonExpressions.equals).toBeInstanceOf(EqualityExpression);
+      expect(comparisonExpressions.notEquals).toBeInstanceOf(InequalityExpression);
     });
   });
 

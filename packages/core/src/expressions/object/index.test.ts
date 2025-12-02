@@ -5,7 +5,7 @@
 
 import { describe, test, expect, beforeEach } from 'vitest';
 import {
-  EnhancedObjectLiteralExpression,
+  ObjectLiteralExpression,
   createObjectLiteralExpression,
   createField,
   createStaticField,
@@ -15,11 +15,11 @@ import {
 import { createTypedExpressionContext, type TypedExpressionContext } from '../../test-utilities.ts';
 
 describe('Enhanced Object Expression', () => {
-  let objectExpression: EnhancedObjectLiteralExpression;
+  let objectExpression: ObjectLiteralExpression;
   let context: TypedExpressionContext;
 
   beforeEach(() => {
-    objectExpression = new EnhancedObjectLiteralExpression();
+    objectExpression = new ObjectLiteralExpression();
     context = createTypedExpressionContext();
   });
 
@@ -370,7 +370,7 @@ describe('Enhanced Object Expression', () => {
   describe('Utility Functions', () => {
     test('factory function works correctly', () => {
       const objectExpr = createObjectLiteralExpression();
-      expect(objectExpr).toBeInstanceOf(EnhancedObjectLiteralExpression);
+      expect(objectExpr).toBeInstanceOf(ObjectLiteralExpression);
     });
 
     test('field creation helpers work', () => {
