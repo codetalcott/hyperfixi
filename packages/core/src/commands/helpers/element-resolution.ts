@@ -214,6 +214,44 @@ export function findAll(element: HTMLElement, selector: string): HTMLElement[] {
   return Array.from(results).filter(isHTMLElement) as HTMLElement[];
 }
 
+/**
+ * Resolve possessive reference to HTMLElement
+ *
+ * Handles: my, me, its, it, your, you
+ *
+ * @param possessive - Possessive keyword
+ * @param context - Execution context
+ * @returns Resolved HTMLElement
+ * @throws Error if context reference is unavailable or not an HTMLElement
+ */
+export function resolvePossessive(
+  possessive: string,
+  context: ExecutionContext | TypedExecutionContext
+): HTMLElement {
+  switch (possessive.toLowerCase()) {
+    case 'my':
+    case 'me':
+      if (!context.me) throw new Error('No "me" element in context');
+      if (!isHTMLElement(context.me)) throw new Error('context.me is not an HTMLElement');
+      return context.me as HTMLElement;
+
+    case 'its':
+    case 'it':
+      if (!context.it) throw new Error('No "it" value in context');
+      if (!isHTMLElement(context.it)) throw new Error('context.it is not an HTMLElement');
+      return context.it as HTMLElement;
+
+    case 'your':
+    case 'you':
+      if (!context.you) throw new Error('No "you" element in context');
+      if (!isHTMLElement(context.you)) throw new Error('context.you is not an HTMLElement');
+      return context.you as HTMLElement;
+
+    default:
+      throw new Error(`Unknown possessive: ${possessive}`);
+  }
+}
+
 /** Default keyword prepositions to filter out */
 const KEYWORD_PREPOSITIONS = ['on', 'from', 'to', 'in', 'with', 'at'];
 

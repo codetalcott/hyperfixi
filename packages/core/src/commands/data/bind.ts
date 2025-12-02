@@ -28,6 +28,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
+import { resolvePossessive } from '../helpers/element-resolution';
 
 /**
  * Typed input for BindCommand
@@ -374,18 +375,17 @@ export class BindCommand {
 
     // Handle string targets
     if (typeof target === 'string') {
-      // Handle special context references
-      if (target === 'me' || target === 'my') {
-        return context.me as HTMLElement;
-      }
-      if (target === 'it' || target === 'its') {
-        return isHTMLElement(context.it) ? (context.it as HTMLElement) : null;
-      }
-      if (target === 'you' || target === 'your') {
-        return context.you as HTMLElement;
+      // Handle possessive context references (me, my, it, its, you, your)
+      const possessiveRefs = ['me', 'my', 'it', 'its', 'you', 'your'];
+      if (possessiveRefs.includes(target.toLowerCase())) {
+        try {
+          return resolvePossessive(target, context);
+        } catch {
+          return null;
+        }
       }
 
-      // Try querySelector
+      // Try querySelector for CSS selectors
       if (typeof document !== 'undefined') {
         try {
           return document.querySelector(target) as HTMLElement;

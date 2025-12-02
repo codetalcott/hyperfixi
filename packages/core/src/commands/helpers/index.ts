@@ -34,6 +34,7 @@ export {
   isCSSSelector,
   findClosest,
   findAll,
+  resolvePossessive,
 } from './element-resolution';
 export type { ResolveTargetsOptions } from './element-resolution';
 

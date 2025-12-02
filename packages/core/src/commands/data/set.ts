@@ -30,6 +30,11 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types.ts';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator.ts';
 import { isHTMLElement } from '../../utils/element-check';
+import {
+  resolveElement as resolveElementHelper,
+  resolveElements as resolveElementsHelper,
+  resolvePossessive,
+} from '../helpers/element-resolution';
 
 /**
  * Typed input for SetCommand (Discriminated Union)
@@ -212,7 +217,7 @@ export class SetCommand {
         const objectName = objectNode.name.toLowerCase();
         // Check if object is a possessive context reference
         if (['me', 'my', 'it', 'its', 'you', 'your'].includes(objectName)) {
-          const element = this.resolvePossessive(objectName, context);
+          const element = resolvePossessive(objectName, context);
           const value = await this.extractValue(raw, evaluator, context);
           return {
             type: 'property',
@@ -282,7 +287,7 @@ export class SetCommand {
       const possessiveMatch = firstValue.match(/^(my|me|its?|your?)\s+(.+)$/i);
       if (possessiveMatch) {
         const [, possessive, property] = possessiveMatch;
-        const element = this.resolvePossessive(possessive, context);
+        const element = resolvePossessive(possessive, context);
         const value = await this.extractValue(raw, evaluator, context);
         return {
           type: 'property',
@@ -480,17 +485,10 @@ export class SetCommand {
     context: ExecutionContext
   ): Promise<HTMLElement> {
     if (!onModifier) {
-      // Default to context.me
-      if (!context.me) throw new Error('No element context available');
-      if (!isHTMLElement(context.me)) throw new Error('context.me is not an HTMLElement');
-      return context.me as HTMLElement;
+      return resolveElementHelper(undefined, context);
     }
-
     const evaluated = await evaluator.evaluate(onModifier, context);
-    if (!isHTMLElement(evaluated)) {
-      throw new Error('Target element must be an HTMLElement');
-    }
-    return evaluated as HTMLElement;
+    return resolveElementHelper(evaluated as string | HTMLElement | undefined, context);
   }
 
   /**
@@ -507,25 +505,10 @@ export class SetCommand {
     context: ExecutionContext
   ): Promise<HTMLElement[]> {
     if (!onModifier) {
-      // Default to context.me
-      if (!context.me) throw new Error('No element context available');
-      if (!isHTMLElement(context.me)) throw new Error('context.me is not an HTMLElement');
-      return [context.me as HTMLElement];
+      return resolveElementsHelper(undefined, context);
     }
-
     const evaluated = await evaluator.evaluate(onModifier, context);
-
-    if (isHTMLElement(evaluated)) {
-      return [evaluated as HTMLElement];
-    }
-    if (evaluated instanceof NodeList) {
-      return Array.from(evaluated).filter((el): el is HTMLElement => isHTMLElement(el));
-    }
-    if (Array.isArray(evaluated)) {
-      return evaluated.filter((el): el is HTMLElement => isHTMLElement(el));
-    }
-
-    throw new Error('Target must be an HTMLElement, NodeList, or array');
+    return resolveElementsHelper(evaluated as string | HTMLElement | HTMLElement[] | NodeList | undefined, context);
   }
 
   /**
@@ -550,29 +533,7 @@ export class SetCommand {
     }
 
     const [, property, targetExpr] = match;
-
-    // Evaluate the target expression
-    // For now, simple implementation - could be enhanced to parse target as AST node
-    let element: HTMLElement;
-    if (targetExpr === 'me') {
-      if (!context.me || !isHTMLElement(context.me)) {
-        throw new Error('No "me" element in context');
-      }
-      element = context.me as HTMLElement;
-    } else if (targetExpr === 'it') {
-      if (!context.it || !isHTMLElement(context.it)) {
-        throw new Error('No "it" element in context');
-      }
-      element = context.it as HTMLElement;
-    } else {
-      // Try to query as CSS selector
-      const queried = document.querySelector(targetExpr);
-      if (!isHTMLElement(queried)) {
-        throw new Error(`Cannot find element: ${targetExpr}`);
-      }
-      element = queried as HTMLElement;
-    }
-
+    const element = resolveElementHelper(targetExpr, context);
     const value = await this.extractValue(raw, evaluator, context);
 
     return {
@@ -581,43 +542,6 @@ export class SetCommand {
       property: property.trim(),
       value,
     };
-  }
-
-  /**
-   * Resolve possessive reference to HTMLElement
-   *
-   * Handles: my, me, its, it, your, you
-   *
-   * @param possessive - Possessive keyword
-   * @param context - Execution context
-   * @returns Resolved HTMLElement
-   */
-  private resolvePossessive(
-    possessive: string,
-    context: ExecutionContext
-  ): HTMLElement {
-    switch (possessive.toLowerCase()) {
-      case 'my':
-      case 'me':
-        if (!context.me) throw new Error('No "me" element in context');
-        if (!isHTMLElement(context.me)) throw new Error('context.me is not an HTMLElement');
-        return context.me as HTMLElement;
-
-      case 'its':
-      case 'it':
-        if (!context.it) throw new Error('No "it" value in context');
-        if (!isHTMLElement(context.it)) throw new Error('context.it is not an HTMLElement');
-        return context.it as HTMLElement;
-
-      case 'your':
-      case 'you':
-        if (!context.you) throw new Error('No "you" element in context');
-        if (!isHTMLElement(context.you)) throw new Error('context.you is not an HTMLElement');
-        return context.you as HTMLElement;
-
-      default:
-        throw new Error(`Unknown possessive: ${possessive}`);
-    }
   }
 
   /**

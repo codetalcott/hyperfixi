@@ -37,6 +37,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
+import { resolveElement } from '../helpers/element-resolution';
 
 /**
  * Typed input for MeasureCommand
@@ -199,11 +200,8 @@ export class MeasureCommand {
   ): Promise<MeasureCommandOutput> {
     const { target, property, variable } = input;
 
-    // Resolve target element (default to context.me)
-    const targetElement = await this.resolveElement(target, context);
-    if (!targetElement) {
-      throw new Error('measure command requires a valid target element');
-    }
+    // Resolve target element (default to context.me) using shared helper
+    const targetElement = resolveElement(target, context);
 
     // Default property to 'width' if not specified
     const measureProperty = property || 'width';
@@ -236,90 +234,6 @@ export class MeasureCommand {
   }
 
   // ========== Private Utility Methods ==========
-
-  /**
-   * Resolve target element from various input types
-   *
-   * @param target - Target (element, selector, context ref, or undefined for me)
-   * @param context - Execution context
-   * @returns Resolved HTML element
-   * @throws Error if element cannot be resolved
-   */
-  private async resolveElement(
-    target: string | HTMLElement | undefined,
-    context: TypedExecutionContext
-  ): Promise<HTMLElement> {
-    // If target is already an HTMLElement, return it
-    if (isHTMLElement(target)) {
-      return target as HTMLElement;
-    }
-
-    // If no target specified, use context.me
-    if (!target) {
-      const me = context.me;
-      if (!me) {
-        throw new Error('No target element - provide explicit target or ensure context.me is set');
-      }
-      return this.asHTMLElement(me);
-    }
-
-    // Handle string targets (context refs or CSS selectors)
-    if (typeof target === 'string') {
-      const trimmed = target.trim();
-
-      // Handle context references
-      if (trimmed === 'me') {
-        if (!context.me) {
-          throw new Error('Context reference "me" is not available');
-        }
-        return this.asHTMLElement(context.me);
-      }
-
-      if (trimmed === 'it') {
-        if (!isHTMLElement(context.it)) {
-          throw new Error('Context reference "it" is not an HTMLElement');
-        }
-        return context.it as HTMLElement;
-      }
-
-      if (trimmed === 'you') {
-        if (!context.you) {
-          throw new Error('Context reference "you" is not available');
-        }
-        return this.asHTMLElement(context.you);
-      }
-
-      // Handle CSS selector
-      if (typeof document !== 'undefined') {
-        const element = document.querySelector(trimmed);
-        if (!element) {
-          throw new Error(`Element not found with selector: ${trimmed}`);
-        }
-        if (!isHTMLElement(element)) {
-          throw new Error(`Element found but is not an HTMLElement: ${trimmed}`);
-        }
-        return element as HTMLElement;
-      }
-
-      throw new Error('DOM not available - cannot resolve element selector');
-    }
-
-    throw new Error(`Invalid target type: ${typeof target}`);
-  }
-
-  /**
-   * Convert value to HTMLElement
-   *
-   * @param value - Value to convert
-   * @returns HTMLElement
-   * @throws Error if value is not an HTMLElement
-   */
-  private asHTMLElement(value: unknown): HTMLElement {
-    if (isHTMLElement(value)) {
-      return value as HTMLElement;
-    }
-    throw new Error('Value is not an HTMLElement');
-  }
 
   /**
    * Get measurement for a specific property

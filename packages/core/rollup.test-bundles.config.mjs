@@ -1,10 +1,9 @@
 /**
  * Rollup Configuration for Tree-Shaking Test Bundles
  *
- * Builds three test bundles for size comparison:
+ * Builds two test bundles for size comparison:
  * 1. test-minimal.js - RuntimeExperimental with 2 commands (~90 KB expected)
  * 2. test-standard.js - RuntimeExperimental with 16 commands (~200 KB expected)
- * 3. test-baseline.js - Original Runtime with all commands (~511 KB baseline)
  */
 
 import typescript from '@rollup/plugin-typescript';
@@ -66,18 +65,6 @@ export default [
       file: 'dist/test-standard.js',
       format: 'iife',
       name: 'HyperFixiStandard',
-      sourcemap: true,
-    },
-    plugins: commonPlugins,
-  },
-
-  // Baseline Bundle (original Runtime)
-  {
-    input: 'src/bundles/test-baseline.ts',
-    output: {
-      file: 'dist/test-baseline.js',
-      format: 'iife',
-      name: 'HyperFixiBaseline',
       sourcemap: true,
     },
     plugins: commonPlugins,
