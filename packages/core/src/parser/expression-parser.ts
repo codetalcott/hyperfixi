@@ -1873,17 +1873,10 @@ async function evaluateCSSSelector(node: any, _context: ExecutionContext): Promi
     const id = selector.startsWith('#') ? selector.slice(1) : selector;
     return document.getElementById(id);
   } else if (node.selectorType === 'class') {
-    // Class selector - use querySelectorAll with escaped special characters
+    // Class selector returns array of elements (consistent with _hyperscript collections)
     // Escape colons and other CSS special characters for compatibility
     const escapedSelector = selector.replace(/:/g, '\\:');
-    const elements = Array.from(document.querySelectorAll(escapedSelector));
-
-    // Return single element when only one match (convenience for common case)
-    // Return array when multiple matches (consistent with _hyperscript collections)
-    if (elements.length === 1) {
-      return elements[0];
-    }
-    return elements;
+    return Array.from(document.querySelectorAll(escapedSelector));
   }
 
   throw new ExpressionParseError(`Unknown CSS selector type: ${node.selectorType}`);
@@ -1896,10 +1889,20 @@ async function evaluateQueryReference(node: any, _context: ExecutionContext): Pr
   const selector = node.selector;
 
   // Remove the < and /> wrapper to get the actual selector
-  const cleanSelector = selector.slice(1, -2); // Remove '<' and '/>'
+  let cleanSelector = selector.slice(1, -2); // Remove '<' and '/>'
 
-  // Note: Do NOT escape colons - they are valid in CSS pseudo-classes like :not(), :first-child
-  // The previous code escaped all colons which broke standard CSS selectors
+  // Escape colons in class names (e.g., .foo:bar -> .foo\:bar)
+  // BUT preserve CSS pseudo-classes like :hover, :not(), :first-child, etc.
+  // Use negative lookahead to avoid escaping known pseudo-class patterns
+  const pseudoClasses = 'hover|active|focus|visited|link|focus-within|focus-visible|' +
+    'first-child|last-child|only-child|nth-child|nth-last-child|nth-of-type|nth-last-of-type|' +
+    'first-of-type|last-of-type|only-of-type|empty|root|target|lang|dir|' +
+    'not|has|is|where|matches|' +
+    'before|after|first-letter|first-line|selection|placeholder|marker|backdrop|' +
+    'enabled|disabled|checked|indeterminate|required|optional|valid|invalid|in-range|out-of-range|read-only|read-write|' +
+    'default|defined|fullscreen|modal|picture-in-picture|autofill';
+  const pseudoRegex = new RegExp(`(\\.[a-zA-Z0-9_-]+):(?!(${pseudoClasses})(?![a-zA-Z0-9_-]))`, 'g');
+  cleanSelector = cleanSelector.replace(pseudoRegex, '$1\\:');
 
   // Query references ALWAYS return NodeList (not arrays)
   // This is the key difference from other CSS selector expressions

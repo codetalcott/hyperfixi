@@ -228,9 +228,11 @@ describe('Core System Validation', () => {
     it('should handle DOM element queries', async () => {
       testContainer.innerHTML = '<div class="test-item">content</div>';
 
+      // Class selectors return arrays (consistent with _hyperscript)
       const result = await evalHyperScript('.test-item');
       expect(result).toBeDefined();
-      expect(result.textContent).toBe('content');
+      expect(Array.isArray(result)).toBe(true);
+      expect(result[0].textContent).toBe('content');
     });
 
     it('should handle multiple element queries', async () => {
