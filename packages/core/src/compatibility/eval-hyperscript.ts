@@ -68,8 +68,15 @@ function convertContext(
   }
 
   if (hyperScriptContext.globals && typeof hyperScriptContext.globals === 'object') {
-    for (const [key, value] of Object.entries(hyperScriptContext.globals)) {
-      context.globals.set(key, value);
+    // Handle both Map and plain object globals
+    if (hyperScriptContext.globals instanceof Map) {
+      for (const [key, value] of hyperScriptContext.globals) {
+        context.globals.set(key, value);
+      }
+    } else {
+      for (const [key, value] of Object.entries(hyperScriptContext.globals)) {
+        context.globals.set(key, value);
+      }
     }
   }
 

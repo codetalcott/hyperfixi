@@ -379,25 +379,24 @@ describe('EnhancedDivisionExpression', () => {
     });
   });
 
-  describe('Division by zero protection', () => {
-    it('should prevent division by zero', async () => {
+  describe('Division by zero handling', () => {
+    it('should return Infinity for division by zero (JavaScript behavior)', async () => {
       const input = { left: 10, right: 0 };
       const result = await divisionExpr.evaluate(context, input);
 
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.errors[0].type).toBe('runtime-error');
-        expect(result.errors[0].message).toContain('Division by zero');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.value).toBe(Infinity);
       }
     });
 
-    it('should prevent division by zero from string conversion', async () => {
+    it('should return Infinity for string zero division (JavaScript behavior)', async () => {
       const input = { left: 10, right: '0' };
       const result = await divisionExpr.evaluate(context, input);
 
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.errors[0].message).toContain('Division by zero');
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.value).toBe(Infinity);
       }
     });
   });

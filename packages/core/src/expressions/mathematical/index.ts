@@ -773,40 +773,9 @@ export class EnhancedDivisionExpression implements BaseTypedExpression<number> {
       const leftNum = additionExpr['toNumber'](input.left, 'left operand');
       const rightNum = additionExpr['toNumber'](input.right, 'right operand');
 
-      // Check for division by zero
-      if (rightNum === 0) {
-        return {
-          success: false,
-          errors: [
-            {
-              type: 'runtime-error',
-              message: 'Division by zero is not allowed',
-              suggestions: [],
-            },
-          ],
-          suggestions: [
-            'Ensure the divisor (right operand) is not zero',
-            'Add a condition to check for zero before division',
-            'Use a default value when divisor might be zero',
-          ],
-        };
-      }
-
+      // Division by zero returns Infinity (JavaScript behavior)
+      // Note: This matches JavaScript's built-in behavior where 1/0 = Infinity, -1/0 = -Infinity
       const result = leftNum / rightNum;
-
-      if (!Number.isFinite(result)) {
-        return {
-          success: false,
-          errors: [
-            {
-              type: 'runtime-error',
-              message: `Division resulted in non-finite value: ${leftNum} / ${rightNum} = ${result}`,
-              suggestions: [],
-            },
-          ],
-          suggestions: ['Check for numeric overflow/underflow'],
-        };
-      }
 
       return {
         success: true,

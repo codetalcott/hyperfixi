@@ -31,6 +31,7 @@ export enum TokenType {
   // Context variables
   CONTEXT_VAR = 'context_var',
   PROPERTY_ACCESS = 'property_access',
+  GLOBAL_VAR = 'global_var',
 
   // Events
   EVENT = 'event',
@@ -308,7 +309,11 @@ export function tokenize(input: string): Token[] {
         (prevToken.type === TokenType.IDENTIFIER ||
           prevToken.type === TokenType.CONTEXT_VAR ||
           prevToken.type === TokenType.ID_SELECTOR ||
-          prevToken.type === TokenType.CLASS_SELECTOR);
+          prevToken.type === TokenType.CLASS_SELECTOR ||
+          // Support possessive after array/object literals and parenthesized expressions
+          prevToken.value === ']' ||
+          prevToken.value === ')' ||
+          prevToken.value === '}');
 
       if (isPossessive) {
         // Directly create the "'s" token without compound operator interference
@@ -451,6 +456,21 @@ export function tokenize(input: string): Token[] {
       addToken(tokenizer, TokenType.OPERATOR, ']');
       advance(tokenizer);
       continue;
+    }
+
+    // Handle global variables ($identifier)
+    if (char === '$') {
+      const nextChar = peek(tokenizer, 1);
+      // Check if followed by an identifier character
+      if (
+        (nextChar >= 'a' && nextChar <= 'z') ||
+        (nextChar >= 'A' && nextChar <= 'Z') ||
+        nextChar === '_'
+      ) {
+        tokenizeGlobalVariable(tokenizer);
+        continue;
+      }
+      // Otherwise fall through to operator handling
     }
 
     // Handle operators
@@ -845,6 +865,38 @@ function tokenizeNumberOrTime(tokenizer: Tokenizer): void {
     }
   }
 
+  // Handle scientific notation (e.g., 1e10, 2.5E-3)
+  if (tokenizer.position < inputLength) {
+    const expChar = input[tokenizer.position];
+    if (expChar === 'e' || expChar === 'E') {
+      const nextChar = tokenizer.position + 1 < inputLength ? input[tokenizer.position + 1] : '';
+      const afterSign = tokenizer.position + 2 < inputLength ? input[tokenizer.position + 2] : '';
+
+      // Check if this is actually an exponent (followed by optional +/- and digits)
+      const hasDigitAfterE = nextChar >= '0' && nextChar <= '9';
+      const hasSignThenDigit = (nextChar === '+' || nextChar === '-') && (afterSign >= '0' && afterSign <= '9');
+
+      if (hasDigitAfterE || hasSignThenDigit) {
+        value += advance(tokenizer); // consume 'e' or 'E'
+
+        // Consume optional sign
+        if (input[tokenizer.position] === '+' || input[tokenizer.position] === '-') {
+          value += advance(tokenizer);
+        }
+
+        // Consume exponent digits
+        while (tokenizer.position < inputLength) {
+          const char = input[tokenizer.position];
+          if (char >= '0' && char <= '9') {
+            value += advance(tokenizer);
+          } else {
+            break;
+          }
+        }
+      }
+    }
+  }
+
   // Check for time unit - optimized
   const unitStart = tokenizer.position;
   let unit = '';
@@ -898,6 +950,34 @@ function tokenizeIdentifier(tokenizer: Tokenizer): void {
   // Classify the identifier
   const type = classifyIdentifier(value);
   addToken(tokenizer, type, value, start);
+}
+
+function tokenizeGlobalVariable(tokenizer: Tokenizer): void {
+  const start = tokenizer.position;
+  const input = tokenizer.input;
+  const inputLength = input.length;
+
+  // Consume the '$' prefix
+  advance(tokenizer);
+
+  let value = '$';
+
+  // Read the identifier part
+  while (tokenizer.position < inputLength) {
+    const char = input[tokenizer.position];
+    if (
+      (char >= 'a' && char <= 'z') ||
+      (char >= 'A' && char <= 'Z') ||
+      (char >= '0' && char <= '9') ||
+      char === '_'
+    ) {
+      value += advance(tokenizer);
+    } else {
+      break;
+    }
+  }
+
+  addToken(tokenizer, TokenType.GLOBAL_VAR, value, start);
 }
 
 function tryTokenizeCompoundOperator(

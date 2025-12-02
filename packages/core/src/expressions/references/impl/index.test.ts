@@ -14,8 +14,10 @@ import {
 } from './index';
 import type { TypedExpressionContext } from '../../../types/expression-types';
 
-// Mock DOM environment
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+// Mock DOM environment - url required to avoid localStorage "opaque origin" errors
+const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+  url: 'http://localhost',
+});
 global.document = dom.window.document;
 global.window = dom.window as any;
 
@@ -215,7 +217,7 @@ describe('Enhanced Reference Expressions', () => {
     it('should infer correct types', async () => {
       mockContext.it = mockElement;
       const elementResult = await itExpression.evaluate(mockContext, undefined);
-      expect(elementResult.success && elementResult.type).toBe('object'); // JSDOM elements are detected as objects
+      expect(elementResult.success && elementResult.type).toBe('element'); // Duck-typing detects JSDOM elements correctly
 
       mockContext.it = null;
       const nullResult = await itExpression.evaluate(mockContext, undefined);

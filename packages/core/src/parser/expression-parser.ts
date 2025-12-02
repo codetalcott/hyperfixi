@@ -772,8 +772,8 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     };
   }
 
-  // Handle unary minus and plus operators
-  if (token.type === TokenType.OPERATOR && (token.value === '-' || token.value === '+')) {
+  // Handle unary minus, plus, and negation operators
+  if (token.type === TokenType.OPERATOR && (token.value === '-' || token.value === '+' || token.value === '!')) {
     advance(state); // consume operator
     const operand = parsePrimaryExpression(state);
     return {
@@ -825,10 +825,12 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
   // Number literals
   if (token.type === TokenType.NUMBER) {
     advance(state);
-    const value = token.value.includes('.') ? parseFloat(token.value) : parseInt(token.value, 10);
+    // Use parseFloat for all numbers to handle scientific notation (1e10) correctly
+    // parseInt stops at 'e', but parseFloat handles it properly
+    const value = parseFloat(token.value);
     return {
       type: 'literal',
-      value,
+      value: Number.isInteger(value) && !token.value.toLowerCase().includes('e') ? parseInt(token.value, 10) : value,
       valueType: 'number',
       start: token.start,
       end: token.end,
@@ -1109,6 +1111,17 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     }
   }
 
+  // Global variables ($identifier)
+  if (token.type === TokenType.GLOBAL_VAR) {
+    const globalToken = advance(state)!;
+    return {
+      type: 'globalVariable',
+      name: globalToken.value, // e.g., "$global"
+      start: globalToken.start,
+      end: globalToken.end,
+    };
+  }
+
   // Context variables, identifiers, and keywords (keywords can be used as identifiers in expression contexts)
   if (
     token.type === TokenType.CONTEXT_VAR ||
@@ -1368,6 +1381,9 @@ async function evaluateASTNode(node: ASTNode, context: ExecutionContext): Promis
 
     case 'positionalExpression':
       return evaluatePositionalExpression(node, context);
+
+    case 'globalVariable':
+      return evaluateGlobalVariable(node, context);
 
     default:
       throw new ExpressionParseError(`Unknown AST node type: ${(node as any).type}`);
@@ -1852,6 +1868,9 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
       if (Array.isArray(operand)) return operand.length > 0;
       if (typeof operand === 'object') return Object.keys(operand).length > 0;
       return true;
+    case '!':
+      // JavaScript-style logical negation
+      return !operand;
     case '-':
       // Unary minus: negate the number
       const negativeValue = typeof operand === 'number' ? operand : parseFloat(operand);
@@ -1932,6 +1951,45 @@ async function evaluateArrayLiteral(node: any, context: ExecutionContext): Promi
 }
 
 /**
+ * Evaluate global variable references ($identifier)
+ */
+function evaluateGlobalVariable(node: any, context: ExecutionContext): any {
+  const name = node.name; // e.g., "$global"
+  const varName = name.startsWith('$') ? name.slice(1) : name;
+
+  // Look up in globals context
+  if (context.globals) {
+    // Handle Map-style globals
+    if (context.globals instanceof Map) {
+      // Try with $ prefix first (as specified in test)
+      if (context.globals.has(name)) {
+        return context.globals.get(name);
+      }
+      // Then try without $ prefix
+      if (context.globals.has(varName)) {
+        return context.globals.get(varName);
+      }
+    }
+    // Handle plain object globals
+    else if (typeof context.globals === 'object') {
+      if (name in context.globals) {
+        return (context.globals as Record<string, any>)[name];
+      }
+      if (varName in context.globals) {
+        return (context.globals as Record<string, any>)[varName];
+      }
+    }
+  }
+
+  // Also check window/global scope for compatibility
+  if (typeof globalThis !== 'undefined' && varName in globalThis) {
+    return (globalThis as any)[varName];
+  }
+
+  return undefined;
+}
+
+/**
  * Evaluate object literal expressions {key: value, ...}
  */
 async function evaluateObjectLiteral(
@@ -1976,9 +2034,13 @@ async function evaluateArrayAccess(node: any, context: ExecutionContext): Promis
 
   // Handle array access
   if (Array.isArray(object)) {
-    const numIndex = typeof index === 'number' ? index : parseInt(index, 10);
+    let numIndex = typeof index === 'number' ? index : parseInt(index, 10);
     if (isNaN(numIndex)) {
       throw new ExpressionParseError(`Array index must be a number, got: ${typeof index}`);
+    }
+    // Support negative indexing: arr[-1] returns last element
+    if (numIndex < 0) {
+      numIndex = object.length + numIndex;
     }
     return object[numIndex];
   }

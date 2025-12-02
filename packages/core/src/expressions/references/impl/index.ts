@@ -120,9 +120,12 @@ export class EnhancedMeExpression
         success: true,
       });
 
+      // Duck-typing for cross-realm compatibility (JSDOM vs native HTMLElement)
+      const isElement = element && typeof element === 'object' && (element as any).nodeType === 1;
+
       return {
         success: true,
-        value: element instanceof HTMLElement ? element : null,
+        value: isElement ? (element as HTMLElement) : null,
         type: 'element',
       };
     } catch (error) {
@@ -263,9 +266,12 @@ export class EnhancedYouExpression
         success: true,
       });
 
+      // Duck-typing for cross-realm compatibility (JSDOM vs native HTMLElement)
+      const isElement = element && typeof element === 'object' && (element as any).nodeType === 1;
+
       return {
         success: true,
-        value: element instanceof HTMLElement ? element : null,
+        value: isElement ? (element as HTMLElement) : null,
         type: 'element',
       };
     } catch (error) {
@@ -458,7 +464,8 @@ export class EnhancedItExpression
 
   private inferType(value: unknown): HyperScriptValueType {
     if (value === null) return 'null';
-    if (value instanceof HTMLElement) return 'element';
+    // Duck-typing for cross-realm compatibility (JSDOM vs native HTMLElement)
+    if (value && typeof value === 'object' && (value as any).nodeType === 1) return 'element';
     if (Array.isArray(value)) return 'array';
     if (typeof value === 'object') return 'object';
     return typeof value as HyperScriptValueType;
