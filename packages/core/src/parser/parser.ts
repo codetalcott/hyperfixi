@@ -90,16 +90,9 @@ export class Parser {
   }
 
   parse(): ParseResult {
-    // debug.parse('🚀 PARSER: Parser.parse() method called', {
-    // tokenCount: this.tokens.length,
-    // firstToken: this.tokens[0]?.value,
-    // firstTokenType: this.tokens[0]?.type
-    // });
-
     try {
       // Handle empty input
       if (this.tokens.length === 0) {
-        // debug.parse('❌ PARSER: empty input detected');
         this.addError('Cannot parse empty input');
         return {
           success: false,
@@ -201,19 +194,10 @@ export class Parser {
       }
 
       // Check if this looks like a command sequence (starts with command)
-      // debug.parse('🔍 PARSER: checking if command sequence', {
-      // isCommandToken: this.checkTokenType(TokenType.COMMAND),
-      // isCommandValue: this.isCommand(this.peek().value),
-      // isKeyword: this.isKeyword(this.peek().value),
-      // firstTokenValue: this.peek().value
-      // });
-
       if (
         this.checkTokenType(TokenType.COMMAND) ||
         (this.isCommand(this.peek().value) && !this.isKeyword(this.peek().value))
       ) {
-        // debug.parse('✅ PARSER: confirmed command sequence, calling parseCommandSequence');
-
         const commandSequence = this.parseCommandSequence();
         if (commandSequence) {
           // Check if there are event handlers after the command sequence
@@ -1629,26 +1613,7 @@ export class Parser {
    */
   private parseTopLevelInitBlock(): ASTNode {
     const pos = this.getPosition();
-    const initCommands: CommandNode[] = [];
-
-    // Parse commands until 'end', skipping comments
-    while (!this.isAtEnd() && !this.check('end')) {
-      // Skip any comment tokens
-      if (this.checkTokenType(TokenType.COMMENT)) {
-        this.advance();
-        continue;
-      }
-
-      // Check if this is a command
-      if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(this.peek().value)) {
-        this.advance();
-        const cmd = this.parseCommand();
-        initCommands.push(cmd);
-      } else {
-        // Unexpected token in init block
-        break;
-      }
-    }
+    const initCommands = this.parseCommandBlock(['end']);
 
     // Consume the 'end' keyword
     this.consume('end', "Expected 'end' after init block");
@@ -1720,24 +1685,7 @@ export class Parser {
     }
 
     // Parse command list (body)
-    const bodyCommands: CommandNode[] = [];
-    while (!this.isAtEnd() && !this.check('end') && !this.check('catch') && !this.check('finally')) {
-      // Skip any comment tokens
-      if (this.checkTokenType(TokenType.COMMENT)) {
-        this.advance();
-        continue;
-      }
-
-      // Check if this is a command
-      if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(this.peek().value)) {
-        this.advance();
-        const cmd = this.parseCommand();
-        bodyCommands.push(cmd);
-      } else {
-        // Unexpected token, break out
-        break;
-      }
-    }
+    const bodyCommands = this.parseCommandBlock(['end', 'catch', 'finally']);
 
     // Parse optional catch block
     let errorSymbol: string | undefined;
@@ -1747,42 +1695,14 @@ export class Parser {
       if (this.checkTokenType(TokenType.IDENTIFIER)) {
         errorSymbol = this.advance().value;
       }
-
-      errorHandler = [];
-      while (!this.isAtEnd() && !this.check('end') && !this.check('finally')) {
-        if (this.checkTokenType(TokenType.COMMENT)) {
-          this.advance();
-          continue;
-        }
-        if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(this.peek().value)) {
-          this.advance();
-          const cmd = this.parseCommand();
-          errorHandler.push(cmd);
-        } else {
-          break;
-        }
-      }
+      errorHandler = this.parseCommandBlock(['end', 'finally']);
     }
 
     // Parse optional finally block
     let finallyHandler: CommandNode[] | undefined;
     if (this.check('finally')) {
       this.advance(); // consume 'finally'
-
-      finallyHandler = [];
-      while (!this.isAtEnd() && !this.check('end')) {
-        if (this.checkTokenType(TokenType.COMMENT)) {
-          this.advance();
-          continue;
-        }
-        if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(this.peek().value)) {
-          this.advance();
-          const cmd = this.parseCommand();
-          finallyHandler.push(cmd);
-        } else {
-          break;
-        }
-      }
+      finallyHandler = this.parseCommandBlock(['end']);
     }
 
     // Consume the 'end' keyword
@@ -1804,6 +1724,30 @@ export class Parser {
     };
   }
 
+  /**
+   * Parse an event name, optionally with namespace (e.g., "click" or "draggable:start")
+   * @param errorMessage - Error message if event name is not found
+   * @returns The parsed event name with optional namespace
+   */
+  private parseEventNameWithNamespace(errorMessage: string): string {
+    let eventToken: Token;
+    if (this.checkTokenType(TokenType.EVENT)) {
+      eventToken = this.advance();
+    } else if (this.checkTokenType(TokenType.IDENTIFIER)) {
+      eventToken = this.advance();
+    } else {
+      eventToken = this.consume(TokenType.EVENT, errorMessage);
+    }
+
+    let event = eventToken.value;
+    if (this.check(':')) {
+      this.advance();
+      const namespaceToken = this.advance();
+      event = `${event}:${namespaceToken.value}`;
+    }
+    return event;
+  }
+
   private parseEventHandler(): EventHandlerNode {
     debug.parse(`🔧 parseEventHandler: ENTRY - parsing event handler`);
 
@@ -1811,23 +1755,7 @@ export class Parser {
     const eventNames: string[] = [];
 
     // Parse first event name
-    let eventToken: Token;
-    if (this.checkTokenType(TokenType.EVENT)) {
-      eventToken = this.advance();
-    } else if (this.checkTokenType(TokenType.IDENTIFIER)) {
-      eventToken = this.advance();
-    } else {
-      eventToken = this.consume(TokenType.EVENT, "Expected event name after 'on'");
-    }
-
-    // Check if event name includes namespace (e.g., "draggable:start")
-    let event = eventToken.value;
-    if (this.check(':')) {
-      this.advance(); // consume ':'
-      const namespaceToken = this.advance(); // get the part after ':'
-      event = `${event}:${namespaceToken.value}`;
-    }
-
+    const event = this.parseEventNameWithNamespace("Expected event name after 'on'");
     eventNames.push(event);
     debug.parse(`🔧 parseEventHandler: Parsed first event name: ${event}`);
 
@@ -1836,23 +1764,7 @@ export class Parser {
       this.advance(); // consume 'or'
       debug.parse(`🔧 parseEventHandler: Found 'or', parsing additional event name`);
 
-      // Parse next event name
-      if (this.checkTokenType(TokenType.EVENT)) {
-        eventToken = this.advance();
-      } else if (this.checkTokenType(TokenType.IDENTIFIER)) {
-        eventToken = this.advance();
-      } else {
-        eventToken = this.consume(TokenType.EVENT, "Expected event name after 'or'");
-      }
-
-      // Check for namespace
-      let additionalEvent = eventToken.value;
-      if (this.check(':')) {
-        this.advance(); // consume ':'
-        const namespaceToken = this.advance(); // get the part after ':'
-        additionalEvent = `${additionalEvent}:${namespaceToken.value}`;
-      }
-
+      const additionalEvent = this.parseEventNameWithNamespace("Expected event name after 'or'");
       eventNames.push(additionalEvent);
       debug.parse(`🔧 parseEventHandler: Parsed additional event name: ${additionalEvent}`);
     }
@@ -2554,17 +2466,7 @@ export class Parser {
         this.consume('end', "Expected 'end' after event handler body");
       } else if (this.match('init')) {
         // Parse init block
-        const initCommands: CommandNode[] = [];
-
-        while (!this.isAtEnd() && !this.check('end')) {
-          if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(this.peek().value)) {
-            this.advance();
-            const cmd = this.parseCommand();
-            initCommands.push(cmd);
-          } else {
-            break;
-          }
-        }
+        const initCommands = this.parseCommandBlock(['end']);
 
         initBlock = {
           type: 'initBlock',
@@ -2722,6 +2624,29 @@ export class Parser {
   private parseMultiWordCommand(commandToken: Token, commandName: string): CommandNode | null {
     // Phase 9-3b: Delegate to extracted utility command parser
     return utilityCommands.parseMultiWordCommand(this.getContext(), commandToken, commandName);
+  }
+
+  /**
+   * Parse a block of commands until one of the stop keywords is encountered
+   * @param stopKeywords - Keywords that signal the end of the block
+   * @returns Array of parsed command nodes
+   */
+  private parseCommandBlock(stopKeywords: string[]): CommandNode[] {
+    const commands: CommandNode[] = [];
+    while (!this.isAtEnd() && !stopKeywords.some(kw => this.check(kw))) {
+      if (this.checkTokenType(TokenType.COMMENT)) {
+        this.advance();
+        continue;
+      }
+      if (this.checkTokenType(TokenType.COMMAND) || this.isCommand(this.peek().value)) {
+        this.advance();
+        const cmd = this.parseCommand();
+        commands.push(cmd);
+      } else {
+        break;
+      }
+    }
+    return commands;
   }
 
   private parseCommand(): CommandNode {
@@ -3376,25 +3301,8 @@ export class Parser {
 
 // Main parse function
 export function parse(input: string): ParseResult {
-  // debug.parse('🎯 PARSER: parse() function called', {
-  // input,
-  // inputLength: input.length
-  // });
-
   const tokens = tokenize(input);
-  // debug.parse('🔍 PARSER: tokenization completed', {
-  // tokenCount: tokens.length,
-  // tokens: tokens.map(t => `${t.type}:${t.value}`).join(' ')
-  // });
-
   const parser = new Parser(tokens);
   const result = parser.parse();
-
-  // debug.parse('🏁 PARSER: parsing completed', {
-  // success: result.success,
-  // hasNode: !!result.node,
-  // errorCount: result.error ? 1 : 0
-  // });
-
   return result;
 }

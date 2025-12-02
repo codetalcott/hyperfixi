@@ -12,7 +12,7 @@ import type {
 } from '../types/base-types';
 
 import { ExpressionEvaluator } from '../core/expression-evaluator';
-import { LazyExpressionEvaluator } from '../core/lazy-expression-evaluator';
+import type { LazyExpressionEvaluator } from '../core/lazy-expression-evaluator';
 import { CommandRegistry } from './command-adapter';
 import { getSharedGlobals } from '../core/context';
 import { asHTMLElement } from '../utils/dom-utils';

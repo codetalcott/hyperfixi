@@ -92,6 +92,76 @@ async function extractValue(result: any): Promise<any> {
   return result;
 }
 
+// Helper to create identifier AST nodes
+function createIdentifierNode(name: string, token: { start?: number; end?: number }): ASTNode {
+  return {
+    type: 'identifier',
+    name,
+    ...(token.start !== undefined && { start: token.start }),
+    ...(token.end !== undefined && { end: token.end }),
+  };
+}
+
+// Helper to create literal AST nodes
+function createLiteralNode(
+  value: any,
+  valueType: string,
+  token: { start?: number; end?: number }
+): ASTNode {
+  return {
+    type: 'literal',
+    value,
+    valueType,
+    ...(token.start !== undefined && { start: token.start }),
+    ...(token.end !== undefined && { end: token.end }),
+  };
+}
+
+/**
+ * Parse comma-separated arguments until closing parenthesis
+ *
+ * @param state - Parser state
+ * @returns Array of parsed argument nodes
+ */
+function parseArguments(state: ParseState): ASTNode[] {
+  const args: ASTNode[] = [];
+  let currentToken = peek(state);
+  while (currentToken && currentToken.value !== ')') {
+    const arg = parseLogicalExpression(state);
+    args.push(arg);
+    currentToken = peek(state);
+    if (currentToken && currentToken.value === ',') {
+      advance(state);
+      currentToken = peek(state);
+    } else {
+      break;
+    }
+  }
+  return args;
+}
+
+/**
+ * Check if a value is empty
+ *
+ * Empty values: null, undefined, empty string, empty array, empty object, empty NodeList
+ * NOT empty: false, 0 (these are valid values, just falsy)
+ *
+ * @param value - Value to check
+ * @returns true if the value is empty
+ */
+function isEmpty(value: unknown): boolean {
+  if (value === null || value === undefined) return true;
+  if (typeof value === 'string') return value.length === 0;
+  if (Array.isArray(value)) return value.length === 0;
+  // NodeList/HTMLCollection check
+  if (value && typeof value === 'object' && 'length' in value && typeof (value as any).length === 'number') {
+    return (value as any).length === 0;
+  }
+  if (typeof value === 'object' && value !== null) return Object.keys(value).length === 0;
+  // For booleans and numbers, they are NOT empty - they have a value
+  return false;
+}
+
 // Expression implementations would be imported when needed for evaluation
 
 interface ParseState {
@@ -444,12 +514,10 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
         const propertyName = parsePrimaryExpression(state);
 
         // Create identifier with * prefix
-        property = {
-          type: 'identifier',
-          name: '*' + ((propertyName as any).name || (propertyName as any).value),
-          start: cssPropertyStart,
-          ...(propertyName.end !== undefined && { end: propertyName.end }),
-        };
+        property = createIdentifierNode(
+          '*' + ((propertyName as any).name || (propertyName as any).value),
+          { start: cssPropertyStart, end: propertyName.end }
+        );
       } else {
         // Normal property access
         property = parsePrimaryExpression(state);
@@ -534,12 +602,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
       left = {
         type: 'propertyAccess',
         object: left,
-        property: {
-          type: 'identifier',
-          name: propertyToken.value,
-          start: propertyToken.start,
-          end: propertyToken.end,
-        },
+        property: createIdentifierNode(propertyToken.value, propertyToken),
         ...(left.start !== undefined && { start: left.start }),
         end: propertyToken.end,
       };
@@ -559,12 +622,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
       left = {
         type: 'optionalChain',
         object: left,
-        property: {
-          type: 'identifier',
-          name: propertyToken.value,
-          start: propertyToken.start,
-          end: propertyToken.end,
-        },
+        property: createIdentifierNode(propertyToken.value, propertyToken),
         optional: true,
         ...(left.start !== undefined && { start: left.start }),
         end: propertyToken.end,
@@ -670,24 +728,7 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
     // Handle method calls (obj.method())
     else if (token.type === TokenType.OPERATOR && token.value === '(') {
       state.position++; // consume '('
-
-      // Parse function arguments
-      const args: ASTNode[] = [];
-
-      // Check for arguments before closing paren
-      let currentToken = peek(state);
-      while (currentToken && currentToken.value !== ')') {
-        const arg = parseLogicalExpression(state);
-        args.push(arg);
-
-        currentToken = peek(state);
-        if (currentToken && currentToken.value === ',') {
-          advance(state); // consume comma
-          currentToken = peek(state);
-        } else {
-          break;
-        }
-      }
+      const args = parseArguments(state);
 
       // Consume closing paren
       const closeParen = advance(state);
@@ -828,13 +869,7 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     // Remove quotes and process escape sequences
     const rawValue = token.value.slice(1, -1);
     const value = processEscapeSequences(rawValue);
-    return {
-      type: 'literal',
-      value,
-      valueType: 'string',
-      start: token.start,
-      end: token.end,
-    };
+    return createLiteralNode(value, 'string', token);
   }
 
   // Template literals
@@ -853,14 +888,11 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     advance(state);
     // Use parseFloat for all numbers to handle scientific notation (1e10) correctly
     // parseInt stops at 'e', but parseFloat handles it properly
-    const value = parseFloat(token.value);
-    return {
-      type: 'literal',
-      value: Number.isInteger(value) && !token.value.toLowerCase().includes('e') ? parseInt(token.value, 10) : value,
-      valueType: 'number',
-      start: token.start,
-      end: token.end,
-    };
+    const floatValue = parseFloat(token.value);
+    const value = Number.isInteger(floatValue) && !token.value.toLowerCase().includes('e')
+      ? parseInt(token.value, 10)
+      : floatValue;
+    return createLiteralNode(value, 'number', token);
   }
 
   // Boolean literals
@@ -891,13 +923,7 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
         valueType = 'boolean';
     }
 
-    return {
-      type: 'literal',
-      value,
-      valueType,
-      start: token.start,
-      end: token.end,
-    };
+    return createLiteralNode(value, valueType, token);
   }
 
   // CSS ID selector (#id)
@@ -963,21 +989,10 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
       let key: ASTNode;
       if (keyToken.type === TokenType.IDENTIFIER) {
         advance(state);
-        key = {
-          type: 'identifier',
-          name: keyToken.value,
-          start: keyToken.start,
-          end: keyToken.end,
-        };
+        key = createIdentifierNode(keyToken.value, keyToken);
       } else if (keyToken.type === TokenType.STRING) {
         advance(state);
-        key = {
-          type: 'literal',
-          value: keyToken.value.slice(1, -1), // Remove quotes
-          valueType: 'string',
-          start: keyToken.start,
-          end: keyToken.end,
-        };
+        key = createLiteralNode(keyToken.value.slice(1, -1), 'string', keyToken);
       } else {
         throw new ExpressionParseError(`Expected property key, got: ${keyToken.type}`);
       }
@@ -1164,24 +1179,7 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
     const nextToken = peek(state);
     if (nextToken && nextToken.value === '(') {
       advance(state); // consume '('
-
-      // Parse function arguments
-      const args: ASTNode[] = [];
-
-      // Check for arguments before closing paren
-      let currentToken = peek(state);
-      while (currentToken && currentToken.value !== ')') {
-        const arg = parseLogicalExpression(state);
-        args.push(arg);
-
-        currentToken = peek(state);
-        if (currentToken && currentToken.value === ',') {
-          advance(state); // consume comma
-          currentToken = peek(state);
-        } else {
-          break;
-        }
-      }
+      const args = parseArguments(state);
 
       // Consume closing paren
       const closeParen = peek(state);
@@ -1192,12 +1190,7 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
 
       return {
         type: 'callExpression',
-        callee: {
-          type: 'identifier',
-          name: identifierToken.value,
-          start: identifierToken.start,
-          end: identifierToken.end,
-        },
+        callee: createIdentifierNode(identifierToken.value, identifierToken),
         arguments: args,
         start: identifierToken.start,
         end: closeParen.end,
@@ -1206,32 +1199,15 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
 
     // Handle special literal identifiers
     if (identifierToken.value === 'null') {
-      return {
-        type: 'literal',
-        value: null,
-        valueType: 'null',
-        start: identifierToken.start,
-        end: identifierToken.end,
-      };
+      return createLiteralNode(null, 'null', identifierToken);
     }
 
     if (identifierToken.value === 'undefined') {
-      return {
-        type: 'literal',
-        value: undefined,
-        valueType: 'undefined',
-        start: identifierToken.start,
-        end: identifierToken.end,
-      };
+      return createLiteralNode(undefined, 'undefined', identifierToken);
     }
 
     // Regular identifier
-    return {
-      type: 'identifier',
-      name: identifierToken.value,
-      start: identifierToken.start,
-      end: identifierToken.end,
-    };
+    return createIdentifierNode(identifierToken.value, identifierToken);
   }
 
   // Handle constructor calls with 'new' keyword
@@ -1546,17 +1522,9 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     case 'exists':
       return left != null;
     case 'is empty':
-      return (
-        !left ||
-        (typeof left === 'string' && left.length === 0) ||
-        (Array.isArray(left) && left.length === 0)
-      );
+      return isEmpty(left);
     case 'is not empty':
-      return (
-        left &&
-        (typeof left !== 'string' || left.length > 0) &&
-        (!Array.isArray(left) || left.length > 0)
-      );
+      return !isEmpty(left);
     case 'is in':
       return String(right).includes(String(left)); // Note: reversed args for membership
     case 'is not in':
@@ -1906,18 +1874,7 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
       return !operand;
     case 'no':
       // 'no' checks for emptiness, not falsiness
-      // Empty values: null, undefined, empty string, empty array, empty object, empty NodeList
-      // NOT empty: false, 0 (these are valid values, just falsy)
-      if (operand === null || operand === undefined) return true;
-      if (typeof operand === 'string') return operand.length === 0;
-      if (Array.isArray(operand)) return operand.length === 0;
-      // NodeList/HTMLCollection check
-      if (operand && typeof operand === 'object' && 'length' in operand && typeof operand.length === 'number') {
-        return operand.length === 0;
-      }
-      if (typeof operand === 'object' && operand !== null) return Object.keys(operand).length === 0;
-      // For booleans and numbers, they are NOT empty - they have a value
-      return false;
+      return isEmpty(operand);
     case 'exists':
       // Fallback implementation for existence check
       return operand !== null && operand !== undefined;
@@ -1925,19 +1882,9 @@ async function evaluateUnaryExpression(node: any, context: ExecutionContext): Pr
       // Fallback implementation for non-existence check
       return operand === null || operand === undefined;
     case 'is empty':
-      // Fallback implementation for emptiness check
-      if (operand === null || operand === undefined) return true;
-      if (typeof operand === 'string') return operand.length === 0;
-      if (Array.isArray(operand)) return operand.length === 0;
-      if (typeof operand === 'object') return Object.keys(operand).length === 0;
-      return false;
+      return isEmpty(operand);
     case 'is not empty':
-      // Fallback implementation for non-emptiness check
-      if (operand === null || operand === undefined) return false;
-      if (typeof operand === 'string') return operand.length > 0;
-      if (Array.isArray(operand)) return operand.length > 0;
-      if (typeof operand === 'object') return Object.keys(operand).length > 0;
-      return true;
+      return !isEmpty(operand);
     case '!':
       // JavaScript-style logical negation
       return !operand;
@@ -2495,14 +2442,4 @@ async function evaluateConstructorCall(node: any, _context: ExecutionContext): P
       `Failed to call constructor "${constructorName}": ${error instanceof Error ? error.message : String(error)}`
     );
   }
-}
-
-/**
- * Helper function to reconstruct expression text for error messages
- */
-// @ts-expect-error - Reserved for future error reporting
-function _reconstructExpression(state: ParseState, _leftNode?: ASTNode): string {
-  // Simple reconstruction - in a more sophisticated implementation,
-  // we'd traverse the AST to rebuild the original text
-  return state.tokens.map(token => token.value).join(' ');
 }
