@@ -29,6 +29,7 @@ export default {
         unsafe: true,
         unsafe_comps: true,
         drop_console: true,
+        passes: 2, // Multi-pass compression for better results
         pure_funcs: [
           'debug.command',
           'debug.event',

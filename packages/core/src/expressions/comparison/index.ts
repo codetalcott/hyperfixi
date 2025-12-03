@@ -14,6 +14,7 @@ import type {
   LLMDocumentation as LLMDocumentation,
   ExpressionCategory as ExpressionCategory,
 } from '../../types/index';
+import { toNumber } from './utils';
 
 // Define BaseTypedExpression locally for now
 interface BaseTypedExpression<T> {
@@ -166,9 +167,9 @@ export class GreaterThanExpression implements BaseTypedExpression<boolean> {
       return left > right;
     }
 
-    // Try to convert both to numbers
-    const leftNum = this.toNumber(left);
-    const rightNum = this.toNumber(right);
+    // Try to convert both to numbers (uses shared toNumber utility)
+    const leftNum = toNumber(left);
+    const rightNum = toNumber(right);
 
     if (leftNum !== null && rightNum !== null) {
       return leftNum > rightNum;
@@ -176,26 +177,6 @@ export class GreaterThanExpression implements BaseTypedExpression<boolean> {
 
     // Fallback to string comparison
     return String(left) > String(right);
-  }
-
-  /**
-   * Convert value to number, return null if not possible
-   */
-  private toNumber(value: unknown): number | null {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-
-    if (typeof value === 'string') {
-      const num = Number(value);
-      return Number.isFinite(num) ? num : null;
-    }
-
-    if (typeof value === 'boolean') {
-      return value ? 1 : 0;
-    }
-
-    return null;
   }
 
   /**
@@ -303,32 +284,15 @@ export class LessThanExpression implements BaseTypedExpression<boolean> {
       return left < right;
     }
 
-    // Try numeric conversion
-    const leftNum = this.toNumber(left);
-    const rightNum = this.toNumber(right);
+    // Try numeric conversion (uses shared toNumber utility)
+    const leftNum = toNumber(left);
+    const rightNum = toNumber(right);
 
     if (leftNum !== null && rightNum !== null) {
       return leftNum < rightNum;
     }
 
     return String(left) < String(right);
-  }
-
-  private toNumber(value: unknown): number | null {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-
-    if (typeof value === 'string') {
-      const num = Number(value);
-      return Number.isFinite(num) ? num : null;
-    }
-
-    if (typeof value === 'boolean') {
-      return value ? 1 : 0;
-    }
-
-    return null;
   }
 }
 
@@ -406,31 +370,15 @@ export class GreaterThanOrEqualExpression implements BaseTypedExpression<boolean
       return left >= right;
     }
 
-    const leftNum = this.toNumber(left);
-    const rightNum = this.toNumber(right);
+    // Uses shared toNumber utility
+    const leftNum = toNumber(left);
+    const rightNum = toNumber(right);
 
     if (leftNum !== null && rightNum !== null) {
       return leftNum >= rightNum;
     }
 
     return String(left) >= String(right);
-  }
-
-  private toNumber(value: unknown): number | null {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-
-    if (typeof value === 'string') {
-      const num = Number(value);
-      return Number.isFinite(num) ? num : null;
-    }
-
-    if (typeof value === 'boolean') {
-      return value ? 1 : 0;
-    }
-
-    return null;
   }
 }
 
@@ -507,31 +455,15 @@ export class LessThanOrEqualExpression implements BaseTypedExpression<boolean> {
       return left <= right;
     }
 
-    const leftNum = this.toNumber(left);
-    const rightNum = this.toNumber(right);
+    // Uses shared toNumber utility
+    const leftNum = toNumber(left);
+    const rightNum = toNumber(right);
 
     if (leftNum !== null && rightNum !== null) {
       return leftNum <= rightNum;
     }
 
     return String(left) <= String(right);
-  }
-
-  private toNumber(value: unknown): number | null {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-
-    if (typeof value === 'string') {
-      const num = Number(value);
-      return Number.isFinite(num) ? num : null;
-    }
-
-    if (typeof value === 'boolean') {
-      return value ? 1 : 0;
-    }
-
-    return null;
   }
 }
 

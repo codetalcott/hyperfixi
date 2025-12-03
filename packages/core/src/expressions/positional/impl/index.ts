@@ -134,25 +134,7 @@ export class FirstExpression
     }
   }
 
-  private normalizeCollection(collection: unknown): unknown[] {
-    if (Array.isArray(collection)) {
-      return collection;
-    }
-    if (collection instanceof NodeList) {
-      return Array.from(collection);
-    }
-    if (typeof collection === 'string') {
-      return collection.split('');
-    }
-    if (collection == null) {
-      return [];
-    }
-    // Try to iterate other iterable objects
-    if (typeof collection === 'object' && Symbol.iterator in collection) {
-      return Array.from(collection as Iterable<unknown>);
-    }
-    return [];
-  }
+  // Uses inherited normalizeCollection() and inferType() from BaseExpressionImpl
 
   private inferResultTypeLocal(value: unknown): EvaluationType {
     if (value === undefined) return 'Undefined';
@@ -253,24 +235,7 @@ export class LastExpression
     }
   }
 
-  private normalizeCollection(collection: unknown): unknown[] {
-    if (Array.isArray(collection)) {
-      return collection;
-    }
-    if (collection instanceof NodeList) {
-      return Array.from(collection);
-    }
-    if (typeof collection === 'string') {
-      return collection.split('');
-    }
-    if (collection == null) {
-      return [];
-    }
-    if (typeof collection === 'object' && Symbol.iterator in collection) {
-      return Array.from(collection as Iterable<unknown>);
-    }
-    return [];
-  }
+  // Uses inherited normalizeCollection() from BaseExpressionImpl
 
   private inferResultTypeLocal(value: unknown): EvaluationType {
     if (value === undefined) return 'Undefined';
@@ -370,24 +335,7 @@ export class AtExpression
     }
   }
 
-  private normalizeCollection(collection: unknown): unknown[] {
-    if (Array.isArray(collection)) {
-      return collection;
-    }
-    if (collection instanceof NodeList) {
-      return Array.from(collection);
-    }
-    if (typeof collection === 'string') {
-      return collection.split('');
-    }
-    if (collection == null) {
-      return [];
-    }
-    if (typeof collection === 'object' && Symbol.iterator in collection) {
-      return Array.from(collection as Iterable<unknown>);
-    }
-    return [];
-  }
+  // Uses inherited normalizeCollection() from BaseExpressionImpl
 
   private normalizeIndex(index: number, length: number): number {
     // Handle negative indices
@@ -508,24 +456,7 @@ export class RandomExpression
     }
   }
 
-  private normalizeCollection(collection: unknown): unknown[] {
-    if (Array.isArray(collection)) {
-      return collection;
-    }
-    if (collection instanceof NodeList) {
-      return Array.from(collection);
-    }
-    if (typeof collection === 'string') {
-      return collection.split('');
-    }
-    if (collection == null) {
-      return [];
-    }
-    if (typeof collection === 'object' && Symbol.iterator in collection) {
-      return Array.from(collection as Iterable<unknown>);
-    }
-    return [];
-  }
+  // Uses inherited normalizeCollection() from BaseExpressionImpl
 
   private getSecureRandomIndex(length: number): number {
     // Use crypto.getRandomValues if available for better randomness

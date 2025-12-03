@@ -197,6 +197,39 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
     return typeof value as EvaluationResult<unknown>['type'];
   }
 
+  /**
+   * Normalize various collection types to array
+   * Previously duplicated in FirstExpression, LastExpression, AtExpression, RandomExpression
+   *
+   * Bundle size savings: ~54 lines by eliminating 4 duplicate implementations
+   */
+  protected normalizeCollection(collection: unknown): unknown[] {
+    if (Array.isArray(collection)) return collection;
+    if (collection instanceof NodeList) return Array.from(collection);
+    if (typeof collection === 'string') return collection.split('');
+    if (collection == null) return [];
+    if (typeof collection === 'object' && Symbol.iterator in collection) {
+      return Array.from(collection as Iterable<unknown>);
+    }
+    return [];
+  }
+
+  /**
+   * Convert value to number with proper null handling
+   * Previously duplicated in comparison expressions (GreaterThan, LessThan, etc.)
+   *
+   * Bundle size savings: ~60 lines by eliminating 4+ duplicate implementations
+   */
+  protected toNumber(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+      const num = Number(value);
+      return Number.isFinite(num) ? num : null;
+    }
+    if (typeof value === 'boolean') return value ? 1 : 0;
+    return null;
+  }
+
   // Abstract methods that subclasses must implement
   abstract evaluate(
     context: TypedExpressionContext,
