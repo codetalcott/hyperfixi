@@ -2,6 +2,8 @@
  * Logical Expressions - Deep TypeScript Integration
  * Implements logical operations (and, or, not) with comprehensive validation
  * Enhanced for LLM code agents with full type safety
+ *
+ * Refactored to use BaseExpressionImpl for reduced bundle size (~3 KB savings)
  */
 
 import { v } from '../../../validation/lightweight-validators';
@@ -16,6 +18,7 @@ import type {
   ExpressionMetadata,
   ExpressionCategory,
 } from '../../../types/expression-types';
+import { BaseExpressionImpl } from '../../base-expression';
 
 // ============================================================================
 // Input Schemas
@@ -42,6 +45,7 @@ type UnaryLogicalInput = any; // Inferred from RuntimeValidator
 // ============================================================================
 
 export class AndExpression
+  extends BaseExpressionImpl<BinaryLogicalInput, boolean>
   implements TypedExpressionImplementation<BinaryLogicalInput, boolean>
 {
   public readonly name = 'and';
@@ -56,8 +60,6 @@ export class AndExpression
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: BinaryLogicalInput
@@ -74,42 +76,32 @@ export class AndExpression
         };
       }
 
-      // Convert left operand to boolean
+      // Convert left operand to boolean (inherited from BaseExpressionImpl)
       const leftBool = this.toBoolean(input.left);
 
       // Short-circuit evaluation: if left is false, return false without evaluating right
       if (!leftBool) {
-        this.trackPerformance(context, startTime, true);
-        return {
-          success: true,
-          value: false,
-          type: 'boolean',
-        };
+        this.trackSimple(context, startTime, true, 'boolean');
+        return this.success(false, 'boolean');
       }
 
       // Convert right operand to boolean
       const rightBool = this.toBoolean(input.right);
       const result = leftBool && rightBool;
 
-      // Track performance
-      this.trackPerformance(context, startTime, true);
+      // Track performance (inherited from BaseExpressionImpl)
+      this.trackSimple(context, startTime, true, 'boolean');
 
-      return {
-        success: true,
-        value: result,
-        type: 'boolean',
-      };
+      return this.success(result, 'boolean');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
+      this.trackSimple(context, startTime, false);
 
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `Logical AND operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      return this.failure(
+        'AndExpressionError',
+        'runtime-error',
+        `Logical AND operation failed: ${error instanceof Error ? error.message : String(error)}`,
+        'AND_EVALUATION_FAILED'
+      );
     }
   }
 
@@ -122,7 +114,7 @@ export class AndExpression
           isValid: false,
           errors:
             parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
+              type: 'type-mismatch' as const,
               message: `Invalid AND operation input: ${err.message}`,
               suggestions: [],
             })) ?? [],
@@ -130,68 +122,13 @@ export class AndExpression
         };
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
+      return this.validationSuccess();
     } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
-    }
-  }
-
-  /**
-   * Convert value to boolean using JavaScript's truthiness rules
-   */
-  private toBoolean(value: unknown): boolean {
-    // JavaScript falsy values: false, 0, -0, 0n, "", null, undefined, NaN
-    // Note: -0 === 0 in JavaScript, so checking value === 0 covers both 0 and -0
-    if (
-      value === false ||
-      value === 0 ||
-      value === 0n ||
-      value === '' ||
-      value === null ||
-      value === undefined
-    ) {
-      return false;
-    }
-
-    if (typeof value === 'number' && isNaN(value)) {
-      return false;
-    }
-
-    // All other values are truthy
-    return true;
-  }
-
-  /**
-   * Track performance for debugging and optimization
-   */
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'logical operation',
-        output: success ? 'boolean' : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed with exception',
+        ['Check input structure and types']
+      );
     }
   }
 }
@@ -201,6 +138,7 @@ export class AndExpression
 // ============================================================================
 
 export class OrExpression
+  extends BaseExpressionImpl<BinaryLogicalInput, boolean>
   implements TypedExpressionImplementation<BinaryLogicalInput, boolean>
 {
   public readonly name = 'or';
@@ -215,8 +153,6 @@ export class OrExpression
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: BinaryLogicalInput
@@ -233,72 +169,59 @@ export class OrExpression
         };
       }
 
-      // Convert left operand to boolean
+      // Convert left operand to boolean (inherited from BaseExpressionImpl)
       const leftBool = this.toBoolean(input.left);
 
       // Short-circuit evaluation: if left is true, return true without evaluating right
       if (leftBool) {
-        this.trackPerformance(context, startTime, true);
-        return {
-          success: true,
-          value: true,
-          type: 'boolean',
-        };
+        this.trackSimple(context, startTime, true, 'boolean');
+        return this.success(true, 'boolean');
       }
 
       // Convert right operand to boolean
       const rightBool = this.toBoolean(input.right);
       const result = leftBool || rightBool;
 
-      // Track performance
-      this.trackPerformance(context, startTime, true);
+      // Track performance (inherited from BaseExpressionImpl)
+      this.trackSimple(context, startTime, true, 'boolean');
 
-      return {
-        success: true,
-        value: result,
-        type: 'boolean',
-      };
+      return this.success(result, 'boolean');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
+      this.trackSimple(context, startTime, false);
 
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `Logical OR operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      return this.failure(
+        'OrExpressionError',
+        'runtime-error',
+        `Logical OR operation failed: ${error instanceof Error ? error.message : String(error)}`,
+        'OR_EVALUATION_FAILED'
+      );
     }
   }
 
   validate(input: unknown): ValidationResult {
-    // Reuse AND validation logic
-    const andExpr = new AndExpression();
-    return andExpr.validate(input);
-  }
+    try {
+      const parsed = this.inputSchema.safeParse(input);
 
-  private toBoolean(value: unknown): boolean {
-    // Reuse AND boolean conversion logic
-    const andExpr = new AndExpression();
-    return andExpr['toBoolean'](value);
-  }
+      if (!parsed.success) {
+        return {
+          isValid: false,
+          errors:
+            parsed.error?.errors.map(err => ({
+              type: 'type-mismatch' as const,
+              message: `Invalid OR operation input: ${err.message}`,
+              suggestions: [],
+            })) ?? [],
+          suggestions: ['Provide both left and right operands', 'Ensure operands are valid values'],
+        };
+      }
 
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'logical operation',
-        output: success ? 'boolean' : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (error) {
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed with exception',
+        ['Check input structure and types']
+      );
     }
   }
 }
@@ -308,6 +231,7 @@ export class OrExpression
 // ============================================================================
 
 export class NotExpression
+  extends BaseExpressionImpl<UnaryLogicalInput, boolean>
   implements TypedExpressionImplementation<UnaryLogicalInput, boolean>
 {
   public readonly name = 'not';
@@ -321,8 +245,6 @@ export class NotExpression
     category: 'Logical',
     complexity: 'simple',
   };
-
-  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -340,29 +262,23 @@ export class NotExpression
         };
       }
 
-      // Convert operand to boolean and negate
+      // Convert operand to boolean and negate (inherited from BaseExpressionImpl)
       const operandBool = this.toBoolean(input.operand);
       const result = !operandBool;
 
-      // Track performance
-      this.trackPerformance(context, startTime, true);
+      // Track performance (inherited from BaseExpressionImpl)
+      this.trackSimple(context, startTime, true, 'boolean');
 
-      return {
-        success: true,
-        value: result,
-        type: 'boolean',
-      };
+      return this.success(result, 'boolean');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
+      this.trackSimple(context, startTime, false);
 
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `Logical NOT operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      return this.failure(
+        'NotExpressionError',
+        'runtime-error',
+        `Logical NOT operation failed: ${error instanceof Error ? error.message : String(error)}`,
+        'NOT_EVALUATION_FAILED'
+      );
     }
   }
 
@@ -375,7 +291,7 @@ export class NotExpression
           isValid: false,
           errors:
             parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
+              type: 'type-mismatch' as const,
               message: `Invalid NOT operation input: ${err.message}`,
               suggestions: [],
             })) ?? [],
@@ -383,46 +299,13 @@ export class NotExpression
         };
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
+      return this.validationSuccess();
     } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
-    }
-  }
-
-  private toBoolean(value: unknown): boolean {
-    // Reuse AND boolean conversion logic
-    const andExpr = new AndExpression();
-    return andExpr['toBoolean'](value);
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'logical operation',
-        output: success ? 'boolean' : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed with exception',
+        ['Check input structure and types']
+      );
     }
   }
 }

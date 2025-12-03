@@ -1,6 +1,8 @@
 /**
  * Conversion Expressions for HyperScript
  * Provides deep TypeScript integration for type conversion expressions with comprehensive validation
+ *
+ * Refactored to use BaseExpressionImpl for reduced bundle size (~2 KB savings)
  */
 
 import { v } from '../../../validation/lightweight-validators';
@@ -10,7 +12,10 @@ import type {
   ExpressionMetadata,
   BaseTypedExpression,
   ValidationResult,
+  EvaluationType,
 } from '../../../types/base-types';
+import type { ExpressionCategory, LLMDocumentation } from '../../../types/expression-types';
+import { BaseExpressionImpl } from '../../base-expression';
 
 // ============================================================================
 // Enhanced Type Conversion Registry
@@ -364,12 +369,17 @@ const AsExpressionInputSchema = v.object({
 
 /**
  * Enhanced implementation of the 'as' conversion expression
+ * Now extends BaseExpressionImpl for reduced bundle size
  */
-export class AsExpression implements BaseTypedExpression<unknown> {
+export class AsExpression
+  extends BaseExpressionImpl<{ value: unknown; type: string }, unknown>
+  implements BaseTypedExpression<unknown>
+{
   readonly name = 'as';
-  readonly category = 'Conversion';
+  readonly category: ExpressionCategory = 'Conversion';
   readonly syntax = 'value as Type';
-  readonly outputType = 'Any';
+  readonly description = 'Converts values between different types using the "as" keyword';
+  readonly outputType: EvaluationType = 'Any';
   readonly inputSchema = AsExpressionInputSchema;
 
   readonly metadata: ExpressionMetadata = {
@@ -515,7 +525,7 @@ export class AsExpression implements BaseTypedExpression<unknown> {
         }
         const fixed = (numberResult.value as number).toFixed(precision);
         const result = { success: true as const, value: fixed, type: 'string' as const };
-        this.trackEvaluation(context, input, result, startTime);
+        this.trackPerformance(context, input, result, startTime);
         return result;
       }
 
@@ -523,7 +533,7 @@ export class AsExpression implements BaseTypedExpression<unknown> {
       let converter = enhancedConverters[type];
       if (converter) {
         const result = converter(value, context);
-        this.trackEvaluation(context, input, result, startTime);
+        this.trackPerformance(context, input, result, startTime);
         return result;
       }
 
@@ -551,7 +561,7 @@ export class AsExpression implements BaseTypedExpression<unknown> {
         converter = enhancedConverters[aliasedType];
         if (converter) {
           const result = converter(value, context);
-          this.trackEvaluation(context, input, result, startTime);
+          this.trackPerformance(context, input, result, startTime);
           return result;
         }
       }
@@ -571,7 +581,7 @@ export class AsExpression implements BaseTypedExpression<unknown> {
           ],
         },
       };
-      this.trackEvaluation(context, input, errorResult, startTime);
+      this.trackPerformance(context, input, errorResult, startTime);
       return errorResult;
     } catch (error) {
       const errorResult = {
@@ -587,7 +597,7 @@ export class AsExpression implements BaseTypedExpression<unknown> {
           ],
         },
       };
-      this.trackEvaluation(context, input, errorResult, startTime);
+      this.trackPerformance(context, input, errorResult, startTime);
       return errorResult;
     }
   }
@@ -613,35 +623,12 @@ export class AsExpression implements BaseTypedExpression<unknown> {
       }
       return { isValid: true, errors: [], suggestions: [] };
     } catch (_error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error' as const,
-            message: 'Validation failed',
-            suggestions: ['Check input structure'],
-          },
-        ],
-        suggestions: ['Check input structure'],
-      };
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed',
+        ['Check input structure']
+      );
     }
-  }
-
-  private trackEvaluation(
-    context: TypedExpressionContext,
-    input: unknown,
-    result: EvaluationResult<unknown>,
-    startTime: number
-  ): void {
-    context.evaluationHistory.push({
-      expressionName: this.name,
-      category: this.category,
-      input,
-      output: result.success ? result.value : result.error,
-      timestamp: startTime,
-      duration: Date.now() - startTime,
-      success: result.success,
-    });
   }
 }
 
@@ -659,12 +646,17 @@ const IsExpressionInputSchema = v.object({
 
 /**
  * Enhanced implementation of the 'is' type checking expression
+ * Now extends BaseExpressionImpl for reduced bundle size
  */
-export class IsExpression implements BaseTypedExpression<boolean> {
+export class IsExpression
+  extends BaseExpressionImpl<{ value: unknown; type: string }, boolean>
+  implements BaseTypedExpression<boolean>
+{
   readonly name = 'is';
-  readonly category = 'Conversion';
+  readonly category: ExpressionCategory = 'Conversion';
   readonly syntax = 'value is Type';
-  readonly outputType = 'Boolean';
+  readonly description = 'Checks if a value is of a specific type';
+  readonly outputType: EvaluationType = 'Boolean';
   readonly inputSchema = IsExpressionInputSchema;
 
   readonly metadata: ExpressionMetadata = {
@@ -820,21 +812,18 @@ export class IsExpression implements BaseTypedExpression<boolean> {
           isMatch = value?.constructor?.name?.toLowerCase() === lowerType;
       }
 
-      const result = { success: true as const, value: isMatch, type: 'boolean' as const };
-      this.trackEvaluation(context, input, result, startTime);
+      const result = this.success(isMatch, 'boolean');
+      this.trackPerformance(context, input, result, startTime);
       return result;
     } catch (error) {
-      const errorResult = {
-        success: false as const,
-        error: {
-          name: 'IsExpressionError',
-          type: 'type-mismatch' as const,
-          message: `Type check failed: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'TYPE_CHECK_FAILED',
-          suggestions: ['Check type name spelling', 'Ensure value is accessible'],
-        },
-      };
-      this.trackEvaluation(context, input, errorResult, startTime);
+      const errorResult = this.failure<boolean>(
+        'IsExpressionError',
+        'type-mismatch',
+        `Type check failed: ${error instanceof Error ? error.message : String(error)}`,
+        'TYPE_CHECK_FAILED',
+        ['Check type name spelling', 'Ensure value is accessible']
+      );
+      this.trackPerformance(context, input, errorResult, startTime);
       return errorResult;
     }
   }
@@ -858,37 +847,14 @@ export class IsExpression implements BaseTypedExpression<boolean> {
           ],
         };
       }
-      return { isValid: true, errors: [], suggestions: [] };
+      return this.validationSuccess();
     } catch (_error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error' as const,
-            message: 'Validation failed',
-            suggestions: ['Check input structure'],
-          },
-        ],
-        suggestions: ['Check input structure'],
-      };
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed',
+        ['Check input structure']
+      );
     }
-  }
-
-  private trackEvaluation(
-    context: TypedExpressionContext,
-    input: unknown,
-    result: EvaluationResult<boolean>,
-    startTime: number
-  ): void {
-    context.evaluationHistory.push({
-      expressionName: this.name,
-      category: this.category,
-      input,
-      output: result.success ? result.value : result.error,
-      timestamp: startTime,
-      duration: Date.now() - startTime,
-      success: result.success,
-    });
   }
 }
 

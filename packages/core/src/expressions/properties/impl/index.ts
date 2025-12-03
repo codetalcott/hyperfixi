@@ -1,6 +1,8 @@
 /**
  * Property Expressions for HyperScript
  * Provides deep TypeScript integration for property access, possessive syntax, and attributes
+ *
+ * Refactored to use BaseExpressionImpl for reduced bundle size (~5 KB savings)
  */
 
 import { v } from '../../../validation/lightweight-validators';
@@ -14,6 +16,7 @@ import type {
 } from '../../../types/base-types';
 import { evaluationToHyperScriptType } from '../../../types/base-types';
 import type { ExpressionCategory } from '../../../types/expression-types';
+import { BaseExpressionImpl } from '../../base-expression';
 
 // ============================================================================
 // Input Schemas
@@ -56,7 +59,10 @@ type AttributeWithValueInput = any; // Inferred from RuntimeValidator
 // Possessive Expression (element's property)
 // ============================================================================
 
-export class PossessiveExpression implements BaseTypedExpression<unknown> {
+export class PossessiveExpression
+  extends BaseExpressionImpl<PropertyAccessInput, unknown>
+  implements BaseTypedExpression<unknown>
+{
   public readonly name = 'possessive';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = "element's property";
@@ -68,8 +74,6 @@ export class PossessiveExpression implements BaseTypedExpression<unknown> {
     category: 'Property',
     complexity: 'simple',
   };
-
-  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -86,26 +90,24 @@ export class PossessiveExpression implements BaseTypedExpression<unknown> {
         };
       }
 
-      const result = this.getProperty(input.element, input.property);
-
-      this.trackPerformance(context, startTime, true, result);
-
-      return {
+      const value = this.getProperty(input.element, input.property);
+      const result: EvaluationResult<unknown> = {
         success: true,
-        value: result,
-        type: evaluationToHyperScriptType[this.inferResultType(result)],
+        value,
+        type: evaluationToHyperScriptType[this.inferResultType(value)],
       };
-    } catch (error) {
-      this.trackPerformance(context, startTime, false);
 
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      this.trackPerformance(context, input, result, startTime);
+      return result;
+    } catch (error) {
+      const errorResult = this.failure<unknown>(
+        'PossessiveExpressionError',
+        'runtime-error',
+        `Property access failed: ${error instanceof Error ? error.message : String(error)}`,
+        'PROPERTY_ACCESS_FAILED'
+      );
+      this.trackPerformance(context, input, errorResult, startTime);
+      return errorResult;
     }
   }
 
@@ -118,7 +120,7 @@ export class PossessiveExpression implements BaseTypedExpression<unknown> {
           isValid: false,
           errors:
             parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
+              type: 'type-mismatch' as const,
               message: `Invalid possessive input: ${err.message}`,
               suggestions: [],
             })) ?? [],
@@ -126,22 +128,13 @@ export class PossessiveExpression implements BaseTypedExpression<unknown> {
         };
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed with exception',
+        ['Check input structure and types']
+      );
     }
   }
 
@@ -215,34 +208,15 @@ export class PossessiveExpression implements BaseTypedExpression<unknown> {
     }
   }
 
-  private inferResultType(result: unknown): EvaluationType {
-    if (result === undefined) return 'Undefined';
-    if (result === null) return 'Null';
-    if (typeof result === 'string') return 'String';
-    if (typeof result === 'number') return 'Number';
-    if (typeof result === 'boolean') return 'Boolean';
-    if (Array.isArray(result)) return 'Array';
-    if (result instanceof HTMLElement) return 'Element';
+  private inferResultType(value: unknown): EvaluationType {
+    if (value === undefined) return 'Undefined';
+    if (value === null) return 'Null';
+    if (typeof value === 'string') return 'String';
+    if (typeof value === 'number') return 'Number';
+    if (typeof value === 'boolean') return 'Boolean';
+    if (Array.isArray(value)) return 'Array';
+    if (value instanceof HTMLElement) return 'Element';
     return 'Object';
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'possessive property access',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
-    }
   }
 }
 
@@ -250,7 +224,10 @@ export class PossessiveExpression implements BaseTypedExpression<unknown> {
 // My Expression (my property)
 // ============================================================================
 
-export class MyExpression implements BaseTypedExpression<unknown> {
+export class MyExpression
+  extends BaseExpressionImpl<ContextPropertyInput, unknown>
+  implements BaseTypedExpression<unknown>
+{
   public readonly name = 'my';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'my property';
@@ -262,8 +239,6 @@ export class MyExpression implements BaseTypedExpression<unknown> {
     category: 'Property',
     complexity: 'simple',
   };
-
-  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -281,12 +256,9 @@ export class MyExpression implements BaseTypedExpression<unknown> {
       }
 
       if (!context.me) {
-        this.trackPerformance(context, startTime, true, undefined);
-        return {
-          success: true,
-          value: undefined,
-          type: 'undefined',
-        };
+        const result = this.success(undefined, 'undefined');
+        this.trackPerformance(context, input, result, startTime);
+        return result;
       }
 
       const possessiveExpr = new PossessiveExpression();
@@ -295,25 +267,17 @@ export class MyExpression implements BaseTypedExpression<unknown> {
         property: input.property,
       });
 
-      this.trackPerformance(
-        context,
-        startTime,
-        result.success,
-        result.success ? result.value : undefined
-      );
-
+      this.trackPerformance(context, input, result, startTime);
       return result;
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `My property access failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      const errorResult = this.failure<unknown>(
+        'MyExpressionError',
+        'runtime-error',
+        `My property access failed: ${error instanceof Error ? error.message : String(error)}`,
+        'MY_PROPERTY_ACCESS_FAILED'
+      );
+      this.trackPerformance(context, input, errorResult, startTime);
+      return errorResult;
     }
   }
 
@@ -326,7 +290,7 @@ export class MyExpression implements BaseTypedExpression<unknown> {
           isValid: false,
           errors:
             parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
+              type: 'type-mismatch' as const,
               message: `Invalid my input: ${err.message}`,
               suggestions: [],
             })) ?? [],
@@ -334,41 +298,13 @@ export class MyExpression implements BaseTypedExpression<unknown> {
         };
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'my property access',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed with exception',
+        ['Check input structure and types']
+      );
     }
   }
 }
@@ -377,7 +313,10 @@ export class MyExpression implements BaseTypedExpression<unknown> {
 // Its Expression (its property)
 // ============================================================================
 
-export class ItsExpression implements BaseTypedExpression<unknown> {
+export class ItsExpression
+  extends BaseExpressionImpl<ContextPropertyInput, unknown>
+  implements BaseTypedExpression<unknown>
+{
   public readonly name = 'its';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'its property';
@@ -389,8 +328,6 @@ export class ItsExpression implements BaseTypedExpression<unknown> {
     category: 'Property',
     complexity: 'simple',
   };
-
-  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -408,12 +345,9 @@ export class ItsExpression implements BaseTypedExpression<unknown> {
       }
 
       if (context.it == null) {
-        this.trackPerformance(context, startTime, true, undefined);
-        return {
-          success: true,
-          value: undefined,
-          type: 'undefined',
-        };
+        const result = this.success(undefined, 'undefined');
+        this.trackPerformance(context, input, result, startTime);
+        return result;
       }
 
       const possessiveExpr = new PossessiveExpression();
@@ -422,25 +356,17 @@ export class ItsExpression implements BaseTypedExpression<unknown> {
         property: input.property,
       });
 
-      this.trackPerformance(
-        context,
-        startTime,
-        result.success,
-        result.success ? result.value : undefined
-      );
-
+      this.trackPerformance(context, input, result, startTime);
       return result;
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `Its property access failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      const errorResult = this.failure<unknown>(
+        'ItsExpressionError',
+        'runtime-error',
+        `Its property access failed: ${error instanceof Error ? error.message : String(error)}`,
+        'ITS_PROPERTY_ACCESS_FAILED'
+      );
+      this.trackPerformance(context, input, errorResult, startTime);
+      return errorResult;
     }
   }
 
@@ -453,7 +379,7 @@ export class ItsExpression implements BaseTypedExpression<unknown> {
           isValid: false,
           errors:
             parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
+              type: 'type-mismatch' as const,
               message: `Invalid its input: ${err.message}`,
               suggestions: [],
             })) ?? [],
@@ -461,41 +387,13 @@ export class ItsExpression implements BaseTypedExpression<unknown> {
         };
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'its property access',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed with exception',
+        ['Check input structure and types']
+      );
     }
   }
 }
@@ -504,7 +402,10 @@ export class ItsExpression implements BaseTypedExpression<unknown> {
 // Your Expression (your property)
 // ============================================================================
 
-export class YourExpression implements BaseTypedExpression<unknown> {
+export class YourExpression
+  extends BaseExpressionImpl<ContextPropertyInput, unknown>
+  implements BaseTypedExpression<unknown>
+{
   public readonly name = 'your';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'your property';
@@ -516,8 +417,6 @@ export class YourExpression implements BaseTypedExpression<unknown> {
     category: 'Property',
     complexity: 'simple',
   };
-
-  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -535,12 +434,9 @@ export class YourExpression implements BaseTypedExpression<unknown> {
       }
 
       if (!context.you) {
-        this.trackPerformance(context, startTime, true, undefined);
-        return {
-          success: true,
-          value: undefined,
-          type: 'undefined',
-        };
+        const result = this.success(undefined, 'undefined');
+        this.trackPerformance(context, input, result, startTime);
+        return result;
       }
 
       const possessiveExpr = new PossessiveExpression();
@@ -549,25 +445,17 @@ export class YourExpression implements BaseTypedExpression<unknown> {
         property: input.property,
       });
 
-      this.trackPerformance(
-        context,
-        startTime,
-        result.success,
-        result.success ? result.value : undefined
-      );
-
+      this.trackPerformance(context, input, result, startTime);
       return result;
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `Your property access failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      const errorResult = this.failure<unknown>(
+        'YourExpressionError',
+        'runtime-error',
+        `Your property access failed: ${error instanceof Error ? error.message : String(error)}`,
+        'YOUR_PROPERTY_ACCESS_FAILED'
+      );
+      this.trackPerformance(context, input, errorResult, startTime);
+      return errorResult;
     }
   }
 
@@ -580,7 +468,7 @@ export class YourExpression implements BaseTypedExpression<unknown> {
           isValid: false,
           errors:
             parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
+              type: 'type-mismatch' as const,
               message: `Invalid your input: ${err.message}`,
               suggestions: [],
             })) ?? [],
@@ -588,41 +476,13 @@ export class YourExpression implements BaseTypedExpression<unknown> {
         };
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'your property access',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed with exception',
+        ['Check input structure and types']
+      );
     }
   }
 }
@@ -631,7 +491,10 @@ export class YourExpression implements BaseTypedExpression<unknown> {
 // Attribute Expression (@attribute)
 // ============================================================================
 
-export class AttributeExpression implements BaseTypedExpression<string | null> {
+export class AttributeExpression
+  extends BaseExpressionImpl<AttributeAccessInput, string | null>
+  implements BaseTypedExpression<string | null>
+{
   public readonly name = 'attribute';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = '@attribute or @attribute of element';
@@ -643,8 +506,6 @@ export class AttributeExpression implements BaseTypedExpression<string | null> {
     category: 'Property',
     complexity: 'simple',
   };
-
-  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -662,34 +523,29 @@ export class AttributeExpression implements BaseTypedExpression<string | null> {
       }
 
       if (!(input.element instanceof Element)) {
-        this.trackPerformance(context, startTime, true, null);
-        return {
-          success: true,
-          value: null,
-          type: 'null',
-        };
+        const result = this.success(null, 'null');
+        this.trackPerformance(context, input, result, startTime);
+        return result;
       }
 
-      const result = input.element.getAttribute(input.attribute);
-
-      this.trackPerformance(context, startTime, true, result);
-
-      return {
+      const value = input.element.getAttribute(input.attribute);
+      const result: EvaluationResult<string | null> = {
         success: true,
-        value: result,
-        type: result === null ? 'null' : 'string',
+        value,
+        type: value === null ? 'null' : 'string',
       };
-    } catch (error) {
-      this.trackPerformance(context, startTime, false);
 
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `Attribute access failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      this.trackPerformance(context, input, result, startTime);
+      return result;
+    } catch (error) {
+      const errorResult = this.failure<string | null>(
+        'AttributeExpressionError',
+        'runtime-error',
+        `Attribute access failed: ${error instanceof Error ? error.message : String(error)}`,
+        'ATTRIBUTE_ACCESS_FAILED'
+      );
+      this.trackPerformance(context, input, errorResult, startTime);
+      return errorResult;
     }
   }
 
@@ -702,7 +558,7 @@ export class AttributeExpression implements BaseTypedExpression<string | null> {
           isValid: false,
           errors:
             parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
+              type: 'type-mismatch' as const,
               message: `Invalid attribute input: ${err.message}`,
               suggestions: [],
             })) ?? [],
@@ -710,41 +566,13 @@ export class AttributeExpression implements BaseTypedExpression<string | null> {
         };
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'attribute access',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed with exception',
+        ['Check input structure and types']
+      );
     }
   }
 }
@@ -753,7 +581,10 @@ export class AttributeExpression implements BaseTypedExpression<string | null> {
 // Enhanced Attribute With Value Expression (@attribute=value)
 // ============================================================================
 
-export class AttributeWithValueExpression implements BaseTypedExpression<boolean> {
+export class AttributeWithValueExpression
+  extends BaseExpressionImpl<AttributeWithValueInput, boolean>
+  implements BaseTypedExpression<boolean>
+{
   public readonly name = 'attributeWithValue';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = '@attribute=value';
@@ -765,8 +596,6 @@ export class AttributeWithValueExpression implements BaseTypedExpression<boolean
     category: 'Property',
     complexity: 'simple',
   };
-
-  
 
   async evaluate(
     context: TypedExpressionContext,
@@ -784,35 +613,26 @@ export class AttributeWithValueExpression implements BaseTypedExpression<boolean
       }
 
       if (!(input.element instanceof Element)) {
-        this.trackPerformance(context, startTime, true, false);
-        return {
-          success: true,
-          value: false,
-          type: 'boolean',
-        };
+        const result = this.success(false, 'boolean');
+        this.trackPerformance(context, input, result, startTime);
+        return result;
       }
 
       const actualValue = input.element.getAttribute(input.attribute);
-      const result = actualValue === input.value;
+      const value = actualValue === input.value;
+      const result = this.success(value, 'boolean');
 
-      this.trackPerformance(context, startTime, true, result);
-
-      return {
-        success: true,
-        value: result,
-        type: 'boolean',
-      };
+      this.trackPerformance(context, input, result, startTime);
+      return result;
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `Attribute value check failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      const errorResult = this.failure<boolean>(
+        'AttributeWithValueExpressionError',
+        'runtime-error',
+        `Attribute value check failed: ${error instanceof Error ? error.message : String(error)}`,
+        'ATTRIBUTE_VALUE_CHECK_FAILED'
+      );
+      this.trackPerformance(context, input, errorResult, startTime);
+      return errorResult;
     }
   }
 
@@ -825,7 +645,7 @@ export class AttributeWithValueExpression implements BaseTypedExpression<boolean
           isValid: false,
           errors:
             parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
+              type: 'type-mismatch' as const,
               message: `Invalid attribute with value input: ${err.message}`,
               suggestions: [],
             })) ?? [],
@@ -836,41 +656,13 @@ export class AttributeWithValueExpression implements BaseTypedExpression<boolean
         };
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'attribute value check',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure(
+        'runtime-error',
+        'Validation failed with exception',
+        ['Check input structure and types']
+      );
     }
   }
 }
