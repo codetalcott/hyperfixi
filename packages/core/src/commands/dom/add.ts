@@ -69,7 +69,7 @@ export class AddCommand {
   /**
    * Command metadata for documentation and tooling
    */
-  readonly metadata = {
+  static readonly metadata = {
     description: 'Add CSS classes to elements',
     syntax: 'add <classes> [to <target>]',
     examples: [
@@ -77,9 +77,16 @@ export class AddCommand {
       'add "active selected" to <button/>',
       'add .highlighted to #modal',
     ],
-    category: 'DOM',
+    category: 'dom',
     sideEffects: ['dom-mutation'],
-  };
+  } as const;
+
+  /**
+   * Instance accessor for metadata (backward compatibility)
+   */
+  get metadata() {
+    return AddCommand.metadata;
+  }
 
   /**
    * Parse raw AST nodes into typed command input

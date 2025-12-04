@@ -94,9 +94,13 @@ export class WaitCommand {
   /**
    * Command metadata for documentation and tooling
    */
-  readonly metadata = {
+static readonly metadata = {
     description: 'Wait for time delay, event, or race condition',
-    syntax: 'wait <time> | wait for <event> | wait for <event> or <condition>',
+    syntax: [
+      'wait <time>',
+      'wait for <event>',
+      'wait for <event> or <condition>',
+    ],
     examples: [
       'wait 2s',
       'wait 500ms',
@@ -108,7 +112,14 @@ export class WaitCommand {
     ],
     category: 'async',
     sideEffects: ['time', 'event-listening'],
-  };
+  } as const;
+
+  /**
+   * Instance accessor for metadata (backward compatibility)
+   */
+  get metadata() {
+    return WaitCommand.metadata;
+  }
 
   /**
    * Parse raw AST nodes into typed command input

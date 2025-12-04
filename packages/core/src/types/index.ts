@@ -118,3 +118,28 @@ export type AsyncValidationFunction<T> = (input: unknown) => Promise<ValidationR
 // ============================================================================
 
 export { default as CoreTypes } from './unified-types';
+
+// ============================================================================
+// Command Metadata System (napi-rs inspired patterns)
+// ============================================================================
+
+export type {
+  CommandCategory as StandardCommandCategory,
+  CommandSideEffect,
+  CommandMetadata,
+  MetadataValidationResult,
+  CommandRegistryEntry,
+} from './command-metadata';
+
+export {
+  COMMAND_CATEGORIES,
+  COMMAND_SIDE_EFFECTS,
+  validateCommandMetadata,
+  normalizeCategory,
+  createCommandMetadata,
+  mergeCommandMetadata,
+  getSyntaxArray,
+  formatMetadataForDocs,
+  CommandMetadataRegistry,
+  commandMetadataRegistry,
+} from './command-metadata';
