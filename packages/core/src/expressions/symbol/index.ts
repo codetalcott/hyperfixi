@@ -2,6 +2,8 @@
  * Symbol Expression - Variable Resolution
  * Implements comprehensive symbol (variable) resolution with TypeScript integration
  * Handles local, element, and global variable resolution with enhanced error handling
+ *
+ * Uses centralized type-helpers for consistent type checking.
  */
 
 import { v } from '../../validation/lightweight-validators';
@@ -16,6 +18,7 @@ import type {
   ExpressionAnalysisInfo,
 } from '../../types/command-types';
 import type { ValidationError } from '../../types/base-types';
+import { isString, isNumber, isBoolean, isObject, isFunction } from '../type-helpers';
 
 // ============================================================================
 // Input Validation Schema
@@ -221,8 +224,8 @@ export class SymbolExpression
         const elementProperty = (context.me as any)[symbolName];
 
         // Handle methods bound to element
-        if (typeof elementProperty === 'function') {
-          return elementProperty.bind(context.me);
+        if (isFunction(elementProperty)) {
+          return (elementProperty as Function).bind(context.me);
         }
 
         return elementProperty as HyperScriptValue;
@@ -257,13 +260,13 @@ export class SymbolExpression
   private inferType(value: HyperScriptValue): HyperScriptValueType {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
-    if (typeof value === 'string') return 'string';
-    if (typeof value === 'number') return 'number';
-    if (typeof value === 'boolean') return 'boolean';
+    if (isString(value)) return 'string';
+    if (isNumber(value)) return 'number';
+    if (isBoolean(value)) return 'boolean';
     if (value instanceof HTMLElement) return 'element';
     if (Array.isArray(value)) return 'array';
-    if (typeof value === 'object') return 'object';
-    if (typeof value === 'function') return 'function';
+    if (isObject(value)) return 'object';
+    if (isFunction(value)) return 'function';
     return 'unknown';
   }
 

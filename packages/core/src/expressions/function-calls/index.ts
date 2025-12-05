@@ -2,6 +2,8 @@
  * Enhanced Function Calls Expression - JavaScript Interoperability
  * Implements comprehensive function call evaluation with TypeScript integration
  * Handles global functions, method calls, async operations, and proper context binding
+ *
+ * Uses centralized type-helpers for consistent type checking.
  */
 
 import { v, z } from '../../validation/lightweight-validators';
@@ -16,6 +18,7 @@ import type {
   ExpressionAnalysisInfo,
 } from '../../types/command-types';
 import type { ValidationError } from '../../types/base-types';
+import { isString, isNumber, isBoolean, isObject, isFunction } from '../type-helpers';
 
 // ============================================================================
 // Input Validation Schema
@@ -135,8 +138,8 @@ export class FunctionCallExpression
         const functionArgs = validatedArgs.length > 1 ? (validatedArgs[1] as unknown[]) : [];
 
         // Validate function reference
-        if (typeof functionReference === 'string') {
-          if (functionReference.trim().length === 0) {
+        if (isString(functionReference)) {
+          if ((functionReference as string).trim().length === 0) {
             issues.push({
               type: 'validation-error',
               message: 'Function name cannot be empty',
@@ -298,10 +301,10 @@ export class FunctionCallExpression
     context: TypedExpressionContext
   ): Promise<EvaluationResult<{ func: Function; thisBinding: any }>> {
     // Handle direct function reference
-    if (typeof functionReference === 'function') {
+    if (isFunction(functionReference)) {
       return {
         success: true,
-        value: { func: functionReference, thisBinding: null },
+        value: { func: functionReference as Function, thisBinding: null },
         type: 'function',
       };
     }
@@ -676,13 +679,13 @@ export class FunctionCallExpression
   private inferType(value: unknown): HyperScriptValueType {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
-    if (typeof value === 'string') return 'string';
-    if (typeof value === 'number') return 'number';
-    if (typeof value === 'boolean') return 'boolean';
+    if (isString(value)) return 'string';
+    if (isNumber(value)) return 'number';
+    if (isBoolean(value)) return 'boolean';
     if (value instanceof HTMLElement) return 'element';
     if (Array.isArray(value)) return 'array';
-    if (typeof value === 'function') return 'function';
-    if (typeof value === 'object') return 'object';
+    if (isFunction(value)) return 'function';
+    if (isObject(value)) return 'object';
     return 'unknown';
   }
 

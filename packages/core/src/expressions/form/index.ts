@@ -2,6 +2,8 @@
  * Form Expressions - Deep TypeScript Integration
  * Comprehensive form handling and validation with full type safety
  * Enhanced for LLM code agents with maximum type safety
+ *
+ * Uses centralized type-helpers for consistent type checking.
  */
 
 import type {
@@ -9,6 +11,7 @@ import type {
   TypedExecutionContext,
   EvaluationResult,
 } from '../../types/command-types';
+import { isString, isNumber } from '../type-helpers';
 
 // ============================================================================
 // Enhanced Form Values Expression
@@ -276,27 +279,27 @@ export class FormValidationExpression implements TypedExpressionImplementation<b
 
     if (rule.startsWith('min:')) {
       const minValue = parseInt(rule.split(':')[1]);
-      if (typeof value === 'string') {
-        return value.length >= minValue;
+      if (isString(value)) {
+        return (value as string).length >= minValue;
       }
-      if (typeof value === 'number') {
-        return value >= minValue;
+      if (isNumber(value)) {
+        return (value as number) >= minValue;
       }
     }
 
     if (rule.startsWith('max:')) {
       const maxValue = parseInt(rule.split(':')[1]);
-      if (typeof value === 'string') {
-        return value.length <= maxValue;
+      if (isString(value)) {
+        return (value as string).length <= maxValue;
       }
-      if (typeof value === 'number') {
-        return value <= maxValue;
+      if (isNumber(value)) {
+        return (value as number) <= maxValue;
       }
     }
 
     if (rule === 'email') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return typeof value === 'string' && emailRegex.test(value);
+      return isString(value) && emailRegex.test(value as string);
     }
 
     return true; // Unknown rules pass by default

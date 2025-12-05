@@ -2,6 +2,8 @@
  * Some Expression - Existence and Non-emptiness Check
  * Implements comprehensive 'some' expression functionality with TypeScript integration
  * Handles existence checking for values, arrays, and DOM query results
+ *
+ * Uses centralized type-helpers for consistent type checking.
  */
 
 import { v } from '../../validation/lightweight-validators';
@@ -12,6 +14,7 @@ import type {
   ValidationResult,
   TypedExecutionContext,
 } from '../../types/command-types';
+import { isString, isObject } from '../type-helpers';
 
 // ============================================================================
 // Input Validation Schemas
@@ -156,8 +159,8 @@ export class SomeExpression implements TypedExpressionImplementation<boolean> {
     }
 
     // Handle DOM selector strings
-    if (typeof value === 'string' && this.isDOMSelector(value)) {
-      return await this.evaluateDOMSelector(value, context);
+    if (isString(value) && this.isDOMSelector(value as string)) {
+      return await this.evaluateDOMSelector(value as string, context);
     }
 
     // Handle empty string - considered non-existent in hyperscript context

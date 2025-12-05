@@ -3,6 +3,7 @@
  * Provides deep TypeScript integration for property access, possessive syntax, and attributes
  *
  * Refactored to use BaseExpressionImpl for reduced bundle size (~5 KB savings)
+ * Uses centralized type-helpers for consistent type checking.
  */
 
 import { v } from '../../../validation/lightweight-validators';
@@ -17,6 +18,7 @@ import type {
 import { evaluationToHyperScriptType } from '../../../types/base-types';
 import type { ExpressionCategory } from '../../../types/expression-types';
 import { BaseExpressionImpl } from '../../base-expression';
+import { isString, isNumber, isBoolean, isObject } from '../../type-helpers';
 
 // ============================================================================
 // Input Schemas
@@ -149,7 +151,7 @@ export class PossessiveExpression
     }
 
     // Handle regular object property access
-    if (typeof element === 'object') {
+    if (isObject(element)) {
       return (element as any)[property];
     }
 
@@ -211,9 +213,9 @@ export class PossessiveExpression
   private inferResultType(value: unknown): EvaluationType {
     if (value === undefined) return 'Undefined';
     if (value === null) return 'Null';
-    if (typeof value === 'string') return 'String';
-    if (typeof value === 'number') return 'Number';
-    if (typeof value === 'boolean') return 'Boolean';
+    if (isString(value)) return 'String';
+    if (isNumber(value)) return 'Number';
+    if (isBoolean(value)) return 'Boolean';
     if (Array.isArray(value)) return 'Array';
     if (value instanceof HTMLElement) return 'Element';
     return 'Object';

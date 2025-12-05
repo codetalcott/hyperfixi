@@ -2,6 +2,8 @@
  * Mathematical Expressions - Deep TypeScript Integration
  * Implements arithmetic operations (+, -, *, /, mod) with comprehensive validation
  * Enhanced for LLM code agents with full type safety
+ *
+ * Uses centralized type-helpers for consistent type checking.
  */
 
 import { v } from '../../validation/lightweight-validators';
@@ -14,6 +16,7 @@ import type {
   LLMDocumentation as LLMDocumentation,
   ExpressionCategory as ExpressionCategory,
 } from '../../types/index';
+import { isString, isNumber, isBoolean } from '../type-helpers';
 
 // Define BaseTypedExpression locally for now
 interface BaseTypedExpression<T> {
@@ -206,14 +209,14 @@ export class AdditionExpression implements BaseTypedExpression<number> {
    * Convert value to number with proper error handling
    */
   private toNumber(value: unknown, context: string): number {
-    if (typeof value === 'number') {
-      if (!Number.isFinite(value)) {
+    if (isNumber(value)) {
+      if (!Number.isFinite(value as number)) {
         throw new Error(`${context} is not a finite number: ${value}`);
       }
-      return value;
+      return value as number;
     }
 
-    if (typeof value === 'string') {
+    if (isString(value)) {
       const num = Number(value);
       if (Number.isNaN(num)) {
         throw new Error(`${context} cannot be converted to number: "${value}"`);
@@ -224,8 +227,8 @@ export class AdditionExpression implements BaseTypedExpression<number> {
       return num;
     }
 
-    if (typeof value === 'boolean') {
-      return value ? 1 : 0;
+    if (isBoolean(value)) {
+      return (value as boolean) ? 1 : 0;
     }
 
     if (value == null) {
@@ -239,16 +242,16 @@ export class AdditionExpression implements BaseTypedExpression<number> {
    * Check if value can be converted to a number
    */
   private isNumericValue(value: unknown): boolean {
-    if (typeof value === 'number') {
-      return Number.isFinite(value);
+    if (isNumber(value)) {
+      return Number.isFinite(value as number);
     }
 
-    if (typeof value === 'string') {
+    if (isString(value)) {
       const num = Number(value);
       return Number.isFinite(num);
     }
 
-    if (typeof value === 'boolean') {
+    if (isBoolean(value)) {
       return true;
     }
 

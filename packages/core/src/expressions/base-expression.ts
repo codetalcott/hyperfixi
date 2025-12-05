@@ -7,6 +7,7 @@
  * - Common validation error creation
  *
  * Bundle size savings: ~10-15 KB by eliminating duplication
+ * Uses centralized type-helpers for consistent type checking.
  */
 
 import type { RuntimeValidator } from '../validation/lightweight-validators';
@@ -18,6 +19,7 @@ import type {
   EvaluationType,
 } from '../types/base-types';
 import type { ExpressionCategory } from '../types/expression-types';
+import { isString, isNumber, isBoolean, isObject } from './type-helpers';
 
 /**
  * Abstract base class for expression implementations
@@ -110,7 +112,7 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
     }
 
     // NaN check (typeof NaN === 'number')
-    if (typeof value === 'number' && isNaN(value)) {
+    if (isNumber(value) && isNaN(value as number)) {
       return false;
     }
 
@@ -182,7 +184,7 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
    * Works across realms (JSDOM vs native HTMLElement)
    */
   protected isElement(value: unknown): value is Element {
-    return value != null && typeof value === 'object' && (value as any).nodeType === 1;
+    return value != null && isObject(value) && (value as any).nodeType === 1;
   }
 
   /**
@@ -193,7 +195,7 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
     if (value === undefined) return 'undefined';
     if (this.isElement(value)) return 'element';
     if (Array.isArray(value)) return 'array';
-    if (typeof value === 'object') return 'object';
+    if (isObject(value)) return 'object';
     return typeof value as EvaluationResult<unknown>['type'];
   }
 
@@ -206,9 +208,9 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
   protected normalizeCollection(collection: unknown): unknown[] {
     if (Array.isArray(collection)) return collection;
     if (collection instanceof NodeList) return Array.from(collection);
-    if (typeof collection === 'string') return collection.split('');
+    if (isString(collection)) return (collection as string).split('');
     if (collection == null) return [];
-    if (typeof collection === 'object' && Symbol.iterator in collection) {
+    if (isObject(collection) && Symbol.iterator in (collection as object)) {
       return Array.from(collection as Iterable<unknown>);
     }
     return [];
@@ -221,12 +223,12 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
    * Bundle size savings: ~60 lines by eliminating 4+ duplicate implementations
    */
   protected toNumber(value: unknown): number | null {
-    if (typeof value === 'number' && Number.isFinite(value)) return value;
-    if (typeof value === 'string') {
+    if (isNumber(value) && Number.isFinite(value as number)) return value as number;
+    if (isString(value)) {
       const num = Number(value);
       return Number.isFinite(num) ? num : null;
     }
-    if (typeof value === 'boolean') return value ? 1 : 0;
+    if (isBoolean(value)) return (value as boolean) ? 1 : 0;
     return null;
   }
 

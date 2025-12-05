@@ -2,6 +2,8 @@
  * Possessive Expression - Property and Attribute Access
  * Implements comprehensive possessive expression functionality with TypeScript integration
  * Handles 'my property', 'element's attribute', style access, and attribute bracket notation
+ *
+ * Uses centralized type-helpers for consistent type checking.
  */
 
 import { v } from '../../validation/lightweight-validators';
@@ -20,6 +22,7 @@ import {
   accessObjectProperty,
   isElement,
 } from '../property-access-utils';
+import { isString, isNumber, isBoolean, isFunction } from '../type-helpers';
 
 // ============================================================================
 // Input Validation Schemas
@@ -75,7 +78,7 @@ export class PossessiveExpression
 
       // Validate property string format (this check runs after Zod parsing)
       // If we get here, the second argument should be validated by Zod as a string
-      if (typeof property !== 'string' || property.length === 0) {
+      if (!isString(property) || (property as string).length === 0) {
         errors.push({
           type: 'type-mismatch',
           message: 'Property name must be a non-empty string',
@@ -84,7 +87,7 @@ export class PossessiveExpression
       }
 
       // Check for potentially dangerous property access
-      if (typeof property === 'string') {
+      if (isString(property)) {
         const dangerousProps = ['__proto__', 'constructor', 'prototype'];
         if (dangerousProps.includes(property)) {
           errors.push({
@@ -187,12 +190,12 @@ export class PossessiveExpression
    */
   private inferValueType(value: unknown): HyperScriptValueType {
     if (value === null || value === undefined) return 'null';
-    if (typeof value === 'boolean') return 'boolean';
-    if (typeof value === 'number') return 'number';
-    if (typeof value === 'string') return 'string';
+    if (isBoolean(value)) return 'boolean';
+    if (isNumber(value)) return 'number';
+    if (isString(value)) return 'string';
     if (Array.isArray(value)) return 'array';
     if (value instanceof Element) return 'element';
-    if (typeof value === 'function') return 'function';
+    if (isFunction(value)) return 'function';
     return 'object';
   }
 

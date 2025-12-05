@@ -2,6 +2,8 @@
  * Array Expressions - Array Literal and Index Operations
  * Implements comprehensive array handling with TypeScript integration
  * Handles array creation, indexing, range operations, and type safety
+ *
+ * Uses centralized type-helpers for consistent type checking.
  */
 
 import { v, type RuntimeValidator } from '../../validation/lightweight-validators';
@@ -16,6 +18,7 @@ import type {
   TypedExpressionContext,
 } from '../../types/base-types';
 import type { TypedExpressionImplementation } from '../../types/expression-types';
+import { isString, isNumber, isBoolean, isObject, isFunction } from '../type-helpers';
 
 // ============================================================================
 // Input Validation Schemas
@@ -162,7 +165,7 @@ export class ArrayLiteralExpression
       // Resolve any promise elements
       const resolvedElements = await Promise.all(
         elements.map(async (element: unknown) => {
-          if (element && typeof element === 'object' && 'then' in element) {
+          if (element && isObject(element) && 'then' in (element as object)) {
             return await element;
           }
           return element;
@@ -275,7 +278,7 @@ export class ArrayIndexExpression
       }
 
       // Validate index type
-      if (typeof index === 'object' && index !== null) {
+      if (isObject(index) && index !== null) {
         const rangeObj = index as { start?: number; end?: number };
         if (
           rangeObj.start !== undefined &&
@@ -384,12 +387,12 @@ export class ArrayIndexExpression
     }
 
     // Handle NodeList, HTMLCollection, etc. - keep original object for string indexing
-    if (target && typeof target === 'object' && 'length' in target) {
+    if (target && isObject(target) && 'length' in (target as object)) {
       return { success: true, value: target, type: 'array' };
     }
 
     // Handle string indexing
-    if (typeof target === 'string') {
+    if (isString(target)) {
       return { success: true, value: target, type: 'string' };
     }
 
@@ -416,32 +419,34 @@ export class ArrayIndexExpression
   ): EvaluationResult<HyperScriptValue> {
     try {
       // Handle numeric indexing
-      if (typeof index === 'number') {
+      if (isNumber(index)) {
         let length: number;
         let element: unknown;
+        const numIndex = index as number;
 
         if (Array.isArray(target)) {
           length = target.length;
-          const normalizedIndex = index < 0 ? length + index : index;
+          const normalizedIndex = numIndex < 0 ? length + numIndex : numIndex;
 
           if (normalizedIndex < 0 || normalizedIndex >= length) {
             return { success: true, value: undefined, type: 'undefined' };
           }
 
           element = target[normalizedIndex];
-        } else if (typeof target === 'string') {
-          length = target.length;
-          const normalizedIndex = index < 0 ? length + index : index;
+        } else if (isString(target)) {
+          const strTarget = target as string;
+          length = strTarget.length;
+          const normalizedIndex = numIndex < 0 ? length + numIndex : numIndex;
 
           if (normalizedIndex < 0 || normalizedIndex >= length) {
             return { success: true, value: undefined, type: 'undefined' };
           }
 
-          element = target[normalizedIndex];
-        } else if (target && typeof target === 'object' && 'length' in target) {
+          element = strTarget[normalizedIndex];
+        } else if (target && isObject(target) && 'length' in (target as object)) {
           const arrayLike = target as ArrayLike<unknown> & Record<string, unknown>;
           length = arrayLike.length;
-          const normalizedIndex = index < 0 ? length + index : index;
+          const normalizedIndex = numIndex < 0 ? length + numIndex : numIndex;
 
           if (normalizedIndex < 0 || normalizedIndex >= length) {
             return { success: true, value: undefined, type: 'undefined' };
@@ -460,9 +465,9 @@ export class ArrayIndexExpression
       }
 
       // Handle string indexing (for object-like arrays)
-      if (typeof index === 'string') {
-        if (target && typeof target === 'object') {
-          const element = (target as Record<string, unknown>)[index];
+      if (isString(index)) {
+        if (target && isObject(target)) {
+          const element = (target as Record<string, unknown>)[index as string];
           return {
             success: true,
             value: element,
@@ -473,7 +478,7 @@ export class ArrayIndexExpression
       }
 
       // Handle range indexing
-      if (typeof index === 'object' && index !== null) {
+      if (isObject(index) && index !== null) {
         const rangeObj = index as { start?: number; end?: number };
 
         let length: number;
@@ -488,16 +493,17 @@ export class ArrayIndexExpression
           const normalizedEnd = end < 0 ? length + end : end;
 
           slice = target.slice(normalizedStart, normalizedEnd + 1);
-        } else if (typeof target === 'string') {
-          length = target.length;
+        } else if (isString(target)) {
+          const strTarget = target as string;
+          length = strTarget.length;
           const start = rangeObj.start ?? 0;
           const end = rangeObj.end ?? length - 1;
 
           const normalizedStart = start < 0 ? length + start : start;
           const normalizedEnd = end < 0 ? length + end : end;
 
-          slice = Array.from(target.slice(normalizedStart, normalizedEnd + 1));
-        } else if (target && typeof target === 'object' && 'length' in target) {
+          slice = Array.from(strTarget.slice(normalizedStart, normalizedEnd + 1));
+        } else if (target && isObject(target) && 'length' in (target as object)) {
           const arrayLike = Array.from(target as ArrayLike<unknown>);
           length = arrayLike.length;
           const start = rangeObj.start ?? 0;
@@ -552,13 +558,13 @@ export class ArrayIndexExpression
   private inferType(value: unknown): HyperScriptValueType {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
-    if (typeof value === 'string') return 'string';
-    if (typeof value === 'number') return 'number';
-    if (typeof value === 'boolean') return 'boolean';
+    if (isString(value)) return 'string';
+    if (isNumber(value)) return 'number';
+    if (isBoolean(value)) return 'boolean';
     if (value instanceof HTMLElement) return 'element';
     if (Array.isArray(value)) return 'array';
-    if (typeof value === 'object') return 'object';
-    if (typeof value === 'function') return 'function';
+    if (isObject(value)) return 'object';
+    if (isFunction(value)) return 'function';
     return 'unknown';
   }
 

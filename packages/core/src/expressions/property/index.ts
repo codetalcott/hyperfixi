@@ -2,6 +2,8 @@
  * Enhanced Property Access Expressions - Deep TypeScript Integration
  * Implements property access operations (my, its, possessive syntax) with comprehensive validation
  * Enhanced for LLM code agents with full type safety and context awareness
+ *
+ * Uses centralized type-helpers for consistent type checking.
  */
 
 import { v } from '../../validation/lightweight-validators';
@@ -15,6 +17,7 @@ import type {
   ExpressionCategory as ExpressionCategory,
   HyperScriptValue as HyperScriptValue,
 } from '../../types/index';
+import { isString, isNumber, isBoolean, isObject } from '../type-helpers';
 
 // Define BaseTypedExpression locally for now
 interface BaseTypedExpression<T> {
@@ -235,11 +238,11 @@ export class MyExpression implements BaseTypedExpression<unknown> {
   private inferType(value: unknown): EvaluationType {
     if (value === null) return 'null';
     if (value === undefined) return 'Any';
-    if (typeof value === 'boolean') return 'boolean';
-    if (typeof value === 'number') return 'number';
-    if (typeof value === 'string') return 'string';
+    if (isBoolean(value)) return 'boolean';
+    if (isNumber(value)) return 'number';
+    if (isString(value)) return 'string';
     if (Array.isArray(value)) return 'array';
-    if (typeof value === 'object') return 'object';
+    if (isObject(value)) return 'object';
     return 'Any';
   }
 
@@ -571,10 +574,10 @@ export class AttributeExpression implements BaseTypedExpression<string | null> {
   private isDOMElement(value: unknown): value is Element {
     return (
       value != null &&
-      typeof value === 'object' &&
-      'getAttribute' in value &&
-      'setAttribute' in value &&
-      'nodeType' in value &&
+      isObject(value) &&
+      'getAttribute' in (value as object) &&
+      'setAttribute' in (value as object) &&
+      'nodeType' in (value as object) &&
       (value as any).nodeType === 1
     ); // Element node
   }
