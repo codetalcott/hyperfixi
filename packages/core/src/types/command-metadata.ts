@@ -60,53 +60,133 @@ export const COMMAND_CATEGORIES: CommandCategory[] = [
 
 /**
  * Standard side effect values
+ *
+ * Categories:
+ * - DOM: dom-mutation, dom-query, dom-creation, dom-observation, element-modification
+ * - Context: context-modification, context-switching, context-mutation, state-mutation
+ * - Control Flow: conditional-execution, iteration, control-flow, execution-termination
+ * - Events: event-listening, event-dispatch, event-dispatching, event-prevention, event-listeners, custom-events
+ * - Execution: command-execution, code-execution, function-execution, method-execution, async-execution
+ * - Data: data-mutation, data-binding, property-transfer
+ * - I/O: network, storage, navigation, clipboard, clipboard-write, console, console-output
+ * - UI: animation, focus, scroll
+ * - Templates: template-execution, behavior-installation
+ * - Utility: random-selection, debugging, error-throwing
  */
 export type CommandSideEffect =
+  // DOM operations
   | 'dom-mutation'
   | 'dom-query'
+  | 'dom-creation'
+  | 'dom-observation'
+  | 'element-modification'
+  // Context operations
   | 'context-modification'
+  | 'context-switching'
+  | 'context-mutation'
+  | 'state-mutation'
+  // Control flow
   | 'conditional-execution'
   | 'iteration'
+  | 'control-flow'
+  | 'execution-termination'
+  // Timing
   | 'time'
+  // Event operations
   | 'event-listening'
   | 'event-dispatch'
-  | 'context-switching'
+  | 'event-dispatching'
+  | 'event-prevention'
+  | 'event-listeners'
+  | 'custom-events'
+  // Execution
   | 'command-execution'
-  | 'data-mutation'
   | 'code-execution'
+  | 'function-execution'
+  | 'method-execution'
+  | 'async-execution'
+  // Data operations
+  | 'data-mutation'
+  | 'data-binding'
+  | 'property-transfer'
+  // I/O operations
   | 'network'
   | 'storage'
   | 'navigation'
+  | 'clipboard'
+  | 'clipboard-write'
+  | 'console'
+  | 'console-output'
+  // UI operations
   | 'animation'
   | 'focus'
   | 'scroll'
-  | 'clipboard'
-  | 'console';
+  // Template operations
+  | 'template-execution'
+  | 'behavior-installation'
+  // Utility operations
+  | 'random-selection'
+  | 'debugging'
+  | 'error-throwing';
 
 /**
  * All valid side effect values as an array (for validation)
  */
 export const COMMAND_SIDE_EFFECTS: CommandSideEffect[] = [
+  // DOM operations
   'dom-mutation',
   'dom-query',
+  'dom-creation',
+  'dom-observation',
+  'element-modification',
+  // Context operations
   'context-modification',
+  'context-switching',
+  'context-mutation',
+  'state-mutation',
+  // Control flow
   'conditional-execution',
   'iteration',
+  'control-flow',
+  'execution-termination',
+  // Timing
   'time',
+  // Event operations
   'event-listening',
   'event-dispatch',
-  'context-switching',
+  'event-dispatching',
+  'event-prevention',
+  'event-listeners',
+  'custom-events',
+  // Execution
   'command-execution',
-  'data-mutation',
   'code-execution',
+  'function-execution',
+  'method-execution',
+  'async-execution',
+  // Data operations
+  'data-mutation',
+  'data-binding',
+  'property-transfer',
+  // I/O operations
   'network',
   'storage',
   'navigation',
+  'clipboard',
+  'clipboard-write',
+  'console',
+  'console-output',
+  // UI operations
   'animation',
   'focus',
   'scroll',
-  'clipboard',
-  'console',
+  // Template operations
+  'template-execution',
+  'behavior-installation',
+  // Utility operations
+  'random-selection',
+  'debugging',
+  'error-throwing',
 ];
 
 // ============================================================================
