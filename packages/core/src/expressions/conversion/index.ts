@@ -1,10 +1,57 @@
 /**
  * Conversion expressions for hyperscript
  * Handles type conversions using the 'as' keyword and built-in conversion types
+ *
+ * Uses Expression Type Registry for consistent type checking.
  */
 
 import type { ExecutionContext, ExpressionImplementation } from '../../types/core';
 import { validateArgCount, validateArgIsString } from '../validation-helpers';
+import { expressionTypeRegistry } from '../type-registry';
+
+// ============================================================================
+// Type Registry Helper Functions
+// ============================================================================
+
+/**
+ * Check if value is a string using the type registry
+ */
+function isString(value: unknown): boolean {
+  const stringType = expressionTypeRegistry.get('String');
+  return stringType ? stringType.isType(value) : typeof value === 'string';
+}
+
+/**
+ * Check if value is a number using the type registry
+ */
+function isNumber(value: unknown): boolean {
+  const numberType = expressionTypeRegistry.get('Number');
+  return numberType ? numberType.isType(value) : typeof value === 'number';
+}
+
+/**
+ * Check if value is a boolean using the type registry
+ */
+function isBoolean(value: unknown): boolean {
+  const boolType = expressionTypeRegistry.get('Boolean');
+  return boolType ? boolType.isType(value) : typeof value === 'boolean';
+}
+
+/**
+ * Check if value is an object using the type registry
+ */
+function isObject(value: unknown): boolean {
+  const objectType = expressionTypeRegistry.get('Object');
+  return objectType ? objectType.isType(value) : typeof value === 'object' && value !== null;
+}
+
+/**
+ * Check if value is a function using the type registry
+ */
+function isFunction(value: unknown): boolean {
+  const funcType = expressionTypeRegistry.get('Function');
+  return funcType ? funcType.isType(value) : typeof value === 'function';
+}
 
 // ============================================================================
 // Conversion Registry
@@ -25,36 +72,36 @@ export const defaultConversions: Record<string, ConversionFunction> = {
 
   String: (value: unknown) => {
     if (value == null) return '';
-    if (typeof value === 'string') return value;
-    if (typeof value === 'object') return JSON.stringify(value);
+    if (isString(value)) return value as string;
+    if (isObject(value)) return JSON.stringify(value);
     return String(value);
   },
 
   Boolean: (value: unknown) => {
-    if (typeof value === 'boolean') return value;
+    if (isBoolean(value)) return value as boolean;
     if (value == null) return false; // null and undefined are falsy
-    if (typeof value === 'string') {
+    if (isString(value)) {
       // Handle special string cases
-      const lowerValue = value.toLowerCase().trim();
+      const lowerValue = (value as string).toLowerCase().trim();
       if (lowerValue === 'false' || lowerValue === '0' || lowerValue === '') return false;
       return true; // Any other non-empty string is truthy
     }
-    if (typeof value === 'number') {
-      return value !== 0 && !isNaN(value); // 0 and NaN are falsy
+    if (isNumber(value)) {
+      return (value as number) !== 0 && !isNaN(value as number); // 0 and NaN are falsy
     }
     // For objects, arrays, etc. - use JavaScript truthiness
     return Boolean(value);
   },
 
   Number: (value: unknown) => {
-    if (typeof value === 'number') return value;
+    if (isNumber(value)) return value as number;
     if (value == null) return 0;
     const num = Number(value);
     return isNaN(num) ? 0 : num;
   },
 
   Math: (value: unknown) => {
-    if (typeof value === 'number') return value;
+    if (isNumber(value)) return value as number;
     if (value == null) return 0;
 
     // Convert to string for expression evaluation
@@ -108,10 +155,10 @@ export const defaultConversions: Record<string, ConversionFunction> = {
   },
 
   Object: (value: unknown) => {
-    if (typeof value === 'object' && value !== null) return value;
-    if (typeof value === 'string') {
+    if (isObject(value)) return value;
+    if (isString(value)) {
       try {
-        return JSON.parse(value);
+        return JSON.parse(value as string);
       } catch (error) {
         return {};
       }
@@ -121,7 +168,7 @@ export const defaultConversions: Record<string, ConversionFunction> = {
 
   // HTML/DOM conversions
   Fragment: (value: unknown) => {
-    if (typeof value !== 'string') {
+    if (!isString(value)) {
       value = defaultConversions.String(value);
     }
 
@@ -131,7 +178,7 @@ export const defaultConversions: Record<string, ConversionFunction> = {
   },
 
   HTML: (value: unknown) => {
-    if (typeof value === 'string') return value;
+    if (isString(value)) return value as string;
     if (value instanceof NodeList) {
       return Array.from(value)
         .map(node => (node instanceof Element ? node.outerHTML : node.textContent || ''))
@@ -201,12 +248,12 @@ function evaluateMathExpression(expression: string): number {
   try {
     const result = new Function(`"use strict"; return (${expression})`)();
 
-    // Ensure result is a finite number
-    if (typeof result !== 'number' || !isFinite(result)) {
+    // Ensure result is a finite number (uses registry-based type check)
+    if (!isNumber(result) || !isFinite(result as number)) {
       throw new Error('Expression did not evaluate to a finite number');
     }
 
-    return result;
+    return result as number;
   } catch (error) {
     throw new Error(
       `Math expression evaluation failed: ${error instanceof Error ? error.message : String(error)}`
@@ -384,27 +431,28 @@ export const isExpression: ExpressionImplementation = {
 
   async evaluate(_context: ExecutionContext, ...args: unknown[]): Promise<boolean> {
     const [value, type] = args;
-    if (typeof type !== 'string') {
+    if (!isString(type)) {
       throw new Error('Type check requires a string type');
     }
 
-    switch (type.toLowerCase()) {
+    // Uses registry-based type checks where applicable
+    switch ((type as string).toLowerCase()) {
       case 'null':
         return value === null;
       case 'undefined':
         return value === undefined;
       case 'string':
-        return typeof value === 'string';
+        return isString(value);
       case 'number':
-        return typeof value === 'number' && !isNaN(value);
+        return isNumber(value) && !isNaN(value as number);
       case 'boolean':
-        return typeof value === 'boolean';
+        return isBoolean(value);
       case 'object':
-        return typeof value === 'object' && value !== null;
+        return isObject(value);
       case 'array':
         return Array.isArray(value);
       case 'function':
-        return typeof value === 'function';
+        return isFunction(value);
       case 'date':
         return value instanceof Date;
       case 'element':
@@ -418,11 +466,11 @@ export const isExpression: ExpressionImplementation = {
           value == null ||
           value === '' ||
           (Array.isArray(value) && value.length === 0) ||
-          (typeof value === 'object' && Object.keys(value).length === 0)
+          (isObject(value) && Object.keys(value as object).length === 0)
         );
       default:
         // Check constructor name for custom types
-        return value?.constructor?.name?.toLowerCase() === type.toLowerCase();
+        return value?.constructor?.name?.toLowerCase() === (type as string).toLowerCase();
     }
   },
 

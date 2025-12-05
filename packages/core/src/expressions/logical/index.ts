@@ -2,6 +2,8 @@
  * Enhanced Logical expressions for hyperscript
  * Handles comparison operators, boolean logic, and conditional expressions
  * Enhanced with TypeScript patterns, comprehensive validation, and LLM documentation
+ *
+ * Uses Expression Type Registry for consistent type checking.
  */
 
 import type { RuntimeValidator } from '../../validation/lightweight-validators';
@@ -10,6 +12,27 @@ import type { ExecutionContext, ExpressionImplementation } from '../../types/cor
 import type { ExpressionMetadata, LLMDocumentation } from '../../types/expression-types';
 import { matchesWithCache } from '../../performance/integration';
 import { validateArgCount, validateTwoArgs } from '../validation-helpers';
+import { expressionTypeRegistry } from '../type-registry';
+
+// ============================================================================
+// Type Registry Helper Functions
+// ============================================================================
+
+/**
+ * Check if value is a string using the type registry
+ */
+function isString(value: unknown): boolean {
+  const stringType = expressionTypeRegistry.get('String');
+  return stringType ? stringType.isType(value) : typeof value === 'string';
+}
+
+/**
+ * Check if value is an object using the type registry
+ */
+function isObject(value: unknown): boolean {
+  const objectType = expressionTypeRegistry.get('Object');
+  return objectType ? objectType.isType(value) : typeof value === 'object' && value !== null;
+}
 
 // ============================================================================
 // Enhanced Expression Interface
@@ -470,12 +493,13 @@ export const isEmptyExpression: ExpressionImplementation = {
 
   async evaluate(_context: ExecutionContext, value: unknown): Promise<boolean> {
     if (value == null) return true;
-    if (typeof value === 'string') return value.length === 0;
+    // Uses registry-based type checks
+    if (isString(value)) return (value as string).length === 0;
     if (Array.isArray(value)) return value.length === 0;
     if (value instanceof NodeList) return value.length === 0;
     // DOM elements should NEVER be considered empty
     if (value instanceof Node || value instanceof Element) return false;
-    if (typeof value === 'object') return Object.keys(value).length === 0;
+    if (isObject(value)) return Object.keys(value as object).length === 0;
     return false;
   },
 
@@ -494,13 +518,14 @@ export const noExpression: ExpressionImplementation = {
     // The 'no' operator should return true for empty/null/undefined values
     // but false for actual values including false and 0
     if (value == null) return true;
-    if (typeof value === 'string') return value.length === 0;
+    // Uses registry-based type checks
+    if (isString(value)) return (value as string).length === 0;
     if (Array.isArray(value)) return value.length === 0;
     if (value instanceof NodeList) return value.length === 0;
     // DOM elements (Node, Element, HTMLElement) should NEVER be considered empty
     // They are real, tangible objects with properties on the prototype chain
     if (value instanceof Node || value instanceof Element) return false;
-    if (typeof value === 'object') return Object.keys(value).length === 0;
+    if (isObject(value)) return Object.keys(value as object).length === 0;
     // For primitives like false, 0, etc., they are actual values so return false
     return false;
   },
@@ -573,32 +598,32 @@ export const containsExpression: ExpressionImplementation = {
         return (container as Node).contains(value as Node);
       }
 
-      // If container is CSS selector string, resolve to element
-      if (typeof container === 'string' && container.match(/^[.#][\w-]+$/)) {
-        const containerElement = document.querySelector(container);
+      // If container is CSS selector string, resolve to element (uses registry-based type check)
+      if (isString(container) && (container as string).match(/^[.#][\w-]+$/)) {
+        const containerElement = document.querySelector(container as string);
         if (containerElement && (value as any).nodeType === 1) {
           return containerElement.contains(value as Node);
         }
-        if (containerElement && typeof value === 'string' && value.match(/^[.#][\w-]+$/)) {
-          const valueElement = document.querySelector(value);
+        if (containerElement && isString(value) && (value as string).match(/^[.#][\w-]+$/)) {
+          const valueElement = document.querySelector(value as string);
           return valueElement ? containerElement.contains(valueElement) : false;
         }
       }
 
-      // If value is CSS selector string, resolve to element
+      // If value is CSS selector string, resolve to element (uses registry-based type check)
       if (
-        typeof value === 'string' &&
-        value.match(/^[.#][\w-]+$/) &&
+        isString(value) &&
+        (value as string).match(/^[.#][\w-]+$/) &&
         (container as any).nodeType === 1
       ) {
-        const valueElement = document.querySelector(value);
+        const valueElement = document.querySelector(value as string);
         return valueElement ? (container as Node).contains(valueElement) : false;
       }
     }
 
-    // String containment
-    if (typeof container === 'string' && typeof value === 'string') {
-      return container.includes(value);
+    // String containment (uses registry-based type checks)
+    if (isString(container) && isString(value)) {
+      return (container as string).includes(value as string);
     }
 
     // Array containment
@@ -611,9 +636,9 @@ export const containsExpression: ExpressionImplementation = {
       return Array.from(container).includes(value as Node);
     }
 
-    // Check if object has property
-    if (typeof container === 'object' && container !== null && typeof value === 'string') {
-      return value in container;
+    // Check if object has property (uses registry-based type checks)
+    if (isObject(container) && isString(value)) {
+      return (value as string) in (container as object);
     }
 
     return false;
@@ -646,10 +671,11 @@ export const startsWithExpression: ExpressionImplementation = {
   operators: ['starts with', 'startsWith'],
 
   async evaluate(_context: ExecutionContext, str: unknown, prefix: unknown): Promise<boolean> {
-    if (typeof str !== 'string' || typeof prefix !== 'string') {
+    // Uses registry-based type checks
+    if (!isString(str) || !isString(prefix)) {
       return false;
     }
-    return str.startsWith(prefix);
+    return (str as string).startsWith(prefix as string);
   },
 
   validate(args: unknown[]): string | null {
@@ -664,10 +690,11 @@ export const endsWithExpression: ExpressionImplementation = {
   operators: ['ends with', 'endsWith'],
 
   async evaluate(_context: ExecutionContext, str: unknown, suffix: unknown): Promise<boolean> {
-    if (typeof str !== 'string' || typeof suffix !== 'string') {
+    // Uses registry-based type checks
+    if (!isString(str) || !isString(suffix)) {
       return false;
     }
-    return str.endsWith(suffix);
+    return (str as string).endsWith(suffix as string);
   },
 
   validate(args: unknown[]): string | null {
@@ -687,35 +714,39 @@ export const matchesExpression: EnhancedExpressionImplementation = {
       let result: boolean;
 
       // If it's a DOM element and selector is a CSS selector, use CSS matching with cache
-      if (element instanceof Element && typeof selector === 'string') {
+      // Uses registry-based type check for selector
+      if (element instanceof Element && isString(selector)) {
+        const selectorStr = selector as string;
         // Check if it looks like a CSS selector (starts with . # : [ or is a tag name)
         if (
-          selector.startsWith('.') ||
-          selector.startsWith('#') ||
-          selector.startsWith(':') ||
-          selector.startsWith('[') ||
-          /^[a-zA-Z][\w-]*$/.test(selector)
+          selectorStr.startsWith('.') ||
+          selectorStr.startsWith('#') ||
+          selectorStr.startsWith(':') ||
+          selectorStr.startsWith('[') ||
+          /^[a-zA-Z][\w-]*$/.test(selectorStr)
         ) {
           try {
-            result = matchesWithCache(element, selector);
+            result = matchesWithCache(element, selectorStr);
           } catch (error) {
             result = false;
           }
         } else {
           result = false;
         }
-      } else if (typeof element === 'string' && typeof selector === 'string') {
-        // String pattern matching
+      } else if (isString(element) && isString(selector)) {
+        // String pattern matching (uses registry-based type checks)
+        const elementStr = element as string;
+        const selectorStr = selector as string;
         try {
           // Support both string patterns and regex patterns
           const regex =
-            selector.startsWith('/') && selector.endsWith('/')
-              ? new RegExp(selector.slice(1, -1))
-              : new RegExp(selector);
-          result = regex.test(element);
+            selectorStr.startsWith('/') && selectorStr.endsWith('/')
+              ? new RegExp(selectorStr.slice(1, -1))
+              : new RegExp(selectorStr);
+          result = regex.test(elementStr);
         } catch (error) {
           // If pattern is invalid regex, treat as literal string
-          result = element.includes(selector);
+          result = elementStr.includes(selectorStr);
         }
       } else {
         result = false;

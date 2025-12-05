@@ -2,6 +2,8 @@
  * As Expression - Type Conversion and Casting
  * Implements comprehensive 'as' expression functionality with TypeScript integration
  * Handles type conversions like 'value as String', 'data as JSON', 'form as Values'
+ *
+ * Uses Expression Type Registry for consistent type checking and coercion.
  */
 
 import { v } from '../../validation/lightweight-validators';
@@ -13,6 +15,7 @@ import type {
   TypedExecutionContext,
 } from '../../types/command-types';
 import type { ValidationResult, ValidationError } from '../../types/base-types';
+import { expressionTypeRegistry } from '../type-registry';
 
 // ============================================================================
 // Input Validation Schemas
@@ -269,33 +272,45 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
 
   /**
    * Convert to string
+   * Uses Expression Type Registry for type checking
    */
   private convertToString(value: unknown): string | null {
     if (value === null || value === undefined) return null;
-    if (typeof value === 'string') return value;
-    if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+    if (this.isString(value)) return value as string;
+    if (this.isNumber(value) || this.isBoolean(value)) return String(value);
     if (value instanceof Date) return value.toISOString().split('T')[0];
-    if (Array.isArray(value)) return value.join(',');
-    if (value instanceof Element) return value.outerHTML;
-    return String(value);
+    if (this.isArray(value)) return (value as unknown[]).join(',');
+    if (this.isElement(value)) return (value as Element).outerHTML;
+
+    // Try registry coercion as fallback
+    const coerced = expressionTypeRegistry.coerce<string>(value, 'String');
+    return coerced ?? String(value);
   }
 
   /**
    * Convert to number
+   * Uses Expression Type Registry for type checking and coercion
    */
   private convertToNumber(value: unknown): number | null {
     if (value === null || value === undefined) return null;
-    if (typeof value === 'number') return value;
-    if (typeof value === 'string') {
-      const num = parseFloat(value);
+    if (this.isNumber(value)) return value as number;
+
+    // Try registry coercion first
+    const coerced = expressionTypeRegistry.coerce<number>(value, 'Number');
+    if (coerced !== null) return coerced;
+
+    // Fallback for special cases
+    if (this.isString(value)) {
+      const num = parseFloat(value as string);
       return isNaN(num) ? null : num;
     }
-    if (typeof value === 'boolean') return value ? 1 : 0;
+    if (this.isBoolean(value)) return (value as boolean) ? 1 : 0;
     return null;
   }
 
   /**
    * Convert to integer
+   * Uses convertToNumber with truncation
    */
   private convertToInteger(value: unknown): number | null {
     const num = this.convertToNumber(value);
@@ -304,22 +319,36 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
 
   /**
    * Convert to boolean
+   * Uses Expression Type Registry for type checking and coercion
    */
   private convertToBoolean(value: unknown): boolean {
     if (value === null || value === undefined) return false;
-    if (typeof value === 'boolean') return value;
-    if (typeof value === 'number') return value !== 0 && !isNaN(value);
-    if (typeof value === 'string') return value !== '';
-    if (Array.isArray(value)) return value.length > 0;
+    if (this.isBoolean(value)) return value as boolean;
+
+    // Try registry coercion first
+    const coerced = expressionTypeRegistry.coerce<boolean>(value, 'Boolean');
+    if (coerced !== null) return coerced;
+
+    // Fallback for special cases
+    if (this.isNumber(value)) return (value as number) !== 0 && !isNaN(value as number);
+    if (this.isString(value)) return (value as string) !== '';
+    if (this.isArray(value)) return (value as unknown[]).length > 0;
     return true; // Objects and other truthy values
   }
 
   /**
    * Convert to array
+   * Uses Expression Type Registry for type checking and coercion
    */
   private convertToArray(value: unknown): unknown[] {
     if (value === null || value === undefined) return [];
-    if (Array.isArray(value)) return value;
+    if (this.isArray(value)) return value as unknown[];
+
+    // Try registry coercion
+    const coerced = expressionTypeRegistry.coerce<unknown[]>(value, 'Array');
+    if (coerced !== null) return coerced;
+
+    // Fallback for special cases
     if (value instanceof NodeList) return Array.from(value);
     if (value instanceof FileList) return Array.from(value);
     return [value]; // Wrap single values
@@ -327,19 +356,21 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
 
   /**
    * Convert to Date
+   * Uses Expression Type Registry for type checking
    */
   private convertToDate(value: unknown): Date | null {
     if (value === null || value === undefined) return null;
     if (value instanceof Date) return value;
-    if (typeof value === 'string') {
+    if (this.isString(value)) {
+      const strVal = value as string;
       // Special handling for YYYY-MM-DD format
-      if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-        return new Date(value + 'T00:00:00');
+      if (/^\d{4}-\d{2}-\d{2}$/.test(strVal)) {
+        return new Date(strVal + 'T00:00:00');
       }
-      const date = new Date(value);
+      const date = new Date(strVal);
       return isNaN(date.getTime()) ? null : date;
     }
-    if (typeof value === 'number') return new Date(value);
+    if (this.isNumber(value)) return new Date(value as number);
     return null;
   }
 
@@ -357,13 +388,23 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
 
   /**
    * Convert to object (parse JSON)
+   * Uses Expression Type Registry for type checking and coercion
    */
   private convertToObject(value: unknown): HyperScriptValue {
     if (value === null || value === undefined) return null;
-    if (typeof value === 'object') return value as HyperScriptValue;
-    if (typeof value === 'string') {
+
+    // Check if already an object using registry
+    const objectType = expressionTypeRegistry.get('Object');
+    if (objectType?.isType(value)) return value as HyperScriptValue;
+
+    // Try registry coercion
+    const coerced = expressionTypeRegistry.coerce<Record<string, unknown>>(value, 'Object');
+    if (coerced !== null) return coerced as HyperScriptValue;
+
+    // Fallback for string parsing
+    if (this.isString(value)) {
       try {
-        return JSON.parse(value) as HyperScriptValue;
+        return JSON.parse(value as string) as HyperScriptValue;
       } catch {
         return null;
       }
@@ -373,17 +414,20 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
 
   /**
    * Convert to HTML string
+   * Uses Expression Type Registry for type checking
    */
   private convertToHTML(value: unknown): string | null {
     if (value === null || value === undefined) return null;
-    if (typeof value === 'string') return value;
-    if (value instanceof Element) return value.outerHTML;
-    if (Array.isArray(value)) {
-      return value.map(item => (item instanceof Element ? item.outerHTML : String(item))).join('');
+    if (this.isString(value)) return value as string;
+    if (this.isElement(value)) return (value as Element).outerHTML;
+    if (this.isArray(value)) {
+      return (value as unknown[]).map(item =>
+        this.isElement(item) ? (item as Element).outerHTML : String(item)
+      ).join('');
     }
     if (value instanceof NodeList) {
       return Array.from(value)
-        .map(node => (node instanceof Element ? node.outerHTML : String(node)))
+        .map(node => this.isElement(node) ? (node as Element).outerHTML : String(node))
         .join('');
     }
     return String(value);
@@ -391,24 +435,25 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
 
   /**
    * Convert to DocumentFragment
+   * Uses Expression Type Registry for type checking
    */
   private convertToFragment(value: unknown): DocumentFragment | null {
     if (value === null || value === undefined) return null;
 
     const fragment = document.createDocumentFragment();
 
-    if (typeof value === 'string') {
+    if (this.isString(value)) {
       const temp = document.createElement('div');
-      temp.innerHTML = value;
+      temp.innerHTML = value as string;
       while (temp.firstChild) {
         fragment.appendChild(temp.firstChild);
       }
-    } else if (value instanceof Element) {
-      fragment.appendChild(value.cloneNode(true));
-    } else if (Array.isArray(value)) {
-      value.forEach(item => {
-        if (item instanceof Element) {
-          fragment.appendChild(item.cloneNode(true));
+    } else if (this.isElement(value)) {
+      fragment.appendChild((value as Element).cloneNode(true));
+    } else if (this.isArray(value)) {
+      (value as unknown[]).forEach(item => {
+        if (this.isElement(item)) {
+          fragment.appendChild((item as Element).cloneNode(true));
         }
       });
     }
@@ -531,6 +576,7 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
 
   /**
    * Check if value is a form element
+   * Uses type registry pattern for consistent type checking
    */
   private isFormElement(value: unknown): boolean {
     return value instanceof HTMLFormElement;
@@ -538,21 +584,62 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
 
   /**
    * Check if value is an element
+   * Uses Expression Type Registry for consistent type checking
    */
   private isElement(value: unknown): boolean {
-    return value instanceof Element;
+    const elementType = expressionTypeRegistry.get('Element');
+    return elementType ? elementType.isType(value) : value instanceof Element;
+  }
+
+  /**
+   * Check if value is an array
+   * Uses Expression Type Registry for consistent type checking
+   */
+  private isArray(value: unknown): boolean {
+    const arrayType = expressionTypeRegistry.get('Array');
+    return arrayType ? arrayType.isType(value) : Array.isArray(value);
+  }
+
+  /**
+   * Check if value is a string
+   * Uses Expression Type Registry for consistent type checking
+   */
+  private isString(value: unknown): boolean {
+    const stringType = expressionTypeRegistry.get('String');
+    return stringType ? stringType.isType(value) : typeof value === 'string';
+  }
+
+  /**
+   * Check if value is a number
+   * Uses Expression Type Registry for consistent type checking
+   */
+  private isNumber(value: unknown): boolean {
+    const numberType = expressionTypeRegistry.get('Number');
+    return numberType ? numberType.isType(value) : typeof value === 'number';
+  }
+
+  /**
+   * Check if value is a boolean
+   * Uses Expression Type Registry for consistent type checking
+   */
+  private isBoolean(value: unknown): boolean {
+    const boolType = expressionTypeRegistry.get('Boolean');
+    return boolType ? boolType.isType(value) : typeof value === 'boolean';
   }
 
   /**
    * Infer TypeScript type from value
+   * Uses Expression Type Registry for consistent type inference
    */
   private inferValueType(value: unknown): HyperScriptValueType {
+    // Use registry for common types
+    const registryType = expressionTypeRegistry.getHyperScriptType(value);
+    if (registryType !== 'unknown') {
+      return registryType as HyperScriptValueType;
+    }
+
+    // Handle special cases not in registry
     if (value === null || value === undefined) return 'null';
-    if (typeof value === 'boolean') return 'boolean';
-    if (typeof value === 'number') return 'number';
-    if (typeof value === 'string') return 'string';
-    if (Array.isArray(value)) return 'array';
-    if (value instanceof Element) return 'element';
     if (value instanceof DocumentFragment) return 'fragment';
     if (value instanceof Date) return 'object';
     if (typeof value === 'function') return 'function';

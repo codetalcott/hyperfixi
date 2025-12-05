@@ -4,6 +4,10 @@
  * Enhanced for LLM code agents with full type safety
  */
 
+/**
+ * Uses Expression Type Registry for consistent type checking.
+ */
+
 import { v } from '../../validation/lightweight-validators';
 import type {
   ValidationResult,
@@ -14,7 +18,7 @@ import type {
   LLMDocumentation as LLMDocumentation,
   ExpressionCategory as ExpressionCategory,
 } from '../../types/index';
-import { toNumber } from './utils';
+import { toNumber, isNumber, isString, isBoolean } from './utils';
 
 // Define BaseTypedExpression locally for now
 interface BaseTypedExpression<T> {
@@ -150,6 +154,7 @@ export class GreaterThanExpression implements BaseTypedExpression<boolean> {
 
   /**
    * Compare two values using the specified operator
+   * Uses Expression Type Registry via shared utilities for type checking
    */
   private compareValues(left: unknown, right: unknown, _operator: string): boolean {
     // Handle null/undefined cases
@@ -157,17 +162,17 @@ export class GreaterThanExpression implements BaseTypedExpression<boolean> {
       return false;
     }
 
-    // If both are numbers, compare numerically
-    if (typeof left === 'number' && typeof right === 'number') {
-      return left > right;
+    // If both are numbers, compare numerically (uses registry-based type check)
+    if (isNumber(left) && isNumber(right)) {
+      return (left as number) > (right as number);
     }
 
-    // If both are strings, compare lexicographically
-    if (typeof left === 'string' && typeof right === 'string') {
-      return left > right;
+    // If both are strings, compare lexicographically (uses registry-based type check)
+    if (isString(left) && isString(right)) {
+      return (left as string) > (right as string);
     }
 
-    // Try to convert both to numbers (uses shared toNumber utility)
+    // Try to convert both to numbers (uses shared toNumber utility with registry)
     const leftNum = toNumber(left);
     const rightNum = toNumber(right);
 
@@ -275,16 +280,16 @@ export class LessThanExpression implements BaseTypedExpression<boolean> {
       return false;
     }
 
-    // For less than, we need to do the actual comparison
-    if (typeof left === 'number' && typeof right === 'number') {
-      return left < right;
+    // For less than, we need to do the actual comparison (uses registry-based type check)
+    if (isNumber(left) && isNumber(right)) {
+      return (left as number) < (right as number);
     }
 
-    if (typeof left === 'string' && typeof right === 'string') {
-      return left < right;
+    if (isString(left) && isString(right)) {
+      return (left as string) < (right as string);
     }
 
-    // Try numeric conversion (uses shared toNumber utility)
+    // Try numeric conversion (uses shared toNumber utility with registry)
     const leftNum = toNumber(left);
     const rightNum = toNumber(right);
 
@@ -362,15 +367,16 @@ export class GreaterThanOrEqualExpression implements BaseTypedExpression<boolean
       return left === right; // Both null/undefined are equal
     }
 
-    if (typeof left === 'number' && typeof right === 'number') {
-      return left >= right;
+    // Uses registry-based type check
+    if (isNumber(left) && isNumber(right)) {
+      return (left as number) >= (right as number);
     }
 
-    if (typeof left === 'string' && typeof right === 'string') {
-      return left >= right;
+    if (isString(left) && isString(right)) {
+      return (left as string) >= (right as string);
     }
 
-    // Uses shared toNumber utility
+    // Uses shared toNumber utility with registry
     const leftNum = toNumber(left);
     const rightNum = toNumber(right);
 
@@ -447,15 +453,16 @@ export class LessThanOrEqualExpression implements BaseTypedExpression<boolean> {
       return left === right;
     }
 
-    if (typeof left === 'number' && typeof right === 'number') {
-      return left <= right;
+    // Uses registry-based type check
+    if (isNumber(left) && isNumber(right)) {
+      return (left as number) <= (right as number);
     }
 
-    if (typeof left === 'string' && typeof right === 'string') {
-      return left <= right;
+    if (isString(left) && isString(right)) {
+      return (left as string) <= (right as string);
     }
 
-    // Uses shared toNumber utility
+    // Uses shared toNumber utility with registry
     const leftNum = toNumber(left);
     const rightNum = toNumber(right);
 
@@ -542,24 +549,24 @@ export class EqualityExpression implements BaseTypedExpression<boolean> {
       return false;
     }
 
-    // Type coercion for numbers and strings
-    if (typeof left === 'number' && typeof right === 'string') {
+    // Type coercion for numbers and strings (uses registry-based type checks)
+    if (isNumber(left) && isString(right)) {
       const rightNum = Number(right);
-      return Number.isFinite(rightNum) && left === rightNum;
+      return Number.isFinite(rightNum) && (left as number) === rightNum;
     }
 
-    if (typeof left === 'string' && typeof right === 'number') {
+    if (isString(left) && isNumber(right)) {
       const leftNum = Number(left);
-      return Number.isFinite(leftNum) && leftNum === right;
+      return Number.isFinite(leftNum) && leftNum === (right as number);
     }
 
-    // Boolean coercion
-    if (typeof left === 'boolean' && typeof right === 'number') {
-      return (left ? 1 : 0) === right;
+    // Boolean coercion (uses registry-based type checks)
+    if (isBoolean(left) && isNumber(right)) {
+      return ((left as boolean) ? 1 : 0) === (right as number);
     }
 
-    if (typeof left === 'number' && typeof right === 'boolean') {
-      return left === (right ? 1 : 0);
+    if (isNumber(left) && isBoolean(right)) {
+      return (left as number) === ((right as boolean) ? 1 : 0);
     }
 
     // Default: convert both to strings and compare
