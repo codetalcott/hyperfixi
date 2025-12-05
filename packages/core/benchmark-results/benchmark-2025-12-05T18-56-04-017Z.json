@@ -1,0 +1,70 @@
+{
+  "timestamp": "2025-12-05T18:56:03.987Z",
+  "nodeVersion": "v20.19.4",
+  "platform": "darwin arm64",
+  "results": [
+    {
+      "name": "Context Creation",
+      "iterations": 50000,
+      "totalMs": 9.744625,
+      "avgMicroseconds": 0.1948925,
+      "opsPerSecond": 5131034,
+      "minMicroseconds": 0.15718330078125,
+      "maxMicroseconds": 0.28442080078125
+    },
+    {
+      "name": "Child Context Creation",
+      "iterations": 50000,
+      "totalMs": 8.1595,
+      "avgMicroseconds": 0.16319,
+      "opsPerSecond": 6127826,
+      "minMicroseconds": 0.14191669921875,
+      "maxMicroseconds": 0.18938330078125
+    },
+    {
+      "name": "Map Set/Get/Delete Cycle",
+      "iterations": 50000,
+      "totalMs": 7.914041015625,
+      "avgMicroseconds": 0.1582808203125,
+      "opsPerSecond": 6317885,
+      "minMicroseconds": 0.09763330078125,
+      "maxMicroseconds": 0.20458330078125
+    },
+    {
+      "name": "Try-Catch Control Flow",
+      "iterations": 50000,
+      "totalMs": 5.4893330078125,
+      "avgMicroseconds": 0.10978666015625,
+      "opsPerSecond": 9108575,
+      "minMicroseconds": 0.1052,
+      "maxMicroseconds": 0.1186875
+    },
+    {
+      "name": "Result Pattern Control Flow",
+      "iterations": 50000,
+      "totalMs": 4.516083984375,
+      "avgMicroseconds": 0.0903216796875,
+      "opsPerSecond": 11071539,
+      "minMicroseconds": 0.0450458984375,
+      "maxMicroseconds": 0.12484580078125
+    },
+    {
+      "name": "Object Allocation (flags)",
+      "iterations": 50000,
+      "totalMs": 4.547791015625,
+      "avgMicroseconds": 0.0909558203125,
+      "opsPerSecond": 10994349,
+      "minMicroseconds": 0.0496,
+      "maxMicroseconds": 0.10312080078125
+    },
+    {
+      "name": "Object Reuse (pooled flags)",
+      "iterations": 50000,
+      "totalMs": 5.7075830078125,
+      "avgMicroseconds": 0.11415166015625,
+      "opsPerSecond": 8760276,
+      "minMicroseconds": 0.1059125,
+      "maxMicroseconds": 0.13580830078125
+    }
+  ]
+}

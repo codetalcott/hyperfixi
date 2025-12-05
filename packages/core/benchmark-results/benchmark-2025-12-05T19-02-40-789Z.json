@@ -1,0 +1,97 @@
+{
+  "timestamp": "2025-12-05T19:02:40.765Z",
+  "nodeVersion": "v20.19.4",
+  "platform": "darwin arm64",
+  "results": [
+    {
+      "name": "Context Creation",
+      "iterations": 50000,
+      "totalMs": 9.9987080078125,
+      "avgMicroseconds": 0.19997416015625,
+      "opsPerSecond": 5000646,
+      "minMicroseconds": 0.14526669921875,
+      "maxMicroseconds": 0.3083625
+    },
+    {
+      "name": "Child Context Creation",
+      "iterations": 50000,
+      "totalMs": 9.3952080078125,
+      "avgMicroseconds": 0.18790416015625,
+      "opsPerSecond": 5321862,
+      "minMicroseconds": 0.1451916015625,
+      "maxMicroseconds": 0.26820419921875
+    },
+    {
+      "name": "Map Set/Get/Delete Cycle",
+      "iterations": 50000,
+      "totalMs": 13.0990419921875,
+      "avgMicroseconds": 0.26198083984375,
+      "opsPerSecond": 3817073,
+      "minMicroseconds": 0.21955830078125,
+      "maxMicroseconds": 0.365975
+    },
+    {
+      "name": "Try-Catch Control Flow",
+      "iterations": 50000,
+      "totalMs": 7.040791015625,
+      "avgMicroseconds": 0.1408158203125,
+      "opsPerSecond": 7101475,
+      "minMicroseconds": 0.12635830078125,
+      "maxMicroseconds": 0.1490375
+    },
+    {
+      "name": "Result Pattern Control Flow",
+      "iterations": 50000,
+      "totalMs": 6.203,
+      "avgMicroseconds": 0.12406,
+      "opsPerSecond": 8060616,
+      "minMicroseconds": 0.1112,
+      "maxMicroseconds": 0.1615666015625
+    },
+    {
+      "name": "Object Allocation (flags)",
+      "iterations": 50000,
+      "totalMs": 5.3765,
+      "avgMicroseconds": 0.10753,
+      "opsPerSecond": 9299730,
+      "minMicroseconds": 0.1019875,
+      "maxMicroseconds": 0.12237919921875
+    },
+    {
+      "name": "Object Reuse (pooled flags)",
+      "iterations": 50000,
+      "totalMs": 5.717375,
+      "avgMicroseconds": 0.1143475,
+      "opsPerSecond": 8745272,
+      "minMicroseconds": 0.10691669921875,
+      "maxMicroseconds": 0.13248330078125
+    },
+    {
+      "name": "Map Allocation (new Map)",
+      "iterations": 50000,
+      "totalMs": 8.22654296875,
+      "avgMicroseconds": 0.164530859375,
+      "opsPerSecond": 6077887,
+      "minMicroseconds": 0.1593583984375,
+      "maxMicroseconds": 0.17516669921875
+    },
+    {
+      "name": "Map Pooling (acquire/release)",
+      "iterations": 50000,
+      "totalMs": 10.2242919921875,
+      "avgMicroseconds": 0.20448583984375,
+      "opsPerSecond": 4890314,
+      "minMicroseconds": 0.18444169921875,
+      "maxMicroseconds": 0.282
+    },
+    {
+      "name": "Context Pooling (acquire/release)",
+      "iterations": 50000,
+      "totalMs": 10.9564580078125,
+      "avgMicroseconds": 0.21912916015625,
+      "opsPerSecond": 4563519,
+      "minMicroseconds": 0.1907875,
+      "maxMicroseconds": 0.31603330078125
+    }
+  ]
+}
