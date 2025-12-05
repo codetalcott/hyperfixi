@@ -25,11 +25,12 @@ const conversionExpressions = legacyConversionExpressions; // Use legacy system 
 // positionalExpressions already imported with correct name
 
 // Helper function to convert ExecutionContext to TypedExecutionContext
-function toTypedContext(context: ExecutionContext): TypedExecutionContext {
+// Note: Returns any to avoid type conflicts between base-types and unified-types definitions
+function toTypedContext(context: ExecutionContext): any {
   return {
     ...context,
     evaluationHistory: (context as any).evaluationHistory || [],
-  } as TypedExecutionContext;
+  };
 }
 
 // Helper function to process escape sequences in strings
@@ -650,9 +651,9 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
           left = {
             type: 'arrayRangeAccess',
             object: left,
-            start: null,
-            end: null,
-          };
+            startExpr: undefined,
+            endExpr: undefined,
+          } as ASTNode;
           continue;
         }
 
@@ -665,9 +666,9 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
         left = {
           type: 'arrayRangeAccess',
           object: left,
-          start: null,
-          end: endIndex,
-        };
+          startExpr: undefined,
+          endExpr: endIndex,
+        } as ASTNode;
         continue;
       }
 
@@ -687,9 +688,9 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
           left = {
             type: 'arrayRangeAccess',
             object: left,
-            start: startIndex,
-            end: null,
-          };
+            startExpr: startIndex,
+            endExpr: undefined,
+          } as ASTNode;
           continue;
         }
 
@@ -703,9 +704,9 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
         left = {
           type: 'arrayRangeAccess',
           object: left,
-          start: startIndex,
-          end: endIndex,
-        };
+          startExpr: startIndex,
+          endExpr: endIndex,
+        } as ASTNode;
         continue;
       }
 

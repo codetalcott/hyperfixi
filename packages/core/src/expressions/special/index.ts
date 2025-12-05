@@ -81,13 +81,13 @@ export class StringLiteralExpression implements BaseTypedExpression<string> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: [{
+          error: {
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          }],
+          },
         };
       }
 
@@ -103,20 +103,20 @@ export class StringLiteralExpression implements BaseTypedExpression<string> {
       return {
         success: true,
         value: result,
-        type: 'String',
+        type: 'string',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: [{
+        error: {
           name: 'StringEvaluationError',
           type: 'runtime-error',
           code: 'STRING_EVALUATION_FAILED',
           message: `String literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
           suggestions: [],
-        }],
+        },
       };
     }
   }
@@ -128,7 +128,7 @@ export class StringLiteralExpression implements BaseTypedExpression<string> {
       if (!parsed.success) {
         return {
           isValid: false,
-          error:
+          errors:
             parsed.error?.errors.map(err => ({
               type: 'type-mismatch',
               message: `Invalid string literal input: ${err.message}`,
@@ -140,13 +140,13 @@ export class StringLiteralExpression implements BaseTypedExpression<string> {
 
       return {
         isValid: true,
-        error: [],
+        errors: [],
         suggestions: [],
       };
     } catch (error) {
       return {
         isValid: false,
-        error: [
+        errors: [
           {
             type: 'runtime-error',
             message: 'Validation failed with exception',
@@ -268,26 +268,26 @@ export class NumberLiteralExpression implements BaseTypedExpression<number> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: [{
+          error: {
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          }],
+          },
         };
       }
 
       if (!isFinite(input.value)) {
         return {
           success: false,
-          error: [{
+          error: {
             name: 'NumberValidationError',
             type: 'invalid-argument',
             code: 'NUMBER_NOT_FINITE',
             message: 'Number literal must be finite',
             suggestions: [],
-          }],
+          },
         };
       }
 
@@ -296,20 +296,20 @@ export class NumberLiteralExpression implements BaseTypedExpression<number> {
       return {
         success: true,
         value: input.value,
-        type: 'Number',
+        type: 'number',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: [{
+        error: {
           name: 'NumberEvaluationError',
           type: 'runtime-error',
           code: 'NUMBER_EVALUATION_FAILED',
           message: `Number literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
           suggestions: [],
-        }],
+        },
       };
     }
   }
@@ -321,7 +321,7 @@ export class NumberLiteralExpression implements BaseTypedExpression<number> {
       if (!parsed.success) {
         return {
           isValid: false,
-          error:
+          errors:
             parsed.error?.errors.map(err => ({
               type: 'type-mismatch',
               message: `Invalid number literal input: ${err.message}`,
@@ -334,7 +334,7 @@ export class NumberLiteralExpression implements BaseTypedExpression<number> {
       if (!isFinite((parsed.data as any).value)) {
         return {
           isValid: false,
-          error: [
+          errors: [
             {
               type: 'invalid-argument',
               message: 'Number literal value must be finite',
@@ -347,13 +347,13 @@ export class NumberLiteralExpression implements BaseTypedExpression<number> {
 
       return {
         isValid: true,
-        error: [],
+        errors: [],
         suggestions: [],
       };
     } catch (error) {
       return {
         isValid: false,
-        error: [
+        errors: [
           {
             type: 'runtime-error',
             message: 'Validation failed with exception',
@@ -415,13 +415,13 @@ export class BooleanLiteralExpression implements BaseTypedExpression<boolean> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: [{
+          error: {
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          }],
+          },
         };
       }
 
@@ -430,20 +430,20 @@ export class BooleanLiteralExpression implements BaseTypedExpression<boolean> {
       return {
         success: true,
         value: input.value,
-        type: 'Boolean',
+        type: 'boolean',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: [{
+        error: {
           name: 'BooleanEvaluationError',
           type: 'runtime-error',
           code: 'BOOLEAN_EVALUATION_FAILED',
           message: `Boolean literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
           suggestions: [],
-        }],
+        },
       };
     }
   }
@@ -455,7 +455,7 @@ export class BooleanLiteralExpression implements BaseTypedExpression<boolean> {
       if (!parsed.success) {
         return {
           isValid: false,
-          error:
+          errors:
             parsed.error?.errors.map(err => ({
               type: 'type-mismatch',
               message: `Invalid boolean literal input: ${err.message}`,
@@ -467,13 +467,13 @@ export class BooleanLiteralExpression implements BaseTypedExpression<boolean> {
 
       return {
         isValid: true,
-        error: [],
+        errors: [],
         suggestions: [],
       };
     } catch (error) {
       return {
         isValid: false,
-        error: [
+        errors: [
           {
             type: 'runtime-error',
             message: 'Validation failed with exception',
@@ -535,13 +535,13 @@ export class AdditionExpression implements BaseTypedExpression<number> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: [{
+          error: {
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          }],
+          },
         };
       }
 
@@ -555,20 +555,20 @@ export class AdditionExpression implements BaseTypedExpression<number> {
       return {
         success: true,
         value: result,
-        type: 'Number',
+        type: 'number',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: [{
+        error: {
           name: 'AdditionError',
           type: 'runtime-error',
           code: 'ADDITION_FAILED',
           message: `Addition failed: ${error instanceof Error ? error.message : String(error)}`,
           suggestions: [],
-        }],
+        },
       };
     }
   }
@@ -580,7 +580,7 @@ export class AdditionExpression implements BaseTypedExpression<number> {
       if (!parsed.success) {
         return {
           isValid: false,
-          error:
+          errors:
             parsed.error?.errors.map(err => ({
               type: 'type-mismatch',
               message: `Invalid addition input: ${err.message}`,
@@ -592,13 +592,13 @@ export class AdditionExpression implements BaseTypedExpression<number> {
 
       return {
         isValid: true,
-        error: [],
+        errors: [],
         suggestions: [],
       };
     } catch (error) {
       return {
         isValid: false,
-        error: [
+        errors: [
           {
             type: 'runtime-error',
             message: 'Validation failed with exception',
@@ -687,13 +687,13 @@ export class StringConcatenationExpression implements BaseTypedExpression<string
       if (!validation.isValid) {
         return {
           success: false,
-          error: [{
+          error: {
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors[0]?.message || 'Invalid input',
             code: 'STRING_CONCATENATION_VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          }],
+          },
         };
       }
 
@@ -708,20 +708,20 @@ export class StringConcatenationExpression implements BaseTypedExpression<string
       return {
         success: true,
         value: result,
-        type: 'String',
+        type: 'string',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: [{
+        error: {
           name: 'StringConcatenationError',
           type: 'runtime-error',
           message: error instanceof Error ? error.message : 'String concatenation failed',
           code: 'STRING_CONCATENATION_ERROR',
           suggestions: ['Check that operands can be converted to strings'],
-        }],
+        },
       };
     }
   }
@@ -732,7 +732,7 @@ export class StringConcatenationExpression implements BaseTypedExpression<string
     if (!parsed.success) {
       return {
         isValid: false,
-        error:
+        errors:
           parsed.error?.errors.map(err => ({
             type: 'type-mismatch',
             message: `Invalid string concatenation input: ${err.message}`,
@@ -744,7 +744,7 @@ export class StringConcatenationExpression implements BaseTypedExpression<string
 
     return {
       isValid: true,
-      error: [],
+      errors: [],
       suggestions: [],
       data: parsed.data,
     };
@@ -815,13 +815,13 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
       if (!validation.isValid) {
         return {
           success: false,
-          error: [{
+          error: {
             name: 'ValidationError',
             type: 'validation-error',
             message: validation.errors.map(e => e.message).join(', '),
             code: 'VALIDATION_FAILED',
             suggestions: validation.suggestions,
-          }],
+          },
         };
       }
 
@@ -835,20 +835,20 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
       return {
         success: true,
         value: result,
-        type: 'Number',
+        type: 'number',
       };
     } catch (error) {
       this.trackPerformance(context, startTime, false);
 
       return {
         success: false,
-        error: [{
+        error: {
           name: 'MultiplicationError',
           type: 'runtime-error',
           code: 'MULTIPLICATION_FAILED',
           message: `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`,
           suggestions: [],
-        }],
+        },
       };
     }
   }
@@ -860,7 +860,7 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
       if (!parsed.success) {
         return {
           isValid: false,
-          error:
+          errors:
             parsed.error?.errors.map(err => ({
               type: 'type-mismatch',
               message: `Invalid multiplication input: ${err.message}`,
@@ -872,13 +872,13 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
 
       return {
         isValid: true,
-        error: [],
+        errors: [],
         suggestions: [],
       };
     } catch (error) {
       return {
         isValid: false,
-        error: [
+        errors: [
           {
             type: 'runtime-error',
             message: 'Validation failed with exception',

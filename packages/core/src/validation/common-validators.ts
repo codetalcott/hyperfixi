@@ -19,7 +19,7 @@ import type { RuntimeValidator } from './lightweight-validators';
 export const htmlElement: RuntimeValidator<HTMLElement> = v.custom(
   (value: unknown) => value instanceof HTMLElement,
   'Expected HTMLElement'
-);
+) as RuntimeValidator<HTMLElement>;
 
 /**
  * Validates that a value is an array of HTMLElements
@@ -27,7 +27,7 @@ export const htmlElement: RuntimeValidator<HTMLElement> = v.custom(
  */
 export const htmlElementArray: RuntimeValidator<HTMLElement[]> = v.array(
   v.custom((value: unknown) => value instanceof HTMLElement)
-);
+) as RuntimeValidator<HTMLElement[]>;
 
 /**
  * Validates that a value is either an HTMLElement, null, or undefined
@@ -37,7 +37,7 @@ export const htmlElementOrNull: RuntimeValidator<HTMLElement | null | undefined>
   v.custom((value: unknown) => value instanceof HTMLElement),
   v.null(),
   v.undefined(),
-]);
+]) as RuntimeValidator<HTMLElement | null | undefined>;
 
 /**
  * Validates element target expressions
@@ -58,7 +58,7 @@ export const elementTarget: RuntimeValidator<
   v.string(),
   v.null(),
   v.undefined(),
-]);
+]) as RuntimeValidator<HTMLElement | HTMLElement[] | string | null | undefined>;
 
 /**
  * Validates NodeList (result of querySelectorAll)
@@ -66,7 +66,7 @@ export const elementTarget: RuntimeValidator<
 export const nodeList: RuntimeValidator<NodeList> = v.custom(
   (value: unknown) => value instanceof NodeList,
   'Expected NodeList'
-);
+) as RuntimeValidator<NodeList>;
 
 /**
  * Validates HTMLCollection
@@ -74,14 +74,14 @@ export const nodeList: RuntimeValidator<NodeList> = v.custom(
 export const htmlCollection: RuntimeValidator<HTMLCollection> = v.custom(
   (value: unknown) => value instanceof HTMLCollection,
   'Expected HTMLCollection'
-);
+) as RuntimeValidator<HTMLCollection>;
 
 /**
  * Validates that a value is a valid CSS selector string
  * Note: This does NOT validate selector syntax, just that it's a non-empty string.
  * Actual syntax validation happens at runtime when querySelector is called.
  */
-export const cssSelector: RuntimeValidator<string> = v.string().min(1);
+export const cssSelector: RuntimeValidator<string> = v.string().min(1) as RuntimeValidator<string>;
 
 /**
  * Validates that a value is a valid CSS class name
@@ -90,9 +90,9 @@ export const cssSelector: RuntimeValidator<string> = v.string().min(1);
 export const cssClassName: RuntimeValidator<string> = v
   .string()
   .refine(
-    (value: string) => /^[a-zA-Z_-][a-zA-Z0-9_-]*$/.test(value.trim()),
+    (value: unknown) => typeof value === 'string' && /^[a-zA-Z_-][a-zA-Z0-9_-]*$/.test(value.trim()),
     'Invalid CSS class name format'
-  );
+  ) as RuntimeValidator<string>;
 
 /**
  * Validates that a value is a valid HTML attribute name
@@ -101,15 +101,15 @@ export const cssClassName: RuntimeValidator<string> = v
 export const attributeName: RuntimeValidator<string> = v
   .string()
   .refine(
-    (value: string) => /^[a-zA-Z_][a-zA-Z0-9._-]*$/.test(value.trim()),
+    (value: unknown) => typeof value === 'string' && /^[a-zA-Z_][a-zA-Z0-9._-]*$/.test(value.trim()),
     'Invalid attribute name format'
-  );
+  ) as RuntimeValidator<string>;
 
 /**
  * Validates event name strings
  * Used by: send, trigger, on, and other event-related commands
  */
-export const eventName: RuntimeValidator<string> = v.string().min(1);
+export const eventName: RuntimeValidator<string> = v.string().min(1) as RuntimeValidator<string>;
 
 /**
  * Collection of all common validators for easy import

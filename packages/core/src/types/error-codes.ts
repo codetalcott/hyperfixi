@@ -308,7 +308,7 @@ export function createError(
   suggestions?: string[]
 ): ValidationError {
   // Get default message from registry
-  let message = ErrorMessages[errorCode as keyof typeof ErrorMessages] || customMessage || 'Unknown error';
+  let message: string = ErrorMessages[errorCode as keyof typeof ErrorMessages] || customMessage || 'Unknown error';
 
   // Replace placeholders if provided
   if (placeholders && placeholders.length > 0) {
@@ -346,7 +346,7 @@ export function createError(
 /**
  * Helper to get standard suggestions for error code
  */
-export function getSuggestions(errorCode: string): string[] {
+export function getSuggestions(errorCode: string): readonly string[] {
   if (errorCode.includes('NOT_FOUND') || errorCode.includes('ELEMENT')) {
     return ErrorSuggestions.ELEMENT_NOT_FOUND;
   }

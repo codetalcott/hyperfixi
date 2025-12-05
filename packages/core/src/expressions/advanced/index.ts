@@ -598,25 +598,25 @@ export const enhancedAdvancedExpressions = {
 } as const;
 
 /**
- * Factory functions for creating enhanced advanced expressions
+ * Factory functions for creating enhanced advanced expression instances
  */
-export function createLambda(): LambdaExpression {
+export function createLambdaExpression(): LambdaExpression {
   return new LambdaExpression();
 }
 
-export function createPromise(): PromiseExpression {
+export function createPromiseExpression(): PromiseExpression {
   return new PromiseExpression();
 }
 
-export function createAwait(): AwaitExpression {
+export function createAwaitExpression(): AwaitExpression {
   return new AwaitExpression();
 }
 
-export function createError(): ErrorExpression {
+export function createErrorExpression(): ErrorExpression {
   return new ErrorExpression();
 }
 
-export function createTypeof(): TypeofExpression {
+export function createTypeofExpression(): TypeofExpression {
   return new TypeofExpression();
 }
 

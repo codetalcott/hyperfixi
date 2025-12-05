@@ -29,7 +29,7 @@ export interface ValidationError {
     | 'invalid-syntax'
     | 'security-warning';
   readonly message: string;
-  readonly suggestions: string[];
+  readonly suggestions: readonly string[] | string[];
   readonly path?: string;
   readonly code?: string;
   readonly name?: string;
@@ -55,7 +55,7 @@ export interface PerformanceCharacteristics {
 export interface ValidationResult<T = unknown> {
   readonly isValid: boolean;
   readonly errors: ValidationError[];
-  readonly suggestions: string[];
+  readonly suggestions: readonly string[] | string[];
   readonly warnings?: ValidationError[];
   readonly performance?: PerformanceCharacteristics;
 
