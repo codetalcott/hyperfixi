@@ -228,6 +228,11 @@
         .rotate {
             transform: rotate(5deg);
         }
+
+        /* Combined transform - needed because transform properties don't combine */
+        .scale-up.rotate {
+            transform: scale(1.1) rotate(5deg);
+        }
     </style>
 </head>
 <body>
