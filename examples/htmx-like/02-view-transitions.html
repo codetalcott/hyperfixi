@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>htmx-like: View Transitions Example</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .demo-box { border: 1px solid #ccc; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .demo-box h3 { margin-top: 0; }
+    button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    .info { background: #f0f9ff; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    .page-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+    .page-nav button { background: #f0f0f0; border: 1px solid #ccc; }
+    .page-nav button.active { background: #007bff; color: white; border-color: #007bff; }
+    #page-content { min-height: 200px; padding: 20px; background: #fafafa; border-radius: 8px; }
+    .support-yes { color: green; }
+    .support-no { color: orange; }
+  </style>
+</head>
+<body>
+  <h1>View Transitions Example</h1>
+
+  <div class="info">
+    <strong>Purpose:</strong> Demonstrates View Transitions API integration with swap commands.
+    <div id="support-status">Checking View Transitions API support...</div>
+  </div>
+
+  <h2>Basic View Transition</h2>
+
+  <div class="demo-box" id="vt-target">
+    <h3>Original Content</h3>
+    <p>This content will be swapped with a view transition.</p>
+  </div>
+
+  <div>
+    <button _="on click
+      set newContent to '<h3>View Transition Demo</h3><p>Content updated with smooth transition at ' + (new Date()).toLocaleTimeString() + '</p>'
+      swap innerHTML of #vt-target with newContent using view transition
+    ">Swap with Transition</button>
+
+    <button _="on click
+      set newContent to '<h3>No Transition</h3><p>Content updated instantly at ' + (new Date()).toLocaleTimeString() + '</p>'
+      swap innerHTML of #vt-target with newContent
+    ">Swap without Transition</button>
+  </div>
+
+  <h2>Page Navigation with Transitions</h2>
+
+  <div class="page-nav">
+    <button id="page-home" class="active" _="on click
+      remove .active from <button/> in closest .page-nav
+      add .active to me
+      set content to '<h3>Home Page</h3><p>Welcome to the home page!</p><p>Click navigation buttons above to switch pages with smooth transitions.</p>'
+      swap innerHTML of #page-content with content using view transition
+    ">Home</button>
+
+    <button id="page-about" _="on click
+      remove .active from <button/> in closest .page-nav
+      add .active to me
+      set content to '<h3>About Page</h3><p>This is the about page.</p><p>View transitions make page changes feel smooth and native.</p>'
+      swap innerHTML of #page-content with content using view transition
+    ">About</button>
+
+    <button id="page-contact" _="on click
+      remove .active from <button/> in closest .page-nav
+      add .active to me
+      set content to '<h3>Contact Page</h3><p>Get in touch with us!</p><p>Email: example@example.com</p>'
+      swap innerHTML of #page-content with content using view transition
+    ">Contact</button>
+  </div>
+
+  <div id="page-content">
+    <h3>Home Page</h3>
+    <p>Welcome to the home page!</p>
+    <p>Click navigation buttons above to switch pages with smooth transitions.</p>
+  </div>
+
+  <script src="/packages/core/dist/hyperfixi-browser.js"></script>
+  <script>
+    // Check View Transitions API support
+    const supportStatus = document.getElementById('support-status');
+    if (document.startViewTransition) {
+      supportStatus.innerHTML = '<span class="support-yes">View Transitions API is supported in this browser!</span>';
+    } else {
+      supportStatus.innerHTML = '<span class="support-no">View Transitions API not supported - transitions will be instant.</span>';
+    }
+  </script>
+</body>
+</html>

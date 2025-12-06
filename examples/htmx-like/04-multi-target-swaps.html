@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04: Multi-Target Swaps - HyperFixi htmx-like Examples</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .breadcrumb {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .description {
+            background: #e8eaf6;
+            border-left: 4px solid #3f51b5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .demo {
+            background: #fff;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+
+        button {
+            background: linear-gradient(135deg, #3f51b5 0%, #303f9f 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(63, 81, 181, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+        }
+
+        button.secondary:hover {
+            box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 600px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 150px;
+        }
+
+        .panel h4 {
+            margin: 0 0 15px 0;
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 5px 0;
+        }
+
+        .card.stats {
+            background: linear-gradient(135deg, #3f51b5 0%, #303f9f 100%);
+        }
+
+        .card.notification {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+
+        .card.sidebar {
+            background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+        }
+
+        .card h3 {
+            margin: 0 0 5px 0;
+            font-size: 16px;
+        }
+
+        .card p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .code {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            font-size: 13px;
+        }
+
+        .keyword {
+            color: #c678dd;
+        }
+
+        .string {
+            color: #98c379;
+        }
+
+        .comment {
+            color: #5c6370;
+        }
+
+        .tag-name {
+            color: #e06c75;
+        }
+
+        .attr-name {
+            color: #d19a66;
+        }
+
+        .explanation {
+            margin: 20px 0;
+            line-height: 1.8;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #e8eaf6;
+            color: #303f9f;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        .tag.htmx {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .nav-buttons a {
+            background: #f0f0f0;
+            color: #333;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .nav-buttons a:hover {
+            background: #e0e0e0;
+        }
+
+        .note {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .partial-demo {
+            background: #f5f5f5;
+            border: 2px dashed #ccc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .partial-demo h4 {
+            margin: 0 0 15px 0;
+            color: #666;
+        }
+
+        .response-preview {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+
+        .notification-badge {
+            display: inline-block;
+            background: #f44336;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="../index.html">← Back to Gallery</a> / <strong>htmx-like</strong> / 04: Multi-Target Swaps
+        </div>
+
+        <h1>🎯 Multi-Target Swaps</h1>
+
+        <div class="description">
+            <strong>Update multiple elements from a single response</strong><br>
+            HyperFixi supports two patterns for multi-target updates:
+            <ul style="margin: 10px 0;">
+                <li><strong>Explicit swaps:</strong> Multiple swap commands in sequence</li>
+                <li><strong>Partials:</strong> <code>&lt;hx-partial&gt;</code> elements for automatic distribution</li>
+            </ul>
+        </div>
+
+        <div>
+            <span class="tag">multi-target</span>
+            <span class="tag">hx-partial</span>
+            <span class="tag htmx">htmx-like</span>
+            <span class="tag">OOB updates</span>
+        </div>
+
+        <!-- Demo 1: Explicit Multi-Swap -->
+        <div class="demo">
+            <h2>Demo 1: Explicit Multi-Swap</h2>
+            <p>Multiple swap commands update different parts of the page:</p>
+
+            <button
+                _="on click
+                   set timestamp to new Date().toLocaleTimeString()
+                   set random to Math.floor(Math.random() * 1000)
+
+                   set mainHtml to '<div class=card><h3>Main Content Updated</h3><p>Time: ' + timestamp + '</p></div>'
+                   swap innerHTML of #main-content with mainHtml
+
+                   set sidebarHtml to '<div class=card><h3>Sidebar Updated</h3><p>Random: ' + random + '</p></div>'
+                   swap innerHTML of #sidebar-content with sidebarHtml
+
+                   set statsHtml to '<div class=card><h3>Stats</h3><div class=stat-value>' + random + '</div></div>'
+                   swap innerHTML of #stats-content with statsHtml
+
+                   set notifHtml to '<div class=card><h3>New Notification</h3><p>Updated at ' + timestamp + '</p></div>'
+                   swap innerHTML of #notifications-content with notifHtml"
+            >
+                Update All Panels
+            </button>
+
+            <div class="dashboard">
+                <div class="panel">
+                    <h4>📄 Main Content</h4>
+                    <div id="main-content">
+                        <div class="card">
+                            <h3>Welcome</h3>
+                            <p>Click the button to update all panels</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h4>📊 Statistics</h4>
+                    <div id="stats-content">
+                        <div class="card stats">
+                            <h3>Stats</h3>
+                            <div class="stat-value">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h4>📁 Sidebar</h4>
+                    <div id="sidebar-content">
+                        <div class="card sidebar">
+                            <h3>Sidebar</h3>
+                            <p>Additional info here</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h4>🔔 Notifications</h4>
+                    <div id="notifications-content">
+                        <div class="card notification">
+                            <h3>No new notifications</h3>
+                            <p>Waiting...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo 2: Process Partials -->
+        <div class="demo">
+            <h2>Demo 2: Process Partials</h2>
+            <p>Use <code>&lt;hx-partial&gt;</code> elements to specify targets:</p>
+
+            <div class="note">
+                <strong>How it works:</strong> The server returns HTML with <code>&lt;hx-partial target="#id"&gt;</code>
+                elements. HyperFixi extracts each partial and swaps it into the specified target.
+            </div>
+
+            <button
+                _="on click
+                   set timestamp to new Date().toLocaleTimeString()
+                   set count to Math.floor(Math.random() * 100)
+
+                   set mainPartialHtml to '<div class=card><h3>Main Area (from partial)</h3><p>Updated: ' + timestamp + '</p></div>'
+                   swap innerHTML of #partial-main with mainPartialHtml
+
+                   set counterPartialHtml to '<div class=card><h3>Counter</h3><div class=stat-value>' + count + '</div></div>'
+                   swap innerHTML of #partial-counter with counterPartialHtml
+
+                   set alertHtml to '<div class=card style=margin-top:10px><p>Alert at ' + timestamp + '</p></div>'
+                   swap beforeEnd of #partial-alert with alertHtml"
+            >
+                Process Partials Response
+            </button>
+
+            <button class="secondary"
+                _="on click put '' into #partial-alert"
+            >
+                Clear Alerts
+            </button>
+
+            <div class="dashboard">
+                <div class="panel">
+                    <h4>📄 Main (partial)</h4>
+                    <div id="partial-main">
+                        <div class="card">
+                            <h3>Waiting for partial...</h3>
+                            <p>Click the button above</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h4>🔢 Counter (partial)</h4>
+                    <div id="partial-counter">
+                        <div class="card stats">
+                            <h3>Counter</h3>
+                            <div class="stat-value">?</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel" style="grid-column: span 2;">
+                    <h4>⚠️ Alerts (beforeEnd strategy)</h4>
+                    <div id="partial-alert">
+                        <p style="color: #666;">Alerts will append here...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo 3: Fetch + Partials Simulation -->
+        <div class="demo">
+            <h2>Demo 3: Dashboard Refresh (Simulated API)</h2>
+            <p>Simulates fetching a dashboard response with multiple components:</p>
+
+            <button
+                _="on click
+                   add .loading to me
+                   wait 500ms
+
+                   set users to Math.floor(Math.random() * 1000) + 100
+                   set revenue to (Math.random() * 10000).toFixed(2)
+                   set orders to Math.floor(Math.random() * 50) + 10
+                   set ts to new Date().toLocaleTimeString()
+
+                   set usersHtml to '<div class=card><h3>Active Users</h3><div class=stat-value>' + users + '</div></div>'
+                   swap innerHTML of #dash-users with usersHtml
+
+                   set revenueHtml to '<div class=card style=background:linear-gradient(135deg,#4caf50,#2e7d32)><h3>Revenue</h3><div class=stat-value>$' + revenue + '</div></div>'
+                   swap innerHTML of #dash-revenue with revenueHtml
+
+                   set ordersHtml to '<div class=card style=background:linear-gradient(135deg,#ff9800,#f57c00)><h3>Orders</h3><div class=stat-value>' + orders + '</div></div>'
+                   swap innerHTML of #dash-orders with ordersHtml
+
+                   set activityHtml to '<div class=card style=margin-top:10px><p>Dashboard refreshed at ' + ts + '</p></div>'
+                   swap beforeEnd of #dash-activity with activityHtml
+
+                   remove .loading from me"
+            >
+                Refresh Dashboard
+            </button>
+
+            <button class="secondary"
+                _="on click put '' into #dash-activity"
+            >
+                Clear Activity
+            </button>
+
+            <div class="dashboard">
+                <div class="panel">
+                    <h4>👥 Users</h4>
+                    <div id="dash-users">
+                        <div class="card stats">
+                            <h3>👥 Active Users</h3>
+                            <div class="stat-value">---</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h4>💰 Revenue</h4>
+                    <div id="dash-revenue">
+                        <div class="card" style="background: linear-gradient(135deg, #4caf50, #2e7d32)">
+                            <h3>💰 Revenue</h3>
+                            <div class="stat-value">$---</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h4>📦 Orders</h4>
+                    <div id="dash-orders">
+                        <div class="card" style="background: linear-gradient(135deg, #ff9800, #f57c00)">
+                            <h3>📦 Orders</h3>
+                            <div class="stat-value">---</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h4>📋 Activity Log</h4>
+                    <div id="dash-activity" style="max-height: 150px; overflow-y: auto;">
+                        <p style="color: #666;">Activity will appear here...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Explanation -->
+        <h2>The Code</h2>
+
+        <h3>Explicit Multi-Swap:</h3>
+        <div class="code">
+<span class="keyword">on</span> click
+  <span class="keyword">fetch</span> <span class="string">"/api/dashboard"</span> <span class="keyword">as</span> json
+  <span class="keyword">put</span> it.data <span class="keyword">into</span> data
+
+  <span class="comment">-- Update multiple targets</span>
+  <span class="keyword">swap</span> #main <span class="keyword">with</span> data.main
+  <span class="keyword">swap</span> #sidebar <span class="keyword">with</span> data.sidebar
+  <span class="keyword">swap</span> #notifications <span class="keyword">with</span> data.notifications
+        </div>
+
+        <h3>hx-partial Response Format:</h3>
+        <div class="code">
+<span class="tag-name">&lt;hx-partial</span> <span class="attr-name">target</span>=<span class="string">"#main"</span><span class="tag-name">&gt;</span>
+  <span class="comment">&lt;!-- Content for #main --&gt;</span>
+  &lt;div&gt;Main content here&lt;/div&gt;
+<span class="tag-name">&lt;/hx-partial&gt;</span>
+
+<span class="tag-name">&lt;hx-partial</span> <span class="attr-name">target</span>=<span class="string">"#sidebar"</span> <span class="attr-name">strategy</span>=<span class="string">"innerHTML"</span><span class="tag-name">&gt;</span>
+  <span class="comment">&lt;!-- Content for #sidebar with explicit strategy --&gt;</span>
+  &lt;nav&gt;Sidebar content&lt;/nav&gt;
+<span class="tag-name">&lt;/hx-partial&gt;</span>
+
+<span class="tag-name">&lt;hx-partial</span> <span class="attr-name">target</span>=<span class="string">"#notifications"</span> <span class="attr-name">strategy</span>=<span class="string">"beforeEnd"</span><span class="tag-name">&gt;</span>
+  <span class="comment">&lt;!-- Append to notifications --&gt;</span>
+  &lt;div class="toast"&gt;New message!&lt;/div&gt;
+<span class="tag-name">&lt;/hx-partial&gt;</span>
+        </div>
+
+        <h3>Process Partials Command:</h3>
+        <div class="code">
+<span class="keyword">on</span> click
+  <span class="keyword">fetch</span> <span class="string">"/api/dashboard"</span> <span class="keyword">as</span> html
+  <span class="keyword">process partials in</span> it  <span class="comment">-- Finds and swaps all hx-partial elements</span>
+        </div>
+
+        <h3>With View Transitions:</h3>
+        <div class="code">
+<span class="keyword">on</span> click
+  <span class="keyword">fetch</span> <span class="string">"/api/dashboard"</span> <span class="keyword">as</span> html
+  <span class="keyword">process partials in</span> it <span class="keyword">using view transition</span>
+        </div>
+
+        <div class="explanation">
+            <h3>How it works:</h3>
+            <ul>
+                <li><strong>Explicit swaps:</strong> Just chain multiple swap commands</li>
+                <li><strong>hx-partial:</strong> Server returns structured response with targets</li>
+                <li><code>process partials</code> extracts and distributes content automatically</li>
+                <li>Each partial can have its own swap strategy</li>
+            </ul>
+
+            <h3>hx-partial Attributes:</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                <tr style="background: #e8eaf6;">
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Attribute</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">Description</th>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;"><code>target</code></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">CSS selector for target element (required)</td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;"><code>strategy</code></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;">Swap strategy (morph, innerHTML, beforeEnd, etc.)</td>
+                </tr>
+            </table>
+
+            <h3>htmx Comparison:</h3>
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                <tr style="background: #e8f5e9;">
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">htmx</th>
+                    <th style="padding: 10px; text-align: left; border-bottom: 2px solid #ddd;">HyperFixi</th>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;"><code>hx-swap-oob="true"</code></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;"><code>&lt;hx-partial target="#id"&gt;</code></td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;"><code>&lt;div id="x" hx-swap-oob="true"&gt;</code></td>
+                    <td style="padding: 10px; border-bottom: 1px solid #eee;"><code>&lt;hx-partial target="#x"&gt;</code></td>
+                </tr>
+            </table>
+
+            <h3>Use Cases:</h3>
+            <ul>
+                <li>Dashboard updates (stats, charts, notifications)</li>
+                <li>Shopping cart + inventory updates</li>
+                <li>Notification badges + content</li>
+                <li>Form submission with multiple result areas</li>
+            </ul>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <a href="03-history-navigation.html">← Previous: History Navigation</a>
+            <a href="05-boosted-links.html">Next: Boosted Links →</a>
+        </div>
+    </div>
+
+    <!-- Load HyperFixi -->
+    <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+</body>
+</html>

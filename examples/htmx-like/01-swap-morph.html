@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>htmx-like: Swap & Morph Example</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .demo-box { border: 1px solid #ccc; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .demo-box h3 { margin-top: 0; }
+    button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    #compare-morph, #compare-innerhtml { margin-top: 20px; }
+    .info { background: #f0f9ff; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    #log { background: #f5f5f5; padding: 10px; font-family: monospace; max-height: 200px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h1>Swap & Morph Example</h1>
+
+  <div class="info">
+    <strong>Purpose:</strong> Demonstrates the swap and morph commands for updating DOM content.
+  </div>
+
+  <div class="demo-box" id="morph-target">
+    <h3>Original Content</h3>
+    <p>This content will be swapped/morphed.</p>
+    <input type="text" placeholder="Type here to test state preservation">
+  </div>
+
+  <div>
+    <button _="on click
+      set newContent to '<h3>Updated at ' + (new Date()).toLocaleTimeString() + '</h3><p>Content was swapped!</p><input type=text placeholder=Type here>'
+      swap innerHTML of #morph-target with newContent
+    ">Swap Content (Morph)</button>
+
+    <button _="on click
+      set html to '<h3>Put update at ' + (new Date()).toLocaleTimeString() + '</h3>'
+      put html into #morph-target
+    ">Put Content (for comparison)</button>
+  </div>
+
+  <h2>Morph vs innerHTML Comparison</h2>
+
+  <div class="demo-box" id="compare-morph">
+    <h4>Morph (preserves state)</h4>
+    <input type="text" placeholder="Type here, morph will preserve this">
+    <button _="on click
+      set html to '<h4>Morph (preserves state)</h4><input type=text placeholder=morphed><button _>Morph Content</button>'
+      morph #compare-morph with html
+    ">Morph Content</button>
+  </div>
+
+  <div class="demo-box" id="compare-innerhtml">
+    <h4>innerHTML (destroys state)</h4>
+    <input type="text" placeholder="Type here, innerHTML will lose this">
+    <button _="on click
+      set html to '<h4>innerHTML (destroys state)</h4><input type=text placeholder=replaced><button _>Swap innerHTML</button>'
+      swap innerHTML of #compare-innerhtml with html
+    ">Swap innerHTML</button>
+  </div>
+
+  <h2>Position Swaps (Strategies List)</h2>
+
+  <div class="demo-box">
+    <p>Click buttons to add cards to the strategies list:</p>
+    <div id="strategies-list">
+      <!-- Cards will be added here -->
+    </div>
+    <div style="margin-top: 15px;">
+      <button _="on click
+        set newCard to '<div class=card>Card added at start</div>'
+        swap afterBegin of #strategies-list with newCard
+      ">afterBegin (prepend)</button>
+
+      <button _="on click
+        set newCard to '<div class=card>Card added at end</div>'
+        swap beforeEnd of #strategies-list with newCard
+      ">beforeEnd (append)</button>
+    </div>
+  </div>
+
+  <h2>Delete Elements</h2>
+
+  <div class="demo-box" id="delete-container">
+    <div id="delete-1" class="card" style="padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+      <span>Card 1</span>
+      <button _="on click swap delete #delete-1">Delete</button>
+    </div>
+    <div id="delete-2" class="card" style="padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+      <span>Card 2</span>
+      <button _="on click swap delete #delete-2">Delete</button>
+    </div>
+    <div id="delete-3" class="card" style="padding: 10px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+      <span>Card 3</span>
+      <button _="on click swap delete #delete-3">Delete</button>
+    </div>
+  </div>
+
+  <h2>Legacy Position Swaps</h2>
+
+  <div class="demo-box" id="list-container">
+    <div id="item-list">
+      <div class="item">Item 1</div>
+      <div class="item">Item 2</div>
+      <div class="item">Item 3</div>
+    </div>
+    <div>
+      <button _="on click
+        set newItem to '<div class=item>New Item (afterBegin)</div>'
+        swap afterBegin of #item-list with newItem
+      ">Prepend (afterBegin)</button>
+
+      <button _="on click
+        set newItem to '<div class=item>New Item (beforeEnd)</div>'
+        swap beforeEnd of #item-list with newItem
+      ">Append (beforeEnd)</button>
+
+      <button _="on click
+        swap delete .item:last-child
+      ">Delete Last Item</button>
+    </div>
+  </div>
+
+  <h2>Debug Log</h2>
+  <div id="log">Waiting for actions...</div>
+
+  <script src="/packages/core/dist/hyperfixi-browser.js"></script>
+  <script>
+    // Debug logging - capture ALL console output
+    const log = document.getElementById('log');
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+
+    function addToLog(type, args) {
+      const text = args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : a).join(' ');
+      log.innerHTML += '\n[' + type + '] ' + text;
+      log.scrollTop = log.scrollHeight;
+    }
+
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      addToLog('LOG', args);
+    };
+    console.warn = function(...args) {
+      originalWarn.apply(console, args);
+      addToLog('WARN', args);
+    };
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      addToLog('ERROR', args);
+    };
+
+    console.log('HyperFixi loaded:', typeof window.hyperfixi);
+    console.log('Registry commands:', window.hyperfixi?.Runtime ? 'Runtime available' : 'No Runtime');
+
+    // Test compilation
+    try {
+      const result = window.hyperfixi.compile('swap innerHTML of #test with "hello"');
+      console.log('Swap compile result:', result);
+    } catch (e) {
+      console.error('Swap compile error:', e.message);
+    }
+
+    console.log('Page ready');
+  </script>
+</body>
+</html>

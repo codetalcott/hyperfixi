@@ -109,7 +109,7 @@ export function parseTriggerCommand(
     const targetArgs = allArgs.slice(operationIndex + 1);
 
     finalArgs.push(...eventArgs);
-    finalArgs.push(ctx.createIdentifier('on', ctx.getPosition()));
+    finalArgs.push(ctx.createIdentifier('on'));
     finalArgs.push(...targetArgs);
   }
 

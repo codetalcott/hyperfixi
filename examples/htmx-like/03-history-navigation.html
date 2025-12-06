@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>htmx-like: History Navigation Example</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .demo-box { border: 1px solid #ccc; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    button { padding: 8px 16px; margin: 5px; cursor: pointer; }
+    .info { background: #f0f9ff; padding: 10px; border-radius: 4px; margin: 10px 0; }
+    .page-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+    .page-nav button { background: #f0f0f0; border: 1px solid #ccc; }
+    .page-nav button.active { background: #007bff; color: white; border-color: #007bff; }
+    #history-content { min-height: 150px; padding: 20px; background: #fafafa; border-radius: 8px; }
+    .url-display { font-family: monospace; background: #e0e0e0; padding: 5px 10px; border-radius: 4px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>History Navigation Example</h1>
+
+  <div class="info">
+    <strong>Purpose:</strong> Demonstrates push url and replace url commands for SPA-like navigation.
+    <div class="url-display">Current URL: <span id="current-url"></span></div>
+  </div>
+
+  <h2>Navigation with Push URL</h2>
+
+  <div class="page-nav">
+    <button id="nav-home" class="active" _="on click
+      remove .active from <button/> in closest .page-nav
+      add .active to me
+      set content to '<h3>Home</h3><p>Welcome to the home page!</p>'
+      swap innerHTML of #history-content with content
+      push url '#/home'
+    ">Home</button>
+
+    <button id="nav-products" _="on click
+      remove .active from <button/> in closest .page-nav
+      add .active to me
+      set content to '<h3>Products</h3><p>Browse our products here.</p><ul><li>Product A</li><li>Product B</li><li>Product C</li></ul>'
+      swap innerHTML of #history-content with content
+      push url '#/products'
+    ">Products</button>
+
+    <button id="nav-about" _="on click
+      remove .active from <button/> in closest .page-nav
+      add .active to me
+      set content to '<h3>About</h3><p>Learn more about us.</p>'
+      swap innerHTML of #history-content with content
+      push url '#/about'
+    ">About</button>
+
+    <button id="nav-contact" _="on click
+      remove .active from <button/> in closest .page-nav
+      add .active to me
+      set content to '<h3>Contact</h3><p>Get in touch!</p><p>Email: hello@example.com</p>'
+      swap innerHTML of #history-content with content
+      push url '#/contact'
+    ">Contact</button>
+  </div>
+
+  <div id="history-content">
+    <h3>Home</h3>
+    <p>Welcome to the home page!</p>
+  </div>
+
+  <h2>Replace URL (No History Entry)</h2>
+
+  <div class="demo-box">
+    <p>Replace URL updates the URL without creating a history entry (can't go back):</p>
+    <button _="on click
+      set content to '<h3>Filtered Results</h3><p>Showing filtered content...</p>'
+      swap innerHTML of #history-content with content
+      replace url '#/filter'
+    ">Apply Filter (replace)</button>
+
+    <button _="on click
+      set content to '<h3>Sorted Results</h3><p>Content sorted by date.</p>'
+      swap innerHTML of #history-content with content
+      replace url '#/sort=date'
+    ">Sort by Date (replace)</button>
+  </div>
+
+  <script src="/packages/core/dist/hyperfixi-browser.js"></script>
+  <script>
+    // Update URL display
+    function updateUrlDisplay() {
+      document.getElementById('current-url').textContent = window.location.hash || '#/home';
+    }
+    updateUrlDisplay();
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', updateUrlDisplay);
+    window.addEventListener('popstate', updateUrlDisplay);
+  </script>
+</body>
+</html>

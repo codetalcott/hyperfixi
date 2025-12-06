@@ -50,7 +50,7 @@ export function parseRemoveCommand(
   // Expect 'from' keyword
   if (ctx.check(KEYWORDS.FROM)) {
     ctx.advance(); // consume 'from'
-    args.push(ctx.createIdentifier(KEYWORDS.FROM, ctx.getPosition())); // Add 'from' as an argument
+    args.push(ctx.createIdentifier(KEYWORDS.FROM)); // Add 'from' as an argument
   }
 
   // Third argument: target
@@ -108,7 +108,7 @@ export function parseToggleCommand(
   if (ctx.check(KEYWORDS.FROM) || ctx.check(KEYWORDS.ON)) {
     const preposition = ctx.peek().value; // 'from' or 'on'
     ctx.advance(); // consume the preposition
-    args.push(ctx.createIdentifier(preposition, ctx.getPosition())); // Add preposition as an argument
+    args.push(ctx.createIdentifier(preposition)); // Add preposition as an argument
 
     // Parse target
     if (
@@ -269,9 +269,92 @@ export function parsePutCommand(
   }
 
   // Create command node using builder pattern
-  const pos = ctx.getPosition();
   return CommandNodeBuilder.fromIdentifier(identifierNode)
-    .withArgs(contentExpr, ctx.createIdentifier(operation, pos), targetExpr)
-    .endingAt(pos)
+    .withArgs(contentExpr, ctx.createIdentifier(operation), targetExpr)
+    .endingAt(ctx.getPosition())
+    .build();
+}
+
+/**
+ * Swap strategy keywords that indicate a specific swap strategy
+ */
+const SWAP_STRATEGY_KEYWORDS = ['innerhtml', 'outerhtml', 'into', 'over', 'delete', 'morph', 'morphouter'];
+
+/**
+ * Parse swap command
+ *
+ * Syntax patterns:
+ *   - swap #target with <content>                → strategy=morph (default)
+ *   - swap innerHTML of #target with <content>  → strategy=innerHTML
+ *   - swap into #target with <content>          → strategy=innerHTML
+ *   - swap over #target with <content>          → strategy=outerHTML
+ *   - swap delete #target                       → strategy=delete
+ *
+ * @param ctx - Parser context providing access to parser state and methods
+ * @param identifierNode - The 'swap' identifier node
+ * @returns CommandNode representing the swap command
+ */
+export function parseSwapCommand(
+  ctx: ParserContext,
+  identifierNode: IdentifierNode
+) {
+  console.log('[PARSER DEBUG] parseSwapCommand called');
+  const args: ASTNode[] = [];
+
+  // Check for strategy keyword first (innerHTML, outerHTML, into, over, delete)
+  let strategyKeyword: string | null = null;
+
+  if (!ctx.isAtEnd()) {
+    const current = ctx.peek();
+    if (current && current.value) {
+      const lowerValue = current.value.toLowerCase();
+      if (SWAP_STRATEGY_KEYWORDS.includes(lowerValue)) {
+        strategyKeyword = lowerValue;
+        ctx.advance(); // consume the strategy keyword
+        args.push(ctx.createIdentifier(strategyKeyword));
+      }
+    }
+  }
+
+  // Handle 'delete' strategy (no content needed)
+  if (strategyKeyword === 'delete') {
+    // Parse target: swap delete #target
+    const targetExpr = ctx.parseExpression();
+    if (targetExpr) {
+      args.push(targetExpr);
+    }
+    return CommandNodeBuilder.fromIdentifier(identifierNode)
+      .withArgs(...args)
+      .endingAt(ctx.getPosition())
+      .build();
+  }
+
+  // Check for 'of' keyword after strategy (e.g., "innerHTML of #target")
+  if (!ctx.isAtEnd() && ctx.check(KEYWORDS.OF)) {
+    ctx.advance(); // consume 'of'
+    args.push(ctx.createIdentifier('of'));
+  }
+
+  // Parse target expression
+  const targetExpr = ctx.parseExpression();
+  if (targetExpr) {
+    args.push(targetExpr);
+  }
+
+  // Check for 'with' keyword - use KEYWORDS.WITH constant
+  if (!ctx.isAtEnd() && ctx.check(KEYWORDS.WITH)) {
+    ctx.advance(); // consume 'with'
+    args.push(ctx.createIdentifier('with'));
+
+    // Parse content expression
+    const contentExpr = ctx.parseExpression();
+    if (contentExpr) {
+      args.push(contentExpr);
+    }
+  }
+
+  return CommandNodeBuilder.fromIdentifier(identifierNode)
+    .withArgs(...args)
+    .endingAt(ctx.getPosition())
     .build();
 }

@@ -115,7 +115,7 @@ export function parseMeasureCommand(
           end: variableName.end,
           line: variableName.line,
           column: variableName.column,
-        } as IdentifierNode;
+        } as ExpressionNode;
       }
     }
   }
@@ -217,20 +217,20 @@ export function parseTransitionCommand(
 
   // Parse target value (can be template string, number, color, etc.)
   const value = ctx.parsePrimary();
-  modifiers['to'] = value;
+  modifiers['to'] = value as ExpressionNode;
 
   // Parse optional 'over <duration>' - store in modifiers
   if (ctx.check('over')) {
     ctx.advance(); // consume 'over'
     const duration = ctx.parsePrimary();
-    modifiers['over'] = duration;
+    modifiers['over'] = duration as ExpressionNode;
   }
 
   // Parse optional 'with <timing-function>' - store in modifiers
   if (ctx.check(KEYWORDS.WITH)) {
     ctx.advance(); // consume 'with'
     const timingFunction = ctx.parsePrimary();
-    modifiers['with'] = timingFunction;
+    modifiers['with'] = timingFunction as ExpressionNode;
   }
 
   // Phase 2 Refactoring: Use CommandNodeBuilder for consistent node construction

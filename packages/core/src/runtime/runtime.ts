@@ -1,13 +1,13 @@
 /**
  * Runtime - Clean V2 Implementation
  *
- * This runtime extends RuntimeBase and registers all 43 V2 commands from commands/.
+ * This runtime extends RuntimeBase and registers all 48 V2 commands from commands/.
  *
  * Key improvements over V1:
  * - Extends RuntimeBase (generic AST traversal)
  * - Uses CommandRegistryV2 (70% simpler adapter)
  * - Uses standalone commands (zero V1 dependencies)
- * - Registers 43 V2 commands by default
+ * - Registers 48 V2 commands by default
  * - Much smaller bundle size (~224 KB vs 366 KB V1 baseline, 39% reduction)
  * - 100% tree-shakeable architecture
  *
@@ -28,8 +28,8 @@ import { ExpressionEvaluator } from '../core/expression-evaluator';
 // LazyExpressionEvaluator is dynamically imported only when lazyLoad=true
 // This allows tree-shaking to eliminate it in browser builds where lazyLoad=false
 
-// Import all 43 V2 commands
-// DOM Commands (7)
+// Import all 48 V2 commands
+// DOM Commands (10) - includes htmx-like swap/morph/process-partials
 import { createHideCommand } from '../commands/dom/hide';
 import { createShowCommand } from '../commands/dom/show';
 import { createAddCommand } from '../commands/dom/add';
@@ -37,6 +37,8 @@ import { createRemoveCommand } from '../commands/dom/remove';
 import { createToggleCommand } from '../commands/dom/toggle';
 import { createPutCommand } from '../commands/dom/put';
 import { createMakeCommand } from '../commands/dom/make';
+import { createSwapCommand, createMorphCommand } from '../commands/dom/swap';
+import { createProcessPartialsCommand } from '../commands/dom/process-partials';
 
 // Async Commands (2)
 import { createWaitCommand } from '../commands/async/wait';
@@ -55,8 +57,10 @@ import { createLogCommand } from '../commands/utility/log';
 import { createTriggerCommand } from '../commands/events/trigger';
 import { createSendCommand } from '../commands/events/send';
 
-// Navigation Commands (1)
+// Navigation Commands (3) - includes htmx-like push/replace url
 import { createGoCommand } from '../commands/navigation/go';
+import { createPushUrlCommand } from '../commands/navigation/push-url';
+import { createReplaceUrlCommand } from '../commands/navigation/replace-url';
 
 // Control Flow Commands (7)
 import { createIfCommand } from '../commands/control-flow/if';
@@ -143,7 +147,7 @@ export interface RuntimeOptions {
   expressionPreload?: 'core' | 'common' | 'all' | 'none';
 
   /**
-   * Custom registry (optional - if not provided, creates default with 43 V2 commands)
+   * Custom registry (optional - if not provided, creates default with 48 V2 commands)
    */
   registry?: CommandRegistryV2;
 
@@ -163,11 +167,11 @@ export interface RuntimeOptions {
 /**
  * Runtime - Clean V2 Implementation
  *
- * Production-ready runtime that extends RuntimeBase and registers all 43 V2 commands.
+ * Production-ready runtime that extends RuntimeBase and registers all 48 V2 commands.
  *
  * Key features:
  * - 100% V2 architecture (zero V1 dependencies)
- * - All 43 user-facing commands registered
+ * - All 48 user-facing commands registered
  * - Tree-shakeable design (224 KB bundle)
  * - Lazy expression loading support
  * - Backward compatible with V1 RuntimeOptions
@@ -177,9 +181,9 @@ export class Runtime extends RuntimeBase {
     // Create or use provided registry
     const registry = options.registry || new CommandRegistryV2();
 
-    // If no custom registry provided, register all 43 V2 commands
+    // If no custom registry provided, register all 48 V2 commands
     if (!options.registry) {
-      // DOM Commands (7)
+      // DOM Commands (10) - includes htmx-like swap/morph/process-partials
       registry.register(createHideCommand());
       registry.register(createShowCommand());
       registry.register(createAddCommand());
@@ -187,6 +191,9 @@ export class Runtime extends RuntimeBase {
       registry.register(createToggleCommand());
       registry.register(createPutCommand());
       registry.register(createMakeCommand());
+      registry.register(createSwapCommand());
+      registry.register(createMorphCommand());
+      registry.register(createProcessPartialsCommand());
 
       // Async Commands (2)
       registry.register(createWaitCommand());
@@ -205,8 +212,10 @@ export class Runtime extends RuntimeBase {
       registry.register(createTriggerCommand());
       registry.register(createSendCommand());
 
-      // Navigation Commands (1)
+      // Navigation Commands (3) - includes htmx-like push/replace url
       registry.register(createGoCommand());
+      registry.register(createPushUrlCommand());
+      registry.register(createReplaceUrlCommand());
 
       // Control Flow Commands (7)
       registry.register(createIfCommand());

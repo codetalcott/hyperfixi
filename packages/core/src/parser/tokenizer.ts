@@ -135,16 +135,21 @@ const COMMANDS = new Set([
   'log',
   'make',
   'measure',
+  'morph',      // htmx-like: DOM morphing with state preservation
   'pick',
+  'process',    // htmx-like: process partials
+  'push',       // htmx-like: push url to history
   'put',
   'remove',
   'render',
   'repeat',
+  'replace',    // htmx-like: replace url in history
   'return',
   'send',
   'set',
   'settle',
   'show',
+  'swap',       // htmx-like: DOM swapping with multiple strategies
   'take',
   'tell',
   'throw',

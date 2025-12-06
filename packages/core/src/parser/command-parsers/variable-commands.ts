@@ -221,8 +221,7 @@ export function parseSetCommand(
     finalArgs.push(...targetTokens);
   }
 
-  const pos = ctx.getPosition();
-  finalArgs.push(ctx.createIdentifier(KEYWORDS.TO, pos));
+  finalArgs.push(ctx.createIdentifier(KEYWORDS.TO));
 
   if (valueTokens.length > 0) {
     finalArgs.push(...valueTokens);

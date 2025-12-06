@@ -58,6 +58,7 @@ export function parseCompoundCommand(
   identifierNode: IdentifierNode
 ): CommandNode | null {
   const commandName = identifierNode.name.toLowerCase();
+  console.log('[PARSER DEBUG] parseCompoundCommand called with:', commandName);
 
   switch (commandName) {
     case 'put':
@@ -76,6 +77,9 @@ export function parseCompoundCommand(
       return animationCommands.parseMeasureCommand(ctx, identifierNode);
     case 'js':
       return parseJsCommand(ctx, identifierNode);
+    case 'swap':
+    case 'morph':
+      return domCommands.parseSwapCommand(ctx, identifierNode);
     default:
       // Fallback to regular parsing
       return parseRegularCommand(ctx, identifierNode);

@@ -112,16 +112,21 @@ export const COMMANDS = new Set([
   'log',
   'make',
   'measure',
+  'morph',      // htmx-like: DOM morphing with state preservation
   'pick',
+  'process',    // htmx-like: process partials
+  'push',       // htmx-like: push url to history
   'put',
   'remove',
   'render',
   'repeat',
+  'replace',    // htmx-like: replace url in history
   'return',
   'send',
   'set',
   'settle',
   'show',
+  'swap',       // htmx-like: DOM swapping with multiple strategies
   'take',
   'tell',
   'throw',
@@ -149,6 +154,12 @@ export const COMPOUND_COMMANDS = new Set([
   'halt',
   'measure',
   'js',
+  // htmx-like commands with complex argument patterns
+  'swap',       // swap [strategy] of <target> with <content> [using view transition]
+  'morph',      // morph [over] <target> with <content>
+  'push',       // push url <url> [with title <title>]
+  'replace',    // replace url <url> [with title <title>]
+  'process',    // process partials in <content> [using view transition]
 ]);
 
 /**
