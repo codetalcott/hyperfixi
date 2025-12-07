@@ -22,8 +22,8 @@ import {
   isOk,
 } from '../types/result';
 
+import { BaseExpressionEvaluator } from '../core/base-expression-evaluator';
 import { ExpressionEvaluator } from '../core/expression-evaluator';
-import type { LazyExpressionEvaluator } from '../core/lazy-expression-evaluator';
 import { CommandRegistryV2 as CommandRegistry } from './command-adapter';
 import { getSharedGlobals } from '../core/context';
 import { debug } from '../utils/debug';
@@ -48,15 +48,17 @@ export interface RuntimeBaseOptions {
   enableResultPattern?: boolean;
 
   /**
-   * Optional custom evaluator. If not provided, defaults to standard/lazy based on preload config.
+   * Optional custom evaluator. If not provided, defaults to standard ExpressionEvaluator.
+   * Accepts any class extending BaseExpressionEvaluator (ExpressionEvaluator, LazyExpressionEvaluator,
+   * ConfigurableExpressionEvaluator, or custom implementations).
    */
-  expressionEvaluator?: ExpressionEvaluator | LazyExpressionEvaluator;
+  expressionEvaluator?: BaseExpressionEvaluator;
 }
 
 export class RuntimeBase {
   protected options: RuntimeBaseOptions;
   protected registry: CommandRegistry;
-  protected expressionEvaluator: ExpressionEvaluator | LazyExpressionEvaluator;
+  protected expressionEvaluator: BaseExpressionEvaluator;
   protected behaviorRegistry: Map<string, any>;
   public behaviorAPI: any;
   protected globalVariables: Map<string, any>;

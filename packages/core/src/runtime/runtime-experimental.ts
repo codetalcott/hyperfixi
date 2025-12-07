@@ -13,6 +13,7 @@
 
 import { RuntimeBase } from './runtime-base';
 import { CommandRegistryV2 } from './command-adapter';
+import { BaseExpressionEvaluator } from '../core/base-expression-evaluator';
 import { ExpressionEvaluator } from '../core/expression-evaluator';
 import { LazyExpressionEvaluator } from '../core/lazy-expression-evaluator';
 
@@ -99,13 +100,22 @@ import { createRenderCommand } from '../commands/templates/render';
 export interface RuntimeExperimentalOptions {
   /**
    * Enable lazy loading of expressions
+   * Ignored if expressionEvaluator is provided.
    */
   lazyLoad?: boolean;
 
   /**
    * Preload level for expressions (if lazy loading enabled)
+   * Ignored if expressionEvaluator is provided.
    */
   expressionPreload?: 'core' | 'all' | 'common' | 'none';
+
+  /**
+   * Custom expression evaluator (optional).
+   * If provided, lazyLoad and expressionPreload options are ignored.
+   * Use ConfigurableExpressionEvaluator for custom bundles with specific categories.
+   */
+  expressionEvaluator?: BaseExpressionEvaluator;
 
   /**
    * Custom registry (optional - if not provided, creates default with 5 core commands)
@@ -218,10 +228,15 @@ export class RuntimeExperimental extends RuntimeBase {
       console.log('RuntimeExperimental: Registered 43 V2 commands (Phase 6 COMPLETE - All commands migrated)');
     }
 
-    // Create expression evaluator (lazy or standard)
-    const expressionEvaluator = options.lazyLoad
-      ? new LazyExpressionEvaluator({ preload: options.expressionPreload || 'core' })
-      : new ExpressionEvaluator();
+    // Create expression evaluator (custom, lazy, or standard)
+    let expressionEvaluator: BaseExpressionEvaluator;
+    if (options.expressionEvaluator) {
+      expressionEvaluator = options.expressionEvaluator;
+    } else if (options.lazyLoad) {
+      expressionEvaluator = new LazyExpressionEvaluator({ preload: options.expressionPreload || 'core' });
+    } else {
+      expressionEvaluator = new ExpressionEvaluator();
+    }
 
     // Initialize RuntimeBase with registry and evaluator
     const baseOptions: any = {

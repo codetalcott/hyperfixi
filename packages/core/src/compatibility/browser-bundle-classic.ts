@@ -35,6 +35,17 @@ import { createMinimalAttributeProcessor } from '../dom/minimal-attribute-proces
 import { createContext } from '../core/context';
 
 // ============================================================================
+// Expression Categories (for ConfigurableExpressionEvaluator)
+// ============================================================================
+import { ConfigurableExpressionEvaluator } from '../core/configurable-expression-evaluator';
+import { referencesExpressions } from '../expressions/references/index';
+import { logicalExpressions } from '../expressions/logical/index';
+import { specialExpressions } from '../expressions/special/index';
+import { propertiesExpressions } from '../expressions/properties/index';
+import { conversionExpressions } from '../expressions/conversion/index';
+import { positionalExpressions } from '../expressions/positional/index';
+
+// ============================================================================
 // DOM Commands (7)
 // ============================================================================
 import { createAddCommand } from '../commands/dom/add';
@@ -120,7 +131,18 @@ import { createPseudoCommand } from '../commands/execution/pseudo-command';
 // Runtime Setup
 // ============================================================================
 
-// Create runtime instance with classic commands (37 total)
+// Create ConfigurableExpressionEvaluator with all 6 expression categories
+// In the future, this could be reduced to only needed categories for smaller bundles
+const expressionEvaluator = new ConfigurableExpressionEvaluator([
+  referencesExpressions,
+  logicalExpressions,
+  specialExpressions,
+  propertiesExpressions,
+  conversionExpressions,
+  positionalExpressions,
+]);
+
+// Create runtime instance with classic commands (37 total) and custom expression evaluator
 const runtimeExperimental = createMinimalRuntime([
   // DOM (7)
   createAddCommand(),
@@ -183,7 +205,7 @@ const runtimeExperimental = createMinimalRuntime([
   createAppendCommand(),
   createRenderCommand(),
   createPseudoCommand(),
-]);
+], { expressionEvaluator });
 
 // Create adapter for MinimalAttributeProcessor
 const runtimeAdapter = {
