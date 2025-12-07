@@ -9,7 +9,7 @@ An experimental hyperscript engine that provides fast parsing, command execution
 - 🎯 **100% _hyperscript Compatible** - Full compatibility with official _hyperscript library
 - 🚀 **High Performance** - Optimized tokenizer and parser for large expressions
 - 🔧 **TypeScript First** - Complete type safety with comprehensive type definitions
-- 🧪 **Thoroughly Tested** - 1800+ tests with 98.5%+ reliability
+- 🧪 **Thoroughly Tested** - 2800+ tests with 98.5%+ reliability
 - 🌊 **Complete Command System** - All major commands implemented (PUT, SET, ADD, SHOW/HIDE, etc.)
 - ⚡ **HTML Integration** - Automatic `_=""` attribute processing and event binding
 - 🛡️ **Error Recovery** - Graceful handling of syntax errors with helpful guidance

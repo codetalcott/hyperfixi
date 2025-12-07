@@ -33,7 +33,7 @@ transition *background-color to hsl(265 60% 65%)
 Error state restoration mechanism catches and recovers from these errors automatically.
 
 **Permanent Fix:**
-See [PARSING_IMPROVEMENTS.md](./PARSING_IMPROVEMENTS.md) for detailed implementation plan.
+See [PARSING_IMPROVEMENTS.md](./docs/archive/summaries/PARSING_IMPROVEMENTS.md) for detailed implementation plan.
 
 **Priority:** Medium (technical debt, not user-facing)
 
