@@ -25,6 +25,7 @@ export { FetchCommand, createFetchCommand } from './async/fetch';
 
 // Data Commands
 export { SetCommand, createSetCommand } from './data/set';
+export { GetCommand, createGetCommand } from './data/get';
 export { IncrementCommand, createIncrementCommand } from './data/increment';
 export { DecrementCommand, createDecrementCommand } from './data/decrement';
 
@@ -104,6 +105,7 @@ export type { ProcessPartialsCommandInput, ParsedPartial, ProcessPartialsResult 
 export type { WaitCommandInput } from './async/wait';
 export type { FetchCommandInput } from './async/fetch';
 export type { SetCommandInput } from './data/set';
+export type { GetCommandInput } from './data/get';
 export type { IncrementCommandInput } from './data/increment';
 export type { DecrementCommandInput } from './data/decrement';
 export type { LogCommandInput } from './utility/log';
