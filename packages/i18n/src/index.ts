@@ -4,6 +4,9 @@ export * from './types';
 export * from './translator';
 export * from './dictionaries';
 
+// Parser integration for multilingual hyperscript
+export * from './parser';
+
 // Re-export key utilities
 export { detectLocale, getBrowserLocales, isRTL } from './utils/locale';
 export { tokenize } from './utils/tokenizer';

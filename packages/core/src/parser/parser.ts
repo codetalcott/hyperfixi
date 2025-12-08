@@ -16,7 +16,7 @@ import type {
   BehaviorNode,
   DefNode,
 } from '../types/core';
-import type { ParseError as LocalParseError } from './types';
+import type { ParseError as LocalParseError, KeywordResolver, ParserOptions } from './types';
 import { debug } from '../utils/debug';
 
 // Phase 1 Refactoring: Import new helper modules
@@ -70,6 +70,7 @@ export class Parser {
   private current: number = 0;
   private error: LocalParseError | undefined;
   private warnings: ParseWarning[] = [];
+  private keywordResolver?: KeywordResolver;
 
   // Postfix unary operators that do NOT take a right operand
   private static readonly POSTFIX_UNARY_OPERATORS = new Set([
@@ -79,8 +80,25 @@ export class Parser {
     'is not empty',
   ]);
 
-  constructor(tokens: Token[]) {
+  constructor(tokens: Token[], options?: ParserOptions) {
     this.tokens = tokens;
+    this.keywordResolver = options?.keywords;
+  }
+
+  /**
+   * Resolve a token value to its canonical English keyword.
+   * If no keyword resolver is set, returns the original value.
+   *
+   * This enables multilingual parsing:
+   * - Spanish 'en' → 'on'
+   * - Spanish 'alternar' → 'toggle'
+   * - Japanese 'クリック' → 'click'
+   */
+  private resolveKeyword(value: string): string {
+    if (!this.keywordResolver) {
+      return value;
+    }
+    return this.keywordResolver.resolve(value) ?? value;
   }
 
   /**
@@ -632,18 +650,27 @@ export class Parser {
   }
 
   private isCommand(name: string): boolean {
+    // If we have a keyword resolver, use it to check if the token is a command
+    if (this.keywordResolver) {
+      return this.keywordResolver.isCommand(name);
+    }
     // Phase 1 Refactoring: Use centralized command list
     return CommandClassification.isCommand(name);
   }
 
   private isKeyword(name: string): boolean {
+    // If we have a keyword resolver, use it to check if the token is a keyword
+    if (this.keywordResolver) {
+      return this.keywordResolver.isKeyword(name);
+    }
     // Phase 1 Refactoring: Use centralized keyword list
     return CommandClassification.isKeyword(name);
   }
 
   private createCommandFromIdentifier(identifierNode: IdentifierNode): CommandNode | null {
     const args: ASTNode[] = [];
-    const commandName = identifierNode.name.toLowerCase();
+    // Resolve to English canonical form for AST normalization
+    const commandName = this.resolveKeyword(identifierNode.name.toLowerCase());
 
     if (this.isCompoundCommand(commandName)) {
       return this.parseCompoundCommand(identifierNode);
@@ -3083,7 +3110,10 @@ export class Parser {
 
   private check(value: string): boolean {
     if (this.isAtEnd()) return false;
-    return this.peek().value === value;
+    const tokenValue = this.peek().value;
+    // Resolve the token value to English before comparing
+    const resolved = this.resolveKeyword(tokenValue);
+    return resolved === value;
   }
 
   private checkTokenType(tokenType: TokenType): boolean {
@@ -3339,11 +3369,12 @@ export class Parser {
       addError: this.addError.bind(this),
       addWarning: this.addWarning.bind(this),
 
-      // Utility Functions (4 methods)
+      // Utility Functions (5 methods)
       isCommand: this.isCommand.bind(this),
       isCompoundCommand: this.isCompoundCommand.bind(this),
       isKeyword: this.isKeyword.bind(this),
       getMultiWordPattern: this.getMultiWordPattern.bind(this),
+      resolveKeyword: this.resolveKeyword.bind(this),
     } as import('./parser-types').ParserContext;
 
     // Add 'current' as getter/setter that syncs with parser's position
@@ -3362,9 +3393,9 @@ export class Parser {
 }
 
 // Main parse function
-export function parse(input: string): ParseResult {
+export function parse(input: string, options?: ParserOptions): ParseResult {
   const tokens = tokenize(input);
-  const parser = new Parser(tokens);
+  const parser = new Parser(tokens, options);
   const result = parser.parse();
   return result;
 }

@@ -182,10 +182,63 @@ export interface ParseError {
   token?: Token;
 }
 
+/**
+ * Minimal interface for keyword resolution.
+ *
+ * This interface allows the parser to accept locale-aware keyword providers
+ * from @hyperfixi/i18n without creating a direct dependency.
+ *
+ * The i18n package's `KeywordProvider` implements this interface.
+ *
+ * @example
+ * ```typescript
+ * import { esKeywords } from '@hyperfixi/i18n/parser/es';
+ * import { parse } from '@hyperfixi/core';
+ *
+ * parse('en clic alternar .active', { keywords: esKeywords });
+ * ```
+ */
+export interface KeywordResolver {
+  /**
+   * Resolve a token to its canonical (English) keyword.
+   * Returns undefined if the token is not a recognized keyword.
+   */
+  resolve(token: string): string | undefined;
+
+  /**
+   * Check if the token is a command in this locale.
+   */
+  isCommand(token: string): boolean;
+
+  /**
+   * Check if the token is a keyword (non-command) in this locale.
+   */
+  isKeyword(token: string): boolean;
+}
+
 export interface ParserOptions {
   includeWhitespace?: boolean;
   includeComments?: boolean;
   strict?: boolean;
+
+  /**
+   * Optional keyword resolver for multilingual parsing.
+   *
+   * When provided, the parser will resolve non-English keywords
+   * to their canonical English equivalents before parsing.
+   *
+   * Use locale packs from @hyperfixi/i18n:
+   * - `esKeywords` for Spanish
+   * - `jaKeywords` for Japanese
+   * - etc.
+   *
+   * @example
+   * ```typescript
+   * import { esKeywords } from '@hyperfixi/i18n/parser/es';
+   * parse('en clic alternar .active', { keywords: esKeywords });
+   * ```
+   */
+  keywords?: KeywordResolver;
 }
 
 // ============================================================================

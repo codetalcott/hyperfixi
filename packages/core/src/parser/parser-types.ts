@@ -328,6 +328,18 @@ export interface ParserContext {
 
   /** Get multi-word pattern for command */
   getMultiWordPattern(commandName: string): MultiWordPattern | null;
+
+  /**
+   * Resolve a keyword to its canonical English form.
+   *
+   * This enables multilingual parsing by resolving locale-specific
+   * keywords to their English equivalents:
+   * - Spanish 'alternar' → 'toggle'
+   * - Japanese '切り替え' → 'toggle'
+   *
+   * If no keyword resolver is configured, returns the original value.
+   */
+  resolveKeyword(value: string): string;
 }
 
 /**

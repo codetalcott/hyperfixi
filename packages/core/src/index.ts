@@ -23,6 +23,7 @@ export type {
 
 // Export utilities for direct usage
 export { parse } from './parser/parser';
+export type { KeywordResolver, ParserOptions } from './parser/types';
 export { Runtime, type RuntimeOptions } from './runtime/runtime';
 export { RuntimeBase, type RuntimeBaseOptions } from './runtime/runtime-base';
 export { createContext, createChildContext } from './core/context';
