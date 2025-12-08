@@ -439,35 +439,39 @@
             </div>
         </div>
 
-        <!-- Grammar Transformation Demo -->
+        <!-- Grammar Transformation Demo - LIVE -->
         <div class="example-card" id="grammar-demo">
-            <h3>🧠 Grammar Transformation (Phase 2)</h3>
+            <h3>🧠 Live Grammar Transformation</h3>
             <p style="color: #666; margin-bottom: 20px;">
                 Beyond word-by-word translation, HyperFixi adapts code to natural grammar patterns.
                 SOV languages (Japanese, Korean) reorder elements; VSO languages (Arabic) place verbs first.
+                <strong>Try it live below!</strong>
             </p>
 
-            <div class="code-comparison" style="grid-template-columns: 1fr;">
-                <div class="code-block">
-                    <div class="code-header">
-                        <span class="flag">🔄</span> Grammar Transformation Examples
-                    </div>
-                    <div class="code-content" style="white-space: pre-wrap;">
-<span style="color: #888;">English (SVO):</span>
-<span class="keyword">on</span> <span class="event">click</span> <span class="command">increment</span> <span class="selector">#count</span>
-
-<span style="color: #888;">Japanese (SOV - patient before verb):</span>
-<span class="selector">#count</span> <span style="color: #ffd700;">を</span> <span class="event">クリック</span> <span style="color: #ffd700;">で</span> <span class="command">増加</span>
-
-<span style="color: #888;">Chinese (Topic-prominent with 当...时 circumfix):</span>
-<span style="color: #ffd700;">当</span> <span class="event">点击</span> <span style="color: #ffd700;">时</span> <span class="command">增加</span> <span class="selector">#count</span>
-
-<span style="color: #888;">Arabic (VSO - verb first, RTL):</span>
-<span class="command">زِد</span> <span class="selector">#count</span> <span style="color: #ffd700;">عند</span> <span class="event">النقر</span></div>
+            <!-- Live Input -->
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; color: #333; font-weight: 600; margin-bottom: 8px;">
+                    Enter English Hyperscript:
+                </label>
+                <input type="text" id="grammar-input"
+                       value="on click increment #count"
+                       style="width: 100%; padding: 12px 15px; border: 2px solid #667eea; border-radius: 8px; font-family: monospace; font-size: 15px;"
+                       placeholder="e.g., on click toggle .active">
+                <div style="margin-top: 8px;">
+                    <button onclick="setGrammarExample('on click increment #count')" style="padding: 6px 12px; margin-right: 5px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 12px;">increment</button>
+                    <button onclick="setGrammarExample('on click toggle .active')" style="padding: 6px 12px; margin-right: 5px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 12px;">toggle</button>
+                    <button onclick="setGrammarExample('put my value into #output')" style="padding: 6px 12px; margin-right: 5px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 12px;">put...into</button>
+                    <button onclick="setGrammarExample('add .highlight to me')" style="padding: 6px 12px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa; cursor: pointer; font-size: 12px;">add...to</button>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 20px;">
+            <!-- Live Transformation Results -->
+            <div id="grammar-results" style="display: grid; gap: 12px;">
+                <!-- Results populated by JavaScript -->
+            </div>
+
+            <!-- Word Order Legend -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-top: 25px;">
                 <div style="background: #f0f7ff; padding: 15px; border-radius: 8px; border-left: 4px solid #667eea;">
                     <strong style="color: #667eea;">SVO (Subject-Verb-Object)</strong>
                     <p style="margin: 5px 0 0; color: #555; font-size: 13px;">English, Chinese, Spanish, Indonesian, Swahili</p>
@@ -490,7 +494,7 @@
         </div>
 
         <div class="info-note">
-            <strong>How it works:</strong> HyperFixi's i18n module translates keywords like <code>on</code>, <code>click</code>, and <code>toggle</code> to their equivalents in your chosen language. The underlying functionality remains the same - only the syntax changes to be more readable in your native tongue.
+            <strong>How it works:</strong> HyperFixi's i18n module goes beyond simple keyword translation. It uses a <em>grammar transformation system</em> that understands semantic roles (action, patient, event, destination) and reorders them according to each language's natural word order. SOV languages like Japanese place the object before the verb (<code>#count を 増加</code>), VSO languages like Arabic place the verb first (<code>زِد #count</code>), and Chinese uses circumfix patterns (<code>当 点击 时</code>). Grammatical markers (particles, prepositions, case suffixes) are inserted appropriately for each language family.
         </div>
     </div>
 
@@ -609,8 +613,131 @@
                 console.warn('HyperFixi i18n bundle not loaded');
             } else {
                 console.log('✓ HyperFixi i18n loaded');
+                console.log('✓ GrammarTransformer available:', !!window.HyperFixiI18n.GrammarTransformer);
+                console.log('✓ Profiles available:', window.HyperFixiI18n.getSupportedLocales?.() || 'N/A');
             }
+
+            // Initialize grammar transformation demo
+            initGrammarDemo();
         });
+
+        // =====================================================
+        // LIVE GRAMMAR TRANSFORMATION DEMO
+        // =====================================================
+
+        // Grammar transformation languages with their word order types
+        const grammarLanguages = [
+            { code: 'en', name: 'English', flag: '🇺🇸', wordOrder: 'SVO', color: '#667eea' },
+            { code: 'ja', name: '日本語', flag: '🇯🇵', wordOrder: 'SOV', color: '#e91e63' },
+            { code: 'ko', name: '한국어', flag: '🇰🇷', wordOrder: 'SOV', color: '#e91e63' },
+            { code: 'zh', name: '中文', flag: '🇨🇳', wordOrder: 'SVO*', color: '#667eea' },
+            { code: 'ar', name: 'العربية', flag: '🇸🇦', wordOrder: 'VSO', color: '#28a745', rtl: true },
+            { code: 'tr', name: 'Türkçe', flag: '🇹🇷', wordOrder: 'SOV', color: '#e91e63' },
+            { code: 'es', name: 'Español', flag: '🇪🇸', wordOrder: 'SVO', color: '#667eea' },
+            { code: 'id', name: 'Indonesian', flag: '🇮🇩', wordOrder: 'SVO', color: '#667eea' },
+            { code: 'qu', name: 'Quechua', flag: '🏔️', wordOrder: 'SOV', color: '#e91e63' },
+            { code: 'sw', name: 'Kiswahili', flag: '🌍', wordOrder: 'SVO', color: '#667eea' },
+        ];
+
+        function initGrammarDemo() {
+            const input = document.getElementById('grammar-input');
+            if (!input) return;
+
+            // Initial transformation
+            updateGrammarTransformations();
+
+            // Update on input change
+            input.addEventListener('input', debounce(updateGrammarTransformations, 150));
+        }
+
+        function setGrammarExample(code) {
+            const input = document.getElementById('grammar-input');
+            if (input) {
+                input.value = code;
+                updateGrammarTransformations();
+            }
+        }
+
+        function updateGrammarTransformations() {
+            const input = document.getElementById('grammar-input');
+            const resultsDiv = document.getElementById('grammar-results');
+            if (!input || !resultsDiv) return;
+
+            const englishCode = input.value.trim();
+            if (!englishCode) {
+                resultsDiv.innerHTML = '<p style="color: #888; text-align: center;">Enter hyperscript code above to see transformations</p>';
+                return;
+            }
+
+            // Check if GrammarTransformer is available
+            const GrammarTransformer = window.HyperFixiI18n?.GrammarTransformer;
+            const translate = window.HyperFixiI18n?.translate;
+
+            if (!GrammarTransformer && !translate) {
+                resultsDiv.innerHTML = '<p style="color: #c00;">Grammar transformation not available. Check console for errors.</p>';
+                return;
+            }
+
+            // Generate transformations for each language
+            let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px;">';
+
+            for (const lang of grammarLanguages) {
+                let transformed = englishCode;
+                let error = null;
+
+                try {
+                    if (lang.code === 'en') {
+                        transformed = englishCode;
+                    } else if (translate) {
+                        // Use the translate function from grammar module
+                        transformed = translate(englishCode, 'en', lang.code);
+                    } else if (GrammarTransformer) {
+                        // Use GrammarTransformer class directly
+                        const transformer = new GrammarTransformer('en', lang.code);
+                        transformed = transformer.transform(englishCode);
+                    }
+                } catch (e) {
+                    error = e.message;
+                    transformed = englishCode;
+                }
+
+                const borderColor = error ? '#ffc107' : lang.color;
+                const rtlStyle = lang.rtl ? 'direction: rtl; text-align: right;' : '';
+
+                html += `
+                    <div style="background: #1e1e1e; border-radius: 8px; overflow: hidden; border-left: 4px solid ${borderColor};">
+                        <div style="background: #2d2d2d; padding: 8px 12px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #aaa;">
+                            <span style="font-size: 18px;">${lang.flag}</span>
+                            <span>${lang.name}</span>
+                            <span style="margin-left: auto; background: ${lang.color}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">${lang.wordOrder}</span>
+                        </div>
+                        <div style="padding: 12px; font-family: Monaco, Menlo, monospace; font-size: 14px; color: #d4d4d4; ${rtlStyle}">
+                            ${escapeHtml(transformed)}
+                        </div>
+                        ${error ? `<div style="padding: 8px 12px; background: #3d3d3d; color: #ffc107; font-size: 12px;">⚠️ ${escapeHtml(error)}</div>` : ''}
+                    </div>
+                `;
+            }
+
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        // Utility: Debounce function
+        function debounce(fn, delay) {
+            let timer;
+            return function(...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+        // Utility: Escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
     </script>
 </body>
 </html>

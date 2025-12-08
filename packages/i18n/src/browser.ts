@@ -57,6 +57,26 @@ export { tr } from './dictionaries/tr';
 
 // Grammar-aware transformation system (Phase 2)
 export {
+  // Types (re-exported for browser usage)
+  type SemanticRole,
+  type WordOrder,
+  type AdpositionType,
+  type MorphologyType,
+  type GrammaticalMarker,
+  type LanguageProfile,
+  type GrammarRule,
+  type PatternMatcher,
+  type PatternTransform,
+  type ParsedStatement,
+  type ParsedElement,
+  // Universal patterns and language family defaults
+  UNIVERSAL_PATTERNS,
+  LANGUAGE_FAMILY_DEFAULTS,
+  // Transformation utilities
+  reorderRoles,
+  insertMarkers,
+  joinTokens,
+  transformStatement,
   // Profiles
   profiles,
   getProfile,

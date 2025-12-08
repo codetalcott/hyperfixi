@@ -1,6 +1,6 @@
 // packages/i18n/src/utils/tokenizer.ts
 
-import { Token, TokenType, Dictionary } from '../types';
+import { Token, TokenType } from '../types';
 import { dictionaries } from '../dictionaries';
 
 export function tokenize(text: string, locale: string): Token[] {

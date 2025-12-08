@@ -271,11 +271,16 @@ export class LocaleFormatter {
   formatList(items: string[], options: { style?: 'long' | 'short' | 'narrow'; type?: 'conjunction' | 'disjunction' | 'unit' } = {}): string {
     if (items.length === 0) return '';
     if (items.length === 1) return items[0];
-    
+
     try {
-      const listFormat = new Intl.ListFormat(this.locale, options);
-      return listFormat.format(items);
-    } catch (error) {
+      // ListFormat may not be available in all environments
+      const ListFormatCtor = (Intl as any).ListFormat;
+      if (ListFormatCtor) {
+        const listFormat = new ListFormatCtor(this.locale, options);
+        return listFormat.format(items);
+      }
+      throw new Error('ListFormat not available');
+    } catch (_error) {
       // Fallback for unsupported locales
       const { type = 'conjunction' } = options;
       const connector = type === 'disjunction' ? 'or' : 'and';

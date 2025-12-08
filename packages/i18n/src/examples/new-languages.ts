@@ -3,7 +3,7 @@
  * Turkish, Indonesian, Quechua, and Swahili
  */
 
-import { HyperScriptTranslator } from '../translator';
+import { HyperscriptTranslator } from '../translator';
 
 /**
  * Turkish examples
@@ -149,31 +149,31 @@ export const swahiliExamples = {
  * Interactive demo function
  */
 export function demonstrateNewLanguages() {
-  const translator = new HyperScriptTranslator();
+  const translator = new HyperscriptTranslator({ locale: 'en' });
   
   console.log('🌍 HyperFixi I18N - New Language Support Demo\n');
   
   // Turkish examples
   console.log('🇹🇷 Turkish (Türkçe):');
-  turkishExamples.basic.translated = translator.translate(turkishExamples.basic.original, 'tr');
+  turkishExamples.basic.translated = translator.translate(turkishExamples.basic.original, { to: 'tr' });
   console.log(`  Original: ${turkishExamples.basic.original}`);
   console.log(`  Turkish:  ${turkishExamples.basic.translated}\n`);
-  
+
   // Indonesian examples
   console.log('🇮🇩 Indonesian (Bahasa Indonesia):');
-  indonesianExamples.basic.translated = translator.translate(indonesianExamples.basic.original, 'id');
+  indonesianExamples.basic.translated = translator.translate(indonesianExamples.basic.original, { to: 'id' });
   console.log(`  Original:   ${indonesianExamples.basic.original}`);
   console.log(`  Indonesian: ${indonesianExamples.basic.translated}\n`);
-  
+
   // Quechua examples
   console.log('🏔️ Quechua (Runasimi):');
-  quechuaExamples.basic.translated = translator.translate(quechuaExamples.basic.original, 'qu');
+  quechuaExamples.basic.translated = translator.translate(quechuaExamples.basic.original, { to: 'qu' });
   console.log(`  Original: ${quechuaExamples.basic.original}`);
   console.log(`  Quechua:  ${quechuaExamples.basic.translated}\n`);
-  
+
   // Swahili examples
   console.log('🌍 Swahili (Kiswahili):');
-  swahiliExamples.basic.translated = translator.translate(swahiliExamples.basic.original, 'sw');
+  swahiliExamples.basic.translated = translator.translate(swahiliExamples.basic.original, { to: 'sw' });
   console.log(`  Original: ${swahiliExamples.basic.original}`);
   console.log(`  Swahili:  ${swahiliExamples.basic.translated}\n`);
   
@@ -283,7 +283,7 @@ export function testNewLanguageSupport() {
   ];
   
   const languages = ['tr', 'id', 'qu', 'sw'];
-  const translator = new HyperScriptTranslator();
+  const translator = new HyperscriptTranslator({ locale: 'en' });
   
   console.log('🧪 Testing new language support...\n');
   
@@ -292,7 +292,7 @@ export function testNewLanguageSupport() {
     
     for (const test of tests) {
       try {
-        const translated = translator.translate(test.original, lang);
+        const translated = translator.translate(test.original, { to: lang });
         console.log(`  ✅ ${test.original} → ${translated}`);
       } catch (error) {
         console.log(`  ❌ ${test.original} → ERROR: ${error}`);

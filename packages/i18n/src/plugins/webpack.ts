@@ -1,8 +1,24 @@
 // packages/i18n/src/plugins/webpack.ts
 
 import { HyperscriptTranslator } from '../translator';
-import { parse } from 'node-html-parser';
-import type { Compiler, WebpackPluginInstance } from 'webpack';
+
+// node-html-parser is an optional dependency
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let parse: any;
+try {
+  parse = require('node-html-parser').parse;
+} catch {
+  parse = null;
+}
+
+// Webpack types - optional peer dependency
+interface Compiler {
+  hooks: any;
+  webpack: any;
+}
+interface WebpackPluginInstance {
+  apply(compiler: Compiler): void;
+}
 
 export interface HyperscriptI18nWebpackOptions {
   sourceLocale?: string;
@@ -38,14 +54,14 @@ export class HyperscriptI18nWebpackPlugin implements WebpackPluginInstance {
       return;
     }
 
-    compiler.hooks.compilation.tap(pluginName, (compilation) => {
+    compiler.hooks.compilation.tap(pluginName, (compilation: any) => {
       // Hook into HTML processing
       compilation.hooks.processAssets.tapPromise(
         {
           name: pluginName,
           stage: compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE
         },
-        async (assets) => {
+        async (assets: any) => {
           const promises = Object.keys(assets)
             .filter(filename => this.options.test.test(filename))
             .map(filename => this.processAsset(compilation, filename));
@@ -69,9 +85,10 @@ export class HyperscriptI18nWebpackPlugin implements WebpackPluginInstance {
           size: () => processed.length
         };
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       compilation.errors.push(
-        new Error(`Failed to process ${filename}: ${error.message}`)
+        new Error(`Failed to process ${filename}: ${message}`)
       );
     }
   }
@@ -82,8 +99,8 @@ export class HyperscriptI18nWebpackPlugin implements WebpackPluginInstance {
 
     this.options.attributes.forEach(attr => {
       const elements = root.querySelectorAll(`[${attr}]`);
-      
-      elements.forEach(element => {
+
+      elements.forEach((element: any) => {
         const original = element.getAttribute(attr);
         if (!original) return;
 

@@ -1,7 +1,7 @@
 // packages/i18n/src/validators/index.ts
 
 import { Dictionary, ValidationResult, ValidationError, ValidationWarning } from '../types';
-import { schema, RequiredCategories, RequiredKeys } from './schema';
+import { RequiredCategories, RequiredKeys } from './schema';
 
 export function validate(dictionary: Dictionary, locale: string): ValidationResult {
   const errors: ValidationError[] = [];
@@ -84,7 +84,7 @@ export function validate(dictionary: Dictionary, locale: string): ValidationResu
 function validateLocaleSpecific(
   dictionary: Dictionary,
   locale: string,
-  errors: ValidationError[],
+  _errors: ValidationError[],
   warnings: ValidationWarning[]
 ): void {
   // Spanish-specific validations

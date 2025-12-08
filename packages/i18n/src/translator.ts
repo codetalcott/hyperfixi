@@ -1,6 +1,6 @@
 // packages/i18n/src/translator.ts
 
-import { Dictionary, I18nConfig, TranslationOptions, TranslationResult, Token, TokenType } from './types';
+import { Dictionary, I18nConfig, TranslationOptions, TranslationResult, Token, TokenType, ValidationResult } from './types';
 import { dictionaries } from './dictionaries';
 import { detectLocale } from './utils/locale';
 import { tokenize } from './utils/tokenizer';
@@ -13,11 +13,11 @@ export class HyperscriptTranslator {
 
   constructor(config: I18nConfig) {
     this.config = {
-      locale: 'en',
       fallbackLocale: 'en',
       preserveOriginalAttribute: 'data-i18n-original',
       detectLocale: true, // Enable language detection by default
-      ...config
+      ...config,
+      locale: config.locale || 'en',  // Ensure locale has a default
     };
 
     this.dictionaries = new Map();
@@ -71,27 +71,31 @@ export class HyperscriptTranslator {
     // Reconstruct the text
     const translated = this.reconstructText(translatedTokens);
 
-    // Validate if requested
-    if (options.validate) {
-      const validation = validate(translated, toLocale);
+    // Validate target dictionary if requested
+    if (options.validate && toDict) {
+      const validation = validate(toDict, toLocale);
       if (!validation.valid) {
         console.warn('Translation validation warnings:', validation.warnings);
       }
     }
 
-    return {
+    const result: TranslationResult = {
       translated,
-      original: options.preserveOriginal ? text : undefined,
       tokens: translatedTokens,
       locale: { from: fromLocale, to: toLocale },
       warnings: []
     };
+    if (options.preserveOriginal) {
+      result.original = text;
+    }
+    return result;
   }
 
   private translateTokens(tokens: Token[], fromLocale: string, toLocale: string): Token[] {
     const fromDict = this.getDictionary(fromLocale);
     const toDict = this.getDictionary(toLocale);
     const reverseFromDict = this.getReverseDictionary(fromLocale);
+    const emptyDict: Dictionary = { commands: {}, modifiers: {}, events: {}, logical: {}, temporal: {}, values: {}, attributes: {} };
 
     return tokens.map(token => {
       let translated = token.value;
@@ -101,16 +105,16 @@ export class HyperscriptTranslator {
         // First, try direct translation from source to target
         if (fromLocale !== 'en' && toLocale !== 'en') {
           // Translate through English as intermediate
-          const english = this.findTranslation(token.value, fromDict, reverseFromDict, 'en');
+          const english = this.findTranslation(token.value, fromDict || emptyDict, reverseFromDict);
           if (english) {
-            translated = this.findTranslation(english, { commands: {}, modifiers: {} }, new Map(), toLocale) || token.value;
+            translated = this.findTranslation(english, toDict || emptyDict, new Map()) || token.value;
           }
         } else if (fromLocale === 'en') {
           // Direct translation from English
-          translated = this.findTranslation(token.value, toDict, new Map(), toLocale) || token.value;
+          translated = this.findTranslation(token.value, toDict || emptyDict, new Map()) || token.value;
         } else {
           // Translation to English
-          translated = this.findTranslation(token.value, fromDict, reverseFromDict, 'en') || token.value;
+          translated = this.findTranslation(token.value, fromDict || emptyDict, reverseFromDict) || token.value;
         }
       }
 
@@ -124,8 +128,7 @@ export class HyperscriptTranslator {
   private findTranslation(
     word: string,
     dict: Dictionary,
-    reverseDict: Map<string, string>,
-    targetLocale: string
+    reverseDict: Map<string, string>
   ): string | null {
     const lowerWord = word.toLowerCase();
 
@@ -175,7 +178,7 @@ export class HyperscriptTranslator {
     // Build reverse dictionary for this locale
     const reverseDict = new Map<string, string>();
     
-    Object.entries(dictionary).forEach(([category, translations]) => {
+    Object.entries(dictionary).forEach(([_category, translations]) => {
       if (typeof translations === 'object') {
         Object.entries(translations).forEach(([english, translated]) => {
           reverseDict.set(translated.toLowerCase(), english);

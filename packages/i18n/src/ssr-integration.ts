@@ -1,7 +1,7 @@
 // packages/i18n/src/ssr-integration.ts
 
 import { HyperscriptTranslator } from './translator';
-import { Dictionary, I18nConfig, TranslationOptions } from './types';
+import type { TranslationOptions } from './types';
 
 /**
  * SSR integration for i18n support
@@ -75,13 +75,18 @@ export class SSRLocaleManager {
       }
     }
 
-    return {
+    const context: SSRLocaleContext = {
       locale,
       direction: this.translator.isRTL(locale) ? 'rtl' : 'ltr',
       preferredLocales,
-      userAgent: request.userAgent,
-      acceptLanguage: request.headers?.['accept-language'],
     };
+    if (request.userAgent) {
+      context.userAgent = request.userAgent;
+    }
+    if (request.headers?.['accept-language']) {
+      context.acceptLanguage = request.headers['accept-language'];
+    }
+    return context;
   }
 
   /**
@@ -116,12 +121,12 @@ export class SSRLocaleManager {
   translateForSSR(
     hyperscriptCode: string,
     targetLocale: string,
-    options: TranslationOptions = {}
+    options: Partial<Omit<TranslationOptions, 'to'>> = {}
   ): string {
     return this.translator.translate(hyperscriptCode, {
       from: 'en',
-      to: targetLocale,
       ...options,
+      to: targetLocale,
     });
   }
 
@@ -166,7 +171,7 @@ export class SSRLocaleManager {
 export function createExpressI18nMiddleware(translator: HyperscriptTranslator, options?: SSRLocaleOptions) {
   const localeManager = new SSRLocaleManager(translator, options);
 
-  return (req: any, res: any, next: any) => {
+  return (req: any, _res: any, next: any) => {
     const localeContext = localeManager.extractLocale({
       url: req.originalUrl || req.url,
       headers: req.headers,

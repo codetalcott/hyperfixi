@@ -1,5 +1,7 @@
 // packages/i18n/src/test-setup.ts
 
+import { vi } from 'vitest';
+
 /**
  * Test setup for HyperFixi i18n package
  */

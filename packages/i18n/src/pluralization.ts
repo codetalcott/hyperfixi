@@ -343,7 +343,7 @@ export class PluralAwareTranslator {
     // Note: Longer alternatives must come first (milliseconds before millisecond, etc.)
     return text.replace(
       /(\d+)\s+(milliseconds|millisecond|seconds|second|minutes|minute|hours|hour|days|day|ms)/gi,
-      (match, value, unit) => {
+      (_match, value, unit) => {
         const numValue = parseInt(value);
         const lowerUnit = unit.toLowerCase();
 

@@ -26,7 +26,7 @@ export class RuntimeI18nManager {
   private observers: Set<(locale: string) => void> = new Set();
   private initialized = false;
 
-  constructor(options: RuntimeI18nOptions = {}) {
+  constructor(options: Partial<RuntimeI18nOptions> = {}) {
     this.options = {
       locale: options.locale || 'en',
       fallbackLocale: options.fallbackLocale || 'en',

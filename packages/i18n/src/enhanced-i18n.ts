@@ -53,6 +53,17 @@ export interface ContextMetadata {
     description: string;
     expectedOutput: string;
   }>;
+  // Additional extended properties
+  frameworkDependencies?: string[];
+  environmentRequirements?: {
+    browser?: boolean;
+    server?: boolean;
+    nodejs?: boolean;
+  };
+  performance?: {
+    averageTime?: number;
+    complexity?: string;
+  };
 }
 
 /**
@@ -60,7 +71,7 @@ export interface ContextMetadata {
  */
 export interface LLMDocumentation {
   summary: string;
-  description: string;
+  description?: string;
   examples?: Array<string | {
     title: string;
     code: string;
@@ -74,13 +85,18 @@ export interface LLMDocumentation {
     description: string;
     required?: boolean;
     default?: string;
+    optional?: boolean;
+    examples?: string[];
   }>;
   returns?: {
     type: string;
     description: string;
+    examples?: string[];
   };
   tips?: string[];
   commonMistakes?: string[];
+  seeAlso?: string[];
+  tags?: string[];
 }
 
 /**
@@ -139,6 +155,8 @@ export const EnhancedI18nInputSchema = z.object({
   debug: z.boolean().default(false),
 });
 
+// Note: Using z.any() for function types because Zod's z.function() inference
+// produces (...args: unknown[]) => unknown which is incompatible with specific signatures
 export const EnhancedI18nOutputSchema = z.object({
   /** Context identifier */
   contextId: z.string(),
@@ -146,14 +164,14 @@ export const EnhancedI18nOutputSchema = z.object({
   category: z.literal('Universal'),
   capabilities: z.array(z.string()),
   state: z.enum(['ready', 'loading', 'error']),
-  
+
   /** I18n specific capabilities */
-  translate: z.function(),
-  translateHyperscript: z.function(),
-  setLocale: z.function(),
-  getLocale: z.function(),
-  validateTranslation: z.function(),
-  
+  translate: z.any(),
+  translateHyperscript: z.any(),
+  setLocale: z.any(),
+  getLocale: z.any(),
+  validateTranslation: z.any(),
+
   /** Locale management */
   locale: z.object({
     current: z.string(),
@@ -161,21 +179,21 @@ export const EnhancedI18nOutputSchema = z.object({
     direction: z.enum(['ltr', 'rtl']),
     available: z.array(z.string()),
   }),
-  
+
   /** Dictionary access */
   dictionary: z.object({
-    get: z.function(),
-    set: z.function(),
-    has: z.function(),
-    keys: z.function(),
+    get: z.any(),
+    set: z.any(),
+    has: z.any(),
+    keys: z.any(),
   }),
-  
+
   /** Formatting utilities */
   format: z.object({
-    number: z.function(),
-    date: z.function(),
-    currency: z.function(),
-    relative: z.function(),
+    number: z.any(),
+    date: z.any(),
+    currency: z.any(),
+    relative: z.any(),
   }),
 });
 
@@ -195,7 +213,7 @@ export class TypedI18nContextImplementation {
 
   private evaluationHistory: Array<{
     input: EnhancedI18nInput;
-    output?: EnhancedI18nOutput;
+    output: EnhancedI18nOutput | undefined;
     success: boolean;
     duration: number;
     timestamp: number;
@@ -296,7 +314,7 @@ export class TypedI18nContextImplementation {
         return {
           success: false,
           errors: validation.errors,
-          suggestions: validation.suggestions
+          suggestions: validation.suggestions || []
         };
       }
 
@@ -504,7 +522,7 @@ export class TypedI18nContextImplementation {
   }
 
   private createValidationFunction(dictionaries: Record<string, any>) {
-    return (locale: string, hyperscript: string) => {
+    return (locale: string, _hyperscript: string) => {
       const dict = dictionaries[locale];
       if (!dict) {
         return {
@@ -545,11 +563,11 @@ export class TypedI18nContextImplementation {
   private getDictionaryKeys(dictionaries: Record<string, any>, locale: string): string[] {
     const dict = dictionaries[locale];
     if (!dict) return [];
-    
+
     const keys: string[] = [];
     Object.entries(dict).forEach(([category, categoryDict]) => {
-      if (typeof categoryDict === 'object') {
-        Object.keys(categoryDict).forEach(key => {
+      if (typeof categoryDict === 'object' && categoryDict !== null) {
+        Object.keys(categoryDict as object).forEach(key => {
           keys.push(`${category}.${key}`);
         });
       }
@@ -622,6 +640,8 @@ export async function createEnhancedI18n(
   const i18n = new TypedI18nContextImplementation();
   return i18n.initialize({
     locale,
+    environment: options?.environment || 'universal',
+    debug: options?.debug || false,
     ...options
   });
 }
