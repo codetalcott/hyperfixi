@@ -4,15 +4,108 @@
  */
 
 import { z } from 'zod';
-import type { 
-  TypedContextImplementation,
-  ContextMetadata,
-  ValidationResult,
-  EvaluationResult,
-  EnhancedContextBase
-} from '../../core/src/types/enhanced-context.js';
-import type { LLMDocumentation, EvaluationType } from '../../core/src/types/enhanced-core.js';
-import type { Dictionary, I18nConfig, TranslationOptions, TranslationResult } from './types.js';
+// Note: Dictionary, I18nConfig, TranslationOptions, TranslationResult are defined in ./types.js
+// but may not be used directly in this file (used for documentation purposes)
+
+// ============================================================================
+// Local Type Definitions
+// These types were previously imported from core but are defined locally
+// to avoid cross-package dependencies and missing module errors.
+// ============================================================================
+
+/**
+ * Validation result for i18n operations
+ */
+export interface ValidationResult {
+  isValid: boolean;
+  errors: Array<{ type: string; message: string; path?: string }>;
+  suggestions?: string[];
+}
+
+/**
+ * Evaluation result wrapper
+ */
+export interface EvaluationResult<T = unknown> {
+  success: boolean;
+  value?: T;
+  type?: string;
+  errors?: Array<{ type: string; message: string }>;
+  suggestions?: string[];
+}
+
+/**
+ * Context metadata for enhanced pattern
+ */
+export interface ContextMetadata {
+  contextId?: string;
+  timestamp?: number;
+  category: string;
+  capabilities?: string[];
+  state?: string;
+  // Extended metadata properties
+  complexity?: string;
+  sideEffects?: string[];
+  dependencies?: string[];
+  returnTypes?: string[];
+  relatedContexts?: string[];
+  examples?: Array<{
+    input: string;
+    description: string;
+    expectedOutput: string;
+  }>;
+}
+
+/**
+ * LLM documentation interface for AI-friendly descriptions
+ */
+export interface LLMDocumentation {
+  summary: string;
+  description: string;
+  examples?: Array<string | {
+    title: string;
+    code: string;
+    explanation: string;
+    output: string;
+  }>;
+  category?: string;
+  parameters?: Array<{
+    name: string;
+    type: string;
+    description: string;
+    required?: boolean;
+    default?: string;
+  }>;
+  returns?: {
+    type: string;
+    description: string;
+  };
+  tips?: string[];
+  commonMistakes?: string[];
+}
+
+/**
+ * Evaluation type enumeration
+ */
+export type EvaluationType = 'sync' | 'async' | 'streaming' | 'Context';
+
+/**
+ * Enhanced context base interface
+ */
+export interface EnhancedContextBase extends ContextMetadata {
+  [key: string]: unknown;
+}
+
+/**
+ * Typed context implementation interface
+ */
+export interface TypedContextImplementation<TInput, TOutput> {
+  inputSchema: z.ZodType<TInput>;
+  outputSchema: z.ZodType<TOutput>;
+  evaluate(input: TInput): Promise<EvaluationResult<TOutput>>;
+  validate(input: unknown): ValidationResult;
+  metadata: ContextMetadata;
+  documentation: LLMDocumentation;
+}
 
 // ============================================================================
 // Enhanced I18n Input/Output Schemas

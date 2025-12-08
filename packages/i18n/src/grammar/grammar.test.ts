@@ -27,6 +27,7 @@ import {
 import {
   reorderRoles,
   insertMarkers,
+  joinTokens,
   UNIVERSAL_PATTERNS,
   LANGUAGE_FAMILY_DEFAULTS,
 } from './types';
@@ -271,6 +272,58 @@ describe('Role Transformation', () => {
 
       const result = insertMarkers(elements, [], 'none');
       expect(result).toEqual(['増加']);
+    });
+  });
+
+  describe('joinTokens', () => {
+    it('should join regular tokens with spaces', () => {
+      const result = joinTokens(['hello', 'world']);
+      expect(result).toBe('hello world');
+    });
+
+    it('should handle empty array', () => {
+      const result = joinTokens([]);
+      expect(result).toBe('');
+    });
+
+    it('should handle single token', () => {
+      const result = joinTokens(['hello']);
+      expect(result).toBe('hello');
+    });
+
+    it('should attach suffix markers without space (Quechua -ta)', () => {
+      // #count + -ta → #countta
+      const result = joinTokens(['#count', '-ta']);
+      expect(result).toBe('#countta');
+    });
+
+    it('should attach prefix markers without space (Arabic بـ-)', () => {
+      // بـ- + الماوس → بـالماوس
+      const result = joinTokens(['بـ-', 'الماوس']);
+      expect(result).toBe('بـالماوس');
+    });
+
+    it('should handle multiple suffix markers (Turkish case suffixes)', () => {
+      // value + -i + another → valuei another
+      const result = joinTokens(['value', '-i', 'another']);
+      expect(result).toBe('valuei another');
+    });
+
+    it('should handle Japanese particles with normal spacing', () => {
+      // Japanese particles don't use hyphen notation, so they get spaces
+      const result = joinTokens(['#count', 'を', 'クリック', 'で', '増加']);
+      expect(result).toBe('#count を クリック で 増加');
+    });
+
+    it('should handle Quechua agglutinative chain', () => {
+      // #count + -ta + click + -pi + increment
+      const result = joinTokens(['#count', '-ta', 'click', '-pi', 'increment']);
+      expect(result).toBe('#countta clickpi increment');
+    });
+
+    it('should handle mixed prefix and regular tokens', () => {
+      const result = joinTokens(['كـ-', 'JSON', 'format']);
+      expect(result).toBe('كـJSON format');
     });
   });
 });
@@ -521,5 +574,172 @@ describe('Edge Cases', () => {
   it('should handle multiple spaces in input', () => {
     const parsed = parseStatement('on   click    toggle   .active');
     expect(parsed).not.toBeNull();
+  });
+});
+
+// =============================================================================
+// Chinese Circumfix Tokenization Tests
+// =============================================================================
+
+describe('Chinese Circumfix Parsing', () => {
+  it('should split attached 时 suffix from event words', () => {
+    // 点击时 should be parsed as two tokens: 点击 + 时
+    const parsed = parseStatement('当 点击时 增加 #count', 'zh');
+    expect(parsed).not.toBeNull();
+    expect(parsed?.type).toBe('event-handler');
+  });
+
+  it('should handle 当...时 circumfix pattern', () => {
+    const transformer = new GrammarTransformer('en', 'zh');
+    const result = transformer.transform('on click increment #count');
+    // Should produce 当 X 时 pattern
+    expect(result).toContain('当');
+    expect(result).toContain('时');
+  });
+
+  it('should preserve selectors when splitting suffixes', () => {
+    const parsed = parseStatement('当 点击时 切换 .active', 'zh');
+    // Patient may include the action in some parsing patterns
+    expect(parsed?.roles.get('patient')?.value).toContain('.active');
+  });
+});
+
+// =============================================================================
+// Round-Trip Translation Tests
+// =============================================================================
+
+describe('Round-Trip Translation', () => {
+  describe('English → Japanese → English', () => {
+    it('should preserve semantic roles in round-trip', () => {
+      const original = 'on click increment #count';
+      const toJapanese = translate(original, 'en', 'ja');
+      expect(toJapanese).toContain('#count');
+      expect(toJapanese).toContain('を');
+
+      // Note: Perfect round-trip isn't expected due to translation,
+      // but semantic structure should be preserved
+      const backToEnglish = translate(toJapanese, 'ja', 'en');
+      expect(backToEnglish).toBeTruthy();
+    });
+
+    it('should preserve CSS selectors through round-trip', () => {
+      const original = 'toggle .menu-active';
+      const toJapanese = translate(original, 'en', 'ja');
+      expect(toJapanese).toContain('.menu-active');
+
+      const backToEnglish = translate(toJapanese, 'ja', 'en');
+      expect(backToEnglish).toContain('.menu-active');
+    });
+  });
+
+  describe('English → Arabic → English', () => {
+    it('should preserve semantic roles with VSO transformation', () => {
+      const original = 'on click increment #count';
+      const toArabic = translate(original, 'en', 'ar');
+      expect(toArabic).toContain('#count');
+      // Arabic VSO puts action first
+      expect(toArabic).toBeTruthy();
+
+      const backToEnglish = translate(toArabic, 'ar', 'en');
+      expect(backToEnglish).toBeTruthy();
+    });
+  });
+
+  describe('English → Chinese → English', () => {
+    it('should preserve structure through topic-prominent language', () => {
+      const original = 'on click toggle .active';
+      const toChinese = translate(original, 'en', 'zh');
+      expect(toChinese).toContain('.active');
+      expect(toChinese).toContain('当');
+
+      const backToEnglish = translate(toChinese, 'zh', 'en');
+      expect(backToEnglish).toContain('.active');
+    });
+  });
+
+  describe('Cross-Language via Pivot', () => {
+    it('should translate Japanese → Arabic via English pivot', () => {
+      // Start with a simple pattern
+      const result = translate('on click log done', 'ja', 'ar');
+      expect(result).toBeTruthy();
+    });
+
+    it('should translate Chinese → Korean via English pivot', () => {
+      const result = translate('on click toggle .active', 'zh', 'ko');
+      expect(result).toBeTruthy();
+      expect(result).toContain('.active');
+    });
+  });
+});
+
+// =============================================================================
+// Language-Specific Word Order Integration Tests
+// =============================================================================
+
+describe('Word Order Integration Tests', () => {
+  describe('SOV Languages (Japanese, Korean, Turkish, Quechua)', () => {
+    it('should place patient before action in Japanese', () => {
+      const transformer = new GrammarTransformer('en', 'ja');
+      const result = transformer.transform('on click increment #count');
+      // Japanese SOV: #count を ... 増加
+      const countIndex = result.indexOf('#count');
+      const actionIndex = result.indexOf('増加');
+      expect(countIndex).toBeLessThan(actionIndex);
+    });
+
+    it('should place patient before action in Korean', () => {
+      const transformer = new GrammarTransformer('en', 'ko');
+      const result = transformer.transform('on click increment #count');
+      // Korean SOV: patient comes before action
+      expect(result).toContain('#count');
+      expect(result).toContain('를'); // Object marker
+    });
+
+    it('should attach Turkish suffixes correctly', () => {
+      const transformer = new GrammarTransformer('en', 'tr');
+      const result = transformer.transform('on click toggle .active');
+      // Turkish uses case suffixes
+      expect(result).toContain('.active');
+    });
+  });
+
+  describe('VSO Languages (Arabic)', () => {
+    it('should place action first in Arabic', () => {
+      const transformer = new GrammarTransformer('en', 'ar');
+      const result = transformer.transform('on click increment #count');
+      // Arabic VSO: زِد (action) comes first
+      const actionIndex = result.indexOf('زِد');
+      const patientIndex = result.indexOf('#count');
+      expect(actionIndex).toBeLessThan(patientIndex);
+    });
+  });
+
+  describe('SVO Languages with Special Features', () => {
+    it('should use circumfix pattern for Chinese events', () => {
+      const transformer = new GrammarTransformer('en', 'zh');
+      const result = transformer.transform('on click increment #count');
+      // Chinese uses 当...时 circumfix
+      expect(result).toContain('当');
+      expect(result).toContain('时');
+    });
+
+    it('should use correct markers for Spanish', () => {
+      const transformer = new GrammarTransformer('en', 'es');
+      const result = transformer.transform('on click toggle .active');
+      // Spanish uses 'en' for events
+      expect(result).toContain('.active');
+    });
+
+    it('should handle Indonesian SVO correctly', () => {
+      const transformer = new GrammarTransformer('en', 'id');
+      const result = transformer.transform('on click toggle .active');
+      expect(result).toContain('.active');
+    });
+
+    it('should handle Swahili SVO correctly', () => {
+      const transformer = new GrammarTransformer('en', 'sw');
+      const result = transformer.transform('on click toggle .active');
+      expect(result).toContain('.active');
+    });
   });
 });

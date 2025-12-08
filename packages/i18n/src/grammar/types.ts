@@ -328,17 +328,30 @@ export const LANGUAGE_FAMILY_DEFAULTS: Record<string, Partial<LanguageProfile>> 
 // =============================================================================
 
 /**
- * Reorder semantic roles according to target language
+ * Reorder semantic roles according to target language.
+ * Includes a safety net to append any roles present in input
+ * but missing from the target order, preventing data loss.
  */
 export function reorderRoles(
   roles: Map<SemanticRole, ParsedElement>,
   targetOrder: SemanticRole[]
 ): ParsedElement[] {
   const result: ParsedElement[] = [];
+  const usedRoles = new Set<SemanticRole>();
 
+  // 1. Add roles that are explicitly in the canonical order
   for (const role of targetOrder) {
     const element = roles.get(role);
     if (element) {
+      result.push(element);
+      usedRoles.add(role);
+    }
+  }
+
+  // 2. Safety Net: Append any roles present in input but missing from target order
+  // This prevents data loss (e.g., if 'manner' or 'instrument' isn't in the profile)
+  for (const [role, element] of roles) {
+    if (!usedRoles.has(role)) {
       result.push(element);
     }
   }
@@ -380,11 +393,61 @@ export function insertMarkers(
 }
 
 /**
+ * Intelligently joins tokens, handling agglutinative suffixes and prefixes.
+ *
+ * Rules:
+ * 1. If a token ends with '-' (prefix marker), no space after it
+ * 2. If a token starts with '-' (suffix marker), no space before it
+ * 3. Removes the hyphen indicators from the final output
+ *
+ * Examples:
+ * - ['#count', '-ta'] → '#countta' (Quechua accusative suffix)
+ * - ['بـ-', 'الماوس'] → 'بـالماوس' (Arabic prefix attachment)
+ * - ['value', 'を'] → 'value を' (Japanese particle, normal spacing)
+ */
+export function joinTokens(tokens: string[]): string {
+  if (tokens.length === 0) return '';
+
+  let result = '';
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    const nextToken = tokens[i + 1];
+
+    // Check if current token is a prefix (ends with -)
+    const isPrefix = token.endsWith('-');
+    // Check if current token is a suffix (starts with -)
+    const isSuffix = token.startsWith('-');
+
+    // Get the display form (strip hyphen markers)
+    let displayToken = token;
+    if (isPrefix) displayToken = token.slice(0, -1);
+    if (isSuffix) displayToken = token.substring(1);
+
+    result += displayToken;
+
+    // Determine if we need a space before the next token
+    if (nextToken) {
+      const nextIsSuffix = nextToken.startsWith('-');
+
+      // Don't add space if:
+      // - Current token is a prefix (ends with -)
+      // - Next token is a suffix (starts with -)
+      if (!isPrefix && !nextIsSuffix) {
+        result += ' ';
+      }
+    }
+  }
+
+  return result;
+}
+
+/**
  * Transform a parsed statement to target language
  */
 export function transformStatement(
   parsed: ParsedStatement,
-  sourceProfile: LanguageProfile,
+  _sourceProfile: LanguageProfile,
   targetProfile: LanguageProfile
 ): string {
   // 1. Reorder roles for target language
@@ -397,7 +460,7 @@ export function transformStatement(
     targetProfile.adpositionType
   );
 
-  // 3. Join with appropriate spacing
-  // (RTL languages may need special handling)
-  return withMarkers.join(' ');
+  // 3. Join with intelligent spacing for agglutinative languages
+  // (handles suffixes like -ta, prefixes like بـ-, etc.)
+  return joinTokens(withMarkers);
 }

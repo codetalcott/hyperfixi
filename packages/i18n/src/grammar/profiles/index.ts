@@ -6,13 +6,7 @@
  * language-specific markers and rules.
  */
 
-import type {
-  LanguageProfile,
-  GrammaticalMarker,
-  GrammarRule,
-  SemanticRole,
-  LANGUAGE_FAMILY_DEFAULTS,
-} from '../types';
+import type { LanguageProfile } from '../types';
 
 // =============================================================================
 // English (Reference Language)
@@ -175,14 +169,14 @@ export const chineseProfile: LanguageProfile = {
       description: 'Standard event handler: 当 X 时 Y',
       priority: 100,
       match: {
-        commands: ['on'],
+        // Don't match commands - match by statement type having event role
         requiredRoles: ['event', 'action'],
       },
       transform: {
         // 当 点击 时 增加 #count
         roleOrder: ['event', 'action', 'patient'],
         insertMarkers: true,
-        custom: (parsed, profile) => {
+        custom: (parsed, _profile) => {
           // Handle 当...时 circumfix
           const event = parsed.roles.get('event');
           const action = parsed.roles.get('action');
@@ -236,8 +230,11 @@ export const arabicProfile: LanguageProfile = {
     { form: 'إلى', role: 'destination', position: 'preposition', required: false },
     { form: 'في', role: 'destination', position: 'preposition', required: false },
     { form: 'من', role: 'source', position: 'preposition', required: false },
-    { form: 'بـ', role: 'instrument', position: 'preposition', required: false },
+    // بـ- notation: trailing hyphen indicates prefix that attaches without space
+    { form: 'بـ-', role: 'instrument', position: 'preposition', required: false },
     { form: 'مع', role: 'instrument', position: 'preposition', required: false },
+    // كـ- notation: "as/like" prefix for manner
+    { form: 'كـ-', role: 'manner', position: 'preposition', required: false },
   ],
 
   rules: [
@@ -315,9 +312,11 @@ export const spanishProfile: LanguageProfile = {
   canonicalOrder: ['event', 'action', 'patient', 'destination'],
 
   markers: [
+    // Event: "En hacer clic" or "Al hacer clic"
     { form: 'en', role: 'event', position: 'preposition', required: true },
+    // Destination: Prioritize 'a' over 'en' to avoid collision with event marker
     { form: 'a', role: 'destination', position: 'preposition', required: false },
-    { form: 'en', role: 'destination', position: 'preposition', required: false },
+    { form: 'hacia', role: 'destination', position: 'preposition', required: false }, // "Towards"
     { form: 'de', role: 'source', position: 'preposition', required: false },
     { form: 'con', role: 'instrument', position: 'preposition', required: false },
     { form: 'por', role: 'quantity', position: 'preposition', required: false },

@@ -13,9 +13,59 @@ import type {
   SemanticRole,
   GrammarRule,
 } from './types';
-import { reorderRoles, insertMarkers, transformStatement } from './types';
-import { profiles, getProfile } from './profiles';
+import { reorderRoles, insertMarkers } from './types';
+import { getProfile } from './profiles';
 import { dictionaries } from '../dictionaries';
+
+// =============================================================================
+// Helper: Dynamic Modifier Map
+// =============================================================================
+
+/**
+ * Generates a lookup map for semantic roles based on the language profile.
+ * Maps markers (e.g., 'to', 'に', 'into', 'إلى') to their semantic roles.
+ * This enables parsing non-English input by using the profile's markers.
+ */
+function generateModifierMap(profile: LanguageProfile): Record<string, SemanticRole> {
+  const map: Record<string, SemanticRole> = {};
+
+  // Map markers to roles from the profile
+  profile.markers.forEach(marker => {
+    // Strip hyphen notation for suffix/prefix markers
+    const form = marker.form.replace(/^-|-$/g, '').toLowerCase();
+    if (form) {
+      map[form] = marker.role;
+    }
+
+    // Map alternatives if they exist (e.g., Korean vowel harmony variants)
+    marker.alternatives?.forEach(alt => {
+      const altForm = alt.replace(/^-|-$/g, '').toLowerCase();
+      if (altForm) {
+        map[altForm] = marker.role;
+      }
+    });
+  });
+
+  // Always include English modifiers as fallback
+  const englishFallback: Record<string, SemanticRole> = {
+    'to': 'destination',
+    'into': 'destination',
+    'from': 'source',
+    'with': 'instrument',
+    'by': 'quantity',
+    'as': 'manner',
+    'on': 'event',
+  };
+
+  // Add English fallback (don't override profile-specific markers)
+  for (const [key, role] of Object.entries(englishFallback)) {
+    if (!(key in map)) {
+      map[key] = role;
+    }
+  }
+
+  return map;
+}
 
 // =============================================================================
 // Statement Parser
@@ -33,7 +83,6 @@ export function parseStatement(
   if (!profile) return null;
 
   const tokens = tokenize(input, profile);
-  const roles = new Map<SemanticRole, ParsedElement>();
 
   // Identify statement type and extract roles
   const statementType = identifyStatementType(tokens, profile);
@@ -51,11 +100,87 @@ export function parseStatement(
 }
 
 /**
+ * Known suffixes that may attach to words without spaces.
+ * These are split off during tokenization for proper parsing.
+ */
+const ATTACHED_SUFFIXES: Record<string, string[]> = {
+  // Chinese: 时 (time/when) often attaches to events like 点击时 (when clicking)
+  zh: ['时', '的', '地', '得'],
+  // Japanese: Some particles may attach in casual writing
+  ja: [],
+  // Korean: Particles sometimes written without spaces
+  ko: [],
+};
+
+/**
+ * Known prefixes that may attach to words without spaces.
+ */
+const ATTACHED_PREFIXES: Record<string, string[]> = {
+  // Chinese: 当 (when) sometimes written attached
+  zh: ['当'],
+  // Arabic: Prepositions that attach
+  ar: ['بـ', 'كـ', 'و'],
+};
+
+/**
+ * Post-process tokens to split attached suffixes/prefixes.
+ * E.g., "点击时" → ["点击", "时"]
+ */
+function splitAttachedAffixes(tokens: string[], locale: string): string[] {
+  const suffixes = ATTACHED_SUFFIXES[locale] || [];
+  const prefixes = ATTACHED_PREFIXES[locale] || [];
+
+  if (suffixes.length === 0 && prefixes.length === 0) {
+    return tokens;
+  }
+
+  const result: string[] = [];
+
+  for (const token of tokens) {
+    // Skip CSS selectors and numbers
+    if (/^[#.<@]/.test(token) || /^\d+/.test(token)) {
+      result.push(token);
+      continue;
+    }
+
+    let processed = token;
+    let prefix = '';
+    let suffix = '';
+
+    // Check for attached prefixes
+    for (const p of prefixes) {
+      if (processed.startsWith(p) && processed.length > p.length) {
+        prefix = p;
+        processed = processed.slice(p.length);
+        break;
+      }
+    }
+
+    // Check for attached suffixes
+    for (const s of suffixes) {
+      if (processed.endsWith(s) && processed.length > s.length) {
+        suffix = s;
+        processed = processed.slice(0, -s.length);
+        break;
+      }
+    }
+
+    // Add tokens in order: prefix, main, suffix
+    if (prefix) result.push(prefix);
+    if (processed) result.push(processed);
+    if (suffix) result.push(suffix);
+  }
+
+  return result;
+}
+
+/**
  * Simple tokenizer that handles:
  * - Keywords (from dictionary)
  * - CSS selectors (#id, .class, <tag/>)
  * - String literals
  * - Numbers
+ * - Attached suffixes/prefixes (language-specific)
  */
 function tokenize(input: string, profile: LanguageProfile): string[] {
   // Split on whitespace, preserving selectors and strings
@@ -91,7 +216,8 @@ function tokenize(input: string, profile: LanguageProfile): string[] {
     tokens.push(current);
   }
 
-  return tokens;
+  // Post-process to split attached affixes for languages that need it
+  return splitAttachedAffixes(tokens, profile.code);
 }
 
 /**
@@ -128,7 +254,7 @@ function identifyStatementType(
  * Parse an event handler statement
  * Pattern: on {event} {command} {target?}
  */
-function parseEventHandler(tokens: string[], profile: LanguageProfile): ParsedStatement {
+function parseEventHandler(tokens: string[], _profile: LanguageProfile): ParsedStatement {
   const roles = new Map<SemanticRole, ParsedElement>();
 
   // Remove the 'on' keyword
@@ -187,16 +313,9 @@ function parseCommand(tokens: string[], profile: LanguageProfile): ParsedStateme
     value: tokens[0],
   });
 
-  // Look for modifier keywords to identify roles
-  const modifierMap: Record<string, SemanticRole> = {
-    'to': 'destination',
-    'into': 'destination',
-    'from': 'source',
-    'with': 'instrument',
-    'by': 'quantity',
-    'as': 'manner',
-    // Add more as needed for other languages
-  };
+  // Generate dynamic modifier map from language profile
+  // This enables parsing non-English input (e.g., Japanese に, Korean 에, Arabic إلى)
+  const modifierMap = generateModifierMap(profile);
 
   let currentRole: SemanticRole = 'patient';
   let currentValue: string[] = [];
@@ -242,7 +361,7 @@ function parseCommand(tokens: string[], profile: LanguageProfile): ParsedStateme
 /**
  * Parse a conditional statement
  */
-function parseConditional(tokens: string[], profile: LanguageProfile): ParsedStatement {
+function parseConditional(tokens: string[], _profile: LanguageProfile): ParsedStatement {
   const roles = new Map<SemanticRole, ParsedElement>();
 
   // First token is the 'if' keyword
@@ -282,7 +401,7 @@ function translateWord(
   word: string,
   sourceLocale: string,
   targetLocale: string,
-  category: string = 'commands'
+  _category: string = 'commands'
 ): string {
   // Don't translate CSS selectors
   if (/^[#.<@]/.test(word)) {
@@ -303,7 +422,7 @@ function translateWord(
   let englishWord = word;
   if (sourceDict) {
     // Find the English key for this localized word
-    for (const [category, entries] of Object.entries(sourceDict)) {
+    for (const [_cat, entries] of Object.entries(sourceDict)) {
       if (typeof entries === 'object') {
         for (const [eng, loc] of Object.entries(entries)) {
           if (loc === word) {
@@ -317,7 +436,7 @@ function translateWord(
 
   // Now map English to target locale
   // Check all categories
-  for (const [cat, entries] of Object.entries(targetDict)) {
+  for (const [_cat, entries] of Object.entries(targetDict)) {
     if (typeof entries === 'object') {
       const translated = (entries as Record<string, string>)[englishWord.toLowerCase()];
       if (translated) {
@@ -337,7 +456,7 @@ function translateElements(
   sourceLocale: string,
   targetLocale: string
 ): void {
-  for (const [role, element] of parsed.roles) {
+  for (const [_role, element] of parsed.roles) {
     if (!element.isSelector && !element.isLiteral) {
       element.translated = translateWord(element.value, sourceLocale, targetLocale);
     } else {
