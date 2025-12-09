@@ -421,7 +421,7 @@ export function isExecutionContext(value: unknown): value is ExecutionContext {
 // Exports
 // ============================================================================
 
-export default {
+export const CoreTypes = {
   Validator,
   isValidationResult,
   isExecutionContext,

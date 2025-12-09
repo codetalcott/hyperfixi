@@ -10,7 +10,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./dist",
-    "removeComments": false,
+    "removeComments": true,
     
     // Type checking
     "strict": true,

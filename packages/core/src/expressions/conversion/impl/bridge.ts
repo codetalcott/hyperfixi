@@ -334,11 +334,3 @@ export class ConversionUtilities {
   }
 }
 
-export default {
-  createTypedExpressionContext,
-  updateExecutionContext,
-  EnhancedConversionAdapter,
-  LegacyCompatibilityLayer,
-  ExpressionMigrationUtility,
-  ConversionUtilities,
-};

@@ -292,10 +292,3 @@ export class ExpressionMigrationUtility {
   }
 }
 
-export default {
-  createTypedExpressionContext,
-  updateExecutionContext,
-  ExpressionAdapter,
-  LegacyCompatibilityLayer,
-  ExpressionMigrationUtility,
-};

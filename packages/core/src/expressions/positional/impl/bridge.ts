@@ -572,11 +572,3 @@ export class PositionalUtilities {
   }
 }
 
-export default {
-  createTypedExpressionContext,
-  updateExecutionContext,
-  EnhancedPositionalAdapter,
-  LegacyCompatibilityLayer,
-  ExpressionMigrationUtility,
-  PositionalUtilities,
-};

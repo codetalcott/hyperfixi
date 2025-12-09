@@ -213,13 +213,3 @@ export function createHyperscriptCompat() {
   };
 }
 
-// Default export for easy importing
-export default {
-  evalHyperScript,
-  evalHyperScriptSync,
-  make,
-  clearWorkArea,
-  getParseErrorFor,
-  testUtils,
-  createHyperscriptCompat,
-};

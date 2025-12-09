@@ -120,7 +120,7 @@ export type AsyncValidationFunction<T> = (input: unknown) => Promise<ValidationR
 // Default Exports
 // ============================================================================
 
-export { default as CoreTypes } from './unified-types';
+export { CoreTypes } from './unified-types';
 
 // ============================================================================
 // Result Pattern (napi-rs inspired - Rust Result<T, E>)
