@@ -20,6 +20,34 @@ import { BaseExpressionImpl } from '../../base-expression';
 import { isString, isNumber, isBoolean, isObject, isFunction } from '../../type-helpers';
 
 // ============================================================================
+// Converter Helper Functions (deduplication)
+// ============================================================================
+
+/** Create a standardized converter error result */
+function converterError(
+  name: string,
+  code: string,
+  message: string,
+  suggestions: string[],
+  type: 'runtime-error' | 'invalid-argument' | 'syntax-error' = 'runtime-error'
+): EvaluationResult<never> {
+  return {
+    success: false,
+    error: { name: `${name}ConversionError`, type, message, code, suggestions },
+  };
+}
+
+/** Create a standardized success result */
+function success<T>(value: T, type: string): EvaluationResult<T> {
+  return { success: true, value, type };
+}
+
+/** Format error message from caught error */
+function errorMsg(prefix: string, error: unknown): string {
+  return `${prefix}: ${error instanceof Error ? error.message : String(error)}`;
+}
+
+// ============================================================================
 // Enhanced Type Conversion Registry
 // ============================================================================
 
@@ -57,272 +85,137 @@ export interface EnhancedTypeConverter<T = unknown> {
 export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
   Array: (value: unknown, _context: TypedExpressionContext): EvaluationResult<unknown[]> => {
     try {
-      if (Array.isArray(value)) {
-        return { success: true, value, type: 'array' };
-      }
-      if (value instanceof NodeList) {
-        return { success: true, value: Array.from(value), type: 'array' };
-      }
-      if (value == null) {
-        return { success: true, value: [], type: 'array' };
-      }
-      return { success: true, value: [value], type: 'array' };
+      if (Array.isArray(value)) return success(value, 'array');
+      if (value instanceof NodeList) return success(Array.from(value), 'array');
+      if (value == null) return success([], 'array');
+      return success([value], 'array');
     } catch (error) {
-      return {
-        success: false,
-        error: {
-          name: 'ArrayConversionError',
-          type: 'runtime-error',
-          message: `Failed to convert value to Array: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'ARRAY_CONVERSION_FAILED',
-          suggestions: ['Check if value is iterable', 'Ensure value is not circular reference'],
-        },
-      };
+      return converterError('Array', 'ARRAY_CONVERSION_FAILED',
+        errorMsg('Failed to convert value to Array', error),
+        ['Check if value is iterable', 'Ensure value is not circular reference']);
     }
   },
 
   String: (value: unknown, _context: TypedExpressionContext): EvaluationResult<string> => {
     try {
-      if (value == null) {
-        return { success: true, value: '', type: 'string' };
-      }
-      if (isString(value)) {
-        return { success: true, value: value as string, type: 'string' };
-      }
-      if (isObject(value)) {
-        const result = JSON.stringify(value);
-        return { success: true, value: result, type: 'string' };
-      }
-      return { success: true, value: String(value), type: 'string' };
+      if (value == null) return success('', 'string');
+      if (isString(value)) return success(value as string, 'string');
+      if (isObject(value)) return success(JSON.stringify(value), 'string');
+      return success(String(value), 'string');
     } catch (error) {
-      return {
-        success: false,
-        error: {
-          name: 'StringConversionError',
-          type: 'runtime-error',
-          message: `Failed to convert value to String: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'STRING_CONVERSION_FAILED',
-          suggestions: ['Check if object has circular references', 'Ensure value is serializable'],
-        },
-      };
+      return converterError('String', 'STRING_CONVERSION_FAILED',
+        errorMsg('Failed to convert value to String', error),
+        ['Check if object has circular references', 'Ensure value is serializable']);
     }
   },
 
   Boolean: (value: unknown, _context: TypedExpressionContext): EvaluationResult<boolean> => {
     try {
-      if (isBoolean(value)) {
-        return { success: true, value: value as boolean, type: 'boolean' };
-      }
-      if (value == null) {
-        return { success: true, value: false, type: 'boolean' };
-      }
+      if (isBoolean(value)) return success(value as boolean, 'boolean');
+      if (value == null) return success(false, 'boolean');
       if (isString(value)) {
         const lowerValue = (value as string).toLowerCase().trim();
-        if (lowerValue === 'false' || lowerValue === '0' || lowerValue === '') {
-          return { success: true, value: false, type: 'boolean' };
-        }
-        return { success: true, value: true, type: 'boolean' };
+        return success(lowerValue !== 'false' && lowerValue !== '0' && lowerValue !== '', 'boolean');
       }
-      if (isNumber(value)) {
-        const num = value as number;
-        return { success: true, value: num !== 0 && !isNaN(num), type: 'boolean' };
-      }
-      return { success: true, value: Boolean(value), type: 'boolean' };
+      if (isNumber(value)) return success((value as number) !== 0 && !isNaN(value as number), 'boolean');
+      return success(Boolean(value), 'boolean');
     } catch (error) {
-      return {
-        success: false,
-        error: {
-          name: 'BooleanConversionError',
-          type: 'runtime-error',
-          message: `Failed to convert value to Boolean: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'BOOLEAN_CONVERSION_FAILED',
-          suggestions: ['Use explicit true/false values', 'Check for unexpected data types'],
-        },
-      };
+      return converterError('Boolean', 'BOOLEAN_CONVERSION_FAILED',
+        errorMsg('Failed to convert value to Boolean', error),
+        ['Use explicit true/false values', 'Check for unexpected data types']);
     }
   },
 
   Number: (value: unknown, _context: TypedExpressionContext): EvaluationResult<number> => {
     try {
-      if (isNumber(value)) {
-        return { success: true, value: value as number, type: 'number' };
-      }
-      if (value == null) {
-        return { success: true, value: 0, type: 'number' };
-      }
+      if (isNumber(value)) return success(value as number, 'number');
+      if (value == null) return success(0, 'number');
       const num = Number(value);
       if (isNaN(num)) {
-        return {
-          success: false,
-          error: {
-            name: 'NumberConversionError',
-            type: 'invalid-argument',
-            message: `Cannot convert "${value}" to a valid number`,
-            code: 'INVALID_NUMBER',
-            suggestions: [
-              'Check if value contains non-numeric characters',
-              'Use a valid numeric format',
-            ],
-          },
-        };
+        return converterError('Number', 'INVALID_NUMBER',
+          `Cannot convert "${value}" to a valid number`,
+          ['Check if value contains non-numeric characters', 'Use a valid numeric format'],
+          'invalid-argument');
       }
-      return { success: true, value: num, type: 'number' };
+      return success(num, 'number');
     } catch (error) {
-      return {
-        success: false,
-        error: {
-          name: 'NumberConversionError',
-          type: 'runtime-error',
-          message: `Failed to convert value to Number: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'NUMBER_CONVERSION_FAILED',
-          suggestions: ['Ensure value is convertible to number', 'Check for special characters'],
-        },
-      };
+      return converterError('Number', 'NUMBER_CONVERSION_FAILED',
+        errorMsg('Failed to convert value to Number', error),
+        ['Ensure value is convertible to number', 'Check for special characters']);
     }
   },
 
   Int: (value: unknown, context: TypedExpressionContext): EvaluationResult<number> => {
-    const numberResult = enhancedConverters.Number(value, context);
-    if (!numberResult.success) {
-      return numberResult as unknown as EvaluationResult<number>;
-    }
-    return { success: true, value: Math.trunc(numberResult.value as number), type: 'number' };
+    const result = enhancedConverters.Number(value, context);
+    if (!result.success) return result as EvaluationResult<number>;
+    return success(Math.trunc(result.value as number), 'number');
   },
 
   Float: (value: unknown, context: TypedExpressionContext): EvaluationResult<number> => {
-    const numberResult = enhancedConverters.Number(value, context);
-    if (!numberResult.success) {
-      return numberResult as unknown as EvaluationResult<number>;
-    }
-    return {
-      success: true,
-      value: parseFloat((numberResult.value as number).toString()),
-      type: 'number',
-    };
+    const result = enhancedConverters.Number(value, context);
+    if (!result.success) return result as EvaluationResult<number>;
+    return success(parseFloat((result.value as number).toString()), 'number');
   },
 
   Date: (value: unknown, _context: TypedExpressionContext): EvaluationResult<Date> => {
     try {
-      if (value instanceof Date) {
-        return { success: true, value, type: 'object' };
-      }
-      if (value == null) {
-        return { success: true, value: new Date(''), type: 'object' };
-      }
-
+      if (value instanceof Date) return success(value, 'object');
+      if (value == null) return success(new Date(''), 'object');
       // Handle YYYY-MM-DD format specially to avoid timezone issues
       if (isString(value) && /^\d{4}-\d{2}-\d{2}$/.test(value as string)) {
         const [year, month, day] = (value as string).split('-').map(Number);
-        const date = new Date(year, month - 1, day);
-        return { success: true, value: date, type: 'object' };
+        return success(new Date(year, month - 1, day), 'object');
       }
-
       const date = new Date(value as string | number | Date);
       if (isNaN(date.getTime())) {
-        return {
-          success: false,
-          error: {
-            name: 'DateConversionError',
-            type: 'invalid-argument',
-            message: `Cannot convert "${value}" to a valid date`,
-            code: 'INVALID_DATE',
-            suggestions: [
-              'Use ISO 8601 format (YYYY-MM-DD)',
-              'Check date string format',
-              'Ensure date values are valid',
-            ],
-          },
-        };
+        return converterError('Date', 'INVALID_DATE',
+          `Cannot convert "${value}" to a valid date`,
+          ['Use ISO 8601 format (YYYY-MM-DD)', 'Check date string format', 'Ensure date values are valid'],
+          'invalid-argument');
       }
-      return { success: true, value: date, type: 'object' };
+      return success(date, 'object');
     } catch (error) {
-      return {
-        success: false,
-        error: {
-          name: 'DateConversionError',
-          type: 'runtime-error',
-          message: `Failed to convert value to Date: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'DATE_CONVERSION_FAILED',
-          suggestions: ['Check date format', 'Ensure value is a valid date string or timestamp'],
-        },
-      };
+      return converterError('Date', 'DATE_CONVERSION_FAILED',
+        errorMsg('Failed to convert value to Date', error),
+        ['Check date format', 'Ensure value is a valid date string or timestamp']);
     }
   },
 
   JSON: (value: unknown, _context: TypedExpressionContext): EvaluationResult<string> => {
     try {
-      const jsonString = JSON.stringify(value);
-      return { success: true, value: jsonString, type: 'string' };
+      return success(JSON.stringify(value), 'string');
     } catch (error) {
-      return {
-        success: false,
-        error: {
-          name: 'JSONConversionError',
-          type: 'runtime-error',
-          message: `Failed to convert value to JSON: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'JSON_STRINGIFY_FAILED',
-          suggestions: [
-            'Check for circular references',
-            'Ensure all properties are serializable',
-            'Remove functions and undefined values',
-          ],
-        },
-      };
+      return converterError('JSON', 'JSON_STRINGIFY_FAILED',
+        errorMsg('Failed to convert value to JSON', error),
+        ['Check for circular references', 'Ensure all properties are serializable', 'Remove functions and undefined values']);
     }
   },
 
-  Object: (
-    value: unknown,
-    _context: TypedExpressionContext
-  ): EvaluationResult<Record<string, unknown>> => {
+  Object: (value: unknown, _context: TypedExpressionContext): EvaluationResult<Record<string, unknown>> => {
     try {
-      if (isObject(value)) {
-        return { success: true, value: value as Record<string, unknown>, type: 'object' };
-      }
+      if (isObject(value)) return success(value as Record<string, unknown>, 'object');
       if (isString(value)) {
         try {
-          const parsed = JSON.parse(value as string);
-          return { success: true, value: parsed, type: 'object' };
+          return success(JSON.parse(value as string), 'object');
         } catch (parseError) {
-          return {
-            success: false,
-            error: {
-              name: 'ObjectConversionError',
-              type: 'syntax-error',
-              message: `Cannot parse JSON string: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
-              code: 'JSON_PARSE_FAILED',
-              suggestions: [
-                'Check JSON syntax',
-                'Ensure proper escaping of quotes',
-                'Validate JSON format',
-              ],
-            },
-          };
+          return converterError('Object', 'JSON_PARSE_FAILED',
+            errorMsg('Cannot parse JSON string', parseError),
+            ['Check JSON syntax', 'Ensure proper escaping of quotes', 'Validate JSON format'],
+            'syntax-error');
         }
       }
-      return { success: true, value: {}, type: 'object' };
+      return success({}, 'object');
     } catch (error) {
-      return {
-        success: false,
-        error: {
-          name: 'ObjectConversionError',
-          type: 'runtime-error',
-          message: `Failed to convert value to Object: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'OBJECT_CONVERSION_FAILED',
-          suggestions: ['Ensure value is valid JSON string or object', 'Check for syntax errors'],
-        },
-      };
+      return converterError('Object', 'OBJECT_CONVERSION_FAILED',
+        errorMsg('Failed to convert value to Object', error),
+        ['Ensure value is valid JSON string or object', 'Check for syntax errors']);
     }
   },
 
-  Values: (
-    value: unknown,
-    _context: TypedExpressionContext
-  ): EvaluationResult<Record<string, unknown>> => {
+  Values: (value: unknown, _context: TypedExpressionContext): EvaluationResult<Record<string, unknown>> => {
     try {
       if (value instanceof HTMLFormElement) {
-        const formValues = extractFormValues(value);
-        return { success: true, value: formValues, type: 'object' };
+        return success(extractFormValues(value), 'object');
       }
       if (value instanceof HTMLElement) {
         const inputs = value.querySelectorAll('input, select, textarea');
@@ -336,24 +229,13 @@ export const enhancedConverters: Record<string, EnhancedTypeConverter> = {
             }
           }
         });
-        return { success: true, value: values, type: 'object' };
+        return success(values, 'object');
       }
-      return { success: true, value: {}, type: 'object' };
+      return success({}, 'object');
     } catch (error) {
-      return {
-        success: false,
-        error: {
-          name: 'FormValuesConversionError',
-          type: 'runtime-error',
-          message: `Failed to extract form values: ${error instanceof Error ? error.message : String(error)}`,
-          code: 'FORM_VALUES_EXTRACTION_FAILED',
-          suggestions: [
-            'Ensure element is a form or contains form inputs',
-            'Check form structure',
-            'Verify input names are set',
-          ],
-        },
-      };
+      return converterError('FormValues', 'FORM_VALUES_EXTRACTION_FAILED',
+        errorMsg('Failed to extract form values', error),
+        ['Ensure element is a form or contains form inputs', 'Check form structure', 'Verify input names are set']);
     }
   },
 };

@@ -98,6 +98,16 @@ export interface SetCommandOutput {
  * V1 Size: 748 lines (with Zod validation, complex syntax, CSS properties, object literals)
  * V2 Size: ~350 lines (core patterns only, 53% reduction)
  */
+/** Property setter lookup table for common DOM properties */
+const PROPERTY_SETTERS: Record<string, (el: HTMLElement, val: unknown) => void> = {
+  textContent: (el, val) => { el.textContent = String(val); },
+  innerHTML: (el, val) => { el.innerHTML = String(val); },
+  innerText: (el, val) => { el.innerText = String(val); },
+  id: (el, val) => { el.id = String(val); },
+  className: (el, val) => { el.className = String(val); },
+  value: (el, val) => { if ('value' in el) (el as HTMLInputElement).value = String(val); },
+};
+
 export class SetCommand {
   /**
    * Command name as registered in runtime
@@ -610,16 +620,7 @@ export class SetCommand {
 
 
   /**
-   * Set element property
-   *
-   * Sets property on the specified element.
-   * Handles common properties like textContent, innerHTML, value, className, etc.
-   *
-   * @param context - Execution context
-   * @param element - Target element
-   * @param property - Property name
-   * @param value - Value to set
-   * @returns Output descriptor
+   * Set element property using lookup table for common properties
    */
   private setProperty(
     context: TypedExecutionContext,
@@ -627,49 +628,26 @@ export class SetCommand {
     property: string,
     value: unknown
   ): SetCommandOutput {
-    // Handle common properties
-    if (property === 'textContent') {
-      element.textContent = String(value);
-    } else if (property === 'innerHTML') {
-      element.innerHTML = String(value);
-    } else if (property === 'innerText') {
-      element.innerText = String(value);
-    } else if (property === 'value' && 'value' in element) {
-      (element as HTMLInputElement).value = String(value);
-    } else if (property === 'id') {
-      element.id = String(value);
-    } else if (property === 'className') {
-      element.className = String(value);
+    // Try lookup table first
+    const setter = PROPERTY_SETTERS[property];
+    if (setter) {
+      setter(element, value);
     } else if (property.includes('-') || property in element.style) {
-      // Style property
+      // CSS style property
       element.style.setProperty(property, String(value));
     } else {
-      // Generic property
+      // Generic property with readonly protection
       try {
         (element as any)[property] = value;
       } catch (error) {
-        // Handle readonly properties gracefully
-        if (error instanceof TypeError && error.message.includes('only a getter')) {
-          return {
-            target: element,
-            value,
-            targetType: 'property',
-          };
+        if (!(error instanceof TypeError && error.message.includes('only a getter'))) {
+          throw new Error(`Cannot set property '${property}': ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
-        throw new Error(
-          `Cannot set property '${property}': ${error instanceof Error ? error.message : 'Unknown error'}`
-        );
       }
     }
 
-    // Update context.it
     Object.assign(context, { it: value });
-
-    return {
-      target: element,
-      value,
-      targetType: 'property',
-    };
+    return { target: element, value, targetType: 'property' };
   }
 }
 
