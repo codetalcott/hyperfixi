@@ -324,6 +324,85 @@ export const spanishProfile: LanguageProfile = {
 };
 
 // =============================================================================
+// German (SVO, Germanic)
+// =============================================================================
+
+export const germanProfile: LanguageProfile = {
+  code: 'de',
+  name: 'Deutsch',
+
+  wordOrder: 'SVO', // V2 in main clauses, but SVO for our purposes
+  adpositionType: 'preposition',
+  morphology: 'fusional',
+  direction: 'ltr',
+
+  canonicalOrder: ['event', 'action', 'patient', 'destination'],
+
+  markers: [
+    { form: 'bei', role: 'event', position: 'preposition', required: true },
+    { form: 'zu', role: 'destination', position: 'preposition', required: false },
+    { form: 'in', role: 'destination', position: 'preposition', required: false },
+    { form: 'von', role: 'source', position: 'preposition', required: false },
+    { form: 'aus', role: 'source', position: 'preposition', required: false },
+    { form: 'mit', role: 'instrument', position: 'preposition', required: false },
+    { form: 'um', role: 'quantity', position: 'preposition', required: false },
+    { form: 'als', role: 'manner', position: 'preposition', required: false },
+  ],
+};
+
+// =============================================================================
+// French (SVO, Romance)
+// =============================================================================
+
+export const frenchProfile: LanguageProfile = {
+  code: 'fr',
+  name: 'Français',
+
+  wordOrder: 'SVO',
+  adpositionType: 'preposition',
+  morphology: 'fusional',
+  direction: 'ltr',
+
+  canonicalOrder: ['event', 'action', 'patient', 'destination'],
+
+  markers: [
+    { form: 'sur', role: 'event', position: 'preposition', required: true },
+    { form: 'à', role: 'destination', position: 'preposition', required: false },
+    { form: 'dans', role: 'destination', position: 'preposition', required: false },
+    { form: 'de', role: 'source', position: 'preposition', required: false },
+    { form: 'avec', role: 'instrument', position: 'preposition', required: false },
+    { form: 'par', role: 'quantity', position: 'preposition', required: false },
+    { form: 'comme', role: 'manner', position: 'preposition', required: false },
+  ],
+};
+
+// =============================================================================
+// Portuguese (SVO, Romance)
+// =============================================================================
+
+export const portugueseProfile: LanguageProfile = {
+  code: 'pt',
+  name: 'Português',
+
+  wordOrder: 'SVO',
+  adpositionType: 'preposition',
+  morphology: 'fusional',
+  direction: 'ltr',
+
+  canonicalOrder: ['event', 'action', 'patient', 'destination'],
+
+  markers: [
+    { form: 'em', role: 'event', position: 'preposition', required: true },
+    { form: 'para', role: 'destination', position: 'preposition', required: false },
+    { form: 'em', role: 'destination', position: 'preposition', required: false },
+    { form: 'de', role: 'source', position: 'preposition', required: false },
+    { form: 'com', role: 'instrument', position: 'preposition', required: false },
+    { form: 'por', role: 'quantity', position: 'preposition', required: false },
+    { form: 'como', role: 'manner', position: 'preposition', required: false },
+  ],
+};
+
+// =============================================================================
 // Indonesian (SVO, Austronesian)
 // =============================================================================
 
@@ -405,6 +484,9 @@ export const profiles: Record<string, LanguageProfile> = {
   ar: arabicProfile,
   tr: turkishProfile,
   es: spanishProfile,
+  de: germanProfile,
+  fr: frenchProfile,
+  pt: portugueseProfile,
   id: indonesianProfile,
   qu: quechuaProfile,
   sw: swahiliProfile,

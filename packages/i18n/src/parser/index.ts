@@ -41,6 +41,10 @@ export { arKeywords, arDictionary } from './ar';
 export { koKeywords, koDictionary } from './ko';
 export { zhKeywords, zhDictionary } from './zh';
 export { trKeywords, trDictionary } from './tr';
+export { idKeywords, idDictionary } from './id';
+export { quKeywords, quDictionary } from './qu';
+export { swKeywords, swDictionary } from './sw';
+export { ptKeywords, ptDictionary } from './pt';
 
 // Locale management
 export { LocaleManager, detectBrowserLocale } from './locale-manager';

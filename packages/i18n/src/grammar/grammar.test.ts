@@ -47,10 +47,13 @@ describe('Language Profiles', () => {
     expect(locales).toContain('ar');
     expect(locales).toContain('tr');
     expect(locales).toContain('es');
+    expect(locales).toContain('de');
+    expect(locales).toContain('fr');
+    expect(locales).toContain('pt');
     expect(locales).toContain('id');
     expect(locales).toContain('qu');
     expect(locales).toContain('sw');
-    expect(locales.length).toBe(10);
+    expect(locales.length).toBe(13);
   });
 
   it('should return undefined for unknown locales', () => {

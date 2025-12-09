@@ -31,10 +31,22 @@ export {
   arabicProfile,
   turkishProfile,
   spanishProfile,
+  germanProfile,
+  frenchProfile,
+  portugueseProfile,
   indonesianProfile,
   quechuaProfile,
   swahiliProfile,
 } from './profiles';
+
+// Direct language-pair translation
+export {
+  directMappings,
+  hasDirectMapping,
+  getDirectMapping,
+  translateWordDirect,
+  getSupportedDirectPairs,
+} from './direct-mappings';
 
 // Transformer
 export {

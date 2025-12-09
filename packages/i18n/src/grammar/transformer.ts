@@ -15,6 +15,7 @@ import type {
 } from './types';
 import { reorderRoles, insertMarkers } from './types';
 import { getProfile, profiles } from './profiles';
+import { hasDirectMapping, getDirectMapping } from './direct-mappings';
 import { dictionaries } from '../dictionaries';
 import { findInDictionary, translateFromEnglish } from '../types';
 import {
@@ -603,16 +604,69 @@ export function toEnglish(input: string, sourceLocale: string): string {
 }
 
 /**
- * Transform between any two languages (via English as pivot)
+ * Transform between any two languages.
+ *
+ * Uses direct translation for supported language pairs (ja↔zh, es↔pt, ko↔ja),
+ * falling back to English pivot for other pairs.
  */
 export function translate(input: string, sourceLocale: string, targetLocale: string): string {
   if (sourceLocale === targetLocale) return input;
   if (sourceLocale === 'en') return toLocale(input, targetLocale);
   if (targetLocale === 'en') return toEnglish(input, sourceLocale);
 
-  // Via English
+  // Try direct translation for supported pairs
+  if (hasDirectMapping(sourceLocale, targetLocale)) {
+    return translateDirect(input, sourceLocale, targetLocale);
+  }
+
+  // Fallback: Via English pivot
   const english = toEnglish(input, sourceLocale);
   return toLocale(english, targetLocale);
+}
+
+/**
+ * Direct translation between language pairs without English pivot.
+ * More accurate for closely related languages (ja↔zh, es↔pt).
+ */
+function translateDirect(input: string, sourceLocale: string, targetLocale: string): string {
+  const mapping = getDirectMapping(sourceLocale, targetLocale);
+  if (!mapping) {
+    // Fallback to pivot translation
+    return toLocale(toEnglish(input, sourceLocale), targetLocale);
+  }
+
+  // Tokenize input
+  const tokens = input.split(/\s+/);
+
+  // Translate each token using direct mapping
+  const translated = tokens.map((token) => {
+    // Preserve CSS selectors and literals
+    if (token.startsWith('#') || token.startsWith('.') || token.startsWith('@')) {
+      return token;
+    }
+    if (token.startsWith('"') || token.startsWith("'")) {
+      return token;
+    }
+
+    // Look up in direct mapping
+    const directTranslation = mapping.words[token];
+    if (directTranslation) {
+      return directTranslation;
+    }
+
+    // Check for suffix-attached tokens (e.g., "#count-ta" in Quechua)
+    const suffixMatch = token.match(/^(.+?)(-.+)$/);
+    if (suffixMatch) {
+      const [, base, suffix] = suffixMatch;
+      const translatedBase = mapping.words[base] || base;
+      return translatedBase + suffix;
+    }
+
+    // Return unchanged if no mapping found
+    return token;
+  });
+
+  return translated.join(' ');
 }
 
 // =============================================================================

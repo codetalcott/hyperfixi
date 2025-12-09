@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HyperFixi Interactive Translation Playground</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .playground {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr auto;
+      height: calc(100vh - 60px);
+    }
+
+    .editor-panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #333;
+    }
+
+    .panel-header {
+      background: #252542;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #333;
+    }
+
+    .panel-header h2 {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    select {
+      background: #333;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .code-editor {
+      flex: 1;
+      background: #16162a;
+      padding: 1rem;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: none;
+      border: none;
+      color: #e0e0ff;
+      outline: none;
+    }
+
+    .code-editor::placeholder {
+      color: #666;
+    }
+
+    .preview-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .transformations {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      background: #16162a;
+    }
+
+    .transform-card {
+      background: #252542;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .transform-card.direct {
+      border: 1px solid #4caf50;
+    }
+
+    .lang-header {
+      padding: 0.75rem 1rem;
+      background: #333;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .lang-flag {
+      font-size: 1.25rem;
+    }
+
+    .lang-name {
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .word-order-badge {
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      background: #444;
+      color: #aaa;
+    }
+
+    .word-order-badge.svo { background: #2196f3; color: white; }
+    .word-order-badge.sov { background: #ff9800; color: white; }
+    .word-order-badge.vso { background: #9c27b0; color: white; }
+
+    .direct-badge {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      background: #4caf50;
+      color: white;
+    }
+
+    .transformed-code {
+      padding: 1rem;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #e0e0ff;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .transformed-code.rtl {
+      direction: rtl;
+      text-align: right;
+    }
+
+    .console-panel {
+      grid-column: 1 / -1;
+      background: #0d0d1a;
+      border-top: 1px solid #333;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .console-output {
+      padding: 1rem;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 12px;
+      color: #888;
+      white-space: pre-wrap;
+    }
+
+    .console-output .info { color: #2196f3; }
+    .console-output .success { color: #4caf50; }
+    .console-output .error { color: #f44336; }
+    .console-output .warning { color: #ff9800; }
+
+    .demo-area {
+      padding: 1rem;
+      background: #1a1a2e;
+      border-top: 1px solid #333;
+    }
+
+    .demo-area h3 {
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .demo-elements {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .demo-btn {
+      background: #667eea;
+      border: none;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+
+    .demo-btn:hover {
+      background: #5a6fd6;
+      transform: translateY(-1px);
+    }
+
+    .demo-btn.active {
+      background: #4caf50;
+    }
+
+    .demo-output {
+      background: #252542;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      min-width: 100px;
+      text-align: center;
+    }
+
+    .demo-input {
+      background: #252542;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    .semantic-view {
+      padding: 1rem;
+      background: #1a1a2e;
+      border-top: 1px solid #333;
+    }
+
+    .semantic-view h3 {
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .role-list {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .role-item {
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      border-left: 3px solid;
+    }
+
+    .role-item.event { background: #1a237e; border-color: #3f51b5; }
+    .role-item.action { background: #1b5e20; border-color: #4caf50; }
+    .role-item.patient { background: #b71c1c; border-color: #f44336; }
+    .role-item.destination { background: #4a148c; border-color: #9c27b0; }
+    .role-item.source { background: #e65100; border-color: #ff9800; }
+    .role-item.instrument { background: #006064; border-color: #00bcd4; }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: #666;
+    }
+
+    .loading {
+      opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+      .playground {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr auto;
+      }
+
+      .editor-panel {
+        border-right: none;
+        border-bottom: 1px solid #333;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>HyperFixi Translation Playground</h1>
+    <div class="header-actions">
+      <button class="btn" id="share-btn" title="Copy shareable link">Share</button>
+      <button class="btn" id="run-btn" title="Execute in demo area">Run</button>
+    </div>
+  </header>
+
+  <div class="playground">
+    <!-- Editor Panel -->
+    <div class="editor-panel">
+      <div class="panel-header">
+        <h2>Source</h2>
+        <select id="source-lang">
+          <option value="en">English</option>
+          <option value="es">Espanol</option>
+          <option value="ja">日本語</option>
+          <option value="zh">中文</option>
+          <option value="ko">한국어</option>
+          <option value="ar">العربية</option>
+          <option value="tr">Turkce</option>
+          <option value="de">Deutsch</option>
+          <option value="fr">Francais</option>
+          <option value="pt">Portugues</option>
+          <option value="id">Bahasa Indonesia</option>
+          <option value="sw">Kiswahili</option>
+          <option value="qu">Runasimi</option>
+        </select>
+      </div>
+      <textarea
+        id="code-editor"
+        class="code-editor"
+        placeholder="Enter hyperscript here...
+
+Examples:
+  on click increment #count
+  on click toggle .active
+  put my value into #output
+  wait 2 seconds then hide me"
+        spellcheck="false"
+      >on click increment #count</textarea>
+
+      <!-- Semantic Analysis -->
+      <div class="semantic-view">
+        <h3>Semantic Roles</h3>
+        <div class="role-list" id="semantic-roles">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Panel -->
+    <div class="preview-panel">
+      <div class="panel-header">
+        <h2>Transformations</h2>
+        <span id="transform-count" style="color: #666; font-size: 0.8rem;">13 languages</span>
+      </div>
+      <div class="transformations" id="transformations">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Demo Area -->
+      <div class="demo-area">
+        <h3>Live Demo</h3>
+        <div class="demo-elements">
+          <button class="demo-btn" id="demo-btn">Click Me</button>
+          <div class="demo-output" id="count">0</div>
+          <input class="demo-input" id="demo-input" placeholder="Type here...">
+          <div class="demo-output" id="output"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Console Panel -->
+    <div class="console-panel">
+      <div class="panel-header">
+        <h2>Console</h2>
+        <button class="btn" id="clear-console" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Clear</button>
+      </div>
+      <div class="console-output" id="console-output">
+<span class="info">[info]</span> HyperFixi Playground loaded
+<span class="info">[info]</span> 13 languages available with grammar transformation
+<span class="success">[ready]</span> Type hyperscript and see live translations
+      </div>
+    </div>
+  </div>
+
+  <!-- Load HyperFixi bundles -->
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../../packages/i18n/dist/hyperfixi-i18n.min.js"></script>
+
+  <script>
+    // Language metadata
+    const LANGUAGES = {
+      en: { name: 'English', flag: '🇺🇸', wordOrder: 'SVO' },
+      es: { name: 'Espanol', flag: '🇪🇸', wordOrder: 'SVO' },
+      pt: { name: 'Portugues', flag: '🇧🇷', wordOrder: 'SVO' },
+      ja: { name: '日本語', flag: '🇯🇵', wordOrder: 'SOV' },
+      zh: { name: '中文', flag: '🇨🇳', wordOrder: 'SVO' },
+      ko: { name: '한국어', flag: '🇰🇷', wordOrder: 'SOV' },
+      ar: { name: 'العربية', flag: '🇸🇦', wordOrder: 'VSO', rtl: true },
+      tr: { name: 'Turkce', flag: '🇹🇷', wordOrder: 'SOV' },
+      de: { name: 'Deutsch', flag: '🇩🇪', wordOrder: 'SVO' },
+      fr: { name: 'Francais', flag: '🇫🇷', wordOrder: 'SVO' },
+      id: { name: 'Bahasa Indonesia', flag: '🇮🇩', wordOrder: 'SVO' },
+      sw: { name: 'Kiswahili', flag: '🇰🇪', wordOrder: 'SVO' },
+      qu: { name: 'Runasimi', flag: '🇵🇪', wordOrder: 'SOV' },
+    };
+
+    // Direct translation pairs
+    const DIRECT_PAIRS = new Set([
+      'ja->zh', 'zh->ja',
+      'ko->ja', 'ja->ko',
+      'es->pt', 'pt->es',
+    ]);
+
+    // DOM elements
+    const codeEditor = document.getElementById('code-editor');
+    const sourceLang = document.getElementById('source-lang');
+    const transformations = document.getElementById('transformations');
+    const semanticRoles = document.getElementById('semantic-roles');
+    const consoleOutput = document.getElementById('console-output');
+
+    // Console logging
+    function logToConsole(message, type = 'info') {
+      const time = new Date().toLocaleTimeString();
+      consoleOutput.innerHTML += `\n<span class="${type}">[${type}]</span> ${escapeHtml(message)}`;
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Update transformations
+    function updateTransformations() {
+      const code = codeEditor.value.trim();
+      const source = sourceLang.value;
+
+      if (!code) {
+        transformations.innerHTML = '<div class="empty-state">Enter hyperscript to see translations</div>';
+        return;
+      }
+
+      let html = '';
+
+      for (const [lang, meta] of Object.entries(LANGUAGES)) {
+        if (lang === source) continue;
+
+        try {
+          const pairKey = `${source}->${lang}`;
+          const isDirect = DIRECT_PAIRS.has(pairKey);
+
+          // Use HyperFixiI18n if available, otherwise simulate
+          let translated = code;
+          if (window.HyperFixiI18n && window.HyperFixiI18n.translate) {
+            translated = window.HyperFixiI18n.translate(code, source, lang);
+          }
+
+          html += `
+            <div class="transform-card ${isDirect ? 'direct' : ''}">
+              <div class="lang-header">
+                <span class="lang-flag">${meta.flag}</span>
+                <span class="lang-name">${meta.name}</span>
+                ${isDirect ? '<span class="direct-badge">DIRECT</span>' : ''}
+                <span class="word-order-badge ${meta.wordOrder.toLowerCase()}">${meta.wordOrder}</span>
+              </div>
+              <pre class="transformed-code ${meta.rtl ? 'rtl' : ''}">${escapeHtml(translated)}</pre>
+            </div>
+          `;
+        } catch (e) {
+          html += `
+            <div class="transform-card">
+              <div class="lang-header">
+                <span class="lang-flag">${meta.flag}</span>
+                <span class="lang-name">${meta.name}</span>
+              </div>
+              <pre class="transformed-code" style="color: #f44336;">Error: ${escapeHtml(e.message)}</pre>
+            </div>
+          `;
+        }
+      }
+
+      transformations.innerHTML = html;
+    }
+
+    // Update semantic analysis
+    function updateSemanticAnalysis() {
+      const code = codeEditor.value.trim();
+      const source = sourceLang.value;
+
+      if (!code || !window.HyperFixiI18n || !window.HyperFixiI18n.parseStatement) {
+        semanticRoles.innerHTML = '<span style="color: #666;">Enter code to analyze</span>';
+        return;
+      }
+
+      try {
+        const parsed = window.HyperFixiI18n.parseStatement(code, source);
+        if (!parsed || !parsed.roles) {
+          semanticRoles.innerHTML = '<span style="color: #666;">Could not parse statement</span>';
+          return;
+        }
+
+        let html = '';
+        for (const [role, element] of parsed.roles) {
+          html += `<div class="role-item ${role}"><strong>${role}:</strong> ${escapeHtml(element.value)}</div>`;
+        }
+        semanticRoles.innerHTML = html || '<span style="color: #666;">No roles detected</span>';
+      } catch (e) {
+        semanticRoles.innerHTML = `<span style="color: #f44336;">Parse error: ${escapeHtml(e.message)}</span>`;
+      }
+    }
+
+    // Shareable URL
+    function shareCode() {
+      const code = codeEditor.value;
+      const lang = sourceLang.value;
+      const data = btoa(JSON.stringify({ code, lang }));
+      const url = `${location.origin}${location.pathname}#${data}`;
+
+      navigator.clipboard.writeText(url).then(() => {
+        logToConsole('Shareable link copied to clipboard!', 'success');
+      }).catch(() => {
+        // Fallback for older browsers
+        prompt('Copy this link:', url);
+      });
+    }
+
+    // Load from URL
+    function loadFromUrl() {
+      if (location.hash) {
+        try {
+          const data = JSON.parse(atob(location.hash.slice(1)));
+          if (data.code) codeEditor.value = data.code;
+          if (data.lang) sourceLang.value = data.lang;
+          logToConsole('Loaded from shared link', 'success');
+        } catch (e) {
+          logToConsole('Failed to load from URL: ' + e.message, 'error');
+        }
+      }
+    }
+
+    // Run hyperscript
+    function runHyperscript() {
+      const code = codeEditor.value.trim();
+      const source = sourceLang.value;
+
+      if (!code) {
+        logToConsole('No code to run', 'warning');
+        return;
+      }
+
+      try {
+        // Translate to English if needed
+        let englishCode = code;
+        if (source !== 'en' && window.HyperFixiI18n) {
+          englishCode = window.HyperFixiI18n.toEnglish(code, source);
+        }
+
+        logToConsole(`Running: ${englishCode}`, 'info');
+
+        // Try to run with HyperFixi
+        if (window.hyperfixi && window.hyperfixi.runtime) {
+          // This is a simplified demo - real execution would need proper integration
+          logToConsole('Execution simulated (demo mode)', 'success');
+        } else {
+          logToConsole('HyperFixi runtime not available', 'warning');
+        }
+      } catch (e) {
+        logToConsole('Execution error: ' + e.message, 'error');
+      }
+    }
+
+    // Event listeners
+    codeEditor.addEventListener('input', () => {
+      updateTransformations();
+      updateSemanticAnalysis();
+    });
+
+    sourceLang.addEventListener('change', () => {
+      updateTransformations();
+      updateSemanticAnalysis();
+      logToConsole(`Source language changed to ${LANGUAGES[sourceLang.value].name}`, 'info');
+    });
+
+    document.getElementById('share-btn').addEventListener('click', shareCode);
+    document.getElementById('run-btn').addEventListener('click', runHyperscript);
+    document.getElementById('clear-console').addEventListener('click', () => {
+      consoleOutput.innerHTML = '<span class="info">[info]</span> Console cleared';
+    });
+
+    // Demo button functionality
+    const demoBtn = document.getElementById('demo-btn');
+    const countOutput = document.getElementById('count');
+    let count = 0;
+
+    demoBtn.addEventListener('click', () => {
+      count++;
+      countOutput.textContent = count;
+      demoBtn.classList.toggle('active');
+      logToConsole(`Demo button clicked. Count: ${count}`, 'success');
+    });
+
+    // Demo input mirror
+    const demoInput = document.getElementById('demo-input');
+    const demoOutput = document.getElementById('output');
+
+    demoInput.addEventListener('input', () => {
+      demoOutput.textContent = demoInput.value;
+    });
+
+    // Initialize
+    loadFromUrl();
+    updateTransformations();
+    updateSemanticAnalysis();
+
+    // Check for HyperFixi availability
+    if (window.HyperFixiI18n) {
+      logToConsole('HyperFixi i18n module loaded successfully', 'success');
+      const profiles = window.HyperFixiI18n.getSupportedLocales ? window.HyperFixiI18n.getSupportedLocales() : [];
+      logToConsole(`Supported locales: ${profiles.join(', ')}`, 'info');
+    } else {
+      logToConsole('HyperFixi i18n module not found - running in demo mode', 'warning');
+    }
+  </script>
+</body>
+</html>

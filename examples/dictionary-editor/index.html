@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HyperFixi Dictionary Editor</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem 2rem;
+    }
+
+    .header h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 0.95rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .control-group label {
+      font-weight: 500;
+      color: #666;
+      font-size: 0.875rem;
+    }
+
+    select, input[type="text"] {
+      padding: 0.6rem 1rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background: white;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .btn {
+      padding: 0.6rem 1.25rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5a6fd6;
+    }
+
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+
+    .btn-success {
+      background: #4caf50;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #43a047;
+    }
+
+    .btn-danger {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #d32f2f;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem 1.5rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #667eea;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .coverage-bar {
+      width: 150px;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+
+    .coverage-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4caf50, #8bc34a);
+      transition: width 0.3s;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 1rem;
+      background: white;
+      padding: 0.5rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .tab:hover {
+      background: #f0f0f0;
+    }
+
+    .tab.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .tab .count {
+      font-size: 0.7rem;
+      opacity: 0.7;
+      margin-left: 0.25rem;
+    }
+
+    .dictionary-table {
+      width: 100%;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .dictionary-table th,
+    .dictionary-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    .dictionary-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #666;
+    }
+
+    .dictionary-table tr:hover {
+      background: #f8f9fa;
+    }
+
+    .dictionary-table input {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .dictionary-table input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .dictionary-table input.modified {
+      border-color: #ff9800;
+      background: #fff8e1;
+    }
+
+    .dictionary-table input.missing {
+      border-color: #f44336;
+      background: #ffebee;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .status-badge.translated { background: #e8f5e9; color: #2e7d32; }
+    .status-badge.modified { background: #fff3e0; color: #ef6c00; }
+    .status-badge.missing { background: #ffebee; color: #c62828; }
+
+    .pending-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #ddd;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      transform: translateY(100%);
+      transition: transform 0.3s;
+    }
+
+    .pending-panel.visible {
+      transform: translateY(0);
+    }
+
+    .pending-count {
+      font-weight: 500;
+    }
+
+    .pending-count strong {
+      color: #ff9800;
+    }
+
+    .pending-actions {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .coverage-matrix {
+      margin-top: 2rem;
+    }
+
+    .coverage-matrix h3 {
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .matrix-table {
+      width: 100%;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .matrix-table th,
+    .matrix-table td {
+      padding: 0.5rem;
+      text-align: center;
+      border: 1px solid #eee;
+      font-size: 0.8rem;
+    }
+
+    .matrix-table th {
+      background: #f8f9fa;
+      font-weight: 600;
+    }
+
+    .matrix-cell {
+      cursor: pointer;
+    }
+
+    .matrix-cell.high { background: #c8e6c9; color: #2e7d32; }
+    .matrix-cell.medium { background: #fff9c4; color: #f57f17; }
+    .matrix-cell.low { background: #ffcdd2; color: #c62828; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.visible {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-content h2 {
+      margin-bottom: 1rem;
+    }
+
+    .modal-content pre {
+      background: #f5f5f5;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 0.75rem;
+      justify-content: flex-end;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>HyperFixi Dictionary Editor</h1>
+    <p>Contribute translations for multilingual hyperscript support</p>
+  </header>
+
+  <div class="container">
+    <!-- Controls -->
+    <div class="controls">
+      <div class="control-group">
+        <label for="language-select">Language:</label>
+        <select id="language-select">
+          <option value="es">Espanol (es)</option>
+          <option value="pt">Portugues (pt)</option>
+          <option value="ja">日本語 (ja)</option>
+          <option value="zh">中文 (zh)</option>
+          <option value="ko">한국어 (ko)</option>
+          <option value="ar">العربية (ar)</option>
+          <option value="tr">Turkce (tr)</option>
+          <option value="de">Deutsch (de)</option>
+          <option value="fr">Francais (fr)</option>
+          <option value="id">Bahasa Indonesia (id)</option>
+          <option value="sw">Kiswahili (sw)</option>
+          <option value="qu">Runasimi (qu)</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="search">Search:</label>
+        <input type="text" id="search" placeholder="Filter keywords...">
+      </div>
+
+      <button class="btn btn-secondary" id="show-missing">Show Missing Only</button>
+      <button class="btn btn-secondary" id="show-coverage">Coverage Matrix</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat">
+        <div class="stat-value" id="total-keywords">0</div>
+        <div class="stat-label">Total Keywords</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="translated-count">0</div>
+        <div class="stat-label">Translated</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="missing-count">0</div>
+        <div class="stat-label">Missing</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="coverage-percent">0%</div>
+        <div class="stat-label">Coverage</div>
+        <div class="coverage-bar">
+          <div class="coverage-fill" id="coverage-bar" style="width: 0%"></div>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="stat-value" id="pending-count">0</div>
+        <div class="stat-label">Pending Changes</div>
+      </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="tabs" id="category-tabs">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Dictionary Table -->
+    <table class="dictionary-table">
+      <thead>
+        <tr>
+          <th style="width: 25%">English</th>
+          <th style="width: 35%">Translation</th>
+          <th style="width: 15%">Status</th>
+          <th style="width: 25%">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="dictionary-body">
+        <!-- Populated by JS -->
+      </tbody>
+    </table>
+
+    <!-- Coverage Matrix -->
+    <div class="coverage-matrix" id="coverage-matrix" style="display: none;">
+      <h3>Translation Coverage Matrix</h3>
+      <table class="matrix-table" id="matrix-table">
+        <!-- Populated by JS -->
+      </table>
+    </div>
+  </div>
+
+  <!-- Pending Changes Panel -->
+  <div class="pending-panel" id="pending-panel">
+    <div class="pending-count">
+      <strong id="pending-display">0</strong> pending changes
+    </div>
+    <div class="pending-actions">
+      <button class="btn btn-secondary" id="reset-changes">Reset All</button>
+      <button class="btn btn-success" id="export-changes">Export as PR</button>
+    </div>
+  </div>
+
+  <!-- Export Modal -->
+  <div class="modal" id="export-modal">
+    <div class="modal-content">
+      <h2>Export Changes for Pull Request</h2>
+      <p style="margin-bottom: 1rem; color: #666;">
+        Copy the content below and submit as a GitHub Pull Request to contribute your translations.
+      </p>
+      <pre id="export-content"></pre>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" id="close-modal">Close</button>
+        <button class="btn btn-primary" id="copy-export">Copy to Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load HyperFixi i18n bundle for dictionary data -->
+  <script src="../../packages/i18n/dist/hyperfixi-i18n.min.js"></script>
+
+  <script>
+    // State
+    const state = {
+      currentLanguage: 'es',
+      currentCategory: 'commands',
+      pendingChanges: new Map(),
+      showMissingOnly: false,
+      searchFilter: '',
+    };
+
+    // Categories
+    const CATEGORIES = ['commands', 'modifiers', 'events', 'logical', 'temporal', 'values', 'attributes'];
+
+    // Languages
+    const LANGUAGES = {
+      es: 'Espanol',
+      pt: 'Portugues',
+      ja: '日本語',
+      zh: '中文',
+      ko: '한국어',
+      ar: 'العربية',
+      tr: 'Turkce',
+      de: 'Deutsch',
+      fr: 'Francais',
+      id: 'Bahasa Indonesia',
+      sw: 'Kiswahili',
+      qu: 'Runasimi',
+    };
+
+    // Reference English dictionary (simplified)
+    const ENGLISH_REFERENCE = {
+      commands: {
+        on: 'on', tell: 'tell', trigger: 'trigger', send: 'send',
+        take: 'take', put: 'put', set: 'set', get: 'get',
+        add: 'add', remove: 'remove', toggle: 'toggle', hide: 'hide', show: 'show',
+        if: 'if', unless: 'unless', repeat: 'repeat', for: 'for',
+        while: 'while', until: 'until', continue: 'continue', break: 'break', halt: 'halt',
+        wait: 'wait', fetch: 'fetch', call: 'call', return: 'return',
+        make: 'make', log: 'log', throw: 'throw', catch: 'catch',
+        increment: 'increment', decrement: 'decrement', bind: 'bind',
+        go: 'go', copy: 'copy', swap: 'swap', morph: 'morph', append: 'append', exit: 'exit',
+      },
+      modifiers: {
+        to: 'to', from: 'from', into: 'into', with: 'with', as: 'as', by: 'by',
+        at: 'at', in: 'in', over: 'over', within: 'within', then: 'then', else: 'else', end: 'end',
+      },
+      events: {
+        click: 'click', change: 'change', input: 'input', submit: 'submit',
+        load: 'load', focus: 'focus', blur: 'blur',
+        keydown: 'keydown', keyup: 'keyup', mouseenter: 'mouseenter', mouseleave: 'mouseleave',
+        scroll: 'scroll', resize: 'resize', dblclick: 'dblclick',
+      },
+      logical: {
+        true: 'true', false: 'false', and: 'and', or: 'or', not: 'not',
+        is: 'is', exists: 'exists', matches: 'matches', contains: 'contains',
+        equals: 'equals', greater: 'greater', less: 'less', than: 'than',
+      },
+      temporal: {
+        seconds: 'seconds', second: 'second', milliseconds: 'milliseconds', ms: 'ms',
+        minutes: 'minutes', minute: 'minute', hours: 'hours', hour: 'hour',
+        after: 'after', before: 'before', every: 'every',
+      },
+      values: {
+        null: 'null', undefined: 'undefined', empty: 'empty', nothing: 'nothing',
+        first: 'first', last: 'last', next: 'next', previous: 'previous',
+        random: 'random', result: 'result', it: 'it', me: 'me', you: 'you',
+      },
+      attributes: {
+        class: 'class', style: 'style', id: 'id', value: 'value', text: 'text',
+        html: 'html', disabled: 'disabled', hidden: 'hidden', checked: 'checked',
+        selected: 'selected', href: 'href', src: 'src', title: 'title', name: 'name', type: 'type',
+      },
+    };
+
+    // DOM elements
+    const languageSelect = document.getElementById('language-select');
+    const categoryTabs = document.getElementById('category-tabs');
+    const dictionaryBody = document.getElementById('dictionary-body');
+    const pendingPanel = document.getElementById('pending-panel');
+    const searchInput = document.getElementById('search');
+
+    // Get dictionary for language
+    function getDictionary(lang) {
+      // Try to get from HyperFixiI18n
+      if (window.HyperFixiI18n && window.HyperFixiI18n[lang]) {
+        return window.HyperFixiI18n[lang];
+      }
+      // Fallback to empty
+      return {};
+    }
+
+    // Calculate coverage
+    function calculateCoverage(lang, category) {
+      const english = ENGLISH_REFERENCE[category] || {};
+      const target = getDictionary(lang)[category] || {};
+      const total = Object.keys(english).length;
+      let translated = 0;
+
+      for (const key of Object.keys(english)) {
+        const translation = target[key];
+        if (translation && translation !== key && translation !== english[key]) {
+          translated++;
+        }
+      }
+
+      return { total, translated, percent: total > 0 ? Math.round((translated / total) * 100) : 0 };
+    }
+
+    // Render category tabs
+    function renderCategoryTabs() {
+      let html = '';
+      for (const category of CATEGORIES) {
+        const coverage = calculateCoverage(state.currentLanguage, category);
+        const isActive = category === state.currentCategory;
+        html += `
+          <button class="tab ${isActive ? 'active' : ''}" data-category="${category}">
+            ${category.charAt(0).toUpperCase() + category.slice(1)}
+            <span class="count">(${coverage.translated}/${coverage.total})</span>
+          </button>
+        `;
+      }
+      categoryTabs.innerHTML = html;
+
+      // Add click handlers
+      categoryTabs.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          state.currentCategory = tab.dataset.category;
+          renderCategoryTabs();
+          renderTable();
+        });
+      });
+    }
+
+    // Render dictionary table
+    function renderTable() {
+      const english = ENGLISH_REFERENCE[state.currentCategory] || {};
+      const target = getDictionary(state.currentLanguage)[state.currentCategory] || {};
+      const filter = state.searchFilter.toLowerCase();
+
+      let html = '';
+
+      for (const [key, _] of Object.entries(english)) {
+        // Apply search filter
+        if (filter && !key.toLowerCase().includes(filter)) continue;
+
+        const translation = target[key] || '';
+        const changeKey = `${state.currentLanguage}:${state.currentCategory}:${key}`;
+        const pending = state.pendingChanges.get(changeKey);
+        const displayValue = pending !== undefined ? pending : translation;
+
+        let status = 'translated';
+        let inputClass = '';
+
+        if (pending !== undefined) {
+          status = 'modified';
+          inputClass = 'modified';
+        } else if (!translation || translation === key) {
+          status = 'missing';
+          inputClass = 'missing';
+        }
+
+        // Skip if showing missing only and it's translated
+        if (state.showMissingOnly && status === 'translated' && pending === undefined) continue;
+
+        html += `
+          <tr>
+            <td><code>${escapeHtml(key)}</code></td>
+            <td>
+              <input type="text"
+                     class="${inputClass}"
+                     value="${escapeHtml(displayValue)}"
+                     data-key="${key}"
+                     data-original="${escapeHtml(translation)}"
+                     placeholder="Enter translation...">
+            </td>
+            <td><span class="status-badge ${status}">${status}</span></td>
+            <td>
+              ${pending !== undefined ? `<button class="btn btn-secondary" onclick="revertChange('${key}')" style="font-size:0.75rem;padding:0.25rem 0.5rem;">Revert</button>` : ''}
+              ${!translation ? `<button class="btn btn-primary" onclick="suggestTranslation('${key}')" style="font-size:0.75rem;padding:0.25rem 0.5rem;">Suggest</button>` : ''}
+            </td>
+          </tr>
+        `;
+      }
+
+      dictionaryBody.innerHTML = html || '<tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">No entries found</td></tr>';
+
+      // Add input handlers
+      dictionaryBody.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', (e) => handleEdit(e.target.dataset.key, e.target.value, e.target.dataset.original));
+      });
+    }
+
+    // Handle edit
+    function handleEdit(englishKey, newValue, original) {
+      const changeKey = `${state.currentLanguage}:${state.currentCategory}:${englishKey}`;
+
+      if (newValue === original) {
+        state.pendingChanges.delete(changeKey);
+      } else {
+        state.pendingChanges.set(changeKey, newValue);
+      }
+
+      saveToLocalStorage();
+      updateStats();
+      updatePendingPanel();
+    }
+
+    // Revert change
+    window.revertChange = function(key) {
+      const changeKey = `${state.currentLanguage}:${state.currentCategory}:${key}`;
+      state.pendingChanges.delete(changeKey);
+      saveToLocalStorage();
+      renderTable();
+      updateStats();
+      updatePendingPanel();
+    };
+
+    // Suggest translation (placeholder)
+    window.suggestTranslation = function(key) {
+      alert(`Suggestion feature: You could use AI to suggest a translation for "${key}"`);
+    };
+
+    // Update stats
+    function updateStats() {
+      let totalTranslated = 0;
+      let totalKeywords = 0;
+      let totalMissing = 0;
+
+      for (const category of CATEGORIES) {
+        const coverage = calculateCoverage(state.currentLanguage, category);
+        totalKeywords += coverage.total;
+        totalTranslated += coverage.translated;
+        totalMissing += coverage.total - coverage.translated;
+      }
+
+      const coveragePercent = totalKeywords > 0 ? Math.round((totalTranslated / totalKeywords) * 100) : 0;
+
+      document.getElementById('total-keywords').textContent = totalKeywords;
+      document.getElementById('translated-count').textContent = totalTranslated;
+      document.getElementById('missing-count').textContent = totalMissing;
+      document.getElementById('coverage-percent').textContent = coveragePercent + '%';
+      document.getElementById('coverage-bar').style.width = coveragePercent + '%';
+      document.getElementById('pending-count').textContent = state.pendingChanges.size;
+    }
+
+    // Update pending panel
+    function updatePendingPanel() {
+      const count = state.pendingChanges.size;
+      document.getElementById('pending-display').textContent = count;
+      pendingPanel.classList.toggle('visible', count > 0);
+    }
+
+    // Local storage
+    function saveToLocalStorage() {
+      localStorage.setItem('hyperfixi-dict-pending',
+        JSON.stringify(Array.from(state.pendingChanges.entries()))
+      );
+    }
+
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('hyperfixi-dict-pending');
+      if (saved) {
+        try {
+          state.pendingChanges = new Map(JSON.parse(saved));
+        } catch (e) {
+          console.error('Failed to load pending changes:', e);
+        }
+      }
+    }
+
+    // Export as PR
+    function exportAsPR() {
+      const changesByLang = new Map();
+
+      for (const [key, value] of state.pendingChanges) {
+        const [lang, category, english] = key.split(':');
+        if (!changesByLang.has(lang)) changesByLang.set(lang, {});
+        if (!changesByLang.get(lang)[category]) changesByLang.get(lang)[category] = {};
+        changesByLang.get(lang)[category][english] = value;
+      }
+
+      let output = `# HyperFixi Dictionary Contribution\n\n`;
+      output += `Generated: ${new Date().toISOString()}\n\n`;
+      output += `## Changes Summary\n\n`;
+      output += `- Total changes: ${state.pendingChanges.size}\n`;
+      output += `- Languages affected: ${changesByLang.size}\n\n`;
+
+      for (const [lang, categories] of changesByLang) {
+        output += `## ${LANGUAGES[lang] || lang} (${lang}.ts)\n\n`;
+        for (const [category, changes] of Object.entries(categories)) {
+          output += `### ${category}\n\n\`\`\`typescript\n`;
+          for (const [english, translation] of Object.entries(changes)) {
+            output += `  ${english}: '${translation}',\n`;
+          }
+          output += `\`\`\`\n\n`;
+        }
+      }
+
+      output += `---\n\n`;
+      output += `To apply these changes:\n`;
+      output += `1. Open \`packages/i18n/src/dictionaries/{lang}.ts\`\n`;
+      output += `2. Update the relevant entries\n`;
+      output += `3. Run \`npm test --prefix packages/i18n\` to verify\n`;
+      output += `4. Submit a Pull Request\n`;
+
+      document.getElementById('export-content').textContent = output;
+      document.getElementById('export-modal').classList.add('visible');
+    }
+
+    // Render coverage matrix
+    function renderCoverageMatrix() {
+      let html = '<tr><th>Language</th>';
+      for (const category of CATEGORIES) {
+        html += `<th>${category}</th>`;
+      }
+      html += '<th>Total</th></tr>';
+
+      for (const [lang, name] of Object.entries(LANGUAGES)) {
+        html += `<tr><td><strong>${name}</strong></td>`;
+        let totalTranslated = 0, totalKeys = 0;
+
+        for (const category of CATEGORIES) {
+          const coverage = calculateCoverage(lang, category);
+          totalTranslated += coverage.translated;
+          totalKeys += coverage.total;
+
+          let cellClass = 'high';
+          if (coverage.percent < 50) cellClass = 'low';
+          else if (coverage.percent < 80) cellClass = 'medium';
+
+          html += `<td class="matrix-cell ${cellClass}" onclick="jumpToCell('${lang}', '${category}')">${coverage.percent}%</td>`;
+        }
+
+        const overallPercent = totalKeys > 0 ? Math.round((totalTranslated / totalKeys) * 100) : 0;
+        html += `<td><strong>${overallPercent}%</strong></td></tr>`;
+      }
+
+      document.getElementById('matrix-table').innerHTML = html;
+    }
+
+    // Jump to specific language/category
+    window.jumpToCell = function(lang, category) {
+      state.currentLanguage = lang;
+      state.currentCategory = category;
+      languageSelect.value = lang;
+      document.getElementById('coverage-matrix').style.display = 'none';
+      renderCategoryTabs();
+      renderTable();
+      updateStats();
+    };
+
+    // Utility
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Event listeners
+    languageSelect.addEventListener('change', () => {
+      state.currentLanguage = languageSelect.value;
+      renderCategoryTabs();
+      renderTable();
+      updateStats();
+    });
+
+    searchInput.addEventListener('input', () => {
+      state.searchFilter = searchInput.value;
+      renderTable();
+    });
+
+    document.getElementById('show-missing').addEventListener('click', (e) => {
+      state.showMissingOnly = !state.showMissingOnly;
+      e.target.textContent = state.showMissingOnly ? 'Show All' : 'Show Missing Only';
+      renderTable();
+    });
+
+    document.getElementById('show-coverage').addEventListener('click', () => {
+      const matrix = document.getElementById('coverage-matrix');
+      const isVisible = matrix.style.display !== 'none';
+      matrix.style.display = isVisible ? 'none' : 'block';
+      if (!isVisible) renderCoverageMatrix();
+    });
+
+    document.getElementById('reset-changes').addEventListener('click', () => {
+      if (confirm('Are you sure you want to reset all pending changes?')) {
+        state.pendingChanges.clear();
+        saveToLocalStorage();
+        renderTable();
+        updateStats();
+        updatePendingPanel();
+      }
+    });
+
+    document.getElementById('export-changes').addEventListener('click', exportAsPR);
+
+    document.getElementById('close-modal').addEventListener('click', () => {
+      document.getElementById('export-modal').classList.remove('visible');
+    });
+
+    document.getElementById('copy-export').addEventListener('click', () => {
+      const content = document.getElementById('export-content').textContent;
+      navigator.clipboard.writeText(content).then(() => {
+        alert('Copied to clipboard!');
+      });
+    });
+
+    // Initialize
+    loadFromLocalStorage();
+    renderCategoryTabs();
+    renderTable();
+    updateStats();
+    updatePendingPanel();
+  </script>
+</body>
+</html>

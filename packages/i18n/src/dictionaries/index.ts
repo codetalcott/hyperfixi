@@ -13,6 +13,7 @@ import { tr } from './tr';
 import { id } from './id';
 import { qu } from './qu';
 import { sw } from './sw';
+import { pt } from './pt';
 
 export const dictionaries: Record<string, Dictionary> = {
   en,
@@ -27,6 +28,7 @@ export const dictionaries: Record<string, Dictionary> = {
   id,
   qu,
   sw,
+  pt,
 };
 
 // Export individual dictionaries for direct import
@@ -42,6 +44,7 @@ export { tr } from './tr';
 export { id } from './id';
 export { qu } from './qu';
 export { sw } from './sw';
+export { pt } from './pt';
 
 // Helper to get all supported locales
 export const supportedLocales = Object.keys(dictionaries);

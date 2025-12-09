@@ -41,6 +41,10 @@ export { arKeywords, arDictionary } from './parser/ar';
 export { koKeywords, koDictionary } from './parser/ko';
 export { zhKeywords, zhDictionary } from './parser/zh';
 export { trKeywords, trDictionary } from './parser/tr';
+export { idKeywords, idDictionary } from './parser/id';
+export { quKeywords, quDictionary } from './parser/qu';
+export { swKeywords, swDictionary } from './parser/sw';
+export { ptKeywords, ptDictionary } from './parser/pt';
 
 // Locale management
 export { LocaleManager, detectBrowserLocale } from './parser/locale-manager';
@@ -54,6 +58,10 @@ export { ar } from './dictionaries/ar';
 export { ko } from './dictionaries/ko';
 export { zh } from './dictionaries/zh';
 export { tr } from './dictionaries/tr';
+export { id } from './dictionaries/id';
+export { qu } from './dictionaries/qu';
+export { sw } from './dictionaries/sw';
+export { pt } from './dictionaries/pt';
 
 // Grammar-aware transformation system (Phase 2)
 export {
@@ -88,9 +96,18 @@ export {
   arabicProfile,
   turkishProfile,
   spanishProfile,
+  germanProfile,
+  frenchProfile,
+  portugueseProfile,
   indonesianProfile,
   quechuaProfile,
   swahiliProfile,
+  // Direct language-pair translation
+  directMappings,
+  hasDirectMapping,
+  getDirectMapping,
+  translateWordDirect,
+  getSupportedDirectPairs,
   // Transformer
   GrammarTransformer,
   parseStatement,
