@@ -25,6 +25,190 @@ import {
 } from '../constants';
 
 // =============================================================================
+// Compound Statement Handling
+// =============================================================================
+
+/**
+ * English commands that can start a new statement.
+ * Used to detect command boundaries in space-chained statements.
+ */
+const COMMAND_KEYWORDS = new Set([
+  'add', 'append', 'async', 'beep', 'break', 'call', 'continue',
+  'decrement', 'default', 'exit', 'fetch', 'for', 'get', 'go',
+  'halt', 'hide', 'if', 'increment', 'install', 'js', 'log',
+  'make', 'measure', 'morph', 'pick', 'process', 'push', 'put',
+  'remove', 'render', 'repeat', 'replace', 'return', 'send', 'set',
+  'settle', 'show', 'swap', 'take', 'tell', 'throw', 'toggle',
+  'transition', 'trigger', 'unless', 'wait',
+]);
+
+/**
+ * Get all command keywords including translated ones for a locale.
+ */
+function getCommandKeywordsForLocale(locale: string): Set<string> {
+  const keywords = new Set(COMMAND_KEYWORDS);
+
+  // Add translated command keywords from dictionaries
+  const dict = dictionaries[locale];
+  if (dict?.commands) {
+    Object.values(dict.commands).forEach(cmd => {
+      if (typeof cmd === 'string') {
+        keywords.add(cmd.toLowerCase());
+      }
+    });
+  }
+
+  return keywords;
+}
+
+/**
+ * Split a compound statement into parts at "then" boundaries, newlines,
+ * AND command keyword boundaries.
+ *
+ * Example: "on click wait 1s then increment #count then toggle .active"
+ * Returns: ["on click wait 1s", "increment #count", "toggle .active"]
+ *
+ * Example: "on click\n  increment #count\n  toggle .highlight"
+ * Returns: ["on click", "increment #count", "toggle .highlight"]
+ *
+ * Example: "wait 2s toggle .highlight"
+ * Returns: ["wait 2s", "toggle .highlight"]
+ */
+function splitCompoundStatement(input: string, sourceLocale: string): string[] {
+  // First, split on newlines (preserving non-empty lines)
+  const lines = input.split(/\n/).map(line => line.trim()).filter(line => line.length > 0);
+
+  // If we have multiple lines, treat each as a separate part
+  // (but still need to handle "then" within each line)
+  let parts: string[] = [];
+
+  for (const line of lines) {
+    const lineParts = splitOnThen(line, sourceLocale);
+    // Further split each part on command boundaries
+    for (const part of lineParts) {
+      const commandParts = splitOnCommandBoundaries(part, sourceLocale);
+      parts.push(...commandParts);
+    }
+  }
+
+  return parts;
+}
+
+/**
+ * Split a statement on command keyword boundaries.
+ * E.g., "wait 2s toggle .highlight" → ["wait 2s", "toggle .highlight"]
+ *
+ * Special cases:
+ * - "on <event> <command>" stays together (event handler with first command)
+ * - Modifiers like "to", "from" don't trigger splits
+ */
+function splitOnCommandBoundaries(input: string, sourceLocale: string): string[] {
+  const commandKeywords = getCommandKeywordsForLocale(sourceLocale);
+  const tokens = input.split(/\s+/);
+
+  if (tokens.length === 0) return [input];
+
+  const parts: string[] = [];
+  let currentPart: string[] = [];
+
+  // Check if this starts with an event handler pattern (on/em/en/bei/で + event)
+  const firstTokenLower = tokens[0]?.toLowerCase();
+  const isEventHandler = EVENT_KEYWORDS.has(firstTokenLower);
+
+  // If it's an event handler, the first command after the event is part of the handler
+  // So we need to track whether we've seen the first command yet
+  let seenFirstCommand = !isEventHandler; // If not event handler, we're already past the "first command" phase
+
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    const lowerToken = token.toLowerCase();
+
+    // If this is a command keyword and we already have tokens in current part
+    if (commandKeywords.has(lowerToken) && currentPart.length > 0) {
+      // Check if the previous token looks like it could end a command
+      const prevToken = currentPart[currentPart.length - 1];
+      const prevLower = prevToken.toLowerCase();
+
+      // Don't split if the previous token is a modifier like "to", "from", "by", etc.
+      const modifiers = new Set(['to', 'into', 'from', 'with', 'by', 'as', 'at', 'in', 'on', 'of', 'over']);
+
+      // For event handlers: don't split before the first command
+      // E.g., "on click wait 1s" should stay together
+      if (!seenFirstCommand) {
+        // Mark that we've now seen the first command
+        seenFirstCommand = true;
+        currentPart.push(token);
+        continue;
+      }
+
+      if (!modifiers.has(prevLower) && !commandKeywords.has(prevLower)) {
+        // This looks like a command boundary - save current part and start new one
+        parts.push(currentPart.join(' '));
+        currentPart = [token];
+        continue;
+      }
+    }
+
+    currentPart.push(token);
+  }
+
+  // Add the last part
+  if (currentPart.length > 0) {
+    parts.push(currentPart.join(' '));
+  }
+
+  return parts.filter(p => p.length > 0);
+}
+
+/**
+ * Split a single line on "then" keywords.
+ */
+function splitOnThen(input: string, sourceLocale: string): string[] {
+  // Build regex pattern from all known "then" keywords
+  const thenKeywords = Array.from(THEN_KEYWORDS);
+
+  // Add any dictionary-specific "then" keyword for the source locale
+  const sourceDict = sourceLocale === 'en' ? null : dictionaries[sourceLocale];
+  if (sourceDict?.modifiers?.then) {
+    thenKeywords.push(sourceDict.modifiers.then);
+  }
+  // Also check logical.then since some dictionaries put it there
+  if ((sourceDict?.logical as Record<string, string>)?.then) {
+    thenKeywords.push((sourceDict?.logical as Record<string, string>).then);
+  }
+
+  // Create a regex that matches any "then" keyword as a whole word
+  // Use word boundaries to avoid matching "then" inside other words
+  const escapedKeywords = thenKeywords.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const pattern = new RegExp(`\\s+(${escapedKeywords.join('|')})\\s+`, 'gi');
+
+  // Split on "then" keywords
+  const parts = input.split(pattern).filter(part => {
+    // Filter out the "then" keywords themselves (captured by the group)
+    const lowerPart = part.toLowerCase().trim();
+    return lowerPart && !thenKeywords.some(k => k.toLowerCase() === lowerPart);
+  });
+
+  return parts.map(p => p.trim()).filter(p => p.length > 0);
+}
+
+/**
+ * Get the "then" keyword in the target language.
+ * Checks both modifiers and logical sections since dictionaries vary.
+ */
+function getTargetThenKeyword(targetLocale: string): string {
+  if (targetLocale === 'en') return 'then';
+
+  const targetDict = dictionaries[targetLocale];
+  if (!targetDict) return 'then';
+
+  // Check modifiers first, then logical (dictionaries vary)
+  return targetDict.modifiers?.then ||
+         (targetDict.logical as Record<string, string>)?.then ||
+         'then';
+}
+
+// =============================================================================
 // Derived Constants from Profiles
 // =============================================================================
 
@@ -498,9 +682,29 @@ export class GrammarTransformer {
   }
 
   /**
-   * Transform a hyperscript statement from source to target language
+   * Transform a hyperscript statement from source to target language.
+   * Handles compound statements with "then" by splitting, transforming each part,
+   * and rejoining with the target language's "then" keyword.
    */
   transform(input: string): string {
+    // Split compound statements at "then" boundaries
+    const parts = splitCompoundStatement(input, this.sourceProfile.code);
+
+    // If we have multiple parts, transform each and rejoin
+    if (parts.length > 1) {
+      const targetThen = getTargetThenKeyword(this.targetProfile.code);
+      const transformedParts = parts.map(part => this.transformSingle(part));
+      return transformedParts.join(` ${targetThen} `);
+    }
+
+    // Single statement (no "then" splitting needed)
+    return this.transformSingle(input);
+  }
+
+  /**
+   * Transform a single hyperscript statement (no compound "then" chains).
+   */
+  private transformSingle(input: string): string {
     // 1. Parse into semantic roles
     const parsed = parseStatement(input, this.sourceProfile.code);
     if (!parsed) {

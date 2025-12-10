@@ -405,7 +405,15 @@
   <header class="header">
     <h1>HyperFixi Translation Playground</h1>
     <div class="header-actions">
-      <button class="btn" id="share-btn" title="Copy shareable link">Share</button>
+      <!-- Hybrid: hyperfixi handles UI feedback, JS builds the URL -->
+      <button class="btn" id="share-btn" title="Copy shareable link"
+              _="on click
+                   call buildShareUrl() then set shareUrl to it
+                   copy shareUrl
+                   set my textContent to 'Copied!'
+                   call logToConsole('Shareable link copied to clipboard!', 'success')
+                   wait 2s
+                   set my textContent to 'Share'">Share</button>
     </div>
   </header>
 
@@ -414,7 +422,13 @@
     <div class="editor-panel">
       <div class="panel-header">
         <h2>Source</h2>
-        <select id="source-lang">
+        <!-- Hybrid: hyperfixi handles event + log, calls JS for complex logic -->
+        <select id="source-lang"
+                _="on change
+                     call updateTransformations()
+                     call updateSemanticAnalysis()
+                     call getLanguageName(my value) then set langName to it
+                     call logToConsole('Source language changed to ' + langName, 'info')">
           <option value="en">English</option>
           <option value="es">Espanol</option>
           <option value="ja">日本語</option>
@@ -430,6 +444,7 @@
           <option value="qu">Runasimi</option>
         </select>
       </div>
+      <!-- Hybrid: hyperfixi handles the event, calls JS for complex translation logic -->
       <textarea
         id="code-editor"
         class="code-editor"
@@ -441,6 +456,7 @@ Examples:
   on click add .highlight then wait 1s then remove .highlight
   on click add .faded then wait 1s then remove .faded"
         spellcheck="false"
+        _="on input call updateTransformations() then call updateSemanticAnalysis()"
       >on click increment #count</textarea>
 
       <!-- Semantic Analysis -->
@@ -467,8 +483,11 @@ Examples:
         <div class="demo-header">
           <h3>Live Demo</h3>
           <div class="demo-controls">
-            <button class="btn btn-primary" id="run-btn" title="Apply source code to demo button">Apply</button>
-            <button class="btn" id="reset-btn" title="Reset demo state">Reset</button>
+            <!-- Hybrid: hyperfixi handles click, calls JS for complex hyperscript application -->
+            <button class="btn btn-primary" id="run-btn" title="Apply source code to demo button"
+                    _="on click call runHyperscript()">Apply</button>
+            <button class="btn" id="reset-btn" title="Reset demo state"
+                    _="on click call resetDemo()">Reset</button>
           </div>
         </div>
         <div class="demo-current" id="demo-current">
@@ -478,7 +497,9 @@ Examples:
         <div class="demo-elements">
           <button class="demo-btn" id="demo-btn">Click Me</button>
           <div class="demo-output" id="count">0</div>
-          <input class="demo-input" id="demo-input" placeholder="Type here...">
+          <!-- Pure hyperfixi: simple input mirroring -->
+          <input class="demo-input" id="demo-input" placeholder="Type here..."
+                 _="on input put my value into #output">
           <div class="demo-output" id="output"></div>
         </div>
       </div>
@@ -488,7 +509,9 @@ Examples:
     <div class="console-panel">
       <div class="panel-header">
         <h2>Console</h2>
-        <button class="btn" id="clear-console" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">Clear</button>
+        <!-- Pure hyperfixi: clear console with simple put command -->
+        <button class="btn" id="clear-console" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                _="on click put '<span class=\"info\">[info]</span> Console cleared' into #console-output">Clear</button>
       </div>
       <div class="console-output" id="console-output">
 <span class="info">[info]</span> HyperFixi Playground loaded
@@ -503,6 +526,29 @@ Examples:
   <script src="../../packages/i18n/dist/hyperfixi-i18n.min.js"></script>
 
   <script>
+    /**
+     * HyperFixi Translation Playground - Hybrid Implementation
+     *
+     * This page demonstrates a hybrid approach where:
+     *
+     * HYPERFIXI HANDLES (via _= attributes in HTML):
+     * - Share button: click → build URL → copy to clipboard → update text → wait → restore
+     * - Code editor: input → call updateTransformations/updateSemanticAnalysis
+     * - Source language: change → call updates + log language change
+     * - Run/Reset buttons: click → call JS functions
+     * - Demo input: input → put value into output (pure hyperfixi)
+     * - Clear console: click → put message into console (pure hyperfixi)
+     *
+     * JAVASCRIPT HANDLES (complex logic):
+     * - buildShareUrl(): URL encoding with btoa/JSON
+     * - updateTransformations(): Iteration, template generation, HyperFixiI18n.translate()
+     * - updateSemanticAnalysis(): HyperFixiI18n.parseStatement(), dynamic HTML
+     * - runHyperscript(): Programmatic hyperfixi.run() API
+     * - resetDemo(): Complex state cleanup
+     * - loadFromUrl(): URL hash parsing, atob/JSON decoding
+     * - logToConsole(): DOM manipulation with escaping
+     */
+
     // Language metadata
     const LANGUAGES = {
       en: { name: 'English', flag: '🇺🇸', wordOrder: 'SVO' },
@@ -626,48 +672,18 @@ Examples:
       }
     }
 
-    // Shareable URL
-    function shareCode() {
+    // Build shareable URL (called from hyperfixi via `call buildShareUrl()`)
+    // Hyperfixi's built-in `copy` command handles the clipboard
+    function buildShareUrl() {
       const code = codeEditor.value;
       const lang = sourceLang.value;
       const data = btoa(JSON.stringify({ code, lang }));
-      const url = `${location.origin}${location.pathname}#${data}`;
-      const shareBtn = document.getElementById('share-btn');
-      const originalText = shareBtn.textContent;
-
-      // Try clipboard API first
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(url).then(() => {
-          shareBtn.textContent = 'Copied!';
-          logToConsole('Shareable link copied to clipboard!', 'success');
-          setTimeout(() => { shareBtn.textContent = originalText; }, 2000);
-        }).catch((err) => {
-          logToConsole('Clipboard failed: ' + err.message, 'warning');
-          fallbackCopy(url, shareBtn, originalText);
-        });
-      } else {
-        fallbackCopy(url, shareBtn, originalText);
-      }
+      return `${location.origin}${location.pathname}#${data}`;
     }
 
-    function fallbackCopy(url, shareBtn, originalText) {
-      // Fallback: use textarea + execCommand
-      const textarea = document.createElement('textarea');
-      textarea.value = url;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      try {
-        document.execCommand('copy');
-        shareBtn.textContent = 'Copied!';
-        logToConsole('Shareable link copied to clipboard!', 'success');
-      } catch (e) {
-        shareBtn.textContent = 'Failed';
-        logToConsole('Copy failed. URL: ' + url, 'warning');
-      }
-      document.body.removeChild(textarea);
-      setTimeout(() => { shareBtn.textContent = originalText; }, 2000);
+    // Get language name by code (called from hyperfixi)
+    function getLanguageName(code) {
+      return LANGUAGES[code]?.name || code;
     }
 
     // Load from URL
@@ -740,23 +756,13 @@ Examples:
       }
     }
 
-    // Event listeners
-    codeEditor.addEventListener('input', () => {
-      updateTransformations();
-      updateSemanticAnalysis();
-    });
+    // NOTE: Event listeners for code-editor, source-lang, run-btn, reset-btn,
+    // clear-console, and demo-input are now handled by hyperfixi attributes (_=)
+    // See the HTML elements above for the hyperscript implementations.
 
-    sourceLang.addEventListener('change', () => {
-      updateTransformations();
-      updateSemanticAnalysis();
-      logToConsole(`Source language changed to ${LANGUAGES[sourceLang.value].name}`, 'info');
-    });
-
-    // Demo elements - no hardcoded behavior, let hyperscript control them
+    // Demo elements references
     const demoBtn = document.getElementById('demo-btn');
     const countOutput = document.getElementById('count');
-    const demoInput = document.getElementById('demo-input');
-    const demoOutput = document.getElementById('output');
 
     // Expose for debugging and for hyperscript to find after reset
     window.demoBtn = demoBtn;
@@ -785,19 +791,6 @@ Examples:
       currentDemoScript = null;
       logToConsole('Demo reset. Click Apply to run hyperscript.', 'info');
     }
-
-    // Event listeners
-    document.getElementById('share-btn').addEventListener('click', shareCode);
-    document.getElementById('run-btn').addEventListener('click', runHyperscript);
-    document.getElementById('reset-btn').addEventListener('click', resetDemo);
-    document.getElementById('clear-console').addEventListener('click', () => {
-      consoleOutput.innerHTML = '<span class="info">[info]</span> Console cleared';
-    });
-
-    // Demo input mirror
-    demoInput.addEventListener('input', () => {
-      demoOutput.textContent = demoInput.value;
-    });
 
     // Initialize
     loadFromUrl();
