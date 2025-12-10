@@ -1,39 +1,24 @@
 /**
- * UnlessCommand - Standalone V2 Implementation
+ * UnlessCommand - Decorated Implementation
  *
- * Conditionally executes commands only if the condition is false (inverse of if)
- *
- * This is a standalone implementation with NO V1 dependencies,
- * enabling true tree-shaking by inlining essential utilities.
- *
- * Features:
- * - Inverse conditional logic (executes when condition is false)
- * - Multiple command execution
- * - Result tracking
- * - Context updates between commands
- * - Comprehensive condition evaluation
+ * Conditionally executes commands only if the condition is false.
+ * Uses Stage 3 decorators for reduced boilerplate.
  *
  * Syntax:
  *   unless <condition> <command> [<command> ...]
- *
- * @example
- *   unless user.isLoggedIn showLoginForm
- *   unless data.isValid clearForm showError
- *   unless element.isVisible fadeIn
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { evaluateCondition } from '../helpers/condition-helpers';
+import { command, meta, createFactory } from '../decorators';
 
 /**
  * Typed input for UnlessCommand
  */
 export interface UnlessCommandInput {
-  /** Condition to evaluate (inverse logic) */
   condition: any;
-  /** Commands to execute if condition is false */
   commands: any[];
 }
 
@@ -49,51 +34,19 @@ export interface UnlessCommandOutput {
 }
 
 /**
- * UnlessCommand - Standalone V2 Implementation
+ * UnlessCommand - Inverse conditional execution
  *
- * Self-contained implementation with no V1 dependencies.
- * Achieves tree-shaking by inlining all required utilities.
- *
- * V1 Size: 224 lines
- * V2 Target: ~210 lines (inline utilities, standalone)
+ * Before: 202 lines
+ * After: ~90 lines (55% reduction)
  */
+@meta({
+  description: 'Execute commands only if condition is false (inverse of if)',
+  syntax: ['unless <condition> <command> [<command> ...]'],
+  examples: ['unless user.isLoggedIn showLoginForm', 'unless data.isValid clearForm'],
+  sideEffects: ['conditional-execution'],
+})
+@command({ name: 'unless', category: 'control-flow' })
 export class UnlessCommand {
-  /**
-   * Command name as registered in runtime
-   */
-  readonly name = 'unless';
-
-  /**
-   * Command metadata for documentation and tooling
-   */
-  static readonly metadata = {
-    description: 'Execute commands only if condition is false (inverse of if)',
-    syntax: ['unless <condition> <command> [<command> ...]'],
-    examples: [
-      'unless user.isLoggedIn showLoginForm',
-      'unless data.isValid clearForm showError',
-      'unless element.isVisible fadeIn',
-      'unless count > 10 increment',
-    ],
-    category: 'control-flow',
-    sideEffects: ['conditional-execution'],
-  } as const;
-
-  /**
-   * Instance accessor for metadata (backward compatibility)
-   */
-  get metadata() {
-    return UnlessCommand.metadata;
-  }
-
-  /**
-   * Parse raw AST nodes into typed command input
-   *
-   * @param raw - Raw command node with args and modifiers from AST
-   * @param evaluator - Expression evaluator for evaluating AST nodes
-   * @param context - Execution context with me, you, it, etc.
-   * @returns Typed input object for execute()
-   */
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
@@ -102,101 +55,41 @@ export class UnlessCommand {
     if (raw.args.length < 2) {
       throw new Error('unless command requires a condition and at least one command');
     }
-
-    // First arg is the condition
     const condition = await evaluator.evaluate(raw.args[0], context);
-
-    // Remaining args are commands to execute
     const commands = raw.args.slice(1);
-
-    return {
-      condition,
-      commands,
-    };
+    return { condition, commands };
   }
 
-  /**
-   * Execute the unless command
-   *
-   * Executes commands only if condition is FALSE (inverse of if).
-   *
-   * @param input - Typed command input from parseInput()
-   * @param context - Typed execution context
-   * @returns Execution result with condition and results
-   */
   async execute(
     input: UnlessCommandInput,
     context: TypedExecutionContext
   ): Promise<UnlessCommandOutput> {
     const { condition, commands } = input;
-
-    // Evaluate the condition
     const conditionResult = evaluateCondition(condition, context);
 
-    // Unless logic: execute commands only if condition is FALSE
     if (conditionResult) {
-      // Condition is true, don't execute commands
-      return {
-        conditionResult,
-        executed: false,
-        commandCount: commands.length,
-        results: [],
-      };
+      return { conditionResult, executed: false, commandCount: commands.length, results: [] };
     }
 
-    // Condition is false, execute commands
     const results: any[] = [];
-    let lastResult: any = undefined;
+    let lastResult: any;
 
-    for (const command of commands) {
-      try {
-        const result = await this.executeCommand(command, context);
-        results.push(result);
-        lastResult = result;
-
-        // Update context for next command
-        Object.assign(context, { it: result });
-      } catch (error) {
-        throw new Error(
-          `Command execution failed in unless block: ${error instanceof Error ? error.message : 'Unknown error'}`
-        );
-      }
+    for (const cmd of commands) {
+      const result = await this.executeCommand(cmd, context);
+      results.push(result);
+      lastResult = result;
+      Object.assign(context, { it: result });
     }
 
-    return {
-      conditionResult,
-      executed: true,
-      commandCount: commands.length,
-      results,
-      lastResult,
-    };
+    return { conditionResult, executed: true, commandCount: commands.length, results, lastResult };
   }
 
-  // ========== Private Utility Methods ==========
-
-  /**
-   * Execute a command
-   *
-   * @param command - Command to execute (function or object with execute method)
-   * @param context - Execution context
-   * @returns Command result
-   */
-  private async executeCommand(command: any, context: TypedExecutionContext): Promise<any> {
-    if (typeof command === 'function') {
-      return await command(context);
-    }
-
-    if (command && typeof command === 'object' && typeof command.execute === 'function') {
-      return await command.execute(context);
-    }
-
-    throw new Error('Invalid command: must be a function or object with execute method');
+  private async executeCommand(cmd: any, context: TypedExecutionContext): Promise<any> {
+    if (typeof cmd === 'function') return await cmd(context);
+    if (cmd?.execute) return await cmd.execute(context);
+    throw new Error('Invalid command');
   }
 }
 
-/**
- * Factory function to create UnlessCommand instance
- */
-export function createUnlessCommand(): UnlessCommand {
-  return new UnlessCommand();
-}
+export const createUnlessCommand = createFactory(UnlessCommand);
+export default UnlessCommand;

@@ -1,14 +1,13 @@
 /**
- * TransitionCommand - Standalone V2 Implementation
+ * TransitionCommand - Decorated Implementation
  *
  * Animates CSS properties using CSS transitions.
- * Uses shared helpers from commands/helpers/ for element resolution and duration parsing.
+ * Uses Stage 3 decorators for reduced boilerplate.
  *
  * Syntax:
  *   transition <property> to <value>
  *   transition <property> to <value> over <duration>
  *   transition <property> to <value> over <duration> with <timing-function>
- *   transition <target> <property> to <value>
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
@@ -17,6 +16,7 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveElement } from '../helpers/element-resolution';
 import { parseDuration, camelToKebab } from '../helpers/duration-parsing';
+import { command, meta, createFactory } from '../decorators';
 
 /**
  * Typed input for TransitionCommand
@@ -42,209 +42,86 @@ export interface TransitionCommandOutput {
 }
 
 /**
- * TransitionCommand - Animates CSS properties with transitions
+ * TransitionCommand - Animate CSS with transitions
+ *
+ * Before: 250 lines
+ * After: ~130 lines (48% reduction)
  */
+@meta({
+  description: 'Animate CSS properties using CSS transitions',
+  syntax: 'transition <property> to <value> [over <duration>] [with <timing>]',
+  examples: ['transition opacity to 0.5', 'transition left to 100px over 500ms', 'transition background-color to red over 1s with ease-in-out'],
+  sideEffects: ['style-change', 'timing'],
+})
+@command({ name: 'transition', category: 'animation' })
 export class TransitionCommand {
-  readonly name = 'transition';
-
-  static readonly metadata = {
-    description: 'Animate CSS properties using CSS transitions',
-    syntax: 'transition <property> to <value> [over <duration>] [with <timing>]',
-    examples: [
-      'transition opacity to 0.5',
-      'transition left to 100px over 500ms',
-      'transition background-color to red over 1s with ease-in-out',
-    ],
-    category: 'animation',
-  } as const;
-
-  /**
-   * Instance accessor for metadata (backward compatibility)
-   */
-  get metadata() {
-    return TransitionCommand.metadata;
-  }
-
-  /**
-   * Parse raw AST nodes into typed command input
-   */
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<TransitionCommandInput> {
-    if (!raw.args || raw.args.length === 0) {
-      throw new Error('transition command requires property and value arguments');
-    }
+    if (!raw.args?.length) throw new Error('transition requires property and value');
 
     let property: string;
     let target: string | HTMLElement | undefined;
-    let duration: number | string | undefined;
-    let timingFunction: string | undefined;
-
-    // Check if first arg is a target element
     const firstArg = await evaluator.evaluate(raw.args[0], context);
 
-    if (
-      isHTMLElement(firstArg) ||
-      (typeof firstArg === 'string' && (
-        firstArg.startsWith('#') ||
-        firstArg.startsWith('.') ||
-        firstArg === 'me' ||
-        firstArg === 'it' ||
-        firstArg === 'you'
-      ))
-    ) {
+    if (isHTMLElement(firstArg) || (typeof firstArg === 'string' && /^[#.me|it|you]/.test(firstArg))) {
       target = firstArg as string | HTMLElement;
       property = String(await evaluator.evaluate(raw.args[1], context));
     } else {
       property = String(firstArg);
     }
 
-    if (!property) {
-      throw new Error('transition command requires a CSS property');
-    }
+    if (!property) throw new Error('transition requires a CSS property');
+    if (!raw.modifiers?.to) throw new Error('transition requires "to <value>"');
 
-    // Extract value from 'to' modifier
-    if (!raw.modifiers?.to) {
-      throw new Error('transition command requires "to <value>" modifier');
-    }
     const value = await evaluator.evaluate(raw.modifiers.to, context);
-
-    // Extract optional duration from 'over' modifier
-    if (raw.modifiers?.over) {
-      duration = await evaluator.evaluate(raw.modifiers.over, context);
-    }
-
-    // Extract optional timing function from 'with' modifier
-    if (raw.modifiers?.with) {
-      timingFunction = String(await evaluator.evaluate(raw.modifiers.with, context));
-    }
-
-    const result: TransitionCommandInput = {
-      property,
-      value: value as string | number,
-    };
+    const result: TransitionCommandInput = { property, value: value as string | number };
     if (target !== undefined) result.target = target;
-    if (duration !== undefined) result.duration = duration;
-    if (timingFunction !== undefined) result.timingFunction = timingFunction;
+    if (raw.modifiers?.over) result.duration = await evaluator.evaluate(raw.modifiers.over, context);
+    if (raw.modifiers?.with) result.timingFunction = String(await evaluator.evaluate(raw.modifiers.with, context));
     return result;
   }
 
-  /**
-   * Execute the transition command
-   */
-  async execute(
-    input: TransitionCommandInput,
-    context: TypedExecutionContext
-  ): Promise<TransitionCommandOutput> {
-    const { target, value, duration: durationInput, timingFunction } = input;
+  async execute(input: TransitionCommandInput, context: TypedExecutionContext): Promise<TransitionCommandOutput> {
     let { property } = input;
+    const { target, value, duration: durationInput, timingFunction } = input;
 
-    if (!property || typeof property !== 'string') {
-      throw new Error('transition command requires a CSS property');
-    }
-
-    if (value === undefined || value === null) {
-      throw new Error(`transition command for property "${property}" requires a target value`);
-    }
-
-    // Handle CSS property prefix (*property means use the actual CSS property name)
-    if (property.startsWith('*')) {
-      property = property.substring(1);
-    }
-
-    // Convert camelCase to kebab-case using shared helper
+    if (property.startsWith('*')) property = property.substring(1);
     property = camelToKebab(property);
 
-    // Resolve target element using shared helper
     const targetElement = resolveElement(target, context);
-
-    // Parse duration using shared helper
     const duration = parseDuration(durationInput, 300);
-
-    // Get current value before transition
     const fromValue = getComputedStyle(targetElement).getPropertyValue(property);
 
-    // Set up transition
     const originalTransition = targetElement.style.transition;
-    const transitionProperty = `${property} ${duration}ms ${timingFunction || 'ease'}`;
-    targetElement.style.transition = originalTransition
-      ? `${originalTransition}, ${transitionProperty}`
-      : transitionProperty;
+    const transitionProp = `${property} ${duration}ms ${timingFunction || 'ease'}`;
+    targetElement.style.transition = originalTransition ? `${originalTransition}, ${transitionProp}` : transitionProp;
 
-    // Apply the new value
     const toValue = String(value);
     targetElement.style.setProperty(property, toValue);
 
-    // Wait for transition to complete
     const completed = await this.waitForTransition(targetElement, property, duration);
-
-    // Clean up transition
     targetElement.style.transition = originalTransition;
-
-    // Set result in context
     Object.assign(context, { it: targetElement });
 
-    return {
-      element: targetElement,
-      property,
-      fromValue,
-      toValue,
-      duration,
-      completed,
-    };
+    return { element: targetElement, property, fromValue, toValue, duration, completed };
   }
 
-  /**
-   * Wait for CSS transition to complete
-   */
-  private async waitForTransition(
-    element: HTMLElement,
-    property: string,
-    duration: number
-  ): Promise<boolean> {
-    return new Promise<boolean>(resolve => {
-      let completed = false;
-
-      const cleanup = () => {
-        element.removeEventListener('transitionend', onTransitionEnd);
-        element.removeEventListener('transitioncancel', onTransitionCancel);
-        clearTimeout(timeoutId);
-      };
-
-      const finish = (wasCompleted: boolean) => {
-        if (!completed) {
-          completed = true;
-          cleanup();
-          resolve(wasCompleted);
-        }
-      };
-
-      const onTransitionEnd = (event: TransitionEvent) => {
-        if (event.target === element && event.propertyName === property) {
-          finish(true);
-        }
-      };
-
-      const onTransitionCancel = (event: TransitionEvent) => {
-        if (event.target === element && event.propertyName === property) {
-          finish(false);
-        }
-      };
-
-      element.addEventListener('transitionend', onTransitionEnd);
-      element.addEventListener('transitioncancel', onTransitionCancel);
-
-      // Set timeout as fallback (duration + 50ms buffer)
-      const timeoutId = setTimeout(() => finish(true), duration + 50);
+  private async waitForTransition(element: HTMLElement, property: string, duration: number): Promise<boolean> {
+    return new Promise(resolve => {
+      let done = false;
+      const cleanup = () => { element.removeEventListener('transitionend', onEnd); element.removeEventListener('transitioncancel', onCancel); clearTimeout(tid); };
+      const finish = (ok: boolean) => { if (!done) { done = true; cleanup(); resolve(ok); } };
+      const onEnd = (e: TransitionEvent) => { if (e.target === element && e.propertyName === property) finish(true); };
+      const onCancel = (e: TransitionEvent) => { if (e.target === element && e.propertyName === property) finish(false); };
+      element.addEventListener('transitionend', onEnd);
+      element.addEventListener('transitioncancel', onCancel);
+      const tid = setTimeout(() => finish(true), duration + 50);
     });
   }
 }
 
-/**
- * Factory function to create TransitionCommand instance
- */
-export function createTransitionCommand(): TransitionCommand {
-  return new TransitionCommand();
-}
+export const createTransitionCommand = createFactory(TransitionCommand);
+export default TransitionCommand;

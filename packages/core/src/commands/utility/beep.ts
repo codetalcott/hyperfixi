@@ -1,40 +1,25 @@
 /**
- * BeepCommand - Standalone V2 Implementation
+ * BeepCommand - Decorated Implementation
  *
- * Provides debugging output for expressions with type information
- *
- * This is a standalone implementation with NO V1 dependencies,
- * enabling true tree-shaking by inlining essential utilities.
- *
- * Features:
- * - Debug output to console
- * - Type information display
- * - Multiple expression support
- * - Context inspection
- * - Inline debug utilities
+ * Provides debugging output for expressions with type information.
+ * Uses Stage 3 decorators for reduced boilerplate.
  *
  * Syntax:
  *   beep!
  *   beep! <expression>
  *   beep! <expression>, <expression>, ...
- *
- * @example
- *   beep!
- *   beep! myValue
- *   beep! me.id, me.className
- *   beep! user.name, user.age
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
+import { command, meta, createFactory } from '../decorators';
 
 /**
  * Typed input for BeepCommand
  */
 export interface BeepCommandInput {
-  /** Expressions to debug (optional) */
   expressions?: any[];
 }
 
@@ -44,113 +29,52 @@ export interface BeepCommandInput {
 export interface BeepCommandOutput {
   expressionCount: number;
   debugged: boolean;
-  outputs: Array<{
-    value: any;
-    type: string;
-    representation: string;
-  }>;
+  outputs: Array<{ value: any; type: string; representation: string }>;
 }
 
 /**
- * BeepCommand - Standalone V2 Implementation
+ * BeepCommand - Debug output with type information
  *
- * Self-contained implementation with no V1 dependencies.
- * Achieves tree-shaking by inlining debug utilities.
- *
- * V1 Size: 223 lines (with debug utils dependency)
- * V2 Target: ~240 lines (inline debug utilities, standalone)
+ * Before: 279 lines
+ * After: ~130 lines (53% reduction)
  */
+@meta({
+  description: 'Debug output for expressions with type information',
+  syntax: ['beep!', 'beep! <expression>', 'beep! <expression>, <expression>, ...'],
+  examples: ['beep!', 'beep! myValue', 'beep! me.id, me.className'],
+  sideEffects: ['console-output', 'debugging'],
+})
+@command({ name: 'beep', category: 'utility' })
 export class BeepCommand {
-  /**
-   * Command name as registered in runtime
-   */
-  readonly name = 'beep';
-
-  /**
-   * Command metadata for documentation and tooling
-   */
-  static readonly metadata = {
-    description: 'Debug output for expressions with type information',
-    syntax: ['beep!', 'beep! <expression>', 'beep! <expression>, <expression>, ...'],
-    examples: [
-      'beep!',
-      'beep! myValue',
-      'beep! me.id, me.className',
-      'beep! user.name, user.age',
-    ],
-    category: 'utility',
-    sideEffects: ['console-output', 'debugging'],
-  } as const;
-
-  /**
-   * Instance accessor for metadata (backward compatibility)
-   */
-  get metadata() {
-    return BeepCommand.metadata;
-  }
-
-  /**
-   * Parse raw AST nodes into typed command input
-   *
-   * @param raw - Raw command node with args and modifiers from AST
-   * @param evaluator - Expression evaluator for evaluating AST nodes
-   * @param context - Execution context with me, you, it, etc.
-   * @returns Typed input object for execute()
-   */
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<BeepCommandInput> {
-    // beep! can be called with no arguments (debug context)
-    if (raw.args.length === 0) {
-      return { expressions: [] };
-    }
-
-    // Evaluate all expressions
+    if (raw.args.length === 0) return { expressions: [] };
     const expressions = await Promise.all(
       raw.args.map((arg) => evaluator.evaluate(arg, context))
     );
-
     return { expressions };
   }
 
-  /**
-   * Execute the beep command
-   *
-   * Outputs debug information to console.
-   *
-   * @param input - Typed command input from parseInput()
-   * @param context - Typed execution context
-   * @returns Debug operation result
-   */
   async execute(
     input: BeepCommandInput,
     context: TypedExecutionContext
   ): Promise<BeepCommandOutput> {
     const expressions = input.expressions || [];
 
-    // If no expressions, beep with context info
     if (expressions.length === 0) {
       this.debugContext(context);
-      return {
-        expressionCount: 0,
-        debugged: true,
-        outputs: [],
-      };
+      return { expressionCount: 0, debugged: true, outputs: [] };
     }
 
     const outputs: Array<{ value: any; type: string; representation: string }> = [];
-
-    // Start debug group
     console.group('🔔 beep! Debug Output');
 
-    // Process each expression
     for (const expression of expressions) {
       const output = this.debugExpression(expression);
       outputs.push(output);
-
-      // Log to console
       console.log(`Value:`, expression);
       console.log(`Type:`, output.type);
       console.log(`Representation:`, output.representation);
@@ -158,22 +82,9 @@ export class BeepCommand {
     }
 
     console.groupEnd();
-
-    return {
-      expressionCount: expressions.length,
-      debugged: true,
-      outputs,
-    };
+    return { expressionCount: expressions.length, debugged: true, outputs };
   }
 
-  // ========== Private Utility Methods ==========
-
-  /**
-   * Debug context information
-   * (Inline utility replacing V1 debug.ts dependency)
-   *
-   * @param context - Execution context
-   */
   private debugContext(context: TypedExecutionContext): void {
     console.group('🔔 beep! Context Debug');
     console.log('me:', context.me);
@@ -185,35 +96,10 @@ export class BeepCommand {
     console.groupEnd();
   }
 
-  /**
-   * Debug expression value
-   * (Inline utility replacing V1 debug.ts dependency)
-   *
-   * @param expression - Expression value to debug
-   * @returns Debug information
-   */
-  private debugExpression(expression: any): {
-    value: any;
-    type: string;
-    representation: string;
-  } {
-    const type = this.getType(expression);
-    const representation = this.getRepresentation(expression);
-
-    return {
-      value: expression,
-      type,
-      representation,
-    };
+  private debugExpression(expression: any): { value: any; type: string; representation: string } {
+    return { value: expression, type: this.getType(expression), representation: this.getRepresentation(expression) };
   }
 
-  /**
-   * Get type string for value
-   * (Inline utility replacing V1 debug.ts dependency)
-   *
-   * @param value - Value to get type for
-   * @returns Type string
-   */
   private getType(value: any): string {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
@@ -227,53 +113,30 @@ export class BeepCommand {
     return typeof value;
   }
 
-  /**
-   * Get string representation of value
-   * (Inline utility replacing V1 debug.ts dependency)
-   *
-   * @param value - Value to get representation for
-   * @returns String representation
-   */
   private getRepresentation(value: any): string {
     if (value === null) return 'null';
     if (value === undefined) return 'undefined';
-
     if (Array.isArray(value)) {
       return `Array(${value.length}) [${value.slice(0, 3).map(v => this.getRepresentation(v)).join(', ')}${value.length > 3 ? '...' : ''}]`;
     }
-
     if (isHTMLElement(value)) {
-      const element = value as HTMLElement;
-      const tag = element.tagName.toLowerCase();
-      const id = element.id ? `#${element.id}` : '';
-      const classes = element.className ? `.${element.className.split(' ').join('.')}` : '';
+      const el = value as HTMLElement;
+      const tag = el.tagName.toLowerCase();
+      const id = el.id ? `#${el.id}` : '';
+      const classes = el.className ? `.${el.className.split(' ').join('.')}` : '';
       return `<${tag}${id}${classes}/>`;
     }
-
-    if (value instanceof Error) {
-      return `Error: ${value.message}`;
-    }
-
-    if (typeof value === 'string') {
-      return value.length > 50 ? `"${value.substring(0, 47)}..."` : `"${value}"`;
-    }
-
+    if (value instanceof Error) return `Error: ${value.message}`;
+    if (typeof value === 'string') return value.length > 50 ? `"${value.substring(0, 47)}..."` : `"${value}"`;
     if (typeof value === 'object') {
       try {
         const keys = Object.keys(value);
         return `Object {${keys.slice(0, 3).join(', ')}${keys.length > 3 ? '...' : ''}}`;
-      } catch {
-        return '[Object]';
-      }
+      } catch { return '[Object]'; }
     }
-
     return String(value);
   }
 }
 
-/**
- * Factory function to create BeepCommand instance
- */
-export function createBeepCommand(): BeepCommand {
-  return new BeepCommand();
-}
+export const createBeepCommand = createFactory(BeepCommand);
+export default BeepCommand;

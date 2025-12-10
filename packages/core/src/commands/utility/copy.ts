@@ -1,41 +1,26 @@
 /**
- * CopyCommand - Standalone V2 Implementation
+ * CopyCommand - Decorated Implementation
  *
- * Copies text or element content to the system clipboard
- *
- * This is a standalone implementation with NO V1 dependencies,
- * enabling true tree-shaking by inlining essential utilities.
- *
- * Features:
- * - Modern Clipboard API support
- * - execCommand fallback for older browsers
- * - Text and HTML format support
- * - Element content extraction
- * - Custom events for copy operations
+ * Copies text or element content to the system clipboard.
+ * Uses Stage 3 decorators for reduced boilerplate.
  *
  * Syntax:
  *   copy <text>
  *   copy <element>
  *   copy <text> to clipboard
- *
- * @example
- *   copy "Hello World"
- *   copy #code-snippet
- *   copy my textContent
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
+import { command, meta, createFactory } from '../decorators';
 
 /**
  * Typed input for CopyCommand
  */
 export interface CopyCommandInput {
-  /** Text string or HTML element to copy */
   source: string | HTMLElement;
-  /** Format to copy (text or html) */
   format?: 'text' | 'html';
 }
 
@@ -50,51 +35,19 @@ export interface CopyCommandOutput {
 }
 
 /**
- * CopyCommand - Standalone V2 Implementation
+ * CopyCommand - Copy to clipboard
  *
- * Self-contained implementation with no V1 dependencies.
- * Achieves tree-shaking by inlining all required utilities.
- *
- * V1 Size: 285 lines
- * V2 Target: ~280 lines (inline utilities, standalone)
+ * Before: 312 lines
+ * After: ~140 lines (55% reduction)
  */
+@meta({
+  description: 'Copy text or element content to the clipboard',
+  syntax: ['copy <source>', 'copy <source> to clipboard'],
+  examples: ['copy "Hello World"', 'copy #code-snippet', 'copy my textContent'],
+  sideEffects: ['clipboard-write', 'custom-events'],
+})
+@command({ name: 'copy', category: 'utility' })
 export class CopyCommand {
-  /**
-   * Command name as registered in runtime
-   */
-  readonly name = 'copy';
-
-  /**
-   * Command metadata for documentation and tooling
-   */
-  static readonly metadata = {
-    description: 'Copy text or element content to the clipboard',
-    syntax: ['copy <source>', 'copy <source> to clipboard'],
-    examples: [
-      'copy "Hello World"',
-      'copy #code-snippet',
-      'copy my textContent',
-      'copy <div/> to clipboard',
-    ],
-    category: 'utility',
-    sideEffects: ['clipboard-write', 'custom-events'],
-  } as const;
-
-  /**
-   * Instance accessor for metadata (backward compatibility)
-   */
-  get metadata() {
-    return CopyCommand.metadata;
-  }
-
-  /**
-   * Parse raw AST nodes into typed command input
-   *
-   * @param raw - Raw command node with args and modifiers from AST
-   * @param evaluator - Expression evaluator for evaluating AST nodes
-   * @param context - Execution context with me, you, it, etc.
-   * @returns Typed input object for execute()
-   */
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
@@ -104,209 +57,85 @@ export class CopyCommand {
       throw new Error('copy command requires a source (text or element)');
     }
 
-    // First arg is the source
     const source = await evaluator.evaluate(raw.args[0], context);
-
-    // Optional format from modifier
     let format: 'text' | 'html' = 'text';
+
     if (raw.modifiers?.format) {
       const formatValue = await evaluator.evaluate(raw.modifiers.format, context);
-      if (formatValue === 'html' || formatValue === 'text') {
-        format = formatValue;
-      }
+      if (formatValue === 'html' || formatValue === 'text') format = formatValue;
     }
 
-    return {
-      source,
-      format,
-    };
+    return { source, format };
   }
 
-  /**
-   * Execute the copy command
-   *
-   * Copies text to clipboard using best available method.
-   *
-   * @param input - Typed command input from parseInput()
-   * @param context - Typed execution context
-   * @returns Copy operation result
-   */
   async execute(
     input: CopyCommandInput,
     context: TypedExecutionContext
   ): Promise<CopyCommandOutput> {
     const { source, format = 'text' } = input;
-
-    // Extract text from source
     const textToCopy = this.extractText(source, format, context);
 
-    // Try modern Clipboard API first
+    // Try Clipboard API
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       try {
         await navigator.clipboard.writeText(textToCopy);
-
-        // Dispatch success event
-        this.dispatchCopyEvent(context, 'copy:success', {
-          text: textToCopy,
-          method: 'clipboard-api',
-        });
-
-        return {
-          success: true,
-          text: textToCopy,
-          format,
-          method: 'clipboard-api',
-        };
-      } catch (error) {
-        // Fall through to execCommand fallback
-        console.warn('Clipboard API failed, trying execCommand:', error);
-      }
+        this.dispatchCopyEvent(context, 'copy:success', { text: textToCopy, method: 'clipboard-api' });
+        return { success: true, text: textToCopy, format, method: 'clipboard-api' };
+      } catch { /* fallback */ }
     }
 
-    // Fallback to execCommand for older browsers
+    // Fallback to execCommand
     try {
-      const success = this.copyUsingExecCommand(textToCopy);
-
-      if (success) {
-        this.dispatchCopyEvent(context, 'copy:success', {
-          text: textToCopy,
-          method: 'execCommand',
-        });
-
-        return {
-          success: true,
-          text: textToCopy,
-          format,
-          method: 'execCommand',
-        };
+      if (this.copyUsingExecCommand(textToCopy)) {
+        this.dispatchCopyEvent(context, 'copy:success', { text: textToCopy, method: 'execCommand' });
+        return { success: true, text: textToCopy, format, method: 'execCommand' };
       }
-    } catch (error) {
-      console.warn('execCommand failed:', error);
-    }
+    } catch { /* fallback */ }
 
-    // Final fallback - dispatch error event
-    this.dispatchCopyEvent(context, 'copy:error', {
-      text: textToCopy,
-      error: 'All copy methods failed',
-    });
-
-    return {
-      success: false,
-      text: textToCopy,
-      format,
-      method: 'fallback',
-    };
+    this.dispatchCopyEvent(context, 'copy:error', { text: textToCopy, error: 'All copy methods failed' });
+    return { success: false, text: textToCopy, format, method: 'fallback' };
   }
 
-  // ========== Private Utility Methods ==========
-
-  /**
-   * Extract text from source
-   *
-   * @param source - Text string or HTML element
-   * @param format - Format to extract (text or html)
-   * @param context - Execution context
-   * @returns Extracted text
-   */
-  private extractText(
-    source: string | HTMLElement,
-    format: 'text' | 'html',
-    context: TypedExecutionContext
-  ): string {
-    // Handle string source
-    if (typeof source === 'string') {
-      return source;
-    }
-
-    // Handle element source
+  private extractText(source: string | HTMLElement, format: 'text' | 'html', context: TypedExecutionContext): string {
+    if (typeof source === 'string') return source;
     if (isHTMLElement(source)) {
-      const element = source as HTMLElement;
-      if (format === 'html') {
-        return element.outerHTML;
-      } else {
-        return element.textContent || '';
-      }
+      return format === 'html' ? source.outerHTML : (source.textContent || '');
     }
-
-    // Handle context references (me, it, you)
     if (source === context.me && isHTMLElement(context.me)) {
-      const element = context.me as HTMLElement;
-      return format === 'html' ? element.outerHTML : (element.textContent || '');
+      const el = context.me as HTMLElement;
+      return format === 'html' ? el.outerHTML : (el.textContent || '');
     }
-
-    // Fallback: convert to string
     return String(source);
   }
 
-  /**
-   * Copy text using execCommand (fallback for older browsers)
-   *
-   * @param text - Text to copy
-   * @returns Success status
-   */
   private copyUsingExecCommand(text: string): boolean {
-    if (typeof document === 'undefined') {
-      return false;
-    }
+    if (typeof document === 'undefined') return false;
 
-    // Create temporary textarea
     const textarea = document.createElement('textarea');
     textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.top = '0';
-    textarea.style.left = '-9999px';
+    textarea.style.cssText = 'position:fixed;top:0;left:-9999px';
     textarea.setAttribute('readonly', '');
-
     document.body.appendChild(textarea);
 
     try {
-      // Select text
       textarea.select();
       textarea.setSelectionRange(0, text.length);
-
-      // Execute copy command
       const success = document.execCommand('copy');
-
-      // Clean up
       document.body.removeChild(textarea);
-
       return success;
-    } catch (error) {
-      // Clean up on error
-      if (textarea.parentNode) {
-        document.body.removeChild(textarea);
-      }
+    } catch {
+      textarea.parentNode?.removeChild(textarea);
       return false;
     }
   }
 
-  /**
-   * Dispatch custom event for copy operations
-   *
-   * @param context - Execution context
-   * @param eventName - Event name
-   * @param detail - Event detail object
-   */
-  private dispatchCopyEvent(
-    context: TypedExecutionContext,
-    eventName: string,
-    detail: Record<string, any>
-  ): void {
+  private dispatchCopyEvent(context: TypedExecutionContext, eventName: string, detail: Record<string, any>): void {
     if (isHTMLElement(context.me)) {
-      const element = context.me as HTMLElement;
-      const event = new CustomEvent(eventName, {
-        detail,
-        bubbles: true,
-        cancelable: false,
-      });
-      element.dispatchEvent(event);
+      const event = new CustomEvent(eventName, { detail, bubbles: true, cancelable: false });
+      (context.me as HTMLElement).dispatchEvent(event);
     }
   }
 }
 
-/**
- * Factory function to create CopyCommand instance
- */
-export function createCopyCommand(): CopyCommand {
-  return new CopyCommand();
-}
+export const createCopyCommand = createFactory(CopyCommand);
+export default CopyCommand;
