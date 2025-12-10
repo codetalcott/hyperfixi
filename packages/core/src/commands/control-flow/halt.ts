@@ -1,42 +1,28 @@
 /**
- * HaltCommand - Standalone V2 Implementation
+ * HaltCommand - Decorated Implementation
  *
- * Stops execution of the current command sequence or prevents event defaults
- *
- * This is a standalone implementation with NO V1 dependencies,
- * enabling true tree-shaking by inlining essential utilities.
- *
- * Features:
- * - Stop command execution (halt)
- * - Prevent event default behavior (halt the event)
- * - Works in event handlers and command sequences
+ * Stops execution of the current command sequence or prevents event defaults.
+ * Uses Stage 3 decorators for reduced boilerplate.
  *
  * Syntax:
  *   halt
  *   halt the event
- *
- * @example
- *   halt
- *   halt the event
- *   if error then halt
- *   unless user.isValid then halt
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
+import { command, meta, createFactory } from '../decorators';
 
 /**
  * Typed input for HaltCommand
  */
 export interface HaltCommandInput {
-  /** Target to halt (can be 'the event' or other targets) */
   target?: unknown;
 }
 
 /**
  * Output from Halt command execution
- * (Only returned for event halting, not execution halting)
  */
 export interface HaltCommandOutput {
   halted: true;
@@ -45,113 +31,48 @@ export interface HaltCommandOutput {
 }
 
 /**
- * HaltCommand - Standalone V2 Implementation
+ * HaltCommand - Stops execution or prevents event defaults
  *
- * Self-contained implementation with no V1 dependencies.
- * Achieves tree-shaking by inlining all required utilities.
- *
- * Supports two modes:
- * 1. `halt` - Stops command execution (throws error)
- * 2. `halt the event` - Prevents default event behavior (returns normally)
- *
- * V1 Size: 129 lines (with debug logging, validation, dual modes)
- * V2 Size: ~110 lines (15% reduction, all features preserved)
+ * Before: 216 lines
+ * After: ~100 lines (54% reduction)
  */
+@meta({
+  description: 'Stop command execution or prevent event defaults',
+  syntax: ['halt', 'halt the event'],
+  examples: ['halt', 'halt the event', 'if error then halt', 'on click halt the event then log "clicked"'],
+  sideEffects: ['control-flow', 'event-prevention'],
+})
+@command({ name: 'halt', category: 'control-flow' })
 export class HaltCommand {
-  /**
-   * Command name as registered in runtime
-   */
-  readonly name = 'halt';
-
-  /**
-   * Command metadata for documentation and tooling
-   */
-  static readonly metadata = {
-    description: 'Stop command execution or prevent event defaults',
-    syntax: [
-      'halt',
-      'halt the event',
-    ],
-    examples: [
-      'halt',
-      'halt the event',
-      'if error then halt',
-      'unless user.isValid then halt',
-      'on click halt the event then log "clicked"',
-    ],
-    category: 'control-flow',
-    sideEffects: ['control-flow', 'event-prevention'],
-  } as const;
-
-  /**
-   * Instance accessor for metadata (backward compatibility)
-   */
-  get metadata() {
-    return HaltCommand.metadata;
-  }
-
-  /**
-   * Parse raw AST nodes into typed command input
-   *
-   * Detects whether we're halting execution or an event.
-   * Pattern: "halt the event" sets target to the event object.
-   *
-   * @param raw - Raw command node with args and modifiers from AST
-   * @param evaluator - Expression evaluator for evaluating AST nodes
-   * @param context - Execution context with me, you, it, etc.
-   * @returns Typed input object for execute()
-   */
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<HaltCommandInput> {
-    // Check if we have arguments (e.g., "halt the event")
     if (raw.args && raw.args.length > 0) {
-      // Check for "halt the event" pattern by examining AST structure
-      // Parser produces: args = [{type: 'identifier', name: 'the'}, {type: 'identifier', name: 'event'}]
       const firstArg = raw.args[0] as any;
       const secondArg = raw.args.length > 1 ? raw.args[1] as any : null;
 
+      // Check for "halt the event" pattern
       if (firstArg.type === 'identifier' && firstArg.name === 'the' &&
           secondArg && secondArg.type === 'identifier' && secondArg.name === 'event') {
-        // Return the event from context directly
         return { target: context.event };
       }
 
-      // For other patterns, evaluate first argument
       const target = await evaluator.evaluate(raw.args[0], context);
       return { target };
     }
 
-    // No arguments - plain "halt" command
     return {};
   }
 
-  /**
-   * Execute the halt command
-   *
-   * Two modes:
-   * 1. If target is an event, prevent default and stop propagation (returns normally)
-   * 2. Otherwise, throw error to halt execution
-   *
-   * @param input - Typed command input from parseInput()
-   * @param context - Typed execution context
-   * @returns Result only for event halting (execution halting throws)
-   * @throws Error with "HALT" message to signal execution stop
-   */
   async execute(
     input: HaltCommandInput,
     context: TypedExecutionContext
   ): Promise<HaltCommandOutput> {
-    // Determine what to halt
     let targetToHalt = input.target;
 
-    // Handle "halt the event" pattern
-    // Input can be:
-    // 1. The event object directly
-    // 2. The string "the" - use context.event
-    // 3. { target: 'the' } - from parser detecting "halt the event"
+    // Handle "halt the event" variations
     if (targetToHalt === 'the' && context.event) {
       targetToHalt = context.event;
     } else if (
@@ -169,34 +90,19 @@ export class HaltCommand {
       event.preventDefault();
       event.stopPropagation();
 
-      // Return normally - don't stop command execution
-      return {
-        halted: true,
-        timestamp: Date.now(),
-        eventHalted: true,
-      };
+      return { halted: true, timestamp: Date.now(), eventHalted: true };
     }
 
-    // This is a regular "halt" command to stop execution
-    // Set halt flag in context if supported
+    // Regular halt - stop execution
     if ('halted' in context) {
       (context as any).halted = true;
     }
 
-    // Throw a special halt error to stop execution
     const haltError = new Error('HALT_EXECUTION');
     (haltError as any).isHalt = true;
     throw haltError;
   }
 
-  // ========== Private Utility Methods ==========
-
-  /**
-   * Check if value is an Event object
-   *
-   * @param value - Value to check
-   * @returns true if value is an Event
-   */
   private isEvent(value: unknown): value is Event {
     return (
       value !== null &&
@@ -207,9 +113,5 @@ export class HaltCommand {
   }
 }
 
-/**
- * Factory function to create HaltCommand instance
- */
-export function createHaltCommand(): HaltCommand {
-  return new HaltCommand();
-}
+export const createHaltCommand = createFactory(HaltCommand);
+export default HaltCommand;

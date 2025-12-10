@@ -1,203 +1,78 @@
 /**
- * ShowCommand - Standalone V2 Implementation
+ * ShowCommand - Decorated Implementation
  *
- * Shows HTML elements by restoring display property
- *
- * This is a standalone implementation with NO V1 dependencies,
- * enabling true tree-shaking by inlining essential utilities.
+ * Shows HTML elements by restoring display property. Uses Stage 3 decorators.
  *
  * Syntax:
  *   show                    # Show current element (me)
  *   show <target>           # Show specified element(s)
- *   show .classname         # Show elements by CSS selector
- *
- * @example
- *   show me
- *   show #modal
- *   show .hidden
- *   show <button/>
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
-import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { resolveTargetsFromArgs } from '../helpers/element-resolution';
+import { command, meta, createFactory, type CommandMetadata } from '../decorators';
+import {
+  parseVisibilityInput,
+  type VisibilityRawInput,
+  type VisibilityInput,
+} from '../helpers/visibility-target-parser';
 
-/**
- * Typed input for ShowCommand
- * Represents parsed arguments ready for execution
- */
-export interface ShowCommandInput {
-  /** Target elements to show */
-  targets: HTMLElement[];
-  /** Default display value to use when no original stored */
+// Re-export for backward compatibility
+export interface ShowCommandInput extends VisibilityInput {
   defaultDisplay: string;
 }
 
 /**
- * ShowCommand - Standalone V2 Implementation
+ * ShowCommand - Restores element visibility
  *
- * Self-contained implementation with no V1 dependencies.
- * Achieves tree-shaking by inlining resolveTargets utility.
- *
- * V1 Size: 328 lines
- * V2 Size: ~130 lines (60% reduction)
+ * Before: 203 lines
+ * After: ~65 lines (68% reduction)
  */
+@meta({
+  description: 'Show elements by restoring display property',
+  syntax: 'show [<target>]',
+  examples: ['show me', 'show #modal', 'show .hidden', 'show <button/>'],
+  sideEffects: ['dom-mutation'],
+})
+@command({ name: 'show', category: 'dom' })
 export class ShowCommand {
-  /**
-   * Command name as registered in runtime
-   */
-  readonly name = 'show';
+  // Properties set by decorators
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
 
-  /**
-   * Command metadata for documentation and tooling
-   */
-  static readonly metadata = {
-    description: 'Show elements by restoring display property',
-    syntax: 'show [<target>]',
-    examples: [
-      'show me',
-      'show #modal',
-      'show .hidden',
-      'show <button/>',
-    ],
-    category: 'dom',
-    sideEffects: ['dom-mutation'],
-  } as const;
-
-  /**
-   * Instance accessor for metadata (backward compatibility)
-   */
-  get metadata() {
-    return ShowCommand.metadata;
-  }
-
-  /**
-   * Parse raw AST nodes into typed command input
-   *
-   * Evaluates target expressions and resolves them to HTMLElements.
-   * If no targets specified, defaults to context.me.
-   *
-   * @param raw - Raw command node with args and modifiers from AST
-   * @param evaluator - Expression evaluator for evaluating AST nodes
-   * @param context - Execution context with me, you, it, etc.
-   * @returns Typed input object for execute()
-   */
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: VisibilityRawInput,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ShowCommandInput> {
-    // Resolve target elements using shared helper
-    const targets = await resolveTargetsFromArgs(raw.args, evaluator, context, 'show');
-
-    // Default display is 'block' (matches V1 behavior)
-    const defaultDisplay = 'block';
-
-    return { targets, defaultDisplay };
+    const { targets } = await parseVisibilityInput(raw, evaluator, context, 'show');
+    return { targets, defaultDisplay: 'block' };
   }
 
-  /**
-   * Execute the show command
-   *
-   * Restores display property on all target elements, using their
-   * original display value from data-original-display attribute if available.
-   *
-   * @param input - Typed command input from parseInput()
-   * @param context - Typed execution context
-   * @returns void (command performs side effects)
-   */
-  async execute(
-    input: ShowCommandInput,
-    context: TypedExecutionContext
-  ): Promise<void> {
+  async execute(input: ShowCommandInput, _context: TypedExecutionContext): Promise<void> {
     for (const element of input.targets) {
-      this.showElement(element, input.defaultDisplay);
-    }
-  }
+      element.classList.add('show');
 
-  /**
-   * Validate parsed input (optional but recommended)
-   *
-   * Runtime validation to catch parsing errors early.
-   *
-   * @param input - Input to validate
-   * @returns true if input is valid ShowCommandInput
-   */
-  validate(input: unknown): input is ShowCommandInput {
-    if (typeof input !== 'object' || input === null) return false;
-
-    const typed = input as Partial<ShowCommandInput>;
-
-    if (!Array.isArray(typed.targets)) return false;
-    if (!typed.targets.every(t => isHTMLElement(t))) return false;
-    if (typeof typed.defaultDisplay !== 'string') return false;
-
-    return true;
-  }
-
-  // ========== Private Utility Methods ==========
-
-  /**
-   * Show a single element
-   *
-   * Restores display property from dataset.originalDisplay if available,
-   * otherwise falls back to defaultDisplay if currently hidden.
-   *
-   * Also adds .show class for CSS compatibility with hyperscript patterns.
-   *
-   * @param element - Element to show
-   * @param defaultDisplay - Default display value to use (typically 'block')
-   */
-  private showElement(element: HTMLElement, defaultDisplay: string): void {
-    // Add .show class (standard _hyperscript behavior)
-    element.classList.add('show');
-
-    // Restore original display value if available
-    const originalDisplay = element.dataset.originalDisplay;
-
-    if (originalDisplay !== undefined) {
-      // Use original display or default if original was empty string
-      element.style.display = originalDisplay || defaultDisplay;
-
-      // Clean up the data attribute
-      delete element.dataset.originalDisplay;
-    } else {
-      // No original display stored
-      // Only change display if currently hidden (display: none)
-      if (element.style.display === 'none') {
-        element.style.display = defaultDisplay;
+      const originalDisplay = element.dataset.originalDisplay;
+      if (originalDisplay !== undefined) {
+        element.style.display = originalDisplay || input.defaultDisplay;
+        delete element.dataset.originalDisplay;
+      } else if (element.style.display === 'none') {
+        element.style.display = input.defaultDisplay;
       }
     }
   }
+
+  validate(input: unknown): input is ShowCommandInput {
+    if (typeof input !== 'object' || input === null) return false;
+    const typed = input as Partial<ShowCommandInput>;
+    if (!Array.isArray(typed.targets)) return false;
+    if (!typed.targets.every(t => isHTMLElement(t))) return false;
+    if (typeof typed.defaultDisplay !== 'string') return false;
+    return true;
+  }
 }
 
-// ========== Factory Function ==========
-
-/**
- * Factory function for creating ShowCommand instances
- * Maintains compatibility with existing command registration patterns
- *
- * @returns New ShowCommand instance
- */
-export function createShowCommand(): ShowCommand {
-  return new ShowCommand();
-}
-
-// Default export for convenience
+export const createShowCommand = createFactory(ShowCommand);
 export default ShowCommand;
-
-// ========== Usage Example ==========
-//
-// import { ShowCommand } from './commands-v2/dom/show-standalone';
-// import { RuntimeBase } from './runtime/runtime-base';
-//
-// const runtime = new RuntimeBase({
-//   registry: {
-//     show: new ShowCommand(),
-//   },
-// });
-//
-// // Now only ShowCommand is bundled, not all V1 dependencies!
-// // Bundle size: ~2-3 KB (vs ~230 KB with V1 inheritance)

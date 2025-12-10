@@ -29,9 +29,7 @@
     
     // Advanced options
     "incremental": true,
-    "composite": false,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "composite": false
   },
   
   "exclude": [

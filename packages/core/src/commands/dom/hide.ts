@@ -1,189 +1,74 @@
 /**
- * HideCommand - Standalone V2 Implementation
+ * HideCommand - Decorated Implementation
  *
- * Hides HTML elements by setting display: none
- *
- * This is a standalone implementation with NO V1 dependencies,
- * enabling true tree-shaking by inlining essential utilities.
+ * Hides HTML elements by setting display: none. Uses Stage 3 decorators.
  *
  * Syntax:
  *   hide                    # Hide current element (me)
  *   hide <target>           # Hide specified element(s)
- *   hide .classname         # Hide elements by CSS selector
- *
- * @example
- *   hide me
- *   hide #modal
- *   hide .warnings
- *   hide <button/>
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
-import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { resolveTargetsFromArgs } from '../helpers/element-resolution';
+import { command, meta, createFactory, type CommandMetadata } from '../decorators';
+import {
+  parseVisibilityInput,
+  type VisibilityRawInput,
+  type VisibilityInput,
+} from '../helpers/visibility-target-parser';
+
+// Re-export for backward compatibility
+export type HideCommandInput = VisibilityInput;
 
 /**
- * Typed input for HideCommand
- * Represents parsed arguments ready for execution
- */
-export interface HideCommandInput {
-  /** Target elements to hide */
-  targets: HTMLElement[];
-}
-
-/**
- * HideCommand - Standalone V2 Implementation
+ * HideCommand - Hides elements
  *
- * Self-contained implementation with no V1 dependencies.
- * Achieves tree-shaking by inlining resolveTargets utility.
- *
- * V1 Size: 323 lines
- * V2 Size: ~120 lines (63% reduction)
+ * Before: 189 lines
+ * After: ~55 lines (71% reduction)
  */
+@meta({
+  description: 'Hide elements by setting display to none',
+  syntax: 'hide [<target>]',
+  examples: ['hide me', 'hide #modal', 'hide .warnings', 'hide <button/>'],
+  sideEffects: ['dom-mutation'],
+})
+@command({ name: 'hide', category: 'dom' })
 export class HideCommand {
-  /**
-   * Command name as registered in runtime
-   */
-  readonly name = 'hide';
+  // Properties set by decorators
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
 
-  /**
-   * Command metadata for documentation and tooling
-   */
-  static readonly metadata = {
-    description: 'Hide elements by setting display to none',
-    syntax: 'hide [<target>]',
-    examples: [
-      'hide me',
-      'hide #modal',
-      'hide .warnings',
-      'hide <button/>',
-    ],
-    category: 'dom',
-    sideEffects: ['dom-mutation'],
-  } as const;
-
-  /**
-   * Instance accessor for metadata (backward compatibility)
-   */
-  get metadata() {
-    return HideCommand.metadata;
-  }
-
-  /**
-   * Parse raw AST nodes into typed command input
-   *
-   * Evaluates target expressions and resolves them to HTMLElements.
-   * If no targets specified, defaults to context.me.
-   *
-   * @param raw - Raw command node with args and modifiers from AST
-   * @param evaluator - Expression evaluator for evaluating AST nodes
-   * @param context - Execution context with me, you, it, etc.
-   * @returns Typed input object for execute()
-   */
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: VisibilityRawInput,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<HideCommandInput> {
-    // Resolve target elements using shared helper
-    const targets = await resolveTargetsFromArgs(raw.args, evaluator, context, 'hide');
-
-    return { targets };
+    return parseVisibilityInput(raw, evaluator, context, 'hide');
   }
 
-  /**
-   * Execute the hide command
-   *
-   * Sets display:none on all target elements and preserves their
-   * original display value in data-original-display attribute.
-   *
-   * @param input - Typed command input from parseInput()
-   * @param context - Typed execution context
-   * @returns void (command performs side effects)
-   */
-  async execute(
-    input: HideCommandInput,
-    context: TypedExecutionContext
-  ): Promise<void> {
+  async execute(input: HideCommandInput, _context: TypedExecutionContext): Promise<void> {
     for (const element of input.targets) {
-      this.hideElement(element);
+      element.classList.remove('show');
+
+      // Preserve original display value if not already stored
+      if (!element.dataset.originalDisplay) {
+        const currentDisplay = element.style.display;
+        element.dataset.originalDisplay = currentDisplay === 'none' ? '' : currentDisplay;
+      }
+
+      element.style.display = 'none';
     }
   }
 
-  /**
-   * Validate parsed input (optional but recommended)
-   *
-   * Runtime validation to catch parsing errors early.
-   *
-   * @param input - Input to validate
-   * @returns true if input is valid HideCommandInput
-   */
   validate(input: unknown): input is HideCommandInput {
     if (typeof input !== 'object' || input === null) return false;
-
     const typed = input as Partial<HideCommandInput>;
-
     if (!Array.isArray(typed.targets)) return false;
     if (!typed.targets.every(t => isHTMLElement(t))) return false;
-
     return true;
   }
-
-  // ========== Private Utility Methods ==========
-
-  /**
-   * Hide a single element
-   *
-   * Sets display:none and preserves the original display value
-   * for potential restoration by show command.
-   *
-   * Also removes .show class for CSS compatibility with hyperscript patterns.
-   *
-   * @param element - Element to hide
-   */
-  private hideElement(element: HTMLElement): void {
-    // Remove .show class (standard _hyperscript behavior)
-    element.classList.remove('show');
-
-    // Preserve original display value if not already stored
-    if (!element.dataset.originalDisplay) {
-      const currentDisplay = element.style.display;
-      // Store empty string if currently 'none', otherwise store current value
-      element.dataset.originalDisplay = currentDisplay === 'none' ? '' : currentDisplay;
-    }
-
-    // Hide the element
-    element.style.display = 'none';
-  }
 }
 
-// ========== Factory Function ==========
-
-/**
- * Factory function for creating HideCommand instances
- * Maintains compatibility with existing command registration patterns
- *
- * @returns New HideCommand instance
- */
-export function createHideCommand(): HideCommand {
-  return new HideCommand();
-}
-
-// Default export for convenience
+export const createHideCommand = createFactory(HideCommand);
 export default HideCommand;
-
-// ========== Usage Example ==========
-//
-// import { HideCommand } from './commands-v2/dom/hide-standalone';
-// import { RuntimeBase } from './runtime/runtime-base';
-//
-// const runtime = new RuntimeBase({
-//   registry: {
-//     hide: new HideCommand(),
-//   },
-// });
-//
-// // Now only HideCommand is bundled, not all V1 dependencies!
-// // Bundle size: ~2-3 KB (vs ~230 KB with V1 inheritance)

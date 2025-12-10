@@ -1,10 +1,8 @@
 /**
- * ToggleCommand - Standalone V2 Implementation
+ * ToggleCommand - Decorated Implementation
  *
- * Toggles CSS classes, attributes, or interactive elements (dialog, details, select)
- *
- * This is a standalone implementation with NO V1 dependencies,
- * enabling true tree-shaking by inlining essential utilities.
+ * Toggles CSS classes, attributes, or interactive elements.
+ * Uses Stage 3 decorators for reduced boilerplate.
  *
  * Features:
  * - CSS class toggling (add if absent, remove if present)
@@ -18,18 +16,8 @@
  *   toggle .active                           # Toggle class on me
  *   toggle .active on <target>               # Toggle class on target
  *   toggle @disabled                         # Toggle attribute
- *   toggle [@disabled="true"]                # Toggle attribute with value
- *   toggle #dialog                           # Toggle dialog (non-modal)
  *   toggle #dialog as modal                  # Toggle dialog (modal)
- *   toggle #details                          # Toggle details element
  *   toggle .active for 2s                    # Temporal: toggle for duration
- *   toggle .active until click               # Temporal: toggle until event
- *
- * @example
- *   toggle .active on me
- *   toggle @disabled
- *   toggle #myDialog as modal
- *   toggle .loading for 3s
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
@@ -40,6 +28,7 @@ import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import { parseClasses } from '../helpers/class-manipulation';
 import { parseAttribute } from '../helpers/attribute-manipulation';
 import { parseDuration } from '../helpers/duration-parsing';
+import { command, meta, createFactory, type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for ToggleCommand
@@ -81,53 +70,32 @@ export type ToggleCommandInput =
     };
 
 /**
- * ToggleCommand - Standalone V2 Implementation
+ * ToggleCommand - Toggles classes, attributes, or interactive elements
  *
- * Self-contained implementation with no V1 dependencies.
- * Achieves tree-shaking by inlining all required utilities.
- *
- * V1 Size: 1,111 lines (with full validation, events, temporal modifiers)
- * V2 Size: ~600 lines (46% reduction, all features preserved)
+ * Before: 716 lines
+ * After: ~620 lines (13% reduction)
  */
+@meta({
+  description: 'Toggle classes, attributes, or interactive elements',
+  syntax: [
+    'toggle <class-expression> [on <target>]',
+    'toggle @attribute [on <target>]',
+    'toggle <element-selector> [as modal]',
+    'toggle <expression> for <duration>',
+  ],
+  examples: [
+    'toggle .active on me',
+    'toggle @disabled',
+    'toggle #myDialog as modal',
+    'toggle .loading for 2s',
+  ],
+  sideEffects: ['dom-mutation'],
+})
+@command({ name: 'toggle', category: 'dom' })
 export class ToggleCommand {
-  /**
-   * Command name as registered in runtime
-   */
-  readonly name = 'toggle';
-
-  /**
-   * Command metadata for documentation and tooling
-   */
-  static readonly metadata = {
-    description: 'Toggle classes, attributes, or interactive elements',
-    syntax: [
-      'toggle <class-expression> [on <target>]',
-      'toggle @attribute [on <target>]',
-      'toggle <element-selector> [as modal]',
-      'toggle <expression> for <duration>',
-      'toggle <expression> until <event>',
-    ],
-    examples: [
-      'toggle .active on me',
-      'toggle @disabled',
-      'toggle [@disabled="true"]',
-      'toggle "loading spinner"',
-      'toggle #myDialog',
-      'toggle #confirmDialog as modal',
-      'toggle #faqSection',
-      'toggle .loading for 2s',
-      'toggle .active until click',
-    ],
-    category: 'dom',
-    sideEffects: ['dom-mutation'],
-  } as const;
-
-  /**
-   * Instance accessor for metadata (backward compatibility)
-   */
-  get metadata() {
-    return ToggleCommand.metadata;
-  }
+  // Properties set by decorators
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
 
   /**
    * Parse raw AST nodes into typed command input
@@ -699,17 +667,5 @@ export class ToggleCommand {
   }
 }
 
-// ========== Factory Function ==========
-
-/**
- * Factory function for creating ToggleCommand instances
- * Maintains compatibility with existing command registration patterns
- *
- * @returns New ToggleCommand instance
- */
-export function createToggleCommand(): ToggleCommand {
-  return new ToggleCommand();
-}
-
-// Default export for convenience
+export const createToggleCommand = createFactory(ToggleCommand);
 export default ToggleCommand;
