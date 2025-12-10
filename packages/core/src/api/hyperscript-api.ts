@@ -397,7 +397,7 @@ async function handleEventHandlerPattern(
     // Execute normally and let the runtime handle it
     return await getDefaultRuntime().execute(ast, context);
   } catch (error) {
-    console.error('❌ Error in event handler setup:', error);
+    console.error('Error in event handler setup:', error);
     throw error;
   }
 }

@@ -211,11 +211,61 @@
       border-top: 1px solid #333;
     }
 
-    .demo-area h3 {
+    .demo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .demo-header h3 {
       font-size: 0.75rem;
       color: #666;
-      margin-bottom: 0.75rem;
+      margin: 0;
       text-transform: uppercase;
+    }
+
+    .demo-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .demo-controls .btn {
+      font-size: 0.75rem;
+      padding: 0.35rem 0.75rem;
+    }
+
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5a6fd6;
+    }
+
+    .demo-current {
+      background: #252542;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .demo-label {
+      color: #666;
+    }
+
+    .demo-current code {
+      color: #4caf50;
+      font-family: 'Monaco', 'Menlo', monospace;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .demo-elements {
@@ -233,7 +283,8 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 1rem;
-      transition: all 0.2s;
+      /* Animation-friendly transitions */
+      transition: all 0.3s ease, opacity 0.5s ease, transform 0.3s ease;
     }
 
     .demo-btn:hover {
@@ -241,8 +292,33 @@
       transform: translateY(-1px);
     }
 
+    /* Animation state classes */
     .demo-btn.active {
       background: #4caf50;
+    }
+
+    .demo-btn.highlight {
+      background: #ff9800;
+      box-shadow: 0 0 20px rgba(255, 152, 0, 0.5);
+    }
+
+    .demo-btn.pulse {
+      animation: pulse 0.5s ease;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    /* Fade/visibility states - hyperscript can manipulate these */
+    .demo-elements [style*="opacity: 0"],
+    .demo-elements .faded {
+      opacity: 0;
+    }
+
+    .demo-elements [style*="display: none"] {
+      display: none !important;
     }
 
     .demo-output {
@@ -251,6 +327,12 @@
       border-radius: 4px;
       min-width: 100px;
       text-align: center;
+      transition: all 0.3s ease, opacity 0.5s ease;
+    }
+
+    .demo-output.highlight {
+      background: #4caf50;
+      color: white;
     }
 
     .demo-input {
@@ -260,6 +342,7 @@
       padding: 0.5rem 1rem;
       border-radius: 4px;
       font-size: 1rem;
+      transition: all 0.3s ease, opacity 0.5s ease;
     }
 
     .semantic-view {
@@ -323,7 +406,6 @@
     <h1>HyperFixi Translation Playground</h1>
     <div class="header-actions">
       <button class="btn" id="share-btn" title="Copy shareable link">Share</button>
-      <button class="btn" id="run-btn" title="Execute in demo area">Run</button>
     </div>
   </header>
 
@@ -354,10 +436,10 @@
         placeholder="Enter hyperscript here...
 
 Examples:
-  on click increment #count
-  on click toggle .active
-  put my value into #output
-  wait 2 seconds then hide me"
+  on click increment #count by 1
+  on click toggle .active on me
+  on click add .highlight then wait 1s then remove .highlight
+  on click add .faded then wait 1s then remove .faded"
         spellcheck="false"
       >on click increment #count</textarea>
 
@@ -382,7 +464,17 @@ Examples:
 
       <!-- Demo Area -->
       <div class="demo-area">
-        <h3>Live Demo</h3>
+        <div class="demo-header">
+          <h3>Live Demo</h3>
+          <div class="demo-controls">
+            <button class="btn btn-primary" id="run-btn" title="Apply source code to demo button">Apply</button>
+            <button class="btn" id="reset-btn" title="Reset demo state">Reset</button>
+          </div>
+        </div>
+        <div class="demo-current" id="demo-current">
+          <span class="demo-label">Current:</span>
+          <code id="current-code">none</code>
+        </div>
         <div class="demo-elements">
           <button class="demo-btn" id="demo-btn">Click Me</button>
           <div class="demo-output" id="count">0</div>
@@ -540,13 +632,42 @@ Examples:
       const lang = sourceLang.value;
       const data = btoa(JSON.stringify({ code, lang }));
       const url = `${location.origin}${location.pathname}#${data}`;
+      const shareBtn = document.getElementById('share-btn');
+      const originalText = shareBtn.textContent;
 
-      navigator.clipboard.writeText(url).then(() => {
+      // Try clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+          shareBtn.textContent = 'Copied!';
+          logToConsole('Shareable link copied to clipboard!', 'success');
+          setTimeout(() => { shareBtn.textContent = originalText; }, 2000);
+        }).catch((err) => {
+          logToConsole('Clipboard failed: ' + err.message, 'warning');
+          fallbackCopy(url, shareBtn, originalText);
+        });
+      } else {
+        fallbackCopy(url, shareBtn, originalText);
+      }
+    }
+
+    function fallbackCopy(url, shareBtn, originalText) {
+      // Fallback: use textarea + execCommand
+      const textarea = document.createElement('textarea');
+      textarea.value = url;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        shareBtn.textContent = 'Copied!';
         logToConsole('Shareable link copied to clipboard!', 'success');
-      }).catch(() => {
-        // Fallback for older browsers
-        prompt('Copy this link:', url);
-      });
+      } catch (e) {
+        shareBtn.textContent = 'Failed';
+        logToConsole('Copy failed. URL: ' + url, 'warning');
+      }
+      document.body.removeChild(textarea);
+      setTimeout(() => { shareBtn.textContent = originalText; }, 2000);
     }
 
     // Load from URL
@@ -563,7 +684,10 @@ Examples:
       }
     }
 
-    // Run hyperscript
+    // Track the current hyperscript applied to demo button
+    let currentDemoScript = null;
+
+    // Run hyperscript - applies it to the demo button
     function runHyperscript() {
       const code = codeEditor.value.trim();
       const source = sourceLang.value;
@@ -576,16 +700,38 @@ Examples:
       try {
         // Translate to English if needed
         let englishCode = code;
-        if (source !== 'en' && window.HyperFixiI18n) {
+        if (source !== 'en' && window.HyperFixiI18n && window.HyperFixiI18n.toEnglish) {
           englishCode = window.HyperFixiI18n.toEnglish(code, source);
         }
 
-        logToConsole(`Running: ${englishCode}`, 'info');
+        logToConsole(`Applying: ${englishCode}`, 'info');
 
-        // Try to run with HyperFixi
-        if (window.hyperfixi && window.hyperfixi.runtime) {
-          // This is a simplified demo - real execution would need proper integration
-          logToConsole('Execution simulated (demo mode)', 'success');
+        // Apply hyperscript to the demo button
+        if (window.hyperfixi) {
+          const btn = window.demoBtn || document.getElementById('demo-btn');
+
+          // Clear any previous hyperscript by replacing the button
+          const newBtn = btn.cloneNode(true);
+          // IMPORTANT: Remove _= attribute BEFORE inserting to prevent MutationObserver double-registration
+          newBtn.removeAttribute('_');
+          btn.parentNode.replaceChild(newBtn, btn);
+          window.demoBtn = newBtn;
+
+          // Use the programmatic API to set up the event handler
+          // This creates a context with the button as 'me' and runs the hyperscript
+          const context = window.hyperfixi.createContext(newBtn);
+
+          window.hyperfixi.run(englishCode, context).then(() => {
+            // Set attribute AFTER run() for display purposes only (won't trigger MutationObserver re-processing)
+            newBtn.setAttribute('_', englishCode);
+            // Update the "current code" display
+            document.getElementById('current-code').textContent = englishCode;
+            logToConsole('Hyperscript applied! Click the button to test.', 'success');
+          }).catch(err => {
+            logToConsole('Error applying hyperscript: ' + err.message, 'error');
+          });
+
+          currentDemoScript = englishCode;
         } else {
           logToConsole('HyperFixi runtime not available', 'warning');
         }
@@ -606,28 +752,49 @@ Examples:
       logToConsole(`Source language changed to ${LANGUAGES[sourceLang.value].name}`, 'info');
     });
 
+    // Demo elements - no hardcoded behavior, let hyperscript control them
+    const demoBtn = document.getElementById('demo-btn');
+    const countOutput = document.getElementById('count');
+    const demoInput = document.getElementById('demo-input');
+    const demoOutput = document.getElementById('output');
+
+    // Expose for debugging and for hyperscript to find after reset
+    window.demoBtn = demoBtn;
+
+    // Reset function to clear demo state
+    function resetDemo() {
+      const currentBtn = window.demoBtn || document.getElementById('demo-btn');
+      countOutput.textContent = '0';
+      demoOutput.textContent = '';
+      demoInput.value = '';
+      // Remove all animation/state classes
+      currentBtn.classList.remove('active', 'highlight', 'faded', 'pulse');
+      currentBtn.style.display = '';
+      currentBtn.style.opacity = '';
+      countOutput.classList.remove('highlight', 'faded');
+      countOutput.style.display = '';
+      countOutput.style.opacity = '';
+      currentBtn.removeAttribute('_');
+      // Remove any existing hyperscript event listeners by replacing the element
+      const newBtn = currentBtn.cloneNode(true);
+      currentBtn.parentNode.replaceChild(newBtn, currentBtn);
+      // Update reference
+      window.demoBtn = newBtn;
+      // Clear the current code display
+      document.getElementById('current-code').textContent = 'none';
+      currentDemoScript = null;
+      logToConsole('Demo reset. Click Apply to run hyperscript.', 'info');
+    }
+
+    // Event listeners
     document.getElementById('share-btn').addEventListener('click', shareCode);
     document.getElementById('run-btn').addEventListener('click', runHyperscript);
+    document.getElementById('reset-btn').addEventListener('click', resetDemo);
     document.getElementById('clear-console').addEventListener('click', () => {
       consoleOutput.innerHTML = '<span class="info">[info]</span> Console cleared';
     });
 
-    // Demo button functionality
-    const demoBtn = document.getElementById('demo-btn');
-    const countOutput = document.getElementById('count');
-    let count = 0;
-
-    demoBtn.addEventListener('click', () => {
-      count++;
-      countOutput.textContent = count;
-      demoBtn.classList.toggle('active');
-      logToConsole(`Demo button clicked. Count: ${count}`, 'success');
-    });
-
     // Demo input mirror
-    const demoInput = document.getElementById('demo-input');
-    const demoOutput = document.getElementById('output');
-
     demoInput.addEventListener('input', () => {
       demoOutput.textContent = demoInput.value;
     });

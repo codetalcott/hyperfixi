@@ -713,7 +713,9 @@ export class RuntimeBase {
         targets = context.me ? [context.me as HTMLElement] : [];
     }
 
-    if (targets.length === 0 && !globalTarget) return;
+    if (targets.length === 0 && !globalTarget) {
+        return;
+    }
 
     // SPECIAL CASE 1: Mutation Observer
     if (event === 'mutation' && attributeName) {
@@ -731,7 +733,9 @@ export class RuntimeBase {
     const eventHandler = async (domEvent: Event) => {
         // Recursion Guard
         const currentDepth = (domEvent as any).__hyperfixi_recursion_depth || 0;
-        if (currentDepth >= 100) return;
+        if (currentDepth >= 100) {
+            return;
+        }
         (domEvent as any).__hyperfixi_recursion_depth = currentDepth + 1;
 
         // Event Delegation Check
@@ -832,7 +836,6 @@ export class RuntimeBase {
         for (const el of targets) {
             for (const evt of eventNames) {
                 el.addEventListener(evt, eventHandler);
-                // Optional: Store handler ref for cleanup if needed
             }
         }
     }
