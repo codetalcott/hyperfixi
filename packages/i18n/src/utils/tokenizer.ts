@@ -200,6 +200,7 @@ function categorizeWord(word: string, locale: string): TokenType {
   const categoryToType: Array<[string, TokenType]> = [
     ['events', 'event'],
     ['commands', 'command'],
+    ['expressions', 'expression'],
     ['modifiers', 'modifier'],
     ['logical', 'logical'],
     ['temporal', 'temporal'],

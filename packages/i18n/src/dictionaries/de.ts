@@ -198,12 +198,31 @@ export const de: Dictionary = {
     attributes: 'attribute',
     property: 'eigenschaft',
     properties: 'eigenschaften',
+  },
+
+  expressions: {
+    // Positional
     first: 'erste',
     last: 'letzte',
     next: 'nächste',
     previous: 'vorherige',
+    prev: 'vorh',
+    at: 'bei',
+    random: 'zufällig',
+
+    // DOM Traversal
+    closest: 'nächste',
     parent: 'elternteil',
     children: 'kinder',
-    closest: 'nächste',
+    within: 'innerhalb',
+
+    // Emptiness/Existence
+    no: 'kein',
+    empty: 'leer',
+    some: 'einige',
+
+    // String operations
+    'starts with': 'beginnt mit',
+    'ends with': 'endet mit',
   },
 };

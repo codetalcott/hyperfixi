@@ -8,6 +8,7 @@ import {
   ENGLISH_MODIFIERS,
   ENGLISH_LOGICAL_KEYWORDS,
   ENGLISH_VALUE_KEYWORDS,
+  ENGLISH_EXPRESSION_KEYWORDS,
   UNIVERSAL_ENGLISH_KEYWORDS,
 } from '../constants';
 
@@ -38,6 +39,7 @@ export function createKeywordProvider(
   const reverseTemporal = new Map<string, string>();
   const reverseValues = new Map<string, string>();
   const reverseAttributes = new Map<string, string>();
+  const reverseExpressions = new Map<string, string>();
   const reverseAll = new Map<string, string>();
 
   // Forward maps: English → locale keyword
@@ -85,6 +87,9 @@ export function createKeywordProvider(
   }
   if (dictionary.attributes) {
     buildReverseMap(dictionary.attributes, reverseAttributes);
+  }
+  if (dictionary.expressions) {
+    buildReverseMap(dictionary.expressions, reverseExpressions);
   }
 
   // Collect all locale commands and keywords for completions
@@ -201,6 +206,12 @@ export function createKeywordProvider(
         (allowEnglishFallback && ENGLISH_VALUE_KEYWORDS.has(normalized));
     },
 
+    isExpression(token: string): boolean {
+      const normalized = token.toLowerCase();
+      return reverseExpressions.has(normalized) ||
+        (allowEnglishFallback && ENGLISH_EXPRESSION_KEYWORDS.has(normalized));
+    },
+
     getCommands(): string[] {
       return Array.from(localeCommands);
     },
@@ -255,6 +266,10 @@ export function createEnglishProvider(): KeywordProvider {
       return ENGLISH_VALUE_KEYWORDS.has(token.toLowerCase());
     },
 
+    isExpression(token: string): boolean {
+      return ENGLISH_EXPRESSION_KEYWORDS.has(token.toLowerCase());
+    },
+
     getCommands(): string[] {
       return Array.from(ENGLISH_COMMANDS);
     },
@@ -277,5 +292,6 @@ export {
   ENGLISH_MODIFIERS,
   ENGLISH_LOGICAL_KEYWORDS,
   ENGLISH_VALUE_KEYWORDS,
+  ENGLISH_EXPRESSION_KEYWORDS,
   UNIVERSAL_ENGLISH_KEYWORDS,
 } from '../constants';

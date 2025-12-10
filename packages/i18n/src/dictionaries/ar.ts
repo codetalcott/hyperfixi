@@ -195,12 +195,31 @@ export const ar: Dictionary = {
     attributes: 'خصائص',
     property: 'خاصية',
     properties: 'خصائص',
+  },
+
+  expressions: {
+    // Positional
     first: 'أول',
     last: 'آخر',
     next: 'التالي',
     previous: 'السابق',
+    prev: 'سابق',
+    at: 'عند',
+    random: 'عشوائي',
+
+    // DOM Traversal
+    closest: 'الأقرب',
     parent: 'والد',
     children: 'أطفال',
-    closest: 'الأقرب',
+    within: 'داخل',
+
+    // Emptiness/Existence
+    no: 'لا يوجد',
+    empty: 'فارغ',
+    some: 'بعض',
+
+    // String operations
+    'starts with': 'يبدأ بـ',
+    'ends with': 'ينتهي بـ',
   },
 };

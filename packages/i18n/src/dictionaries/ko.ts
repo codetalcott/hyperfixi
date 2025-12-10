@@ -195,12 +195,31 @@ export const ko: Dictionary = {
     attributes: '속성들',
     property: '프로퍼티',
     properties: '프로퍼티들',
+  },
+
+  expressions: {
+    // Positional
     first: '첫번째',
     last: '마지막',
     next: '다음',
     previous: '이전',
+    prev: '이전',
+    at: '에서',
+    random: '무작위',
+
+    // DOM Traversal
+    closest: '가장가까운',
     parent: '부모',
     children: '자식',
-    closest: '가장가까운',
+    within: '이내',
+
+    // Emptiness/Existence
+    no: '없음',
+    empty: '비어있는',
+    some: '일부',
+
+    // String operations
+    'starts with': '로시작',
+    'ends with': '로끝나는',
   },
 };

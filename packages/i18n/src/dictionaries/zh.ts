@@ -195,12 +195,31 @@ export const zh: Dictionary = {
     attributes: '属性集',
     property: '特性',
     properties: '特性集',
+  },
+
+  expressions: {
+    // Positional
     first: '第一个',
     last: '最后一个',
     next: '下一个',
     previous: '上一个',
+    prev: '上个',
+    at: '在',
+    random: '随机',
+
+    // DOM Traversal
+    closest: '最近的',
     parent: '父级',
     children: '子级',
-    closest: '最近的',
+    within: '之内',
+
+    // Emptiness/Existence
+    no: '没有',
+    empty: '空的',
+    some: '一些',
+
+    // String operations
+    'starts with': '以开头',
+    'ends with': '以结尾',
   },
 };

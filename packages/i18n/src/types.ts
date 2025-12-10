@@ -10,7 +10,8 @@ export type DictionaryCategory =
   | 'logical'
   | 'temporal'
   | 'values'
-  | 'attributes';
+  | 'attributes'
+  | 'expressions';
 
 /**
  * All valid dictionary categories.
@@ -23,6 +24,7 @@ export const DICTIONARY_CATEGORIES: readonly DictionaryCategory[] = [
   'temporal',
   'values',
   'attributes',
+  'expressions',
 ] as const;
 
 /**
@@ -40,6 +42,7 @@ export interface Dictionary {
   temporal: Record<string, string>;
   values: Record<string, string>;
   attributes: Record<string, string>;
+  expressions: Record<string, string>;
 }
 
 // =============================================================================
@@ -172,7 +175,7 @@ export interface TranslationContext {
   metadata: LocaleMetadata;
 }
 
-export type TokenType = 
+export type TokenType =
   | 'command'
   | 'modifier'
   | 'event'
@@ -180,6 +183,7 @@ export type TokenType =
   | 'temporal'
   | 'value'
   | 'attribute'
+  | 'expression'
   | 'identifier'
   | 'operator'
   | 'literal';

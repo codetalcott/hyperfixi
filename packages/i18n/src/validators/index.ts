@@ -62,6 +62,7 @@ export function validate(dictionary: Dictionary, locale: string): ValidationResu
 
   for (const category of DICTIONARY_CATEGORIES) {
     const translations = dictionary[category];
+    if (!translations) continue;
 
     for (const [key, value] of Object.entries(translations)) {
       if (seen.has(value)) {
@@ -120,6 +121,7 @@ function validateLocaleSpecific(
 
     for (const category of DICTIONARY_CATEGORIES) {
       const translations = dictionary[category];
+      if (!translations) continue;
       for (const value of Object.values(translations)) {
         if (formalEndings.some(ending => value.endsWith(ending))) {
           formalCount++;
@@ -150,6 +152,7 @@ function validateLocaleSpecific(
 
     for (const category of DICTIONARY_CATEGORIES) {
       const translations = dictionary[category];
+      if (!translations) continue;
       for (const value of Object.values(translations)) {
         if (simplified.some(char => value.includes(char))) {
           hasSimplified = true;

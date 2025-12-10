@@ -195,12 +195,31 @@ export const id: Dictionary = {
     attributes: 'atribut_atribut',
     property: 'properti',
     properties: 'properti_properti',
+  },
+
+  expressions: {
+    // Positional
     first: 'pertama',
     last: 'terakhir',
     next: 'berikutnya',
     previous: 'sebelumnya',
+    prev: 'sblm',
+    at: 'di',
+    random: 'acak',
+
+    // DOM Traversal
+    closest: 'terdekat',
     parent: 'induk',
     children: 'anak_anak',
-    closest: 'terdekat',
+    within: 'dalam',
+
+    // Emptiness/Existence
+    no: 'tidak_ada',
+    empty: 'kosong',
+    some: 'beberapa',
+
+    // String operations
+    'starts with': 'dimulai dengan',
+    'ends with': 'diakhiri dengan',
   },
 };

@@ -176,9 +176,12 @@ export const en: Dictionary = {
     null: 'null',
     undefined: 'undefined',
     it: 'it',
+    its: 'its',
     me: 'me',
     my: 'my',
     myself: 'myself',
+    you: 'you',
+    your: 'your',
     element: 'element',
     target: 'target',
     detail: 'detail',
@@ -199,12 +202,31 @@ export const en: Dictionary = {
     attributes: 'attributes',
     property: 'property',
     properties: 'properties',
+  },
+
+  expressions: {
+    // Positional
     first: 'first',
     last: 'last',
     next: 'next',
     previous: 'previous',
+    prev: 'prev',
+    at: 'at',
+    random: 'random',
+
+    // DOM Traversal
+    closest: 'closest',
     parent: 'parent',
     children: 'children',
-    closest: 'closest',
+    within: 'within',
+
+    // Emptiness/Existence
+    no: 'no',
+    empty: 'empty',
+    some: 'some',
+
+    // String operations
+    'starts with': 'starts with',
+    'ends with': 'ends with',
   },
 };

@@ -127,6 +127,24 @@ export const ENGLISH_VALUE_KEYWORDS: Set<string> = new Set([
 ]);
 
 // =============================================================================
+// Expression Keywords
+// =============================================================================
+
+/**
+ * English expression keywords - positional, traversal, and string operations.
+ */
+export const ENGLISH_EXPRESSION_KEYWORDS: Set<string> = new Set([
+  // Positional
+  'first', 'last', 'next', 'previous', 'prev', 'at', 'random',
+  // DOM traversal
+  'closest', 'parent', 'children', 'within',
+  // Emptiness/existence
+  'no', 'empty', 'some',
+  // String operations (multi-word)
+  'starts with', 'ends with',
+]);
+
+// =============================================================================
 // Conditional Keywords
 // =============================================================================
 

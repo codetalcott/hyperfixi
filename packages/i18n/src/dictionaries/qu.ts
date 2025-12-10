@@ -195,12 +195,31 @@ export const qu: Dictionary = {
     attributes: 'kaqkuna',
     property: 'kanay',
     properties: 'kanaykuna',
+  },
+
+  expressions: {
+    // Positional
     first: 'ñawpaq',
     last: 'qhipa',
     next: 'qhipantin',
     previous: 'ñawpaqnin',
+    prev: 'ñawpaq',
+    at: 'pi',
+    random: 'imaymanata',
+
+    // DOM Traversal
+    closest: 'aswan_kaylla',
     parent: 'mama_tayta',
     children: 'wawakuna',
-    closest: 'aswan_kaylla',
+    within: 'ukupi',
+
+    // Emptiness/Existence
+    no: 'mana_kanchu',
+    empty: 'ch_usaq',
+    some: 'wakin',
+
+    // String operations
+    'starts with': 'qallarisqa wan',
+    'ends with': 'tukusqa wan',
   },
 };

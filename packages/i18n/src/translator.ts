@@ -104,7 +104,7 @@ export class HyperscriptTranslator {
     const fromDict = this.getDictionary(fromLocale);
     const toDict = this.getDictionary(toLocale);
     const reverseFromDict = this.getReverseDictionary(fromLocale);
-    const emptyDict: Dictionary = { commands: {}, modifiers: {}, events: {}, logical: {}, temporal: {}, values: {}, attributes: {} };
+    const emptyDict: Dictionary = { commands: {}, modifiers: {}, events: {}, logical: {}, temporal: {}, values: {}, attributes: {}, expressions: {} };
 
     return tokens.map(token => {
       let translated = token.value;
@@ -148,7 +148,7 @@ export class HyperscriptTranslator {
     }
 
     // Check categories in priority order (events before commands to handle 'click' etc.)
-    const categoryOrder = ['events', 'commands', 'modifiers', 'logical', 'temporal', 'values', 'attributes'];
+    const categoryOrder = ['events', 'commands', 'expressions', 'modifiers', 'logical', 'temporal', 'values', 'attributes'];
 
     for (const category of categoryOrder) {
       const translations = dict[category as keyof Dictionary];
@@ -164,7 +164,7 @@ export class HyperscriptTranslator {
 
   private isTranslatableToken(token: Token): boolean {
     const translatableTypes: TokenType[] = [
-      'command', 'modifier', 'event', 'logical', 'temporal', 'value', 'attribute'
+      'command', 'modifier', 'event', 'logical', 'temporal', 'value', 'attribute', 'expression'
     ];
     return translatableTypes.includes(token.type);
   }
@@ -189,8 +189,10 @@ export class HyperscriptTranslator {
 
     for (const category of DICTIONARY_CATEGORIES) {
       const translations = dictionary[category];
-      for (const [english, translated] of Object.entries(translations)) {
-        reverseDict.set(translated.toLowerCase(), english);
+      if (translations) {
+        for (const [english, translated] of Object.entries(translations)) {
+          reverseDict.set(translated.toLowerCase(), english);
+        }
       }
     }
 
@@ -243,13 +245,15 @@ export class HyperscriptTranslator {
     // For non-English locales, search translated values; for English, search keys
     for (const category of DICTIONARY_CATEGORIES) {
       const translations = dict[category];
-      for (const [key, value] of Object.entries(translations)) {
-        // Search keys (English terms) and values (translated terms)
-        if (key.toLowerCase().startsWith(lowerPartial)) {
-          completions.push(key);
-        }
-        if (value.toLowerCase().startsWith(lowerPartial) && !completions.includes(value)) {
-          completions.push(value);
+      if (translations) {
+        for (const [key, value] of Object.entries(translations)) {
+          // Search keys (English terms) and values (translated terms)
+          if (key.toLowerCase().startsWith(lowerPartial)) {
+            completions.push(key);
+          }
+          if (value.toLowerCase().startsWith(lowerPartial) && !completions.includes(value)) {
+            completions.push(value);
+          }
         }
       }
     }

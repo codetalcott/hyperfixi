@@ -198,12 +198,31 @@ export const ja: Dictionary = {
     attributes: '属性群',
     property: 'プロパティ',
     properties: 'プロパティ群',
+  },
+
+  expressions: {
+    // Positional
     first: '最初',
     last: '最後',
     next: '次',
     previous: '前',
+    prev: '前',
+    at: 'で',
+    random: 'ランダム',
+
+    // DOM Traversal
+    closest: '最も近い',
     parent: '親',
     children: '子',
-    closest: '最も近い',
+    within: '以内',
+
+    // Emptiness/Existence
+    no: 'ない',
+    empty: '空',
+    some: 'いくつか',
+
+    // String operations
+    'starts with': 'で始まる',
+    'ends with': 'で終わる',
   },
 };

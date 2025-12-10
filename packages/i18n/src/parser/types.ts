@@ -62,6 +62,11 @@ export interface KeywordProvider {
   isValue(token: string): boolean;
 
   /**
+   * Check if the token is an expression keyword (first, last, closest, etc.) in this locale.
+   */
+  isExpression(token: string): boolean;
+
+  /**
    * Get all command names in this locale (for completions).
    */
   getCommands(): string[];
@@ -95,5 +100,5 @@ export interface KeywordProviderOptions {
   /**
    * Categories to include. If not specified, all categories are included.
    */
-  categories?: Array<'commands' | 'modifiers' | 'events' | 'logical' | 'temporal' | 'values' | 'attributes'>;
+  categories?: Array<'commands' | 'modifiers' | 'events' | 'logical' | 'temporal' | 'values' | 'attributes' | 'expressions'>;
 }

@@ -195,12 +195,31 @@ export const tr: Dictionary = {
     attributes: 'özellikler',
     property: 'özellik',
     properties: 'özellikler',
+  },
+
+  expressions: {
+    // Positional
     first: 'ilk',
     last: 'son',
     next: 'sonraki',
     previous: 'önceki',
+    prev: 'önc',
+    at: 'de',
+    random: 'rastgele',
+
+    // DOM Traversal
+    closest: 'en_yakın',
     parent: 'ebeveyn',
     children: 'çocuklar',
-    closest: 'en_yakın',
+    within: 'içinde',
+
+    // Emptiness/Existence
+    no: 'yok',
+    empty: 'boş',
+    some: 'bazı',
+
+    // String operations
+    'starts with': 'ile başlar',
+    'ends with': 'ile biter',
   },
 };

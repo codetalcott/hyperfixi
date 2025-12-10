@@ -280,13 +280,13 @@ describe('New Language Support', () => {
       // Quechua uses complex suffixation
       expect(dict.modifiers.to).toBe('man');
       expect(dict.modifiers.from).toBe('manta');
-      expect(dict.attributes.children).toBe('wawakuna'); // -kuna is plural marker
+      expect(dict.expressions.children).toBe('wawakuna'); // -kuna is plural marker
     });
 
     it('should use appropriate Swahili noun class system hints', () => {
       const dict = dictionaries.sw;
       // Swahili has noun classes, reflected in some translations
-      expect(dict.attributes.children).toBe('watoto'); // wa- prefix for people
+      expect(dict.expressions.children).toBe('watoto'); // wa- prefix for people
       expect(dict.values.window).toBe('dirisha'); // appropriate class
     });
   });

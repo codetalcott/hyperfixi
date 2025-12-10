@@ -208,4 +208,30 @@ export const pt: Dictionary = {
     width: 'largura',
     height: 'altura',
   },
+
+  expressions: {
+    // Positional
+    first: 'primeiro',
+    last: 'último',
+    next: 'próximo',
+    previous: 'anterior',
+    prev: 'ant',
+    at: 'em',
+    random: 'aleatório',
+
+    // DOM Traversal
+    closest: 'mais próximo',
+    parent: 'pai',
+    children: 'filhos',
+    within: 'dentro',
+
+    // Emptiness/Existence
+    no: 'nenhum',
+    empty: 'vazio',
+    some: 'algum',
+
+    // String operations
+    'starts with': 'começa com',
+    'ends with': 'termina com',
+  },
 };

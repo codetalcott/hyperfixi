@@ -195,12 +195,31 @@ export const sw: Dictionary = {
     attributes: 'sifa',
     property: 'mali',
     properties: 'mali',
+  },
+
+  expressions: {
+    // Positional
     first: 'kwanza',
     last: 'mwisho',
     next: 'ijayo',
     previous: 'iliyopita',
+    prev: 'awali',
+    at: 'katika',
+    random: 'nasibu',
+
+    // DOM Traversal
+    closest: 'karibu_zaidi',
     parent: 'mzazi',
     children: 'watoto',
-    closest: 'karibu_zaidi',
+    within: 'ndani_ya',
+
+    // Emptiness/Existence
+    no: 'hakuna',
+    empty: 'tupu',
+    some: 'baadhi',
+
+    // String operations
+    'starts with': 'huanza na',
+    'ends with': 'huisha na',
   },
 };
