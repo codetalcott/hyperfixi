@@ -677,32 +677,152 @@ function translateWord(
 }
 
 /**
+ * Possessive markers for each language.
+ * Used to transform "X's Y" patterns to target language structure.
+ */
+const POSSESSIVE_MARKERS: Record<string, { type: 'prefix' | 'suffix' | 'preposition'; marker: string }> = {
+  en: { type: 'suffix', marker: "'s" },
+  es: { type: 'preposition', marker: 'de' },
+  pt: { type: 'preposition', marker: 'de' },
+  fr: { type: 'preposition', marker: 'de' },
+  de: { type: 'preposition', marker: 'von' },
+  ja: { type: 'suffix', marker: 'の' },
+  ko: { type: 'suffix', marker: '의' },
+  zh: { type: 'suffix', marker: '的' },
+  ar: { type: 'preposition', marker: 'لـ' },
+  tr: { type: 'suffix', marker: "'ın" },
+  id: { type: 'preposition', marker: 'dari' },
+  qu: { type: 'suffix', marker: '-pa' },
+  sw: { type: 'preposition', marker: 'ya' },
+};
+
+/**
+ * Transform possessive 's syntax to target language.
+ *
+ * Examples:
+ *   me's value → mi valor (Spanish - pronoun becomes possessive adjective)
+ *   #button's textContent → textContent de #button (Spanish - prepositional)
+ *   me's value → 私の値 (Japanese - の particle)
+ */
+function translatePossessive(
+  token: string,
+  sourceLocale: string,
+  targetLocale: string
+): string {
+  // Check for 's possessive pattern
+  const possessiveMatch = token.match(/^(.+)'s$/i);
+  if (!possessiveMatch) {
+    return token;
+  }
+
+  const owner = possessiveMatch[1];
+  const targetMarker = POSSESSIVE_MARKERS[targetLocale] || POSSESSIVE_MARKERS.en;
+
+  // Check if owner is a pronoun that has a possessive form
+  const pronounPossessives: Record<string, string> = {
+    me: 'my',
+    it: 'its',
+    you: 'your',
+  };
+
+  const lowerOwner = owner.toLowerCase();
+  if (pronounPossessives[lowerOwner]) {
+    // Convert "me's" to "my" then translate
+    const possessiveForm = pronounPossessives[lowerOwner];
+    return translateWord(possessiveForm, 'en', targetLocale);
+  }
+
+  // For selectors and other owners, translate owner and apply target possessive marker
+  const translatedOwner = translateWord(owner, sourceLocale, targetLocale);
+
+  switch (targetMarker.type) {
+    case 'suffix':
+      // Japanese/Korean/Chinese: owner + marker (e.g., #buttonの, #button의)
+      return `${translatedOwner}${targetMarker.marker}`;
+    case 'preposition':
+      // Will be handled by caller - return marker + owner format
+      // Store as special format to be processed later
+      return `__POSS__${targetMarker.marker}__${translatedOwner}__POSS__`;
+    default:
+      return `${translatedOwner}'s`;
+  }
+}
+
+/**
  * Translate a multi-word value, translating each word individually.
  * Handles possessives like "my value" → "mi valor" in Spanish.
+ * Also handles 's possessive syntax like "me's value" → "mi valor".
  */
 function translateMultiWordValue(
   value: string,
   sourceLocale: string,
   targetLocale: string
 ): string {
-  // If it's a single word, just translate it directly
+  // If it's a single word, check for possessive then translate
   if (!value.includes(' ')) {
+    // Check for possessive 's
+    if (value.includes("'s")) {
+      return translatePossessive(value, sourceLocale, targetLocale);
+    }
     return translateWord(value, sourceLocale, targetLocale);
   }
 
   // Split into words and translate each
   const words = value.split(/\s+/);
-  const translated = words.map(word => {
-    // Skip CSS selectors and numbers
-    if (/^[#.<@]/.test(word) || /^\d+/.test(word)) {
-      return word;
+  const translated: string[] = [];
+  let i = 0;
+
+  while (i < words.length) {
+    const word = words[i];
+
+    // Check for possessive 's pattern FIRST (e.g., "me's value", "#button's textContent")
+    // This must come before selector check because "#button's" starts with #
+    if (word.includes("'s")) {
+      const possessiveResult = translatePossessive(word, sourceLocale, targetLocale);
+
+      // Check if it's a prepositional possessive that needs reordering
+      const prepMatch = possessiveResult.match(/^__POSS__(.+)__(.+)__POSS__$/);
+      if (prepMatch && i + 1 < words.length) {
+        // Prepositional: "X's Y" → "Y marker X" (e.g., "textContent de #button")
+        const marker = prepMatch[1];
+        const owner = prepMatch[2];
+        const property = words[i + 1];
+        const translatedProperty = translateWord(property, sourceLocale, targetLocale);
+        translated.push(`${translatedProperty} ${marker} ${owner}`);
+        i += 2; // Skip property since we consumed it
+        continue;
+      } else if (prepMatch) {
+        // No property following - just output owner with marker prefix
+        const marker = prepMatch[1];
+        const owner = prepMatch[2];
+        translated.push(`${marker} ${owner}`);
+        i++;
+        continue;
+      }
+
+      // Suffix-style possessive (Japanese, Korean, etc.) or pronoun
+      translated.push(possessiveResult);
+      i++;
+      continue;
     }
+
+    // Skip pure CSS selectors and numbers (but NOT possessives which were handled above)
+    if (/^[#.<@]/.test(word) || /^\d+/.test(word)) {
+      translated.push(word);
+      i++;
+      continue;
+    }
+
     // Skip quoted strings
     if (/^["'].*["']$/.test(word)) {
-      return word;
+      translated.push(word);
+      i++;
+      continue;
     }
-    return translateWord(word, sourceLocale, targetLocale);
-  });
+
+    translated.push(translateWord(word, sourceLocale, targetLocale));
+    i++;
+  }
 
   return translated.join(' ');
 }
@@ -716,7 +836,11 @@ function translateElements(
   targetLocale: string
 ): void {
   for (const [_role, element] of parsed.roles) {
-    if (!element.isSelector && !element.isLiteral) {
+    // Always process possessive 's syntax, even for selectors
+    // E.g., "#button's textContent" should translate the possessive
+    if (element.value.includes("'s")) {
+      element.translated = translateMultiWordValue(element.value, sourceLocale, targetLocale);
+    } else if (!element.isSelector && !element.isLiteral) {
       element.translated = translateMultiWordValue(element.value, sourceLocale, targetLocale);
     } else {
       element.translated = element.value;
