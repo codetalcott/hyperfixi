@@ -469,9 +469,11 @@ function identifyStatementType(
 
 /**
  * Parse an event handler statement
- * Pattern: on {event} {command} {target?}
+ * Pattern: on {event} {command} {target?} {modifiers?}
+ *
+ * Now handles modifiers like "by 3" in "on click increment #count by 3"
  */
-function parseEventHandler(tokens: string[], _profile: LanguageProfile): ParsedStatement {
+function parseEventHandler(tokens: string[], profile: LanguageProfile): ParsedStatement {
   const roles = new Map<SemanticRole, ParsedElement>();
 
   // Skip the event keyword (e.g., 'on', 'で', '当', etc.) - derived from profiles
@@ -495,14 +497,43 @@ function parseEventHandler(tokens: string[], _profile: LanguageProfile): ParsedS
     startIndex++;
   }
 
-  // Remaining tokens are the patient (target)
+  // Parse remaining tokens with modifier awareness (like parseCommand does)
+  // This handles "by 3" in "on click increment #count by 3"
   if (tokens[startIndex]) {
-    const patientValue = tokens.slice(startIndex).join(' ');
-    roles.set('patient', {
-      role: 'patient',
-      value: patientValue,
-      isSelector: /^[#.<@]/.test(patientValue),
-    });
+    const modifierMap = generateModifierMap(profile);
+    let currentRole: SemanticRole = 'patient';
+    let currentValue: string[] = [];
+
+    for (let i = startIndex; i < tokens.length; i++) {
+      const token = tokens[i];
+      const mappedRole = modifierMap[token.toLowerCase()];
+
+      if (mappedRole) {
+        // Save previous role
+        if (currentValue.length > 0) {
+          const value = currentValue.join(' ');
+          roles.set(currentRole, {
+            role: currentRole,
+            value,
+            isSelector: /^[#.<@]/.test(value),
+          });
+        }
+        currentRole = mappedRole;
+        currentValue = [];
+      } else {
+        currentValue.push(token);
+      }
+    }
+
+    // Save final role
+    if (currentValue.length > 0) {
+      const value = currentValue.join(' ');
+      roles.set(currentRole, {
+        role: currentRole,
+        value,
+        isSelector: /^[#.<@]/.test(value),
+      });
+    }
   }
 
   return {
