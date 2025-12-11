@@ -106,11 +106,33 @@ export class TransitionCommand {
     const transitionProp = `${property} ${duration}ms ${timingFunction || 'ease'}`;
     targetElement.style.transition = originalTransition ? `${originalTransition}, ${transitionProp}` : transitionProp;
 
-    const toValue = String(value);
+    let toValue = String(value);
+    let removeInlineAfter = false;
+
+    // Handle CSS keywords that should restore to stylesheet value, not CSS spec initial
+    // 'initial' in hyperscript means "restore to original" not CSS's transparent/default
+    if (toValue === 'initial' || toValue === 'inherit' || toValue === 'unset' || toValue === 'revert') {
+      // Get the stylesheet value by temporarily removing inline style
+      const currentInline = targetElement.style.getPropertyValue(property);
+      targetElement.style.removeProperty(property);
+      toValue = getComputedStyle(targetElement).getPropertyValue(property);
+      // Restore inline style so transition can animate FROM current value
+      if (currentInline) {
+        targetElement.style.setProperty(property, currentInline);
+      }
+      removeInlineAfter = true;
+    }
+
     targetElement.style.setProperty(property, toValue);
 
     const completed = await this.waitForTransition(targetElement, property, duration);
     targetElement.style.transition = originalTransition;
+
+    // If we transitioned to "initial", remove inline style to let stylesheet take over
+    if (removeInlineAfter) {
+      targetElement.style.removeProperty(property);
+    }
+
     Object.assign(context, { it: targetElement });
 
     return { element: targetElement, property, fromValue, toValue, duration, completed };
