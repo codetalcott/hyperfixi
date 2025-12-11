@@ -125,22 +125,59 @@ export const englishProfile: LanguageProfile = {
     method: { primary: 'as', position: 'before' },
   },
   keywords: {
+    // Class/Attribute operations
     toggle: { primary: 'toggle' },
     add: { primary: 'add' },
     remove: { primary: 'remove' },
+    // Content operations
     put: { primary: 'put' },
-    set: { primary: 'set' },
-    get: { primary: 'get' },
-    show: { primary: 'show' },
-    hide: { primary: 'hide' },
-    on: { primary: 'on' },
-    trigger: { primary: 'trigger', alternatives: ['send'] },
-    wait: { primary: 'wait' },
-    fetch: { primary: 'fetch' },
-    increment: { primary: 'increment' },
-    decrement: { primary: 'decrement' },
     append: { primary: 'append' },
     prepend: { primary: 'prepend' },
+    take: { primary: 'take' },
+    make: { primary: 'make' },
+    clone: { primary: 'clone' },
+    // Variable operations
+    set: { primary: 'set' },
+    get: { primary: 'get' },
+    increment: { primary: 'increment' },
+    decrement: { primary: 'decrement' },
+    log: { primary: 'log' },
+    // Visibility
+    show: { primary: 'show' },
+    hide: { primary: 'hide' },
+    transition: { primary: 'transition' },
+    // Events
+    on: { primary: 'on' },
+    trigger: { primary: 'trigger', alternatives: ['send'] },
+    send: { primary: 'send' },
+    // DOM focus
+    focus: { primary: 'focus' },
+    blur: { primary: 'blur' },
+    // Navigation
+    go: { primary: 'go' },
+    // Async
+    wait: { primary: 'wait' },
+    fetch: { primary: 'fetch' },
+    settle: { primary: 'settle' },
+    // Control flow
+    if: { primary: 'if' },
+    else: { primary: 'else' },
+    repeat: { primary: 'repeat' },
+    for: { primary: 'for' },
+    while: { primary: 'while' },
+    continue: { primary: 'continue' },
+    halt: { primary: 'halt' },
+    throw: { primary: 'throw' },
+    call: { primary: 'call' },
+    return: { primary: 'return' },
+    // Advanced
+    js: { primary: 'js' },
+    async: { primary: 'async' },
+    tell: { primary: 'tell' },
+    default: { primary: 'default' },
+    init: { primary: 'init' },
+    behavior: { primary: 'behavior' },
+    // Modifiers
     into: { primary: 'into' },
     before: { primary: 'before' },
     after: { primary: 'after' },
@@ -427,20 +464,61 @@ export const koreanProfile: LanguageProfile = {
     style: { primary: '로', alternatives: ['으로'], position: 'after' },
   },
   keywords: {
-    toggle: { primary: '전환', alternatives: ['토글'], normalized: 'toggle' },
+    // Class/Attribute operations
+    toggle: { primary: '토글', alternatives: ['전환'], normalized: 'toggle' },
     add: { primary: '추가', normalized: 'add' },
     remove: { primary: '제거', alternatives: ['삭제'], normalized: 'remove' },
-    put: { primary: '넣기', alternatives: ['놓기'], normalized: 'put' },
+    // Content operations
+    put: { primary: '넣다', alternatives: ['넣기', '놓기'], normalized: 'put' },
+    append: { primary: '추가', normalized: 'append' },
+    take: { primary: '가져오다', normalized: 'take' },
+    make: { primary: '만들다', normalized: 'make' },
+    clone: { primary: '복사', normalized: 'clone' },
+    // Variable operations
     set: { primary: '설정', normalized: 'set' },
-    get: { primary: '가져오기', normalized: 'get' },
-    show: { primary: '표시', alternatives: ['보이기'], normalized: 'show' },
-    hide: { primary: '숨기기', normalized: 'hide' },
-    on: { primary: '시', alternatives: ['때', '할 때'], normalized: 'on' },
-    trigger: { primary: '트리거', normalized: 'trigger' },
-    wait: { primary: '대기', normalized: 'wait' },
-    fetch: { primary: '가져오기', normalized: 'fetch' },
+    get: { primary: '얻다', alternatives: ['가져오기'], normalized: 'get' },
     increment: { primary: '증가', normalized: 'increment' },
     decrement: { primary: '감소', normalized: 'decrement' },
+    log: { primary: '로그', normalized: 'log' },
+    // Visibility
+    show: { primary: '보이다', alternatives: ['표시'], normalized: 'show' },
+    hide: { primary: '숨기다', normalized: 'hide' },
+    transition: { primary: '전환', normalized: 'transition' },
+    // Events
+    on: { primary: '에', alternatives: ['시', '때', '할 때'], normalized: 'on' },
+    trigger: { primary: '트리거', normalized: 'trigger' },
+    send: { primary: '보내다', normalized: 'send' },
+    // DOM focus
+    focus: { primary: '포커스', normalized: 'focus' },
+    blur: { primary: '블러', normalized: 'blur' },
+    // Navigation
+    go: { primary: '이동', normalized: 'go' },
+    // Async
+    wait: { primary: '대기', normalized: 'wait' },
+    fetch: { primary: '가져오기', normalized: 'fetch' },
+    settle: { primary: '안정', normalized: 'settle' },
+    // Control flow
+    if: { primary: '만약', normalized: 'if' },
+    else: { primary: '아니면', normalized: 'else' },
+    repeat: { primary: '반복', normalized: 'repeat' },
+    for: { primary: '동안', normalized: 'for' },
+    while: { primary: '동안', normalized: 'while' },
+    continue: { primary: '계속', normalized: 'continue' },
+    halt: { primary: '정지', normalized: 'halt' },
+    throw: { primary: '던지다', normalized: 'throw' },
+    call: { primary: '호출', normalized: 'call' },
+    return: { primary: '반환', normalized: 'return' },
+    // Advanced
+    js: { primary: 'JS실행', alternatives: ['js'], normalized: 'js' },
+    async: { primary: '비동기', normalized: 'async' },
+    tell: { primary: '말하다', normalized: 'tell' },
+    default: { primary: '기본값', normalized: 'default' },
+    init: { primary: '초기화', normalized: 'init' },
+    behavior: { primary: '동작', normalized: 'behavior' },
+    // Modifiers
+    into: { primary: '으로', normalized: 'into' },
+    before: { primary: '전에', normalized: 'before' },
+    after: { primary: '후에', normalized: 'after' },
   },
   tokenization: {
     particles: ['을', '를', '이', '가', '은', '는', '에', '에서', '으로', '로', '와', '과', '도'],
@@ -471,20 +549,61 @@ export const chineseProfile: LanguageProfile = {
     style: { primary: '用', alternatives: ['以'], position: 'before' },
   },
   keywords: {
+    // Class/Attribute operations
     toggle: { primary: '切换', normalized: 'toggle' },
     add: { primary: '添加', alternatives: ['加'], normalized: 'add' },
     remove: { primary: '移除', alternatives: ['删除', '去掉'], normalized: 'remove' },
-    put: { primary: '放', alternatives: ['放入', '放置'], normalized: 'put' },
+    // Content operations
+    put: { primary: '放置', alternatives: ['放', '放入'], normalized: 'put' },
+    append: { primary: '追加', normalized: 'append' },
+    take: { primary: '获取', normalized: 'take' },
+    make: { primary: '制作', normalized: 'make' },
+    clone: { primary: '复制', normalized: 'clone' },
+    // Variable operations
     set: { primary: '设置', alternatives: ['设定'], normalized: 'set' },
-    get: { primary: '获取', alternatives: ['取得'], normalized: 'get' },
-    show: { primary: '显示', alternatives: ['展示'], normalized: 'show' },
-    hide: { primary: '隐藏', normalized: 'hide' },
-    on: { primary: '当', alternatives: ['在...时'], normalized: 'on' },
-    trigger: { primary: '触发', normalized: 'trigger' },
-    wait: { primary: '等待', normalized: 'wait' },
-    fetch: { primary: '获取', normalized: 'fetch' },
+    get: { primary: '获得', alternatives: ['获取', '取得'], normalized: 'get' },
     increment: { primary: '增加', normalized: 'increment' },
     decrement: { primary: '减少', normalized: 'decrement' },
+    log: { primary: '日志', normalized: 'log' },
+    // Visibility
+    show: { primary: '显示', alternatives: ['展示'], normalized: 'show' },
+    hide: { primary: '隐藏', normalized: 'hide' },
+    transition: { primary: '过渡', normalized: 'transition' },
+    // Events
+    on: { primary: '当', alternatives: ['在...时'], normalized: 'on' },
+    trigger: { primary: '触发', normalized: 'trigger' },
+    send: { primary: '发送', normalized: 'send' },
+    // DOM focus
+    focus: { primary: '聚焦', normalized: 'focus' },
+    blur: { primary: '失焦', normalized: 'blur' },
+    // Navigation
+    go: { primary: '前往', normalized: 'go' },
+    // Async
+    wait: { primary: '等待', normalized: 'wait' },
+    fetch: { primary: '获取', normalized: 'fetch' },
+    settle: { primary: '稳定', normalized: 'settle' },
+    // Control flow
+    if: { primary: '如果', normalized: 'if' },
+    else: { primary: '否则', normalized: 'else' },
+    repeat: { primary: '重复', normalized: 'repeat' },
+    for: { primary: '为', normalized: 'for' },
+    while: { primary: '当', normalized: 'while' },
+    continue: { primary: '继续', normalized: 'continue' },
+    halt: { primary: '停止', normalized: 'halt' },
+    throw: { primary: '抛出', normalized: 'throw' },
+    call: { primary: '调用', normalized: 'call' },
+    return: { primary: '返回', normalized: 'return' },
+    // Advanced
+    js: { primary: 'JS执行', alternatives: ['js'], normalized: 'js' },
+    async: { primary: '异步', normalized: 'async' },
+    tell: { primary: '告诉', normalized: 'tell' },
+    default: { primary: '默认', normalized: 'default' },
+    init: { primary: '初始化', normalized: 'init' },
+    behavior: { primary: '行为', normalized: 'behavior' },
+    // Modifiers
+    into: { primary: '进入', normalized: 'into' },
+    before: { primary: '之前', normalized: 'before' },
+    after: { primary: '之后', normalized: 'after' },
   },
   tokenization: {
     boundaryStrategy: 'character',
@@ -515,20 +634,61 @@ export const turkishProfile: LanguageProfile = {
     style: { primary: 'le', alternatives: ['la', 'yle', 'yla'], position: 'after' }, // Instrumental
   },
   keywords: {
+    // Class/Attribute operations
     toggle: { primary: 'değiştir', alternatives: ['aç/kapat'], normalized: 'toggle' },
     add: { primary: 'ekle', normalized: 'add' },
     remove: { primary: 'kaldır', alternatives: ['sil'], normalized: 'remove' },
+    // Content operations
     put: { primary: 'koy', normalized: 'put' },
+    append: { primary: 'ekle', normalized: 'append' },
+    take: { primary: 'al', normalized: 'take' },
+    make: { primary: 'yap', normalized: 'make' },
+    clone: { primary: 'kopyala', normalized: 'clone' },
+    // Variable operations
     set: { primary: 'ayarla', normalized: 'set' },
     get: { primary: 'al', normalized: 'get' },
-    show: { primary: 'göster', normalized: 'show' },
-    hide: { primary: 'gizle', normalized: 'hide' },
-    on: { primary: 'olduğunda', alternatives: ['zaman'], normalized: 'on' },
-    trigger: { primary: 'tetikle', normalized: 'trigger' },
-    wait: { primary: 'bekle', normalized: 'wait' },
-    fetch: { primary: 'getir', normalized: 'fetch' },
     increment: { primary: 'artır', normalized: 'increment' },
     decrement: { primary: 'azalt', normalized: 'decrement' },
+    log: { primary: 'kaydet', normalized: 'log' },
+    // Visibility
+    show: { primary: 'göster', normalized: 'show' },
+    hide: { primary: 'gizle', normalized: 'hide' },
+    transition: { primary: 'geçiş', normalized: 'transition' },
+    // Events
+    on: { primary: 'üzerinde', alternatives: ['olduğunda', 'zaman'], normalized: 'on' },
+    trigger: { primary: 'tetikle', normalized: 'trigger' },
+    send: { primary: 'gönder', normalized: 'send' },
+    // DOM focus
+    focus: { primary: 'odak', normalized: 'focus' },
+    blur: { primary: 'bulanık', normalized: 'blur' },
+    // Navigation
+    go: { primary: 'git', normalized: 'go' },
+    // Async
+    wait: { primary: 'bekle', normalized: 'wait' },
+    fetch: { primary: 'getir', normalized: 'fetch' },
+    settle: { primary: 'sabitlen', normalized: 'settle' },
+    // Control flow
+    if: { primary: 'eğer', normalized: 'if' },
+    else: { primary: 'yoksa', normalized: 'else' },
+    repeat: { primary: 'tekrarla', normalized: 'repeat' },
+    for: { primary: 'için', normalized: 'for' },
+    while: { primary: 'iken', normalized: 'while' },
+    continue: { primary: 'devam', normalized: 'continue' },
+    halt: { primary: 'durdur', normalized: 'halt' },
+    throw: { primary: 'fırlat', normalized: 'throw' },
+    call: { primary: 'çağır', normalized: 'call' },
+    return: { primary: 'dön', normalized: 'return' },
+    // Advanced
+    js: { primary: 'js', normalized: 'js' },
+    async: { primary: 'asenkron', normalized: 'async' },
+    tell: { primary: 'söyle', normalized: 'tell' },
+    default: { primary: 'varsayılan', normalized: 'default' },
+    init: { primary: 'başlat', normalized: 'init' },
+    behavior: { primary: 'davranış', normalized: 'behavior' },
+    // Modifiers
+    into: { primary: 'içine', normalized: 'into' },
+    before: { primary: 'önce', normalized: 'before' },
+    after: { primary: 'sonra', normalized: 'after' },
   },
 };
 
