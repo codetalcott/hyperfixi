@@ -17,7 +17,12 @@ import type {
   DefNode,
 } from '../types/core';
 import type { ParseError as LocalParseError, KeywordResolver, ParserOptions } from './types';
+import type { SemanticAnalyzer } from './semantic-integration';
 import { debug } from '../utils/debug';
+import {
+  SemanticIntegrationAdapter,
+  DEFAULT_CONFIDENCE_THRESHOLD,
+} from './semantic-integration';
 
 // Phase 1 Refactoring: Import new helper modules
 import {
@@ -71,6 +76,8 @@ export class Parser {
   private error: LocalParseError | undefined;
   private warnings: ParseWarning[] = [];
   private keywordResolver?: KeywordResolver;
+  private semanticAdapter?: SemanticIntegrationAdapter;
+  private originalInput?: string;
 
   // Postfix unary operators that do NOT take a right operand
   private static readonly POSTFIX_UNARY_OPERATORS = new Set([
@@ -83,6 +90,20 @@ export class Parser {
   constructor(tokens: Token[], options?: ParserOptions) {
     this.tokens = tokens;
     this.keywordResolver = options?.keywords;
+
+    // Initialize semantic integration if analyzer provided
+    if (options?.semanticAnalyzer && options?.language) {
+      this.semanticAdapter = new SemanticIntegrationAdapter({
+        analyzer: options.semanticAnalyzer as SemanticAnalyzer,
+        language: options.language,
+        confidenceThreshold: options.semanticConfidenceThreshold ?? DEFAULT_CONFIDENCE_THRESHOLD,
+      });
+    }
+
+    // Reconstruct original input from tokens for semantic analysis
+    if (this.semanticAdapter) {
+      this.originalInput = tokens.map(t => t.value).join('');
+    }
   }
 
   /**
@@ -2670,7 +2691,91 @@ export class Parser {
     return commands;
   }
 
+  /**
+   * Try semantic-first parsing for the current command.
+   *
+   * This method attempts to parse using the semantic analyzer when available.
+   * If successful with sufficient confidence, returns the parsed command node.
+   * Otherwise returns null to indicate fallback to traditional parsing.
+   *
+   * @param remainingInput The remaining input string from current position
+   * @returns Parsed CommandNode if successful, null otherwise
+   */
+  private trySemanticParse(remainingInput: string): CommandNode | null {
+    if (!this.semanticAdapter || !this.semanticAdapter.isAvailable()) {
+      return null;
+    }
+
+    try {
+      const result = this.semanticAdapter.trySemanticParse(remainingInput);
+
+      if (result.success && result.node) {
+        debug.parse(
+          `[Semantic] Successfully parsed with confidence ${result.confidence}:`,
+          result.node.name
+        );
+
+        // Update position tracking based on tokens consumed
+        // For now, semantic parsing handles full command - traditional parser continues from here
+        return result.node;
+      }
+
+      debug.parse(
+        `[Semantic] Low confidence (${result.confidence}), falling back to traditional parser`
+      );
+      return null;
+    } catch (error) {
+      debug.parse('[Semantic] Error during semantic parse:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get remaining input from current token position for semantic analysis.
+   */
+  private getRemainingInput(): string {
+    if (!this.originalInput) {
+      // Reconstruct from tokens if not stored
+      return this.tokens
+        .slice(this.current > 0 ? this.current - 1 : 0)
+        .map(t => t.value)
+        .join(' ');
+    }
+
+    // Get position from current token
+    const currentToken = this.current > 0 ? this.tokens[this.current - 1] : this.tokens[0];
+    if (currentToken && currentToken.start !== undefined) {
+      return this.originalInput.slice(currentToken.start);
+    }
+
+    return this.originalInput;
+  }
+
   private parseCommand(): CommandNode {
+    // Try semantic-first parsing if available
+    // This enables true multilingual parsing with confidence-based fallback
+    if (this.semanticAdapter) {
+      const remainingInput = this.getRemainingInput();
+      const semanticResult = this.trySemanticParse(remainingInput);
+      if (semanticResult) {
+        // Semantic parsing succeeded - use the result
+        // Skip tokens that were consumed by semantic parsing
+        // For now, advance to next command boundary
+        while (
+          !this.isAtEnd() &&
+          !this.check('then') &&
+          !this.check('and') &&
+          !this.check('else') &&
+          !this.check('end') &&
+          !this.checkTokenType(TokenType.COMMAND)
+        ) {
+          this.advance();
+        }
+        return semanticResult;
+      }
+      // Semantic parsing failed or low confidence - fall through to traditional parsing
+    }
+
     const commandToken = this.previous();
     let commandName = commandToken.value;
 

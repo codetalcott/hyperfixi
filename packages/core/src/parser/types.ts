@@ -216,6 +216,37 @@ export interface KeywordResolver {
   isKeyword(token: string): boolean;
 }
 
+/**
+ * Interface for semantic analysis integration.
+ * Mirrors the SemanticAnalyzer from @hyperfixi/semantic.
+ */
+export interface SemanticAnalyzerInterface {
+  /**
+   * Analyze input in the specified language.
+   * @param input The input string to analyze
+   * @param language ISO 639-1 language code
+   * @returns Analysis result with confidence score
+   */
+  analyze(
+    input: string,
+    language: string
+  ): {
+    confidence: number;
+    command?: {
+      name: string;
+      roles: ReadonlyMap<string, { type: string; value: string }>;
+    };
+    errors?: string[];
+    tokensConsumed?: number;
+  };
+
+  /** Check if semantic parsing is available for a language */
+  supportsLanguage(language: string): boolean;
+
+  /** Get the list of supported languages */
+  supportedLanguages(): string[];
+}
+
 export interface ParserOptions {
   includeWhitespace?: boolean;
   includeComments?: boolean;
@@ -239,6 +270,39 @@ export interface ParserOptions {
    * ```
    */
   keywords?: KeywordResolver;
+
+  /**
+   * Optional semantic analyzer for multilingual parsing.
+   *
+   * When provided, the parser can use semantic-first parsing with
+   * confidence-based fallback to traditional keyword parsing.
+   *
+   * Use the semantic analyzer from @hyperfixi/semantic:
+   *
+   * @example
+   * ```typescript
+   * import { createSemanticAnalyzer } from '@hyperfixi/semantic';
+   * parse('#button の .active を 切り替え', {
+   *   semanticAnalyzer: createSemanticAnalyzer(),
+   *   language: 'ja',
+   * });
+   * ```
+   */
+  semanticAnalyzer?: SemanticAnalyzerInterface;
+
+  /**
+   * Language code for semantic parsing (ISO 639-1).
+   * Required when using semanticAnalyzer.
+   * @example 'en', 'es', 'ja', 'ar'
+   */
+  language?: string;
+
+  /**
+   * Confidence threshold for semantic parsing (0-1).
+   * If semantic analysis confidence is below this, fall back to traditional parsing.
+   * @default 0.5
+   */
+  semanticConfidenceThreshold?: number;
 }
 
 // ============================================================================
