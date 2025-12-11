@@ -6,15 +6,8 @@
  * fallback between semantic and traditional parsing.
  */
 
-import type {
-  SemanticNode,
-  SemanticValue,
-  ActionType,
-  TokenStream,
-  PatternMatchResult,
-} from './types';
+import type { SemanticNode, SemanticValue, ActionType, PatternMatchResult } from './types';
 import type { SemanticRole } from '@hyperfixi/i18n/src/grammar/types';
-import { SemanticParserImpl } from './parser/semantic-parser';
 import { PatternMatcher } from './parser/pattern-matcher';
 import { getTokenizer } from './tokenizers';
 import { getPatternsForLanguage } from './patterns';
@@ -76,12 +69,10 @@ export interface SemanticAnalyzer {
  * Implementation of SemanticAnalyzer that wraps the semantic parser.
  */
 export class SemanticAnalyzerImpl implements SemanticAnalyzer {
-  private readonly parser: SemanticParserImpl;
   private readonly patternMatcher: PatternMatcher;
   private readonly languages: Set<string>;
 
   constructor() {
-    this.parser = new SemanticParserImpl();
     this.patternMatcher = new PatternMatcher();
     this.languages = new Set(['en', 'es', 'ja', 'ar']);
   }

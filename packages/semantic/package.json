@@ -5,11 +5,16 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "browser": "dist/hyperfixi-semantic.browser.global.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "default": "./dist/hyperfixi-semantic.browser.global.js"
     },
     "./explicit": {
       "types": "./dist/explicit/index.d.ts",
@@ -19,6 +24,7 @@
   },
   "scripts": {
     "build": "tsup",
+    "build:browser": "tsup src/browser.ts --format iife --global-name HyperFixiSemantic --minify",
     "dev": "tsup --watch",
     "test": "vitest",
     "test:run": "vitest run",
