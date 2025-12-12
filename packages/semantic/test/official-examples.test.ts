@@ -266,6 +266,49 @@ describe('Multilingual Equivalents of Official Examples', () => {
     });
   });
 
+  describe('Increment Command', () => {
+    it('Japanese: :x を 増加', () => {
+      expect(canParse(':x を 増加', 'ja')).toBe(true);
+
+      const node = parse(':x を 増加', 'ja');
+      expect(node.action).toBe('increment');
+      expect(node.roles.get('patient')?.value).toBe(':x');
+    });
+
+    it('Korean: :x 를 증가', () => {
+      expect(canParse(':x 를 증가', 'ko')).toBe(true);
+
+      const node = parse(':x 를 증가', 'ko');
+      expect(node.action).toBe('increment');
+      expect(node.roles.get('patient')?.value).toBe(':x');
+    });
+
+    it('Arabic: زِد :x', () => {
+      expect(canParse('زِد :x', 'ar')).toBe(true);
+
+      const node = parse('زِد :x', 'ar');
+      expect(node.action).toBe('increment');
+      expect(node.roles.get('patient')?.value).toBe(':x');
+    });
+
+    it('Spanish: incrementar :x', () => {
+      expect(canParse('incrementar :x', 'es')).toBe(true);
+
+      const node = parse('incrementar :x', 'es');
+      expect(node.action).toBe('increment');
+      expect(node.roles.get('patient')?.value).toBe(':x');
+    });
+
+    it('Turkish: :x i artır', () => {
+      // Turkish requires accusative case particle 'i' for objects
+      expect(canParse(':x i artır', 'tr')).toBe(true);
+
+      const node = parse(':x i artır', 'tr');
+      expect(node.action).toBe('increment');
+      expect(node.roles.get('patient')?.value).toBe(':x');
+    });
+  });
+
   describe('Wait Command', () => {
     it('Japanese: 1s 待つ', () => {
       // Note: May need to adjust syntax based on actual Japanese patterns
