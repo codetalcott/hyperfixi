@@ -222,7 +222,7 @@ export class ToggleCommand {
       case 'attribute': {
         const { name, value } = parseAttribute(expression);
         const targetArgs = raw.args.slice(1);
-        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true });
+        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true, fallbackModifierKey: 'on' }, raw.modifiers);
         return { type: 'attribute', name, value, targets, duration, untilEvent };
       }
 
@@ -232,7 +232,7 @@ export class ToggleCommand {
           throw new Error(`Invalid CSS property: ${expression}`);
         }
         const targetArgs = raw.args.slice(1);
-        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true });
+        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true, fallbackModifierKey: 'on' }, raw.modifiers);
         return { type: 'css-property', property, targets };
       }
 
@@ -252,7 +252,7 @@ export class ToggleCommand {
           );
         } else {
           // Resolve from selector
-          elements = await resolveTargetsFromArgs([firstArg], evaluator, context, 'toggle', { filterPrepositions: true });
+          elements = await resolveTargetsFromArgs([firstArg], evaluator, context, 'toggle', { filterPrepositions: true, fallbackModifierKey: 'on' }, raw.modifiers);
         }
 
         // Check for mode specifier (e.g., "as modal" or "modal")
@@ -321,7 +321,7 @@ export class ToggleCommand {
           throw new Error('toggle command: no valid class names found');
         }
         const targetArgs = raw.args.slice(1);
-        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true });
+        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true, fallbackModifierKey: 'on' }, raw.modifiers);
         return { type: 'classes', classes, targets, duration, untilEvent };
       }
     }

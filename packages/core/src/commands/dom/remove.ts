@@ -136,7 +136,7 @@ export class RemoveCommand {
       if (isAttributeSyntax(trimmed)) {
         const name = parseAttributeName(trimmed);
         const targetArgs = raw.args.slice(1);
-        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'remove', { filterPrepositions: true });
+        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'remove', { filterPrepositions: true, fallbackModifierKey: 'from' }, raw.modifiers);
         return { type: 'attribute', name, targets };
       }
 
@@ -144,7 +144,7 @@ export class RemoveCommand {
       if (trimmed.startsWith('*')) {
         const property = trimmed.substring(1);
         const targetArgs = raw.args.slice(1);
-        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'remove', { filterPrepositions: true });
+        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'remove', { filterPrepositions: true, fallbackModifierKey: 'from' }, raw.modifiers);
         return { type: 'styles', properties: [property], targets };
       }
     }
@@ -156,7 +156,7 @@ export class RemoveCommand {
     }
 
     const targetArgs = raw.args.slice(1);
-    const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'remove', { filterPrepositions: true });
+    const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'remove', { filterPrepositions: true, fallbackModifierKey: 'from' }, raw.modifiers);
 
     return { type: 'classes', classes, targets };
   }

@@ -26,6 +26,13 @@ import { Runtime } from '../runtime/runtime';
 import { tokenize } from '../parser/tokenizer';
 import { debug } from '../utils/debug';
 import { styleBatcher, ObjectPool } from '../utils/performance';
+import {
+  enableDebugEvents,
+  disableDebugEvents,
+  isDebugEnabled,
+  getDebugStats,
+  resetDebugStats,
+} from '../utils/debug-events';
 
 // Semantic parsing API for multilingual support
 import {
@@ -68,6 +75,14 @@ declare global {
         toExplicit: typeof toExplicit;
         fromExplicit: typeof fromExplicit;
         supportedLanguages: string[];
+      };
+      // Semantic debug API
+      semanticDebug: {
+        enable: typeof enableDebugEvents;
+        disable: typeof disableDebugEvents;
+        isEnabled: typeof isDebugEnabled;
+        getStats: typeof getDebugStats;
+        resetStats: typeof resetDebugStats;
       };
     };
     // Also expose as direct globals for test compatibility
@@ -147,12 +162,24 @@ const hyperfixi = {
     supportedLanguages: ['en', 'es', 'ja', 'ar'],
   },
 
+  // Semantic debug API for monitoring parsing decisions
+  semanticDebug: {
+    enable: enableDebugEvents,
+    disable: disableDebugEvents,
+    isEnabled: isDebugEnabled,
+    getStats: getDebugStats,
+    resetStats: resetDebugStats,
+  },
+
   // Version info
   version: '1.0.0-full',
 };
 
 // Export to global for browser testing
 if (typeof window !== 'undefined') {
+  // Note: Debug auto-enable via URL param is handled in debug-events.ts module load
+  // This ensures it happens before attribute processing
+
   window.hyperfixi = hyperfixi;
 
   // Also expose functions as direct globals for test compatibility

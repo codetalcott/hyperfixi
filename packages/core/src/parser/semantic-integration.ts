@@ -8,6 +8,12 @@
  */
 
 import type { CommandNode, ExpressionNode } from '../types/core';
+import {
+  emitSemanticParseEvent,
+  updateDebugStats,
+  isDebugEnabled,
+  type SemanticParseEventDetail,
+} from '../utils/debug-events';
 
 // =============================================================================
 // Semantic Analyzer Interface (mirrors @hyperfixi/semantic/core-bridge)
@@ -200,6 +206,8 @@ export class SemanticIntegrationAdapter {
    * @returns Parse attempt result with success status and optional node
    */
   trySemanticParse(input: string): SemanticParseAttempt {
+    const startTime = performance.now();
+
     if (!this.isAvailable()) {
       return {
         success: false,
@@ -210,6 +218,7 @@ export class SemanticIntegrationAdapter {
 
     try {
       const result = this.analyzer.analyze(input, this.language);
+      const duration = performance.now() - startTime;
 
       if (this.debugEnabled) {
         console.log(`[SemanticIntegration] Analysis result:`, {
@@ -222,7 +231,37 @@ export class SemanticIntegrationAdapter {
       }
 
       // Check if confidence meets threshold
-      if (result.confidence < this.confidenceThreshold || !result.command) {
+      const semanticSuccess = result.confidence >= this.confidenceThreshold && !!result.command;
+      const fallbackTriggered = !semanticSuccess && result.confidence > 0;
+
+      // Emit debug event if enabled
+      if (isDebugEnabled()) {
+        const roles: Record<string, string> = {};
+        if (result.command?.roles) {
+          for (const [role, value] of result.command.roles) {
+            roles[role] = value.value;
+          }
+        }
+
+        const eventDetail: SemanticParseEventDetail = {
+          input: input.substring(0, 100), // Truncate for display
+          language: this.language,
+          confidence: result.confidence,
+          threshold: this.confidenceThreshold,
+          semanticSuccess,
+          fallbackTriggered,
+          command: result.command?.name,
+          roles: Object.keys(roles).length > 0 ? roles : undefined,
+          errors: result.errors,
+          timestamp: Date.now(),
+          duration,
+        };
+
+        emitSemanticParseEvent(eventDetail);
+        updateDebugStats(eventDetail);
+      }
+
+      if (!semanticSuccess) {
         return {
           success: false,
           confidence: result.confidence,

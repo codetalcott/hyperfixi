@@ -64,7 +64,13 @@ export class PutCommand {
 
     let contentArg: ASTNode | null = null, targetArg: ASTNode | null = null;
     if (prepIdx === -1) {
-      if (raw.args.length >= 3) {
+      // Check modifiers for semantic parsing format (e.g., { args: [content], modifiers: { into: target } })
+      if (raw.modifiers.into || raw.modifiers.before || raw.modifiers.after) {
+        const prepKey = raw.modifiers.into ? 'into' : raw.modifiers.before ? 'before' : 'after';
+        contentArg = raw.args[0];
+        prepKw = prepKey;
+        targetArg = raw.modifiers[prepKey] as ASTNode;
+      } else if (raw.args.length >= 3) {
         contentArg = raw.args[0]; prepKw = (raw.args[1] as any)?.value || (raw.args[1] as any)?.name || null; targetArg = raw.args[2];
       } else if (raw.args.length >= 2) {
         contentArg = raw.args[0]; prepKw = (raw.args[1] as any)?.value || (raw.args[1] as any)?.name || 'into';

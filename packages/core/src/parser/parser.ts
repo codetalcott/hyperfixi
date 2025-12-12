@@ -19,6 +19,7 @@ import type {
 import type { ParseError as LocalParseError, KeywordResolver, ParserOptions } from './types';
 import type { SemanticAnalyzer } from './semantic-integration';
 import { debug } from '../utils/debug';
+// Note: isDebugEnabled is used in semantic-integration.ts for debug event emission
 import {
   SemanticIntegrationAdapter,
   DEFAULT_CONFIDENCE_THRESHOLD,
@@ -87,7 +88,7 @@ export class Parser {
     'is not empty',
   ]);
 
-  constructor(tokens: Token[], options?: ParserOptions) {
+  constructor(tokens: Token[], options?: ParserOptions, originalInput?: string) {
     this.tokens = tokens;
     this.keywordResolver = options?.keywords;
 
@@ -100,9 +101,10 @@ export class Parser {
       });
     }
 
-    // Reconstruct original input from tokens for semantic analysis
+    // Store original input for semantic analysis (passed from parse function)
+    // Fallback to reconstructing from tokens if not provided
     if (this.semanticAdapter) {
-      this.originalInput = tokens.map(t => t.value).join('');
+      this.originalInput = originalInput || tokens.map(t => t.value).join(' ');
     }
   }
 
@@ -2753,27 +2755,16 @@ export class Parser {
 
   private parseCommand(): CommandNode {
     // Try semantic-first parsing if available
-    // This enables true multilingual parsing with confidence-based fallback
+    // Semantic parsing uses modifiers format ({args: [patient], modifiers: {into: dest}})
+    // Command handlers now accept both formats via fallback logic
     if (this.semanticAdapter) {
       const remainingInput = this.getRemainingInput();
       const semanticResult = this.trySemanticParse(remainingInput);
       if (semanticResult) {
-        // Semantic parsing succeeded - use the result
-        // Skip tokens that were consumed by semantic parsing
-        // For now, advance to next command boundary
-        while (
-          !this.isAtEnd() &&
-          !this.check('then') &&
-          !this.check('and') &&
-          !this.check('else') &&
-          !this.check('end') &&
-          !this.checkTokenType(TokenType.COMMAND)
-        ) {
-          this.advance();
-        }
+        // Successfully parsed with semantic analyzer - use the result
         return semanticResult;
       }
-      // Semantic parsing failed or low confidence - fall through to traditional parsing
+      // Fall through to traditional parsing
     }
 
     const commandToken = this.previous();
@@ -3500,7 +3491,7 @@ export class Parser {
 // Main parse function
 export function parse(input: string, options?: ParserOptions): ParseResult {
   const tokens = tokenize(input);
-  const parser = new Parser(tokens, options);
+  const parser = new Parser(tokens, options, input);
   const result = parser.parse();
   return result;
 }

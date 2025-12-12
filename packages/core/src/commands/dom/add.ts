@@ -119,7 +119,7 @@ export class AddCommand {
     if (typeof firstValue === 'object' && firstValue !== null && !Array.isArray(firstValue)) {
       const styles = firstValue as Record<string, string>;
       const targetArgs = raw.args.slice(1);
-      const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'add', { filterPrepositions: true });
+      const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'add', { filterPrepositions: true, fallbackModifierKey: 'to' }, raw.modifiers);
       return { type: 'styles', styles, targets };
     }
 
@@ -131,7 +131,7 @@ export class AddCommand {
       if (isAttributeSyntax(trimmed)) {
         const { name, value } = parseAttributeWithValue(trimmed);
         const targetArgs = raw.args.slice(1);
-        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'add', { filterPrepositions: true });
+        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'add', { filterPrepositions: true, fallbackModifierKey: 'to' }, raw.modifiers);
         return { type: 'attribute', name, value, targets };
       }
 
@@ -145,7 +145,7 @@ export class AddCommand {
         const valueArg = await evaluator.evaluate(raw.args[1], context);
         const styles = { [property]: String(valueArg) };
         const targetArgs = raw.args.slice(2);
-        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'add', { filterPrepositions: true });
+        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'add', { filterPrepositions: true, fallbackModifierKey: 'to' }, raw.modifiers);
         return { type: 'styles', styles, targets };
       }
     }
@@ -157,7 +157,7 @@ export class AddCommand {
     }
 
     const targetArgs = raw.args.slice(1);
-    const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'add', { filterPrepositions: true });
+    const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'add', { filterPrepositions: true, fallbackModifierKey: 'to' }, raw.modifiers);
 
     return { type: 'classes', classes, targets };
   }
