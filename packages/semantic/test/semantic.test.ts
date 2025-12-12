@@ -104,6 +104,182 @@ describe('Japanese Parsing', () => {
 });
 
 // =============================================================================
+// Conjugated Verb Integration Tests
+// =============================================================================
+// These tests validate that morphological normalization enables natural
+// conjugated verb forms to be parsed correctly.
+
+describe('Conjugated Verb Parsing', () => {
+  describe('Japanese conjugations', () => {
+    it('should parse past tense: ".active を 切り替えた"', () => {
+      const node = parse('.active を 切り替えた', 'ja');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse polite form: ".active を 切り替えます"', () => {
+      const node = parse('.active を 切り替えます', 'ja');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse te-form: ".active を 切り替えて"', () => {
+      const node = parse('.active を 切り替えて', 'ja');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse progressive: ".active を 切り替えている"', () => {
+      const node = parse('.active を 切り替えている', 'ja');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse する verb: ".active を トグルする"', () => {
+      const node = parse('.active を トグルする', 'ja');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse する verb past: ".active を トグルした"', () => {
+      const node = parse('.active を トグルした', 'ja');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+  });
+
+  // Korean patterns not yet created - tokenizer and morphology ready
+  // TODO: Create Korean semantic patterns (SOV word order with particles)
+  describe.skip('Korean conjugations (patterns pending)', () => {
+    it('should parse dictionary form: ".active 를 토글하다"', () => {
+      const node = parse('.active 를 토글하다', 'ko');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse polite form: ".active 를 토글해요"', () => {
+      const node = parse('.active 를 토글해요', 'ko');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse formal form: ".active 를 토글합니다"', () => {
+      const node = parse('.active 를 토글합니다', 'ko');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse honorific request: ".active 를 토글하세요"', () => {
+      const node = parse('.active 를 토글하세요', 'ko');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse past tense: ".active 를 토글했어요"', () => {
+      const node = parse('.active 를 토글했어요', 'ko');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+  });
+
+  describe('Spanish conjugations', () => {
+    it('should parse gerund: "alternando .active"', () => {
+      const node = parse('alternando .active', 'es');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse past participle: "alternado .active"', () => {
+      const node = parse('alternado .active', 'es');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse 3rd person: "alterna .active"', () => {
+      const node = parse('alterna .active', 'es');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse reflexive infinitive: "alternarse .active"', () => {
+      const node = parse('alternarse .active', 'es');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+  });
+
+  // Turkish patterns not yet created - tokenizer and morphology ready
+  // TODO: Create Turkish semantic patterns (SOV word order with postpositions)
+  describe.skip('Turkish conjugations (patterns pending)', () => {
+    it('should parse infinitive: "değiştirmek .active"', () => {
+      const node = parse('değiştirmek .active', 'tr');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse present continuous: "değiştiriyor .active"', () => {
+      const node = parse('değiştiriyor .active', 'tr');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse past tense: "değiştirdi .active"', () => {
+      const node = parse('değiştirdi .active', 'tr');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse 1sg present: "değiştiriyorum .active"', () => {
+      const node = parse('değiştiriyorum .active', 'tr');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+  });
+
+  describe('Arabic prefix variations', () => {
+    it('should parse with definite article: "البدّل .active"', () => {
+      const node = parse('البدّل .active', 'ar');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse present tense marker: "يبدّل .active"', () => {
+      const node = parse('يبدّل .active', 'ar');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+
+    it('should parse without diacritics: "بدل .active"', () => {
+      const node = parse('بدل .active', 'ar');
+
+      expect(node.action).toBe('toggle');
+      expect(node.roles.get('patient')?.value).toBe('.active');
+    });
+  });
+});
+
+// =============================================================================
 // Arabic Parsing Tests
 // =============================================================================
 
