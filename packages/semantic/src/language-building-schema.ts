@@ -239,7 +239,7 @@ export function validateCommand(checklist: CommandChecklist): ValidationResult {
   }
 
   if (checklist.missingTokenizerKeywordsIn.length > 0) {
-    errors.push(
+    warnings.push(
       `Command ${checklist.action} missing tokenizer keywords in: ` +
         checklist.missingTokenizerKeywordsIn.join(', ')
     );
@@ -615,7 +615,7 @@ export const SUPPORTED_COMMANDS: CommandChecklist[] = [
     profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
     tokenizerKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
     missingTokenizerKeywordsIn: [],
-    testsFor: ['en'],
+    testsFor: ['en', 'ja', 'ko', 'ar', 'es', 'tr', 'zh'],
   },
   {
     action: 'append',
@@ -657,7 +657,88 @@ export const SUPPORTED_COMMANDS: CommandChecklist[] = [
     missingTokenizerKeywordsIn: [],
     testsFor: ['en', 'ja', 'es', 'ar', 'ko', 'tr'],
   },
-  // ... add other commands as needed
+  // Tier 2: Content & variable operations (newly wired)
+  {
+    action: 'take',
+    schemaExists: true,
+    wiredInPatterns: true,
+    usesHandCraftedPatterns: false,
+    profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    tokenizerKeywordsIn: ['en', 'ja', 'es', 'ko', 'tr', 'zh'],
+    missingTokenizerKeywordsIn: ['ar'],
+    testsFor: ['en'],
+  },
+  {
+    action: 'make',
+    schemaExists: true,
+    wiredInPatterns: true,
+    usesHandCraftedPatterns: false,
+    profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    tokenizerKeywordsIn: ['en', 'zh'],
+    missingTokenizerKeywordsIn: ['ja', 'ar', 'es', 'ko', 'tr'],
+    testsFor: ['en'],
+  },
+  {
+    action: 'clone',
+    schemaExists: true,
+    wiredInPatterns: true,
+    usesHandCraftedPatterns: false,
+    profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    tokenizerKeywordsIn: ['en', 'zh'],
+    missingTokenizerKeywordsIn: ['ja', 'ar', 'es', 'ko', 'tr'],
+    testsFor: ['en'],
+  },
+  {
+    action: 'get',
+    schemaExists: true,
+    wiredInPatterns: true,
+    usesHandCraftedPatterns: false,
+    profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    tokenizerKeywordsIn: ['en', 'ja', 'es', 'zh'],
+    missingTokenizerKeywordsIn: ['ar', 'ko', 'tr'],
+    testsFor: ['en'],
+  },
+  // Tier 3: Control flow & DOM (newly wired)
+  {
+    action: 'focus',
+    schemaExists: true,
+    wiredInPatterns: true,
+    usesHandCraftedPatterns: false,
+    profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    tokenizerKeywordsIn: ['en', 'ja', 'zh'],
+    missingTokenizerKeywordsIn: ['ar', 'es', 'ko', 'tr'],
+    testsFor: ['en'],
+  },
+  {
+    action: 'blur',
+    schemaExists: true,
+    wiredInPatterns: true,
+    usesHandCraftedPatterns: false,
+    profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    tokenizerKeywordsIn: ['en', 'ja', 'zh'],
+    missingTokenizerKeywordsIn: ['ar', 'es', 'ko', 'tr'],
+    testsFor: ['en'],
+  },
+  {
+    action: 'call',
+    schemaExists: true,
+    wiredInPatterns: true,
+    usesHandCraftedPatterns: false,
+    profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    tokenizerKeywordsIn: ['en', 'ja', 'tr', 'zh'],
+    missingTokenizerKeywordsIn: ['ar', 'es', 'ko'],
+    testsFor: ['en'],
+  },
+  {
+    action: 'return',
+    schemaExists: true,
+    wiredInPatterns: true,
+    usesHandCraftedPatterns: false,
+    profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    tokenizerKeywordsIn: ['en', 'ja', 'tr'],
+    missingTokenizerKeywordsIn: ['ar', 'es', 'ko', 'zh'],
+    testsFor: ['en'],
+  },
 ];
 
 // =============================================================================

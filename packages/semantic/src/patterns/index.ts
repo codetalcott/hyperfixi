@@ -32,6 +32,16 @@ import {
   prependSchema,
   triggerSchema,
   setSchema,
+  // Tier 2: Content & variable operations
+  takeSchema,
+  makeSchema,
+  cloneSchema,
+  getCommandSchema,
+  // Tier 3: Control flow & DOM
+  callSchema,
+  returnSchema,
+  focusSchema,
+  blurSchema,
 } from '../generators';
 
 // =============================================================================
@@ -43,6 +53,7 @@ import {
  * These don't have hand-crafted patterns, so we generate them.
  */
 const generatedPatterns: LanguagePattern[] = [
+  // Tier 1: Core commands
   ...generatePatternsForCommand(addSchema),
   ...generatePatternsForCommand(removeSchema),
   ...generatePatternsForCommand(showSchema),
@@ -58,6 +69,16 @@ const generatedPatterns: LanguagePattern[] = [
   ...generatePatternsForCommand(prependSchema),
   ...generatePatternsForCommand(triggerSchema),
   ...generatePatternsForCommand(setSchema),
+  // Tier 2: Content & variable operations
+  ...generatePatternsForCommand(takeSchema),
+  ...generatePatternsForCommand(makeSchema),
+  ...generatePatternsForCommand(cloneSchema),
+  ...generatePatternsForCommand(getCommandSchema),
+  // Tier 3: Control flow & DOM
+  ...generatePatternsForCommand(callSchema),
+  ...generatePatternsForCommand(returnSchema),
+  ...generatePatternsForCommand(focusSchema),
+  ...generatePatternsForCommand(blurSchema),
 ];
 
 // =============================================================================

@@ -50,6 +50,17 @@ export {
   prependSchema,
   logSchema,
   sendSchema,
+  // Tier 2: Content & variable operations
+  takeSchema,
+  makeSchema,
+  cloneSchema,
+  getCommandSchema,
+  // Tier 3: Control flow & DOM
+  callSchema,
+  returnSchema,
+  focusSchema,
+  blurSchema,
+  // Registry functions
   commandSchemas,
   getSchema,
   getSchemasByCategory,
