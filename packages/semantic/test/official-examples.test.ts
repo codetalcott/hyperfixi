@@ -456,6 +456,60 @@ describe('AST Equivalence Across Languages', () => {
       expect(japaneseNode.roles.get('destination')?.value).toBe('#output');
     });
   });
+
+  describe('Increment :x', () => {
+    it('should produce equivalent AST in all languages', () => {
+      const englishNode = parse('increment :x', 'en');
+      const japaneseNode = parse(':x を 増加', 'ja');
+      const koreanNode = parse(':x 를 증가', 'ko');
+      const arabicNode = parse('زِد :x', 'ar');
+      const spanishNode = parse('incrementar :x', 'es');
+      const turkishNode = parse(':x i artır', 'tr');
+
+      // All should have same action
+      expect(englishNode.action).toBe('increment');
+      expect(japaneseNode.action).toBe('increment');
+      expect(koreanNode.action).toBe('increment');
+      expect(arabicNode.action).toBe('increment');
+      expect(spanishNode.action).toBe('increment');
+      expect(turkishNode.action).toBe('increment');
+
+      // All should have same patient
+      expect(englishNode.roles.get('patient')?.value).toBe(':x');
+      expect(japaneseNode.roles.get('patient')?.value).toBe(':x');
+      expect(koreanNode.roles.get('patient')?.value).toBe(':x');
+      expect(arabicNode.roles.get('patient')?.value).toBe(':x');
+      expect(spanishNode.roles.get('patient')?.value).toBe(':x');
+      expect(turkishNode.roles.get('patient')?.value).toBe(':x');
+    });
+  });
+
+  describe('Decrement :x', () => {
+    it('should produce equivalent AST in all languages', () => {
+      const englishNode = parse('decrement :x', 'en');
+      const japaneseNode = parse(':x を 減少', 'ja');
+      const koreanNode = parse(':x 를 감소', 'ko');
+      const arabicNode = parse('أنقص :x', 'ar');
+      const spanishNode = parse('decrementar :x', 'es');
+      const turkishNode = parse(':x i azalt', 'tr');
+
+      // All should have same action
+      expect(englishNode.action).toBe('decrement');
+      expect(japaneseNode.action).toBe('decrement');
+      expect(koreanNode.action).toBe('decrement');
+      expect(arabicNode.action).toBe('decrement');
+      expect(spanishNode.action).toBe('decrement');
+      expect(turkishNode.action).toBe('decrement');
+
+      // All should have same patient
+      expect(englishNode.roles.get('patient')?.value).toBe(':x');
+      expect(japaneseNode.roles.get('patient')?.value).toBe(':x');
+      expect(koreanNode.roles.get('patient')?.value).toBe(':x');
+      expect(arabicNode.roles.get('patient')?.value).toBe(':x');
+      expect(spanishNode.roles.get('patient')?.value).toBe(':x');
+      expect(turkishNode.roles.get('patient')?.value).toBe(':x');
+    });
+  });
 });
 
 // =============================================================================
