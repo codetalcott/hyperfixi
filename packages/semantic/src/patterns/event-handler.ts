@@ -85,7 +85,9 @@ const eventJapaneseStandard: LanguagePattern = {
     format: '{event} で {body}',
     tokens: [
       { type: 'role', role: 'event' },
-      { type: 'literal', value: 'で', alternatives: ['に', 'のとき', 'の時', '時'] },
+      // Note: 'に' removed from alternatives to avoid conflict with destination markers
+      // Use 'で' (instrumental) for events: クリック で toggle .active
+      { type: 'literal', value: 'で', alternatives: ['のとき', 'の時', '時'] },
       // Body is captured as remaining tokens
     ],
   },

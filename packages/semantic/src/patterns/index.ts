@@ -28,6 +28,10 @@ import {
   sendSchema,
   goSchema,
   fetchSchema,
+  appendSchema,
+  prependSchema,
+  triggerSchema,
+  setSchema,
 } from '../generators';
 
 // =============================================================================
@@ -50,6 +54,10 @@ const generatedPatterns: LanguagePattern[] = [
   ...generatePatternsForCommand(sendSchema),
   ...generatePatternsForCommand(goSchema),
   ...generatePatternsForCommand(fetchSchema),
+  ...generatePatternsForCommand(appendSchema),
+  ...generatePatternsForCommand(prependSchema),
+  ...generatePatternsForCommand(triggerSchema),
+  ...generatePatternsForCommand(setSchema),
 ];
 
 // =============================================================================

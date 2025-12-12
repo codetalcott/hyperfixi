@@ -595,6 +595,171 @@ describe('AST Equivalence Across Languages', () => {
 });
 
 // =============================================================================
+// Newly Wired Commands Tests
+// =============================================================================
+// Tests for append, prepend, trigger, set commands
+
+describe('Newly Wired Commands', () => {
+  describe('Append Command', () => {
+    it('append "text" on #container', () => {
+      // Generated pattern uses "on" not "to"
+      expect(canParse('append "text" on #container', 'en')).toBe(true);
+
+      const node = parse('append "text" on #container', 'en');
+      expect(node.action).toBe('append');
+      expect(node.roles.get('patient')?.value).toBe('text');
+      expect(node.roles.get('destination')?.value).toBe('#container');
+    });
+
+    it('Japanese: #container に "text" を 末尾追加', () => {
+      // Generated pattern: {destination} に {patient} を 末尾追加
+      expect(canParse('#container に "text" を 末尾追加', 'ja')).toBe(true);
+
+      const node = parse('#container に "text" を 末尾追加', 'ja');
+      expect(node.action).toBe('append');
+    });
+
+    it('Spanish: añadir "text" en #container', () => {
+      // Generated pattern uses "en" not "a"
+      expect(canParse('añadir "text" en #container', 'es')).toBe(true);
+
+      const node = parse('añadir "text" en #container', 'es');
+      expect(node.action).toBe('append');
+    });
+
+    it('Arabic: ألحق "text" على #container', () => {
+      // Generated pattern uses ألحق
+      expect(canParse('ألحق "text" على #container', 'ar')).toBe(true);
+
+      const node = parse('ألحق "text" على #container', 'ar');
+      expect(node.action).toBe('append');
+    });
+  });
+
+  describe('Prepend Command', () => {
+    it('prepend "text" on #container', () => {
+      // Generated pattern uses "on" not "to"
+      expect(canParse('prepend "text" on #container', 'en')).toBe(true);
+
+      const node = parse('prepend "text" on #container', 'en');
+      expect(node.action).toBe('prepend');
+      expect(node.roles.get('patient')?.value).toBe('text');
+      expect(node.roles.get('destination')?.value).toBe('#container');
+    });
+
+    it('Japanese: #container に "text" を 先頭追加', () => {
+      // Generated pattern: {destination} に {patient} を 先頭追加
+      expect(canParse('#container に "text" を 先頭追加', 'ja')).toBe(true);
+
+      const node = parse('#container に "text" を 先頭追加', 'ja');
+      expect(node.action).toBe('prepend');
+    });
+
+    it('Spanish: anteponer "text" en #container', () => {
+      // Generated pattern uses "en" not "a"
+      expect(canParse('anteponer "text" en #container', 'es')).toBe(true);
+
+      const node = parse('anteponer "text" en #container', 'es');
+      expect(node.action).toBe('prepend');
+    });
+  });
+
+  describe('Trigger Command', () => {
+    it('trigger click on #button', () => {
+      expect(canParse('trigger click on #button', 'en')).toBe(true);
+
+      const node = parse('trigger click on #button', 'en');
+      expect(node.action).toBe('trigger');
+      expect(node.roles.get('event')?.value).toBe('click');
+      expect(node.roles.get('destination')?.value).toBe('#button');
+    });
+
+    it('trigger click (implicit target)', () => {
+      expect(canParse('trigger click', 'en')).toBe(true);
+
+      const node = parse('trigger click', 'en');
+      expect(node.action).toBe('trigger');
+      expect(node.roles.get('event')?.value).toBe('click');
+    });
+
+    it('Japanese: #button に click 引き金', () => {
+      // Generated pattern uses 引き金 not トリガー
+      expect(canParse('#button に click 引き金', 'ja')).toBe(true);
+
+      const node = parse('#button に click 引き金', 'ja');
+      expect(node.action).toBe('trigger');
+    });
+
+    it('Spanish: disparar click en #button', () => {
+      expect(canParse('disparar click en #button', 'es')).toBe(true);
+
+      const node = parse('disparar click en #button', 'es');
+      expect(node.action).toBe('trigger');
+    });
+
+    it('Arabic: تشغيل click على #button', () => {
+      // Generated pattern uses تشغيل
+      expect(canParse('تشغيل click على #button', 'ar')).toBe(true);
+
+      const node = parse('تشغيل click على #button', 'ar');
+      expect(node.action).toBe('trigger');
+    });
+  });
+
+  describe('Set Command', () => {
+    it('set on :x 5', () => {
+      // Generated pattern: set on {destination} {patient}
+      expect(canParse('set on :x 5', 'en')).toBe(true);
+
+      const node = parse('set on :x 5', 'en');
+      expect(node.action).toBe('set');
+      expect(node.roles.get('destination')?.value).toBe(':x');
+      expect(node.roles.get('patient')?.value).toBe(5);
+    });
+
+    it('Japanese: :x に 5 を 設定', () => {
+      // Generated pattern: {destination} に {patient} を 設定
+      expect(canParse(':x に 5 を 設定', 'ja')).toBe(true);
+
+      const node = parse(':x に 5 を 設定', 'ja');
+      expect(node.action).toBe('set');
+    });
+
+    it('Spanish: establecer en :x 5', () => {
+      // Generated pattern: establecer en {destination} {patient}
+      expect(canParse('establecer en :x 5', 'es')).toBe(true);
+
+      const node = parse('establecer en :x 5', 'es');
+      expect(node.action).toBe('set');
+    });
+
+    it('Arabic: اضبط على :x 5', () => {
+      // Generated pattern: اضبط على {destination} {patient}
+      expect(canParse('اضبط على :x 5', 'ar')).toBe(true);
+
+      const node = parse('اضبط على :x 5', 'ar');
+      expect(node.action).toBe('set');
+    });
+
+    it('Korean: :x 에 5 을 설정', () => {
+      // Generated pattern: {destination} 에 {patient} 을 설정
+      expect(canParse(':x 에 5 을 설정', 'ko')).toBe(true);
+
+      const node = parse(':x 에 5 을 설정', 'ko');
+      expect(node.action).toBe('set');
+    });
+
+    it('Turkish: :x e 5 i ayarla', () => {
+      // Generated pattern: {destination} e {patient} i ayarla
+      expect(canParse(':x e 5 i ayarla', 'tr')).toBe(true);
+
+      const node = parse(':x e 5 i ayarla', 'tr');
+      expect(node.action).toBe('set');
+    });
+  });
+});
+
+// =============================================================================
 // Pattern Coverage Report
 // =============================================================================
 // This test generates a coverage report for official examples
@@ -613,6 +778,11 @@ describe('Pattern Coverage Report', () => {
     // Tier 2 - Important
     { example: 'increment :x', expected: 'increment', tier: 2 },
     { example: 'log "Hello Console!"', expected: 'log', tier: 2 },
+    // Tier 3 - Newly wired
+    { example: 'append "text" on #container', expected: 'append', tier: 3 },
+    { example: 'prepend "text" on #container', expected: 'prepend', tier: 3 },
+    { example: 'trigger click on #button', expected: 'trigger', tier: 3 },
+    { example: 'set on :x 5', expected: 'set', tier: 3 },
   ];
 
   it('should report coverage of official examples', () => {
@@ -644,11 +814,14 @@ describe('Pattern Coverage Report', () => {
     const tier1Total = results.filter(r => r.tier === 1).length;
     const tier2Success = results.filter(r => r.tier === 2 && r.success).length;
     const tier2Total = results.filter(r => r.tier === 2).length;
+    const tier3Success = results.filter(r => r.tier === 3 && r.success).length;
+    const tier3Total = results.filter(r => r.tier === 3).length;
 
     // Report
     console.log('\n=== Official Example Coverage Report ===');
     console.log(`Tier 1 (Core): ${tier1Success}/${tier1Total}`);
     console.log(`Tier 2 (Important): ${tier2Success}/${tier2Total}`);
+    console.log(`Tier 3 (Newly Wired): ${tier3Success}/${tier3Total}`);
     console.log('');
 
     // Failed examples
@@ -660,9 +833,9 @@ describe('Pattern Coverage Report', () => {
       }
     }
 
-    // Currently we only have toggle and put patterns implemented
-    // This test tracks progress as we add more patterns
-    // Current baseline: 3/10 (toggle and put)
-    expect(tier1Success).toBeGreaterThanOrEqual(3);
+    // Current baseline: Tier 1: 8/8, Tier 2: 2/2, Tier 3: 4/4
+    expect(tier1Success).toBeGreaterThanOrEqual(8);
+    expect(tier2Success).toBeGreaterThanOrEqual(2);
+    expect(tier3Success).toBeGreaterThanOrEqual(4);
   });
 });

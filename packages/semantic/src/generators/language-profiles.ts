@@ -555,7 +555,8 @@ export const chineseProfile: LanguageProfile = {
     remove: { primary: '移除', alternatives: ['删除', '去掉'], normalized: 'remove' },
     // Content operations
     put: { primary: '放置', alternatives: ['放', '放入'], normalized: 'put' },
-    append: { primary: '追加', normalized: 'append' },
+    append: { primary: '追加', alternatives: ['附加'], normalized: 'append' },
+    prepend: { primary: '前置', alternatives: ['预置'], normalized: 'prepend' },
     take: { primary: '获取', normalized: 'take' },
     make: { primary: '制作', normalized: 'make' },
     clone: { primary: '复制', normalized: 'clone' },

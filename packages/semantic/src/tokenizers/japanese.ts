@@ -135,9 +135,17 @@ const JAPANESE_KEYWORDS: Map<string, string> = new Map([
   ['送信する', 'send'],
   ['トリガー', 'trigger'],
   ['発火', 'trigger'],
+  ['引き金', 'trigger'],  // Primary in language profile
   ['呼び出す', 'call'],
   ['返す', 'return'],
   ['ログ', 'log'],
+  // Append/prepend
+  ['末尾追加', 'append'],
+  ['末尾に追加', 'append'],
+  ['アペンド', 'append'],
+  ['先頭追加', 'prepend'],
+  ['先頭に追加', 'prepend'],
+  ['プリペンド', 'prepend'],
   // Control flow
   ['もし', 'if'],
   ['ならば', 'then'],
