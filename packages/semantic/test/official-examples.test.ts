@@ -136,12 +136,13 @@ describe('Official Examples - Tier 1 (Core)', () => {
 
 describe('Official Examples - Tier 2 (Important)', () => {
   describe('Increment Command', () => {
-    it.skip('increment :x', () => {
-      // Needs tokenizer enhancement to recognize :var as single token
+    it('increment :x', () => {
       expect(canParse('increment :x', 'en')).toBe(true);
 
       const node = parse('increment :x', 'en');
       expect(node.action).toBe('increment');
+      expect(node.roles.get('patient')?.value).toBe(':x');
+      expect(node.roles.get('patient')?.type).toBe('reference');
     });
 
     it('increment #counter', () => {

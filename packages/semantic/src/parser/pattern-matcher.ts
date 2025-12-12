@@ -301,7 +301,11 @@ export class PatternMatcher {
         return createLiteral(token.normalized || token.value);
 
       case 'identifier':
-        // Check if it's a reference
+        // Check if it's a variable reference (:varname)
+        if (token.value.startsWith(':')) {
+          return createReference(token.value as any);
+        }
+        // Check if it's a built-in reference
         const identLower = token.value.toLowerCase();
         if (['me', 'you', 'it', 'result', 'event', 'target', 'body'].includes(identLower)) {
           return createReference(identLower as any);
