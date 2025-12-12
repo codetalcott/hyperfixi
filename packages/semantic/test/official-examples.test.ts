@@ -48,9 +48,13 @@ describe('Official Examples - Tier 1 (Core)', () => {
   });
 
   describe('Add/Remove Classes', () => {
-    it.skip('add .foo to .bar', () => {
-      // Complex: needs 'to' connector support in generator
+    it('add .foo to .bar', () => {
       expect(canParse('add .foo to .bar', 'en')).toBe(true);
+
+      const node = parse('add .foo to .bar', 'en');
+      expect(node.action).toBe('add');
+      expect(node.roles.get('patient')?.value).toBe('.foo');
+      expect(node.roles.get('destination')?.value).toBe('.bar');
     });
 
     it('add .highlight', () => {

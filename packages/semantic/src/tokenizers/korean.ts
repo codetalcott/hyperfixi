@@ -233,6 +233,17 @@ export class KoreanTokenizer extends BaseTokenizer {
         }
       }
 
+      // Try Korean word FIRST (before particles)
+      // This ensures keywords like 로그 aren't split on particle characters
+      if (isKorean(input[pos])) {
+        const wordToken = this.extractKoreanWord(input, pos);
+        if (wordToken) {
+          tokens.push(wordToken);
+          pos = wordToken.position.end;
+          continue;
+        }
+      }
+
       // Try multi-character particle (before single-character)
       const multiParticle = this.tryMultiCharParticle(input, pos);
       if (multiParticle) {
@@ -250,16 +261,6 @@ export class KoreanTokenizer extends BaseTokenizer {
         ));
         pos++;
         continue;
-      }
-
-      // Try Korean word (Hangul sequence)
-      if (isKorean(input[pos])) {
-        const wordToken = this.extractKoreanWord(input, pos);
-        if (wordToken) {
-          tokens.push(wordToken);
-          pos = wordToken.position.end;
-          continue;
-        }
       }
 
       // Try ASCII word (for mixed content)
@@ -307,28 +308,92 @@ export class KoreanTokenizer extends BaseTokenizer {
 
   /**
    * Extract a Korean word (sequence of Hangul).
-   * Stops at particles, ASCII, or whitespace.
+   * Prioritizes known keywords, then uses particle-based word boundaries.
    *
    * Uses morphological normalization to handle verb conjugations.
    */
   private extractKoreanWord(input: string, startPos: number): LanguageToken | null {
+    // First, try to find the longest matching keyword starting at this position
+    // This ensures compound words like 추가, 증가, 숨기다 are recognized whole
+    const maxKeywordLen = 6; // Longest Korean keyword
+    for (let len = Math.min(maxKeywordLen, input.length - startPos); len >= 2; len--) {
+      const candidate = input.slice(startPos, startPos + len);
+      // Check all chars are Korean
+      let allKorean = true;
+      for (let i = 0; i < candidate.length; i++) {
+        if (!isKorean(candidate[i])) {
+          allKorean = false;
+          break;
+        }
+      }
+      if (!allKorean) continue;
+
+      // Check if it's a keyword (exact match or stem match)
+      const normalized = KOREAN_KEYWORDS.get(candidate);
+      if (normalized) {
+        return createToken(
+          candidate,
+          'keyword',
+          createPosition(startPos, startPos + len),
+          normalized
+        );
+      }
+
+      // Try morphological normalization for conjugated forms
+      const morphResult = this.morphNormalizer.normalize(candidate);
+      if (morphResult.stem !== candidate && morphResult.confidence >= 0.7) {
+        const stemNormalized = KOREAN_KEYWORDS.get(morphResult.stem);
+        if (stemNormalized) {
+          const tokenOptions: CreateTokenOptions = {
+            normalized: stemNormalized,
+            stem: morphResult.stem,
+            stemConfidence: morphResult.confidence,
+          };
+          return createToken(
+            candidate,
+            'keyword',
+            createPosition(startPos, startPos + len),
+            tokenOptions
+          );
+        }
+      }
+    }
+
+    // No keyword match - extract as regular word using particle boundaries
     let pos = startPos;
     let word = '';
 
     while (pos < input.length) {
       const char = input[pos];
+      const nextChar = pos + 1 < input.length ? input[pos + 1] : '';
 
-      // Stop at single-char particles (if we have content)
+      // Stop at single-char particles only if:
+      // 1. We have content already
+      // 2. The particle is at a word boundary (followed by whitespace, end, non-Korean, or another particle)
       if (SINGLE_CHAR_PARTICLES.has(char) && word.length > 0) {
-        break;
+        const isWordBoundary =
+          nextChar === '' ||
+          isWhitespace(nextChar) ||
+          !isKorean(nextChar) ||
+          SINGLE_CHAR_PARTICLES.has(nextChar);
+
+        if (isWordBoundary) {
+          break;
+        }
+        // Otherwise, continue - this particle char is part of the word
       }
 
-      // Check for multi-char particle
+      // Check for multi-char particle (these are always at word boundaries)
       let foundMulti = false;
       for (const particle of MULTI_CHAR_PARTICLES) {
         if (input.slice(pos, pos + particle.length) === particle && word.length > 0) {
-          foundMulti = true;
-          break;
+          // Only treat as particle if followed by word boundary
+          const afterParticle = pos + particle.length;
+          const charAfter = afterParticle < input.length ? input[afterParticle] : '';
+          if (charAfter === '' || isWhitespace(charAfter) || !isKorean(charAfter)) {
+            foundMulti = true;
+            break;
+          }
         }
       }
       if (foundMulti) break;
@@ -427,9 +492,10 @@ export class KoreanTokenizer extends BaseTokenizer {
       }
     }
 
-    // Check for Korean time units
+    // Check for time units (Korean or standard)
     if (pos < input.length) {
       const remaining = input.slice(pos);
+      // Korean time units
       if (remaining.startsWith('밀리초')) {
         number += 'ms';
         pos += 3;
@@ -442,6 +508,20 @@ export class KoreanTokenizer extends BaseTokenizer {
       } else if (remaining.startsWith('시간')) {
         number += 'h';
         pos += 2;
+      }
+      // Standard time units (s, ms, m, h)
+      else if (remaining.startsWith('ms')) {
+        number += 'ms';
+        pos += 2;
+      } else if (remaining[0] === 's' && !isAsciiIdentifierChar(remaining[1] || '')) {
+        number += 's';
+        pos += 1;
+      } else if (remaining[0] === 'm' && remaining[1] !== 's' && !isAsciiIdentifierChar(remaining[1] || '')) {
+        number += 'm';
+        pos += 1;
+      } else if (remaining[0] === 'h' && !isAsciiIdentifierChar(remaining[1] || '')) {
+        number += 'h';
+        pos += 1;
       }
     }
 

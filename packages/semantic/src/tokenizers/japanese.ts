@@ -430,9 +430,10 @@ export class JapaneseTokenizer extends BaseTokenizer {
       }
     }
 
-    // Check for Japanese time units
+    // Check for time units (Japanese or standard)
     if (pos < input.length) {
       const remaining = input.slice(pos);
+      // Japanese time units
       if (remaining.startsWith('ミリ秒')) {
         number += 'ms';
         pos += 3;
@@ -445,6 +446,20 @@ export class JapaneseTokenizer extends BaseTokenizer {
       } else if (remaining.startsWith('時間')) {
         number += 'h';
         pos += 2;
+      }
+      // Standard time units (s, ms, m, h)
+      else if (remaining.startsWith('ms')) {
+        number += 'ms';
+        pos += 2;
+      } else if (remaining[0] === 's' && !isAsciiIdentifierChar(remaining[1] || '')) {
+        number += 's';
+        pos += 1;
+      } else if (remaining[0] === 'm' && remaining[1] !== 's' && !isAsciiIdentifierChar(remaining[1] || '')) {
+        number += 'm';
+        pos += 1;
+      } else if (remaining[0] === 'h' && !isAsciiIdentifierChar(remaining[1] || '')) {
+        number += 'h';
+        pos += 1;
       }
     }
 
