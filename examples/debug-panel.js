@@ -507,11 +507,27 @@
     // Enable debug events
     window.hyperfixi.semanticDebug.enable();
 
-    // Listen for parse events
+    // Listen for future parse events
     window.addEventListener('hyperfixi:semantic:parse', handleParseEvent);
+
+    // Replay any events that occurred before panel initialized
+    if (window.hyperfixi.semanticDebug.getEventHistory) {
+      const history = window.hyperfixi.semanticDebug.getEventHistory();
+      history.forEach(event => {
+        eventLog.unshift(event);
+      });
+      // Trim if too long
+      while (eventLog.length > MAX_LOG_ENTRIES) {
+        eventLog.pop();
+      }
+    }
 
     // Create panel
     createPanel();
+
+    // Update display with replayed events
+    updateLog();
+    updateStats();
 
     // Auto-show if URL param is set
     if (autoEnable) {

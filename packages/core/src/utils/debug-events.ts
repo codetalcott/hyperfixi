@@ -94,6 +94,12 @@ export function isDebugEnabled(): boolean {
 export function emitSemanticParseEvent(detail: SemanticParseEventDetail): void {
   if (!debugEnabled) return;
 
+  // Store in event history for late-binding debug panels
+  eventHistory.push(detail);
+  if (eventHistory.length > MAX_EVENT_HISTORY) {
+    eventHistory.shift();
+  }
+
   // Always log to console when debug is enabled
   const method = detail.semanticSuccess ? 'semantic' : detail.fallbackTriggered ? 'fallback' : 'traditional';
   const confidencePercent = Math.round(detail.confidence * 100);
@@ -163,6 +169,10 @@ let stats: DebugStats = {
   confidenceHistory: [],
 };
 
+// Event history for late-binding debug panels
+const MAX_EVENT_HISTORY = 50;
+let eventHistory: SemanticParseEventDetail[] = [];
+
 /**
  * Update debug statistics.
  */
@@ -206,4 +216,22 @@ export function resetDebugStats(): void {
     averageConfidence: 0,
     confidenceHistory: [],
   };
+  eventHistory = [];
+}
+
+/**
+ * Get event history for late-binding debug panels.
+ * Returns events in chronological order (oldest first).
+ */
+export function getEventHistory(): readonly SemanticParseEventDetail[] {
+  return [...eventHistory];
+}
+
+/**
+ * Replay stored events to a callback (for late-binding debug panels).
+ */
+export function replayEvents(callback: (event: SemanticParseEventDetail) => void): void {
+  for (const event of eventHistory) {
+    callback(event);
+  }
 }

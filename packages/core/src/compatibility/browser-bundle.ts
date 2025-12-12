@@ -32,6 +32,8 @@ import {
   isDebugEnabled,
   getDebugStats,
   resetDebugStats,
+  getEventHistory,
+  replayEvents,
 } from '../utils/debug-events';
 
 // Semantic parsing API for multilingual support
@@ -83,6 +85,8 @@ declare global {
         isEnabled: typeof isDebugEnabled;
         getStats: typeof getDebugStats;
         resetStats: typeof resetDebugStats;
+        getEventHistory: typeof getEventHistory;
+        replayEvents: typeof replayEvents;
       };
     };
     // Also expose as direct globals for test compatibility
@@ -169,6 +173,8 @@ const hyperfixi = {
     isEnabled: isDebugEnabled,
     getStats: getDebugStats,
     resetStats: resetDebugStats,
+    getEventHistory,
+    replayEvents,
   },
 
   // Version info
