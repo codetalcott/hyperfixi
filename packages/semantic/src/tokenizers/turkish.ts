@@ -20,6 +20,7 @@ import {
   isSelectorStart,
   isQuote,
   isDigit,
+  isAsciiIdentifierChar,
   type CreateTokenOptions,
 } from './base';
 import { TurkishMorphologicalNormalizer } from './morphology/turkish-normalizer';
@@ -242,6 +243,16 @@ export class TurkishTokenizer extends BaseTokenizer {
         }
       }
 
+      // Try variable reference (:varname)
+      if (input[pos] === ':' && pos + 1 < input.length && isAsciiIdentifierChar(input[pos + 1])) {
+        const varToken = this.extractVariableRef(input, pos);
+        if (varToken) {
+          tokens.push(varToken);
+          pos = varToken.position.end;
+          continue;
+        }
+      }
+
       // Try Turkish word
       if (isTurkishLetter(input[pos])) {
         const wordToken = this.extractTurkishWord(input, pos);
@@ -399,6 +410,29 @@ export class TurkishTokenizer extends BaseTokenizer {
     return createToken(
       number,
       'literal',
+      createPosition(startPos, pos)
+    );
+  }
+
+  /**
+   * Extract a variable reference (:varname) from the input.
+   * In hyperscript, :x refers to a local variable named x.
+   */
+  private extractVariableRef(input: string, startPos: number): LanguageToken | null {
+    if (input[startPos] !== ':') return null;
+
+    let pos = startPos + 1; // Skip the colon
+    let varName = '';
+
+    while (pos < input.length && isAsciiIdentifierChar(input[pos])) {
+      varName += input[pos++];
+    }
+
+    if (!varName) return null;
+
+    return createToken(
+      ':' + varName,
+      'identifier',
       createPosition(startPos, pos)
     );
   }

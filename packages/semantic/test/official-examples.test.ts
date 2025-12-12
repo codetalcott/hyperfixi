@@ -164,9 +164,12 @@ describe('Official Examples - Tier 2 (Important)', () => {
       expect(node.roles.get('patient')?.value).toBe('Hello Console!');
     });
 
-    it.skip('log x', () => {
-      // Identifier 'x' not recognized as valid patient
+    it('log x', () => {
       expect(canParse('log x', 'en')).toBe(true);
+
+      const node = parse('log x', 'en');
+      expect(node.action).toBe('log');
+      expect(node.roles.get('patient')?.value).toBe('x');
     });
   });
 
