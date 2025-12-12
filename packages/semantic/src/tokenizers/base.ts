@@ -159,9 +159,10 @@ export function isWhitespace(char: string): boolean {
 
 /**
  * Check if a string starts with a CSS selector prefix.
+ * Includes JSX-style element selectors: <form />, <div>
  */
 export function isSelectorStart(char: string): boolean {
-  return char === '#' || char === '.' || char === '[' || char === '@' || char === '*';
+  return char === '#' || char === '.' || char === '[' || char === '@' || char === '*' || char === '<';
 }
 
 /**
@@ -253,6 +254,35 @@ export function extractCssSelector(input: string, startPos: number): string | nu
       selector += input[pos++];
     }
     if (selector.length <= 1) return null;
+  } else if (char === '<') {
+    // JSX-style element selector: <form>, <form />, <div>
+    selector += input[pos++]; // <
+
+    // Must be followed by an identifier (tag name)
+    if (pos >= input.length || !isAsciiLetter(input[pos])) return null;
+
+    // Extract tag name
+    while (pos < input.length && isAsciiIdentifierChar(input[pos])) {
+      selector += input[pos++];
+    }
+
+    // Skip whitespace
+    while (pos < input.length && isWhitespace(input[pos])) {
+      selector += input[pos++];
+    }
+
+    // Optional self-closing /
+    if (pos < input.length && input[pos] === '/') {
+      selector += input[pos++];
+      // Skip whitespace after /
+      while (pos < input.length && isWhitespace(input[pos])) {
+        selector += input[pos++];
+      }
+    }
+
+    // Must end with >
+    if (pos >= input.length || input[pos] !== '>') return null;
+    selector += input[pos++]; // >
   }
 
   return selector || null;

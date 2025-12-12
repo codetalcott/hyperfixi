@@ -26,6 +26,8 @@ import {
   incrementSchema,
   decrementSchema,
   sendSchema,
+  goSchema,
+  fetchSchema,
 } from '../generators';
 
 // =============================================================================
@@ -46,6 +48,8 @@ const generatedPatterns: LanguagePattern[] = [
   ...generatePatternsForCommand(incrementSchema),
   ...generatePatternsForCommand(decrementSchema),
   ...generatePatternsForCommand(sendSchema),
+  ...generatePatternsForCommand(goSchema),
+  ...generatePatternsForCommand(fetchSchema),
 ];
 
 // =============================================================================

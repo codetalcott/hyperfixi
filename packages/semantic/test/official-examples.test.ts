@@ -114,9 +114,13 @@ describe('Official Examples - Tier 1 (Core)', () => {
   });
 
   describe('Send Command', () => {
-    it.skip('send hello to <form />', () => {
-      // Complex JSX-style selector syntax - not supported
+    it('send hello to <form /> (JSX selector)', () => {
       expect(canParse('send hello to <form />', 'en')).toBe(true);
+
+      const node = parse('send hello to <form />', 'en');
+      expect(node.action).toBe('send');
+      expect(node.roles.get('event')?.value).toBe('hello');
+      expect(node.roles.get('destination')?.value).toBe('<form />');
     });
 
     it('send foo to #target', () => {
@@ -174,16 +178,37 @@ describe('Official Examples - Tier 2 (Important)', () => {
   });
 
   describe('Go Command', () => {
+    it('go to "/home" (quoted URL)', () => {
+      expect(canParse('go to "/home"', 'en')).toBe(true);
+
+      const node = parse('go to "/home"', 'en');
+      expect(node.action).toBe('go');
+      expect(node.roles.get('destination')?.value).toBe('/home');
+    });
+
     it.skip('go to the top of the body smoothly', () => {
-      // Complex syntax - may need enhancement
+      // Complex syntax with positional reference ("top of body") - needs enhancement
       expect(canParse('go to the top of the body smoothly', 'en')).toBe(true);
     });
   });
 
   describe('Fetch Command', () => {
+    it('fetch from "/api/data" (with preposition)', () => {
+      expect(canParse('fetch from "/api/data"', 'en')).toBe(true);
+
+      const node = parse('fetch from "/api/data"', 'en');
+      expect(node.action).toBe('fetch');
+      expect(node.roles.get('source')?.value).toBe('/api/data');
+    });
+
     it.skip('fetch /clickedMessage', () => {
-      // URL syntax - may need enhancement
+      // Official syntax uses bare URL without preposition - needs custom patterns
       expect(canParse('fetch /clickedMessage', 'en')).toBe(true);
+    });
+
+    it.skip('fetch "/api" (without preposition)', () => {
+      // Official syntax doesn't require "from" - needs custom patterns
+      expect(canParse('fetch "/api"', 'en')).toBe(true);
     });
   });
 });

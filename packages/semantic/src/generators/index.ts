@@ -43,6 +43,7 @@ export {
   triggerSchema,
   waitSchema,
   fetchSchema,
+  goSchema,
   incrementSchema,
   decrementSchema,
   appendSchema,
