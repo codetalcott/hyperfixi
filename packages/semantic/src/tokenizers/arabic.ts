@@ -20,7 +20,9 @@ import {
   isQuote,
   isDigit,
   isAsciiIdentifierChar,
+  type CreateTokenOptions,
 } from './base';
+import { ArabicMorphologicalNormalizer } from './morphology/arabic-normalizer';
 
 // =============================================================================
 // Arabic Character Classification
@@ -169,6 +171,9 @@ export class ArabicTokenizer extends BaseTokenizer {
   readonly language = 'ar';
   readonly direction = 'rtl' as const;
 
+  /** Morphological normalizer for Arabic prefix/suffix stripping */
+  private morphNormalizer = new ArabicMorphologicalNormalizer();
+
   tokenize(input: string): TokenStream {
     const tokens: LanguageToken[] = [];
     let pos = 0;
@@ -280,6 +285,7 @@ export class ArabicTokenizer extends BaseTokenizer {
 
   /**
    * Extract an Arabic word.
+   * Uses morphological normalization to handle prefix/suffix variations.
    */
   private extractArabicWord(input: string, startPos: number): LanguageToken | null {
     let pos = startPos;
@@ -301,17 +307,55 @@ export class ArabicTokenizer extends BaseTokenizer {
 
     if (!word) return null;
 
-    // Check if this is a known keyword
+    // Check if this is a known keyword (exact match)
     const normalized = ARABIC_KEYWORDS.get(word);
 
-    // Check if it's a preposition
-    const isPreposition = PREPOSITIONS.has(word);
+    if (normalized) {
+      return createToken(
+        word,
+        'keyword',
+        createPosition(startPos, pos),
+        normalized
+      );
+    }
 
+    // Check if it's a preposition
+    if (PREPOSITIONS.has(word)) {
+      return createToken(
+        word,
+        'particle',
+        createPosition(startPos, pos)
+      );
+    }
+
+    // Try morphological normalization for conjugated/inflected forms
+    const morphResult = this.morphNormalizer.normalize(word);
+
+    if (morphResult.stem !== word && morphResult.confidence >= 0.7) {
+      // Check if the stem is a known keyword
+      const stemNormalized = ARABIC_KEYWORDS.get(morphResult.stem);
+
+      if (stemNormalized) {
+        const tokenOptions: CreateTokenOptions = {
+          normalized: stemNormalized,
+          stem: morphResult.stem,
+          stemConfidence: morphResult.confidence,
+        };
+
+        return createToken(
+          word,
+          'keyword',
+          createPosition(startPos, pos),
+          tokenOptions
+        );
+      }
+    }
+
+    // Not a keyword or recognized form, return as identifier
     return createToken(
       word,
-      normalized ? 'keyword' : (isPreposition ? 'particle' : 'identifier'),
-      createPosition(startPos, pos),
-      normalized
+      'identifier',
+      createPosition(startPos, pos)
     );
   }
 

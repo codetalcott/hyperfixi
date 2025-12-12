@@ -32,6 +32,10 @@ export class PatternMatcher {
     const mark = tokens.mark();
     const captured = new Map<SemanticRole, SemanticValue>();
 
+    // Reset match counters for this pattern
+    this.stemMatchCount = 0;
+    this.totalKeywordMatches = 0;
+
     const success = this.matchTokenSequence(
       tokens,
       pattern.template.tokens,
@@ -152,7 +156,12 @@ export class PatternMatcher {
     if (!token) return false;
 
     // Check main value
-    if (this.tokenMatches(token, patternToken.value)) {
+    const matchType = this.getMatchType(token, patternToken.value);
+    if (matchType !== 'none') {
+      this.totalKeywordMatches++;
+      if (matchType === 'stem') {
+        this.stemMatchCount++;
+      }
       tokens.advance();
       return true;
     }
@@ -160,7 +169,12 @@ export class PatternMatcher {
     // Check alternatives
     if (patternToken.alternatives) {
       for (const alt of patternToken.alternatives) {
-        if (this.tokenMatches(token, alt)) {
+        const altMatchType = this.getMatchType(token, alt);
+        if (altMatchType !== 'none') {
+          this.totalKeywordMatches++;
+          if (altMatchType === 'stem') {
+            this.stemMatchCount++;
+          }
           tokens.advance();
           return true;
         }
@@ -226,22 +240,46 @@ export class PatternMatcher {
   }
 
   /**
-   * Check if a token matches a pattern value.
+   * Get the type of match for a token against a value.
+   * Used for confidence calculation.
    */
-  private tokenMatches(token: LanguageToken, value: string): boolean {
-    // Exact match
-    if (token.value === value) return true;
+  private getMatchType(
+    token: LanguageToken,
+    value: string
+  ): 'exact' | 'normalized' | 'stem' | 'case-insensitive' | 'none' {
+    // Exact match (highest confidence)
+    if (token.value === value) return 'exact';
 
-    // Normalized match
-    if (token.normalized === value) return true;
+    // Explicit keyword map normalized match (high confidence)
+    if (token.normalized === value) return 'normalized';
 
-    // Case-insensitive match for keywords
-    if (token.kind === 'keyword' && token.value.toLowerCase() === value.toLowerCase()) {
-      return true;
+    // Morphologically normalized stem match (medium-high confidence)
+    // Only accept if stem confidence is reasonable
+    if (
+      token.stem === value &&
+      token.stemConfidence !== undefined &&
+      token.stemConfidence >= 0.7
+    ) {
+      return 'stem';
     }
 
-    return false;
+    // Case-insensitive match for keywords (medium confidence)
+    if (
+      token.kind === 'keyword' &&
+      token.value.toLowerCase() === value.toLowerCase()
+    ) {
+      return 'case-insensitive';
+    }
+
+    return 'none';
   }
+
+  /**
+   * Track stem matches for confidence calculation.
+   * This is set during matching and read during confidence calculation.
+   */
+  private stemMatchCount: number = 0;
+  private totalKeywordMatches: number = 0;
 
   /**
    * Convert a language token to a semantic value.
@@ -333,6 +371,10 @@ export class PatternMatcher {
 
   /**
    * Calculate confidence score for a match (0-1).
+   *
+   * Confidence is reduced for:
+   * - Stem matches (morphological normalization has inherent uncertainty)
+   * - Missing optional roles
    */
   private calculateConfidence(
     pattern: LanguagePattern,
@@ -361,7 +403,17 @@ export class PatternMatcher {
       }
     }
 
-    return maxScore > 0 ? score / maxScore : 1;
+    let baseConfidence = maxScore > 0 ? score / maxScore : 1;
+
+    // Apply penalty for stem matches
+    // Each stem match reduces confidence slightly (e.g., 5% per stem match)
+    // This ensures exact matches are preferred over morphological matches
+    if (this.stemMatchCount > 0 && this.totalKeywordMatches > 0) {
+      const stemPenalty = (this.stemMatchCount / this.totalKeywordMatches) * 0.15;
+      baseConfidence = Math.max(0.5, baseConfidence - stemPenalty);
+    }
+
+    return baseConfidence;
   }
 }
 

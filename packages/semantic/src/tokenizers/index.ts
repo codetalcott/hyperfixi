@@ -8,6 +8,7 @@
 import type { LanguageTokenizer, TokenStream } from '../types';
 import { englishTokenizer } from './english';
 import { japaneseTokenizer } from './japanese';
+import { koreanTokenizer } from './korean';
 import { arabicTokenizer } from './arabic';
 import { spanishTokenizer } from './spanish';
 
@@ -21,6 +22,7 @@ import { spanishTokenizer } from './spanish';
 const tokenizers = new Map<string, LanguageTokenizer>();
 tokenizers.set('en', englishTokenizer);
 tokenizers.set('ja', japaneseTokenizer);
+tokenizers.set('ko', koreanTokenizer);
 tokenizers.set('ar', arabicTokenizer);
 tokenizers.set('es', spanishTokenizer);
 
@@ -69,6 +71,7 @@ export function registerTokenizer(tokenizer: LanguageTokenizer): void {
 
 export { englishTokenizer } from './english';
 export { japaneseTokenizer } from './japanese';
+export { koreanTokenizer } from './korean';
 export { arabicTokenizer } from './arabic';
 export { spanishTokenizer } from './spanish';
 

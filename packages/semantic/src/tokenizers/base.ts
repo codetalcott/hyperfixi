@@ -13,6 +13,7 @@ import type {
   SourcePosition,
   LanguageTokenizer,
 } from '../types';
+import type { MorphologicalNormalizer, NormalizationResult } from './morphology/types';
 
 // =============================================================================
 // Token Stream Implementation
@@ -102,19 +103,51 @@ export function createPosition(start: number, end: number): SourcePosition {
 }
 
 /**
+ * Options for creating a token with optional morphological data.
+ */
+export interface CreateTokenOptions {
+  /** Explicitly normalized form from keyword map */
+  normalized?: string;
+  /** Morphologically normalized stem */
+  stem?: string;
+  /** Confidence in the stem (0.0-1.0) */
+  stemConfidence?: number;
+}
+
+/**
  * Create a language token.
  */
 export function createToken(
   value: string,
   kind: TokenKind,
   position: SourcePosition,
-  normalized?: string
+  normalizedOrOptions?: string | CreateTokenOptions
 ): LanguageToken {
-  const token: LanguageToken = { value, kind, position };
-  if (normalized !== undefined) {
-    return { value, kind, position, normalized };
+  // Handle legacy string argument for backward compatibility
+  if (typeof normalizedOrOptions === 'string') {
+    return { value, kind, position, normalized: normalizedOrOptions };
   }
-  return token;
+
+  // Handle options object
+  if (normalizedOrOptions) {
+    const { normalized, stem, stemConfidence } = normalizedOrOptions;
+    const token: LanguageToken = { value, kind, position };
+
+    // Build token with only defined properties
+    if (normalized !== undefined) {
+      (token as any).normalized = normalized;
+    }
+    if (stem !== undefined) {
+      (token as any).stem = stem;
+      if (stemConfidence !== undefined) {
+        (token as any).stemConfidence = stemConfidence;
+      }
+    }
+
+    return token;
+  }
+
+  return { value, kind, position };
 }
 
 /**
@@ -338,8 +371,40 @@ export abstract class BaseTokenizer implements LanguageTokenizer {
   abstract readonly language: string;
   abstract readonly direction: 'ltr' | 'rtl';
 
+  /** Optional morphological normalizer for this language */
+  protected normalizer?: MorphologicalNormalizer;
+
   abstract tokenize(input: string): TokenStream;
   abstract classifyToken(token: string): TokenKind;
+
+  /**
+   * Set the morphological normalizer for this tokenizer.
+   */
+  setNormalizer(normalizer: MorphologicalNormalizer): void {
+    this.normalizer = normalizer;
+  }
+
+  /**
+   * Try to normalize a word using the morphological normalizer.
+   * Returns null if no normalizer is set or normalization fails.
+   */
+  protected tryNormalize(word: string): NormalizationResult | null {
+    if (!this.normalizer) return null;
+
+    // Check if word is normalizable (if the method exists)
+    if (this.normalizer.isNormalizable && !this.normalizer.isNormalizable(word)) {
+      return null;
+    }
+
+    const result = this.normalizer.normalize(word);
+
+    // Only return if actually normalized (stem differs from input)
+    if (result.stem !== word && result.confidence >= 0.7) {
+      return result;
+    }
+
+    return null;
+  }
 
   /**
    * Try to extract a CSS selector at the current position.

@@ -1,11 +1,11 @@
 /**
- * Japanese Tokenizer
+ * Korean Tokenizer
  *
- * Tokenizes Japanese hyperscript input.
- * Japanese is challenging because:
- * - No spaces between words
- * - Particles (助詞) mark grammatical roles
- * - Mixed scripts (hiragana, katakana, kanji, romaji)
+ * Tokenizes Korean hyperscript input.
+ * Korean is an agglutinative language with:
+ * - Hangul syllable blocks (가-힣)
+ * - Particles (조사) mark grammatical roles
+ * - 하다 verbs (noun + 하다)
  * - CSS selectors are embedded ASCII
  */
 
@@ -22,181 +22,182 @@ import {
   isAsciiIdentifierChar,
   type CreateTokenOptions,
 } from './base';
-import { JapaneseMorphologicalNormalizer } from './morphology/japanese-normalizer';
+import { KoreanMorphologicalNormalizer } from './morphology/korean-normalizer';
 
 // =============================================================================
-// Japanese Character Classification
+// Korean Character Classification
 // =============================================================================
 
 /**
- * Check if character is hiragana.
+ * Check if character is a Korean syllable block (Hangul).
+ * Korean syllables are in the range U+AC00 to U+D7A3.
  */
-function isHiragana(char: string): boolean {
+function isHangul(char: string): boolean {
   const code = char.charCodeAt(0);
-  return code >= 0x3040 && code <= 0x309F;
+  return code >= 0xAC00 && code <= 0xD7A3;
 }
 
 /**
- * Check if character is katakana.
+ * Check if character is a Hangul Jamo (individual letter).
+ * Jamo range: U+1100 to U+11FF, U+3130 to U+318F
  */
-function isKatakana(char: string): boolean {
+function isJamo(char: string): boolean {
   const code = char.charCodeAt(0);
-  return code >= 0x30A0 && code <= 0x30FF;
+  return (code >= 0x1100 && code <= 0x11FF) || (code >= 0x3130 && code <= 0x318F);
 }
 
 /**
- * Check if character is kanji (CJK Unified Ideographs).
+ * Check if character is Korean (Hangul syllable or Jamo).
  */
-function isKanji(char: string): boolean {
-  const code = char.charCodeAt(0);
-  return (code >= 0x4E00 && code <= 0x9FFF) ||  // CJK Unified Ideographs
-         (code >= 0x3400 && code <= 0x4DBF);    // CJK Unified Ideographs Extension A
-}
-
-/**
- * Check if character is Japanese (hiragana, katakana, or kanji).
- */
-function isJapanese(char: string): boolean {
-  return isHiragana(char) || isKatakana(char) || isKanji(char);
+function isKorean(char: string): boolean {
+  return isHangul(char) || isJamo(char);
 }
 
 // =============================================================================
-// Japanese Particles
+// Korean Particles (조사)
 // =============================================================================
 
 /**
- * Japanese particles that mark grammatical roles.
- * These are single hiragana characters that appear after nouns/verbs.
+ * Korean particles that mark grammatical roles.
+ * These appear after nouns and vary based on vowel harmony.
  */
 const PARTICLES = new Set([
-  'を', // wo - object marker
-  'に', // ni - destination, time
-  'で', // de - location of action, means
-  'から', // kara - from
-  'まで', // made - until
-  'へ', // e - direction
-  'と', // to - and, with
-  'の', // no - possessive
-  'が', // ga - subject marker
-  'は', // wa - topic marker
-  'も', // mo - also
-  'より', // yori - than, from
+  // Subject markers
+  '이', // i - after consonant
+  '가', // ga - after vowel
+  // Object markers
+  '을', // eul - after consonant
+  '를', // reul - after vowel
+  // Topic markers
+  '은', // eun - after consonant
+  '는', // neun - after vowel
+  // Location/time markers
+  '에', // e - at, to
+  '에서', // eseo - at (action location), from
+  '로', // ro - to, by means (after vowel or ㄹ)
+  '으로', // euro - to, by means (after consonant)
+  // Others
+  '와', // wa - and, with (after vowel)
+  '과', // gwa - and, with (after consonant)
+  '의', // ui - possessive ('s)
+  '도', // do - also
+  '만', // man - only
+  '부터', // buteo - from
+  '까지', // kkaji - until
+  '처럼', // cheoreom - like
+  '보다', // boda - than
 ]);
 
 /**
- * Single-character particles (most common).
+ * Single-character particles.
  */
-const SINGLE_CHAR_PARTICLES = new Set(['を', 'に', 'で', 'へ', 'と', 'の', 'が', 'は', 'も']);
+const SINGLE_CHAR_PARTICLES = new Set(['이', '가', '을', '를', '은', '는', '에', '로', '와', '과', '의', '도', '만']);
 
 /**
  * Multi-character particles.
  */
-const MULTI_CHAR_PARTICLES = ['から', 'まで', 'より'];
+const MULTI_CHAR_PARTICLES = ['에서', '으로', '부터', '까지', '처럼', '보다'];
 
 // =============================================================================
-// Japanese Keywords
+// Korean Keywords
 // =============================================================================
 
 /**
- * Japanese command keywords mapped to their English equivalents.
+ * Korean command keywords mapped to their English equivalents.
  */
-const JAPANESE_KEYWORDS: Map<string, string> = new Map([
+const KOREAN_KEYWORDS: Map<string, string> = new Map([
   // Commands
-  ['切り替え', 'toggle'],
-  ['切り替える', 'toggle'],
-  ['トグル', 'toggle'],
-  ['トグルする', 'toggle'],
-  ['追加', 'add'],
-  ['追加する', 'add'],
-  ['削除', 'remove'],
-  ['削除する', 'remove'],
-  ['置く', 'put'],
-  ['入れる', 'put'],
-  ['セット', 'set'],
-  ['セットする', 'set'],
-  ['設定', 'set'],
-  ['設定する', 'set'],
-  ['取得', 'get'],
-  ['取得する', 'get'],
-  ['表示', 'show'],
-  ['表示する', 'show'],
-  ['隠す', 'hide'],
-  ['非表示', 'hide'],
-  ['増加', 'increment'],
-  ['増加する', 'increment'],
-  ['増やす', 'increment'],
-  ['減少', 'decrement'],
-  ['減少する', 'decrement'],
-  ['減らす', 'decrement'],
-  ['待つ', 'wait'],
-  ['待機', 'wait'],
-  ['送信', 'send'],
-  ['送信する', 'send'],
-  ['トリガー', 'trigger'],
-  ['発火', 'trigger'],
-  ['呼び出す', 'call'],
-  ['返す', 'return'],
-  ['ログ', 'log'],
+  ['토글', 'toggle'],
+  ['추가', 'add'],
+  ['제거', 'remove'],
+  ['넣다', 'put'],
+  ['설정', 'set'],
+  ['얻다', 'get'],
+  ['보이다', 'show'],
+  ['숨기다', 'hide'],
+  ['증가', 'increment'],
+  ['감소', 'decrement'],
+  ['대기', 'wait'],
+  ['보내다', 'send'],
+  ['트리거', 'trigger'],
+  ['호출', 'call'],
+  ['반환', 'return'],
+  ['로그', 'log'],
+  ['이동', 'go'],
+  ['만들다', 'make'],
+  ['가져오다', 'take'],
+  ['가져오기', 'fetch'],
   // Control flow
-  ['もし', 'if'],
-  ['ならば', 'then'],
-  ['なら', 'then'],
-  ['そうでなければ', 'else'],
-  ['終わり', 'end'],
-  ['繰り返す', 'repeat'],
-  ['繰り返し', 'repeat'],
-  ['間', 'while'],
-  ['まで', 'until'],
-  // Events (these will be normalized)
-  ['クリック', 'click'],
-  ['入力', 'input'],
-  ['変更', 'change'],
-  ['送信', 'submit'],
-  ['キーダウン', 'keydown'],
-  ['キーアップ', 'keyup'],
-  ['マウスオーバー', 'mouseover'],
-  ['マウスアウト', 'mouseout'],
-  ['フォーカス', 'focus'],
-  ['ブラー', 'blur'],
-  ['ロード', 'load'],
-  ['スクロール', 'scroll'],
+  ['만약', 'if'],
+  ['아니면', 'else'],
+  ['그러면', 'then'],
+  ['그렇지않으면', 'otherwise'],
+  ['끝', 'end'],
+  ['반복', 'repeat'],
+  ['동안', 'while'],
+  ['까지', 'until'],
+  ['계속', 'continue'],
+  ['중단', 'break'],
+  ['정지', 'halt'],
+  // Events
+  ['클릭', 'click'],
+  ['더블클릭', 'dblclick'],
+  ['입력', 'input'],
+  ['변경', 'change'],
+  ['제출', 'submit'],
+  ['키다운', 'keydown'],
+  ['키업', 'keyup'],
+  ['마우스오버', 'mouseover'],
+  ['마우스아웃', 'mouseout'],
+  ['포커스', 'focus'],
+  ['블러', 'blur'],
+  ['로드', 'load'],
+  ['스크롤', 'scroll'],
   // References
-  ['私', 'me'],
-  ['私の', 'my'],
-  ['それ', 'it'],
-  ['その', 'its'],
-  ['結果', 'result'],
-  ['イベント', 'event'],
-  ['ターゲット', 'target'],
+  ['나', 'me'],
+  ['내', 'my'],
+  ['그것', 'it'],
+  ['그것의', 'its'],
+  ['결과', 'result'],
+  ['이벤트', 'event'],
+  ['대상', 'target'],
   // Positional
-  ['最初', 'first'],
-  ['最後', 'last'],
-  ['次', 'next'],
-  ['前', 'previous'],
+  ['첫번째', 'first'],
+  ['마지막', 'last'],
+  ['다음', 'next'],
+  ['이전', 'previous'],
+  // Logical
+  ['그리고', 'and'],
+  ['또는', 'or'],
+  ['아니', 'not'],
+  ['이다', 'is'],
   // Time units
-  ['秒', 's'],
-  ['ミリ秒', 'ms'],
-  ['分', 'm'],
-  ['時間', 'h'],
+  ['초', 's'],
+  ['밀리초', 'ms'],
+  ['분', 'm'],
+  ['시간', 'h'],
+  // Values
+  ['참', 'true'],
+  ['거짓', 'false'],
 ]);
 
 // =============================================================================
-// Japanese Tokenizer Implementation
+// Korean Tokenizer Implementation
 // =============================================================================
 
-export class JapaneseTokenizer extends BaseTokenizer {
-  readonly language = 'ja';
+export class KoreanTokenizer extends BaseTokenizer {
+  readonly language = 'ko';
   readonly direction = 'ltr' as const;
 
-  /** Morphological normalizer for Japanese verb conjugations */
-  private morphNormalizer = new JapaneseMorphologicalNormalizer();
+  /** Morphological normalizer for Korean verb conjugations */
+  private morphNormalizer = new KoreanMorphologicalNormalizer();
 
   tokenize(input: string): TokenStream {
     const tokens: LanguageToken[] = [];
     let pos = 0;
 
     while (pos < input.length) {
-      // Skip whitespace (Japanese can have spaces for readability)
+      // Skip whitespace
       if (isWhitespace(input[pos])) {
         pos++;
         continue;
@@ -212,7 +213,7 @@ export class JapaneseTokenizer extends BaseTokenizer {
         }
       }
 
-      // Try string literal (both ASCII and Japanese quotes)
+      // Try string literal
       if (isQuote(input[pos])) {
         const stringToken = this.tryString(input, pos);
         if (stringToken) {
@@ -222,9 +223,9 @@ export class JapaneseTokenizer extends BaseTokenizer {
         }
       }
 
-      // Try number (including Japanese time units)
+      // Try number (including Korean time units)
       if (isDigit(input[pos])) {
-        const numberToken = this.extractJapaneseNumber(input, pos);
+        const numberToken = this.extractKoreanNumber(input, pos);
         if (numberToken) {
           tokens.push(numberToken);
           pos = numberToken.position.end;
@@ -251,9 +252,9 @@ export class JapaneseTokenizer extends BaseTokenizer {
         continue;
       }
 
-      // Try Japanese word (kanji/kana sequence)
-      if (isJapanese(input[pos])) {
-        const wordToken = this.extractJapaneseWord(input, pos);
+      // Try Korean word (Hangul sequence)
+      if (isKorean(input[pos])) {
+        const wordToken = this.extractKoreanWord(input, pos);
         if (wordToken) {
           tokens.push(wordToken);
           pos = wordToken.position.end;
@@ -275,14 +276,14 @@ export class JapaneseTokenizer extends BaseTokenizer {
       pos++;
     }
 
-    return new TokenStreamImpl(tokens, 'ja');
+    return new TokenStreamImpl(tokens, 'ko');
   }
 
   classifyToken(token: string): TokenKind {
     if (PARTICLES.has(token)) return 'particle';
-    if (JAPANESE_KEYWORDS.has(token)) return 'keyword';
+    if (KOREAN_KEYWORDS.has(token)) return 'keyword';
     if (token.startsWith('#') || token.startsWith('.') || token.startsWith('[')) return 'selector';
-    if (token.startsWith('"') || token.startsWith("'") || token.startsWith('「')) return 'literal';
+    if (token.startsWith('"') || token.startsWith("'")) return 'literal';
     if (/^\d/.test(token)) return 'literal';
 
     return 'identifier';
@@ -305,21 +306,19 @@ export class JapaneseTokenizer extends BaseTokenizer {
   }
 
   /**
-   * Extract a Japanese word (sequence of kanji/kana).
+   * Extract a Korean word (sequence of Hangul).
    * Stops at particles, ASCII, or whitespace.
    *
-   * Uses morphological normalization to handle verb conjugations:
-   * 1. First checks if the exact word is in the keyword map
-   * 2. If not found, tries to strip conjugation suffixes and check again
+   * Uses morphological normalization to handle verb conjugations.
    */
-  private extractJapaneseWord(input: string, startPos: number): LanguageToken | null {
+  private extractKoreanWord(input: string, startPos: number): LanguageToken | null {
     let pos = startPos;
     let word = '';
 
     while (pos < input.length) {
       const char = input[pos];
 
-      // Stop at particles (except within longer words)
+      // Stop at single-char particles (if we have content)
       if (SINGLE_CHAR_PARTICLES.has(char) && word.length > 0) {
         break;
       }
@@ -334,8 +333,8 @@ export class JapaneseTokenizer extends BaseTokenizer {
       }
       if (foundMulti) break;
 
-      // Continue if Japanese character
-      if (isJapanese(char)) {
+      // Continue if Korean character
+      if (isKorean(char)) {
         word += char;
         pos++;
       } else {
@@ -346,10 +345,9 @@ export class JapaneseTokenizer extends BaseTokenizer {
     if (!word) return null;
 
     // Check if this is a known keyword (exact match)
-    const normalized = JAPANESE_KEYWORDS.get(word);
+    const normalized = KOREAN_KEYWORDS.get(word);
 
     if (normalized) {
-      // Exact match found in keyword map
       return createToken(
         word,
         'keyword',
@@ -363,10 +361,9 @@ export class JapaneseTokenizer extends BaseTokenizer {
 
     if (morphResult.stem !== word && morphResult.confidence >= 0.7) {
       // Check if the stem is a known keyword
-      const stemNormalized = JAPANESE_KEYWORDS.get(morphResult.stem);
+      const stemNormalized = KOREAN_KEYWORDS.get(morphResult.stem);
 
       if (stemNormalized) {
-        // Found via morphological normalization
         const tokenOptions: CreateTokenOptions = {
           normalized: stemNormalized,
           stem: morphResult.stem,
@@ -391,7 +388,7 @@ export class JapaneseTokenizer extends BaseTokenizer {
   }
 
   /**
-   * Extract an ASCII word (for mixed Japanese/English content).
+   * Extract an ASCII word (for mixed Korean/English content).
    */
   private extractAsciiWord(input: string, startPos: number): LanguageToken | null {
     let pos = startPos;
@@ -411,9 +408,9 @@ export class JapaneseTokenizer extends BaseTokenizer {
   }
 
   /**
-   * Extract a number, including Japanese time unit suffixes.
+   * Extract a number, including Korean time unit suffixes.
    */
-  private extractJapaneseNumber(input: string, startPos: number): LanguageToken | null {
+  private extractKoreanNumber(input: string, startPos: number): LanguageToken | null {
     let pos = startPos;
     let number = '';
 
@@ -430,19 +427,19 @@ export class JapaneseTokenizer extends BaseTokenizer {
       }
     }
 
-    // Check for Japanese time units
+    // Check for Korean time units
     if (pos < input.length) {
       const remaining = input.slice(pos);
-      if (remaining.startsWith('ミリ秒')) {
+      if (remaining.startsWith('밀리초')) {
         number += 'ms';
         pos += 3;
-      } else if (remaining.startsWith('秒')) {
+      } else if (remaining.startsWith('초')) {
         number += 's';
         pos += 1;
-      } else if (remaining.startsWith('分')) {
+      } else if (remaining.startsWith('분')) {
         number += 'm';
         pos += 1;
-      } else if (remaining.startsWith('時間')) {
+      } else if (remaining.startsWith('시간')) {
         number += 'h';
         pos += 2;
       }
@@ -461,4 +458,4 @@ export class JapaneseTokenizer extends BaseTokenizer {
 /**
  * Singleton instance.
  */
-export const japaneseTokenizer = new JapaneseTokenizer();
+export const koreanTokenizer = new KoreanTokenizer();

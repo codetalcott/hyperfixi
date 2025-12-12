@@ -18,7 +18,9 @@ import {
   isSelectorStart,
   isQuote,
   isDigit,
+  type CreateTokenOptions,
 } from './base';
+import { SpanishMorphologicalNormalizer } from './morphology/spanish-normalizer';
 
 // =============================================================================
 // Spanish Character Classification
@@ -168,6 +170,9 @@ export class SpanishTokenizer extends BaseTokenizer {
   readonly language = 'es';
   readonly direction = 'ltr' as const;
 
+  /** Morphological normalizer for Spanish verb conjugations */
+  private morphNormalizer = new SpanishMorphologicalNormalizer();
+
   tokenize(input: string): TokenStream {
     const tokens: LanguageToken[] = [];
     let pos = 0;
@@ -297,6 +302,10 @@ export class SpanishTokenizer extends BaseTokenizer {
 
   /**
    * Extract a Spanish word.
+   *
+   * Uses morphological normalization to handle:
+   * - Reflexive verbs (mostrarse → mostrar)
+   * - Verb conjugations (alternando → alternar)
    */
   private extractSpanishWord(input: string, startPos: number): LanguageToken | null {
     let pos = startPos;
@@ -309,14 +318,56 @@ export class SpanishTokenizer extends BaseTokenizer {
     if (!word) return null;
 
     const lower = word.toLowerCase();
-    const normalized = SPANISH_KEYWORDS.get(lower);
-    const isPreposition = PREPOSITIONS.has(lower);
 
+    // Check if this is a known keyword (exact match)
+    const normalized = SPANISH_KEYWORDS.get(lower);
+
+    if (normalized) {
+      return createToken(
+        word,
+        'keyword',
+        createPosition(startPos, pos),
+        normalized
+      );
+    }
+
+    // Check if it's a preposition
+    if (PREPOSITIONS.has(lower)) {
+      return createToken(
+        word,
+        'particle',
+        createPosition(startPos, pos)
+      );
+    }
+
+    // Try morphological normalization for conjugated/reflexive forms
+    const morphResult = this.morphNormalizer.normalize(lower);
+
+    if (morphResult.stem !== lower && morphResult.confidence >= 0.7) {
+      // Check if the stem (infinitive) is a known keyword
+      const stemNormalized = SPANISH_KEYWORDS.get(morphResult.stem);
+
+      if (stemNormalized) {
+        const tokenOptions: CreateTokenOptions = {
+          normalized: stemNormalized,
+          stem: morphResult.stem,
+          stemConfidence: morphResult.confidence,
+        };
+
+        return createToken(
+          word,
+          'keyword',
+          createPosition(startPos, pos),
+          tokenOptions
+        );
+      }
+    }
+
+    // Not a keyword, return as identifier
     return createToken(
       word,
-      normalized ? 'keyword' : (isPreposition ? 'particle' : 'identifier'),
-      createPosition(startPos, pos),
-      normalized
+      'identifier',
+      createPosition(startPos, pos)
     );
   }
 

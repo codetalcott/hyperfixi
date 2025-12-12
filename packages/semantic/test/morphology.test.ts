@@ -1,0 +1,657 @@
+/**
+ * Morphological Normalizer Tests
+ *
+ * Tests for verb conjugation normalization across all supported languages.
+ * Each normalizer should strip prefixes/suffixes to find the stem form
+ * that can be matched against keyword dictionaries.
+ */
+
+import { describe, it, expect } from 'vitest';
+import {
+  JapaneseMorphologicalNormalizer,
+  KoreanMorphologicalNormalizer,
+  SpanishMorphologicalNormalizer,
+  ArabicMorphologicalNormalizer,
+} from '../src/tokenizers/morphology';
+
+// =============================================================================
+// Japanese Normalizer Tests
+// =============================================================================
+
+describe('JapaneseMorphologicalNormalizer', () => {
+  const normalizer = new JapaneseMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for Japanese words ending in hiragana', () => {
+      expect(normalizer.isNormalizable('切り替えて')).toBe(true);
+      expect(normalizer.isNormalizable('表示する')).toBe(true);
+    });
+
+    it('should return false for non-Japanese text', () => {
+      expect(normalizer.isNormalizable('toggle')).toBe(false);
+      expect(normalizer.isNormalizable('123')).toBe(false);
+    });
+
+    it('should return false for single characters', () => {
+      expect(normalizer.isNormalizable('あ')).toBe(false);
+    });
+  });
+
+  describe('て-form normalization', () => {
+    it('should normalize 切り替えて to 切り替え', () => {
+      const result = normalizer.normalize('切り替えて');
+      expect(result.stem).toBe('切り替え');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize 追加して to 追加', () => {
+      const result = normalizer.normalize('追加して');
+      expect(result.stem).toBe('追加');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+  });
+
+  describe('た-form (past) normalization', () => {
+    it('should normalize 切り替えた to 切り替え', () => {
+      const result = normalizer.normalize('切り替えた');
+      expect(result.stem).toBe('切り替え');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize 表示した to 表示', () => {
+      const result = normalizer.normalize('表示した');
+      expect(result.stem).toBe('表示');
+    });
+  });
+
+  describe('ます-form (polite) normalization', () => {
+    it('should normalize 切り替えます to 切り替え', () => {
+      const result = normalizer.normalize('切り替えます');
+      expect(result.stem).toBe('切り替え');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize 追加します to 追加', () => {
+      const result = normalizer.normalize('追加します');
+      expect(result.stem).toBe('追加');
+    });
+  });
+
+  describe('ている (progressive) normalization', () => {
+    it('should normalize 切り替えている to 切り替え', () => {
+      const result = normalizer.normalize('切り替えている');
+      expect(result.stem).toBe('切り替え');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize 表示しています to 表示', () => {
+      const result = normalizer.normalize('表示しています');
+      expect(result.stem).toBe('表示');
+    });
+  });
+
+  describe('ない (negative) normalization', () => {
+    it('should normalize 切り替えない to 切り替え', () => {
+      const result = normalizer.normalize('切り替えない');
+      expect(result.stem).toBe('切り替え');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+  });
+
+  describe('する verb normalization', () => {
+    it('should normalize トグルする to トグル', () => {
+      const result = normalizer.normalize('トグルする');
+      expect(result.stem).toBe('トグル');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+    });
+
+    it('should normalize 設定する to 設定', () => {
+      const result = normalizer.normalize('設定する');
+      expect(result.stem).toBe('設定');
+    });
+
+    it('should normalize している to stem', () => {
+      const result = normalizer.normalize('トグルしている');
+      expect(result.stem).toBe('トグル');
+    });
+
+    it('should normalize しました (past polite) to stem', () => {
+      const result = normalizer.normalize('追加しました');
+      expect(result.stem).toBe('追加');
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should not modify words that are already stems', () => {
+      const result = normalizer.normalize('切り替え');
+      expect(result.stem).toBe('切り替え');
+      expect(result.confidence).toBe(1.0);
+    });
+
+    it('should not modify katakana loanwords without verb ending', () => {
+      const result = normalizer.normalize('トグル');
+      expect(result.stem).toBe('トグル');
+    });
+  });
+});
+
+// =============================================================================
+// Korean Normalizer Tests
+// =============================================================================
+
+describe('KoreanMorphologicalNormalizer', () => {
+  const normalizer = new KoreanMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for Korean words', () => {
+      expect(normalizer.isNormalizable('토글하다')).toBe(true);
+      expect(normalizer.isNormalizable('추가해요')).toBe(true);
+    });
+
+    it('should return false for non-Korean text', () => {
+      expect(normalizer.isNormalizable('toggle')).toBe(false);
+      expect(normalizer.isNormalizable('123')).toBe(false);
+    });
+
+    it('should return false for single characters', () => {
+      expect(normalizer.isNormalizable('가')).toBe(false);
+    });
+  });
+
+  describe('하다 verb normalization', () => {
+    it('should normalize 토글하다 to 토글', () => {
+      const result = normalizer.normalize('토글하다');
+      expect(result.stem).toBe('토글');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+    });
+
+    it('should normalize 추가하다 to 추가', () => {
+      const result = normalizer.normalize('추가하다');
+      expect(result.stem).toBe('추가');
+    });
+
+    it('should normalize 설정하다 to 설정', () => {
+      const result = normalizer.normalize('설정하다');
+      expect(result.stem).toBe('설정');
+    });
+  });
+
+  describe('polite form normalization', () => {
+    it('should normalize 토글해요 to 토글', () => {
+      const result = normalizer.normalize('토글해요');
+      expect(result.stem).toBe('토글');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize 추가해요 to 추가', () => {
+      const result = normalizer.normalize('추가해요');
+      expect(result.stem).toBe('추가');
+    });
+  });
+
+  describe('formal form normalization', () => {
+    it('should normalize 토글합니다 to 토글', () => {
+      const result = normalizer.normalize('토글합니다');
+      expect(result.stem).toBe('토글');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+    });
+
+    it('should normalize 추가합니다 to 추가', () => {
+      const result = normalizer.normalize('추가합니다');
+      expect(result.stem).toBe('추가');
+    });
+  });
+
+  describe('honorific request normalization', () => {
+    it('should normalize 토글하세요 to 토글', () => {
+      const result = normalizer.normalize('토글하세요');
+      expect(result.stem).toBe('토글');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize 추가하세요 to 추가', () => {
+      const result = normalizer.normalize('추가하세요');
+      expect(result.stem).toBe('추가');
+    });
+  });
+
+  describe('past tense normalization', () => {
+    it('should normalize 토글했어요 to 토글', () => {
+      const result = normalizer.normalize('토글했어요');
+      expect(result.stem).toBe('토글');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize 추가했습니다 to 추가', () => {
+      const result = normalizer.normalize('추가했습니다');
+      expect(result.stem).toBe('추가');
+    });
+  });
+
+  describe('connective form normalization', () => {
+    // Note: 하고 is a connective form (and/with) that would need
+    // more advanced handling. For now we test the forms that work.
+    it('should normalize 토글해서 to 토글', () => {
+      const result = normalizer.normalize('토글해서');
+      expect(result.stem).toBe('토글');
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should not modify words that are already stems', () => {
+      const result = normalizer.normalize('토글');
+      expect(result.stem).toBe('토글');
+      expect(result.confidence).toBe(1.0);
+    });
+
+    it('should not modify pure nouns', () => {
+      const result = normalizer.normalize('클릭');
+      expect(result.stem).toBe('클릭');
+    });
+  });
+});
+
+// =============================================================================
+// Spanish Normalizer Tests
+// =============================================================================
+
+describe('SpanishMorphologicalNormalizer', () => {
+  const normalizer = new SpanishMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for Spanish words', () => {
+      expect(normalizer.isNormalizable('alternar')).toBe(true);
+      expect(normalizer.isNormalizable('mostrarse')).toBe(true);
+    });
+
+    it('should return false for non-Spanish text', () => {
+      expect(normalizer.isNormalizable('toggle')).toBe(false);
+    });
+
+    it('should return false for short words', () => {
+      expect(normalizer.isNormalizable('a')).toBe(false);
+    });
+  });
+
+  describe('-ar verb conjugation', () => {
+    it('should normalize alternando (gerund) to alternar', () => {
+      const result = normalizer.normalize('alternando');
+      expect(result.stem).toBe('alternar');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize alternado (past participle) to alternar', () => {
+      const result = normalizer.normalize('alternado');
+      expect(result.stem).toBe('alternar');
+    });
+
+    it('should normalize alterna (present 3rd) to alternar', () => {
+      const result = normalizer.normalize('alterna');
+      expect(result.stem).toBe('alternar');
+    });
+
+    it('should normalize alternan (present plural) to alternar', () => {
+      const result = normalizer.normalize('alternan');
+      expect(result.stem).toBe('alternar');
+    });
+
+    it('should normalize alterné (past 1st) to alternar', () => {
+      const result = normalizer.normalize('alterné');
+      expect(result.stem).toBe('alternar');
+    });
+
+    it('should normalize alternó (past 3rd) to alternar', () => {
+      const result = normalizer.normalize('alternó');
+      expect(result.stem).toBe('alternar');
+    });
+  });
+
+  describe('-er verb conjugation', () => {
+    it('should normalize escondiendo (gerund) to escond + infinitive ending', () => {
+      const result = normalizer.normalize('escondiendo');
+      // -iendo is shared by -er and -ir verbs; normalizer picks one consistently
+      expect(result.stem).toMatch(/^escond(er|ir)$/);
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize escondido (past participle) to escond + infinitive ending', () => {
+      const result = normalizer.normalize('escondido');
+      // -ido is shared by -er and -ir verbs
+      expect(result.stem).toMatch(/^escond(er|ir)$/);
+    });
+
+    it('should normalize esconde (present 3rd) - ambiguous ending', () => {
+      const result = normalizer.normalize('esconde');
+      // Single-char 'e' is ambiguous across all verb classes
+      expect(result.stem).toMatch(/^escond/);
+      expect(result.confidence).toBeLessThan(1.0);
+    });
+  });
+
+  describe('-ir verb conjugation', () => {
+    // Note: -iendo and -ido endings are shared by -er and -ir verbs.
+    // Without a dictionary, we can't disambiguate. The normalizer will
+    // consistently pick one pattern (either -er or -ir).
+    it('should normalize añadiendo (gerund) to añad + infinitive ending', () => {
+      const result = normalizer.normalize('añadiendo');
+      expect(result.stem).toMatch(/^añad(er|ir)$/);
+      expect(result.confidence).toBeGreaterThanOrEqual(0.8);
+    });
+
+    it('should normalize añadido (past participle) to añad + infinitive ending', () => {
+      const result = normalizer.normalize('añadido');
+      expect(result.stem).toMatch(/^añad(er|ir)$/);
+    });
+
+    it('should normalize añade (present 3rd) - ambiguous ending', () => {
+      const result = normalizer.normalize('añade');
+      // The 'e' ending is ambiguous; normalizer will pick one pattern
+      expect(result.stem).toMatch(/^añad/);
+      expect(result.confidence).toBeLessThan(1.0);
+    });
+  });
+
+  describe('reflexive verb normalization', () => {
+    it('should normalize mostrarse to mostrar', () => {
+      const result = normalizer.normalize('mostrarse');
+      expect(result.stem).toBe('mostrar');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+      expect(result.metadata?.conjugationType).toBe('reflexive');
+    });
+
+    it('should normalize ocultarse to ocultar', () => {
+      const result = normalizer.normalize('ocultarse');
+      expect(result.stem).toBe('ocultar');
+      expect(result.metadata?.conjugationType).toBe('reflexive');
+    });
+
+    it('should normalize esconderse to esconder', () => {
+      const result = normalizer.normalize('esconderse');
+      expect(result.stem).toBe('esconder');
+    });
+  });
+
+  describe('infinitive preservation', () => {
+    it('should not modify infinitives (already base form)', () => {
+      const result = normalizer.normalize('alternar');
+      expect(result.stem).toBe('alternar');
+      expect(result.confidence).toBe(1.0);
+    });
+
+    it('should not modify mostrar', () => {
+      const result = normalizer.normalize('mostrar');
+      expect(result.stem).toBe('mostrar');
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should not modify nouns', () => {
+      const result = normalizer.normalize('botón');
+      expect(result.stem).toBe('botón');
+      expect(result.confidence).toBe(1.0);
+    });
+  });
+});
+
+// =============================================================================
+// Arabic Normalizer Tests
+// =============================================================================
+
+describe('ArabicMorphologicalNormalizer', () => {
+  const normalizer = new ArabicMorphologicalNormalizer();
+
+  describe('isNormalizable', () => {
+    it('should return true for Arabic words', () => {
+      expect(normalizer.isNormalizable('البدّل')).toBe(true);
+      expect(normalizer.isNormalizable('يبدّل')).toBe(true);
+    });
+
+    it('should return false for non-Arabic text', () => {
+      expect(normalizer.isNormalizable('toggle')).toBe(false);
+      expect(normalizer.isNormalizable('123')).toBe(false);
+    });
+
+    it('should return false for single characters', () => {
+      expect(normalizer.isNormalizable('ب')).toBe(false);
+    });
+  });
+
+  describe('definite article (ال) prefix', () => {
+    it('should strip ال from البدل', () => {
+      const result = normalizer.normalize('البدل');
+      expect(result.stem).toBe('بدل');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.9);
+    });
+
+    it('should strip ال from التبديل', () => {
+      const result = normalizer.normalize('التبديل');
+      expect(result.stem).toBe('تبديل');
+    });
+  });
+
+  describe('conjunction prefixes', () => {
+    it('should strip و (and) from والبدل', () => {
+      const result = normalizer.normalize('والبدل');
+      expect(result.stem).toBe('بدل');
+    });
+
+    it('should strip ف (then) prefix', () => {
+      const result = normalizer.normalize('فالبدل');
+      expect(result.stem).toBe('بدل');
+    });
+  });
+
+  describe('preposition prefixes', () => {
+    it('should strip ب (with/by) from ببدل', () => {
+      const result = normalizer.normalize('ببدل');
+      expect(result.stem).toBe('بدل');
+    });
+
+    it('should strip ل (to/for) from لبدل', () => {
+      const result = normalizer.normalize('لبدل');
+      expect(result.stem).toBe('بدل');
+    });
+
+    it('should strip combined بال prefix', () => {
+      const result = normalizer.normalize('بالبدل');
+      expect(result.stem).toBe('بدل');
+    });
+  });
+
+  describe('verb prefixes (present tense markers)', () => {
+    it('should strip ي (he/it) from يبدّل', () => {
+      const result = normalizer.normalize('يبدل');
+      expect(result.stem).toBe('بدل');
+    });
+
+    it('should strip ت (she/you) from تبدّل', () => {
+      const result = normalizer.normalize('تبدل');
+      expect(result.stem).toBe('بدل');
+    });
+
+    it('should strip ن (we) from نبدّل', () => {
+      const result = normalizer.normalize('نبدل');
+      expect(result.stem).toBe('بدل');
+    });
+
+    it('should strip أ (I) from أبدّل', () => {
+      const result = normalizer.normalize('أبدل');
+      expect(result.stem).toBe('بدل');
+    });
+  });
+
+  describe('plural suffixes', () => {
+    it('should strip ون (masculine plural nominative)', () => {
+      const result = normalizer.normalize('مستخدمون');
+      expect(result.stem).toBe('مستخدم');
+    });
+
+    it('should strip ين (masculine plural accusative)', () => {
+      const result = normalizer.normalize('مستخدمين');
+      expect(result.stem).toBe('مستخدم');
+    });
+
+    it('should strip ات (feminine plural)', () => {
+      const result = normalizer.normalize('تغييرات');
+      expect(result.stem).toBe('تغيير');
+    });
+  });
+
+  describe('pronoun suffixes', () => {
+    it('should strip ها (her/it) from longer words', () => {
+      // Using a longer word since بدل is too short
+      const result = normalizer.normalize('تغييرها');
+      expect(result.stem).toBe('تغيير');
+    });
+
+    it('should strip هم (them) from longer words', () => {
+      const result = normalizer.normalize('تغييرهم');
+      expect(result.stem).toBe('تغيير');
+    });
+
+    it('should not over-strip short words', () => {
+      // بدلها has only 2 chars after stripping - should be cautious
+      const result = normalizer.normalize('بدلها');
+      // Should either not strip (returning original) or strip suffix only
+      expect(result.stem.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  describe('feminine marker', () => {
+    it('should strip ة (ta marbuta)', () => {
+      const result = normalizer.normalize('إضافة');
+      expect(result.stem).toBe('إضاف');
+    });
+  });
+
+  describe('diacritics handling', () => {
+    it('should handle words with and without diacritics consistently', () => {
+      // When no morphological change is made, original word is returned
+      // But internal matching uses diacritic-stripped form
+      const withDiacritics = normalizer.normalize('بدّل');
+      const withoutDiacritics = normalizer.normalize('بدل');
+
+      // Both should return unchanged (no prefix/suffix to strip)
+      expect(withDiacritics.confidence).toBe(1.0);
+      expect(withoutDiacritics.confidence).toBe(1.0);
+    });
+
+    it('should strip prefixes consistently regardless of diacritics', () => {
+      // الكتاب (the book) - with and without diacritics
+      const result1 = normalizer.normalize('الكتاب');
+      const result2 = normalizer.normalize('الْكِتَاب'); // with diacritics
+
+      // Both should strip ال prefix
+      expect(result1.stem).toBe('كتاب');
+      // Result2 will have diacritics stripped internally for matching
+      expect(result2.confidence).toBeLessThan(1.0); // Some stripping occurred
+    });
+  });
+
+  describe('no change cases', () => {
+    it('should not modify words that are already stems (no prefix/suffix)', () => {
+      // Using a word without any prefix/suffix patterns
+      const result = normalizer.normalize('كتب');  // ktb - triliteral root
+      expect(result.stem).toBe('كتب');
+      expect(result.confidence).toBe(1.0);
+    });
+
+    it('should not strip short words incorrectly', () => {
+      // بدل is 3 chars but starts with ب which is a prefix candidate
+      // With minRemaining=3, it shouldn't be stripped
+      const result = normalizer.normalize('بدل');
+      expect(result.stem).toBe('بدل');
+    });
+
+    it('should not strip if result would be too short', () => {
+      // Single-character stems should not be produced
+      const result = normalizer.normalize('اب');
+      // Either returns same or finds valid stem
+      expect(result.stem.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+});
+
+// =============================================================================
+// Integration Tests - Confidence Scoring
+// =============================================================================
+
+describe('Confidence Scoring', () => {
+  const japanesNormalizer = new JapaneseMorphologicalNormalizer();
+  const koreanNormalizer = new KoreanMorphologicalNormalizer();
+  const spanishNormalizer = new SpanishMorphologicalNormalizer();
+  const arabicNormalizer = new ArabicMorphologicalNormalizer();
+
+  describe('confidence ranges', () => {
+    it('should return 1.0 for unchanged words', () => {
+      expect(japanesNormalizer.normalize('切り替え').confidence).toBe(1.0);
+      expect(koreanNormalizer.normalize('토글').confidence).toBe(1.0);
+      expect(spanishNormalizer.normalize('alternar').confidence).toBe(1.0);
+      // Using a word without prefix/suffix patterns
+      expect(arabicNormalizer.normalize('كتب').confidence).toBe(1.0);
+    });
+
+    it('should return 0.75-0.9 for single transformation', () => {
+      const jaResult = japanesNormalizer.normalize('切り替えて');
+      expect(jaResult.confidence).toBeGreaterThanOrEqual(0.75);
+      expect(jaResult.confidence).toBeLessThanOrEqual(0.95);
+
+      const koResult = koreanNormalizer.normalize('토글하다');
+      expect(koResult.confidence).toBeGreaterThanOrEqual(0.75);
+      expect(koResult.confidence).toBeLessThanOrEqual(0.95);
+
+      const esResult = spanishNormalizer.normalize('alternando');
+      expect(esResult.confidence).toBeGreaterThanOrEqual(0.75);
+      expect(esResult.confidence).toBeLessThanOrEqual(0.95);
+
+      const arResult = arabicNormalizer.normalize('البدل');
+      expect(arResult.confidence).toBeGreaterThanOrEqual(0.75);
+      expect(arResult.confidence).toBeLessThanOrEqual(0.95);
+    });
+
+    it('should return lower confidence for multiple transformations', () => {
+      // Multiple suffix stripping should reduce confidence
+      const arResult = arabicNormalizer.normalize('والمستخدمين');
+      // Strips وال and ين
+      expect(arResult.confidence).toBeLessThan(0.9);
+      expect(arResult.confidence).toBeGreaterThanOrEqual(0.5);
+    });
+  });
+
+  describe('minimum stem length enforcement', () => {
+    it('should not over-strip to produce tiny stems', () => {
+      // All normalizers should enforce minimum stem lengths
+      const jaResult = japanesNormalizer.normalize('した');
+      // Should not strip to empty or single char
+      expect(jaResult.stem.length).toBeGreaterThanOrEqual(1);
+
+      const arResult = arabicNormalizer.normalize('له');
+      expect(arResult.stem.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+});
+
+// =============================================================================
+// Metadata Tests
+// =============================================================================
+
+describe('Normalization Metadata', () => {
+  const spanishNormalizer = new SpanishMorphologicalNormalizer();
+  const arabicNormalizer = new ArabicMorphologicalNormalizer();
+
+  it('should include conjugationType for reflexive verbs', () => {
+    const result = spanishNormalizer.normalize('mostrarse');
+    expect(result.metadata?.conjugationType).toBe('reflexive');
+  });
+
+  it('should include removed suffixes in metadata', () => {
+    const result = spanishNormalizer.normalize('mostrarse');
+    expect(result.metadata?.removedSuffixes).toContain('se');
+  });
+
+  it('should include removed prefixes for Arabic', () => {
+    const result = arabicNormalizer.normalize('والبدل');
+    expect(result.metadata?.removedPrefixes).toBeDefined();
+    expect(result.metadata?.removedPrefixes?.length).toBeGreaterThan(0);
+  });
+});

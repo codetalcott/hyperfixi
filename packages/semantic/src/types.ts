@@ -326,8 +326,12 @@ export interface LanguageToken {
   readonly value: string;
   readonly kind: TokenKind;
   readonly position: SourcePosition;
-  /** Normalized form (e.g., 切り替える → toggle) */
+  /** Normalized form from explicit keyword map (e.g., 切り替え → toggle) */
   readonly normalized?: string;
+  /** Morphologically normalized stem (e.g., 切り替えた → 切り替え) */
+  readonly stem?: string;
+  /** Confidence in the morphological stem (0.0-1.0) */
+  readonly stemConfidence?: number;
 }
 
 export type TokenKind =
