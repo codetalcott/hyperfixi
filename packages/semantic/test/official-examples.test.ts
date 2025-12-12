@@ -332,6 +332,15 @@ describe('Multilingual Equivalents of Official Examples', () => {
       expect(node.action).toBe('increment');
       expect(node.roles.get('patient')?.value).toBe(':x');
     });
+
+    it('Chinese: 增加 把 :x', () => {
+      // Chinese uses 把 (ba) particle for BA construction
+      expect(canParse('增加 把 :x', 'zh')).toBe(true);
+
+      const node = parse('增加 把 :x', 'zh');
+      expect(node.action).toBe('increment');
+      expect(node.roles.get('patient')?.value).toBe(':x');
+    });
   });
 
   describe('Decrement Command', () => {
