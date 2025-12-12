@@ -119,8 +119,10 @@ export {
   registerTokenizer,
   englishTokenizer,
   japaneseTokenizer,
+  koreanTokenizer,
   arabicTokenizer,
   spanishTokenizer,
+  turkishTokenizer,
   TokenStreamImpl,
 } from './tokenizers';
 
@@ -168,7 +170,7 @@ export {
  * Get all supported languages for parsing.
  */
 export function getSupportedLanguages(): string[] {
-  return ['en', 'ja', 'ar', 'es'];
+  return ['en', 'ja', 'ar', 'es', 'ko', 'tr'];
 }
 
 /**
