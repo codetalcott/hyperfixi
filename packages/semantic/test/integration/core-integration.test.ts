@@ -34,8 +34,9 @@ describe('Core Integration', () => {
   // ===========================================================================
 
   describe('Language Support', () => {
-    it('should support all 7 languages', () => {
+    it('should support all 13 languages', () => {
       const languages = analyzer.supportedLanguages();
+      // Original 7 languages
       expect(languages).toContain('en');
       expect(languages).toContain('ja');
       expect(languages).toContain('ar');
@@ -43,7 +44,14 @@ describe('Core Integration', () => {
       expect(languages).toContain('ko');
       expect(languages).toContain('tr');
       expect(languages).toContain('zh');
-      expect(languages.length).toBe(7);
+      // 6 new languages
+      expect(languages).toContain('pt');
+      expect(languages).toContain('fr');
+      expect(languages).toContain('de');
+      expect(languages).toContain('id');
+      expect(languages).toContain('qu');
+      expect(languages).toContain('sw');
+      expect(languages.length).toBe(13);
     });
 
     it('should return true for supported languages', () => {

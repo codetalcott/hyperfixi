@@ -11,6 +11,7 @@ import type { SemanticRole } from '@hyperfixi/i18n/src/grammar/types';
 import { PatternMatcher } from './parser/pattern-matcher';
 import { getTokenizer } from './tokenizers';
 import { getPatternsForLanguage } from './patterns';
+import { SemanticCache, semanticCache, type SemanticCacheConfig, type CacheStats } from './cache';
 
 // =============================================================================
 // SemanticAnalyzer Interface
@@ -59,6 +60,21 @@ export interface SemanticAnalyzer {
    * Get the list of supported languages.
    */
   supportedLanguages(): string[];
+
+  /**
+   * Get cache statistics.
+   */
+  getCacheStats(): CacheStats;
+
+  /**
+   * Clear the result cache.
+   */
+  clearCache(): void;
+
+  /**
+   * Configure the cache.
+   */
+  configureCache(config: Partial<SemanticCacheConfig>): void;
 }
 
 // =============================================================================
@@ -66,16 +82,33 @@ export interface SemanticAnalyzer {
 // =============================================================================
 
 /**
+ * Options for creating a SemanticAnalyzer.
+ */
+export interface SemanticAnalyzerOptions {
+  /** Cache configuration. Pass false to disable caching. */
+  cache?: SemanticCacheConfig | false;
+}
+
+/**
  * Implementation of SemanticAnalyzer that wraps the semantic parser.
+ * Includes LRU caching for performance optimization on repeated inputs.
  */
 export class SemanticAnalyzerImpl implements SemanticAnalyzer {
   private readonly patternMatcher: PatternMatcher;
   private readonly languages: Set<string>;
+  private readonly cache: SemanticCache;
 
-  constructor() {
+  constructor(options: SemanticAnalyzerOptions = {}) {
     this.patternMatcher = new PatternMatcher();
-    // All 7 supported languages
-    this.languages = new Set(['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh']);
+    // All 13 supported languages
+    this.languages = new Set(['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh', 'pt', 'fr', 'de', 'id', 'qu', 'sw']);
+
+    // Initialize cache
+    if (options.cache === false) {
+      this.cache = new SemanticCache({ enabled: false });
+    } else {
+      this.cache = options.cache ? new SemanticCache(options.cache) : semanticCache;
+    }
   }
 
   analyze(input: string, language: string): SemanticAnalysisResult {
@@ -87,6 +120,25 @@ export class SemanticAnalyzerImpl implements SemanticAnalyzer {
       };
     }
 
+    // Check cache first
+    const cached = this.cache.get(input, language);
+    if (cached) {
+      return cached;
+    }
+
+    // Perform analysis
+    const result = this.analyzeUncached(input, language);
+
+    // Cache successful results
+    this.cache.set(input, language, result);
+
+    return result;
+  }
+
+  /**
+   * Perform analysis without cache lookup.
+   */
+  private analyzeUncached(input: string, language: string): SemanticAnalysisResult {
     try {
       // Tokenize
       const tokenizer = getTokenizer(language);
@@ -146,6 +198,18 @@ export class SemanticAnalyzerImpl implements SemanticAnalyzer {
     return Array.from(this.languages);
   }
 
+  getCacheStats(): CacheStats {
+    return this.cache.getStats();
+  }
+
+  clearCache(): void {
+    this.cache.clear();
+  }
+
+  configureCache(config: Partial<SemanticCacheConfig>): void {
+    this.cache.configure(config);
+  }
+
   private buildSemanticNode(match: PatternMatchResult): SemanticNode {
     return {
       kind: 'command',
@@ -165,11 +229,27 @@ export class SemanticAnalyzerImpl implements SemanticAnalyzer {
 /**
  * Create a SemanticAnalyzer instance.
  *
+ * @param options - Configuration options including cache settings
  * @returns A new SemanticAnalyzer
+ *
+ * @example
+ * // Default: uses shared global cache
+ * const analyzer = createSemanticAnalyzer();
+ *
+ * @example
+ * // Custom cache size
+ * const analyzer = createSemanticAnalyzer({ cache: { maxSize: 500 } });
+ *
+ * @example
+ * // Disable caching
+ * const analyzer = createSemanticAnalyzer({ cache: false });
  */
-export function createSemanticAnalyzer(): SemanticAnalyzer {
-  return new SemanticAnalyzerImpl();
+export function createSemanticAnalyzer(options?: SemanticAnalyzerOptions): SemanticAnalyzer {
+  return new SemanticAnalyzerImpl(options);
 }
+
+// Re-export cache types for convenience
+export type { SemanticCacheConfig, CacheStats } from './cache';
 
 // =============================================================================
 // Confidence Thresholds

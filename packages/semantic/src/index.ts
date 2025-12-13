@@ -171,7 +171,7 @@ export {
  * Get all supported languages for parsing.
  */
 export function getSupportedLanguages(): string[] {
-  return ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'];
+  return ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw'];
 }
 
 /**
@@ -258,3 +258,30 @@ export {
   getGeneratorSummary,
   validateLanguageKeywords,
 } from './generators';
+
+// =============================================================================
+// Validators (Per-Command Semantic Validation)
+// =============================================================================
+
+export {
+  validateSemanticResult,
+  validateAndAdjustConfidence,
+  getSchema as getValidatorSchema,
+  registerSchema,
+  schemaRegistry,
+  type ValidationError,
+  type ValidationResult,
+} from './validators';
+
+// =============================================================================
+// Cache (Performance Optimization)
+// =============================================================================
+
+export {
+  SemanticCache,
+  semanticCache,
+  createSemanticCache,
+  withCache,
+  type SemanticCacheConfig,
+  type CacheStats,
+} from './cache';
