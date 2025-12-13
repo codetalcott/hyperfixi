@@ -303,3 +303,30 @@ export {
   toI18nProfile,
   isUnifiedProfile,
 } from './types/unified-profile';
+
+// =============================================================================
+// Static Analysis
+// =============================================================================
+
+export {
+  // Main functions
+  analyze,
+  analyzeAll,
+  analyzeMultiple,
+  // Individual checks
+  checkAccessibility,
+  checkPerformance,
+  checkSchema,
+  // Dev mode
+  enableDevMode,
+  disableDevMode,
+  isDevModeEnabled,
+  getDevModeConfig,
+  devModeAnalyze,
+  // Types
+  type AnalysisResult,
+  type AnalysisWarning,
+  type AnalysisConfig,
+  type WarningSeverity,
+  type WarningCode,
+} from './analysis';
