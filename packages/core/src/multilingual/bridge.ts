@@ -74,7 +74,8 @@ export function semanticNodeToParsedStatement(node: SemanticNode): ParsedStateme
     isLiteral: false,
   });
 
-  for (const [role, value] of node.roles) {
+  // Use forEach to avoid downlevelIteration requirement
+  node.roles.forEach((value, role) => {
     const stringValue = semanticValueToString(value);
     roles.set(role, {
       role,
@@ -83,7 +84,7 @@ export function semanticNodeToParsedStatement(node: SemanticNode): ParsedStateme
       isSelector: value.type === 'selector',
       isLiteral: value.type === 'literal' && typeof value.value === 'string',
     });
-  }
+  });
 
   return {
     type: node.kind === 'event-handler' ? 'event-handler' :
