@@ -347,12 +347,19 @@
             </p>
 
             <div class="examples-row">
-                <button class="example-btn" onclick="setExample('toggle .active on #button', 'en')">🇺🇸 toggle .active on #button</button>
-                <button class="example-btn" onclick="setExample('#button の .active を 切り替え', 'ja')">🇯🇵 #button の .active を 切り替え</button>
-                <button class="example-btn" onclick="setExample('بدّل .active على #button', 'ar')">🇸🇦 بدّل .active على #button</button>
-                <button class="example-btn" onclick="setExample('alternar .active en #button', 'es')">🇪🇸 alternar .active en #button</button>
-                <button class="example-btn" onclick="setExample('put \"hello\" into #output', 'en')">🇺🇸 put "hello" into #output</button>
-                <button class="example-btn" onclick="setExample('.active を 切り替え', 'ja')">🇯🇵 .active を 切り替え</button>
+                <button class="example-btn" onclick="setExample('toggle .active on #button', 'en')">🇺🇸 toggle .active</button>
+                <button class="example-btn" onclick="setExample('#button の .active を 切り替え', 'ja')">🇯🇵 切り替え</button>
+                <button class="example-btn" onclick="setExample('بدّل .active على #button', 'ar')">🇸🇦 بدّل</button>
+                <button class="example-btn" onclick="setExample('alternar .active en #button', 'es')">🇪🇸 alternar</button>
+                <button class="example-btn" onclick="setExample('.active 를 토글', 'ko')">🇰🇷 토글</button>
+                <button class="example-btn" onclick="setExample('切换 .active 在 #button', 'zh')">🇨🇳 切换</button>
+                <button class="example-btn" onclick="setExample('.active değiştir', 'tr')">🇹🇷 değiştir</button>
+                <button class="example-btn" onclick="setExample('basculer .active sur #button', 'fr')">🇫🇷 basculer</button>
+                <button class="example-btn" onclick="setExample('umschalten .active auf #button', 'de')">🇩🇪 umschalten</button>
+                <button class="example-btn" onclick="setExample('alternar .active em #button', 'pt')">🇧🇷 alternar</button>
+                <button class="example-btn" onclick="setExample('alihkan .active pada #button', 'id')">🇮🇩 alihkan</button>
+                <button class="example-btn" onclick="setExample('tikray .active', 'qu')">🇵🇪 tikray</button>
+                <button class="example-btn" onclick="setExample('badilisha .active kwenye #button', 'sw')">🇰🇪 badilisha</button>
             </div>
 
             <div class="input-section">
@@ -367,6 +374,15 @@
                         <option value="ja">🇯🇵 Japanese</option>
                         <option value="ar">🇸🇦 Arabic</option>
                         <option value="es">🇪🇸 Spanish</option>
+                        <option value="ko">🇰🇷 Korean</option>
+                        <option value="tr">🇹🇷 Turkish</option>
+                        <option value="zh">🇨🇳 Chinese</option>
+                        <option value="pt">🇧🇷 Portuguese</option>
+                        <option value="fr">🇫🇷 French</option>
+                        <option value="de">🇩🇪 German</option>
+                        <option value="id">🇮🇩 Indonesian</option>
+                        <option value="qu">🇵🇪 Quechua</option>
+                        <option value="sw">🇰🇪 Swahili</option>
                     </select>
                 </div>
             </div>
@@ -442,7 +458,7 @@
                         <td>🇯🇵 Japanese</td>
                         <td><span class="badge badge-sov">SOV</span></td>
                         <td><code>#button の .active を 切り替え</code></td>
-                        <td>"button's active, toggle" - object before verb</td>
+                        <td>Object before verb, particles mark roles</td>
                     </tr>
                     <tr>
                         <td>🇸🇦 Arabic</td>
@@ -455,6 +471,60 @@
                         <td><span class="badge badge-svo">SVO</span></td>
                         <td><code>alternar .active en #button</code></td>
                         <td>Similar to English structure</td>
+                    </tr>
+                    <tr>
+                        <td>🇰🇷 Korean</td>
+                        <td><span class="badge badge-sov">SOV</span></td>
+                        <td><code>.active 를 토글</code></td>
+                        <td>Object-marker + verb at end</td>
+                    </tr>
+                    <tr>
+                        <td>🇹🇷 Turkish</td>
+                        <td><span class="badge badge-sov">SOV</span></td>
+                        <td><code>.active değiştir</code></td>
+                        <td>Agglutinative, verb at end</td>
+                    </tr>
+                    <tr>
+                        <td>🇨🇳 Chinese</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>切换 .active 在 #button</code></td>
+                        <td>Similar to English, no inflection</td>
+                    </tr>
+                    <tr>
+                        <td>🇧🇷 Portuguese</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>alternar .active em #button</code></td>
+                        <td>Romance language, like Spanish</td>
+                    </tr>
+                    <tr>
+                        <td>🇫🇷 French</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>basculer .active sur #button</code></td>
+                        <td>Romance language structure</td>
+                    </tr>
+                    <tr>
+                        <td>🇩🇪 German</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>umschalten .active auf #button</code></td>
+                        <td>Germanic, compound-friendly</td>
+                    </tr>
+                    <tr>
+                        <td>🇮🇩 Indonesian</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>alihkan .active pada #button</code></td>
+                        <td>Simple structure, no conjugation</td>
+                    </tr>
+                    <tr>
+                        <td>🇵🇪 Quechua</td>
+                        <td><span class="badge badge-sov">SOV</span></td>
+                        <td><code>.active tikray</code></td>
+                        <td>Agglutinative Andean language</td>
+                    </tr>
+                    <tr>
+                        <td>🇰🇪 Swahili</td>
+                        <td><span class="badge badge-svo">SVO</span></td>
+                        <td><code>badilisha .active kwenye #button</code></td>
+                        <td>Bantu language, noun class system</td>
                     </tr>
                 </tbody>
             </table>
@@ -487,6 +557,15 @@
             ja: { name: '日本語', flag: '🇯🇵', wordOrder: 'SOV', rtl: false },
             ar: { name: 'العربية', flag: '🇸🇦', wordOrder: 'VSO', rtl: true },
             es: { name: 'Español', flag: '🇪🇸', wordOrder: 'SVO', rtl: false },
+            ko: { name: '한국어', flag: '🇰🇷', wordOrder: 'SOV', rtl: false },
+            tr: { name: 'Türkçe', flag: '🇹🇷', wordOrder: 'SOV', rtl: false },
+            zh: { name: '中文', flag: '🇨🇳', wordOrder: 'SVO', rtl: false },
+            pt: { name: 'Português', flag: '🇧🇷', wordOrder: 'SVO', rtl: false },
+            fr: { name: 'Français', flag: '🇫🇷', wordOrder: 'SVO', rtl: false },
+            de: { name: 'Deutsch', flag: '🇩🇪', wordOrder: 'SVO', rtl: false },
+            id: { name: 'Indonesia', flag: '🇮🇩', wordOrder: 'SVO', rtl: false },
+            qu: { name: 'Runasimi', flag: '🇵🇪', wordOrder: 'SOV', rtl: false },
+            sw: { name: 'Kiswahili', flag: '🇰🇪', wordOrder: 'SVO', rtl: false },
         };
 
         function updateParserDemo() {

@@ -51,10 +51,21 @@ test.describe('Semantic Multilingual Parser', () => {
     const languages = await page.evaluate(() => {
       return (window as any).HyperFixiSemantic.getSupportedLanguages();
     });
+    // Original 4 languages
     expect(languages).toContain('en');
     expect(languages).toContain('es');
     expect(languages).toContain('ja');
     expect(languages).toContain('ar');
+    // Extended languages (13 total)
+    expect(languages).toContain('ko');
+    expect(languages).toContain('tr');
+    expect(languages).toContain('zh');
+    expect(languages).toContain('pt');
+    expect(languages).toContain('fr');
+    expect(languages).toContain('de');
+    expect(languages).toContain('id');
+    expect(languages).toContain('qu');
+    expect(languages).toContain('sw');
   });
 
   test.describe('English Parsing', () => {
@@ -129,6 +140,172 @@ test.describe('Semantic Multilingual Parser', () => {
     });
   });
 
+  // =============================================================================
+  // Extended Language Tests (9 new languages)
+  // =============================================================================
+
+  test.describe('Korean Parsing (SOV)', () => {
+    test('parses "토글 .active"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('토글 .active', 'ko');
+      });
+      expect(result).toBe(true);
+    });
+
+    test('parses ".active 를 토글"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('.active 를 토글', 'ko');
+      });
+      expect(result).toBe(true);
+    });
+  });
+
+  test.describe('Turkish Parsing (SOV)', () => {
+    test('parses "değiştir .active"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('değiştir .active', 'tr');
+      });
+      expect(result).toBe(true);
+    });
+
+    test('parses ".active değiştir"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('.active değiştir', 'tr');
+      });
+      expect(result).toBe(true);
+    });
+  });
+
+  test.describe('Chinese Parsing (SVO)', () => {
+    test('parses "切换 .active"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('切换 .active', 'zh');
+      });
+      expect(result).toBe(true);
+    });
+
+    test('parses "切换 .active 在 #button"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('切换 .active 在 #button', 'zh');
+      });
+      expect(result).toBe(true);
+    });
+  });
+
+  test.describe('Portuguese Parsing (SVO)', () => {
+    test('parses "alternar .active"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('alternar .active', 'pt');
+      });
+      expect(result).toBe(true);
+    });
+
+    test('parses "alternar .active em #button"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('alternar .active em #button', 'pt');
+      });
+      expect(result).toBe(true);
+    });
+  });
+
+  test.describe('French Parsing (SVO)', () => {
+    test('parses "basculer .active"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('basculer .active', 'fr');
+      });
+      expect(result).toBe(true);
+    });
+
+    test('parses "basculer .active sur #button"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('basculer .active sur #button', 'fr');
+      });
+      expect(result).toBe(true);
+    });
+  });
+
+  test.describe('German Parsing (SVO)', () => {
+    test('parses "umschalten .active"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('umschalten .active', 'de');
+      });
+      expect(result).toBe(true);
+    });
+
+    test('parses "umschalten .active auf #button"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('umschalten .active auf #button', 'de');
+      });
+      expect(result).toBe(true);
+    });
+  });
+
+  test.describe('Indonesian Parsing (SVO)', () => {
+    test('parses "alihkan .active"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('alihkan .active', 'id');
+      });
+      expect(result).toBe(true);
+    });
+
+    test('parses "alihkan .active pada #button"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('alihkan .active pada #button', 'id');
+      });
+      expect(result).toBe(true);
+    });
+  });
+
+  test.describe('Quechua Parsing (SOV)', () => {
+    test('parses "tikray .active"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('tikray .active', 'qu');
+      });
+      expect(result).toBe(true);
+    });
+
+    test('parses ".active tikray"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('.active tikray', 'qu');
+      });
+      expect(result).toBe(true);
+    });
+  });
+
+  test.describe('Swahili Parsing (SVO)', () => {
+    test('parses "badilisha .active"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('badilisha .active', 'sw');
+      });
+      expect(result).toBe(true);
+    });
+
+    test('parses "badilisha .active kwenye #button"', async ({ page }) => {
+      const result = await page.evaluate(() => {
+        const S = (window as any).HyperFixiSemantic;
+        return S.canParse('badilisha .active kwenye #button', 'sw');
+      });
+      expect(result).toBe(true);
+    });
+  });
+
   test.describe('Translation', () => {
     test('translates English to Japanese', async ({ page }) => {
       const translation = await page.evaluate(() => {
@@ -176,10 +353,21 @@ test.describe('Semantic Multilingual Parser', () => {
         const S = (window as any).HyperFixiSemantic;
         return S.getAllTranslations('toggle .active on #button', 'en');
       });
+      // Original 4 languages
       expect(translations).toHaveProperty('en');
       expect(translations).toHaveProperty('ja');
       expect(translations).toHaveProperty('ar');
       expect(translations).toHaveProperty('es');
+      // Extended languages (13 total)
+      expect(translations).toHaveProperty('ko');
+      expect(translations).toHaveProperty('tr');
+      expect(translations).toHaveProperty('zh');
+      expect(translations).toHaveProperty('pt');
+      expect(translations).toHaveProperty('fr');
+      expect(translations).toHaveProperty('de');
+      expect(translations).toHaveProperty('id');
+      expect(translations).toHaveProperty('qu');
+      expect(translations).toHaveProperty('sw');
     });
   });
 
@@ -228,10 +416,21 @@ test.describe('Semantic Multilingual Parser', () => {
         const analyzer = S.createSemanticAnalyzer();
         return analyzer.supportedLanguages();
       });
+      // Original 4 languages
       expect(supportedLangs).toContain('en');
       expect(supportedLangs).toContain('ja');
       expect(supportedLangs).toContain('ar');
       expect(supportedLangs).toContain('es');
+      // Extended languages (13 total)
+      expect(supportedLangs).toContain('ko');
+      expect(supportedLangs).toContain('tr');
+      expect(supportedLangs).toContain('zh');
+      expect(supportedLangs).toContain('pt');
+      expect(supportedLangs).toContain('fr');
+      expect(supportedLangs).toContain('de');
+      expect(supportedLangs).toContain('id');
+      expect(supportedLangs).toContain('qu');
+      expect(supportedLangs).toContain('sw');
     });
 
     test('analyzer returns confidence score', async ({ page }) => {
