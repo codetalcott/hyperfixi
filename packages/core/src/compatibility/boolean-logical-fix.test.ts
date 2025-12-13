@@ -44,7 +44,7 @@ describe('Boolean/Logical Operations Fix', () => {
             console.log(`  ❌ ${test.expr}: Expected ${test.expected}, got ${result}`);
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -79,7 +79,7 @@ describe('Boolean/Logical Operations Fix', () => {
             console.log(`  ❌ ${test.expr}: Expected ${test.expected}, got ${result}`);
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -114,7 +114,7 @@ describe('Boolean/Logical Operations Fix', () => {
             console.log(`  ❌ ${test.expr}: Expected ${test.expected}, got ${result}`);
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -148,7 +148,7 @@ describe('Boolean/Logical Operations Fix', () => {
             console.log(`  ❌ ${test.expr}: Expected ${test.expected}, got ${result}`);
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 

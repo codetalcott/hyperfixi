@@ -14,7 +14,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { parseDurationStrict } from '../helpers/duration-parsing';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 export interface WaitTimeInput { type: 'time'; milliseconds: number; }
 export interface WaitEventInput { type: 'event'; eventName: string; target?: EventTarget; destructure?: string[]; }
@@ -40,7 +40,10 @@ export interface WaitCommandOutput {
   sideEffects: ['time', 'event-listening'],
 })
 @command({ name: 'wait', category: 'async' })
-export class WaitCommand {
+export class WaitCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

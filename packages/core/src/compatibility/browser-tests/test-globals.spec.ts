@@ -28,7 +28,7 @@ test.describe('Global Functions Test', () => {
         const result = await window.evalHyperScript('"hello world"');
         return { success: true, result };
       } catch (error) {
-        return { success: false, error: error.message };
+        return { success: false, error: (error as Error).message };
       }
     });
 
@@ -45,7 +45,7 @@ test.describe('Global Functions Test', () => {
         const result = await window.evalHyperScript('1 + 1');
         return { success: true, result };
       } catch (error) {
-        return { success: false, error: error.message };
+        return { success: false, error: (error as Error).message };
       }
     });
 

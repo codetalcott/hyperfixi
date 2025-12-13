@@ -74,7 +74,7 @@ describe('Enhanced Reference Expressions', () => {
       expect(meExpression.syntax).toBe('me');
       expect(meExpression.outputType).toBe('Element');
       expect(meExpression.metadata.complexity).toBe('simple');
-      expect(meExpression.metadata.performance.complexity).toBe('O(1)');
+      expect(meExpression.metadata!.performance.complexity).toBe('O(1)');
     });
 
     it('should return the current element from context', async () => {
@@ -82,7 +82,7 @@ describe('Enhanced Reference Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(mockElement);
+        expect(result.value!).toBe(mockElement);
         expect(result.type).toBe('element');
       }
     });
@@ -93,7 +93,7 @@ describe('Enhanced Reference Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(null);
+        expect(result.value!).toBe(null);
         expect(result.type).toBe('element');
       }
     });
@@ -102,18 +102,18 @@ describe('Enhanced Reference Expressions', () => {
       await meExpression.evaluate(mockContext, undefined);
 
       expect(mockContext.evaluationHistory).toHaveLength(1);
-      const evaluation = mockContext.evaluationHistory[0];
+      const evaluation = mockContext.evaluationHistory![0];
       expect(evaluation.expressionName).toBe('me');
       expect(evaluation.category).toBe('Reference');
       expect(evaluation.success).toBe(true);
     });
 
     it('should validate that no input is required', () => {
-      const validResult = meExpression.validate(undefined);
+      const validResult = meExpression.validate!(undefined);
       expect(validResult.isValid).toBe(true);
       expect(validResult.errors).toHaveLength(0);
 
-      const invalidResult = meExpression.validate('some-input');
+      const invalidResult = meExpression.validate!('some-input');
       expect(invalidResult.isValid).toBe(false);
       expect(invalidResult.errors[0].message).toContain('takes no arguments');
     });
@@ -145,7 +145,7 @@ describe('Enhanced Reference Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(mockTargetElement);
+        expect(result.value!).toBe(mockTargetElement);
         expect(result.type).toBe('element');
       }
     });
@@ -156,16 +156,16 @@ describe('Enhanced Reference Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(null);
+        expect(result.value!).toBe(null);
         expect(result.type).toBe('element');
       }
     });
 
     it('should validate that no input is required', () => {
-      const validResult = youExpression.validate(undefined);
+      const validResult = youExpression.validate!(undefined);
       expect(validResult.isValid).toBe(true);
 
-      const invalidResult = youExpression.validate({ invalid: 'input' });
+      const invalidResult = youExpression.validate!({ invalid: 'input' });
       expect(invalidResult.isValid).toBe(false);
       expect(invalidResult.errors[0].message).toContain('takes no arguments');
     });
@@ -195,7 +195,7 @@ describe('Enhanced Reference Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('test-value');
+        expect(result.value!).toBe('test-value');
         expect(result.type).toBe('string');
       }
     });
@@ -281,7 +281,7 @@ describe('Enhanced Reference Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(mockElement);
+        expect(result.value!).toBe(mockElement);
         expect(result.type).toBe('element');
       }
     });
@@ -292,7 +292,7 @@ describe('Enhanced Reference Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(null);
+        expect(result.value!).toBe(null);
       }
     });
 
@@ -302,25 +302,25 @@ describe('Enhanced Reference Expressions', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('CSSSelectorError');
-        expect(result.error.message).toContain('Invalid CSS selector');
-        expect(result.error.suggestions).toContain('Check selector syntax');
+        expect(result.error!.name).toBe('CSSSelectorError');
+        expect(result.error!.message).toContain('Invalid CSS selector');
+        expect(result.error!.suggestions).toContain('Check selector syntax');
       }
     });
 
     it('should validate input structure', () => {
       const validInput = { selector: '.valid', single: true };
-      const validResult = selectorExpression.validate(validInput);
+      const validResult = selectorExpression.validate!(validInput);
       expect(validResult.isValid).toBe(true);
 
       const invalidInput = { selector: '', single: false };
-      const invalidResult = selectorExpression.validate(invalidInput);
+      const invalidResult = selectorExpression.validate!(invalidInput);
       expect(invalidResult.isValid).toBe(false);
       // Zod returns "String must be at least 1 character" for min(1) validation
       expect(invalidResult.errors[0].message).toMatch(/cannot be empty|at least 1 character/);
 
       const wrongTypeInput = { selector: 123, single: false };
-      const wrongTypeResult = selectorExpression.validate(wrongTypeInput);
+      const wrongTypeResult = selectorExpression.validate!(wrongTypeInput);
       expect(wrongTypeResult.isValid).toBe(false);
     });
 
@@ -329,7 +329,7 @@ describe('Enhanced Reference Expressions', () => {
       await selectorExpression.evaluate(mockContext, input);
 
       expect(mockContext.evaluationHistory).toHaveLength(1);
-      const evaluation = mockContext.evaluationHistory[0];
+      const evaluation = mockContext.evaluationHistory![0];
       expect(evaluation.expressionName).toBe('css-selector');
       expect(evaluation.duration).toBeGreaterThanOrEqual(0);
       expect(evaluation.success).toBe(true);
@@ -375,15 +375,15 @@ describe('Enhanced Reference Expressions', () => {
       expect(meExpr.name).toBe('me');
       expect(meExpr.category).toBe('Reference');
       expect(typeof meExpr.evaluate).toBe('function');
-      expect(typeof meExpr.validate).toBe('function');
+      expect(typeof meExpr.validate!).toBe('function');
     });
 
     it.skip('should provide richer metadata than legacy expressions', () => {
       const meExpr = referenceExpressions.me;
 
       expect(meExpr.metadata).toBeDefined();
-      expect(meExpr.metadata.examples).toBeDefined();
-      expect(meExpr.metadata.performance).toBeDefined();
+      expect(meExpr.metadata!.examples).toBeDefined();
+      expect(meExpr.metadata!.performance).toBeDefined();
       expect(meExpr.documentation).toBeDefined();
       expect(meExpr.documentation.examples).toBeDefined();
     });
@@ -413,8 +413,8 @@ describe('Enhanced Reference Expressions', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('CSSSelectorError');
-        expect(result.error.suggestions).toBeDefined();
+        expect(result.error!.name).toBe('CSSSelectorError');
+        expect(result.error!.suggestions).toBeDefined();
       }
 
       // Restore original function
@@ -424,10 +424,10 @@ describe('Enhanced Reference Expressions', () => {
     it('should provide helpful validation messages', () => {
       const selectorExpr = referenceExpressions['css-selector'];
 
-      const result = selectorExpr.validate({ invalid: 'structure' });
+      const result = selectorExpr.validate!({ invalid: 'structure' });
       expect(result.isValid).toBe(false);
-      expect(result.suggestions).toBeDefined();
-      expect(result.suggestions.length).toBeGreaterThan(0);
+      expect(result.suggestions!).toBeDefined();
+      expect(result.suggestions!.length).toBeGreaterThan(0);
     });
   });
 
@@ -447,7 +447,7 @@ describe('Enhanced Reference Expressions', () => {
 
       await itExpr.evaluate(mockContext, undefined);
 
-      const evaluation = mockContext.evaluationHistory[0];
+      const evaluation = mockContext.evaluationHistory![0];
       expect(evaluation.timestamp).toBeDefined();
       expect(evaluation.duration).toBeGreaterThanOrEqual(0);
       expect(evaluation.input).toBe(undefined);

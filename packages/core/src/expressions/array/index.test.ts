@@ -58,7 +58,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toEqual([]);
+          expect(result.value!).toEqual([]);
           expect(result.type).toBe('array');
         }
       });
@@ -68,7 +68,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toEqual([true]);
+          expect(result.value!).toEqual([true]);
           expect(result.type).toBe('array');
         }
       });
@@ -78,7 +78,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toEqual([1, 2, 3]);
+          expect(result.value!).toEqual([1, 2, 3]);
           expect(result.type).toBe('array');
         }
       });
@@ -88,7 +88,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toEqual([true, 42, 'hello', null]);
+          expect(result.value!).toEqual([true, 42, 'hello', null]);
           expect(result.type).toBe('array');
         }
       });
@@ -98,7 +98,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toEqual([
+          expect(result.value!).toEqual([
             [1, 2],
             [3, 4],
           ]);
@@ -112,7 +112,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toEqual(['sync', 'async-value']);
+          expect(result.value!).toEqual(['sync', 'async-value']);
           expect(result.type).toBe('array');
         }
       });
@@ -161,7 +161,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(10);
+          expect(result.value!).toBe(10);
           expect(result.type).toBe('number');
         }
       });
@@ -171,7 +171,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(20);
+          expect(result.value!).toBe(20);
           expect(result.type).toBe('number');
         }
       });
@@ -181,7 +181,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(30);
+          expect(result.value!).toBe(30);
           expect(result.type).toBe('number');
         }
       });
@@ -191,7 +191,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBeUndefined();
+          expect(result.value!).toBeUndefined();
           expect(result.type).toBe('undefined');
         }
       });
@@ -203,7 +203,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(30);
+          expect(result.value!).toBe(30);
           expect(result.type).toBe('number');
         }
       });
@@ -213,7 +213,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(20);
+          expect(result.value!).toBe(20);
           expect(result.type).toBe('number');
         }
       });
@@ -223,7 +223,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBeUndefined();
+          expect(result.value!).toBeUndefined();
           expect(result.type).toBe('undefined');
         }
       });
@@ -236,7 +236,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('value');
+          expect(result.value!).toBe('value');
           expect(result.type).toBe('string');
         }
       });
@@ -251,7 +251,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toEqual([1, 2, 3]);
+          expect(result.value!).toEqual([1, 2, 3]);
           expect(result.type).toBe('array');
         }
       });
@@ -261,7 +261,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toEqual([0, 1, 2]);
+          expect(result.value!).toEqual([0, 1, 2]);
           expect(result.type).toBe('array');
         }
       });
@@ -271,7 +271,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toEqual([3, 4]);
+          expect(result.value!).toEqual([3, 4]);
           expect(result.type).toBe('array');
         }
       });
@@ -284,7 +284,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toEqual([2, 3, 4]);
+          expect(result.value!).toEqual([2, 3, 4]);
           expect(result.type).toBe('array');
         }
       });
@@ -308,7 +308,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('second');
+          expect(result.value!).toBe('second');
           expect(result.type).toBe('string');
         }
       });
@@ -318,7 +318,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('e');
+          expect(result.value!).toBe('e');
           expect(result.type).toBe('string');
         }
       });
@@ -364,8 +364,8 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.name).toBe('InvalidArrayTargetError');
-          expect(result.error.message).toContain('Cannot index target of type number');
+          expect(result.error!.name).toBe('InvalidArrayTargetError');
+          expect(result.error!.message).toContain('Cannot index target of type number');
         }
       });
 
@@ -376,7 +376,7 @@ describe('Enhanced Array Expressions', () => {
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.name).toBe('ArrayIndexValidationError');
+          expect(result.error!.name).toBe('ArrayIndexValidationError');
         }
       });
     });
@@ -396,7 +396,7 @@ describe('Enhanced Array Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([1, 2, 3]);
+        expect(result.value!).toEqual([1, 2, 3]);
       }
     });
 
@@ -405,7 +405,7 @@ describe('Enhanced Array Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(20);
+        expect(result.value!).toBe(20);
       }
     });
 
@@ -458,7 +458,7 @@ describe('Enhanced Array Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toHaveLength(1000);
+        expect(result.value!).toHaveLength(1000);
       }
 
       // Should be reasonably fast even for large arrays
@@ -483,7 +483,7 @@ describe('Enhanced Array Expressions', () => {
       results.forEach((result, index) => {
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(index);
+          expect(result.value!).toBe(index);
         }
       });
 
@@ -498,7 +498,7 @@ describe('Enhanced Array Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([]);
+        expect(result.value!).toEqual([]);
       }
     });
 
@@ -507,7 +507,7 @@ describe('Enhanced Array Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([true]);
+        expect(result.value!).toEqual([true]);
       }
     });
 
@@ -516,7 +516,7 @@ describe('Enhanced Array Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([true, false]);
+        expect(result.value!).toEqual([true, false]);
       }
     });
 

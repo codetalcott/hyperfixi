@@ -28,7 +28,7 @@ test('analyze _hyperscript API behavior', async ({ page }) => {
         const result = _hyperscript.evaluate(expr, {});
         results.push({ expr, result, success: true });
       } catch (error) {
-        results.push({ expr, error: error.message, success: false });
+        results.push({ expr, error: (error as Error).message, success: false });
       }
     }
 

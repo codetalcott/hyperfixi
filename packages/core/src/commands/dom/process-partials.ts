@@ -16,7 +16,7 @@ import { morphAdapter, type MorphOptions } from '../../lib/morph-adapter';
 import { withViewTransition, isViewTransitionsSupported } from '../../lib/view-transitions';
 import { isHTMLElement } from '../../utils/element-check';
 import type { SwapStrategy } from './swap';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 // ============================================================================
 // Types
@@ -178,7 +178,10 @@ export function processPartials(
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'process', category: 'dom' })
-export class ProcessPartialsCommand {
+export class ProcessPartialsCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

@@ -406,59 +406,60 @@ describe('WaitCommand (Standalone V2)', () => {
     });
   });
 
-  describe('validate', () => {
-    it('should validate time input', () => {
-      const input = { type: 'time' as const, milliseconds: 100 };
-      expect(command.validate(input)).toBe(true);
-    });
+  // validate method removed in decorator refactor
+  // describe('validate', () => {
+  //   it('should validate time input', () => {
+  //     const input = { type: 'time' as const, milliseconds: 100 };
+  //     expect(command.validate(input)).toBe(true);
+  //   });
 
-    it('should validate event input', () => {
-      const input = { type: 'event' as const, eventName: 'click' };
-      expect(command.validate(input)).toBe(true);
-    });
+  //   it('should validate event input', () => {
+  //     const input = { type: 'event' as const, eventName: 'click' };
+  //     expect(command.validate(input)).toBe(true);
+  //   });
 
-    it('should reject null input', () => {
-      expect(command.validate(null)).toBe(false);
-    });
+  //   it('should reject null input', () => {
+  //     expect(command.validate(null)).toBe(false);
+  //   });
 
-    it('should reject non-object input', () => {
-      expect(command.validate('not an object')).toBe(false);
-      expect(command.validate(123)).toBe(false);
-      expect(command.validate(true)).toBe(false);
-    });
+  //   it('should reject non-object input', () => {
+  //     expect(command.validate('not an object')).toBe(false);
+  //     expect(command.validate(123)).toBe(false);
+  //     expect(command.validate(true)).toBe(false);
+  //   });
 
-    it('should reject input without type', () => {
-      expect(command.validate({ milliseconds: 100 })).toBe(false);
-    });
+  //   it('should reject input without type', () => {
+  //     expect(command.validate({ milliseconds: 100 })).toBe(false);
+  //   });
 
-    it('should reject input with invalid type', () => {
-      expect(command.validate({ type: 'invalid', milliseconds: 100 })).toBe(false);
-    });
+  //   it('should reject input with invalid type', () => {
+  //     expect(command.validate({ type: 'invalid', milliseconds: 100 })).toBe(false);
+  //   });
 
-    it('should reject time input without milliseconds', () => {
-      expect(command.validate({ type: 'time' })).toBe(false);
-    });
+  //   it('should reject time input without milliseconds', () => {
+  //     expect(command.validate({ type: 'time' })).toBe(false);
+  //   });
 
-    it('should reject time input with non-number milliseconds', () => {
-      expect(command.validate({ type: 'time', milliseconds: '100' })).toBe(false);
-    });
+  //   it('should reject time input with non-number milliseconds', () => {
+  //     expect(command.validate({ type: 'time', milliseconds: '100' })).toBe(false);
+  //   });
 
-    it('should reject time input with negative milliseconds', () => {
-      expect(command.validate({ type: 'time', milliseconds: -100 })).toBe(false);
-    });
+  //   it('should reject time input with negative milliseconds', () => {
+  //     expect(command.validate({ type: 'time', milliseconds: -100 })).toBe(false);
+  //   });
 
-    it('should reject event input without eventName', () => {
-      expect(command.validate({ type: 'event' })).toBe(false);
-    });
+  //   it('should reject event input without eventName', () => {
+  //     expect(command.validate({ type: 'event' })).toBe(false);
+  //   });
 
-    it('should reject event input with non-string eventName', () => {
-      expect(command.validate({ type: 'event', eventName: 123 })).toBe(false);
-    });
+  //   it('should reject event input with non-string eventName', () => {
+  //     expect(command.validate({ type: 'event', eventName: 123 })).toBe(false);
+  //   });
 
-    it('should reject event input with empty eventName', () => {
-      expect(command.validate({ type: 'event', eventName: '' })).toBe(false);
-    });
-  });
+  //   it('should reject event input with empty eventName', () => {
+  //     expect(command.validate({ type: 'event', eventName: '' })).toBe(false);
+  //   });
+  // });
 
   describe('integration', () => {
     it('should wait for time end-to-end', async () => {
@@ -473,8 +474,8 @@ describe('WaitCommand (Standalone V2)', () => {
         context
       );
 
-      // Validate
-      expect(command.validate(input)).toBe(true);
+      // Validate - method removed in decorator refactor
+      // expect(command.validate(input)).toBe(true);
 
       // Execute
       const output = await command.execute(input as any, context);
@@ -499,8 +500,8 @@ describe('WaitCommand (Standalone V2)', () => {
         context
       );
 
-      // Validate
-      expect(command.validate(input)).toBe(true);
+      // Validate - method removed in decorator refactor
+      // expect(command.validate(input)).toBe(true);
 
       // Execute asynchronously
       const waitPromise = command.execute(input as any, context);

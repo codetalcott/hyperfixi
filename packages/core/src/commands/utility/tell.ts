@@ -12,7 +12,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { resolveElements } from '../helpers/element-resolution';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for TellCommand
@@ -44,7 +44,10 @@ export interface TellCommandOutput {
   sideEffects: ['context-switching', 'command-execution'],
 })
 @command({ name: 'tell', category: 'utility' })
-export class TellCommand {
+export class TellCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

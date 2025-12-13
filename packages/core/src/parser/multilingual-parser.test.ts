@@ -135,7 +135,7 @@ describe('Multilingual Parser', () => {
     it('should parse simple Spanish command', () => {
       const result = parse('on click toggle .active', { keywords: spanishKeywords });
       expect(result.success).toBe(true);
-      expect(result.node).toBeDefined();
+      expect(result.node!).toBeDefined();
     });
 
     it('should resolve Spanish "en" to English "on"', () => {
@@ -147,7 +147,7 @@ describe('Multilingual Parser', () => {
       expect(result.success).toBe(true);
       // Single event handlers parse to eventHandler type
       // The 'en' (Spanish for 'on') should be resolved correctly
-      expect(result.node.type).toBe('eventHandler');
+      expect(result.node!.type).toBe('eventHandler');
     });
 
     it('should allow mixing Spanish commands with English DOM terms', () => {

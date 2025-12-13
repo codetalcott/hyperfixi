@@ -47,7 +47,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(2000);
+        expect(result.value!).toBe(2000);
         expect(result.type).toBe('number');
       }
     });
@@ -57,7 +57,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(500);
+        expect(result.value!).toBe(500);
       }
     });
 
@@ -66,7 +66,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(60000);
+        expect(result.value!).toBe(60000);
       }
     });
 
@@ -75,7 +75,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(7200000);
+        expect(result.value!).toBe(7200000);
       }
     });
 
@@ -84,7 +84,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(86400000);
+        expect(result.value!).toBe(86400000);
       }
     });
 
@@ -93,7 +93,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(604800000);
+        expect(result.value!).toBe(604800000);
       }
     });
   });
@@ -104,7 +104,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(2500);
+        expect(result.value!).toBe(2500);
       }
     });
 
@@ -113,7 +113,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(-1000);
+        expect(result.value!).toBe(-1000);
       }
     });
   });
@@ -124,7 +124,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1000);
+        expect(result.value!).toBe(1000);
       }
     });
 
@@ -133,7 +133,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(5000);
+        expect(result.value!).toBe(5000);
       }
     });
   });
@@ -144,7 +144,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('EMPTY_TIME_STRING');
+        expect(result.error!.code).toBe('EMPTY_TIME_STRING');
       }
     });
 
@@ -153,7 +153,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('INVALID_TIME_FORMAT');
+        expect(result.error!.code).toBe('INVALID_TIME_FORMAT');
       }
     });
 
@@ -162,7 +162,7 @@ describe('Enhanced Time Parsing Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('INVALID_TIME_FORMAT');
+        expect(result.error!.code).toBe('INVALID_TIME_FORMAT');
       }
     });
   });
@@ -217,7 +217,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('2s');
+        expect(result.value!).toBe('2s');
         expect(result.type).toBe('string');
       }
     });
@@ -227,7 +227,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('1m 30s');
+        expect(result.value!).toBe('1m 30s');
       }
     });
 
@@ -236,7 +236,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('1h 1m 1s');
+        expect(result.value!).toBe('1h 1m 1s');
       }
     });
 
@@ -245,7 +245,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('0s');
+        expect(result.value!).toBe('0s');
       }
     });
   });
@@ -256,7 +256,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('1 minute, 30 seconds');
+        expect(result.value!).toBe('1 minute, 30 seconds');
       }
     });
 
@@ -265,7 +265,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('1 minute, 1 second');
+        expect(result.value!).toBe('1 minute, 1 second');
       }
     });
 
@@ -274,7 +274,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('0 seconds');
+        expect(result.value!).toBe('0 seconds');
       }
     });
   });
@@ -285,7 +285,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('1h 1m');
+        expect(result.value!).toBe('1h 1m');
       }
     });
   });
@@ -296,7 +296,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('2.5s');
+        expect(result.value!).toBe('2.5s');
       }
     });
 
@@ -305,7 +305,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('500ms');
+        expect(result.value!).toBe('500ms');
       }
     });
   });
@@ -317,7 +317,7 @@ describe('Enhanced Duration Formatting Expression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         // Should only show first 2 units
-        expect(result.value).toBe('1d 1h');
+        expect(result.value!).toBe('1d 1h');
       }
     });
   });
@@ -328,7 +328,7 @@ describe('Enhanced Duration Formatting Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('NEGATIVE_DURATION');
+        expect(result.error!.code).toBe('NEGATIVE_DURATION');
       }
     });
   });
@@ -349,7 +349,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(2500);
+        expect(result.value!).toBe(2500);
         expect(result.type).toBe('number');
       }
     });
@@ -359,7 +359,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1500);
+        expect(result.value!).toBe(1500);
       }
     });
 
@@ -368,7 +368,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1500);
+        expect(result.value!).toBe(1500);
       }
     });
   });
@@ -379,7 +379,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1500);
+        expect(result.value!).toBe(1500);
       }
     });
 
@@ -388,7 +388,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(-1500);
+        expect(result.value!).toBe(-1500);
       }
     });
   });
@@ -399,7 +399,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(2000);
+        expect(result.value!).toBe(2000);
       }
     });
 
@@ -408,7 +408,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(3000);
+        expect(result.value!).toBe(3000);
       }
     });
   });
@@ -419,7 +419,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1000);
+        expect(result.value!).toBe(1000);
       }
     });
 
@@ -428,7 +428,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('DIVISION_BY_ZERO');
+        expect(result.error!.code).toBe('DIVISION_BY_ZERO');
       }
     });
 
@@ -437,7 +437,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(333); // Rounded from 333.333...
+        expect(result.value!).toBe(333); // Rounded from 333.333...
       }
     });
   });
@@ -448,7 +448,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1500);
+        expect(result.value!).toBe(1500);
       }
     });
 
@@ -457,7 +457,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1500);
+        expect(result.value!).toBe(1500);
       }
     });
 
@@ -466,7 +466,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(2000);
+        expect(result.value!).toBe(2000);
       }
     });
 
@@ -475,7 +475,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1000);
+        expect(result.value!).toBe(1000);
       }
     });
   });
@@ -486,7 +486,7 @@ describe('Enhanced Time Arithmetic Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('UNSUPPORTED_OPERATION');
+        expect(result.error!.code).toBe('UNSUPPORTED_OPERATION');
       }
     });
 
@@ -523,7 +523,7 @@ describe('Utility Functions', () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.value).toBe(2000);
+      expect(result.value!).toBe(2000);
     }
   });
 
@@ -532,7 +532,7 @@ describe('Utility Functions', () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.value).toBe('2s');
+      expect(result.value!).toBe('2s');
     }
   });
 
@@ -541,7 +541,7 @@ describe('Utility Functions', () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.value).toBe(2500);
+      expect(result.value!).toBe(2500);
     }
   });
 });

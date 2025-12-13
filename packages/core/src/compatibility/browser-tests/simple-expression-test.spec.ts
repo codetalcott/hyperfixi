@@ -32,7 +32,7 @@ test.describe('Simple Expression Tests', () => {
       } catch (error) {
         return {
           success: false,
-          error: error.message,
+          error: (error as Error).message,
         };
       }
     });
@@ -70,7 +70,7 @@ test.describe('Simple Expression Tests', () => {
       } catch (error) {
         return {
           success: false,
-          error: error.message,
+          error: (error as Error).message,
         };
       }
     });
@@ -107,7 +107,7 @@ test.describe('Simple Expression Tests', () => {
       } catch (error) {
         return {
           success: false,
-          error: error.message,
+          error: (error as Error).message,
         };
       }
     });

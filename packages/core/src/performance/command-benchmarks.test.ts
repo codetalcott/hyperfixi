@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect, beforeEach } from 'vitest';
-import { EnhancedBenchmark, BenchmarkResult } from './benchmarks';
+import { Benchmark, BenchmarkResult } from './benchmarks';
 import { HideCommand } from '../commands/dom/hide';
 import { ShowCommand } from '../commands/dom/show';
 import { AddCommand } from '../commands/dom/add';
@@ -16,12 +16,12 @@ import { createMockElement, createTypedExecutionContext } from '../test-utilitie
 
 // Skipped: Tests pass incomplete input objects, commands expect full CommandInput with targets[]
 describe.skip('Enhanced Command Performance Benchmarks', () => {
-  let benchmark: EnhancedBenchmark;
+  let benchmark: Benchmark;
   let testElement: HTMLElement;
   let context: ReturnType<typeof createTypedExecutionContext>;
 
   beforeEach(() => {
-    benchmark = new EnhancedBenchmark();
+    benchmark = new Benchmark();
     testElement = createMockElement('div');
     context = createTypedExecutionContext({ me: testElement });
   });

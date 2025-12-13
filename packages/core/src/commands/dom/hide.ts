@@ -11,7 +11,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { command, meta, createFactory, type CommandMetadata } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 import {
   parseVisibilityInput,
   type VisibilityRawInput,
@@ -34,7 +34,7 @@ export type HideCommandInput = VisibilityInput;
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'hide', category: 'dom' })
-export class HideCommand {
+export class HideCommand implements DecoratedCommand {
   // Properties set by decorators
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;

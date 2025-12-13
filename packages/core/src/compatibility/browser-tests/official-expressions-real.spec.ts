@@ -43,7 +43,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: null,
             success: false,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -101,7 +101,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: null,
             success: false,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -158,7 +158,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: null,
             success: false,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -215,7 +215,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: null,
             success: false,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -266,7 +266,7 @@ test.describe('REAL Official Expression Compatibility Tests', () => {
             expected: test.expected,
             actual: null,
             success: false,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }

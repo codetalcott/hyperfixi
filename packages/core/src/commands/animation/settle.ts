@@ -16,7 +16,7 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveElement } from '../helpers/element-resolution';
 import { parseDuration, parseCSSDurations, calculateMaxAnimationTime } from '../helpers/duration-parsing';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for SettleCommand
@@ -49,7 +49,10 @@ export interface SettleCommandOutput {
   sideEffects: ['timing'],
 })
 @command({ name: 'settle', category: 'animation' })
-export class SettleCommand {
+export class SettleCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

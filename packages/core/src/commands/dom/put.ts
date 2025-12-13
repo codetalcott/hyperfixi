@@ -16,7 +16,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 export type InsertPosition = 'replace' | 'beforeend' | 'afterend' | 'beforebegin' | 'afterbegin';
 
@@ -41,7 +41,10 @@ export interface PutCommandInput {
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'put', category: 'dom' })
-export class PutCommand {
+export class PutCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

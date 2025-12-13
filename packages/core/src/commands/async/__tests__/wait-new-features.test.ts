@@ -327,57 +327,58 @@ describe('WaitCommand - Race Conditions', () => {
     });
   });
 
-  describe('validate - race conditions', () => {
-    it('should validate correct race input', () => {
-      const input = {
-        type: 'race' as const,
-        conditions: [
-          { type: 'time' as const, milliseconds: 100 },
-          { type: 'event' as const, eventName: 'click' },
-        ],
-      };
-      expect(command.validate(input)).toBe(true);
-    });
+  // validate method removed in decorator refactor
+  // describe('validate - race conditions', () => {
+  //   it('should validate correct race input', () => {
+  //     const input = {
+  //       type: 'race' as const,
+  //       conditions: [
+  //         { type: 'time' as const, milliseconds: 100 },
+  //         { type: 'event' as const, eventName: 'click' },
+  //       ],
+  //     };
+  //     expect(command.validate(input)).toBe(true);
+  //   });
 
-    it('should reject race input with less than 2 conditions', () => {
-      const input = {
-        type: 'race' as const,
-        conditions: [{ type: 'time' as const, milliseconds: 100 }],
-      };
-      expect(command.validate(input)).toBe(false);
-    });
+  //   it('should reject race input with less than 2 conditions', () => {
+  //     const input = {
+  //       type: 'race' as const,
+  //       conditions: [{ type: 'time' as const, milliseconds: 100 }],
+  //     };
+  //     expect(command.validate(input)).toBe(false);
+  //   });
 
-    it('should reject race input with non-array conditions', () => {
-      const input = {
-        type: 'race' as const,
-        conditions: 'not an array' as any,
-      };
-      expect(command.validate(input)).toBe(false);
-    });
+  //   it('should reject race input with non-array conditions', () => {
+  //     const input = {
+  //       type: 'race' as const,
+  //       conditions: 'not an array' as any,
+  //     };
+  //     expect(command.validate(input)).toBe(false);
+  //   });
 
-    it('should reject race input with invalid nested conditions', () => {
-      const input = {
-        type: 'race' as const,
-        conditions: [
-          { type: 'time' as const, milliseconds: 100 },
-          { type: 'invalid' as any, foo: 'bar' },
-        ],
-      };
-      expect(command.validate(input)).toBe(false);
-    });
+  //   it('should reject race input with invalid nested conditions', () => {
+  //     const input = {
+  //       type: 'race' as const,
+  //       conditions: [
+  //         { type: 'time' as const, milliseconds: 100 },
+  //         { type: 'invalid' as any, foo: 'bar' },
+  //       ],
+  //     };
+  //     expect(command.validate(input)).toBe(false);
+  //   });
 
-    it('should validate race with multiple valid conditions', () => {
-      const input = {
-        type: 'race' as const,
-        conditions: [
-          { type: 'time' as const, milliseconds: 100 },
-          { type: 'event' as const, eventName: 'click' },
-          { type: 'event' as const, eventName: 'keypress' },
-        ],
-      };
-      expect(command.validate(input)).toBe(true);
-    });
-  });
+  //   it('should validate race with multiple valid conditions', () => {
+  //     const input = {
+  //       type: 'race' as const,
+  //       conditions: [
+  //         { type: 'time' as const, milliseconds: 100 },
+  //         { type: 'event' as const, eventName: 'click' },
+  //         { type: 'event' as const, eventName: 'keypress' },
+  //       ],
+  //     };
+  //     expect(command.validate(input)).toBe(true);
+  //   });
+  // });
 
   describe('integration - race conditions', () => {
     it('should wait for click or 1s end-to-end', async () => {
@@ -397,8 +398,8 @@ describe('WaitCommand - Race Conditions', () => {
         context
       );
 
-      // Validate
-      expect(command.validate(input)).toBe(true);
+      // Validate - method removed in decorator refactor
+      // expect(command.validate(input)).toBe(true);
 
       // Execute asynchronously
       const waitPromise = command.execute(input as any, context);
@@ -432,8 +433,8 @@ describe('WaitCommand - Race Conditions', () => {
         context
       );
 
-      // Validate
-      expect(command.validate(input)).toBe(true);
+      // Validate - method removed in decorator refactor
+      // expect(command.validate(input)).toBe(true);
 
       // Execute (don't trigger event)
       const output = await command.execute(input as any, context);
@@ -748,51 +749,52 @@ describe('WaitCommand - Event Destructuring', () => {
     });
   });
 
-  describe('validate - event destructuring', () => {
-    it('should validate event input with destructure', () => {
-      const input = {
-        type: 'event' as const,
-        eventName: 'mousemove',
-        destructure: ['clientX', 'clientY'],
-      };
-      expect(command.validate(input)).toBe(true);
-    });
+  // validate method removed in decorator refactor
+  // describe('validate - event destructuring', () => {
+  //   it('should validate event input with destructure', () => {
+  //     const input = {
+  //       type: 'event' as const,
+  //       eventName: 'mousemove',
+  //       destructure: ['clientX', 'clientY'],
+  //     };
+  //     expect(command.validate(input)).toBe(true);
+  //   });
 
-    it('should validate event input without destructure', () => {
-      const input = {
-        type: 'event' as const,
-        eventName: 'click',
-      };
-      expect(command.validate(input)).toBe(true);
-    });
+  //   it('should validate event input without destructure', () => {
+  //     const input = {
+  //       type: 'event' as const,
+  //       eventName: 'click',
+  //     };
+  //     expect(command.validate(input)).toBe(true);
+  //   });
 
-    it('should reject event input with non-array destructure', () => {
-      const input = {
-        type: 'event' as const,
-        eventName: 'click',
-        destructure: 'not an array' as any,
-      };
-      expect(command.validate(input)).toBe(false);
-    });
+  //   it('should reject event input with non-array destructure', () => {
+  //     const input = {
+  //       type: 'event' as const,
+  //       eventName: 'click',
+  //       destructure: 'not an array' as any,
+  //     };
+  //     expect(command.validate(input)).toBe(false);
+  //   });
 
-    it('should reject event input with non-string properties in destructure', () => {
-      const input = {
-        type: 'event' as const,
-        eventName: 'click',
-        destructure: ['valid', 123, 'alsoValid'] as any,
-      };
-      expect(command.validate(input)).toBe(false);
-    });
+  //   it('should reject event input with non-string properties in destructure', () => {
+  //     const input = {
+  //       type: 'event' as const,
+  //       eventName: 'click',
+  //       destructure: ['valid', 123, 'alsoValid'] as any,
+  //     };
+  //     expect(command.validate(input)).toBe(false);
+  //   });
 
-    it('should validate event input with empty destructure array', () => {
-      const input = {
-        type: 'event' as const,
-        eventName: 'click',
-        destructure: [],
-      };
-      expect(command.validate(input)).toBe(true);
-    });
-  });
+  //   it('should validate event input with empty destructure array', () => {
+  //     const input = {
+  //       type: 'event' as const,
+  //       eventName: 'click',
+  //       destructure: [],
+  //     };
+  //     expect(command.validate(input)).toBe(true);
+  //   });
+  // });
 
   describe('integration - event destructuring', () => {
     it('should wait for mousemove with destructuring end-to-end', async () => {
@@ -809,8 +811,8 @@ describe('WaitCommand - Event Destructuring', () => {
         context
       );
 
-      // Validate
-      expect(command.validate(input)).toBe(true);
+      // Validate - method removed in decorator refactor
+      // expect(command.validate(input)).toBe(true);
 
       // Execute asynchronously
       const waitPromise = command.execute(input as any, context);
@@ -848,8 +850,8 @@ describe('WaitCommand - Event Destructuring', () => {
         context
       );
 
-      // Validate
-      expect(command.validate(input)).toBe(true);
+      // Validate - method removed in decorator refactor
+      // expect(command.validate(input)).toBe(true);
 
       // Execute asynchronously
       const waitPromise = command.execute(input as any, context);
@@ -1218,8 +1220,8 @@ describe('WaitCommand - Custom Event Sources', () => {
         context
       );
 
-      // Validate
-      expect(command.validate(input)).toBe(true);
+      // Validate - method removed in decorator refactor
+      // expect(command.validate(input)).toBe(true);
 
       // Execute asynchronously
       const waitPromise = command.execute(input as any, context);
@@ -1269,8 +1271,8 @@ describe('WaitCommand - Custom Event Sources', () => {
         context
       );
 
-      // Validate
-      expect(command.validate(input)).toBe(true);
+      // Validate - method removed in decorator refactor
+      // expect(command.validate(input)).toBe(true);
 
       // Execute asynchronously
       const waitPromise = command.execute(input as any, context);

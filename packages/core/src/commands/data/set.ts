@@ -19,7 +19,7 @@ import {
   resolveElements as resolveElementsHelper,
   resolvePossessive,
 } from '../helpers/element-resolution';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for SetCommand (Discriminated Union)
@@ -97,7 +97,10 @@ const PROPERTY_SETTERS: Record<string, (el: HTMLElement, val: unknown) => void> 
   sideEffects: ['state-mutation', 'dom-mutation'],
 })
 @command({ name: 'set', category: 'data' })
-export class SetCommand {
+export class SetCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   /**
    * Parse raw AST nodes into typed command input
    *

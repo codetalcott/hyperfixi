@@ -50,7 +50,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -63,7 +63,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -76,7 +76,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -89,7 +89,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -102,7 +102,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -115,7 +115,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -128,7 +128,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -141,7 +141,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -167,16 +167,16 @@ describe('Enhanced Pattern Matching Expressions', () => {
     });
 
     it('should track performance', async () => {
-      const initialHistoryLength = context.evaluationHistory.length;
+      const initialHistoryLength = context.evaluationHistory!.length;
 
       await expression.evaluate(context, {
         value: 'test',
         pattern: 'test',
       });
 
-      expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+      expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
 
-      const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+      const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
       expect(evaluation.expressionName).toBe('matches');
       expect(evaluation.category).toBe('Logical');
       expect(evaluation.success).toBe(true);
@@ -214,7 +214,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -227,7 +227,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -240,7 +240,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -253,7 +253,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -266,7 +266,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -279,7 +279,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -292,7 +292,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -305,7 +305,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -318,7 +318,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -346,7 +346,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -359,7 +359,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -372,7 +372,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -385,7 +385,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -458,7 +458,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
 
       // Cleanup
@@ -483,7 +483,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(testCase.expected);
+          expect(result.value!).toBe(testCase.expected);
         }
       }
     });
@@ -508,7 +508,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         // Should be false because arrays are compared by reference
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -544,7 +544,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(testCase.expected);
+          expect(result.value!).toBe(testCase.expected);
         }
       }
     });
@@ -595,7 +595,7 @@ describe('Enhanced Pattern Matching Expressions', () => {
 
       expect(result.success).toBe(true); // null gets converted to string "null"
       if (result.success) {
-        expect(result.value).toBe(true); // "null" matches /.*/
+        expect(result.value!).toBe(true); // "null" matches /.*/
       }
     });
   });

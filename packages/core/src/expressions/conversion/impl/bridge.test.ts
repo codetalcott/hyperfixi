@@ -372,10 +372,11 @@ describe('Enhanced Conversion Bridge', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
-      expect(result.error.name).toBe('DateConversionError');
-      expect(result.error.code).toBe('INVALID_DATE');
-      expect(result.error.suggestions).toBeDefined();
-      expect(result.error.suggestions.length).toBeGreaterThan(0);
+      const error = result.error as { name: string; code: string; suggestions: string[] };
+      expect(error.name).toBe('DateConversionError');
+      expect(error.code).toBe('INVALID_DATE');
+      expect(error.suggestions).toBeDefined();
+      expect(error.suggestions.length).toBeGreaterThan(0);
     });
 
     it('should handle unexpected errors gracefully', async () => {

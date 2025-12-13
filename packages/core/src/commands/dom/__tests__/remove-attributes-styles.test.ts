@@ -142,8 +142,8 @@ describe('RemoveCommand - Attribute Support', () => {
         context
       );
 
-      expect(element.hasAttribute('data-test')).toBe(false);
-      expect(element.getAttribute('data-keep')).toBe('keep-this'); // Preserved
+      expect(element!.hasAttribute('data-test')).toBe(false);
+      expect(element!.getAttribute('data-keep')).toBe('keep-this'); // Preserved
     });
 
     it('should remove ARIA attribute', async () => {
@@ -157,8 +157,8 @@ describe('RemoveCommand - Attribute Support', () => {
         context
       );
 
-      expect(element.hasAttribute('aria-label')).toBe(false);
-      expect(element.getAttribute('aria-hidden')).toBe('true'); // Preserved
+      expect(element!.hasAttribute('aria-label')).toBe(false);
+      expect(element!.getAttribute('aria-hidden')).toBe('true'); // Preserved
     });
 
     it('should remove boolean attribute', async () => {
@@ -171,7 +171,7 @@ describe('RemoveCommand - Attribute Support', () => {
         context
       );
 
-      expect(element.hasAttribute('disabled')).toBe(false);
+      expect(element!.hasAttribute('disabled')).toBe(false);
     });
 
     it('should remove attribute from multiple elements', async () => {
@@ -202,7 +202,7 @@ describe('RemoveCommand - Attribute Support', () => {
       );
 
       // Existing attribute should remain
-      expect(element.getAttribute('data-existing')).toBe('value');
+      expect(element!.getAttribute('data-existing')).toBe('value');
     });
   });
 
@@ -352,8 +352,8 @@ describe('RemoveCommand - Style Support', () => {
         context
       );
 
-      expect(element.style.opacity).toBe('');
-      expect(element.style.color).toBe('red'); // Preserved
+      expect(element!.style.opacity).toBe('');
+      expect(element!.style.color).toBe('red'); // Preserved
     });
 
     it('should remove multiple inline styles', async () => {
@@ -368,9 +368,9 @@ describe('RemoveCommand - Style Support', () => {
         context
       );
 
-      expect(element.style.opacity).toBe('');
-      expect(element.style.backgroundColor).toBe('');
-      expect(element.style.color).toBe('red'); // Preserved
+      expect(element!.style.opacity).toBe('');
+      expect(element!.style.backgroundColor).toBe('');
+      expect(element!.style.color).toBe('red'); // Preserved
     });
 
     it('should handle kebab-case property names correctly', async () => {
@@ -383,7 +383,7 @@ describe('RemoveCommand - Style Support', () => {
         context
       );
 
-      expect(element.style.backgroundColor).toBe('');
+      expect(element!.style.backgroundColor).toBe('');
     });
 
     it('should remove styles from multiple elements', async () => {
@@ -414,7 +414,7 @@ describe('RemoveCommand - Style Support', () => {
       );
 
       // Existing style should remain
-      expect(element.style.color).toBe('red');
+      expect(element!.style.color).toBe('red');
     });
   });
 
@@ -491,7 +491,7 @@ describe('RemoveCommand - Integration (Attributes & Styles)', () => {
 
   it('should remove attribute end-to-end', async () => {
     const context = createMockContext();
-    context.me.setAttribute('data-temp', 'temporary');
+    context.me!.setAttribute('data-temp', 'temporary');
     const evaluator = {
       evaluate: async () => '@data-temp',
     };
@@ -510,12 +510,12 @@ describe('RemoveCommand - Integration (Attributes & Styles)', () => {
     await command.execute(input, context);
 
     // Verify
-    expect(context.me.hasAttribute('data-temp')).toBe(false);
+    expect(context.me!.hasAttribute('data-temp')).toBe(false);
   });
 
   it('should remove style end-to-end', async () => {
     const context = createMockContext();
-    context.me.style.opacity = '0.7';
+    context.me!.style.opacity = '0.7';
     const evaluator = {
       evaluate: async () => '*opacity',
     };
@@ -534,13 +534,13 @@ describe('RemoveCommand - Integration (Attributes & Styles)', () => {
     await command.execute(input, context);
 
     // Verify
-    expect(context.me.style.opacity).toBe('');
+    expect(context.me!.style.opacity).toBe('');
   });
 
   it('should preserve classes when removing attributes', async () => {
     const context = createMockContext();
-    context.me.className = 'keep-me';
-    context.me.setAttribute('data-remove', 'value');
+    context.me!.className = 'keep-me';
+    context.me!.setAttribute('data-remove', 'value');
     const evaluator = {
       evaluate: async () => '@data-remove',
     };
@@ -554,14 +554,14 @@ describe('RemoveCommand - Integration (Attributes & Styles)', () => {
     await command.execute(input, context);
 
     // Classes should be preserved
-    expect(context.me.classList.contains('keep-me')).toBe(true);
-    expect(context.me.hasAttribute('data-remove')).toBe(false);
+    expect(context.me!.classList.contains('keep-me')).toBe(true);
+    expect(context.me!.hasAttribute('data-remove')).toBe(false);
   });
 
   it('should preserve attributes when removing styles', async () => {
     const context = createMockContext();
-    context.me.setAttribute('data-keep', 'value');
-    context.me.style.opacity = '0.5';
+    context.me!.setAttribute('data-keep', 'value');
+    context.me!.style.opacity = '0.5';
     const evaluator = {
       evaluate: async () => '*opacity',
     };
@@ -575,7 +575,7 @@ describe('RemoveCommand - Integration (Attributes & Styles)', () => {
     await command.execute(input, context);
 
     // Attributes should be preserved
-    expect(context.me.getAttribute('data-keep')).toBe('value');
-    expect(context.me.style.opacity).toBe('');
+    expect(context.me!.getAttribute('data-keep')).toBe('value');
+    expect(context.me!.style.opacity).toBe('');
   });
 });

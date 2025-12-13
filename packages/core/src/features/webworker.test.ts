@@ -122,14 +122,14 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
       const result = await webworkerFeature.initialize(input);
 
       expect(result.success).toBe(true);
-      expect(result.value).toBeDefined();
+      expect(result.value!).toBeDefined();
 
       if (result.success && result.value) {
-        expect(result.value.category).toBe('Frontend');
-        expect(result.value.capabilities).toContain('worker-management');
-        expect(result.value.capabilities).toContain('message-handling');
-        expect(result.value.capabilities).toContain('background-execution');
-        expect(result.value.capabilities).toContain('transferable-objects');
+        expect(result.value!.category).toBe('Frontend');
+        expect(result.value!.capabilities).toContain('worker-management');
+        expect(result.value!.capabilities).toContain('message-handling');
+        expect(result.value!.capabilities).toContain('background-execution');
+        expect(result.value!.capabilities).toContain('transferable-objects');
       }
     });
 
@@ -192,9 +192,9 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
       expect(result.success).toBe(true);
 
       if (result.success && result.value) {
-        expect(result.value.capabilities).toContain('worker-management');
-        expect(result.value.capabilities).toContain('error-recovery');
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.capabilities).toContain('worker-management');
+        expect(result.value!.capabilities).toContain('error-recovery');
+        expect(result.value!.state).toBe('ready');
       }
     });
 
@@ -220,8 +220,8 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
       expect(result.success).toBe(true);
 
       if (result.success && result.value) {
-        expect(result.value.capabilities).toContain('background-execution');
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.capabilities).toContain('background-execution');
+        expect(result.value!.state).toBe('ready');
       }
     });
   });
@@ -605,7 +605,7 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
 
   describe('Validation and Error Handling', () => {
     it('should validate worker script URL', () => {
-      const validationResult = webworkerFeature.validate({
+      const validationResult = webworkerFeature.validate!({
         worker: {
           script: 'not-a-valid-url',
           inline: false,
@@ -620,7 +620,7 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
     });
 
     it('should validate inline script syntax', () => {
-      const validationResult = webworkerFeature.validate({
+      const validationResult = webworkerFeature.validate!({
         worker: {
           script: 'invalid javascript syntax [[[',
           inline: true,
@@ -635,7 +635,7 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
     });
 
     it('should validate worker limits', () => {
-      const validationResult = webworkerFeature.validate({
+      const validationResult = webworkerFeature.validate!({
         worker: {
           script: './test-worker.js',
         },
@@ -655,7 +655,7 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
     });
 
     it('should validate message queue settings', () => {
-      const validationResult = webworkerFeature.validate({
+      const validationResult = webworkerFeature.validate!({
         worker: {
           script: './test-worker.js',
         },
@@ -675,7 +675,7 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
     });
 
     it('should validate event handler filter expressions', () => {
-      const validationResult = webworkerFeature.validate({
+      const validationResult = webworkerFeature.validate!({
         worker: {
           script: './test-worker.js',
         },
@@ -696,7 +696,7 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
     });
 
     it('should validate conflicting performance options', () => {
-      const validationResult = webworkerFeature.validate({
+      const validationResult = webworkerFeature.validate!({
         worker: {
           script: './test-worker.js',
         },
@@ -722,7 +722,7 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
     });
 
     it('should validate empty commands arrays', () => {
-      const validationResult = webworkerFeature.validate({
+      const validationResult = webworkerFeature.validate!({
         worker: {
           script: './test-worker.js',
         },
@@ -747,8 +747,8 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors).toBeDefined();
-      expect(result.suggestions).toBeDefined();
+      expect(result.errors!).toBeDefined();
+      expect(result.suggestions!).toBeDefined();
     });
   });
 
@@ -825,8 +825,8 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
       expect(metadata.complexity).toBe('complex');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
       expect(Array.isArray(metadata.dependencies)).toBe(true);
-      expect(Array.isArray(metadata.examples)).toBe(true);
-      expect(metadata.examples.length).toBeGreaterThan(0);
+      expect(Array.isArray(metadata.examples!)).toBe(true);
+      expect(metadata.examples!.length).toBeGreaterThan(0);
       expect(metadata.environmentRequirements).toBeDefined();
       expect(metadata.performance).toBeDefined();
     });
@@ -912,9 +912,9 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
 
       if (result.success && result.value) {
         // Verify worker capabilities
-        expect(result.value.capabilities).toContain('worker-management');
-        expect(result.value.capabilities).toContain('background-execution');
-        expect(result.value.capabilities).toContain('transferable-objects');
+        expect(result.value!.capabilities).toContain('worker-management');
+        expect(result.value!.capabilities).toContain('background-execution');
+        expect(result.value!.capabilities).toContain('transferable-objects');
 
         // Verify messaging capabilities
         expect(typeof result.value.messaging.sendJSON).toBe('function');
@@ -927,7 +927,7 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
         // Verify error handling
         expect(typeof result.value.errors.handle).toBe('function');
 
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.state).toBe('ready');
       }
     });
 
@@ -968,7 +968,7 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
         expect(typeof result.value.messaging.sendBinary).toBe('function');
 
         // Verify real-time optimizations
-        expect(result.value.capabilities).toContain('transferable-objects');
+        expect(result.value!.capabilities).toContain('transferable-objects');
       }
     });
 
@@ -1013,7 +1013,7 @@ describe.skip('Enhanced WebWorker Feature Implementation', () => {
 
       if (result.success && result.value) {
         // Verify module worker support
-        expect(result.value.capabilities).toContain('background-execution');
+        expect(result.value!.capabilities).toContain('background-execution');
 
         // Verify parallel processing capabilities
         expect(typeof result.value.messaging.broadcast).toBe('function');

@@ -11,7 +11,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for ExitCommand
@@ -39,7 +39,10 @@ export interface ExitCommandOutput {
   sideEffects: ['control-flow'],
 })
 @command({ name: 'exit', category: 'control-flow' })
-export class ExitCommand {
+export class ExitCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     _raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     _evaluator: ExpressionEvaluator,

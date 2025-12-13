@@ -50,7 +50,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -60,7 +60,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -72,7 +72,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -82,7 +82,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -92,7 +92,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // Whitespace strings exist
+        expect(result.value!).toBe(true); // Whitespace strings exist
       }
     });
   });
@@ -103,7 +103,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -113,7 +113,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -123,7 +123,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -132,7 +132,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // Array has elements, even if falsy
+        expect(result.value!).toBe(true); // Array has elements, even if falsy
       }
     });
   });
@@ -150,7 +150,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // Has length > 0
+        expect(result.value!).toBe(true); // Has length > 0
       }
     });
 
@@ -163,7 +163,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // Length is 0
+        expect(result.value!).toBe(false); // Length is 0
       }
     });
 
@@ -177,7 +177,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // Has arguments
+        expect(result.value!).toBe(true); // Has arguments
       }
     });
   });
@@ -188,7 +188,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -197,7 +197,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // Zero exists (different from truthiness)
+        expect(result.value!).toBe(true); // Zero exists (different from truthiness)
       }
     });
 
@@ -206,7 +206,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -215,7 +215,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // NaN exists as a value
+        expect(result.value!).toBe(true); // NaN exists as a value
       }
     });
   });
@@ -226,7 +226,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -235,7 +235,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // false exists as a value
+        expect(result.value!).toBe(true); // false exists as a value
       }
     });
   });
@@ -246,7 +246,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // Objects exist even if empty
+        expect(result.value!).toBe(true); // Objects exist even if empty
       }
     });
 
@@ -255,7 +255,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
   });
@@ -266,7 +266,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // No elements with this class
+        expect(result.value!).toBe(false); // No elements with this class
       }
     });
 
@@ -275,7 +275,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // No element with this ID
+        expect(result.value!).toBe(false); // No element with this ID
       }
     });
 
@@ -292,7 +292,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // DIV element should exist now
+        expect(result.value!).toBe(true); // DIV element should exist now
       }
 
       // Clean up
@@ -304,7 +304,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // No div with this class
+        expect(result.value!).toBe(false); // No div with this class
       }
     });
 
@@ -320,7 +320,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // Span element should exist now
+        expect(result.value!).toBe(true); // Span element should exist now
       }
 
       // Clean up
@@ -332,7 +332,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // Invalid selector treated as string = exists
+        expect(result.value!).toBe(true); // Invalid selector treated as string = exists
       }
     });
   });
@@ -347,7 +347,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // Span exists within context.me
+        expect(result.value!).toBe(true); // Span exists within context.me
       }
     });
 
@@ -360,7 +360,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // No span in empty div
+        expect(result.value!).toBe(false); // No span in empty div
       }
     });
   });
@@ -372,7 +372,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // Functions exist
+        expect(result.value!).toBe(true); // Functions exist
       }
     });
   });
@@ -383,7 +383,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('SomeExpressionValidationError');
+        expect(result.error!.name).toBe('SomeExpressionValidationError');
       }
     });
   });
@@ -399,7 +399,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -468,7 +468,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -477,7 +477,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -486,7 +486,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -495,7 +495,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -504,7 +504,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -520,7 +520,7 @@ describe('Enhanced Some Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
 
       // Clean up

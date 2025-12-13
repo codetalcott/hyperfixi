@@ -13,7 +13,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { evaluateCondition } from '../helpers/condition-helpers';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for IfCommand
@@ -46,7 +46,10 @@ export interface IfCommandOutput {
   sideEffects: ['conditional-execution'],
 })
 @command({ name: 'if', category: 'control-flow' })
-export class IfCommand {
+export class IfCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

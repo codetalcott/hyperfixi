@@ -69,7 +69,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('submit-button');
+        expect(result.value!).toBe('submit-button');
         expect(result.type).toBe('string');
       }
     });
@@ -82,7 +82,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('btn btn-primary active');
+        expect(result.value!).toBe('btn btn-primary active');
         expect(result.type).toBe('string');
       }
     });
@@ -95,7 +95,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('Click me!');
+        expect(result.value!).toBe('Click me!');
         expect(result.type).toBe('string');
       }
     });
@@ -112,7 +112,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('42');
+        expect(result.value!).toBe('42');
         expect(result.type).toBe('string');
       }
     });
@@ -127,7 +127,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('block');
+        expect(result.value!).toBe('block');
         expect(result.type).toBe('string');
       }
     });
@@ -140,7 +140,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(undefined);
+        expect(result.value!).toBe(undefined);
         expect(result.type).toBe('Any');
       }
     });
@@ -153,8 +153,8 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].type).toBe('context-error');
-        expect(result.errors[0].message).toContain('No current element (me) available');
+        expect(result.errors![0].type).toBe('context-error');
+        expect(result.errors![0].message).toContain('No current element (me) available');
       }
     });
 
@@ -164,7 +164,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].type).toBe('context-error');
+        expect(result.errors![0].type).toBe('context-error');
       }
     });
   });
@@ -178,7 +178,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(undefined);
+        expect(result.value!).toBe(undefined);
         expect(result.type).toBe('Any');
       }
     });
@@ -191,7 +191,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(null);
+        expect(result.value!).toBe(null);
         expect(result.type).toBe('null');
       }
     });
@@ -204,7 +204,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -217,7 +217,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(5);
+        expect(result.value!).toBe(5);
         expect(result.type).toBe('number');
       }
     });
@@ -226,7 +226,7 @@ describe('MyExpression', () => {
   describe('Validation', () => {
     it('should validate correct input', () => {
       const input = { property: 'id' };
-      const validation = myExpr.validate(input);
+      const validation = myExpr.validate!(input);
 
       expect(validation.isValid).toBe(true);
       expect(validation.errors).toHaveLength(0);
@@ -234,7 +234,7 @@ describe('MyExpression', () => {
 
     it('should reject empty property names', () => {
       const input = { property: '' };
-      const validation = myExpr.validate(input);
+      const validation = myExpr.validate!(input);
 
       expect(validation.isValid).toBe(false);
       expect(validation.errors[0].type).toBe('validation-error');
@@ -243,7 +243,7 @@ describe('MyExpression', () => {
 
     it('should reject whitespace-only property names', () => {
       const input = { property: '   ' };
-      const validation = myExpr.validate(input);
+      const validation = myExpr.validate!(input);
 
       expect(validation.isValid).toBe(false);
       expect(validation.errors[0].message).toContain('Property name cannot be empty');
@@ -271,7 +271,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('John Doe');
+        expect(result.value!).toBe('John Doe');
         expect(result.type).toBe('string');
       }
     });
@@ -282,7 +282,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(42);
+        expect(result.value!).toBe(42);
         expect(result.type).toBe('number');
       }
     });
@@ -293,7 +293,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -306,7 +306,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('form-element');
+        expect(result.value!).toBe('form-element');
         expect(result.type).toBe('string');
       }
     });
@@ -322,7 +322,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('123');
+        expect(result.value!).toBe('123');
         expect(result.type).toBe('string');
       }
     });
@@ -335,7 +335,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(3);
+        expect(result.value!).toBe(3);
         expect(result.type).toBe('number');
       }
     });
@@ -346,7 +346,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('first');
+        expect(result.value!).toBe('first');
         expect(result.type).toBe('string');
       }
     });
@@ -371,7 +371,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('https://api.example.com');
+        expect(result.value!).toBe('https://api.example.com');
         expect(result.type).toBe('string');
       }
     });
@@ -385,7 +385,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(undefined);
+        expect(result.value!).toBe(undefined);
         expect(result.type).toBe('Any');
       }
     });
@@ -397,7 +397,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(undefined);
+        expect(result.value!).toBe(undefined);
         expect(result.type).toBe('Any');
       }
     });
@@ -407,7 +407,7 @@ describe('ItsExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(undefined);
+        expect(result.value!).toBe(undefined);
         expect(result.type).toBe('Any');
       }
     });
@@ -416,7 +416,7 @@ describe('ItsExpression', () => {
   describe('Validation', () => {
     it('should validate correct input', () => {
       const input = { target: {}, property: 'name' };
-      const validation = itsExpr.validate(input);
+      const validation = itsExpr.validate!(input);
 
       expect(validation.isValid).toBe(true);
       expect(validation.errors).toHaveLength(0);
@@ -424,7 +424,7 @@ describe('ItsExpression', () => {
 
     it('should reject empty property names', () => {
       const input = { target: {}, property: '' };
-      const validation = itsExpr.validate(input);
+      const validation = itsExpr.validate!(input);
 
       expect(validation.isValid).toBe(false);
       expect(validation.errors[0].type).toBe('validation-error');
@@ -463,7 +463,7 @@ describe('AttributeExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('submit-button');
+        expect(result.value!).toBe('submit-button');
         expect(result.type).toBe('string');
       }
     });
@@ -483,7 +483,7 @@ describe('AttributeExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('btn btn-primary active');
+        expect(result.value!).toBe('btn btn-primary active');
         expect(result.type).toBe('string');
       }
     });
@@ -504,7 +504,7 @@ describe('AttributeExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('12345');
+        expect(result.value!).toBe('12345');
         expect(result.type).toBe('string');
       }
     });
@@ -519,7 +519,7 @@ describe('AttributeExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(null);
+        expect(result.value!).toBe(null);
         expect(result.type).toBe('null');
       }
     });
@@ -570,8 +570,8 @@ describe('AttributeExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].type).toBe('type-mismatch');
-        expect(result.errors[0].message).toContain('Target must be a DOM element');
+        expect(result.errors![0].type).toBe('type-mismatch');
+        expect(result.errors![0].message).toContain('Target must be a DOM element');
       }
     });
 
@@ -583,7 +583,7 @@ describe('AttributeExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].type).toBe('type-mismatch');
+        expect(result.errors![0].type).toBe('type-mismatch');
       }
     });
 
@@ -595,7 +595,7 @@ describe('AttributeExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].type).toBe('type-mismatch');
+        expect(result.errors![0].type).toBe('type-mismatch');
       }
     });
   });
@@ -604,7 +604,7 @@ describe('AttributeExpression', () => {
     it('should validate correct input', () => {
       const mockElement = createMockElement();
       const input = { element: mockElement, attribute: 'id' };
-      const validation = attrExpr.validate(input);
+      const validation = attrExpr.validate!(input);
 
       expect(validation.isValid).toBe(true);
       expect(validation.errors).toHaveLength(0);
@@ -613,7 +613,7 @@ describe('AttributeExpression', () => {
     it('should reject empty attribute names', () => {
       const mockElement = createMockElement();
       const input = { element: mockElement, attribute: '' };
-      const validation = attrExpr.validate(input);
+      const validation = attrExpr.validate!(input);
 
       expect(validation.isValid).toBe(false);
       expect(validation.errors[0].type).toBe('validation-error');

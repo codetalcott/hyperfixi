@@ -19,7 +19,7 @@ import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import { parseClasses } from '../helpers/class-manipulation';
 import { isAttributeSyntax, parseAttributeName } from '../helpers/attribute-manipulation';
-import { command, meta, createFactory, type CommandMetadata } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for RemoveCommand
@@ -65,7 +65,7 @@ export type RemoveCommandInput =
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'remove', category: 'dom' })
-export class RemoveCommand {
+export class RemoveCommand implements DecoratedCommand {
   // Properties set by decorators
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;

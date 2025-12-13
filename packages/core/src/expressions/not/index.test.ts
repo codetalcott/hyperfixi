@@ -45,7 +45,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -55,7 +55,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -70,7 +70,7 @@ describe('Enhanced Not Expression', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(true); // not falsy = true
+          expect(result.value!).toBe(true); // not falsy = true
           expect(result.type).toBe('boolean');
         }
       }
@@ -84,7 +84,7 @@ describe('Enhanced Not Expression', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(false); // not truthy = false
+          expect(result.value!).toBe(false); // not truthy = false
           expect(result.type).toBe('boolean');
         }
       }
@@ -95,7 +95,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // not NaN = true (NaN is falsy)
+        expect(result.value!).toBe(true); // not NaN = true (NaN is falsy)
         expect(result.type).toBe('boolean');
       }
     });
@@ -123,7 +123,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // not [] = false (arrays are truthy)
+        expect(result.value!).toBe(false); // not [] = false (arrays are truthy)
       }
     });
 
@@ -132,7 +132,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // not [1,2,3] = false
+        expect(result.value!).toBe(false); // not [1,2,3] = false
       }
     });
 
@@ -141,7 +141,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // not {} = false (objects are truthy)
+        expect(result.value!).toBe(false); // not {} = false (objects are truthy)
       }
     });
 
@@ -150,7 +150,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // not {key: 'value'} = false
+        expect(result.value!).toBe(false); // not {key: 'value'} = false
       }
     });
   });
@@ -198,7 +198,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // not 'hello' = false
+        expect(result.value!).toBe(false); // not 'hello' = false
       }
     });
 
@@ -207,7 +207,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // not '' = true
+        expect(result.value!).toBe(true); // not '' = true
       }
     });
 
@@ -216,7 +216,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // not 'false' = false (string is truthy)
+        expect(result.value!).toBe(false); // not 'false' = false (string is truthy)
       }
     });
 
@@ -225,7 +225,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // not '0' = false (string is truthy)
+        expect(result.value!).toBe(false); // not '0' = false (string is truthy)
       }
     });
   });
@@ -236,7 +236,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // not 42 = false
+        expect(result.value!).toBe(false); // not 42 = false
       }
     });
 
@@ -245,7 +245,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // not -42 = false
+        expect(result.value!).toBe(false); // not -42 = false
       }
     });
 
@@ -254,7 +254,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // not 0 = true
+        expect(result.value!).toBe(true); // not 0 = true
       }
     });
 
@@ -263,7 +263,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // not -0 = true
+        expect(result.value!).toBe(true); // not -0 = true
       }
     });
   });
@@ -274,7 +274,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('NotExpressionValidationError');
+        expect(result.error!.name).toBe('NotExpressionValidationError');
       }
     });
   });
@@ -290,7 +290,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -334,7 +334,7 @@ describe('Enhanced Not Expression', () => {
       results.forEach((result, index) => {
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(!testValues[index]);
+          expect(result.value!).toBe(!testValues[index]);
         }
       });
 
@@ -349,7 +349,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -358,7 +358,7 @@ describe('Enhanced Not Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 

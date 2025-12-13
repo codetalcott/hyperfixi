@@ -30,11 +30,11 @@ describe('ExecutionContext System', () => {
     });
 
     it('should initialize execution flags correctly', () => {
-      expect(context.flags.halted).toBe(false);
-      expect(context.flags.breaking).toBe(false);
-      expect(context.flags.continuing).toBe(false);
-      expect(context.flags.returning).toBe(false);
-      expect(context.flags.async).toBe(false);
+      expect(context.flags?.halted).toBe(false);
+      expect(context.flags?.breaking).toBe(false);
+      expect(context.flags?.continuing).toBe(false);
+      expect(context.flags?.returning).toBe(false);
+      expect(context.flags?.async).toBe(false);
     });
 
     it('should allow creating context without element', () => {
@@ -137,26 +137,26 @@ describe('ExecutionContext System', () => {
 
   describe('Context Flags Management', () => {
     it('should handle halted flag correctly', () => {
-      expect(context.flags.halted).toBe(false);
-      context.flags.halted = true;
-      expect(context.flags.halted).toBe(true);
+      expect(context.flags?.halted).toBe(false);
+      context.flags!.halted = true;
+      expect(context.flags?.halted).toBe(true);
     });
 
     it('should handle control flow flags', () => {
-      context.flags.breaking = true;
-      expect(context.flags.breaking).toBe(true);
-      expect(context.flags.continuing).toBe(false);
+      context.flags!.breaking = true;
+      expect(context.flags?.breaking).toBe(true);
+      expect(context.flags?.continuing).toBe(false);
 
-      context.flags.breaking = false;
-      context.flags.continuing = true;
-      expect(context.flags.breaking).toBe(false);
-      expect(context.flags.continuing).toBe(true);
+      context.flags!.breaking = false;
+      context.flags!.continuing = true;
+      expect(context.flags?.breaking).toBe(false);
+      expect(context.flags?.continuing).toBe(true);
     });
 
     it('should handle async execution flag', () => {
-      expect(context.flags.async).toBe(false);
-      context.flags.async = true;
-      expect(context.flags.async).toBe(true);
+      expect(context.flags?.async).toBe(false);
+      context.flags!.async = true;
+      expect(context.flags?.async).toBe(true);
     });
   });
 

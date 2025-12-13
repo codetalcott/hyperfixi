@@ -50,7 +50,7 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(8);
+        expect(result.value!).toBe(8);
         expect(result.type).toBe('number');
       }
     });
@@ -61,7 +61,7 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(7);
+        expect(result.value!).toBe(7);
       }
     });
 
@@ -71,7 +71,7 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(3.75);
+        expect(result.value!).toBe(3.75);
       }
     });
 
@@ -81,7 +81,7 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(42);
+        expect(result.value!).toBe(42);
       }
     });
   });
@@ -93,7 +93,7 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(30);
+        expect(result.value!).toBe(30);
       }
     });
 
@@ -103,7 +103,7 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(40);
+        expect(result.value!).toBe(40);
       }
     });
 
@@ -113,7 +113,7 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1); // true=1, false=0
+        expect(result.value!).toBe(1); // true=1, false=0
       }
     });
   });
@@ -125,8 +125,8 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].type).toBe('runtime-error');
-        expect(result.errors[0].message).toContain('cannot be converted to number');
+        expect(result.errors![0].type).toBe('runtime-error');
+        expect(result.errors![0].message).toContain('cannot be converted to number');
       }
     });
 
@@ -136,7 +136,7 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].message).toContain('null or undefined');
+        expect(result.errors![0].message).toContain('null or undefined');
       }
     });
 
@@ -146,7 +146,7 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].message).toContain('null or undefined');
+        expect(result.errors![0].message).toContain('null or undefined');
       }
     });
 
@@ -156,7 +156,7 @@ describe('AdditionExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].message).toContain('non-finite value');
+        expect(result.errors![0].message).toContain('non-finite value');
       }
     });
   });
@@ -164,7 +164,7 @@ describe('AdditionExpression', () => {
   describe('Validation', () => {
     it('should validate correct input', () => {
       const input = { left: 5, right: 3 };
-      const validation = additionExpr.validate(input);
+      const validation = additionExpr.validate!(input);
 
       expect(validation.isValid).toBe(true);
       expect(validation.errors).toHaveLength(0);
@@ -172,7 +172,7 @@ describe('AdditionExpression', () => {
 
     it('should reject missing operands', () => {
       const input = { left: 5 }; // missing right
-      const validation = additionExpr.validate(input);
+      const validation = additionExpr.validate!(input);
 
       expect(validation.isValid).toBe(false);
       expect(validation.errors.length).toBeGreaterThan(0);
@@ -180,7 +180,7 @@ describe('AdditionExpression', () => {
 
     it('should reject non-numeric strings', () => {
       const input = { left: 'abc', right: 5 };
-      const validation = additionExpr.validate(input);
+      const validation = additionExpr.validate!(input);
 
       expect(validation.isValid).toBe(false);
       expect(validation.errors[0].message).toContain('cannot be converted to number');
@@ -208,7 +208,7 @@ describe('SubtractionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(7);
+        expect(result.value!).toBe(7);
       }
     });
 
@@ -218,7 +218,7 @@ describe('SubtractionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(-3);
+        expect(result.value!).toBe(-3);
       }
     });
 
@@ -228,7 +228,7 @@ describe('SubtractionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(3.5);
+        expect(result.value!).toBe(3.5);
       }
     });
 
@@ -238,7 +238,7 @@ describe('SubtractionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(42);
+        expect(result.value!).toBe(42);
       }
     });
   });
@@ -250,7 +250,7 @@ describe('SubtractionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(75);
+        expect(result.value!).toBe(75);
       }
     });
   });
@@ -276,7 +276,7 @@ describe('MultiplicationExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(42);
+        expect(result.value!).toBe(42);
       }
     });
 
@@ -286,7 +286,7 @@ describe('MultiplicationExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(0);
+        expect(result.value!).toBe(0);
       }
     });
 
@@ -296,7 +296,7 @@ describe('MultiplicationExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(-12);
+        expect(result.value!).toBe(-12);
       }
     });
 
@@ -306,7 +306,7 @@ describe('MultiplicationExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(10);
+        expect(result.value!).toBe(10);
       }
     });
   });
@@ -318,7 +318,7 @@ describe('MultiplicationExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(60);
+        expect(result.value!).toBe(60);
       }
     });
   });
@@ -344,7 +344,7 @@ describe('DivisionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(5);
+        expect(result.value!).toBe(5);
       }
     });
 
@@ -354,7 +354,7 @@ describe('DivisionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(2.5);
+        expect(result.value!).toBe(2.5);
       }
     });
 
@@ -364,7 +364,7 @@ describe('DivisionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(-4);
+        expect(result.value!).toBe(-4);
       }
     });
   });
@@ -376,7 +376,7 @@ describe('DivisionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(Infinity);
+        expect(result.value!).toBe(Infinity);
       }
     });
 
@@ -386,7 +386,7 @@ describe('DivisionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(Infinity);
+        expect(result.value!).toBe(Infinity);
       }
     });
   });
@@ -398,7 +398,7 @@ describe('DivisionExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(5);
+        expect(result.value!).toBe(5);
       }
     });
   });
@@ -424,7 +424,7 @@ describe('ModuloExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1);
+        expect(result.value!).toBe(1);
       }
     });
 
@@ -434,7 +434,7 @@ describe('ModuloExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(0);
+        expect(result.value!).toBe(0);
       }
     });
 
@@ -444,7 +444,7 @@ describe('ModuloExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(-1);
+        expect(result.value!).toBe(-1);
       }
     });
 
@@ -454,7 +454,7 @@ describe('ModuloExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(1.5);
+        expect(result.value!).toBe(1.5);
       }
     });
   });
@@ -466,8 +466,8 @@ describe('ModuloExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors[0].type).toBe('runtime-error');
-        expect(result.errors[0].message).toContain('Modulo by zero');
+        expect(result.errors![0].type).toBe('runtime-error');
+        expect(result.errors![0].message).toContain('Modulo by zero');
       }
     });
   });
@@ -479,7 +479,7 @@ describe('ModuloExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(2);
+        expect(result.value!).toBe(2);
       }
     });
   });
@@ -582,10 +582,10 @@ describe('Enhanced Mathematical Expressions Integration', () => {
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.errors).toHaveLength(1);
-          expect(result.errors[0].type).toBe('runtime-error');
-          expect(result.errors[0].message).toBeTruthy();
-          expect(result.suggestions).toHaveLength(0);
+          expect(result.errors!).toHaveLength(1);
+          expect(result.errors![0].type).toBe('runtime-error');
+          expect(result.errors![0].message).toBeTruthy();
+          expect(result.suggestions!).toHaveLength(0);
         }
       }
     });

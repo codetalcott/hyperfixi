@@ -24,11 +24,11 @@
  * properties that are absolutely required for basic hyperscript execution.
  */
 export interface CoreExecutionContext {
-  /** Current element context ('me' reference) */
-  readonly me: Element | null;
+  /** Current element context ('me' reference) - mutable for runtime context updates */
+  me: Element | null;
 
-  /** Target element for operations ('you' reference) */
-  readonly you: Element | null;
+  /** Target element for operations ('you' reference) - mutable for runtime context updates */
+  you: Element | null;
 
   /** Result of last expression evaluation ('it' reference) - mutable for runtime */
   it: unknown;

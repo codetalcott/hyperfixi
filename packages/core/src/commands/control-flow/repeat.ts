@@ -16,7 +16,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import { evaluateCondition } from '../helpers/condition-helpers';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for RepeatCommand
@@ -78,7 +78,10 @@ export interface RepeatCommandOutput {
   sideEffects: ['iteration', 'conditional-execution'],
 })
 @command({ name: 'repeat', category: 'control-flow' })
-export class RepeatCommand {
+export class RepeatCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

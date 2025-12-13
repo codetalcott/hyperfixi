@@ -19,7 +19,7 @@ import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import { parseClasses } from '../helpers/class-manipulation';
 import { isAttributeSyntax, parseAttributeWithValue } from '../helpers/attribute-manipulation';
-import { command, meta, createFactory, type CommandMetadata } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for AddCommand
@@ -61,7 +61,7 @@ export type AddCommandInput =
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'add', category: 'dom' })
-export class AddCommand {
+export class AddCommand implements DecoratedCommand {
   // Properties set by decorators
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;

@@ -14,6 +14,7 @@
 
 import type { RuntimeValidator } from '../validation/lightweight-validators';
 import type { CoreExecutionContext } from './core-context';
+import type { ExecutionContext } from './base-types';
 
 // Re-export core context types
 export type { CoreExecutionContext } from './core-context';

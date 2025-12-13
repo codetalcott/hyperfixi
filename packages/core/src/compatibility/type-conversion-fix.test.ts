@@ -45,7 +45,7 @@ describe('Type Conversion Fix', () => {
             );
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -80,7 +80,7 @@ describe('Type Conversion Fix', () => {
             );
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -117,7 +117,7 @@ describe('Type Conversion Fix', () => {
             );
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -152,7 +152,7 @@ describe('Type Conversion Fix', () => {
             );
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 

@@ -15,7 +15,7 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolvePossessive } from '../helpers/element-resolution';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for BindCommand
@@ -73,7 +73,10 @@ const activeBindings: Map<string, ActiveBinding> = new Map();
   sideEffects: ['data-binding', 'event-listeners', 'dom-observation'],
 })
 @command({ name: 'bind', category: 'data' })
-export class BindCommand {
+export class BindCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

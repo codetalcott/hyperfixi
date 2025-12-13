@@ -12,7 +12,7 @@
 
 import type { ExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 import {
   parseNumericTargetInput,
   type NumericTargetRawInput,
@@ -40,7 +40,10 @@ import {
   sideEffects: ['data-mutation', 'context-modification'],
 })
 @command({ name: 'increment', category: 'data' })
-export class IncrementCommand {
+export class IncrementCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   /**
    * Parse raw AST input into structured input object
    */

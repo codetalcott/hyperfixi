@@ -51,13 +51,13 @@ describe('ContextBridge', () => {
       expect(typedContext.event).toBe(undefined);
 
       // Check variable storage
-      expect(typedContext.variables).toBe(baseContext.variables);
+      expect(typedContext.variables!).toBe(baseContext.variables);
       expect(typedContext.locals).toBe(baseContext.locals);
       expect(typedContext.globals).toBe(baseContext.globals);
 
       // Check runtime state
       expect(typedContext.events).toBe(baseContext.events);
-      expect(typedContext.meta).toBe(baseContext.meta);
+      expect(typedContext.meta!).toBe(baseContext.meta);
 
       // Check enhanced features
       expect(typedContext.errors).toEqual([]);
@@ -76,10 +76,10 @@ describe('ContextBridge', () => {
 
       const typedContext = ContextBridge.toTyped(minimalContext);
 
-      expect(typedContext.variables).toEqual(new Map());
+      expect(typedContext.variables!).toEqual(new Map());
       expect(typedContext.locals).toEqual(new Map());
       expect(typedContext.globals).toEqual(new Map());
-      expect(typedContext.meta).toEqual({});
+      expect(typedContext.meta!).toEqual({});
       expect(typedContext.events).toBe(undefined);
     });
   });
@@ -91,15 +91,15 @@ describe('ContextBridge', () => {
       // Modify typed context
       typedContext.result = 'new-result';
       typedContext.it = 'modified-it';
-      typedContext.variables.set('newVar', 'newValue');
-      typedContext.meta.newMeta = 'newMetaValue';
+      typedContext.variables!.set('newVar', 'newValue');
+      typedContext.meta!.newMeta = 'newMetaValue';
 
       const updatedContext = ContextBridge.fromTyped(typedContext, baseContext);
 
       expect(updatedContext.result).toBe('new-result');
       expect(updatedContext.it).toBe('modified-it');
-      expect(updatedContext.variables.get('newVar')).toBe('newValue');
-      expect(updatedContext.meta.newMeta).toBe('newMetaValue');
+      expect(updatedContext.variables!.get('newVar')).toBe('newValue');
+      expect(updatedContext.meta!.newMeta).toBe('newMetaValue');
 
       // Original references should be preserved where appropriate
       expect(updatedContext.me).toBe(mockElement);
@@ -188,7 +188,7 @@ describe('ContextBridge', () => {
 
       expect(typedContext.me).toBe(null);
       expect(typedContext.it).toBe(null);
-      expect(typedContext.variables).toEqual(new Map());
+      expect(typedContext.variables!).toEqual(new Map());
     });
 
     it('should handle context with missing properties', () => {

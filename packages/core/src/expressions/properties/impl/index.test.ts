@@ -57,8 +57,8 @@ describe('Enhanced Property Expressions', () => {
   afterEach(() => {
     // Clean up DOM elements
     [testElement, testInput, testForm].forEach(element => {
-      if (element && element.parentNode) {
-        element.parentNode.removeChild(element);
+      if (element && element!.parentNode) {
+        element!.parentNode.removeChild(element);
       }
     });
   });
@@ -88,7 +88,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('John');
+          expect(result.value!).toBe('John');
           expect(result.type).toBe('String');
         }
       });
@@ -106,7 +106,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Jane');
+          expect(result.value!).toBe('Jane');
           expect(result.type).toBe('String');
         }
       });
@@ -120,7 +120,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBeUndefined();
+          expect(result.value!).toBeUndefined();
           expect(result.type).toBe('Undefined');
         }
       });
@@ -135,7 +135,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('test-element');
+          expect(result.value!).toBe('test-element');
           expect(result.type).toBe('String');
         }
       });
@@ -148,7 +148,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('container active');
+          expect(result.value!).toBe('container active');
           expect(result.type).toBe('String');
         }
       });
@@ -161,7 +161,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('div');
+          expect(result.value!).toBe('div');
           expect(result.type).toBe('String');
         }
       });
@@ -174,7 +174,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Test content');
+          expect(result.value!).toBe('Test content');
           expect(result.type).toBe('String');
         }
       });
@@ -187,7 +187,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('input value');
+          expect(result.value!).toBe('input value');
           expect(result.type).toBe('String');
         }
       });
@@ -214,7 +214,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(testForm);
+          expect(result.value!).toBe(testForm);
           expect(result.type).toBe('Element');
         }
       });
@@ -229,7 +229,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('component');
+          expect(result.value!).toBe('component');
           expect(result.type).toBe('String');
         }
       });
@@ -242,7 +242,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Test component');
+          expect(result.value!).toBe('Test component');
           expect(result.type).toBe('String');
         }
       });
@@ -255,7 +255,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBeUndefined();
+          expect(result.value!).toBeUndefined();
           expect(result.type).toBe('Undefined');
         }
       });
@@ -270,7 +270,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBeUndefined();
+          expect(result.value!).toBeUndefined();
           expect(result.type).toBe('Undefined');
         }
       });
@@ -283,7 +283,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBeUndefined();
+          expect(result.value!).toBeUndefined();
           expect(result.type).toBe('Undefined');
         }
       });
@@ -296,7 +296,7 @@ describe('Enhanced Property Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(5);
+          expect(result.value!).toBe(5);
           expect(result.type).toBe('Number');
         }
       });
@@ -334,16 +334,16 @@ describe('Enhanced Property Expressions', () => {
       });
 
       it('should track performance', async () => {
-        const initialHistoryLength = context.evaluationHistory.length;
+        const initialHistoryLength = context.evaluationHistory!.length;
 
         await expression.evaluate(context, {
           element: testElement,
           property: 'id',
         });
 
-        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
 
-        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
         expect(evaluation.expressionName).toBe('possessive');
         expect(evaluation.category).toBe('Property');
         expect(evaluation.success).toBe(true);
@@ -383,7 +383,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('test-element');
+        expect(result.value!).toBe('test-element');
         expect(result.type).toBe('String');
       }
     });
@@ -396,7 +396,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeUndefined();
+        expect(result.value!).toBeUndefined();
         expect(result.type).toBe('Undefined');
       }
     });
@@ -408,7 +408,7 @@ describe('Enhanced Property Expressions', () => {
         const result = await expression.evaluate(context, { property });
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBeTruthy();
+          expect(result.value!).toBeTruthy();
         }
       }
     });
@@ -452,7 +452,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('test object');
+        expect(result.value!).toBe('test object');
         expect(result.type).toBe('String');
       }
     });
@@ -464,7 +464,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(5);
+        expect(result.value!).toBe(5);
         expect(result.type).toBe('Number');
       }
     });
@@ -477,7 +477,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeUndefined();
+        expect(result.value!).toBeUndefined();
         expect(result.type).toBe('Undefined');
       }
     });
@@ -490,7 +490,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(3);
+        expect(result.value!).toBe(3);
         expect(result.type).toBe('Number');
       }
     });
@@ -516,7 +516,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('input value');
+        expect(result.value!).toBe('input value');
         expect(result.type).toBe('String');
       }
     });
@@ -528,7 +528,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('test-input');
+        expect(result.value!).toBe('test-input');
         expect(result.type).toBe('String');
       }
     });
@@ -541,7 +541,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeUndefined();
+        expect(result.value!).toBeUndefined();
         expect(result.type).toBe('Undefined');
       }
     });
@@ -569,7 +569,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('component');
+        expect(result.value!).toBe('component');
         expect(result.type).toBe('String');
       }
     });
@@ -582,7 +582,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('text');
+        expect(result.value!).toBe('text');
         expect(result.type).toBe('String');
       }
     });
@@ -595,7 +595,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('Test component');
+        expect(result.value!).toBe('Test component');
         expect(result.type).toBe('String');
       }
     });
@@ -608,7 +608,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeNull();
+        expect(result.value!).toBeNull();
         expect(result.type).toBe('Null');
       }
     });
@@ -621,7 +621,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeNull();
+        expect(result.value!).toBeNull();
         expect(result.type).toBe('Null');
       }
     });
@@ -670,7 +670,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('Boolean');
       }
     });
@@ -684,7 +684,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('Boolean');
       }
     });
@@ -698,7 +698,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('Boolean');
       }
     });
@@ -712,7 +712,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('Boolean');
       }
     });
@@ -728,7 +728,7 @@ describe('Enhanced Property Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('Boolean');
       }
     });
@@ -900,7 +900,7 @@ describe('Enhanced Property Expressions', () => {
       expect(duration).toBeLessThan(10); // Should be very fast
 
       if (result.success) {
-        expect(result.value).toBe('value500');
+        expect(result.value!).toBe('value500');
       }
     });
 

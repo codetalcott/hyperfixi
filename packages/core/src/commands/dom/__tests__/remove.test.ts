@@ -362,8 +362,8 @@ describe('RemoveCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.classList.contains('active')).toBe(false);
-      expect(element.classList.contains('selected')).toBe(true); // Preserved
+      expect(element!.classList.contains('active')).toBe(false);
+      expect(element!.classList.contains('selected')).toBe(true); // Preserved
     });
 
     it('should remove multiple classes from single element', async () => {
@@ -376,9 +376,9 @@ describe('RemoveCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.classList.contains('active')).toBe(false);
-      expect(element.classList.contains('selected')).toBe(false);
-      expect(element.classList.contains('highlighted')).toBe(false);
+      expect(element!.classList.contains('active')).toBe(false);
+      expect(element!.classList.contains('selected')).toBe(false);
+      expect(element!.classList.contains('highlighted')).toBe(false);
     });
 
     it('should remove single class from multiple elements', async () => {
@@ -430,7 +430,7 @@ describe('RemoveCommand (Standalone V2)', () => {
       );
 
       // Existing class should remain
-      expect(element.classList.contains('existing')).toBe(true);
+      expect(element!.classList.contains('existing')).toBe(true);
     });
 
     it('should preserve other classes when removing specific class', async () => {
@@ -443,9 +443,9 @@ describe('RemoveCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.classList.contains('keep-1')).toBe(true);
-      expect(element.classList.contains('keep-2')).toBe(true);
-      expect(element.classList.contains('remove-me')).toBe(false);
+      expect(element!.classList.contains('keep-1')).toBe(true);
+      expect(element!.classList.contains('keep-2')).toBe(true);
+      expect(element!.classList.contains('remove-me')).toBe(false);
     });
 
     it('should handle elements with no classes', async () => {
@@ -458,7 +458,7 @@ describe('RemoveCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.className).toBe('');
+      expect(element!.className).toBe('');
     });
   });
 
@@ -532,7 +532,7 @@ describe('RemoveCommand (Standalone V2)', () => {
   describe('integration', () => {
     it('should remove class end-to-end', async () => {
       const context = createMockContext();
-      context.me.className = 'active selected';
+      context.me!.className = 'active selected';
       const evaluator = createMockEvaluator();
 
       // Parse input
@@ -549,13 +549,13 @@ describe('RemoveCommand (Standalone V2)', () => {
       await command.execute(input, context);
 
       // Verify
-      expect(context.me.classList.contains('active')).toBe(false);
-      expect(context.me.classList.contains('selected')).toBe(true); // Preserved
+      expect(context.me!.classList.contains('active')).toBe(false);
+      expect(context.me!.classList.contains('selected')).toBe(true); // Preserved
     });
 
     it('should remove multiple classes end-to-end', async () => {
       const context = createMockContext();
-      context.me.className = 'active selected highlighted';
+      context.me!.className = 'active selected highlighted';
       const evaluator = {
         evaluate: async () => 'active selected highlighted',
       };
@@ -574,9 +574,9 @@ describe('RemoveCommand (Standalone V2)', () => {
       await command.execute(input, context);
 
       // Verify all removed
-      expect(context.me.classList.contains('active')).toBe(false);
-      expect(context.me.classList.contains('selected')).toBe(false);
-      expect(context.me.classList.contains('highlighted')).toBe(false);
+      expect(context.me!.classList.contains('active')).toBe(false);
+      expect(context.me!.classList.contains('selected')).toBe(false);
+      expect(context.me!.classList.contains('highlighted')).toBe(false);
     });
 
     it('should remove from specific target end-to-end', async () => {
@@ -623,7 +623,7 @@ describe('RemoveCommand (Standalone V2)', () => {
 
     it('should preserve unrelated classes end-to-end', async () => {
       const context = createMockContext();
-      context.me.className = 'keep-1 remove-me keep-2';
+      context.me!.className = 'keep-1 remove-me keep-2';
       const evaluator = {
         evaluate: async () => '.remove-me',
       };
@@ -639,9 +639,9 @@ describe('RemoveCommand (Standalone V2)', () => {
       await command.execute(input, context);
 
       // Verify preserved classes
-      expect(context.me.classList.contains('keep-1')).toBe(true);
-      expect(context.me.classList.contains('keep-2')).toBe(true);
-      expect(context.me.classList.contains('remove-me')).toBe(false);
+      expect(context.me!.classList.contains('keep-1')).toBe(true);
+      expect(context.me!.classList.contains('keep-2')).toBe(true);
+      expect(context.me!.classList.contains('remove-me')).toBe(false);
     });
   });
 });

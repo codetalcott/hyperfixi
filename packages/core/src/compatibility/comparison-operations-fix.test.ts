@@ -49,7 +49,7 @@ describe('Comparison Operations Fix', () => {
             );
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -86,7 +86,7 @@ describe('Comparison Operations Fix', () => {
             );
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 

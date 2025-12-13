@@ -341,7 +341,7 @@ describe('AddCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.classList.contains('active')).toBe(true);
+      expect(element!.classList.contains('active')).toBe(true);
     });
 
     it('should add multiple classes to single element', async () => {
@@ -353,9 +353,9 @@ describe('AddCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.classList.contains('active')).toBe(true);
-      expect(element.classList.contains('selected')).toBe(true);
-      expect(element.classList.contains('highlighted')).toBe(true);
+      expect(element!.classList.contains('active')).toBe(true);
+      expect(element!.classList.contains('selected')).toBe(true);
+      expect(element!.classList.contains('highlighted')).toBe(true);
     });
 
     it('should add single class to multiple elements', async () => {
@@ -393,9 +393,9 @@ describe('AddCommand (Standalone V2)', () => {
     it('should not add class if already present', async () => {
       const context = createMockContext();
       const element = document.createElement('div');
-      element.classList.add('existing');
+      element!.classList.add('existing');
 
-      const addSpy = vi.spyOn(element.classList, 'add');
+      const addSpy = vi.spyOn(element!.classList, 'add');
 
       await command.execute(
         { type: 'classes', classes: ['existing'], targets: [element] },
@@ -409,16 +409,16 @@ describe('AddCommand (Standalone V2)', () => {
     it('should preserve existing classes', async () => {
       const context = createMockContext();
       const element = document.createElement('div');
-      element.className = 'existing-1 existing-2';
+      element!.className = 'existing-1 existing-2';
 
       await command.execute(
         { type: 'classes', classes: ['new-class'], targets: [element] },
         context
       );
 
-      expect(element.classList.contains('existing-1')).toBe(true);
-      expect(element.classList.contains('existing-2')).toBe(true);
-      expect(element.classList.contains('new-class')).toBe(true);
+      expect(element!.classList.contains('existing-1')).toBe(true);
+      expect(element!.classList.contains('existing-2')).toBe(true);
+      expect(element!.classList.contains('new-class')).toBe(true);
     });
 
     it('should handle elements with no existing classes', async () => {
@@ -430,7 +430,7 @@ describe('AddCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.className).toBe('first-class');
+      expect(element!.className).toBe('first-class');
     });
   });
 
@@ -521,7 +521,7 @@ describe('AddCommand (Standalone V2)', () => {
       await command.execute(input, context);
 
       // Verify
-      expect(context.me.classList.contains('active')).toBe(true);
+      expect(context.me!.classList.contains('active')).toBe(true);
     });
 
     it('should add multiple classes end-to-end', async () => {
@@ -544,9 +544,9 @@ describe('AddCommand (Standalone V2)', () => {
       await command.execute(input, context);
 
       // Verify
-      expect(context.me.classList.contains('active')).toBe(true);
-      expect(context.me.classList.contains('selected')).toBe(true);
-      expect(context.me.classList.contains('highlighted')).toBe(true);
+      expect(context.me!.classList.contains('active')).toBe(true);
+      expect(context.me!.classList.contains('selected')).toBe(true);
+      expect(context.me!.classList.contains('highlighted')).toBe(true);
     });
 
     it('should add to specific target end-to-end', async () => {
@@ -591,7 +591,7 @@ describe('AddCommand (Standalone V2)', () => {
 
     it('should preserve existing classes end-to-end', async () => {
       const context = createMockContext();
-      context.me.className = 'existing-1 existing-2';
+      context.me!.className = 'existing-1 existing-2';
       const evaluator = {
         evaluate: async () => '.new-class',
       };
@@ -607,9 +607,9 @@ describe('AddCommand (Standalone V2)', () => {
       await command.execute(input, context);
 
       // Verify all classes present
-      expect(context.me.classList.contains('existing-1')).toBe(true);
-      expect(context.me.classList.contains('existing-2')).toBe(true);
-      expect(context.me.classList.contains('new-class')).toBe(true);
+      expect(context.me!.classList.contains('existing-1')).toBe(true);
+      expect(context.me!.classList.contains('existing-2')).toBe(true);
+      expect(context.me!.classList.contains('new-class')).toBe(true);
     });
   });
 });

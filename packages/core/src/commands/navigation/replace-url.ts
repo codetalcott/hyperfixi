@@ -12,7 +12,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 import { parseUrlArguments, type UrlCommandInput } from '../helpers/url-argument-parser';
 
 /**
@@ -41,7 +41,10 @@ export interface ReplaceUrlCommandOutput {
   sideEffects: ['navigation'],
 })
 @command({ name: 'replace', category: 'navigation' })
-export class ReplaceUrlCommand {
+export class ReplaceUrlCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

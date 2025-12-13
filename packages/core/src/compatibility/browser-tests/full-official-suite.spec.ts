@@ -228,7 +228,7 @@ class OfficialTestSuiteRunner {
           } catch (error) {
             return {
               success: false,
-              error: error.message || String(error)
+              error: (error as Error).message || String(error)
             };
           }
         },
@@ -247,7 +247,7 @@ class OfficialTestSuiteRunner {
       }
     } catch (error) {
       this.results.errors.push(
-        `${testFile.category}/${testFile.filename} - ${testCase.description}: ${error.message}`
+        `${testFile.category}/${testFile.filename} - ${testCase.description}: ${(error as Error).message}`
       );
       this.results.failed++;
       return false;
@@ -351,8 +351,8 @@ test.describe('Complete Official _hyperscript Test Suite', () => {
             }
           }
         } catch (error) {
-          console.error(`  ❌ Failed to process ${testFile.filename}: ${error.message}`);
-          runner.results.errors.push(`${category}/${testFile.filename}: ${error.message}`);
+          console.error(`  ❌ Failed to process ${testFile.filename}: ${(error as Error).message}`);
+          runner.results.errors.push(`${category}/${testFile.filename}: ${(error as Error).message}`);
         }
       }
     }

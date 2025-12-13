@@ -312,7 +312,7 @@ describe('Enhanced Official Expression Compatibility Tests', () => {
           await parseAndEvaluateExpression(pattern, context);
           passedCount++;
         } catch (error) {
-          console.warn(`Pattern failed: ${pattern}`, error.message);
+          console.warn(`Pattern failed: ${pattern}`, (error as Error).message);
         }
       }
 

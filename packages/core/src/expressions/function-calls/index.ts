@@ -134,12 +134,13 @@ export class FunctionCallExpression
         }
       } else {
         // Regular function call validation
-        const functionReference = validatedArgs[0];
+        const functionReference = validatedArgs[0] as unknown;
         const functionArgs = validatedArgs.length > 1 ? (validatedArgs[1] as unknown[]) : [];
 
         // Validate function reference
         if (isString(functionReference)) {
-          if ((functionReference as string).trim().length === 0) {
+          const funcRef = functionReference as string;
+          if (funcRef.trim().length === 0) {
             issues.push({
               type: 'validation-error',
               message: 'Function name cannot be empty',
@@ -147,7 +148,7 @@ export class FunctionCallExpression
             });
           }
 
-          if (functionReference.includes('..')) {
+          if (funcRef.includes('..')) {
             issues.push({
               type: 'validation-error',
               message: 'Invalid function path - contains consecutive dots',
@@ -155,7 +156,7 @@ export class FunctionCallExpression
             });
           }
 
-          if (functionReference.startsWith('.') || functionReference.endsWith('.')) {
+          if (funcRef.startsWith('.') || funcRef.endsWith('.')) {
             issues.push({
               type: 'validation-error',
               message: 'Function path cannot start or end with a dot',
@@ -165,7 +166,7 @@ export class FunctionCallExpression
 
           // Check for potentially dangerous function names
           const dangerousFunctions = ['eval', 'Function', 'setTimeout', 'setInterval'];
-          const functionName = functionReference.split('.').pop() || '';
+          const functionName = funcRef.split('.').pop() || '';
           if (dangerousFunctions.includes(functionName)) {
             issues.push({
               type: 'validation-error',

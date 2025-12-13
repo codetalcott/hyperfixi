@@ -28,7 +28,7 @@ import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import { parseClasses } from '../helpers/class-manipulation';
 import { parseAttribute } from '../helpers/attribute-manipulation';
 import { parseDuration } from '../helpers/duration-parsing';
-import { command, meta, createFactory, type CommandMetadata } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for ToggleCommand
@@ -92,7 +92,7 @@ export type ToggleCommandInput =
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'toggle', category: 'dom' })
-export class ToggleCommand {
+export class ToggleCommand implements DecoratedCommand {
   // Properties set by decorators
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;

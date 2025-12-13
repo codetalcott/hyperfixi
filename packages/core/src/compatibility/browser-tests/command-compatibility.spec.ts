@@ -46,7 +46,7 @@ test.describe('HyperFixi Command Compatibility Tests @comprehensive', () => {
             const result = await window.executeHyperScript(script, context);
             return { success: true, result, error: null };
           } catch (error) {
-            return { success: false, result: null, error: error.message };
+            return { success: false, result: null, error: (error as Error).message };
           }
         };
       `,
@@ -166,7 +166,7 @@ test.describe('HyperFixi Command Compatibility Tests @comprehensive', () => {
             description: testCase.description,
             command: testCase.command,
             success: false,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -246,7 +246,7 @@ test.describe('HyperFixi Command Compatibility Tests @comprehensive', () => {
             description: testCase.description,
             command: testCase.command,
             success: false,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -333,7 +333,7 @@ test.describe('HyperFixi Command Compatibility Tests @comprehensive', () => {
             description: testCase.description,
             command: testCase.command,
             success: false,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -430,7 +430,7 @@ test.describe('HyperFixi Command Compatibility Tests @comprehensive', () => {
             description: testCase.description,
             command: testCase.command,
             success: false,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }

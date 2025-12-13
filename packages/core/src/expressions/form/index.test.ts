@@ -127,7 +127,7 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           username: 'john_doe',
           email: 'john@example.com',
           age: 25,
@@ -147,7 +147,7 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({});
+        expect(result.value!).toEqual({});
       }
     });
 
@@ -164,7 +164,7 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ test: 'value' });
+        expect(result.value!).toEqual({ test: 'value' });
       }
     });
   });
@@ -182,7 +182,7 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value.name).toBe('John');
+        expect(result.value!.name).toBe('John');
       }
     });
 
@@ -198,8 +198,8 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value.count).toBe(42);
-        expect(typeof result.value.count).toBe('number');
+        expect(result.value!.count).toBe(42);
+        expect(typeof result.value!.count).toBe('number');
       }
     });
 
@@ -224,8 +224,8 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value.checked).toBe('yes');
-        expect(result.value.unchecked).toBe(false);
+        expect(result.value!.checked).toBe('yes');
+        expect(result.value!.unchecked).toBe(false);
       }
     });
 
@@ -250,7 +250,7 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value.choice).toBe('option2');
+        expect(result.value!.choice).toBe('option2');
       }
     });
 
@@ -275,7 +275,7 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value.language).toBe('es');
+        expect(result.value!.language).toBe('es');
       }
     });
   });
@@ -286,7 +286,7 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('MISSING_FORM_ELEMENT');
+        expect(result.error!.code).toBe('MISSING_FORM_ELEMENT');
       }
     });
 
@@ -295,7 +295,7 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('INVALID_ELEMENT_TYPE');
+        expect(result.error!.code).toBe('INVALID_ELEMENT_TYPE');
       }
     });
   });
@@ -329,7 +329,7 @@ describe('Enhanced Form Values Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value['field-id']).toBe('test-value');
+        expect(result.value!['field-id']).toBe('test-value');
       }
     });
   });
@@ -354,7 +354,7 @@ describe('Enhanced Form Validation Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -368,7 +368,7 @@ describe('Enhanced Form Validation Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -379,7 +379,7 @@ describe('Enhanced Form Validation Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
   });
@@ -395,7 +395,7 @@ describe('Enhanced Form Validation Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -414,7 +414,7 @@ describe('Enhanced Form Validation Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -433,7 +433,7 @@ describe('Enhanced Form Validation Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -452,7 +452,7 @@ describe('Enhanced Form Validation Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -471,7 +471,7 @@ describe('Enhanced Form Validation Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
   });
@@ -482,7 +482,7 @@ describe('Enhanced Form Validation Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('INVALID_FORM_ELEMENT');
+        expect(result.error!.code).toBe('INVALID_FORM_ELEMENT');
       }
     });
   });
@@ -515,8 +515,8 @@ describe('Enhanced Form Serialization Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toContain('name=John+Doe');
-        expect(result.value).toContain('email=john%40example.com');
+        expect(result.value!).toContain('name=John+Doe');
+        expect(result.value!).toContain('email=john%40example.com');
         expect(result.type).toBe('string');
       }
     });
@@ -533,9 +533,9 @@ describe('Enhanced Form Serialization Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toContain('special=');
+        expect(result.value!).toContain('special=');
         // Should be URL encoded
-        expect(result.value).toContain('%');
+        expect(result.value!).toContain('%');
       }
     });
   });
@@ -589,7 +589,7 @@ describe('Enhanced Form Serialization Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('');
+        expect(result.value!).toBe('');
       }
     });
 
@@ -610,8 +610,8 @@ describe('Enhanced Form Serialization Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toContain('valid=value');
-        expect(result.value).toContain('empty=');
+        expect(result.value!).toContain('valid=value');
+        expect(result.value!).toContain('empty=');
       }
     });
   });
@@ -622,7 +622,7 @@ describe('Enhanced Form Serialization Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('INVALID_FORM_ELEMENT');
+        expect(result.error!.code).toBe('INVALID_FORM_ELEMENT');
       }
     });
   });
@@ -653,8 +653,8 @@ describe('Utility Functions', () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.value.username).toBe('john_doe');
-      expect(result.value.age).toBe(25);
+      expect(result.value!.username).toBe('john_doe');
+      expect(result.value!.age).toBe(25);
     }
   });
 
@@ -675,7 +675,7 @@ describe('Utility Functions', () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(typeof result.value).toBe('string');
-      expect(result.value).toContain('username=john_doe');
+      expect(result.value!).toContain('username=john_doe');
     }
   });
 });

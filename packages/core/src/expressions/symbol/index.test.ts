@@ -66,7 +66,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(42);
+        expect(result.value!).toBe(42);
         expect(result.type).toBe('number');
       }
     });
@@ -76,7 +76,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('Alice');
+        expect(result.value!).toBe('Alice');
         expect(result.type).toBe('string');
       }
     });
@@ -86,7 +86,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -96,7 +96,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([1, 2, 3]);
+        expect(result.value!).toEqual([1, 2, 3]);
         expect(result.type).toBe('array');
       }
     });
@@ -106,7 +106,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ name: 'Test', value: 100 });
+        expect(result.value!).toEqual({ name: 'Test', value: 100 });
         expect(result.type).toBe('object');
       }
     });
@@ -121,25 +121,25 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(999); // Should prefer locals
+        expect(result.value!).toBe(999); // Should prefer locals
         expect(result.type).toBe('number');
       }
     });
 
     test('resolves from variables map', async () => {
-      context.variables.set('variableValue', 'from variables');
+      context.variables!.set('variableValue', 'from variables');
 
       const result = await symbolExpression.evaluate(context, 'variableValue');
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('from variables');
+        expect(result.value!).toBe('from variables');
         expect(result.type).toBe('string');
       }
     });
 
     test('resolves from meta context with highest priority', async () => {
-      context.meta.set('testValue', 'meta-priority');
+      context.meta!.set('testValue', 'meta-priority');
       context.locals.set('testValue', 'locals-value');
       // testValue also exists in direct context as 42
 
@@ -147,7 +147,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('meta-priority'); // Meta has highest priority
+        expect(result.value!).toBe('meta-priority'); // Meta has highest priority
         expect(result.type).toBe('string');
       }
     });
@@ -165,7 +165,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('test-class');
+        expect(result.value!).toBe('test-class');
         expect(result.type).toBe('string');
       }
     });
@@ -199,7 +199,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeUndefined();
+        expect(result.value!).toBeUndefined();
         expect(result.type).toBe('undefined');
       }
     });
@@ -212,7 +212,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('global-value');
+        expect(result.value!).toBe('global-value');
         expect(result.type).toBe('string');
       }
 
@@ -229,7 +229,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(null);
+        expect(result.value!).toBe(null);
         expect(result.type).toBe('null');
       }
     });
@@ -241,7 +241,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeUndefined();
+        expect(result.value!).toBeUndefined();
         expect(result.type).toBe('undefined');
       }
     });
@@ -265,8 +265,8 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('SymbolValidationError');
-        expect(result.error.message).toContain('validation failed');
+        expect(result.error!.name).toBe('SymbolValidationError');
+        expect(result.error!.message).toContain('validation failed');
         expect(result.type).toBe('error');
       }
     });
@@ -293,7 +293,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(42);
+        expect(result.value!).toBe(42);
       }
     });
 
@@ -336,7 +336,7 @@ describe('Enhanced Symbol Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(500);
+        expect(result.value!).toBe(500);
       }
 
       // Should be fast even with large context
@@ -359,7 +359,7 @@ describe('Enhanced Symbol Expression', () => {
       results.forEach(result => {
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(42);
+          expect(result.value!).toBe(42);
         }
       });
 

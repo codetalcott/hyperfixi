@@ -16,7 +16,7 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { createCustomEvent, parseEventValue } from '../helpers/event-helpers';
 import type { EventOptions } from '../helpers/event-helpers';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 export type { EventOptions } from '../helpers/event-helpers';
 
@@ -43,7 +43,10 @@ export interface TriggerCommandInput {
   sideEffects: ['event-dispatch'],
 })
 @command({ name: 'trigger', category: 'event' })
-export class TriggerCommand {
+export class TriggerCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

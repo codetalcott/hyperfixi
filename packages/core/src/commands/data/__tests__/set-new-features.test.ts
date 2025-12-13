@@ -135,9 +135,9 @@ describe('SetCommand - Object Literal Support', () => {
         context
       );
 
-      expect(element.textContent).toBe('Updated');
-      expect(element.title).toBe('Tooltip');
-      expect(element.id).toBe('updated-id');
+      expect(element!.textContent).toBe('Updated');
+      expect(element!.title).toBe('Tooltip');
+      expect(element!.id).toBe('updated-id');
     });
 
     it('should set properties on multiple elements', async () => {
@@ -349,7 +349,7 @@ describe('SetCommand - "the X of Y" Syntax', () => {
         context
       );
 
-      expect(element.textContent).toBe('Set via pattern');
+      expect(element!.textContent).toBe('Set via pattern');
     });
   });
 });
@@ -464,7 +464,7 @@ describe('SetCommand - CSS Property Shorthand', () => {
         context
       );
 
-      expect(element.style.opacity).toBe('0.7');
+      expect(element!.style.opacity).toBe('0.7');
     });
 
     it('should set kebab-case style property', async () => {
@@ -481,7 +481,7 @@ describe('SetCommand - CSS Property Shorthand', () => {
         context
       );
 
-      expect(element.style.backgroundColor).toBe('green');
+      expect(element!.style.backgroundColor).toBe('green');
     });
 
     it('should set multiple style properties', async () => {
@@ -508,8 +508,8 @@ describe('SetCommand - CSS Property Shorthand', () => {
         context
       );
 
-      expect(element.style.color).toBe('red');
-      expect(element.style.fontSize).toBe('16px');
+      expect(element!.style.color).toBe('red');
+      expect(element!.style.fontSize).toBe('16px');
     });
 
     it('should update context.it when setting style', async () => {
@@ -601,8 +601,8 @@ describe('SetCommand - Integration (New Features)', () => {
 
     await command.execute(input, context);
 
-    expect(context.me.textContent).toBe('Object');
-    expect(context.me.id).toBe('obj-id');
+    expect(context.me!.textContent).toBe('Object');
+    expect(context.me!.id).toBe('obj-id');
   });
 
   it('should set "the X of Y" end-to-end', async () => {
@@ -622,7 +622,7 @@ describe('SetCommand - Integration (New Features)', () => {
 
     await command.execute(input, context);
 
-    expect(context.me.title).toBe('Title');
+    expect(context.me!.title).toBe('Title');
   });
 
   it('should set CSS property end-to-end', async () => {
@@ -642,6 +642,6 @@ describe('SetCommand - Integration (New Features)', () => {
 
     await command.execute(input, context);
 
-    expect(context.me.style.opacity).toBe('0.8');
+    expect(context.me!.style.opacity).toBe('0.8');
   });
 });

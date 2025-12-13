@@ -14,7 +14,7 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { getVariableValue } from '../helpers/variable-access';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for GoCommand
@@ -44,7 +44,10 @@ export interface GoCommandOutput {
   sideEffects: ['navigation', 'scrolling'],
 })
 @command({ name: 'go', category: 'navigation' })
-export class GoCommand {
+export class GoCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

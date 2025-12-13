@@ -67,7 +67,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
         console.error('Template render failed:', error);
         return {
           success: false,
-          error: error.message,
+          error: (error as Error).message,
           expected: 'render :)',
           actual: '',
         };
@@ -127,7 +127,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
       } catch (error) {
         return {
           success: false,
-          error: error.message,
+          error: (error as Error).message,
           expected: 'render &lt;br&gt; <br>',
           actual: '',
         };
@@ -181,7 +181,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
       } catch (error) {
         return {
           success: false,
-          error: error.message,
+          error: (error as Error).message,
           expected: 'begin\n1\n2\n3\nend\n',
           actual: '',
         };
@@ -240,7 +240,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
       } catch (error) {
         return {
           success: false,
-          error: error.message,
+          error: (error as Error).message,
           expected: 'begin\na\nend\n',
           actual: '',
         };
@@ -297,7 +297,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
       } catch (error) {
         return {
           success: false,
-          error: `Render command failed: ${error.message}`,
+          error: `Render command failed: ${(error as Error).message}`,
         };
       }
     });

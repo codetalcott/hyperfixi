@@ -415,11 +415,7 @@ export class PatternMatcher {
     const methodCall = `${token.value}.${methodToken.value}(${args.join(', ')})`;
     return {
       type: 'expression',
-      value: methodCall,
-      expressionType: 'method-call',
-      object: createSelector(token.value),
-      method: methodToken.value,
-      args,
+      raw: methodCall,
     } as SemanticValue;
   }
 

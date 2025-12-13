@@ -99,7 +99,7 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
             success: false,
             result: null,
             expected: null,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -162,7 +162,7 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
             success: false,
             result: null,
             expected: null,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -232,7 +232,7 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
             success: false,
             result: null,
             expected: null,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }
@@ -309,7 +309,7 @@ test.describe('HyperFixi vs _hyperscript Baseline Tests', () => {
             success: false,
             result: null,
             expected: null,
-            error: error.message,
+            error: (error as Error).message,
           });
         }
       }

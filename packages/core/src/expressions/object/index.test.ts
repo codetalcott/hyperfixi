@@ -25,18 +25,18 @@ describe('Enhanced Object Expression', () => {
 
   describe('Input Validation', () => {
     test('validates empty object literal', async () => {
-      const result = await objectExpression.validate([]);
+      const result = await objectExpression.validate!([]);
       expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
+      expect(result.errors!).toHaveLength(0);
     });
 
     test('validates single field object', async () => {
-      const result = await objectExpression.validate([createStaticField('foo', true)]);
+      const result = await objectExpression.validate!([createStaticField('foo', true)]);
       expect(result.isValid).toBe(true);
     });
 
     test('validates multi-field object', async () => {
-      const result = await objectExpression.validate([
+      const result = await objectExpression.validate!([
         createStaticField('foo', true),
         createStaticField('bar', false),
       ]);
@@ -47,13 +47,13 @@ describe('Enhanced Object Expression', () => {
       const largeFieldArray = Array.from({ length: 1001 }, (_, i) =>
         createStaticField(`field${i}`, i)
       );
-      const result = await objectExpression.validate(largeFieldArray);
+      const result = await objectExpression.validate!(largeFieldArray);
       // Validation is now permissive - large objects are accepted
       expect(result.isValid).toBe(true);
     });
 
     test.skip('accepts)', async () => {
-      const result = await objectExpression.validate([
+      const result = await objectExpression.validate!([
         createStaticField('foo', true),
         createStaticField('foo', false),
       ]);
@@ -62,7 +62,7 @@ describe('Enhanced Object Expression', () => {
     });
 
     test.skip('accepts)', async () => {
-      const result = await objectExpression.validate([
+      const result = await objectExpression.validate!([
         createField(123, 'value', false), // Non-string static key - now accepted
       ]);
       // Validation is now permissive - type coercion happens at runtime
@@ -76,7 +76,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({});
+        expect(result.value!).toEqual({});
         expect(result.type).toBe('object');
       }
     });
@@ -88,7 +88,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ foo: true });
+        expect(result.value!).toEqual({ foo: true });
         expect(result.type).toBe('object');
       }
     });
@@ -98,7 +98,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ name: 'John' });
+        expect(result.value!).toEqual({ name: 'John' });
         expect(result.type).toBe('object');
       }
     });
@@ -108,7 +108,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ age: 30 });
+        expect(result.value!).toEqual({ age: 30 });
         expect(result.type).toBe('object');
       }
     });
@@ -124,7 +124,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ foo: true, bar: false });
+        expect(result.value!).toEqual({ foo: true, bar: false });
         expect(result.type).toBe('object');
       }
     });
@@ -140,7 +140,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           name: 'John',
           age: 30,
           active: true,
@@ -161,7 +161,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ foo: true, bar: false });
+        expect(result.value!).toEqual({ foo: true, bar: false });
       }
     });
 
@@ -175,7 +175,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           'field-with-hyphens': true,
           field_with_underscores: false,
           'field.with.dots': 'value',
@@ -194,7 +194,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           '-foo': true,
           'bar-baz': false,
         });
@@ -216,7 +216,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           dynamicKey: true,
           static: false,
         });
@@ -233,7 +233,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           computedKey: 'computed-value',
         });
       }
@@ -249,7 +249,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           asyncKey: 'async-value',
         });
       }
@@ -267,7 +267,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           asyncField: 'resolved-value',
         });
       }
@@ -286,7 +286,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           field1: 'value1',
           field2: 'value2',
           field3: 'sync-value',
@@ -307,7 +307,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           nested: { inner: 'value' },
           simple: 'value',
         });
@@ -325,7 +325,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({
+        expect(result.value!).toEqual({
           array: [1, 2, 3],
           count: 3,
         });
@@ -346,7 +346,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('DynamicFieldKeyError');
+        expect(result.error!.name).toBe('DynamicFieldKeyError');
       }
     });
 
@@ -362,7 +362,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('FieldValueFunctionError');
+        expect(result.error!.name).toBe('FieldValueFunctionError');
       }
     });
   });
@@ -397,7 +397,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ foo: true, bar: false });
+        expect(result.value!).toEqual({ foo: true, bar: false });
       }
     });
 
@@ -455,10 +455,10 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(Object.keys(result.value)).toHaveLength(20);
+        expect(Object.keys(result.value!)).toHaveLength(20);
         // Verify all promises were resolved
         for (let i = 0; i < 20; i++) {
-          expect(result.value[`field${i}`]).toBe(`value${i}`);
+          expect(result.value![`field${i}`]).toBe(`value${i}`);
         }
       }
 
@@ -473,7 +473,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({});
+        expect(result.value!).toEqual({});
       }
     });
 
@@ -482,7 +482,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ foo: true });
+        expect(result.value!).toEqual({ foo: true });
       }
     });
 
@@ -495,7 +495,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ foo: true, bar: false });
+        expect(result.value!).toEqual({ foo: true, bar: false });
       }
     });
 
@@ -508,7 +508,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ foo: true, bar: false });
+        expect(result.value!).toEqual({ foo: true, bar: false });
       }
     });
 
@@ -521,7 +521,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ '-foo': true, 'bar-baz': false });
+        expect(result.value!).toEqual({ '-foo': true, 'bar-baz': false });
       }
     });
 
@@ -536,7 +536,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ foo: true, 'bar-baz': false });
+        expect(result.value!).toEqual({ foo: true, 'bar-baz': false });
       }
     });
 
@@ -554,7 +554,7 @@ describe('Enhanced Object Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual({ bar: true, foo: false });
+        expect(result.value!).toEqual({ bar: true, foo: false });
       }
     });
   });

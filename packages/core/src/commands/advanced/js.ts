@@ -12,7 +12,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 export interface JsCommandInput {
   code: string;
@@ -39,7 +39,10 @@ export interface JsCommandOutput {
   sideEffects: ['code-execution', 'data-mutation'],
 })
 @command({ name: 'js', category: 'advanced' })
-export class JsCommand {
+export class JsCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     _evaluator: ExpressionEvaluator,

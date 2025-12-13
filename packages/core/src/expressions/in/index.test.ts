@@ -18,13 +18,13 @@ describe('Enhanced In Expression', () => {
 
   describe('Input Validation', () => {
     test('validates correct input arguments', async () => {
-      const result = await inExpression.validate([1, [1, 2, 3]]);
+      const result = await inExpression.validate!([1, [1, 2, 3]]);
       expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
+      expect(result.errors!).toHaveLength(0);
     });
 
     test('validates array search values', async () => {
-      const result = await inExpression.validate([
+      const result = await inExpression.validate!([
         [1, 3],
         [1, 2, 3],
       ]);
@@ -32,20 +32,20 @@ describe('Enhanced In Expression', () => {
     });
 
     test.skip('accepts)', async () => {
-      const result = await inExpression.validate([undefined, [1, 2, 3]]);
+      const result = await inExpression.validate!([undefined, [1, 2, 3]]);
       // Validation is now permissive - undefined is handled at runtime
       expect(result.isValid).toBe(true);
     });
 
     test.skip('accepts)', async () => {
-      const result = await inExpression.validate([1, null]);
+      const result = await inExpression.validate!([1, null]);
       // Validation is now permissive - null is handled at runtime
       expect(result.isValid).toBe(true);
     });
 
     test.skip('accepts)', async () => {
       const largeSearchArray = new Array(101).fill(0).map((_, i) => i);
-      const result = await inExpression.validate([largeSearchArray, [1, 2, 3]]);
+      const result = await inExpression.validate!([largeSearchArray, [1, 2, 3]]);
       // Validation is now permissive - large arrays are accepted
       expect(result.isValid).toBe(true);
     });
@@ -57,7 +57,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([1]);
+        expect(result.value!).toEqual([1]);
         expect(result.type).toBe('array');
       }
     });
@@ -67,7 +67,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([]);
+        expect(result.value!).toEqual([]);
         expect(result.type).toBe('array');
       }
     });
@@ -77,7 +77,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([1, 3]);
+        expect(result.value!).toEqual([1, 3]);
         expect(result.type).toBe('array');
       }
     });
@@ -87,7 +87,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([1, 3]);
+        expect(result.value!).toEqual([1, 3]);
         expect(result.type).toBe('array');
       }
     });
@@ -97,7 +97,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([]);
+        expect(result.value!).toEqual([]);
         expect(result.type).toBe('array');
       }
     });
@@ -107,7 +107,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual(['apple']);
+        expect(result.value!).toEqual(['apple']);
         expect(result.type).toBe('array');
       }
     });
@@ -117,7 +117,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([1, 'hello']);
+        expect(result.value!).toEqual([1, 'hello']);
         expect(result.type).toBe('array');
       }
     });
@@ -141,7 +141,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual(['second']);
+        expect(result.value!).toEqual(['second']);
       }
     });
 
@@ -150,7 +150,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual(['e']);
+        expect(result.value!).toEqual(['e']);
       }
     });
   });
@@ -173,8 +173,8 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toHaveLength(1);
-        expect(result.value[0]).toBeInstanceOf(HTMLElement);
+        expect(result.value!).toHaveLength(1);
+        expect(result.value![0]).toBeInstanceOf(HTMLElement);
       }
     });
 
@@ -292,7 +292,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('InvalidContainerError');
+        expect(result.error!.name).toBe('InvalidContainerError');
       }
     });
 
@@ -301,7 +301,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('QuerySelectorError');
+        expect(result.error!.name).toBe('QuerySelectorError');
       }
     });
 
@@ -317,7 +317,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('ArraySearchError');
+        expect(result.error!.name).toBe('ArraySearchError');
       }
     });
   });
@@ -333,7 +333,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([1]);
+        expect(result.value!).toEqual([1]);
       }
     });
 
@@ -374,7 +374,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([100, 500, 900]);
+        expect(result.value!).toEqual([100, 500, 900]);
       }
 
       // Should be reasonably fast even for large arrays
@@ -401,9 +401,9 @@ describe('Enhanced In Expression', () => {
         if (result.success) {
           const expectedValue = index % 10;
           if (expectedValue === 0) {
-            expect(result.value).toEqual([]); // 0 is not in array
+            expect(result.value!).toEqual([]); // 0 is not in array
           } else {
-            expect(result.value).toEqual([expectedValue]);
+            expect(result.value!).toEqual([expectedValue]);
           }
         }
       });
@@ -420,7 +420,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([1]);
+        expect(result.value!).toEqual([1]);
       }
     });
 
@@ -430,7 +430,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([1, 3]);
+        expect(result.value!).toEqual([1, 3]);
       }
     });
 
@@ -440,7 +440,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([1, 3]);
+        expect(result.value!).toEqual([1, 3]);
       }
     });
 
@@ -450,7 +450,7 @@ describe('Enhanced In Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual([]);
+        expect(result.value!).toEqual([]);
       }
     });
 

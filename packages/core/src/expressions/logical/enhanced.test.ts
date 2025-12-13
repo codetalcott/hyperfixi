@@ -57,7 +57,7 @@ describe('Enhanced Logical Expressions', () => {
       expect(equalsExpression.metadata?.category).toBe('Logical');
       expect(equalsExpression.metadata?.complexity).toBe('simple');
       expect(equalsExpression.metadata?.examples).toBeInstanceOf(Array);
-      expect(equalsExpression.metadata?.examples.length).toBeGreaterThan(0);
+      expect(equalsExpression.metadata?.examples!.length).toBeGreaterThan(0);
     });
 
     it.skip('should have comprehensive LLM documentation', () => {
@@ -218,7 +218,7 @@ describe('Enhanced Logical Expressions', () => {
       expect(matchesExpression.metadata?.category).toBe('Logical');
       expect(matchesExpression.metadata?.complexity).toBe('medium');
       expect(matchesExpression.metadata?.sideEffects).toContain('dom-query');
-      expect(matchesExpression.metadata?.performance.complexity).toBe('O(n)');
+      expect(matchesExpression.metadata?.performance!.complexity).toBe('O(n)');
     });
 
     it.skip('should have comprehensive LLM documentation', () => {
@@ -312,9 +312,9 @@ describe('Enhanced Logical Expressions', () => {
     });
 
     it('should maintain existing validate signature', () => {
-      expect(typeof equalsExpression.validate).toBe('function');
-      expect(typeof andExpression.validate).toBe('function');
-      expect(typeof matchesExpression.validate).toBe('function');
+      expect(typeof equalsExpression.validate!).toBe('function');
+      expect(typeof andExpression.validate!).toBe('function');
+      expect(typeof matchesExpression.validate!).toBe('function');
     });
 
     it('should have all original properties', () => {
@@ -362,16 +362,16 @@ describe('Enhanced Logical Expressions', () => {
 
   describe('Enhanced Validation', () => {
     it('should provide original validation for enhanced expressions', () => {
-      const result1 = equalsExpression.validate([5, 10]);
+      const result1 = equalsExpression.validate!([5, 10]);
       expect(result1).toBeNull();
 
-      const result2 = equalsExpression.validate([5]); // Missing argument
+      const result2 = equalsExpression.validate!([5]); // Missing argument
       expect(result2).toContain('exactly two arguments');
 
-      const result3 = andExpression.validate([true, false]);
+      const result3 = andExpression.validate!([true, false]);
       expect(result3).toBeNull();
 
-      const result4 = matchesExpression.validate([mockElement, '.class']);
+      const result4 = matchesExpression.validate!([mockElement, '.class']);
       expect(result4).toBeNull();
     });
 

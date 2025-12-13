@@ -234,15 +234,15 @@ describe('Enhanced Positional Expressions', () => {
       });
 
       it('should track performance', async () => {
-        const initialHistoryLength = context.evaluationHistory.length;
+        const initialHistoryLength = context.evaluationHistory!.length;
 
         await expression.evaluate(context, {
           collection: [1, 2, 3],
         });
 
-        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
 
-        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
         expect(evaluation.expressionName).toBe('first');
         expect(evaluation.category).toBe('Positional');
         expect(evaluation.success).toBe(true);
@@ -354,15 +354,15 @@ describe('Enhanced Positional Expressions', () => {
       });
 
       it('should track performance correctly', async () => {
-        const initialHistoryLength = context.evaluationHistory.length;
+        const initialHistoryLength = context.evaluationHistory!.length;
 
         await expression.evaluate(context, {
           collection: 'test',
         });
 
-        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
 
-        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
         expect(evaluation.expressionName).toBe('last');
         expect(evaluation.success).toBe(true);
       });
@@ -585,16 +585,16 @@ describe('Enhanced Positional Expressions', () => {
       });
 
       it('should track performance', async () => {
-        const initialHistoryLength = context.evaluationHistory.length;
+        const initialHistoryLength = context.evaluationHistory!.length;
 
         await expression.evaluate(context, {
           collection: [1, 2, 3],
           index: 1,
         });
 
-        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
 
-        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
         expect(evaluation.expressionName).toBe('at');
         expect(evaluation.category).toBe('Positional');
         expect(evaluation.success).toBe(true);
@@ -762,15 +762,15 @@ describe('Enhanced Positional Expressions', () => {
       });
 
       it('should track performance', async () => {
-        const initialHistoryLength = context.evaluationHistory.length;
+        const initialHistoryLength = context.evaluationHistory!.length;
 
         await expression.evaluate(context, {
           collection: [1, 2, 3],
         });
 
-        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
 
-        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
         expect(evaluation.expressionName).toBe('random');
         expect(evaluation.category).toBe('Positional');
         expect(evaluation.success).toBe(true);

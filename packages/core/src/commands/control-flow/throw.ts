@@ -11,7 +11,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for ThrowCommand
@@ -40,7 +40,10 @@ export interface ThrowCommandOutput {
   sideEffects: ['error-throwing', 'execution-termination'],
 })
 @command({ name: 'throw', category: 'control-flow' })
-export class ThrowCommand {
+export class ThrowCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

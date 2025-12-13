@@ -16,7 +16,7 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveElement } from '../helpers/element-resolution';
 import { parseDuration, camelToKebab } from '../helpers/duration-parsing';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 /**
  * Typed input for TransitionCommand
@@ -54,7 +54,10 @@ export interface TransitionCommandOutput {
   sideEffects: ['style-change', 'timing'],
 })
 @command({ name: 'transition', category: 'animation' })
-export class TransitionCommand {
+export class TransitionCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

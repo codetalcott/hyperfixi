@@ -9,7 +9,7 @@
 import type { TypedExecutionContext, ExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 // Re-export for backward compatibility
 export interface ContinueCommandInput {}
@@ -35,7 +35,10 @@ export interface ContinueCommandOutput {
   sideEffects: ['control-flow'],
 })
 @command({ name: 'continue', category: 'control-flow' })
-export class ContinueCommand {
+export class ContinueCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     _raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     _evaluator: ExpressionEvaluator,

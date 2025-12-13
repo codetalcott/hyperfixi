@@ -571,8 +571,8 @@ test.describe('HyperFixi Complete Feature Compatibility Tests', () => {
         `📊 Feature Completion: ${result.completionRate}% (${result.compatibilityScore}/${result.totalFeatures})`
       );
       console.log(`✅ Implemented: ${result.implementedFeatures?.join(', ')}`);
-      if (result.missingFeatures?.length > 0) {
-        console.log(`❌ Missing: ${result.missingFeatures.join(', ')}`);
+      if (result.missingFeatures?.length! > 0) {
+        console.log(`❌ Missing: ${result.missingFeatures!.join(', ')}`);
       }
 
       expect(result.success).toBe(true);

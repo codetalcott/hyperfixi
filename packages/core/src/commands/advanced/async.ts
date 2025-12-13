@@ -11,7 +11,7 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 export interface AsyncCommandInput {
   commands: any[];
@@ -37,7 +37,10 @@ export interface AsyncCommandOutput {
   sideEffects: ['async-execution'],
 })
 @command({ name: 'async', category: 'advanced' })
-export class AsyncCommand {
+export class AsyncCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     _evaluator: ExpressionEvaluator,

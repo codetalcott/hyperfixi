@@ -15,7 +15,7 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveElement } from '../helpers/element-resolution';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 export interface MeasureCommandInput {
   target?: string | HTMLElement;
@@ -46,7 +46,10 @@ export interface MeasureCommandOutput {
   sideEffects: ['data-mutation'],
 })
 @command({ name: 'measure', category: 'animation' })
-export class MeasureCommand {
+export class MeasureCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

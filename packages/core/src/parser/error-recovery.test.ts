@@ -172,7 +172,7 @@ describe('Parser Error Recovery and Error Messages', () => {
 
         // For misspelled identifiers, suggest corrections
         if (!result.success && result.error) {
-          const message = result.error.message;
+          const message = result.error!.message;
           // Check if suggestion system is working
           expect(typeof message).toBe('string');
           expect(message.length).toBeGreaterThan(0);
@@ -328,7 +328,7 @@ describe('Parser Error Recovery and Error Messages', () => {
       expect(result.error).toBeDefined();
 
       // Should not crash or enter infinite loops
-      expect(result.error.message).toBeDefined();
+      expect(result.error!.message).toBeDefined();
     });
 
     it('should provide useful partial results when possible', () => {
@@ -352,10 +352,10 @@ describe('Parser Error Recovery and Error Messages', () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBeDefined();
-      expect(result.error.message).toBeDefined();
-      expect(result.error.position).toBeGreaterThanOrEqual(0);
-      expect(result.error.line).toBeGreaterThanOrEqual(1);
-      expect(result.error.column).toBeGreaterThanOrEqual(1);
+      expect(result.error!.message).toBeDefined();
+      expect(result.error!.position).toBeGreaterThanOrEqual(0);
+      expect(result.error!.line).toBeGreaterThanOrEqual(1);
+      expect(result.error!.column).toBeGreaterThanOrEqual(1);
     });
 
     it('should maintain existing error format', () => {
@@ -370,10 +370,10 @@ describe('Parser Error Recovery and Error Messages', () => {
       expect(result.error).toHaveProperty('line');
       expect(result.error).toHaveProperty('column');
 
-      expect(typeof result.error.message).toBe('string');
-      expect(typeof result.error.position).toBe('number');
-      expect(typeof result.error.line).toBe('number');
-      expect(typeof result.error.column).toBe('number');
+      expect(typeof result.error!.message).toBe('string');
+      expect(typeof result.error!.position).toBe('number');
+      expect(typeof result.error!.line).toBe('number');
+      expect(typeof result.error!.column).toBe('number');
     });
   });
 });

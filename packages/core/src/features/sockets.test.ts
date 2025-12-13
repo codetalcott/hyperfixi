@@ -110,14 +110,14 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
       const result = await socketsFeature.initialize(input);
 
       expect(result.success).toBe(true);
-      expect(result.value).toBeDefined();
+      expect(result.value!).toBeDefined();
 
       if (result.success && result.value) {
-        expect(result.value.category).toBe('Frontend');
-        expect(result.value.capabilities).toContain('websocket-connection');
-        expect(result.value.capabilities).toContain('message-handling');
-        expect(result.value.capabilities).toContain('reconnection-management');
-        expect(result.value.capabilities).toContain('queue-management');
+        expect(result.value!.category).toBe('Frontend');
+        expect(result.value!.capabilities).toContain('websocket-connection');
+        expect(result.value!.capabilities).toContain('message-handling');
+        expect(result.value!.capabilities).toContain('reconnection-management');
+        expect(result.value!.capabilities).toContain('queue-management');
       }
     });
 
@@ -193,10 +193,10 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
       expect(result.success).toBe(true);
 
       if (result.success && result.value) {
-        expect(result.value.capabilities).toContain('websocket-connection');
-        expect(result.value.capabilities).toContain('reconnection-management');
-        expect(result.value.capabilities).toContain('error-recovery');
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.capabilities).toContain('websocket-connection');
+        expect(result.value!.capabilities).toContain('reconnection-management');
+        expect(result.value!.capabilities).toContain('error-recovery');
+        expect(result.value!.state).toBe('ready');
       }
     });
 
@@ -226,8 +226,8 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
       expect(result.success).toBe(true);
 
       if (result.success && result.value) {
-        expect(result.value.capabilities).toContain('message-handling');
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.capabilities).toContain('message-handling');
+        expect(result.value!.state).toBe('ready');
       }
     });
   });
@@ -566,7 +566,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
 
   describe('Validation and Error Handling', () => {
     it('should validate WebSocket URL protocol', () => {
-      const validationResult = socketsFeature.validate({
+      const validationResult = socketsFeature.validate!({
         socket: {
           url: 'http://example.com/ws', // Invalid protocol
         },
@@ -581,7 +581,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
     });
 
     it('should validate WebSocket URL format', () => {
-      const validationResult = socketsFeature.validate({
+      const validationResult = socketsFeature.validate!({
         socket: {
           url: 'not-a-valid-url',
         },
@@ -597,7 +597,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
     });
 
     it('should validate reconnection settings', () => {
-      const validationResult = socketsFeature.validate({
+      const validationResult = socketsFeature.validate!({
         socket: {
           url: 'wss://example.com/ws',
           reconnect: {
@@ -615,7 +615,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
     });
 
     it('should validate heartbeat settings', () => {
-      const validationResult = socketsFeature.validate({
+      const validationResult = socketsFeature.validate!({
         socket: {
           url: 'wss://example.com/ws',
           heartbeat: {
@@ -631,7 +631,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
     });
 
     it('should validate event handler filter expressions', () => {
-      const validationResult = socketsFeature.validate({
+      const validationResult = socketsFeature.validate!({
         socket: {
           url: 'wss://example.com/ws',
         },
@@ -649,7 +649,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
     });
 
     it('should validate conflicting performance options', () => {
-      const validationResult = socketsFeature.validate({
+      const validationResult = socketsFeature.validate!({
         socket: {
           url: 'wss://example.com/ws',
         },
@@ -672,7 +672,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
     });
 
     it('should validate empty commands arrays', () => {
-      const validationResult = socketsFeature.validate({
+      const validationResult = socketsFeature.validate!({
         socket: {
           url: 'wss://example.com/ws',
         },
@@ -689,7 +689,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
     });
 
     it('should validate message queue settings', () => {
-      const validationResult = socketsFeature.validate({
+      const validationResult = socketsFeature.validate!({
         socket: {
           url: 'wss://example.com/ws',
         },
@@ -706,7 +706,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
     });
 
     it('should validate connection limits', () => {
-      const validationResult = socketsFeature.validate({
+      const validationResult = socketsFeature.validate!({
         socket: {
           url: 'wss://example.com/ws',
         },
@@ -727,8 +727,8 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors).toBeDefined();
-      expect(result.suggestions).toBeDefined();
+      expect(result.errors!).toBeDefined();
+      expect(result.suggestions!).toBeDefined();
     });
   });
 
@@ -804,8 +804,8 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
       expect(metadata.complexity).toBe('complex');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
       expect(Array.isArray(metadata.dependencies)).toBe(true);
-      expect(Array.isArray(metadata.examples)).toBe(true);
-      expect(metadata.examples.length).toBeGreaterThan(0);
+      expect(Array.isArray(metadata.examples!)).toBe(true);
+      expect(metadata.examples!.length).toBeGreaterThan(0);
       expect(metadata.environmentRequirements).toBeDefined();
       expect(metadata.performance).toBeDefined();
     });
@@ -922,9 +922,9 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
 
       if (result.success && result.value) {
         // Verify connection capabilities
-        expect(result.value.capabilities).toContain('websocket-connection');
-        expect(result.value.capabilities).toContain('reconnection-management');
-        expect(result.value.capabilities).toContain('error-recovery');
+        expect(result.value!.capabilities).toContain('websocket-connection');
+        expect(result.value!.capabilities).toContain('reconnection-management');
+        expect(result.value!.capabilities).toContain('error-recovery');
 
         // Verify messaging capabilities
         expect(typeof result.value.messaging.sendJSON).toBe('function');
@@ -943,7 +943,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
         expect(typeof result.value.connection.disconnect).toBe('function');
         expect(typeof result.value.connection.reconnect).toBe('function');
 
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.state).toBe('ready');
       }
     });
 
@@ -996,7 +996,7 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
         expect(typeof result.value.messaging.sendBinary).toBe('function');
 
         // Verify real-time optimizations
-        expect(result.value.capabilities).toContain('message-handling');
+        expect(result.value!.capabilities).toContain('message-handling');
       }
     });
 
@@ -1071,8 +1071,8 @@ describe.skip('Enhanced Sockets Feature Implementation', () => {
 
       if (result.success && result.value) {
         // Verify IoT-specific features
-        expect(result.value.capabilities).toContain('reconnection-management');
-        expect(result.value.capabilities).toContain('queue-management');
+        expect(result.value!.capabilities).toContain('reconnection-management');
+        expect(result.value!.capabilities).toContain('queue-management');
 
         // Verify persistence and reliability features
         expect(typeof result.value.queue.getPending).toBe('function');

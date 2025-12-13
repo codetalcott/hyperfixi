@@ -30,7 +30,7 @@ import {
 } from '../../lib/swap-executor';
 import type { MorphOptions } from '../../lib/morph-adapter';
 import { isHTMLElement } from '../../utils/element-check';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 // Re-export types from swap-executor for consumers
 export type { SwapStrategy } from '../../lib/swap-executor';
@@ -94,7 +94,10 @@ async function resolveTargets(
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'swap', category: 'dom' })
-export class SwapCommand {
+export class SwapCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
@@ -269,7 +272,10 @@ export class SwapCommand {
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'morph', category: 'dom' })
-export class MorphCommand {
+export class MorphCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

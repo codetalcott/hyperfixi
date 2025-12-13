@@ -147,8 +147,8 @@ describe('Enhanced Conversion Expressions', () => {
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.name).toBe('NumberConversionError');
-          expect(result.error.code).toBe('INVALID_NUMBER');
+          expect(result.error!.name).toBe('NumberConversionError');
+          expect(result.error!.code).toBe('INVALID_NUMBER');
         }
       });
 
@@ -336,8 +336,8 @@ describe('Enhanced Conversion Expressions', () => {
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.name).toBe('DateConversionError');
-          expect(result.error.code).toBe('INVALID_DATE');
+          expect(result.error!.name).toBe('DateConversionError');
+          expect(result.error!.code).toBe('INVALID_DATE');
         }
       });
     });
@@ -395,8 +395,8 @@ describe('Enhanced Conversion Expressions', () => {
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.name).toBe('ObjectConversionError');
-          expect(result.error.code).toBe('JSON_PARSE_FAILED');
+          expect(result.error!.name).toBe('ObjectConversionError');
+          expect(result.error!.code).toBe('JSON_PARSE_FAILED');
         }
       });
 
@@ -526,9 +526,9 @@ describe('Enhanced Conversion Expressions', () => {
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.error.name).toBe('UnknownConversionTypeError');
-          expect(result.error.code).toBe('UNKNOWN_CONVERSION_TYPE');
-          expect(result.error.suggestions).toContain(
+          expect(result.error!.name).toBe('UnknownConversionTypeError');
+          expect(result.error!.code).toBe('UNKNOWN_CONVERSION_TYPE');
+          expect(result.error!.suggestions).toContain(
             'Use supported types: String, Number, Boolean, Array, Object, Date, JSON, Values'
           );
         }
@@ -557,16 +557,16 @@ describe('Enhanced Conversion Expressions', () => {
 
     describe('Performance Tracking', () => {
       it('should track evaluation performance', async () => {
-        const initialHistoryLength = context.evaluationHistory.length;
+        const initialHistoryLength = context.evaluationHistory!.length;
 
         await expression.evaluate(context, {
           value: 123,
           type: 'String',
         });
 
-        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
 
-        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
         expect(evaluation.expressionName).toBe('as');
         expect(evaluation.category).toBe('Conversion');
         expect(evaluation.success).toBe(true);
@@ -899,16 +899,16 @@ describe('Enhanced Conversion Expressions', () => {
 
     describe('Performance Tracking', () => {
       it('should track evaluation performance', async () => {
-        const initialHistoryLength = context.evaluationHistory.length;
+        const initialHistoryLength = context.evaluationHistory!.length;
 
         await expression.evaluate(context, {
           value: 'test',
           type: 'string',
         });
 
-        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
 
-        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
         expect(evaluation.expressionName).toBe('is');
         expect(evaluation.category).toBe('Conversion');
         expect(evaluation.success).toBe(true);

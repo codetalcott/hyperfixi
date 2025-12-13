@@ -60,7 +60,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('hello world');
+          expect(result.value!).toBe('hello world');
           expect(result.type).toBe('String');
         }
       });
@@ -72,7 +72,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('');
+          expect(result.value!).toBe('');
           expect(result.type).toBe('String');
         }
       });
@@ -84,7 +84,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Hello\nWorld\t"Test"');
+          expect(result.value!).toBe('Hello\nWorld\t"Test"');
         }
       });
     });
@@ -97,7 +97,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Hello John!');
+          expect(result.value!).toBe('Hello John!');
         }
       });
 
@@ -108,7 +108,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('User John is 30 years old');
+          expect(result.value!).toBe('User John is 30 years old');
         }
       });
 
@@ -119,7 +119,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Array has 3 items');
+          expect(result.value!).toBe('Array has 3 items');
         }
       });
 
@@ -130,7 +130,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Price: 19.99, Count: 42');
+          expect(result.value!).toBe('Price: 19.99, Count: 42');
         }
       });
 
@@ -141,7 +141,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Hello !');
+          expect(result.value!).toBe('Hello !');
         }
       });
     });
@@ -154,7 +154,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Hello John!');
+          expect(result.value!).toBe('Hello John!');
         }
       });
 
@@ -165,7 +165,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Length: 3');
+          expect(result.value!).toBe('Length: 3');
         }
       });
 
@@ -176,7 +176,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('App: HyperFixi, User: John, Age: 30');
+          expect(result.value!).toBe('App: HyperFixi, User: John, Age: 30');
         }
       });
     });
@@ -191,7 +191,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Hello John!'); // Should use local value
+          expect(result.value!).toBe('Hello John!'); // Should use local value
         }
       });
 
@@ -202,13 +202,13 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe('Version: 1.0.0');
+          expect(result.value!).toBe('Version: 1.0.0');
         }
       });
 
       it('should resolve context references', async () => {
         context.me = document.createElement('div');
-        context.me.id = 'test-element';
+        context.me!.id = 'test-element';
 
         const result = await expression.evaluate(context, {
           value: 'Element: ${me}',
@@ -216,8 +216,8 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toContain('Element: ');
-          expect(result.value).toContain('test-element');
+          expect(result.value!).toContain('Element: ');
+          expect(result.value!).toContain('test-element');
         }
       });
     });
@@ -249,15 +249,15 @@ describe('Enhanced Special Expressions', () => {
       });
 
       it('should track performance', async () => {
-        const initialHistoryLength = context.evaluationHistory.length;
+        const initialHistoryLength = context.evaluationHistory!.length;
 
         await expression.evaluate(context, {
           value: 'test',
         });
 
-        expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+        expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
 
-        const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+        const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
         expect(evaluation.expressionName).toBe('stringLiteral');
         expect(evaluation.category).toBe('Special');
         expect(evaluation.success).toBe(true);
@@ -298,7 +298,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(42);
+          expect(result.value!).toBe(42);
           expect(result.type).toBe('Number');
         }
       });
@@ -310,7 +310,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(-17);
+          expect(result.value!).toBe(-17);
         }
       });
 
@@ -321,7 +321,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(0);
+          expect(result.value!).toBe(0);
         }
       });
     });
@@ -334,7 +334,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(3.14159);
+          expect(result.value!).toBe(3.14159);
         }
       });
 
@@ -345,7 +345,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(0.000001);
+          expect(result.value!).toBe(0.000001);
         }
       });
 
@@ -356,7 +356,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(1234567890.123);
+          expect(result.value!).toBe(1234567890.123);
         }
       });
     });
@@ -423,7 +423,7 @@ describe('Enhanced Special Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('Boolean');
       }
     });
@@ -435,7 +435,7 @@ describe('Enhanced Special Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('Boolean');
       }
     });
@@ -482,7 +482,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(8);
+          expect(result.value!).toBe(8);
           expect(result.type).toBe('Number');
         }
       });
@@ -495,7 +495,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBeCloseTo(6.0);
+          expect(result.value!).toBeCloseTo(6.0);
         }
       });
 
@@ -507,7 +507,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(-2);
+          expect(result.value!).toBe(-2);
         }
       });
 
@@ -519,7 +519,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(42);
+          expect(result.value!).toBe(42);
         }
       });
     });
@@ -533,7 +533,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(8);
+          expect(result.value!).toBe(8);
         }
       });
 
@@ -545,7 +545,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(1); // true = 1, false = 0
+          expect(result.value!).toBe(1); // true = 1, false = 0
         }
       });
 
@@ -557,7 +557,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(0);
+          expect(result.value!).toBe(0);
         }
       });
 
@@ -569,7 +569,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(8);
+          expect(result.value!).toBe(8);
         }
       });
     });
@@ -643,7 +643,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(15);
+          expect(result.value!).toBe(15);
           expect(result.type).toBe('Number');
         }
       });
@@ -656,7 +656,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBeCloseTo(6.28);
+          expect(result.value!).toBeCloseTo(6.28);
         }
       });
 
@@ -668,7 +668,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(0);
+          expect(result.value!).toBe(0);
         }
       });
 
@@ -680,7 +680,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(-15);
+          expect(result.value!).toBe(-15);
         }
       });
     });
@@ -694,7 +694,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(15);
+          expect(result.value!).toBe(15);
         }
       });
 
@@ -706,7 +706,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(5); // 5 * 1
+          expect(result.value!).toBe(5); // 5 * 1
         }
       });
 
@@ -718,7 +718,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(0); // 5 * 0
+          expect(result.value!).toBe(0); // 5 * 0
         }
       });
     });
@@ -759,8 +759,8 @@ describe('Enhanced Special Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toContain('User Jane');
-        expect(result.value).toContain('3 scores');
+        expect(result.value!).toContain('User Jane');
+        expect(result.value!).toContain('3 scores');
       }
     });
 
@@ -804,7 +804,7 @@ describe('Enhanced Special Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(i + (i + 1));
+          expect(result.value!).toBe(i + (i + 1));
         }
       }
 
@@ -876,15 +876,15 @@ describe('Enhanced Special Expressions', () => {
 
     it('should track performance history correctly', async () => {
       const addExpr = new AdditionExpression();
-      const initialHistoryLength = context.evaluationHistory.length;
+      const initialHistoryLength = context.evaluationHistory!.length;
 
       await addExpr.evaluate(context, { left: 1, right: 2 });
       await addExpr.evaluate(context, { left: 3, right: 4 });
       await addExpr.evaluate(context, { left: 5, right: 6 });
 
-      expect(context.evaluationHistory.length).toBe(initialHistoryLength + 3);
+      expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 3);
 
-      const recentEvaluations = context.evaluationHistory.slice(-3);
+      const recentEvaluations = context.evaluationHistory!.slice(-3);
       recentEvaluations.forEach(evaluation => {
         expect(evaluation.expressionName).toBe('addition');
         expect(evaluation.category).toBe('Special');

@@ -46,7 +46,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -60,7 +60,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -74,7 +74,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -88,7 +88,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -102,13 +102,13 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
 
     it('should validate correct operator', () => {
-      const validResult = expression.validate({
+      const validResult = expression.validate!({
         left: 5,
         operator: '==',
         right: 5,
@@ -119,7 +119,7 @@ describe('Enhanced Comparison Expressions', () => {
     });
 
     it('should reject invalid operator', () => {
-      const invalidResult = expression.validate({
+      const invalidResult = expression.validate!({
         left: 5,
         operator: '!=',
         right: 5,
@@ -131,7 +131,7 @@ describe('Enhanced Comparison Expressions', () => {
     });
 
     it('should track performance', async () => {
-      const initialHistoryLength = context.evaluationHistory.length;
+      const initialHistoryLength = context.evaluationHistory!.length;
 
       await expression.evaluate(context, {
         left: 5,
@@ -139,9 +139,9 @@ describe('Enhanced Comparison Expressions', () => {
         right: 5,
       });
 
-      expect(context.evaluationHistory.length).toBe(initialHistoryLength + 1);
+      expect(context.evaluationHistory!.length).toBe(initialHistoryLength + 1);
 
-      const evaluation = context.evaluationHistory[context.evaluationHistory.length - 1];
+      const evaluation = context.evaluationHistory![context.evaluationHistory!.length - 1];
       expect(evaluation.expressionName).toBe('equals');
       expect(evaluation.category).toBe('Logical');
       expect(evaluation.success).toBe(true);
@@ -173,7 +173,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -187,7 +187,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -201,7 +201,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -223,7 +223,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -237,7 +237,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -251,7 +251,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -265,7 +265,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -279,7 +279,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -301,7 +301,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -315,7 +315,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -337,7 +337,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -351,7 +351,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -365,7 +365,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -387,7 +387,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -401,7 +401,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -415,7 +415,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
         expect(result.type).toBe('boolean');
       }
     });
@@ -471,7 +471,7 @@ describe('Enhanced Comparison Expressions', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(testCase.expected);
+          expect(result.value!).toBe(testCase.expected);
         }
       }
     });
@@ -480,7 +480,7 @@ describe('Enhanced Comparison Expressions', () => {
       const expression = new EqualsExpression();
 
       // Valid input
-      const validResult = expression.validate({
+      const validResult = expression.validate!({
         left: 5,
         operator: '==',
         right: 5,
@@ -488,14 +488,14 @@ describe('Enhanced Comparison Expressions', () => {
       expect(validResult.isValid).toBe(true);
 
       // Missing properties
-      const missingResult = expression.validate({
+      const missingResult = expression.validate!({
         left: 5,
         // missing operator and right
       });
       expect(missingResult.isValid).toBe(false);
 
       // Invalid operator
-      const invalidOpResult = expression.validate({
+      const invalidOpResult = expression.validate!({
         left: 5,
         operator: 'invalid',
         right: 5,
@@ -515,7 +515,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.suggestions.length).toBeGreaterThan(0);
+        expect(result.suggestions!.length).toBeGreaterThan(0);
       }
     });
 
@@ -548,7 +548,7 @@ describe('Enhanced Comparison Expressions', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         // NaN == NaN is false in JavaScript
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -563,7 +563,7 @@ describe('Enhanced Comparison Expressions', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -582,7 +582,7 @@ describe('Enhanced Comparison Expressions', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         // Objects are compared by reference, not value
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
   });

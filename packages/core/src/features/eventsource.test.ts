@@ -153,14 +153,14 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
       const result = await eventsourceFeature.initialize(input);
 
       expect(result.success).toBe(true);
-      expect(result.value).toBeDefined();
+      expect(result.value!).toBeDefined();
 
       if (result.success && result.value) {
-        expect(result.value.category).toBe('Frontend');
-        expect(result.value.capabilities).toContain('sse-connection');
-        expect(result.value.capabilities).toContain('message-processing');
-        expect(result.value.capabilities).toContain('event-handling');
-        expect(result.value.capabilities).toContain('automatic-reconnection');
+        expect(result.value!.category).toBe('Frontend');
+        expect(result.value!.capabilities).toContain('sse-connection');
+        expect(result.value!.capabilities).toContain('message-processing');
+        expect(result.value!.capabilities).toContain('event-handling');
+        expect(result.value!.capabilities).toContain('automatic-reconnection');
       }
     });
 
@@ -229,9 +229,9 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
       expect(result.success).toBe(true);
 
       if (result.success && result.value) {
-        expect(result.value.capabilities).toContain('sse-connection');
-        expect(result.value.capabilities).toContain('error-recovery');
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.capabilities).toContain('sse-connection');
+        expect(result.value!.capabilities).toContain('error-recovery');
+        expect(result.value!.state).toBe('ready');
       }
     });
 
@@ -260,8 +260,8 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
       expect(result.success).toBe(true);
 
       if (result.success && result.value) {
-        expect(result.value.capabilities).toContain('message-processing');
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.capabilities).toContain('message-processing');
+        expect(result.value!.state).toBe('ready');
       }
     });
   });
@@ -536,7 +536,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
 
   describe('Validation and Error Handling', () => {
     it('should validate EventSource URL format', () => {
-      const validationResult = eventsourceFeature.validate({
+      const validationResult = eventsourceFeature.validate!({
         source: {
           url: 'invalid-url-format',
         },
@@ -550,7 +550,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
     });
 
     it('should validate retry settings', () => {
-      const validationResult = eventsourceFeature.validate({
+      const validationResult = eventsourceFeature.validate!({
         source: {
           url: 'https://example.com/events',
           retry: {
@@ -568,7 +568,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
     });
 
     it('should validate timeout settings', () => {
-      const validationResult = eventsourceFeature.validate({
+      const validationResult = eventsourceFeature.validate!({
         source: {
           url: 'https://example.com/events',
           timeout: {
@@ -586,7 +586,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
     });
 
     it('should validate connection limits', () => {
-      const validationResult = eventsourceFeature.validate({
+      const validationResult = eventsourceFeature.validate!({
         source: {
           url: 'https://example.com/events',
         },
@@ -602,7 +602,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
     });
 
     it('should validate event handler filter expressions', () => {
-      const validationResult = eventsourceFeature.validate({
+      const validationResult = eventsourceFeature.validate!({
         source: {
           url: 'https://example.com/events',
         },
@@ -623,7 +623,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
     });
 
     it('should validate conflicting performance options', () => {
-      const validationResult = eventsourceFeature.validate({
+      const validationResult = eventsourceFeature.validate!({
         source: {
           url: 'https://example.com/events',
         },
@@ -649,7 +649,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
     });
 
     it('should validate empty commands arrays', () => {
-      const validationResult = eventsourceFeature.validate({
+      const validationResult = eventsourceFeature.validate!({
         source: {
           url: 'https://example.com/events',
         },
@@ -669,7 +669,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
     });
 
     it('should validate message buffer settings', () => {
-      const validationResult = eventsourceFeature.validate({
+      const validationResult = eventsourceFeature.validate!({
         source: {
           url: 'https://example.com/events',
         },
@@ -694,8 +694,8 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors).toBeDefined();
-      expect(result.suggestions).toBeDefined();
+      expect(result.errors!).toBeDefined();
+      expect(result.suggestions!).toBeDefined();
     });
   });
 
@@ -772,8 +772,8 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
       expect(metadata.complexity).toBe('complex');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
       expect(Array.isArray(metadata.dependencies)).toBe(true);
-      expect(Array.isArray(metadata.examples)).toBe(true);
-      expect(metadata.examples.length).toBeGreaterThan(0);
+      expect(Array.isArray(metadata.examples!)).toBe(true);
+      expect(metadata.examples!.length).toBeGreaterThan(0);
       expect(metadata.environmentRequirements).toBeDefined();
       expect(metadata.performance).toBeDefined();
     });
@@ -874,9 +874,9 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
 
       if (result.success && result.value) {
         // Verify connection capabilities
-        expect(result.value.capabilities).toContain('sse-connection');
-        expect(result.value.capabilities).toContain('automatic-reconnection');
-        expect(result.value.capabilities).toContain('error-recovery');
+        expect(result.value!.capabilities).toContain('sse-connection');
+        expect(result.value!.capabilities).toContain('automatic-reconnection');
+        expect(result.value!.capabilities).toContain('error-recovery');
 
         // Verify message handling capabilities
         expect(typeof result.value.messages.getHistory).toBe('function');
@@ -887,7 +887,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
         expect(typeof result.value.connection.disconnect).toBe('function');
         expect(typeof result.value.connection.reconnect).toBe('function');
 
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.state).toBe('ready');
       }
     });
 
@@ -932,7 +932,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
 
       if (result.success && result.value) {
         // Verify real-time optimizations
-        expect(result.value.capabilities).toContain('message-processing');
+        expect(result.value!.capabilities).toContain('message-processing');
         expect(typeof result.value.messages.getHistory).toBe('function');
       }
     });
@@ -997,8 +997,8 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
 
       if (result.success && result.value) {
         // Verify high-availability features
-        expect(result.value.capabilities).toContain('automatic-reconnection');
-        expect(result.value.capabilities).toContain('error-recovery');
+        expect(result.value!.capabilities).toContain('automatic-reconnection');
+        expect(result.value!.capabilities).toContain('error-recovery');
 
         // Verify reliability features
         expect(typeof result.value.messages.getBuffer).toBe('function');

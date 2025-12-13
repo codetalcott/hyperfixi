@@ -14,7 +14,7 @@ import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 export type FetchResponseType = 'text' | 'json' | 'html' | 'response' | 'blob' | 'arrayBuffer';
 
@@ -46,7 +46,10 @@ export interface FetchCommandOutput {
   sideEffects: ['network', 'event-dispatching'],
 })
 @command({ name: 'fetch', category: 'async' })
-export class FetchCommand {
+export class FetchCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,

@@ -63,7 +63,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('test');
+        expect(result.value!).toBe('test');
         expect(result.type).toBe('string');
       }
     });
@@ -75,7 +75,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeNull();
+        expect(result.value!).toBeNull();
         expect(result.type).toBe('null');
       }
     });
@@ -93,7 +93,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toEqual(obj.user);
+        expect(result.value!).toEqual(obj.user);
         expect(result.type).toBe('object');
       }
     });
@@ -123,7 +123,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('test value');
+        expect(result.value!).toBe('test value');
         expect(result.type).toBe('string');
       }
     });
@@ -152,7 +152,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeNull();
+        expect(result.value!).toBeNull();
       }
     });
   });
@@ -166,7 +166,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('attribute value');
+        expect(result.value!).toBe('attribute value');
         expect(result.type).toBe('string');
       }
     });
@@ -178,7 +178,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeNull();
+        expect(result.value!).toBeNull();
       }
     });
 
@@ -190,7 +190,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('complex value');
+        expect(result.value!).toBe('complex value');
       }
     });
 
@@ -201,7 +201,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeNull();
+        expect(result.value!).toBeNull();
       }
     });
   });
@@ -215,7 +215,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('bracket value');
+        expect(result.value!).toBe('bracket value');
         expect(result.type).toBe('string');
       }
     });
@@ -228,7 +228,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('special value');
+        expect(result.value!).toBe('special value');
       }
     });
 
@@ -239,7 +239,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeNull();
+        expect(result.value!).toBeNull();
       }
     });
   });
@@ -254,7 +254,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('red');
+        expect(result.value!).toBe('red');
         expect(result.type).toBe('string');
       }
     });
@@ -267,7 +267,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('blue');
+        expect(result.value!).toBe('blue');
       }
     });
 
@@ -278,7 +278,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeNull();
+        expect(result.value!).toBeNull();
       }
     });
 
@@ -289,7 +289,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeNull();
+        expect(result.value!).toBeNull();
       }
     });
   });
@@ -306,7 +306,7 @@ describe('Enhanced Possessive Expression', () => {
       if (result.success) {
         // Computed style might return rgb() format
         expect(typeof result.value).toBe('string');
-        expect(result.value).toBeTruthy();
+        expect(result.value!).toBeTruthy();
       }
 
       // Clean up
@@ -321,7 +321,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBeNull();
+        expect(result.value!).toBeNull();
       }
 
       // Clean up
@@ -342,7 +342,7 @@ describe('Enhanced Possessive Expression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Array.isArray(result.value)).toBe(true);
-        expect(result.value).toEqual(['first', 'second', 'third']);
+        expect(result.value!).toEqual(['first', 'second', 'third']);
         expect(result.type).toBe('array');
       }
     });
@@ -359,7 +359,7 @@ describe('Enhanced Possessive Expression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Array.isArray(result.value)).toBe(true);
-        expect(result.value).toEqual(['1', '2']);
+        expect(result.value!).toEqual(['1', '2']);
       }
     });
 
@@ -375,7 +375,7 @@ describe('Enhanced Possessive Expression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Array.isArray(result.value)).toBe(true);
-        expect(result.value).toEqual(['red', 'blue']);
+        expect(result.value!).toEqual(['red', 'blue']);
       }
     });
 
@@ -387,7 +387,7 @@ describe('Enhanced Possessive Expression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Array.isArray(result.value)).toBe(true);
-        expect(result.value).toEqual(['valid', null, 'also valid']);
+        expect(result.value!).toEqual(['valid', null, 'also valid']);
       }
     });
   });
@@ -455,7 +455,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('PossessiveExpressionValidationError');
+        expect(result.error!.name).toBe('PossessiveExpressionValidationError');
       }
     });
 
@@ -479,7 +479,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('value');
+        expect(result.value!).toBe('value');
       }
     });
 
@@ -528,7 +528,7 @@ describe('Enhanced Possessive Expression', () => {
       results.forEach((result, index) => {
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(`item${index}`);
+          expect(result.value!).toBe(`item${index}`);
         }
       });
 
@@ -544,7 +544,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('bar');
+        expect(result.value!).toBe('bar');
       }
     });
 
@@ -556,7 +556,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('attribute-value');
+        expect(result.value!).toBe('attribute-value');
       }
     });
 
@@ -568,7 +568,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('bracket-value');
+        expect(result.value!).toBe('bracket-value');
       }
     });
 
@@ -580,7 +580,7 @@ describe('Enhanced Possessive Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe('red');
+        expect(result.value!).toBe('red');
       }
     });
   });

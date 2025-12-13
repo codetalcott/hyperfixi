@@ -94,7 +94,7 @@ test.describe('Comprehensive Compatibility Metrics', () => {
             expected: test.expected,
             result: null,
             passed: false,
-            error: error.message || String(error),
+            error: (error as Error).message || String(error),
           });
         }
       }
@@ -127,8 +127,9 @@ test.describe('Comprehensive Compatibility Metrics', () => {
     console.log(`Failed: ${failed} (${100 - passRate}%)`);
     console.log('\n=== BY CATEGORY ===');
     for (const [cat, stats] of Object.entries(byCategory)) {
-      const catPassRate = Math.round((stats.passed / stats.total) * 100);
-      console.log(`${cat}: ${stats.passed}/${stats.total} (${catPassRate}%)`);
+      const s = stats as { total: number; passed: number; failed: number };
+      const catPassRate = Math.round((s.passed / s.total) * 100);
+      console.log(`${cat}: ${s.passed}/${s.total} (${catPassRate}%)`);
     }
 
     console.log('\n=== FAILED TESTS ===');

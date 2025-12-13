@@ -309,7 +309,7 @@ describe('Enhanced Function Call Expression', () => {
 
     test('resolves function from variables', async () => {
       const variableFunc = (x: number) => x * 3;
-      context.variables.set('variableFunc', variableFunc);
+      context.variables!.set('variableFunc', variableFunc);
 
       const result = await functionCallExpression.evaluate(context, 'variableFunc', [7]);
 
@@ -321,7 +321,7 @@ describe('Enhanced Function Call Expression', () => {
 
     test('resolves function from meta context', async () => {
       const metaFunc = () => 'meta-result';
-      context.meta.set('metaFunc', metaFunc);
+      context.meta!.set('metaFunc', metaFunc);
 
       const result = await functionCallExpression.evaluate(context, 'metaFunc', []);
 
@@ -404,8 +404,8 @@ describe('Enhanced Function Call Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('ConstructorNotFoundError');
-        expect(result.error.message).toContain('not found');
+        expect(result.error!.name).toBe('ConstructorNotFoundError');
+        expect(result.error!.message).toContain('not found');
       }
     });
 
@@ -420,8 +420,8 @@ describe('Enhanced Function Call Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('ConstructorExecutionError');
-        expect(result.error.message).toContain('Constructor error');
+        expect(result.error!.name).toBe('ConstructorExecutionError');
+        expect(result.error!.message).toContain('Constructor error');
       }
 
       delete (globalThis as any).ErrorConstructor;
@@ -472,8 +472,8 @@ describe('Enhanced Function Call Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('FunctionNotFoundError');
-        expect(result.error.message).toContain('not found');
+        expect(result.error!.name).toBe('FunctionNotFoundError');
+        expect(result.error!.message).toContain('not found');
       }
     });
 
@@ -488,8 +488,8 @@ describe('Enhanced Function Call Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('FunctionExecutionError');
-        expect(result.error.message).toContain('Test error');
+        expect(result.error!.name).toBe('FunctionExecutionError');
+        expect(result.error!.message).toContain('Test error');
       }
 
       delete (globalThis as any).errorFunc;
@@ -500,8 +500,8 @@ describe('Enhanced Function Call Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('FunctionCallValidationError');
-        expect(result.error.message).toContain('validation failed');
+        expect(result.error!.name).toBe('FunctionCallValidationError');
+        expect(result.error!.message).toContain('validation failed');
       }
     });
 
@@ -510,7 +510,7 @@ describe('Enhanced Function Call Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.name).toBe('FunctionNotFoundError');
+        expect(result.error!.name).toBe('FunctionNotFoundError');
       }
     });
   });

@@ -26,7 +26,7 @@ describe('Behavior Parser', () => {
       }
 
       expect(result.success).toBe(true);
-      expect(result.node.type).toBe('behavior');
+      expect(result.node!.type).toBe('behavior');
 
       const behavior = result.node as BehaviorNode;
       expect(behavior.name).toBe('Removable');

@@ -46,7 +46,7 @@ describe('Official Expression Compatibility Tests', () => {
             );
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -84,7 +84,7 @@ describe('Official Expression Compatibility Tests', () => {
             console.log(`  ❌ ${test.expr}: Expected ${test.expected}, got ${result}`);
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -123,7 +123,7 @@ describe('Official Expression Compatibility Tests', () => {
             console.log(`  ❌ ${test.expr}: Expected ${test.expected}, got ${result}`);
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -162,7 +162,7 @@ describe('Official Expression Compatibility Tests', () => {
             console.log(`  ❌ ${test.expr}: Expected ${test.expected}, got ${result}`);
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -203,7 +203,7 @@ describe('Official Expression Compatibility Tests', () => {
             );
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 
@@ -241,7 +241,7 @@ describe('Official Expression Compatibility Tests', () => {
             );
           }
         } catch (error) {
-          console.log(`  ❌ ${test.expr}: Error - ${error.message}`);
+          console.log(`  ❌ ${test.expr}: Error - ${(error as Error).message}`);
         }
       }
 

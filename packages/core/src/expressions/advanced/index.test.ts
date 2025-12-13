@@ -63,7 +63,7 @@ describe('Enhanced Lambda Expression', () => {
         expect(result.type).toBe('function');
 
         // Test the lambda function
-        const lambdaResult = result.value(3, 4);
+        const lambdaResult = result.value!(3, 4);
         expect(lambdaResult).toBe(7);
       }
     });
@@ -76,7 +76,7 @@ describe('Enhanced Lambda Expression', () => {
         expect(typeof result.value).toBe('function');
 
         // Test the lambda function
-        const lambdaResult = result.value({ name: 'Alice', age: 25 });
+        const lambdaResult = result.value!({ name: 'Alice', age: 25 });
         expect(lambdaResult).toBe('Alice');
       }
     });
@@ -89,7 +89,7 @@ describe('Enhanced Lambda Expression', () => {
         expect(typeof result.value).toBe('function');
 
         // Test the lambda function
-        const lambdaResult = result.value();
+        const lambdaResult = result.value!();
         expect(lambdaResult).toBe(true);
       }
     });
@@ -99,7 +99,7 @@ describe('Enhanced Lambda Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        const lambdaResult = result.value('test-value');
+        const lambdaResult = result.value!('test-value');
         expect(lambdaResult).toBe('test-value');
       }
     });
@@ -111,7 +111,7 @@ describe('Enhanced Lambda Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('INVALID_PARAMETERS');
+        expect(result.error!.code).toBe('INVALID_PARAMETERS');
       }
     });
 
@@ -120,7 +120,7 @@ describe('Enhanced Lambda Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('INVALID_BODY');
+        expect(result.error!.code).toBe('INVALID_BODY');
       }
     });
   });
@@ -276,8 +276,8 @@ describe('Enhanced Await Expression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.code).toBe('AWAIT_FAILED');
-        expect(result.error.message).toBe('test error');
+        expect(result.error!.code).toBe('AWAIT_FAILED');
+        expect(result.error!.message).toBe('test error');
       }
     });
 
@@ -342,7 +342,7 @@ describe('Enhanced Error Expression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeInstanceOf(Error);
-        expect(result.value.message).toBe('Something went wrong');
+        expect(result.value!.message).toBe('Something went wrong');
         expect(result.type).toBe('object');
       }
     });
@@ -353,8 +353,8 @@ describe('Enhanced Error Expression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeInstanceOf(Error);
-        expect(result.value.message).toBe('Validation failed');
-        expect(result.value.name).toBe('ValidationError');
+        expect(result.value!.message).toBe('Validation failed');
+        expect(result.value!.name).toBe('ValidationError');
       }
     });
 
@@ -364,8 +364,8 @@ describe('Enhanced Error Expression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeInstanceOf(Error);
-        expect(result.value.message).toBe('Network timeout');
-        expect(result.value.name).toBe('NetworkError');
+        expect(result.value!.message).toBe('Network timeout');
+        expect(result.value!.name).toBe('NetworkError');
         expect((result.value as any).code).toBe('E001');
       }
     });
@@ -376,8 +376,8 @@ describe('Enhanced Error Expression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeInstanceOf(Error);
-        expect(result.value.message).toBe('123');
-        expect(result.value.name).toBe('456');
+        expect(result.value!.message).toBe('123');
+        expect(result.value!.name).toBe('456');
         expect((result.value as any).code).toBe('789');
       }
     });
@@ -404,7 +404,7 @@ describe('Enhanced Error Expression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        const error = result.value;
+        const error = result.value!;
         expect(error.toString()).toContain('TestError');
         expect(error.toString()).toContain('serializable error');
       }
@@ -601,8 +601,8 @@ describe('Utility Functions', () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.value).toBeInstanceOf(Error);
-      expect(result.value.message).toBe('Test error');
-      expect(result.value.name).toBe('TestError');
+      expect(result.value!.message).toBe('Test error');
+      expect(result.value!.name).toBe('TestError');
       expect((result.value as any).code).toBe('T001');
     }
   });

@@ -51,7 +51,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
         expect(result.type).toBe('boolean');
       }
     });
@@ -62,7 +62,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -72,7 +72,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -82,7 +82,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -92,7 +92,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
   });
@@ -104,7 +104,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -114,7 +114,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // 'B' < 'a' in ASCII
+        expect(result.value!).toBe(false); // 'B' < 'a' in ASCII
       }
     });
   });
@@ -126,7 +126,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -136,7 +136,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -146,7 +146,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // true (1) > false (0)
+        expect(result.value!).toBe(true); // true (1) > false (0)
       }
     });
   });
@@ -158,7 +158,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -168,7 +168,7 @@ describe('GreaterThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
   });
@@ -176,7 +176,7 @@ describe('GreaterThanExpression', () => {
   describe('Validation', () => {
     it('should validate correct input', () => {
       const input = { left: 10, right: 5 };
-      const validation = greaterThanExpr.validate(input);
+      const validation = greaterThanExpr.validate!(input);
 
       expect(validation.isValid).toBe(true);
       expect(validation.errors).toHaveLength(0);
@@ -184,7 +184,7 @@ describe('GreaterThanExpression', () => {
 
     it('should reject missing operands', () => {
       const input = { left: 10 }; // missing right
-      const validation = greaterThanExpr.validate(input);
+      const validation = greaterThanExpr.validate!(input);
 
       expect(validation.isValid).toBe(false);
       expect(validation.errors.length).toBeGreaterThan(0);
@@ -212,7 +212,7 @@ describe('LessThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -222,7 +222,7 @@ describe('LessThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
 
@@ -232,7 +232,7 @@ describe('LessThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
   });
@@ -244,7 +244,7 @@ describe('LessThanExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
   });
@@ -270,7 +270,7 @@ describe('GreaterThanOrEqualExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -280,7 +280,7 @@ describe('GreaterThanOrEqualExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -290,7 +290,7 @@ describe('GreaterThanOrEqualExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
   });
@@ -302,7 +302,7 @@ describe('GreaterThanOrEqualExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
   });
@@ -328,7 +328,7 @@ describe('LessThanOrEqualExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -338,7 +338,7 @@ describe('LessThanOrEqualExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -348,7 +348,7 @@ describe('LessThanOrEqualExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
   });
@@ -374,7 +374,7 @@ describe('EqualityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -384,7 +384,7 @@ describe('EqualityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
   });
@@ -396,7 +396,7 @@ describe('EqualityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -406,7 +406,7 @@ describe('EqualityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -416,7 +416,7 @@ describe('EqualityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
   });
@@ -428,7 +428,7 @@ describe('EqualityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -438,7 +438,7 @@ describe('EqualityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
   });
@@ -450,7 +450,7 @@ describe('EqualityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -460,7 +460,7 @@ describe('EqualityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -470,7 +470,7 @@ describe('EqualityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true); // null == undefined in JS
+        expect(result.value!).toBe(true); // null == undefined in JS
       }
     });
   });
@@ -496,7 +496,7 @@ describe('InequalityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -506,7 +506,7 @@ describe('InequalityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false);
+        expect(result.value!).toBe(false);
       }
     });
   });
@@ -518,7 +518,7 @@ describe('InequalityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(true);
+        expect(result.value!).toBe(true);
       }
     });
 
@@ -528,7 +528,7 @@ describe('InequalityExpression', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.value).toBe(false); // 1 == true, so 1 != true is false
+        expect(result.value!).toBe(false); // 1 == true, so 1 != true is false
       }
     });
   });
@@ -640,9 +640,9 @@ describe('Enhanced Comparison Expressions Integration', () => {
 
         expect(result.success).toBe(false);
         if (!result.success) {
-          expect(result.errors).toHaveLength(1);
-          expect(result.errors[0].type).toBe('type-mismatch');
-          expect(result.errors[0].message).toBeTruthy();
+          expect(result.errors!).toHaveLength(1);
+          expect(result.errors![0].type).toBe('type-mismatch');
+          expect(result.errors![0].message).toBeTruthy();
         }
       }
     });
@@ -666,7 +666,7 @@ describe('Enhanced Comparison Expressions Integration', () => {
 
         expect(result.success).toBe(true);
         if (result.success) {
-          expect(result.value).toBe(testCase.expected);
+          expect(result.value!).toBe(testCase.expected);
         }
       }
     });

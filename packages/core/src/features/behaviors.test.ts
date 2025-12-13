@@ -43,14 +43,14 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
       const result = await behaviorsFeature.initialize(input);
 
       expect(result.success).toBe(true);
-      expect(result.value).toBeDefined();
+      expect(result.value!).toBeDefined();
 
       if (result.success && result.value) {
-        expect(result.value.category).toBe('Frontend');
-        expect(result.value.capabilities).toContain('behavior-definition');
-        expect(result.value.capabilities).toContain('behavior-installation');
-        expect(result.value.capabilities).toContain('lifecycle-management');
-        expect(result.value.capabilities).toContain('event-handling');
+        expect(result.value!.category).toBe('Frontend');
+        expect(result.value!.capabilities).toContain('behavior-definition');
+        expect(result.value!.capabilities).toContain('behavior-installation');
+        expect(result.value!.capabilities).toContain('lifecycle-management');
+        expect(result.value!.capabilities).toContain('event-handling');
       }
     });
 
@@ -117,10 +117,10 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
       expect(result.success).toBe(true);
 
       if (result.success && result.value) {
-        expect(result.value.capabilities).toContain('behavior-definition');
-        expect(result.value.capabilities).toContain('parameter-validation');
-        expect(result.value.capabilities).toContain('instance-management');
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.capabilities).toContain('behavior-definition');
+        expect(result.value!.capabilities).toContain('parameter-validation');
+        expect(result.value!.capabilities).toContain('instance-management');
+        expect(result.value!.state).toBe('ready');
       }
     });
 
@@ -160,8 +160,8 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
       expect(result.success).toBe(true);
 
       if (result.success && result.value) {
-        expect(result.value.capabilities).toContain('event-handling');
-        expect(result.value.state).toBe('ready');
+        expect(result.value!.capabilities).toContain('event-handling');
+        expect(result.value!.state).toBe('ready');
       }
     });
   });
@@ -496,12 +496,12 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
       if (result.success && result.value) {
         // Test valid parameters
         const validParams = { required1: 'value1', required2: 'value2' };
-        const validResult = result.value.parameters.validate('parameterized', validParams);
+        const validResult = result.value.parameters.validate!('parameterized', validParams);
         expect(validResult.isValid).toBe(true);
 
         // Test invalid parameters (missing required)
         const invalidParams = { required1: 'value1' };
-        const invalidResult = result.value.parameters.validate('parameterized', invalidParams);
+        const invalidResult = result.value.parameters.validate!('parameterized', invalidParams);
         expect(invalidResult.isValid).toBe(false);
         expect(invalidResult.error).toContain('required2');
       }
@@ -624,7 +624,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
 
   describe('Validation and Error Handling', () => {
     it('should validate behavior name', () => {
-      const validationResult = behaviorsFeature.validate({
+      const validationResult = behaviorsFeature.validate!({
         behavior: {
           name: 'invalid behavior name!', // Invalid characters
           eventHandlers: [],
@@ -640,7 +640,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
     });
 
     it('should validate parameter names', () => {
-      const validationResult = behaviorsFeature.validate({
+      const validationResult = behaviorsFeature.validate!({
         behavior: {
           name: 'valid-name',
           parameters: ['valid_param', 'invalid-param!', 'another_valid'],
@@ -653,7 +653,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
     });
 
     it('should validate duplicate parameters', () => {
-      const validationResult = behaviorsFeature.validate({
+      const validationResult = behaviorsFeature.validate!({
         behavior: {
           name: 'test',
           parameters: ['param1', 'param2', 'param1'], // Duplicate param1
@@ -666,7 +666,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
     });
 
     it('should validate event types', () => {
-      const validationResult = behaviorsFeature.validate({
+      const validationResult = behaviorsFeature.validate!({
         behavior: {
           name: 'test',
           eventHandlers: [{ event: 'invalidEventType123', commands: [{ name: 'log', args: [] }] }],
@@ -678,7 +678,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
     });
 
     it('should validate event source selectors', () => {
-      const validationResult = behaviorsFeature.validate({
+      const validationResult = behaviorsFeature.validate!({
         behavior: {
           name: 'test',
           eventHandlers: [
@@ -698,7 +698,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
     });
 
     it('should validate filter expressions', () => {
-      const validationResult = behaviorsFeature.validate({
+      const validationResult = behaviorsFeature.validate!({
         behavior: {
           name: 'test',
           eventHandlers: [
@@ -716,7 +716,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
     });
 
     it('should validate conflicting performance options', () => {
-      const validationResult = behaviorsFeature.validate({
+      const validationResult = behaviorsFeature.validate!({
         behavior: {
           name: 'test',
           eventHandlers: [
@@ -739,7 +739,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
     });
 
     it('should validate empty commands arrays', () => {
-      const validationResult = behaviorsFeature.validate({
+      const validationResult = behaviorsFeature.validate!({
         behavior: {
           name: 'test',
           eventHandlers: [
@@ -758,7 +758,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
         commands: [{ name: `command${i}`, args: [] }],
       }));
 
-      const validationResult = behaviorsFeature.validate({
+      const validationResult = behaviorsFeature.validate!({
         behavior: {
           name: 'test',
           eventHandlers: tooManyHandlers,
@@ -773,7 +773,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
     });
 
     it('should validate namespace format', () => {
-      const validationResult = behaviorsFeature.validate({
+      const validationResult = behaviorsFeature.validate!({
         behavior: {
           name: 'test',
           namespace: 'invalid namespace format!',
@@ -791,8 +791,8 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.errors).toBeDefined();
-      expect(result.suggestions).toBeDefined();
+      expect(result.errors!).toBeDefined();
+      expect(result.suggestions!).toBeDefined();
     });
   });
 
@@ -868,8 +868,8 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
       expect(metadata.complexity).toBe('complex');
       expect(Array.isArray(metadata.sideEffects)).toBe(true);
       expect(Array.isArray(metadata.dependencies)).toBe(true);
-      expect(Array.isArray(metadata.examples)).toBe(true);
-      expect(metadata.examples.length).toBeGreaterThan(0);
+      expect(Array.isArray(metadata.examples!)).toBe(true);
+      expect(metadata.examples!.length).toBeGreaterThan(0);
       expect(metadata.environmentRequirements).toBeDefined();
       expect(metadata.performance).toBeDefined();
     });
@@ -993,7 +993,7 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
 
         // Verify parameter validation
         const validParams = { title: 'Test Modal', closable: true, size: 'large' };
-        const validation = result.value.parameters.validate('ui.modal', validParams);
+        const validation = result.value.parameters.validate!('ui.modal', validParams);
         expect(validation.isValid).toBe(true);
 
         // Verify defaults
@@ -1005,10 +1005,10 @@ describe.skip('Enhanced Behaviors Feature Implementation', () => {
         });
 
         // Verify state
-        expect(result.value.state).toBe('ready');
-        expect(result.value.capabilities).toContain('behavior-definition');
-        expect(result.value.capabilities).toContain('lifecycle-management');
-        expect(result.value.capabilities).toContain('parameter-validation');
+        expect(result.value!.state).toBe('ready');
+        expect(result.value!.capabilities).toContain('behavior-definition');
+        expect(result.value!.capabilities).toContain('lifecycle-management');
+        expect(result.value!.capabilities).toContain('parameter-validation');
       }
     });
 

@@ -301,7 +301,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(context.me.getAttribute('data-theme')).toBe('dark');
+      expect(context.me!.getAttribute('data-theme')).toBe('dark');
       expect(output.target).toBe('@data-theme');
       expect(output.value).toBe('dark');
       expect(output.targetType).toBe('attribute');
@@ -315,7 +315,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(context.me.getAttribute('aria-label')).toBe('Close button');
+      expect(context.me!.getAttribute('aria-label')).toBe('Close button');
     });
 
     it('should convert value to string for attributes', async () => {
@@ -326,7 +326,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(context.me.getAttribute('data-count')).toBe('42');
+      expect(context.me!.getAttribute('data-count')).toBe('42');
     });
 
     it('should update context.it when setting attribute', async () => {
@@ -351,7 +351,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.textContent).toBe('Hello World');
+      expect(element!.textContent).toBe('Hello World');
       expect(output.target).toBe(element);
       expect(output.value).toBe('Hello World');
       expect(output.targetType).toBe('property');
@@ -366,7 +366,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.innerHTML).toBe('<strong>Bold</strong>');
+      expect(element!.innerHTML).toBe('<strong>Bold</strong>');
     });
 
     it('should set innerText property', async () => {
@@ -378,7 +378,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.innerText).toBe('Plain text');
+      expect(element!.innerText).toBe('Plain text');
     });
 
     it('should set id property', async () => {
@@ -390,7 +390,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.id).toBe('new-id');
+      expect(element!.id).toBe('new-id');
     });
 
     it('should set className property', async () => {
@@ -402,7 +402,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.className).toBe('active selected');
+      expect(element!.className).toBe('active selected');
     });
 
     it('should set value property on input element', async () => {
@@ -426,7 +426,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.style.color).toBe('red');
+      expect(element!.style.color).toBe('red');
     });
 
     it('should set style property with hyphen', async () => {
@@ -438,7 +438,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.style.backgroundColor).toBe('blue');
+      expect(element!.style.backgroundColor).toBe('blue');
     });
 
     it('should set generic property', async () => {
@@ -450,7 +450,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
 
-      expect(element.title).toBe('Element title');
+      expect(element!.title).toBe('Element title');
     });
 
     it('should update context.it when setting property', async () => {
@@ -570,7 +570,7 @@ describe('SetCommand (Standalone V2)', () => {
       const output = await command.execute(input, context);
 
       // Verify
-      expect(context.me.getAttribute('data-theme')).toBe('dark');
+      expect(context.me!.getAttribute('data-theme')).toBe('dark');
       expect(output.targetType).toBe('attribute');
       expect(context.it).toBe('dark');
     });
@@ -596,7 +596,7 @@ describe('SetCommand (Standalone V2)', () => {
       const output = await command.execute(input, context);
 
       // Verify
-      expect(context.me.textContent).toBe('Hello');
+      expect(context.me!.textContent).toBe('Hello');
       expect(output.targetType).toBe('property');
       expect(context.it).toBe('Hello');
     });
@@ -627,7 +627,7 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
       await command.execute(input2, context);
-      expect(context.me.textContent).toBe('World');
+      expect(context.me!.textContent).toBe('World');
 
       // Step 3: Set attribute
       const input3 = await command.parseInput(
@@ -639,12 +639,12 @@ describe('SetCommand (Standalone V2)', () => {
         context
       );
       await command.execute(input3, context);
-      expect(context.me.getAttribute('data-status')).toBe('complete');
+      expect(context.me!.getAttribute('data-status')).toBe('complete');
 
       // Verify all are still set
       expect(context.locals.get('greeting')).toBe('Hello');
-      expect(context.me.textContent).toBe('World');
-      expect(context.me.getAttribute('data-status')).toBe('complete');
+      expect(context.me!.textContent).toBe('World');
+      expect(context.me!.getAttribute('data-status')).toBe('complete');
     });
   });
 });

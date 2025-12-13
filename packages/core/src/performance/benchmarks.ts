@@ -235,7 +235,7 @@ export class Benchmark {
 }
 
 // Singleton instance for global benchmarking
-export const globalBenchmark = new EnhancedBenchmark();
+export const globalBenchmark = new Benchmark();
 
 /**
  * Convenience function for quick benchmarks

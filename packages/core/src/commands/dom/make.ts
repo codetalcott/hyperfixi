@@ -12,7 +12,7 @@
 import type { ASTNode, ExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
-import { command, meta, createFactory } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
 /**
  * Raw input from RuntimeBase (before evaluation)
@@ -45,7 +45,10 @@ export interface MakeCommandInput {
   sideEffects: ['dom-creation', 'data-mutation'],
 })
 @command({ name: 'make', category: 'dom' })
-export class MakeCommand {
+export class MakeCommand implements DecoratedCommand {
+  declare readonly name: string;
+  declare readonly metadata: CommandMetadata;
+
 
   // ============================================================================
   // INLINED UTILITIES (Zero External Dependencies)
