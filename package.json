@@ -11,6 +11,9 @@
   "scripts": {
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
+    "test:integration": "npm test --workspace=@hyperfixi/core && npm test --workspace=@hyperfixi/semantic",
+    "test:core": "npm test --workspace=@hyperfixi/core",
+    "test:semantic": "npm test --workspace=@hyperfixi/semantic",
     "test:watch": "npm run test:watch --workspaces",
     "test:coverage": "npm run test:coverage --workspaces",
     "lint": "npm run lint --workspaces",
