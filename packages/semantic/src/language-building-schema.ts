@@ -300,12 +300,35 @@ export const SUPPORTED_LANGUAGES: LanguageChecklist[] = [
     profileKeywords: [
       'toggle', 'add', 'remove', 'put', 'set', 'show', 'hide',
       'append', 'prepend', 'increment', 'decrement', 'wait',
-      'fetch', 'go', 'trigger', 'send', 'log',
+      'fetch', 'go', 'trigger', 'send', 'log', 'make', 'clone',
+      'take', 'get', 'focus', 'blur', 'transition', 'settle',
+      'if', 'else', 'repeat', 'for', 'while', 'continue', 'halt', 'throw',
+      'call', 'return', 'js', 'async', 'tell', 'default', 'init', 'behavior',
+      'into', 'before', 'after', 'on',
     ],
     tokenizerKeywords: [
-      'toggle', 'add', 'remove', 'put', 'set', 'get', 'show', 'hide',
-      'append', 'prepend', 'take', 'increment', 'decrement', 'wait',
-      'fetch', 'go', 'trigger', 'send', 'call', 'return', 'log',
+      // Commands - Class/Attribute operations
+      'toggle', 'add', 'remove',
+      // Commands - Content operations
+      'put', 'append', 'prepend', 'take', 'make', 'clone',
+      // Commands - Variable operations
+      'set', 'get', 'increment', 'decrement', 'log',
+      // Commands - Visibility
+      'show', 'hide', 'transition',
+      // Commands - Events
+      'on', 'trigger', 'send',
+      // Commands - DOM focus
+      'focus', 'blur',
+      // Commands - Navigation
+      'go',
+      // Commands - Async
+      'wait', 'fetch', 'settle',
+      // Commands - Control flow
+      'if', 'else', 'repeat', 'for', 'while', 'continue', 'halt', 'throw', 'call', 'return',
+      // Commands - Advanced
+      'js', 'async', 'tell', 'default', 'init', 'behavior',
+      // Modifiers
+      'into', 'before', 'after',
     ],
     missingFromTokenizer: [],
     potentialConflicts: [],
@@ -341,19 +364,46 @@ export const SUPPORTED_LANGUAGES: LanguageChecklist[] = [
     profileKeywords: [
       '切り替え', '追加', '削除', '置く', '設定', '表示', '隠す',
       '末尾追加', '先頭追加', '増加', '減少', '待つ', '取得',
-      '前往', '引き金', '送信', 'ログ',
+      '移動', '引き金', '送信', '記録', '作る', '複製', '取る',
+      'フォーカス', 'ぼかし', '遷移', '安定', 'もし', 'そうでなければ',
+      '繰り返し', 'ために', 'の間', '続ける', '停止', '投げる',
+      '呼び出し', '戻る', 'JS実行', '非同期', '伝える', '既定',
+      '初期化', '振る舞い', 'へ', '前に', '後に', 'で',
     ],
     tokenizerKeywords: [
+      // Commands - Class/Attribute operations
       '切り替え', '切り替える', 'トグル', 'トグルする',
-      '追加', '追加する', '削除', '削除する',
-      '置く', '入れる', 'セット', 'セットする', '設定', '設定する',
-      '取得', '取得する', '表示', '表示する', '隠す', '非表示',
-      '増加', '増加する', '増やす', '減少', '減少する', '減らす',
-      '待つ', '待機', '送信', '送信する',
-      'トリガー', '発火', '引き金',
-      '末尾追加', '末尾に追加', 'アペンド',
-      '先頭追加', '先頭に追加', 'プリペンド',
-      '呼び出す', '返す', 'ログ',
+      '追加', '追加する', '加える', '削除', '削除する', '取り除く',
+      // Commands - Content operations
+      '置く', '入れる', '末尾追加', 'アペンド', '先頭追加', 'プリペンド',
+      '取る', '作る', '作成', '複製', 'クローン',
+      // Commands - Variable operations
+      'セット', 'セットする', '設定', '設定する',
+      '取得', '取得する', 'ゲット',
+      '増加', '増加する', '増やす', 'インクリメント',
+      '減少', '減少する', '減らす', 'デクリメント',
+      '記録', 'ログ', '出力',
+      // Commands - Visibility
+      '表示', '表示する', '見せる', '隠す', '非表示', '非表示にする',
+      '遷移', 'トランジション', 'アニメーション',
+      // Commands - Events
+      'で', '時', 'とき', 'トリガー', '発火', '引き金', '送る', '送信', '送信する',
+      // Commands - DOM focus
+      'フォーカス', '集中', 'ぼかし', 'フォーカス解除',
+      // Commands - Navigation
+      '移動', '行く', 'ナビゲート',
+      // Commands - Async
+      '待つ', '待機', 'フェッチ', '安定', '落ち着く',
+      // Commands - Control flow
+      'もし', '条件', 'そうでなければ', 'それ以外',
+      '繰り返し', '繰り返す', 'リピート', 'ために', '各', 'の間', '間',
+      '続ける', '継続', '停止', '止める', 'ハルト', '投げる', 'スロー',
+      '呼び出し', 'コール', '呼ぶ', '呼び出す', '戻る', '返す', 'リターン',
+      // Commands - Advanced
+      'JS実行', 'js', '非同期', 'アシンク', '伝える', 'テル',
+      '既定', 'デフォルト', '初期化', 'イニット', '振る舞い', 'ビヘイビア',
+      // Modifiers
+      'へ', '前に', '後に', '後',
     ],
     missingFromTokenizer: [], // Now synced
     potentialConflicts: [
@@ -396,18 +446,46 @@ export const SUPPORTED_LANGUAGES: LanguageChecklist[] = [
     profileKeywords: [
       '토글', '추가', '제거', '놓다', '설정', '보이다', '숨기다',
       '추가', '앞에추가', '증가', '감소', '기다리다', '가져오다',
-      '가다', '트리거', '보내다', '로그',
+      '가다', '트리거', '보내다', '로그', '만들다', '복사', '가져오기',
+      '포커스', '블러', '전환', '안정', '던지다', '비동기', '말하다',
+      '기본값', '초기화', '동작', '으로', '전에', '후에',
     ],
     tokenizerKeywords: [
-      '토글', '토글하다', '바꾸다', '전환',
-      '추가', '추가하다', '제거', '제거하다',
-      '놓다', '넣다', '세트', '설정', '설정하다',
-      '가져오다', '얻다', '보이다', '표시', '숨기다', '숨김',
+      // Commands - Class/Attribute operations
+      '토글', '토글하다', '바꾸다', '전환', '스위치',
+      '추가', '추가하다', '더하다', '제거', '제거하다', '삭제', '없애다',
+      // Commands - Content operations
+      '놓다', '넣다', '두다', '뒤에추가', '앞에추가',
+      '가져가다', '취하다', '만들다', '생성', '복사', '클론',
+      // Commands - Variable operations
+      '세트', '설정', '설정하다', '정하다',
+      '가져오다', '얻다', '취득',
       '증가', '증가하다', '늘리다', '감소', '감소하다', '줄이다',
-      '기다리다', '대기', '보내다', '전송',
-      '트리거', '발동', '호출', '반환', '로그',
+      '로그', '기록',
+      // Commands - Visibility
+      '보이다', '표시', '보여주다', '숨기다', '숨김', '감추다',
+      '전환', '애니메이션',
+      // Commands - Events
+      '에', '시', '때', '트리거', '발동', '발사', '보내다', '전송',
+      // Commands - DOM focus
+      '포커스', '집중', '블러', '흐리게',
+      // Commands - Navigation
+      '가다', '이동', '네비게이트',
+      // Commands - Async
+      '기다리다', '대기', '페치', '가져오기', '안정', '정착',
+      // Commands - Control flow
+      '만약', '조건', '아니면', '그렇지않으면',
+      '반복', '되풀이', '각각', '동안', '하는동안',
+      '계속', '계속하다', '정지', '중지', '멈추다', '던지다', '던지기',
+      '호출', '부르다', '반환', '돌려주다',
+      // Commands - Advanced
+      'js', 'JS실행', '비동기', '어싱크',
+      '말하다', '알리다', '기본값', '디폴트',
+      '초기화', '시작', '동작', '행동',
+      // Modifiers
+      '으로', '로', '전에', '이전', '후에', '이후',
     ],
-    missingFromTokenizer: [], // Check and update as needed
+    missingFromTokenizer: [], // Now synced
     potentialConflicts: [],
   },
   {
@@ -441,19 +519,47 @@ export const SUPPORTED_LANGUAGES: LanguageChecklist[] = [
     profileKeywords: [
       'بدل', 'أضف', 'أزل', 'ضع', 'اضبط', 'أظهر', 'أخف',
       'ألحق', 'سبق', 'زد', 'أنقص', 'انتظر', 'جلب',
-      'اذهب', 'تشغيل', 'أرسل', 'سجل',
+      'اذهب', 'تشغيل', 'أرسل', 'سجل', 'خذ', 'اصنع', 'استنسخ',
+      'تركيز', 'ضبابية', 'انتقال', 'استقر', 'استدع', 'ارجع',
+      'جافاسكربت', 'متزامن', 'أخبر', 'افتراضي', 'تهيئة', 'سلوك',
+      'في', 'قبل', 'بعد',
     ],
     tokenizerKeywords: [
+      // Commands - Class/Attribute operations
       'بدّل', 'بدل', 'غيّر', 'غير',
-      'أضف', 'إضافة', 'أزل', 'إزالة',
-      'ضع', 'اضبط', 'عيّن',
-      'أظهر', 'إظهار', 'أخف', 'إخفاء',
-      'زد', 'زيادة', 'أنقص', 'إنقاص',
-      'انتظر', 'جلب', 'اذهب',
-      'تشغيل', 'أطلق', 'أرسل', 'سجل',
-      'ألحق', 'سبق',
+      'أضف', 'اضف', 'زِد', 'أزل', 'ازل', 'احذف', 'امسح',
+      // Commands - Content operations
+      'ضع', 'اضع', 'يضع', 'اجعل', 'ألحق', 'سبق',
+      'خذ', 'اصنع', 'أنشئ', 'استنسخ', 'انسخ',
+      // Commands - Variable operations
+      'اضبط', 'عيّن', 'عين', 'حدد',
+      'احصل', 'زِد', 'زد', 'ارفع', 'أنقص', 'انقص', 'قلل',
+      'سجّل', 'سجل',
+      // Commands - Visibility
+      'أظهر', 'اظهر', 'اعرض', 'أخفِ', 'اخفِ', 'اخف', 'اخفي',
+      'انتقال', 'انتقل',
+      // Commands - Events
+      'على', 'عند', 'لدى', 'حين',
+      'تشغيل', 'شغّل', 'شغل', 'أطلق', 'فعّل',
+      'أرسل', 'ارسل',
+      // Commands - DOM focus
+      'تركيز', 'ركز', 'ضبابية', 'شوش',
+      // Commands - Navigation
+      'اذهب',
+      // Commands - Async
+      'انتظر', 'احضر', 'جلب', 'استقر',
+      // Commands - Control flow
+      'إذا', 'اذا', 'لو', 'وإلا', 'والا',
+      'كرر', 'لكل', 'بينما', 'واصل',
+      'أوقف', 'توقف', 'ارم', 'ارمِ',
+      'استدع', 'اتصل', 'نادِ', 'ارجع', 'عُد',
+      // Commands - Advanced
+      'جافاسكربت', 'js', 'متزامن',
+      'أخبر', 'افتراضي', 'تهيئة', 'بدء', 'سلوك',
+      // Modifiers
+      'في', 'إلى', 'قبل', 'بعد',
     ],
-    missingFromTokenizer: [], // Check and update as needed
+    missingFromTokenizer: [], // Now synced
     potentialConflicts: [],
   },
   {
@@ -488,19 +594,44 @@ export const SUPPORTED_LANGUAGES: LanguageChecklist[] = [
       'alternar', 'añadir', 'quitar', 'poner', 'establecer',
       'mostrar', 'ocultar', 'añadir', 'anteponer',
       'incrementar', 'decrementar', 'esperar', 'obtener',
-      'ir', 'disparar', 'enviar', 'registrar',
+      'ir', 'disparar', 'enviar', 'registrar', 'tomar', 'hacer', 'clonar',
+      'enfocar', 'desenfocar', 'transición', 'estabilizar', 'llamar', 'devolver',
+      'js', 'asíncrono', 'decir', 'predeterminar', 'iniciar', 'comportamiento',
+      'dentro de', 'antes', 'después',
     ],
     tokenizerKeywords: [
-      'alternar', 'cambiar', 'toggle',
-      'añadir', 'agregar', 'quitar', 'eliminar', 'remover',
-      'poner', 'colocar', 'establecer', 'configurar',
-      'obtener', 'mostrar', 'ocultar', 'esconder',
+      // Commands - Class/Attribute operations
+      'alternar', 'cambiar', 'toggle', 'conmutar',
+      'añadir', 'agregar', 'quitar', 'eliminar', 'borrar', 'remover',
+      // Commands - Content operations
+      'poner', 'pon', 'colocar', 'anteponer',
+      'tomar', 'hacer', 'crear', 'clonar', 'copiar',
+      // Commands - Variable operations
+      'establecer', 'fijar', 'obtener',
       'incrementar', 'aumentar', 'decrementar', 'disminuir',
-      'esperar', 'enviar', 'disparar', 'activar',
-      'llamar', 'devolver', 'registrar', 'log',
-      'anteponer', 'preponer',
+      'registrar', 'imprimir',
+      // Commands - Visibility
+      'mostrar', 'enseñar', 'ocultar', 'esconder',
+      'transición', 'animar',
+      // Commands - Events
+      'en', 'cuando', 'al', 'disparar', 'activar', 'enviar',
+      // Commands - DOM focus
+      'enfocar', 'desenfocar',
+      // Commands - Navigation
+      'ir', 'navegar',
+      // Commands - Async
+      'esperar', 'buscar', 'estabilizar',
+      // Commands - Control flow
+      'si', 'sino', 'repetir', 'para', 'mientras',
+      'continuar', 'detener', 'parar', 'lanzar', 'arrojar',
+      'llamar', 'devolver', 'retornar',
+      // Commands - Advanced
+      'js', 'asíncrono', 'asincrono',
+      'decir', 'predeterminar', 'iniciar', 'inicializar', 'comportamiento',
+      // Modifiers
+      'dentro de', 'antes', 'después', 'despues',
     ],
-    missingFromTokenizer: [], // Check and update as needed
+    missingFromTokenizer: [], // Now synced
     potentialConflicts: [],
   },
   {
@@ -536,19 +667,47 @@ export const SUPPORTED_LANGUAGES: LanguageChecklist[] = [
       'değiştir', 'ekle', 'kaldır', 'koy', 'ayarla',
       'göster', 'gizle', 'ekle', 'öneekle',
       'artır', 'azalt', 'bekle', 'getir',
-      'git', 'tetikle', 'gönder', 'kaydet',
+      'git', 'tetikle', 'gönder', 'kaydet', 'al', 'yap', 'kopyala',
+      'odakla', 'bulanıklaştır', 'geçiş', 'yerleş', 'fırlat',
+      'asenkron', 'söyle', 'varsayılan', 'başlat', 'davranış',
+      'içine', 'önce', 'sonra',
     ],
     tokenizerKeywords: [
-      'değiştir', 'değistir',
-      'ekle', 'kaldır', 'sil',
-      'koy', 'yerleştir', 'ayarla', 'belirle',
-      'al', 'getir', 'göster', 'gizle', 'sakla',
-      'artır', 'arttır', 'azalt', 'eksilt',
-      'bekle', 'gönder', 'tetikle', 'ateşle',
-      'çağır', 'döndür', 'kaydet', 'logla',
-      'öneekle',
+      // Commands - Class/Attribute operations
+      'değiştir', 'değistir', 'ekle', 'kaldır', 'kaldir', 'sil',
+      // Commands - Content operations
+      'koy', 'yerleştir', 'yerlestir', 'sonunaekle', 'sona_ekle',
+      'basaekle', 'başa_ekle', 'basa_ekle',
+      'al', 'yap', 'oluştur', 'olustur', 'kopyala', 'klonla',
+      // Commands - Variable operations
+      'ayarla', 'belirle', 'getir', 'elde_et',
+      'artır', 'artir', 'azalt', 'kaydet', 'yazdır', 'yazdir',
+      // Commands - Visibility
+      'göster', 'goster', 'gizle', 'sakla',
+      'geçiş', 'gecis', 'animasyon',
+      // Commands - Events
+      'üzerinde', 'uzerinde', 'olduğunda', 'oldugunda',
+      'tetikle', 'ateşle', 'atesle', 'gönder', 'gonder',
+      // Commands - DOM focus
+      'odakla', 'odaklan', 'bulanıklaştır', 'bulaniklastir', 'odak_kaldır', 'odak_kaldir',
+      // Commands - Navigation
+      'git', 'yönlendir', 'yonlendir',
+      // Commands - Async
+      'bekle', 'çek', 'cek', 'yerleş', 'yerles', 'istikrar', 'sabitlen',
+      // Commands - Control flow
+      'eğer', 'eger', 'yoksa', 'değilse', 'degilse',
+      'tekrarla', 'herbir', 'her', 'iken',
+      'devam', 'devam_et', 'dur', 'durdur',
+      'fırlat', 'firlat', 'at',
+      'çağır', 'cagir', 'dön', 'don', 'döndür', 'dondur',
+      // Commands - Advanced
+      'js', 'javascript', 'asenkron', 'eşzamansız', 'eszamansiz',
+      'söyle', 'soyle', 'varsayılan', 'varsayilan',
+      'başlat', 'baslat', 'başla', 'basla', 'davranış', 'davranis',
+      // Modifiers
+      'içine', 'icine', 'önce', 'once', 'sonra',
     ],
-    missingFromTokenizer: [], // Check and update as needed
+    missingFromTokenizer: [], // Now synced
     potentialConflicts: [],
   },
   {
@@ -576,19 +735,42 @@ export const SUPPORTED_LANGUAGES: LanguageChecklist[] = [
       '切换', '添加', '移除', '放置', '设置',
       '显示', '隐藏', '追加', '前置',
       '增加', '减少', '等待', '获取',
-      '前往', '触发', '发送', '日志',
+      '前往', '触发', '发送', '日志', '拿取', '制作', '复制',
+      '聚焦', '失焦', '过渡', '稳定', '抛出', '调用', '返回',
+      '脚本', '异步', '告诉', '默认', '初始化', '行为',
+      '里', '之前', '之后',
     ],
     tokenizerKeywords: [
+      // Commands - Class/Attribute operations
       '切换', '添加', '加', '移除', '删除', '去掉',
+      // Commands - Content operations
       '放置', '放', '放入', '追加', '附加', '前置', '预置',
-      '获取', '取得', '获得',
-      '制作', '创建', '复制', '设置', '设定',
-      '增加', '减少', '日志', '记录',
-      '显示', '展示', '隐藏', '过渡',
-      '当', '触发', '发送', '聚焦', '失焦',
-      '前往', '跳转', '等待', '稳定',
+      '拿取', '取', '制作', '创建', '复制', '克隆',
+      // Commands - Variable operations
+      '设置', '设定', '获取', '取得', '获得',
+      '增加', '减少', '日志', '记录', '打印',
+      // Commands - Visibility
+      '显示', '展示', '隐藏', '过渡', '动画',
+      // Commands - Events
+      '当', '在', '触发', '激发', '发送',
+      // Commands - DOM focus
+      '聚焦', '对焦', '失焦', '模糊',
+      // Commands - Navigation
+      '前往', '跳转', '导航',
+      // Commands - Async
+      '等待', '抓取', '获取数据', '稳定', '安定',
+      // Commands - Control flow
+      '如果', '若', '否则', '不然',
+      '重复', '循环', '遍历', '每个', '为每', '当',
+      '继续', '停止', '中止', '抛出', '抛',
+      '调用', '呼叫', '返回', '回',
+      // Commands - Advanced
+      'js', 'javascript', '脚本', '异步',
+      '告诉', '通知', '默认', '缺省', '初始化', '初始', '行为', '动作',
+      // Modifiers
+      '到里面', '进入', '里', '之前', '前', '之后', '后',
     ],
-    missingFromTokenizer: [], // All keywords now present
+    missingFromTokenizer: [], // Now synced
     potentialConflicts: [],
   },
 ];
@@ -664,8 +846,8 @@ export const SUPPORTED_COMMANDS: CommandChecklist[] = [
     wiredInPatterns: true,
     usesHandCraftedPatterns: false,
     profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
-    tokenizerKeywordsIn: ['en', 'ja', 'es', 'ko', 'tr', 'zh'],
-    missingTokenizerKeywordsIn: ['ar'],
+    tokenizerKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    missingTokenizerKeywordsIn: [],
     testsFor: ['en'],
   },
   {
@@ -674,8 +856,8 @@ export const SUPPORTED_COMMANDS: CommandChecklist[] = [
     wiredInPatterns: true,
     usesHandCraftedPatterns: false,
     profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
-    tokenizerKeywordsIn: ['en', 'zh'],
-    missingTokenizerKeywordsIn: ['ja', 'ar', 'es', 'ko', 'tr'],
+    tokenizerKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    missingTokenizerKeywordsIn: [],
     testsFor: ['en'],
   },
   {
@@ -684,8 +866,8 @@ export const SUPPORTED_COMMANDS: CommandChecklist[] = [
     wiredInPatterns: true,
     usesHandCraftedPatterns: false,
     profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
-    tokenizerKeywordsIn: ['en', 'zh'],
-    missingTokenizerKeywordsIn: ['ja', 'ar', 'es', 'ko', 'tr'],
+    tokenizerKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    missingTokenizerKeywordsIn: [],
     testsFor: ['en'],
   },
   {
@@ -694,8 +876,8 @@ export const SUPPORTED_COMMANDS: CommandChecklist[] = [
     wiredInPatterns: true,
     usesHandCraftedPatterns: false,
     profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
-    tokenizerKeywordsIn: ['en', 'ja', 'es', 'zh'],
-    missingTokenizerKeywordsIn: ['ar', 'ko', 'tr'],
+    tokenizerKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    missingTokenizerKeywordsIn: [],
     testsFor: ['en'],
   },
   // Tier 3: Control flow & DOM (newly wired)
@@ -705,8 +887,8 @@ export const SUPPORTED_COMMANDS: CommandChecklist[] = [
     wiredInPatterns: true,
     usesHandCraftedPatterns: false,
     profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
-    tokenizerKeywordsIn: ['en', 'ja', 'zh'],
-    missingTokenizerKeywordsIn: ['ar', 'es', 'ko', 'tr'],
+    tokenizerKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    missingTokenizerKeywordsIn: [],
     testsFor: ['en'],
   },
   {
@@ -715,8 +897,8 @@ export const SUPPORTED_COMMANDS: CommandChecklist[] = [
     wiredInPatterns: true,
     usesHandCraftedPatterns: false,
     profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
-    tokenizerKeywordsIn: ['en', 'ja', 'zh'],
-    missingTokenizerKeywordsIn: ['ar', 'es', 'ko', 'tr'],
+    tokenizerKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    missingTokenizerKeywordsIn: [],
     testsFor: ['en'],
   },
   {
@@ -725,8 +907,8 @@ export const SUPPORTED_COMMANDS: CommandChecklist[] = [
     wiredInPatterns: true,
     usesHandCraftedPatterns: false,
     profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
-    tokenizerKeywordsIn: ['en', 'ja', 'tr', 'zh'],
-    missingTokenizerKeywordsIn: ['ar', 'es', 'ko'],
+    tokenizerKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    missingTokenizerKeywordsIn: [],
     testsFor: ['en'],
   },
   {
@@ -735,8 +917,8 @@ export const SUPPORTED_COMMANDS: CommandChecklist[] = [
     wiredInPatterns: true,
     usesHandCraftedPatterns: false,
     profileKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
-    tokenizerKeywordsIn: ['en', 'ja', 'tr'],
-    missingTokenizerKeywordsIn: ['ar', 'es', 'ko', 'zh'],
+    tokenizerKeywordsIn: ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh'],
+    missingTokenizerKeywordsIn: [],
     testsFor: ['en'],
   },
 ];

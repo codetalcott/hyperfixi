@@ -77,46 +77,95 @@ const PREPOSITIONS = new Set([
  * Spanish command keywords mapped to their English equivalents.
  */
 const SPANISH_KEYWORDS: Map<string, string> = new Map([
-  // Commands
+  // Commands - Class/Attribute operations
   ['alternar', 'toggle'],
   ['cambiar', 'toggle'],
   ['toggle', 'toggle'],
+  ['conmutar', 'toggle'],
   ['añadir', 'add'],
   ['agregar', 'add'],
   ['quitar', 'remove'],
   ['eliminar', 'remove'],
   ['borrar', 'remove'],
+  ['remover', 'remove'],
+  // Commands - Content operations
   ['poner', 'put'],
   ['pon', 'put'],
   ['colocar', 'put'],
+  ['anteponer', 'prepend'],
+  ['tomar', 'take'],
+  ['hacer', 'make'],
+  ['crear', 'make'],
+  ['clonar', 'clone'],
+  ['copiar', 'clone'],
+  // Commands - Variable operations
   ['establecer', 'set'],
   ['fijar', 'set'],
   ['obtener', 'get'],
-  ['mostrar', 'show'],
-  ['ocultar', 'hide'],
-  ['esconder', 'hide'],
   ['incrementar', 'increment'],
   ['aumentar', 'increment'],
   ['decrementar', 'decrement'],
   ['disminuir', 'decrement'],
-  ['esperar', 'wait'],
-  ['enviar', 'send'],
+  ['registrar', 'log'],
+  ['imprimir', 'log'],
+  // Commands - Visibility
+  ['mostrar', 'show'],
+  ['enseñar', 'show'],
+  ['ocultar', 'hide'],
+  ['esconder', 'hide'],
+  ['transición', 'transition'],
+  ['animar', 'transition'],
+  // Commands - Events
+  ['en', 'on'],
+  ['cuando', 'on'],
+  ['al', 'on'],
   ['disparar', 'trigger'],
   ['activar', 'trigger'],
+  ['enviar', 'send'],
+  // Commands - DOM focus
+  ['enfocar', 'focus'],
+  ['desenfocar', 'blur'],
+  // Commands - Navigation
+  ['ir', 'go'],
+  ['navegar', 'go'],
+  // Commands - Async
+  ['esperar', 'wait'],
+  ['buscar', 'fetch'],
+  ['estabilizar', 'settle'],
+  // Commands - Control flow
+  ['si', 'if'],
+  ['sino', 'else'],
+  ['repetir', 'repeat'],
+  ['para', 'for'],
+  ['mientras', 'while'],
+  ['continuar', 'continue'],
+  ['detener', 'halt'],
+  ['parar', 'halt'],
+  ['lanzar', 'throw'],
+  ['arrojar', 'throw'],
   ['llamar', 'call'],
   ['devolver', 'return'],
   ['retornar', 'return'],
-  ['registrar', 'log'],
-  // Control flow
-  ['si', 'if'],
+  // Commands - Advanced
+  ['js', 'js'],
+  ['asíncrono', 'async'],
+  ['asincrono', 'async'],
+  ['decir', 'tell'],
+  ['predeterminar', 'default'],
+  ['iniciar', 'init'],
+  ['inicializar', 'init'],
+  ['comportamiento', 'behavior'],
+  // Modifiers
+  ['dentro de', 'into'],
+  ['antes', 'before'],
+  ['después', 'after'],
+  ['despues', 'after'],
+  // Control flow helpers
   ['entonces', 'then'],
-  ['sino', 'else'],
   ['de lo contrario', 'else'],
   ['fin', 'end'],
-  ['repetir', 'repeat'],
-  ['mientras', 'while'],
   ['hasta que', 'until'],
-  // Events
+  // Events (for event name recognition)
   ['clic', 'click'],
   ['click', 'click'],
   ['entrada', 'input'],
@@ -159,8 +208,6 @@ const SPANISH_KEYWORDS: Map<string, string> = new Map([
   ['minutos', 'm'],
   ['hora', 'h'],
   ['horas', 'h'],
-  // Conditionals
-  ['cuando', 'when'],
 ]);
 
 // =============================================================================

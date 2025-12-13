@@ -94,7 +94,7 @@ const CHINESE_KEYWORDS: Map<string, string> = new Map([
   ['移除', 'remove'],
   ['删除', 'remove'],
   ['去掉', 'remove'],
-  // Content operations
+  // Commands - Content operations
   ['放置', 'put'],
   ['放', 'put'],
   ['放入', 'put'],
@@ -102,49 +102,99 @@ const CHINESE_KEYWORDS: Map<string, string> = new Map([
   ['附加', 'append'],
   ['前置', 'prepend'],
   ['预置', 'prepend'],
-  ['获取', 'get'],
-  ['取得', 'get'],
-  ['获得', 'get'],
+  ['拿取', 'take'],
+  ['取', 'take'],
   ['制作', 'make'],
   ['创建', 'make'],
   ['复制', 'clone'],
-  // Variable operations
+  ['克隆', 'clone'],
+  // Commands - Variable operations
   ['设置', 'set'],
   ['设定', 'set'],
+  ['获取', 'get'],
+  ['取得', 'get'],
+  ['获得', 'get'],
   ['增加', 'increment'],
   ['减少', 'decrement'],
   ['日志', 'log'],
   ['记录', 'log'],
-  // Visibility
+  ['打印', 'log'],
+  // Commands - Visibility
   ['显示', 'show'],
   ['展示', 'show'],
   ['隐藏', 'hide'],
   ['过渡', 'transition'],
-  // Events
+  ['动画', 'transition'],
+  // Commands - Events
   ['当', 'on'],
+  ['在', 'on'],
   ['触发', 'trigger'],
+  ['激发', 'trigger'],
   ['发送', 'send'],
-  // DOM focus
+  // Commands - DOM focus
   ['聚焦', 'focus'],
+  ['对焦', 'focus'],
   ['失焦', 'blur'],
-  // Navigation
+  ['模糊', 'blur'],
+  // Commands - Navigation
   ['前往', 'go'],
   ['跳转', 'go'],
-  // Async
+  ['导航', 'go'],
+  // Commands - Async
   ['等待', 'wait'],
+  ['抓取', 'fetch'],
+  ['获取数据', 'fetch'],
   ['稳定', 'settle'],
-  // Control flow
+  ['安定', 'settle'],
+  // Commands - Control flow
   ['如果', 'if'],
-  ['那么', 'then'],
+  ['若', 'if'],
   ['否则', 'else'],
-  ['结束', 'end'],
+  ['不然', 'else'],
   ['重复', 'repeat'],
   ['循环', 'repeat'],
+  ['遍历', 'for'],
+  ['每个', 'for'],
+  ['为每', 'for'],
   ['当', 'while'],
-  ['直到', 'until'],
   ['继续', 'continue'],
   ['停止', 'halt'],
-  // Events (these will be normalized)
+  ['中止', 'halt'],
+  ['抛出', 'throw'],
+  ['抛', 'throw'],
+  ['调用', 'call'],
+  ['呼叫', 'call'],
+  ['返回', 'return'],
+  ['回', 'return'],
+  // Commands - Advanced
+  ['js', 'js'],
+  ['javascript', 'js'],
+  ['脚本', 'js'],
+  ['异步', 'async'],
+  ['告诉', 'tell'],
+  ['通知', 'tell'],
+  ['默认', 'default'],
+  ['缺省', 'default'],
+  ['初始化', 'init'],
+  ['初始', 'init'],
+  ['行为', 'behavior'],
+  ['动作', 'behavior'],
+  // Modifiers
+  ['到里面', 'into'],
+  ['进入', 'into'],   // profile primary
+  ['里', 'into'],
+  ['之前', 'before'],
+  ['前', 'before'],
+  ['之后', 'after'],
+  ['后', 'after'],
+  // Control flow helpers
+  ['那么', 'then'],
+  ['然后', 'then'],
+  ['结束', 'end'],
+  ['完', 'end'],
+  ['直到', 'until'],
+
+  // Events (for event name recognition)
   ['点击', 'click'],
   ['双击', 'dblclick'],
   ['输入', 'input'],
@@ -159,6 +209,7 @@ const CHINESE_KEYWORDS: Map<string, string> = new Map([
   ['失去焦点', 'blur'],
   ['加载', 'load'],
   ['滚动', 'scroll'],
+
   // References
   ['我', 'me'],
   ['我的', 'my'],
@@ -167,11 +218,15 @@ const CHINESE_KEYWORDS: Map<string, string> = new Map([
   ['结果', 'result'],
   ['事件', 'event'],
   ['目标', 'target'],
+
   // Positional
   ['第一个', 'first'],
+  ['首个', 'first'],
   ['最后一个', 'last'],
+  ['末个', 'last'],
   ['下一个', 'next'],
   ['上一个', 'previous'],
+
   // Logical
   ['和', 'and'],
   ['并且', 'and'],
@@ -180,11 +235,13 @@ const CHINESE_KEYWORDS: Map<string, string> = new Map([
   ['不', 'not'],
   ['非', 'not'],
   ['是', 'is'],
+
   // Time units
   ['秒', 's'],
   ['毫秒', 'ms'],
   ['分钟', 'm'],
   ['小时', 'h'],
+
   // Boolean
   ['真', 'true'],
   ['假', 'false'],

@@ -107,40 +107,75 @@ const MULTI_CHAR_PARTICLES = ['에서', '으로', '부터', '까지', '처럼', 
  * Korean command keywords mapped to their English equivalents.
  */
 const KOREAN_KEYWORDS: Map<string, string> = new Map([
-  // Commands
+  // Commands - Class/Attribute operations
   ['토글', 'toggle'],
+  ['전환', 'toggle'],
   ['추가', 'add'],
   ['제거', 'remove'],
+  ['삭제', 'remove'],
+  // Commands - Content operations
   ['넣다', 'put'],
+  ['넣기', 'put'],
+  ['놓기', 'put'],
+  ['가져오다', 'take'],
+  ['만들다', 'make'],
+  ['복사', 'clone'],
+  // Commands - Variable operations
   ['설정', 'set'],
   ['얻다', 'get'],
-  ['보이다', 'show'],
-  ['숨기다', 'hide'],
+  ['가져오기', 'fetch'],
   ['증가', 'increment'],
   ['감소', 'decrement'],
-  ['대기', 'wait'],
-  ['보내다', 'send'],
-  ['트리거', 'trigger'],
-  ['호출', 'call'],
-  ['반환', 'return'],
   ['로그', 'log'],
+  // Commands - Visibility
+  ['보이다', 'show'],
+  ['표시', 'show'],
+  ['숨기다', 'hide'],
+  ['전환', 'transition'],
+  // Commands - Events
+  ['에', 'on'],
+  ['시', 'on'],
+  ['때', 'on'],
+  ['트리거', 'trigger'],
+  ['보내다', 'send'],
+  // Commands - DOM focus
+  ['포커스', 'focus'],
+  ['블러', 'blur'],
+  // Commands - Navigation
   ['이동', 'go'],
-  ['만들다', 'make'],
-  ['가져오다', 'take'],
-  ['가져오기', 'fetch'],
-  // Control flow
+  // Commands - Async
+  ['대기', 'wait'],
+  ['안정', 'settle'],
+  // Commands - Control flow
   ['만약', 'if'],
   ['아니면', 'else'],
+  ['반복', 'repeat'],
+  ['동안', 'while'],
+  ['동안', 'for'],
+  ['계속', 'continue'],
+  ['정지', 'halt'],
+  ['던지다', 'throw'],
+  ['호출', 'call'],
+  ['반환', 'return'],
+  // Commands - Advanced
+  ['JS실행', 'js'],
+  ['js', 'js'],
+  ['비동기', 'async'],
+  ['말하다', 'tell'],
+  ['기본값', 'default'],
+  ['초기화', 'init'],
+  ['동작', 'behavior'],
+  // Modifiers
+  ['으로', 'into'],
+  ['전에', 'before'],
+  ['후에', 'after'],
+  // Control flow helpers
   ['그러면', 'then'],
   ['그렇지않으면', 'otherwise'],
   ['끝', 'end'],
-  ['반복', 'repeat'],
-  ['동안', 'while'],
   ['까지', 'until'],
-  ['계속', 'continue'],
   ['중단', 'break'],
-  ['정지', 'halt'],
-  // Events
+  // Events (for event name recognition)
   ['클릭', 'click'],
   ['더블클릭', 'dblclick'],
   ['입력', 'input'],
@@ -150,8 +185,6 @@ const KOREAN_KEYWORDS: Map<string, string> = new Map([
   ['키업', 'keyup'],
   ['마우스오버', 'mouseover'],
   ['마우스아웃', 'mouseout'],
-  ['포커스', 'focus'],
-  ['블러', 'blur'],
   ['로드', 'load'],
   ['스크롤', 'scroll'],
   // References

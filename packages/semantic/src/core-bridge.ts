@@ -74,7 +74,8 @@ export class SemanticAnalyzerImpl implements SemanticAnalyzer {
 
   constructor() {
     this.patternMatcher = new PatternMatcher();
-    this.languages = new Set(['en', 'es', 'ja', 'ar']);
+    // All 7 supported languages
+    this.languages = new Set(['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh']);
   }
 
   analyze(input: string, language: string): SemanticAnalysisResult {

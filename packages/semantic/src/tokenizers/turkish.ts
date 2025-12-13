@@ -94,44 +94,134 @@ const CASE_SUFFIXES = new Set([
  * Turkish command keywords mapped to their English equivalents.
  */
 const TURKISH_KEYWORDS: Map<string, string> = new Map([
-  // Commands (from dictionary)
+  // Commands - Class/Attribute operations
   ['değiştir', 'toggle'],
   ['değistir', 'toggle'],  // without diacritics
   ['ekle', 'add'],
   ['kaldır', 'remove'],
   ['kaldir', 'remove'],    // without diacritics
+  ['sil', 'remove'],
+  // Commands - Content operations
   ['koy', 'put'],
+  ['yerleştir', 'put'],
+  ['yerlestir', 'put'],    // without diacritics
+  ['sonunaekle', 'append'],
+  ['sona_ekle', 'append'],
+  ['basaekle', 'prepend'],
+  ['başa_ekle', 'prepend'],
+  ['basa_ekle', 'prepend'], // without diacritics
+  ['al', 'take'],
+  ['yap', 'make'],
+  ['oluştur', 'make'],
+  ['olustur', 'make'],     // without diacritics
+  ['kopyala', 'clone'],
+  ['klonla', 'clone'],
+  // Commands - Variable operations
   ['ayarla', 'set'],
-  ['al', 'get'],
-  ['göster', 'show'],
-  ['goster', 'show'],      // without diacritics
-  ['gizle', 'hide'],
+  ['belirle', 'set'],
+  ['getir', 'get'],
+  ['elde_et', 'get'],
   ['artır', 'increment'],
   ['artir', 'increment'],  // without diacritics
   ['azalt', 'decrement'],
-  ['bekle', 'wait'],
+  ['kaydet', 'log'],
+  ['yazdır', 'log'],
+  ['yazdir', 'log'],       // without diacritics
+  // Commands - Visibility
+  ['göster', 'show'],
+  ['goster', 'show'],      // without diacritics
+  ['gizle', 'hide'],
+  ['sakla', 'hide'],
+  ['geçiş', 'transition'],
+  ['gecis', 'transition'], // without diacritics
+  ['animasyon', 'transition'],
+  // Commands - Events
+  ['üzerinde', 'on'],
+  ['uzerinde', 'on'],      // without diacritics
+  ['olduğunda', 'on'],
+  ['oldugunda', 'on'],     // without diacritics
+  ['tetikle', 'trigger'],
+  ['ateşle', 'trigger'],
+  ['atesle', 'trigger'],   // without diacritics
   ['gönder', 'send'],
   ['gonder', 'send'],      // without diacritics
-  ['tetikle', 'trigger'],
+  // Commands - DOM focus
+  ['odakla', 'focus'],
+  ['odaklan', 'focus'],
+  ['bulanıklaştır', 'blur'],
+  ['bulaniklastir', 'blur'], // without diacritics
+  ['odak_kaldır', 'blur'],
+  ['odak_kaldir', 'blur'], // without diacritics
+  // Commands - Navigation
+  ['git', 'go'],
+  ['yönlendir', 'go'],
+  ['yonlendir', 'go'],     // without diacritics
+  // Commands - Async
+  ['bekle', 'wait'],
+  ['getir', 'fetch'],
+  ['çek', 'fetch'],
+  ['cek', 'fetch'],        // without diacritics
+  ['yerleş', 'settle'],
+  ['yerles', 'settle'],    // without diacritics
+  ['istikrar', 'settle'],
+  ['sabitlen', 'settle'],  // profile primary
+  // Commands - Control flow
+  ['eğer', 'if'],
+  ['eger', 'if'],          // without diacritics
+  ['yoksa', 'else'],
+  ['değilse', 'else'],
+  ['degilse', 'else'],     // without diacritics
+  ['tekrarla', 'repeat'],
+  ['herbir', 'for'],
+  ['her', 'for'],
+  ['iken', 'while'],
+  ['devam', 'continue'],
+  ['devam_et', 'continue'],
+  ['dur', 'halt'],
+  ['durdur', 'halt'],
+  ['fırlat', 'throw'],
+  ['firlat', 'throw'],     // without diacritics
+  ['at', 'throw'],
   ['çağır', 'call'],
   ['cagir', 'call'],       // without diacritics
   ['dön', 'return'],
   ['don', 'return'],       // without diacritics
-  ['kaydet', 'log'],
-
-  // Control flow
-  ['eğer', 'if'],
-  ['eger', 'if'],          // without diacritics
+  ['döndür', 'return'],
+  ['dondur', 'return'],    // without diacritics
+  // Commands - Advanced
+  ['js', 'js'],
+  ['javascript', 'js'],
+  ['asenkron', 'async'],
+  ['eşzamansız', 'async'],
+  ['eszamansiz', 'async'], // without diacritics
+  ['söyle', 'tell'],
+  ['soyle', 'tell'],       // without diacritics
+  ['varsayılan', 'default'],
+  ['varsayilan', 'default'], // without diacritics
+  ['başlat', 'init'],
+  ['baslat', 'init'],      // without diacritics
+  ['başla', 'init'],
+  ['basla', 'init'],       // without diacritics
+  ['davranış', 'behavior'],
+  ['davranis', 'behavior'], // without diacritics
+  // Modifiers
+  ['içine', 'into'],
+  ['icine', 'into'],       // without diacritics
+  ['önce', 'before'],
+  ['once', 'before'],      // without diacritics
+  ['sonra', 'after'],
+  // Control flow helpers
   ['sonra', 'then'],
-  ['yoksa', 'else'],
+  ['o_zaman', 'then'],
   ['son', 'end'],
-  ['tekrarla', 'repeat'],
-  ['iken', 'while'],
+  ['bitir', 'end'],
   ['kadar', 'until'],
 
-  // Events
+  // Events (for event name recognition)
   ['tıklama', 'click'],
   ['tiklama', 'click'],    // without diacritics
+  ['tık', 'click'],
+  ['tik', 'click'],        // without diacritics
   ['giriş', 'input'],
   ['giris', 'input'],      // without diacritics
   ['değişim', 'change'],
@@ -187,8 +277,6 @@ const TURKISH_KEYWORDS: Map<string, string> = new Map([
   ['ile', 'with'],
   ['için', 'for'],
   ['icin', 'for'],         // without diacritics
-  ['üzerinde', 'on'],
-  ['uzerinde', 'on'],      // without diacritics
 ]);
 
 // =============================================================================

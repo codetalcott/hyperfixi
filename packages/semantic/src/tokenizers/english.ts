@@ -27,16 +27,30 @@ import {
  * English hyperscript keywords that should be recognized.
  */
 const ENGLISH_KEYWORDS = new Set([
-  // Commands
-  'toggle', 'add', 'remove', 'put', 'set', 'get',
-  'show', 'hide', 'append', 'prepend', 'take',
-  'increment', 'decrement', 'wait', 'fetch', 'go',
-  'trigger', 'send', 'call', 'return', 'log',
+  // Commands - Class/Attribute operations
+  'toggle', 'add', 'remove',
+  // Commands - Content operations
+  'put', 'append', 'prepend', 'take', 'make', 'clone',
+  // Commands - Variable operations
+  'set', 'get', 'increment', 'decrement', 'log',
+  // Commands - Visibility
+  'show', 'hide', 'transition',
+  // Commands - Events
+  'on', 'trigger', 'send',
+  // Commands - DOM focus
+  'focus', 'blur',
+  // Commands - Navigation
+  'go',
+  // Commands - Async
+  'wait', 'fetch', 'settle',
+  // Commands - Control flow
+  'if', 'else', 'repeat', 'for', 'while', 'continue', 'halt', 'throw', 'call', 'return',
+  // Commands - Advanced
+  'js', 'async', 'tell', 'default', 'init', 'behavior',
   // Event handling
-  'on', 'every',
-  // Control flow
-  'if', 'then', 'else', 'end', 'unless',
-  'repeat', 'while', 'until', 'for', 'forever', 'times',
+  'every',
+  // Control flow helpers
+  'then', 'end', 'unless', 'until', 'forever', 'times',
   // Prepositions/modifiers
   'into', 'in', 'to', 'from', 'at', 'by', 'with', 'without',
   'before', 'after', 'of', 'as',
