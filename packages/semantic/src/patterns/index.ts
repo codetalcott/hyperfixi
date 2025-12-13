@@ -45,6 +45,32 @@ import {
 } from '../generators';
 
 // =============================================================================
+// Hand-crafted Fetch Simple Pattern (English only)
+// =============================================================================
+
+/**
+ * English: "fetch /url" without "from" preposition.
+ * Official hyperscript allows bare URL without "from".
+ * Higher priority so it's tried first before the generated pattern.
+ */
+const fetchSimpleEnglish: LanguagePattern = {
+  id: 'fetch-en-simple',
+  language: 'en',
+  command: 'fetch',
+  priority: 80, // Lower than generated pattern (100) - fallback when "from" not present
+  template: {
+    format: 'fetch {source}',
+    tokens: [
+      { type: 'literal', value: 'fetch' },
+      { type: 'role', role: 'source' },
+    ],
+  },
+  extraction: {
+    source: { position: 1 },
+  },
+};
+
+// =============================================================================
 // Generated Patterns (New Commands)
 // =============================================================================
 
@@ -94,6 +120,7 @@ export const allPatterns: LanguagePattern[] = [
   ...togglePatterns,
   ...putPatterns,
   ...eventHandlerPatterns,
+  fetchSimpleEnglish, // fetch /url without "from"
   // Generated patterns (new commands)
   ...generatedPatterns,
 ];

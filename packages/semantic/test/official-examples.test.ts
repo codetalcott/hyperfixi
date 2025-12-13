@@ -210,8 +210,8 @@ describe('Official Examples - Tier 2 (Important)', () => {
       expect(node.roles.get('destination')?.value).toBe('https://example.com');
     });
 
-    it.skip('go to the top of the body smoothly', () => {
-      // Complex syntax with positional reference ("top of body") - needs enhancement
+    it('go to the top of the body smoothly', () => {
+      // Complex syntax with positional reference ("top of body")
       expect(canParse('go to the top of the body smoothly', 'en')).toBe(true);
     });
   });
@@ -249,13 +249,13 @@ describe('Official Examples - Tier 2 (Important)', () => {
       expect(node.roles.get('source')?.value).toBe('https://api.example.com/v1');
     });
 
-    it.skip('fetch /clickedMessage', () => {
-      // Official syntax uses bare URL without preposition - needs custom patterns
+    it('fetch /clickedMessage', () => {
+      // Official syntax uses bare URL without preposition
       expect(canParse('fetch /clickedMessage', 'en')).toBe(true);
     });
 
-    it.skip('fetch "/api" (without preposition)', () => {
-      // Official syntax doesn't require "from" - needs custom patterns
+    it('fetch "/api" (without preposition)', () => {
+      // Official syntax doesn't require "from"
       expect(canParse('fetch "/api"', 'en')).toBe(true);
     });
   });
