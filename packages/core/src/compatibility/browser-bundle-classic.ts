@@ -267,8 +267,8 @@ const api = {
   /**
    * Initialize DOM scanning for _="" attributes
    */
-  init: () => {
-    attributeProcessor.init();
+  init: async () => {
+    await attributeProcessor.init();
   }
 };
 
@@ -278,12 +278,12 @@ if (typeof window !== 'undefined') {
 
   // Auto-initialize on DOMContentLoaded
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      attributeProcessor.init();
+    document.addEventListener('DOMContentLoaded', async () => {
+      await attributeProcessor.init();
     });
   } else {
     // DOM already loaded
-    attributeProcessor.init();
+    void attributeProcessor.init();
   }
 }
 

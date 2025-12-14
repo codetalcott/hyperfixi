@@ -34,7 +34,7 @@ export class AttributeProcessor {
    * Initialize the attribute processor
    * This sets up automatic scanning and processing of hyperscript attributes
    */
-  init(): void {
+  async init(): Promise<void> {
     if (typeof document === 'undefined') {
       return; // Skip in non-browser environments
     }
@@ -48,11 +48,11 @@ export class AttributeProcessor {
 
     // Process existing elements
     if (this.options.autoScan) {
-      this.scanAndProcessAll();
+      // Must await to ensure behaviors are defined before elements are processed
+      await this.scanAndProcessAll();
 
       // Dispatch hyperscript:ready event after initial page processing
       this.dispatchReadyEvent();
-    } else {
     }
 
     // Set up mutation observer for new elements
@@ -62,29 +62,35 @@ export class AttributeProcessor {
   /**
    * Scan and process all elements with hyperscript attributes in the document
    */
-  scanAndProcessAll(): void {
+  async scanAndProcessAll(): Promise<void> {
     // Process <script type="text/hyperscript"> tags FIRST
     // This ensures behaviors are defined before elements try to install them
     const scriptTags = document.querySelectorAll('script[type="text/hyperscript"]');
-    scriptTags.forEach(script => {
+    debug.parse(`SCAN: Found ${scriptTags.length} script tags to process`);
+    for (const script of scriptTags) {
       if (script instanceof HTMLScriptElement) {
-        this.processHyperscriptTag(script);
+        debug.parse('SCAN: Processing script tag...');
+        await this.processHyperscriptTag(script);
+        debug.parse('SCAN: Script tag processed');
       }
-    });
+    }
+    debug.parse('SCAN: All script tags processed, now processing elements');
 
     // Process elements with _ attributes AFTER behaviors are defined
     const elements = document.querySelectorAll(`[${this.options.attributeName}]`);
-    elements.forEach((element, index) => {
+    debug.parse(`SCAN: Found ${elements.length} elements to process`);
+    elements.forEach((element) => {
       if (element instanceof HTMLElement) {
         this.processElement(element);
       }
     });
+    debug.parse('SCAN: All elements processed');
   }
 
   /**
    * Process a <script type="text/hyperscript"> tag
    */
-  private processHyperscriptTag(script: HTMLScriptElement): void {
+  private async processHyperscriptTag(script: HTMLScriptElement): Promise<void> {
     debug.parse('SCRIPT: Processing hyperscript script tag');
 
     const hyperscriptCode = script.textContent || script.innerHTML;
@@ -94,42 +100,31 @@ export class AttributeProcessor {
     }
 
     try {
-      debug.parse(
-        'SCRIPT: Compiling hyperscript code from script tag:',
-        hyperscriptCode.substring(0, 100)
-      );
+      debug.parse('SCRIPT: Compiling script tag code:', hyperscriptCode.substring(0, 50) + '...');
 
       // Create execution context (no specific element for global behavior definitions)
       const context = createContext(null);
 
       // Compile the hyperscript code
       const compilationResult = hyperscript.compile(hyperscriptCode);
+      debug.parse('SCRIPT: Compilation result:', compilationResult.success ? 'SUCCESS' : 'FAILED');
 
       if (!compilationResult.success) {
-        console.error(`🔧 SCRIPT: Hyperscript compilation failed for script tag`);
-        console.error(`🔧 SCRIPT: Code that failed:`, hyperscriptCode);
-        console.error(
-          `🔧 SCRIPT: Compilation errors:`,
-          JSON.stringify(compilationResult.errors, null, 2)
-        );
-        compilationResult.errors?.forEach((error: any, i: number) => {
-          console.error(
-            `🔧 SCRIPT: Error ${i + 1}:`,
-            error.message,
-            `at line ${error.line}, column ${error.column}`
-          );
-        });
+        debug.parse('SCRIPT: Hyperscript compilation failed for script tag');
+        debug.parse('SCRIPT: Code that failed:', hyperscriptCode);
+        debug.parse('SCRIPT: Compilation errors:', JSON.stringify(compilationResult.errors, null, 2));
         return;
       }
 
-      debug.parse('SCRIPT: Compilation succeeded, executing...');
+      debug.parse('SCRIPT: Executing script tag AST...');
 
       // Execute the compiled code (this will register behaviors)
-      void hyperscript.execute(compilationResult.ast!, context);
+      // Must await to ensure behaviors are registered before elements are processed
+      await hyperscript.execute(compilationResult.ast!, context);
 
-      debug.parse('SCRIPT: Script tag processing complete');
+      debug.parse('SCRIPT: Script tag execution complete');
     } catch (error) {
-      console.error(`Error processing hyperscript script tag:`, error);
+      debug.parse('SCRIPT: Error processing hyperscript script tag:', error);
     }
   }
 
@@ -166,15 +161,12 @@ export class AttributeProcessor {
       debug.parse('ATTR: Compilation result:', compilationResult);
 
       if (!compilationResult.success) {
-        console.error(`🔧 ATTR: Hyperscript compilation failed for element:`, element);
-        console.error(`🔧 ATTR: Code that failed:`, hyperscriptCode);
-        console.error(
-          `🔧 ATTR: Compilation errors:`,
-          JSON.stringify(compilationResult.errors, null, 2)
-        );
+        debug.parse('ATTR: Hyperscript compilation failed for element:', element);
+        debug.parse('ATTR: Code that failed:', hyperscriptCode);
+        debug.parse('ATTR: Compilation errors:', JSON.stringify(compilationResult.errors, null, 2));
         compilationResult.errors.forEach((error, i) => {
-          console.error(
-            `🔧 ATTR: Error ${i + 1}:`,
+          debug.parse(
+            `ATTR: Error ${i + 1}:`,
             error.message,
             `at line ${error.line}, column ${error.column}`
           );
@@ -196,7 +188,7 @@ export class AttributeProcessor {
       // Dispatch load event on the element after successful processing
       this.dispatchLoadEvent(element);
     } catch (error) {
-      console.error(`Error processing hyperscript attribute on element:`, element, error);
+      debug.parse('ATTR: Error processing hyperscript attribute on element:', element, error);
     }
   }
 
@@ -211,7 +203,7 @@ export class AttributeProcessor {
       });
       element.dispatchEvent(loadEvent);
     } catch (error) {
-      console.error(`Error dispatching load event on element:`, element, error);
+      debug.parse('ATTR: Error dispatching load event on element:', element, error);
     }
   }
 
@@ -236,7 +228,7 @@ export class AttributeProcessor {
       document.dispatchEvent(readyEvent);
       this.readyEventDispatched = true;
     } catch (error) {
-      console.error(`Error dispatching hyperscript:ready event:`, error);
+      debug.parse('ATTR: Error dispatching hyperscript:ready event:', error);
     }
   }
 
@@ -296,11 +288,11 @@ export const defaultAttributeProcessor = new AttributeProcessor();
 // Auto-initialize when DOM is ready
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      defaultAttributeProcessor.init();
+    document.addEventListener('DOMContentLoaded', async () => {
+      await defaultAttributeProcessor.init();
     });
   } else {
     // DOM is already ready
-    defaultAttributeProcessor.init();
+    void defaultAttributeProcessor.init();
   }
 }

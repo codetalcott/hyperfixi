@@ -701,6 +701,9 @@ export class RuntimeBase {
             globalTarget = window;
         } else if (targetLower === 'document' || targetLower === 'the document' || targetLower === 'body') {
             globalTarget = document;
+        } else if (targetLower === 'me' || targetLower === 'myself') {
+            // Special case: 'me' refers to the context element
+            targets = context.me ? [context.me as HTMLElement] : [];
         } else if (typeof target === 'string' && context.locals.has(target)) {
             const resolved = context.locals.get(target);
             if (this.isElement(resolved)) targets = [resolved];
