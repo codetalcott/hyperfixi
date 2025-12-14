@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HyperFixi Behaviors Demo</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #f5f5f5;
+    }
+
+    h1 { color: #333; }
+    h2 { color: #555; margin-top: 2rem; }
+
+    .demo-section {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Draggable */
+    .draggable-box {
+      position: absolute;
+      width: 150px;
+      height: 100px;
+      background: #4a90d9;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      cursor: move;
+      user-select: none;
+    }
+
+    .draggable-container {
+      position: relative;
+      height: 200px;
+      background: #e0e0e0;
+      border-radius: 4px;
+    }
+
+    /* Removable */
+    .removable-item {
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background: #f0f0f0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .removable-item:hover {
+      background: #e0e0e0;
+    }
+
+    /* Toggleable */
+    .toggle-button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      background: #666;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .toggle-button.active {
+      background: #4a90d9;
+    }
+
+    .accordion-item {
+      border: 1px solid #ddd;
+      margin: 0.5rem 0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .accordion-header {
+      padding: 1rem;
+      background: #f5f5f5;
+      cursor: pointer;
+    }
+    .accordion-content {
+      padding: 0 1rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s, padding 0.3s;
+    }
+    .accordion-item.expanded .accordion-content {
+      max-height: 200px;
+      padding: 1rem;
+    }
+
+    /* Sortable */
+    .sortable-list {
+      list-style: none;
+      padding: 0;
+    }
+    .sortable-list li {
+      padding: 1rem;
+      margin: 0.5rem 0;
+      background: #f0f0f0;
+      border-radius: 4px;
+      cursor: grab;
+    }
+    .sortable-list li.sorting {
+      background: #4a90d9;
+      color: white;
+    }
+
+    /* Resizable */
+    .resizable-box {
+      position: relative;
+      width: 200px;
+      height: 150px;
+      background: #4a90d9;
+      color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .hyperfixi-resize-handle {
+      background: rgba(255,255,255,0.3);
+    }
+    .hyperfixi-resize-handle::after {
+      content: '⋱';
+      position: absolute;
+      right: 2px;
+      bottom: 0;
+      color: white;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>HyperFixi Behaviors Demo</h1>
+  <p>Reusable behaviors for common UI patterns. Each behavior can be installed on any element.</p>
+
+  <!-- Draggable Demo -->
+  <div class="demo-section">
+    <h2>Draggable</h2>
+    <p>Drag the box around the container.</p>
+    <div class="draggable-container">
+      <div class="draggable-box" _="install Draggable" style="left: 20px; top: 20px;">
+        Drag me!
+      </div>
+    </div>
+  </div>
+
+  <!-- Removable Demo -->
+  <div class="demo-section">
+    <h2>Removable</h2>
+    <p>Click items to remove them.</p>
+    <div class="removable-item" _="install Removable">
+      Click to remove (no confirmation)
+    </div>
+    <div class="removable-item" _="install Removable(confirm: true)">
+      Click to remove (with confirmation)
+    </div>
+    <div class="removable-item" _="install Removable(transition: fade)">
+      Click to fade out and remove
+    </div>
+  </div>
+
+  <!-- Toggleable Demo -->
+  <div class="demo-section">
+    <h2>Toggleable</h2>
+    <p>Click to toggle states.</p>
+    <button class="toggle-button" _="install Toggleable">
+      Toggle Active
+    </button>
+
+    <h3 style="margin-top: 1.5rem;">Accordion</h3>
+    <div class="accordion-item" _="install Toggleable(class: expanded)">
+      <div class="accordion-header">Section 1 (click to expand)</div>
+      <div class="accordion-content">
+        <p>This is the content of section 1. It can contain any HTML.</p>
+      </div>
+    </div>
+    <div class="accordion-item" _="install Toggleable(class: expanded)">
+      <div class="accordion-header">Section 2 (click to expand)</div>
+      <div class="accordion-content">
+        <p>This is the content of section 2. More content here.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sortable Demo -->
+  <div class="demo-section">
+    <h2>Sortable</h2>
+    <p>Drag items to reorder them.</p>
+    <ul class="sortable-list" _="install Sortable">
+      <li>Item 1</li>
+      <li>Item 2</li>
+      <li>Item 3</li>
+      <li>Item 4</li>
+      <li>Item 5</li>
+    </ul>
+  </div>
+
+  <!-- Resizable Demo -->
+  <div class="demo-section">
+    <h2>Resizable</h2>
+    <p>Drag the corner to resize the box.</p>
+    <div class="resizable-box" _="install Resizable(minWidth: 100, minHeight: 80, maxWidth: 400)">
+      Resize me by dragging the bottom-right corner!
+    </div>
+  </div>
+
+  <!-- Load HyperFixi and Behaviors -->
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../../packages/behaviors/dist/all.browser.global.js"></script>
+</body>
+</html>

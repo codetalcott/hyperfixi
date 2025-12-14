@@ -1,0 +1,84 @@
+{
+  "name": "@hyperfixi/behaviors",
+  "version": "0.1.0",
+  "description": "Reusable hyperscript behaviors for HyperFixi",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./draggable": {
+      "types": "./dist/draggable.d.ts",
+      "import": "./dist/draggable.js",
+      "require": "./dist/draggable.cjs"
+    },
+    "./removable": {
+      "types": "./dist/removable.d.ts",
+      "import": "./dist/removable.js",
+      "require": "./dist/removable.cjs"
+    },
+    "./toggleable": {
+      "types": "./dist/toggleable.d.ts",
+      "import": "./dist/toggleable.js",
+      "require": "./dist/toggleable.cjs"
+    },
+    "./sortable": {
+      "types": "./dist/sortable.d.ts",
+      "import": "./dist/sortable.js",
+      "require": "./dist/sortable.cjs"
+    },
+    "./resizable": {
+      "types": "./dist/resizable.d.ts",
+      "import": "./dist/resizable.js",
+      "require": "./dist/resizable.cjs"
+    },
+    "./draggable.browser.js": "./dist/draggable.browser.global.js",
+    "./removable.browser.js": "./dist/removable.browser.global.js",
+    "./toggleable.browser.js": "./dist/toggleable.browser.global.js",
+    "./sortable.browser.js": "./dist/sortable.browser.global.js",
+    "./resizable.browser.js": "./dist/resizable.browser.global.js",
+    "./all.browser.js": "./dist/all.browser.global.js"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "@hyperfixi/core": "^1.0.0"
+  },
+  "devDependencies": {
+    "@hyperfixi/core": "*",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.2.4"
+  },
+  "keywords": [
+    "hyperscript",
+    "hyperfixi",
+    "behaviors",
+    "draggable",
+    "sortable",
+    "resizable",
+    "removable",
+    "toggleable",
+    "ui-components"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codetalcott/hyperfixi.git",
+    "directory": "packages/behaviors"
+  }
+}
