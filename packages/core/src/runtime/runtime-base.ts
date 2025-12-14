@@ -218,6 +218,10 @@ export class RuntimeBase {
     const { name, args, modifiers } = node;
     const commandName = name.toLowerCase();
 
+    console.log(`[PROCESSCOMMAND] name='${commandName}', args.length=${args?.length || 0}`);
+    if (commandName === 'install') {
+      console.log('[PROCESSCOMMAND] install args:', JSON.stringify(args, null, 2).substring(0, 800));
+    }
     debug.command(`RUNTIME BASE: Processing command '${commandName}'`);
 
     // 1. check registry
@@ -634,8 +638,10 @@ export class RuntimeBase {
     element: HTMLElement,
     parameters: Record<string, any>
   ): Promise<void> {
+    debug.runtime(`BEHAVIOR: installBehaviorOnElement called: ${behaviorName}`);
     const behavior = this.behaviorRegistry.get(behaviorName);
     if (!behavior) throw new Error(`Behavior "${behaviorName}" not found`);
+    debug.runtime(`BEHAVIOR: Found behavior, eventHandlers count: ${behavior.eventHandlers?.length || 0}`);
 
     // Create isolated context
     const behaviorContext: ExecutionContext = {
@@ -653,9 +659,12 @@ export class RuntimeBase {
     };
 
     // Hydrate parameters
+    console.log('[DEBUG] Behavior params definition:', behavior.parameters);
+    console.log('[DEBUG] Install params passed:', parameters);
     if (behavior.parameters) {
         for (const param of behavior.parameters) {
             const value = param in parameters ? parameters[param] : undefined;
+            console.log(`[DEBUG] Setting param '${param}' = ${JSON.stringify(value)}`);
             behaviorContext.locals.set(param, value);
         }
     }
@@ -668,19 +677,24 @@ export class RuntimeBase {
 
     // Run Init Block
     if (behavior.initBlock) {
+        debug.runtime(`BEHAVIOR: Running init block for ${behaviorName}`);
         try {
             await this.execute(behavior.initBlock, behaviorContext);
+            debug.runtime(`BEHAVIOR: Init block completed for ${behaviorName}`);
         } catch (e) {
+            debug.runtime(`BEHAVIOR: Init block error for ${behaviorName}:`, e);
             if (!(e instanceof Error && (e as any).isHalt)) throw e;
         }
     }
 
     // Attach Handlers
+    debug.runtime(`BEHAVIOR: About to attach ${behavior.eventHandlers?.length || 0} handlers for ${behaviorName}`);
     if (behavior.eventHandlers) {
         for (const handler of behavior.eventHandlers) {
             await this.executeEventHandler(handler, behaviorContext);
         }
     }
+    debug.runtime(`BEHAVIOR: Finished installing ${behaviorName}`);
   }
 
   protected async executeEventHandler(
@@ -689,6 +703,7 @@ export class RuntimeBase {
   ): Promise<void> {
     const { event, events, commands, target, args, selector, attributeName, watchTarget } = node as any;
     const eventNames = events && events.length > 0 ? events : [event];
+    debug.runtime(`BEHAVIOR: executeEventHandler: event='${event}', target='${target}'`);
 
     let targets: HTMLElement[] = [];
     let globalTarget: Window | Document | null = null;
@@ -706,10 +721,12 @@ export class RuntimeBase {
             targets = context.me ? [context.me as HTMLElement] : [];
         } else if (typeof target === 'string' && context.locals.has(target)) {
             const resolved = context.locals.get(target);
+            debug.runtime(`BEHAVIOR: Target resolution: found local '${target}', isElement: ${this.isElement(resolved)}`);
             if (this.isElement(resolved)) targets = [resolved];
             else if (Array.isArray(resolved)) targets = resolved.filter(el => this.isElement(el));
             else if (typeof resolved === 'string') targets = this.queryElements(resolved, context);
         } else {
+            debug.runtime(`BEHAVIOR: Target resolution: querying for '${target}'`);
             targets = this.queryElements(target, context);
         }
     } else {
@@ -717,8 +734,10 @@ export class RuntimeBase {
     }
 
     if (targets.length === 0 && !globalTarget) {
+        debug.runtime(`BEHAVIOR: executeEventHandler - No targets found for event '${event}', returning early`);
         return;
     }
+    debug.runtime(`BEHAVIOR: executeEventHandler - Attaching '${eventNames.join(',')}' to ${targets.length} targets`);
 
     // SPECIAL CASE 1: Mutation Observer
     if (event === 'mutation' && attributeName) {

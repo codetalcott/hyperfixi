@@ -145,24 +145,35 @@ export class Parser {
         };
       }
 
-      // Check if this is a behavior definition
+      // Check if this is a behavior definition (may have multiple)
       if (this.check('behavior')) {
-        this.advance(); // consume 'behavior' keyword
-        const behaviorNode = this.parseBehaviorDefinition();
+        const behaviors: ASTNode[] = [];
+
+        while (this.check('behavior')) {
+          this.advance(); // consume 'behavior' keyword
+          const behaviorNode = this.parseBehaviorDefinition();
+          if (behaviorNode) {
+            behaviors.push(behaviorNode);
+          }
+          if (this.error) {
+            break;
+          }
+        }
 
         if (this.error) {
           return {
             success: false,
-            node: behaviorNode || this.createErrorNode(),
+            node: behaviors.length === 1 ? behaviors[0] : this.createProgramNode(behaviors),
             tokens: this.tokens,
             error: this.error,
             warnings: this.warnings,
           };
         }
 
+        // Return single behavior directly, or program node for multiple
         return {
           success: true,
-          node: behaviorNode,
+          node: behaviors.length === 1 ? behaviors[0] : this.createProgramNode(behaviors),
           tokens: this.tokens,
           warnings: this.warnings,
         };
@@ -1571,13 +1582,13 @@ export class Parser {
       // Create value node - if it has ${} syntax, make it a template literal
       const value: ASTNode = hasTemplateExpression
         ? {
-            type: 'templateLiteral',
-            value: valueString,
-            start: pos.start,
-            end: this.getPosition().end,
-            line: pos.line,
-            column: pos.column,
-          }
+          type: 'templateLiteral',
+          value: valueString,
+          start: pos.start,
+          end: this.getPosition().end,
+          line: pos.line,
+          column: pos.column,
+        }
         : this.createLiteral(valueString, valueString);
 
       properties.push({ key, value });
@@ -2017,15 +2028,15 @@ export class Parser {
                       },
                       ...(preposition
                         ? [
-                            {
-                              key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
-                              value: {
-                                type: 'literal',
-                                value: preposition,
-                                raw: `"${preposition}"`,
-                              } as LiteralNode,
-                            },
-                          ]
+                          {
+                            key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
+                            value: {
+                              type: 'literal',
+                              value: preposition,
+                              raw: `"${preposition}"`,
+                            } as LiteralNode,
+                          },
+                        ]
                         : []),
                       {
                         key: { type: 'identifier', name: 'targetExpression' } as IdentifierNode,
@@ -2221,15 +2232,15 @@ export class Parser {
                       },
                       ...(preposition
                         ? [
-                            {
-                              key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
-                              value: {
-                                type: 'literal',
-                                value: preposition,
-                                raw: `"${preposition}"`,
-                              } as LiteralNode,
-                            },
-                          ]
+                          {
+                            key: { type: 'identifier', name: 'preposition' } as IdentifierNode,
+                            value: {
+                              type: 'literal',
+                              value: preposition,
+                              raw: `"${preposition}"`,
+                            } as LiteralNode,
+                          },
+                        ]
                         : []),
                       {
                         key: { type: 'identifier', name: 'targetExpression' } as IdentifierNode,
@@ -2787,9 +2798,10 @@ export class Parser {
     const commandToken = this.previous();
     let commandName = commandToken.value;
     const skipSemanticParsing: string[] = [
-      // All control flow commands now handled via semantic parsing:
-      // - 'repeat' via loopType semantic role in buildRepeatCommandNode
-      // - 'set' via buildSetCommandNode with possessive expression support
+      // Commands with complex syntax that semantic parsing doesn't handle correctly yet:
+      // - 'install' has complex 'install Behavior(param: value)' syntax with named params
+      'install',
+      // Control flow commands handled via semantic parsing:
       // - 'for' via buildRepeatCommandNode with loopType='for'
       // - 'if'/'unless' via buildIfCommandNode with condition role
     ];

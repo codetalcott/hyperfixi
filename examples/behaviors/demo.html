@@ -89,7 +89,7 @@
       overflow: hidden;
       transition: max-height 0.3s, padding 0.3s;
     }
-    .accordion-item.expanded .accordion-content {
+    .accordion-item.active .accordion-content {
       max-height: 200px;
       padding: 1rem;
     }
@@ -157,10 +157,10 @@
     <div class="removable-item" _="install Removable">
       Click to remove (no confirmation)
     </div>
-    <div class="removable-item" _="install Removable(confirm: true)">
+    <div class="removable-item" _="install Removable(needsConfirm: 'yes')">
       Click to remove (with confirmation)
     </div>
-    <div class="removable-item" _="install Removable(transition: fade)">
+    <div class="removable-item" _="install Removable(effect: 'fade')">
       Click to fade out and remove
     </div>
   </div>
@@ -174,13 +174,13 @@
     </button>
 
     <h3 style="margin-top: 1.5rem;">Accordion</h3>
-    <div class="accordion-item" _="install Toggleable(class: expanded)">
+    <div class="accordion-item" _="install Toggleable">
       <div class="accordion-header">Section 1 (click to expand)</div>
       <div class="accordion-content">
         <p>This is the content of section 1. It can contain any HTML.</p>
       </div>
     </div>
-    <div class="accordion-item" _="install Toggleable(class: expanded)">
+    <div class="accordion-item" _="install Toggleable">
       <div class="accordion-header">Section 2 (click to expand)</div>
       <div class="accordion-content">
         <p>This is the content of section 2. More content here.</p>
@@ -188,30 +188,70 @@
     </div>
   </div>
 
-  <!-- Sortable Demo -->
-  <div class="demo-section">
-    <h2>Sortable</h2>
-    <p>Drag items to reorder them.</p>
-    <ul class="sortable-list" _="install Sortable">
-      <li>Item 1</li>
-      <li>Item 2</li>
-      <li>Item 3</li>
-      <li>Item 4</li>
-      <li>Item 5</li>
-    </ul>
-  </div>
+  <!-- Sortable Demo - TODO: implement Sortable behavior -->
+  <!-- Resizable Demo - TODO: implement Resizable behavior -->
 
-  <!-- Resizable Demo -->
-  <div class="demo-section">
-    <h2>Resizable</h2>
-    <p>Drag the corner to resize the box.</p>
-    <div class="resizable-box" _="install Resizable(minWidth: 100, minHeight: 80, maxWidth: 400)">
-      Resize me by dragging the bottom-right corner!
-    </div>
-  </div>
+  <!-- Load HyperFixi -->
+  <script src="../../packages/core/dist/hyperfixi-browser.dev.js"></script>
 
-  <!-- Load HyperFixi and Behaviors -->
-  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
-  <script src="../../packages/behaviors/dist/all.browser.global.js"></script>
+  <!-- Behaviors in separate script tags to isolate parse errors -->
+  <script type="text/hyperscript">
+behavior Toggleable(toggleClass, target)
+  init
+    if no target set the target to me
+  end
+  on click
+    toggle .active on the target
+  end
+end
+  </script>
+
+  <script type="text/hyperscript">
+behavior Removable(needsConfirm, effect)
+  on click
+    log "needsConfirm value:" needsConfirm
+    if needsConfirm
+      log "showing confirm dialog"
+      if not window.confirm("Are you sure?")
+        log "user cancelled"
+        halt
+      end
+      log "user confirmed"
+    end
+    trigger removable:before
+    if effect is "fade"
+      transition opacity to 0 over 300ms
+    end
+    trigger removable:removed
+    remove me
+  end
+end
+  </script>
+
+  <script type="text/hyperscript">
+behavior Draggable(dragHandle)
+  init
+    if no dragHandle set the dragHandle to me
+  end
+  on pointerdown(clientX, clientY) from dragHandle
+    halt the event
+    trigger draggable:start
+    measure x
+    set startX to it
+    measure y
+    set startY to it
+    set xoff to clientX - startX
+    set yoff to clientY - startY
+    add .dragging to me
+    repeat until event pointerup from document
+      wait for pointermove(clientX, clientY) from document
+      add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }
+      trigger draggable:move
+    end
+    remove .dragging from me
+    trigger draggable:end
+  end
+end
+  </script>
 </body>
 </html>

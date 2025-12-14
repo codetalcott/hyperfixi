@@ -149,14 +149,9 @@ export async function registerResizable(
 }
 
 // Auto-register when loaded as a script tag
+// Register SYNCHRONOUSLY so behaviors are available before attribute processing
 if (typeof window !== 'undefined' && (window as any).hyperfixi) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      registerResizable().catch(console.error);
-    });
-  } else {
-    registerResizable().catch(console.error);
-  }
+  registerResizable().catch(console.error);
 }
 
 export default {

@@ -139,14 +139,9 @@ export async function registerSortable(
 }
 
 // Auto-register when loaded as a script tag
+// Register SYNCHRONOUSLY so behaviors are available before attribute processing
 if (typeof window !== 'undefined' && (window as any).hyperfixi) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      registerSortable().catch(console.error);
-    });
-  } else {
-    registerSortable().catch(console.error);
-  }
+  registerSortable().catch(console.error);
 }
 
 export default {

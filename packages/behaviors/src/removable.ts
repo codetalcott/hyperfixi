@@ -95,14 +95,9 @@ export async function registerRemovable(
 }
 
 // Auto-register when loaded as a script tag
+// Register SYNCHRONOUSLY so behaviors are available before attribute processing
 if (typeof window !== 'undefined' && (window as any).hyperfixi) {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      registerRemovable().catch(console.error);
-    });
-  } else {
-    registerRemovable().catch(console.error);
-  }
+  registerRemovable().catch(console.error);
 }
 
 export default {

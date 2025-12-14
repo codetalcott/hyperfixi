@@ -118,15 +118,9 @@ export async function registerDraggable(
 }
 
 // Auto-register when loaded as a script tag (IIFE/global build)
+// Register SYNCHRONOUSLY so behaviors are available before attribute processing
 if (typeof window !== 'undefined' && (window as any).hyperfixi) {
-  // Wait for DOM to be ready, then register
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      registerDraggable().catch(console.error);
-    });
-  } else {
-    registerDraggable().catch(console.error);
-  }
+  registerDraggable().catch(console.error);
 }
 
 // Default export for convenience

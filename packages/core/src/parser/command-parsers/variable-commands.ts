@@ -127,6 +127,16 @@ export function parseSetCommand(
           ctx.current = startPosition;
           targetExpression = null;
         }
+      } else if (nextToken && tokenAfterNext && tokenAfterNext.value === KEYWORDS.TO) {
+        // Handle "the X to Y" syntax - "the X" is the variable name, strip the article
+        // e.g., "set the dragHandle to me" -> variable name is "dragHandle"
+        const variableToken = ctx.advance();
+        targetExpression = {
+          type: 'identifier',
+          name: variableToken.value,
+          start: variableToken.start,
+          end: variableToken.end,
+        } as any;
       } else {
         ctx.current = thePosition;
         targetExpression = null;
