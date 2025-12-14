@@ -254,7 +254,11 @@
                 _="on click
                    add .loading to me
                    fetch 'https://jsonplaceholder.typicode.com/todos/1' as json
+                   log 'Fetch result:', it
+                   log 'it.data:', it.data
+                   log 'typeof it:', (typeof it)
                    put it.data into todoData
+                   log 'todoData:', todoData
                    put `<h3>Todo #${todoData.id}</h3>
                         <p>Title: ${todoData.title}</p>
                         <p>Completed: ${todoData.completed ? '✅' : '❌'}</p>` into #native-output

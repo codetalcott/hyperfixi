@@ -179,7 +179,9 @@ export function parseMultiWordCommand(
   commandToken: Token,
   commandName: string
 ) {
+  console.log('[parseMultiWordCommand] called for:', commandName);
   const pattern = ctx.getMultiWordPattern(commandName);
+  console.log('[parseMultiWordCommand] pattern:', pattern);
   if (!pattern) return null;
 
   const args: ASTNode[] = [];
@@ -237,7 +239,9 @@ export function parseMultiWordCommand(
     builder.withModifiers(modifiers);
   }
 
-  return builder.build();
+  const result = builder.build();
+  console.log('[parseMultiWordCommand] result:', JSON.stringify(result, null, 2));
+  return result;
 }
 
 /**

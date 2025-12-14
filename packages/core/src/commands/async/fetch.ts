@@ -101,9 +101,10 @@ export class FetchCommand implements DecoratedCommand {
 
       if (context.me) this.dispatchEvent(context.me, 'fetch:afterRequest', { result: data });
 
-      Object.assign(context, { it: data });
+      const result = { status: response.status, statusText: response.statusText, headers: response.headers, data, url: response.url, duration: Date.now() - startTime };
+      Object.assign(context, { it: result });
 
-      return { status: response.status, statusText: response.statusText, headers: response.headers, data, url: response.url, duration: Date.now() - startTime };
+      return result;
     } catch (error) {
       if (context.me) this.dispatchEvent(context.me, 'fetch:error', { reason: error instanceof Error ? error.message : String(error), error });
       if (error instanceof Error && error.name === 'AbortError') throw new Error(`Fetch aborted for ${url}`);

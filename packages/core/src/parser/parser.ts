@@ -1914,7 +1914,9 @@ export class Parser {
         break;
       }
 
+      console.log('[Parser.parseEventHandler] token:', this.peek().value, 'type:', this.peek().type, 'isCOMMAND:', this.checkTokenType(TokenType.COMMAND));
       if (this.checkTokenType(TokenType.COMMAND)) {
+        console.log('[Parser.parseEventHandler] Recognized as COMMAND:', this.peek().value);
         // Check if this is actually a pseudo-command (command token used as function call)
         const nextIsOpenParen = this.tokens[this.current + 1]?.value === '(';
 
