@@ -777,6 +777,28 @@ export const ifSchema: CommandSchema = {
 };
 
 /**
+ * Unless command: negated conditional execution.
+ * Executes body when condition is false.
+ */
+export const unlessSchema: CommandSchema = {
+  action: 'unless',
+  description: 'Negated conditional execution (executes when condition is false)',
+  category: 'control-flow',
+  primaryRole: 'condition',
+  hasBody: true,
+  roles: [
+    {
+      role: 'condition',
+      description: 'The condition to evaluate (body executes when false)',
+      required: true,
+      expectedTypes: ['expression'],
+      svoPosition: 1,
+      sovPosition: 1,
+    },
+  ],
+};
+
+/**
  * Else command: alternative branch.
  */
 export const elseSchema: CommandSchema = {
@@ -1374,6 +1396,7 @@ export const commandSchemas: Record<ActionType, CommandSchema> = {
   send: sendSchema,
   // Batch 2 - Control Flow
   if: ifSchema,
+  unless: unlessSchema,
   else: elseSchema,
   repeat: repeatSchema,
   for: forSchema,

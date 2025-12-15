@@ -69,6 +69,7 @@ export type ActionType =
   | 'install'
   // Control flow
   | 'if'
+  | 'unless'
   | 'else'
   | 'repeat'
   | 'for'
@@ -347,6 +348,7 @@ export type TokenKind =
   | 'selector' // CSS selector (#id, .class, [attr])
   | 'literal' // String or number literal
   | 'particle' // Grammatical particle (を, に, من)
+  | 'conjunction' // Grammatical conjunction (Arabic و/ف proclitics)
   | 'identifier' // Variable or property name
   | 'operator' // Comparison or logical operator
   | 'punctuation' // Brackets, quotes, etc.
