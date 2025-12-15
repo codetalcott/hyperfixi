@@ -65,6 +65,102 @@ const eventEnglishWithSource: LanguagePattern = {
   },
 };
 
+/**
+ * English: "when clicked {body...}"
+ * Natural English idiom using temporal "when".
+ * More intuitive for beginners than "on click".
+ *
+ * Works with: click, clicked, clicking (morphologically normalized)
+ */
+const eventEnglishWhen: LanguagePattern = {
+  id: 'event-en-when',
+  language: 'en',
+  command: 'on',
+  priority: 105, // Higher than standard - prefer native idiom
+  template: {
+    format: 'when {event} {body}',
+    tokens: [
+      { type: 'literal', value: 'when' },
+      { type: 'role', role: 'event' },
+      // Body is captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 1 },
+  },
+};
+
+/**
+ * English: "when clicked from #button {body...}"
+ * Natural English idiom with source filter.
+ */
+const eventEnglishWhenWithSource: LanguagePattern = {
+  id: 'event-en-when-source',
+  language: 'en',
+  command: 'on',
+  priority: 115, // Higher priority - more specific
+  template: {
+    format: 'when {event} from {source} {body}',
+    tokens: [
+      { type: 'literal', value: 'when' },
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: 'from' },
+      { type: 'role', role: 'source' },
+      // Body is captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 1 },
+    source: { marker: 'from' },
+  },
+};
+
+/**
+ * English: "if clicked {body...}"
+ * Conditional framing for event handlers.
+ * Natural for developers thinking in terms of conditionals.
+ */
+const eventEnglishIf: LanguagePattern = {
+  id: 'event-en-if',
+  language: 'en',
+  command: 'on',
+  priority: 95, // Lower priority - "if" is also used for control flow
+  template: {
+    format: 'if {event} {body}',
+    tokens: [
+      { type: 'literal', value: 'if' },
+      { type: 'role', role: 'event' },
+      // Body is captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 1 },
+  },
+};
+
+/**
+ * English: "upon clicking {body...}"
+ * Formal alternative using "upon".
+ * Common in technical documentation.
+ */
+const eventEnglishUpon: LanguagePattern = {
+  id: 'event-en-upon',
+  language: 'en',
+  command: 'on',
+  priority: 98, // Slightly lower than standard
+  template: {
+    format: 'upon {event} {body}',
+    tokens: [
+      { type: 'literal', value: 'upon' },
+      { type: 'role', role: 'event' },
+      // Body is captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 1 },
+  },
+};
+
 // =============================================================================
 // Japanese Patterns (SOV)
 // =============================================================================
@@ -1557,9 +1653,13 @@ export function normalizeEventName(event: string, language: string): string {
 // =============================================================================
 
 export const eventHandlerPatterns: LanguagePattern[] = [
-  // English
-  eventEnglishStandard,
+  // English - native idiom patterns first (higher priority)
+  eventEnglishWhenWithSource,
+  eventEnglishWhen,
   eventEnglishWithSource,
+  eventEnglishStandard,
+  eventEnglishUpon,
+  eventEnglishIf,
   // Japanese - native idiom patterns first (higher priority)
   eventJapaneseConditionalWithSource,
   eventJapaneseConditionalTara,

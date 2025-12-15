@@ -212,6 +212,9 @@ export class PatternMatcher {
     patternToken: PatternToken & { type: 'role' },
     captured: Map<SemanticRole, SemanticValue>
   ): boolean {
+    // Skip noise words like "the" before selectors (English idiom support)
+    this.skipNoiseWords(tokens);
+
     const token = tokens.peek();
     if (!token) {
       return patternToken.optional || false;
@@ -739,6 +742,52 @@ export class PatternMatcher {
     }
 
     return baseConfidence;
+  }
+
+  // ===========================================================================
+  // English Idiom Support - Noise Word Handling
+  // ===========================================================================
+
+  /**
+   * Noise words that can be skipped in English for more natural syntax.
+   * - "the" before selectors: "toggle the .active" → "toggle .active"
+   * - "class" after class selectors: "add the .visible class" → "add .visible"
+   */
+  private static readonly ENGLISH_NOISE_WORDS = new Set(['the', 'a', 'an']);
+
+  /**
+   * Skip noise words like "the" before selectors.
+   * This enables more natural English syntax like "toggle the .active".
+   */
+  private skipNoiseWords(tokens: TokenStream): void {
+    const token = tokens.peek();
+    if (!token) return;
+
+    const tokenLower = token.value.toLowerCase();
+
+    // Check if current token is a noise word (like "the")
+    if (PatternMatcher.ENGLISH_NOISE_WORDS.has(tokenLower)) {
+      // Look ahead to see if the next token is a selector
+      const mark = tokens.mark();
+      tokens.advance();
+      const nextToken = tokens.peek();
+
+      if (nextToken && nextToken.kind === 'selector') {
+        // Keep the position after "the" - effectively skipping it
+        return;
+      }
+
+      // Not followed by a selector, revert
+      tokens.reset(mark);
+    }
+
+    // Also handle "class" after class selectors: ".visible class" → ".visible"
+    // This is handled when the selector has already been consumed,
+    // so we check if current token is "class" and skip it
+    if (tokenLower === 'class') {
+      // Skip "class" as it's just noise after a class selector
+      tokens.advance();
+    }
   }
 }
 

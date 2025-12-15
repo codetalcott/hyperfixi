@@ -260,6 +260,55 @@ const forEnglish: LanguagePattern = {
 };
 
 // =============================================================================
+// Hand-crafted Temporal Expression Patterns (English Idiom Support)
+// =============================================================================
+
+/**
+ * English: "in 2s toggle .active" - Natural temporal delay
+ * Transforms to: wait 2s then toggle .active
+ *
+ * This is a beginner-friendly idiom for delayed execution.
+ * Supports: 2s, 500ms, 2 seconds, 500 milliseconds
+ */
+const temporalInEnglish: LanguagePattern = {
+  id: 'temporal-en-in',
+  language: 'en',
+  command: 'wait',
+  priority: 95, // Lower than standard wait patterns
+  template: {
+    format: 'in {duration}',
+    tokens: [
+      { type: 'literal', value: 'in' },
+      { type: 'role', role: 'duration', expectedTypes: ['literal', 'expression'] },
+    ],
+  },
+  extraction: {
+    duration: { position: 1 },
+  },
+};
+
+/**
+ * English: "after 2s show #tooltip" - Natural temporal delay (alternative)
+ * Transforms to: wait 2s then show #tooltip
+ */
+const temporalAfterEnglish: LanguagePattern = {
+  id: 'temporal-en-after',
+  language: 'en',
+  command: 'wait',
+  priority: 95, // Lower than standard wait patterns
+  template: {
+    format: 'after {duration}',
+    tokens: [
+      { type: 'literal', value: 'after' },
+      { type: 'role', role: 'duration', expectedTypes: ['literal', 'expression'] },
+    ],
+  },
+  extraction: {
+    duration: { position: 1 },
+  },
+};
+
+// =============================================================================
 // Hand-crafted If/Unless Patterns (English)
 // =============================================================================
 
@@ -381,6 +430,8 @@ export const allPatterns: LanguagePattern[] = [
   forEnglish, // for X in Y iteration (higher priority)
   ifEnglish, // if {condition} conditional (higher priority)
   unlessEnglish, // unless {condition} negated conditional (higher priority)
+  temporalInEnglish, // in 2s {command} - natural delay idiom
+  temporalAfterEnglish, // after 2s {command} - natural delay idiom
   // Generated patterns (new commands)
   ...generatedPatterns,
 ];

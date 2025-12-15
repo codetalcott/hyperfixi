@@ -51,7 +51,7 @@ const ENGLISH_KEYWORDS = new Set([
   // Commands - Advanced
   'js', 'async', 'tell', 'default', 'init', 'behavior',
   // Event handling
-  'every',
+  'every', 'when', 'upon',
   // Control flow helpers
   'then', 'end', 'unless', 'until', 'forever', 'times',
   // Prepositions/modifiers
@@ -66,7 +66,35 @@ const ENGLISH_KEYWORDS = new Set([
   'first', 'last', 'next', 'previous', 'closest',
   // Misc
   'true', 'false', 'null', 'undefined',
+  // Command synonyms (developer-friendly alternatives)
+  'flip', 'switch', 'increase', 'decrease', 'display', 'reveal', 'conceal',
+  // British spelling aliases
+  'colour', 'grey', 'centre', 'behaviour', 'initialise', 'favourite',
 ]);
+
+/**
+ * English command synonyms - maps alternative terms to standard commands.
+ * Used for beginner-friendly syntax.
+ */
+const ENGLISH_SYNONYMS: Record<string, string> = {
+  // Toggle synonyms
+  'flip': 'toggle',
+  'switch': 'toggle',
+  // Increment/Decrement synonyms
+  'increase': 'increment',
+  'decrease': 'decrement',
+  // Show/Hide synonyms
+  'display': 'show',
+  'reveal': 'show',
+  'conceal': 'hide',
+  // British spelling aliases
+  'colour': 'color',
+  'grey': 'gray',
+  'centre': 'center',
+  'behaviour': 'behavior',
+  'initialise': 'initialize',
+  'favourite': 'favorite',
+};
 
 /**
  * English event names.
@@ -262,10 +290,13 @@ export class EnglishTokenizer extends BaseTokenizer {
     }
 
     const kind = this.classifyToken(word);
+    const lower = word.toLowerCase();
+    const normalized = ENGLISH_SYNONYMS[lower];
     return createToken(
       word,
       kind,
-      createPosition(startPos, pos)
+      createPosition(startPos, pos),
+      normalized // Will be undefined if not a synonym, which is fine
     );
   }
 
