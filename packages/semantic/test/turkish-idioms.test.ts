@@ -10,6 +10,8 @@
  * Key forms tested:
  * - Conditional: -dığında (when X happens), -rsa/-rse (if)
  * - Temporal: -ınca/-ince (when/as)
+ * - Simultaneity: -ken (while)
+ * - Repetitive: -dikçe/-dıkça (whenever/each time)
  * - Standard: olduğunda (when it happens)
  *
  * Turkish features:
@@ -17,6 +19,15 @@
  * - Highly agglutinative (many suffixes attach to words)
  * - Vowel harmony (front/back vowels)
  * - Postpositions instead of prepositions
+ *
+ * Converb suffixes (verified via research):
+ * - -DIğIndA: "when" (temporal)
+ * - -(y)IncA: "when/upon" (temporal)
+ * - -ken: "while" (simultaneity)
+ * - -DIkçA: "whenever" (repetitive)
+ * - -sA/-sE: "if" (conditional)
+ *
+ * @see NATIVE_REVIEW_NEEDED.md for patterns needing native speaker validation
  */
 
 import { describe, it, expect } from 'vitest';
@@ -279,6 +290,18 @@ describe('Turkish Semantic Equivalence', () => {
       expect(standardTokens.length).toBeGreaterThan(0);
       expect(conditionalTokens.length).toBeGreaterThan(0);
       expect(temporalTokens.length).toBeGreaterThan(0);
+    });
+
+    it('simultaneity -ken form tokenizes', () => {
+      // -ken = while (simultaneity converb)
+      const kenTokens = getTokens('tıklarken değiştir .active', 'tr');
+      expect(kenTokens.length).toBeGreaterThan(0);
+    });
+
+    it('repetitive -dikçe form tokenizes', () => {
+      // -dikçe = whenever/each time (repetitive converb)
+      const dikceTokens = getTokens('tıkladıkça değiştir .active', 'tr');
+      expect(dikceTokens.length).toBeGreaterThan(0);
     });
   });
 

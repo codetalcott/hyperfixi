@@ -8,16 +8,25 @@
  * normalize to equivalent semantic nodes.
  *
  * Key forms tested:
- * - Temporal: quando (when)
- * - Native idiom: ao + infinitive (upon/when doing)
- * - Preposition: em (on/in)
- * - Conditional: se (if)
+ * - Temporal: quando (when) ✅ Verified
+ * - Native idiom: ao + infinitive (upon/when doing) ✅ Verified
+ * - Preposition: em (on/in) ⚠️ NEEDS NATIVE REVIEW
+ * - Conditional: se (if) ✅ Verified
  *
  * Portuguese features:
  * - SVO (Subject-Verb-Object) word order
  * - Three verb conjugation classes (-ar, -er, -ir)
  * - Preposition contractions (ao = a + o, no = em + o)
  * - Reflexive verbs with hyphenated pronouns
+ *
+ * Research notes:
+ * - "ao clicar" is idiomatic and natural (verified in Brazilian forums)
+ * - "quando clique/clicar" is standard (verified in Microsoft docs)
+ * - "em clique" may not be natural - native speakers might prefer
+ *   "no clique" or "ao clicar" instead
+ * - Brazilian Portuguese requires 25-30% more space than English
+ *
+ * @see NATIVE_REVIEW_NEEDED.md for patterns needing native speaker validation
  */
 
 import { describe, it, expect } from 'vitest';

@@ -8,7 +8,8 @@
  * normalize to equivalent semantic nodes.
  *
  * Key forms tested:
- * - Temporal: عندما (when), حين (at the time of), لمّا (when - past)
+ * - Temporal: عندما (when - formal), حين (at the time of - classical)
+ * - Temporal: لمّا (when - DIALECTAL/INFORMAL, common in spoken Arabic)
  * - Conditional: إذا (if/when)
  * - Standard: عند (at/upon)
  * - With source: من #button (from #button)
@@ -18,6 +19,13 @@
  * - RTL (Right-to-Left) text direction
  * - Definite article ال (al-) commonly used with event nouns
  * - Rich morphology (prefixes, suffixes, root patterns)
+ *
+ * Formality notes (verified via research):
+ * - عندما is formal, suitable for UI text
+ * - حين/حينما are classical Arabic (الفصحى)
+ * - لمّا is dialectal, more suitable for casual/conversational interfaces
+ *
+ * @see NATIVE_REVIEW_NEEDED.md for patterns needing native speaker validation
  */
 
 import { describe, it, expect } from 'vitest';

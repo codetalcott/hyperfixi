@@ -672,6 +672,64 @@ const eventTurkishConditionalWithSource: LanguagePattern = {
   },
 };
 
+/**
+ * Turkish: "tıklarken {body...}"
+ * Simultaneity temporal converb using -ken (while).
+ *
+ * -ken = while (simultaneity converb)
+ * tıklarken = "while clicking"
+ *
+ * Research note: -ken expresses simultaneity between two events.
+ * @see NATIVE_REVIEW_NEEDED.md
+ */
+const eventTurkishSimultaneityKen: LanguagePattern = {
+  id: 'event-tr-simultaneity-ken',
+  language: 'tr',
+  command: 'on',
+  priority: 95,
+  template: {
+    format: '{event}ken {body}',
+    tokens: [
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: 'ken' },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 0 },
+  },
+};
+
+/**
+ * Turkish: "tıkladıkça {body...}"
+ * Repetitive temporal converb using -dikçe (whenever/each time).
+ *
+ * -DIkçA = whenever, each time (repetitive temporal)
+ * tıkladıkça = "whenever/each time clicking"
+ *
+ * Vowel harmony variants: -dikçe, -dıkça, -dukça, -dükçe
+ *
+ * Research note: -DIkçA expresses repeated events over time.
+ * @see NATIVE_REVIEW_NEEDED.md
+ */
+const eventTurkishRepetitiveDikce: LanguagePattern = {
+  id: 'event-tr-repetitive-dikce',
+  language: 'tr',
+  command: 'on',
+  priority: 93,
+  template: {
+    format: '{event}dikçe {body}',
+    tokens: [
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: 'dikçe', alternatives: ['dıkça', 'dukça', 'dükçe', 'tikçe', 'tıkça', 'tukça', 'tükçe'] },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 0 },
+  },
+};
+
 // =============================================================================
 // Spanish Patterns (SVO)
 // =============================================================================
@@ -1085,6 +1143,8 @@ export const eventHandlerPatterns: LanguagePattern[] = [
   eventTurkishConditionalDiginda,
   eventTurkishTemporalInca,
   eventTurkishConditionalSa,
+  eventTurkishSimultaneityKen,
+  eventTurkishRepetitiveDikce,
   eventTurkishStandard,
   // Spanish
   eventSpanishStandard,
