@@ -3,6 +3,8 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import { terser } from 'rollup-plugin-terser';
 
+const useTerser = process.env.NO_TERSER !== '1';
+
 export default {
   input: 'src/compatibility/browser-bundle.ts',
   output: {
@@ -23,13 +25,13 @@ export default {
       declaration: false,
       sourceMap: true
     }),
-    terser({
+    useTerser && terser({
       compress: {
         pure_getters: true,
-        unsafe: true,
-        unsafe_comps: true,
+        unsafe: false,
+        unsafe_comps: false,
         drop_console: true,
-        passes: 2, // Multi-pass compression for better results
+        passes: 1,
         pure_funcs: [
           'debug.command',
           'debug.event',
@@ -46,5 +48,5 @@ export default {
         properties: false // Keep property names for compatibility
       }
     })
-  ]
+  ].filter(Boolean)
 };
