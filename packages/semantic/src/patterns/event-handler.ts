@@ -359,6 +359,87 @@ const eventKoreanWithSource: LanguagePattern = {
   },
 };
 
+/**
+ * Korean: "클릭하시면 {body...}"
+ * Honorific conditional form using -하시면 (if/when X happens - polite)
+ *
+ * -하시면 = honorific conditional form of 하다
+ * 클릭하시면 = "if/when (you honorably) click"
+ *
+ * Used in formal/polite contexts to show respect to the subject.
+ */
+const eventKoreanHonorificConditional: LanguagePattern = {
+  id: 'event-ko-honorific-conditional',
+  language: 'ko',
+  command: 'on',
+  priority: 106, // Higher than standard conditional - prefer polite form
+  template: {
+    format: '{event}하시면 {body}',
+    tokens: [
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: '하시면', alternatives: ['으시면', '시면'] },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 0 },
+  },
+};
+
+/**
+ * Korean: "클릭하자마자 {body...}"
+ * Immediate form using -하자마자 (as soon as)
+ *
+ * -자마자 = "as soon as" (immediate succession)
+ * 클릭하자마자 = "as soon as clicked"
+ *
+ * Emphasizes immediate reaction to an event.
+ */
+const eventKoreanImmediate: LanguagePattern = {
+  id: 'event-ko-immediate',
+  language: 'ko',
+  command: 'on',
+  priority: 104, // Higher priority for native idiom
+  template: {
+    format: '{event}하자마자 {body}',
+    tokens: [
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: '하자마자', alternatives: ['자마자'] },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 0 },
+  },
+};
+
+/**
+ * Korean: "클릭하고 나서 {body...}"
+ * Sequential form using -하고 나서 (after doing)
+ *
+ * -고 나서 = "after doing" (sequential temporal)
+ * 클릭하고 나서 = "after clicking"
+ *
+ * Emphasizes sequential order of events.
+ */
+const eventKoreanSequentialAfter: LanguagePattern = {
+  id: 'event-ko-sequential-after',
+  language: 'ko',
+  command: 'on',
+  priority: 103,
+  template: {
+    format: '{event}하고 나서 {body}',
+    tokens: [
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: '하고 나서', alternatives: ['하고나서', '고 나서', '고나서'] },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 0 },
+  },
+};
+
 // =============================================================================
 // Arabic Patterns (VSO)
 // =============================================================================
@@ -1488,7 +1569,10 @@ export const eventHandlerPatterns: LanguagePattern[] = [
   eventJapaneseWhen,
   // Korean - native idiom patterns (conditional forms preferred over ambiguous 에)
   eventKoreanConditionalWithSource,
+  eventKoreanHonorificConditional,
   eventKoreanConditionalMyeon,
+  eventKoreanImmediate,
+  eventKoreanSequentialAfter,
   eventKoreanTemporalTtae,
   eventKoreanWithSource,
   // Note: eventKoreanStandard disabled - 에 is ambiguous (event vs destination)

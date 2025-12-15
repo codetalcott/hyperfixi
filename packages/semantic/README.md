@@ -92,7 +92,10 @@ HyperFixi accepts multiple natural Korean forms, following Nadeshiko's approach.
 | Form | Example | Notes |
 |------|---------|-------|
 | Conditional (-면) | `클릭하면 .active 를 토글` | **Recommended** - "if clicked" |
+| Honorific (-시면) | `클릭하시면 .active 를 토글` | Polite/formal - "if you click" |
 | Temporal (-ㄹ 때) | `클릭할때 .active 를 토글` | "When clicking" |
+| Immediate (-자마자) | `클릭하자마자 증가` | "As soon as clicked" |
+| Sequential (-고 나서) | `클릭하고 나서 증가` | "After clicking" |
 | With source | `#button 에서 클릭하면 증가` | "When clicked from #button" |
 | Compact | `.active를토글` | No spaces - natural writing |
 

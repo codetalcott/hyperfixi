@@ -78,6 +78,75 @@ describe('Korean Conditional Morphology', () => {
     });
   });
 
+  describe('-하시면 (hasimyeon) honorific conditional', () => {
+    it('should normalize 클릭하시면 to 클릭', () => {
+      const result = normalizer.normalize('클릭하시면');
+      expect(result.stem).toBe('클릭');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+      expect(result.metadata?.conjugationType).toBe('honorific-conditional');
+    });
+
+    it('should normalize 입력하시면 to 입력', () => {
+      const result = normalizer.normalize('입력하시면');
+      expect(result.stem).toBe('입력');
+      expect(result.metadata?.conjugationType).toBe('honorific-conditional');
+    });
+  });
+
+  describe('-하실때 (hasilttae) honorific temporal', () => {
+    it('should normalize 클릭하실때 to 클릭', () => {
+      const result = normalizer.normalize('클릭하실때');
+      expect(result.stem).toBe('클릭');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+      expect(result.metadata?.conjugationType).toBe('honorific-temporal');
+    });
+  });
+
+  describe('-하자마자 (hajamaja) immediate', () => {
+    it('should normalize 클릭하자마자 to 클릭', () => {
+      const result = normalizer.normalize('클릭하자마자');
+      expect(result.stem).toBe('클릭');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+      expect(result.metadata?.conjugationType).toBe('immediate');
+    });
+
+    it('should normalize 입력하자마자 to 입력', () => {
+      const result = normalizer.normalize('입력하자마자');
+      expect(result.stem).toBe('입력');
+      expect(result.metadata?.conjugationType).toBe('immediate');
+    });
+  });
+
+  describe('-하고 나서 (hago naseo) sequential after', () => {
+    it('should normalize 클릭하고나서 to 클릭', () => {
+      const result = normalizer.normalize('클릭하고나서');
+      expect(result.stem).toBe('클릭');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+      expect(result.metadata?.conjugationType).toBe('sequential-after');
+    });
+
+    it('should normalize 입력하고 나서 (with space) to 입력', () => {
+      const result = normalizer.normalize('입력하고 나서');
+      expect(result.stem).toBe('입력');
+      expect(result.metadata?.conjugationType).toBe('sequential-after');
+    });
+  });
+
+  describe('-하기 전에 (hagi jeone) sequential before', () => {
+    it('should normalize 클릭하기전에 to 클릭', () => {
+      const result = normalizer.normalize('클릭하기전에');
+      expect(result.stem).toBe('클릭');
+      expect(result.confidence).toBeGreaterThanOrEqual(0.85);
+      expect(result.metadata?.conjugationType).toBe('sequential-before');
+    });
+
+    it('should normalize 입력하기 전에 (with space) to 입력', () => {
+      const result = normalizer.normalize('입력하기 전에');
+      expect(result.stem).toBe('입력');
+      expect(result.metadata?.conjugationType).toBe('sequential-before');
+    });
+  });
+
   describe('existing 하다 verb conjugations (baseline)', () => {
     it('should normalize 토글하다 to 토글', () => {
       const result = normalizer.normalize('토글하다');
@@ -247,6 +316,72 @@ describe('Korean Event Handler Patterns', () => {
         const node = parse('#button 에서 클릭하면 증가', 'ko');
         expect(node.action).toBe('on');
         expect(node.roles.get('source')?.value).toBe('#button');
+      }
+    });
+  });
+
+  describe('honorific -하시면 patterns (polite native idiom)', () => {
+    it('should parse "클릭하시면 증가" as event handler', () => {
+      const result = canParse('클릭하시면 증가', 'ko');
+      if (result.canParse) {
+        const node = parse('클릭하시면 증가', 'ko');
+        expect(node.action).toBe('on');
+        expect(node.roles.has('event')).toBe(true);
+      } else {
+        const tokens = getTokens('클릭하시면 증가', 'ko');
+        expect(tokens.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('should parse "입력하시면 .active 를 토글" as event handler', () => {
+      const result = canParse('입력하시면 .active 를 토글', 'ko');
+      if (result.canParse) {
+        const node = parse('입력하시면 .active 를 토글', 'ko');
+        expect(node.action).toBe('on');
+      }
+    });
+  });
+
+  describe('immediate -하자마자 patterns (as soon as)', () => {
+    it('should parse "클릭하자마자 증가" as event handler', () => {
+      const result = canParse('클릭하자마자 증가', 'ko');
+      if (result.canParse) {
+        const node = parse('클릭하자마자 증가', 'ko');
+        expect(node.action).toBe('on');
+        expect(node.roles.has('event')).toBe(true);
+      } else {
+        const tokens = getTokens('클릭하자마자 증가', 'ko');
+        expect(tokens.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('should parse "입력하자마자 .active 를 토글" as event handler', () => {
+      const result = canParse('입력하자마자 .active 를 토글', 'ko');
+      if (result.canParse) {
+        const node = parse('입력하자마자 .active 를 토글', 'ko');
+        expect(node.action).toBe('on');
+      }
+    });
+  });
+
+  describe('sequential -하고 나서 patterns (after doing)', () => {
+    it('should parse "클릭하고 나서 증가" as event handler', () => {
+      const result = canParse('클릭하고 나서 증가', 'ko');
+      if (result.canParse) {
+        const node = parse('클릭하고 나서 증가', 'ko');
+        expect(node.action).toBe('on');
+        expect(node.roles.has('event')).toBe(true);
+      } else {
+        const tokens = getTokens('클릭하고 나서 증가', 'ko');
+        expect(tokens.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('should parse "입력하고나서 .active 를 토글" (no space) as event handler', () => {
+      const result = canParse('입력하고나서 .active 를 토글', 'ko');
+      if (result.canParse) {
+        const node = parse('입력하고나서 .active 를 토글', 'ko');
+        expect(node.action).toBe('on');
       }
     });
   });

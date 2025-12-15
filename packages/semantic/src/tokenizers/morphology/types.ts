@@ -74,6 +74,16 @@ export type ConjugationType =
   | 'conditional-myeon'  // -(으)면 - if/when (general conditional)
   | 'temporal-ttae'      // -(으)ㄹ 때 - when (at the time of)
   | 'causal-nikka'       // -(으)니까 - because/since
+  // Korean honorific forms (-시- infix)
+  | 'honorific-conditional'  // -하시면 - if (honorific)
+  | 'honorific-temporal'     // -하실 때 - when (honorific)
+  | 'honorific-causal'       // -하시니까 - because (honorific)
+  | 'honorific-past'         // -하셨어요 - past (honorific)
+  | 'honorific-polite'       // -하십니다 - polite (honorific)
+  // Korean sequential forms
+  | 'sequential-after'       // -고 나서 - after doing
+  | 'sequential-before'      // -기 전에 - before doing
+  | 'immediate'              // -자마자 - as soon as
   // Spanish-specific
   | 'reflexive'
   | 'reflexive-imperative'

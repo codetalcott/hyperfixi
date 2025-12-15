@@ -49,6 +49,27 @@ function containsKorean(word: string): boolean {
  * Ordered by length (longest first) to ensure greedy matching.
  */
 const KOREAN_SUFFIX_RULES: readonly SuffixRule[] = [
+  // Honorific conditional/temporal forms (-시- infix)
+  // These are critical for polite/formal Korean
+  { pattern: '하시니까', confidence: 0.85, conjugationType: 'honorific-causal', minStemLength: 1 },
+  { pattern: '하실때', confidence: 0.88, conjugationType: 'honorific-temporal', minStemLength: 1 },
+  { pattern: '하실 때', confidence: 0.88, conjugationType: 'honorific-temporal', minStemLength: 1 },
+  { pattern: '하시면', confidence: 0.88, conjugationType: 'honorific-conditional', minStemLength: 1 },
+  { pattern: '으시면', confidence: 0.85, conjugationType: 'honorific-conditional', minStemLength: 2 },
+  { pattern: '시면', confidence: 0.82, conjugationType: 'honorific-conditional', minStemLength: 2 },
+
+  // Sequential/temporal forms - "after doing", "before doing", "as soon as"
+  { pattern: '하고나서', confidence: 0.85, conjugationType: 'sequential-after', minStemLength: 1 },
+  { pattern: '하고 나서', confidence: 0.85, conjugationType: 'sequential-after', minStemLength: 1 },
+  { pattern: '고나서', confidence: 0.82, conjugationType: 'sequential-after', minStemLength: 2 },
+  { pattern: '고 나서', confidence: 0.82, conjugationType: 'sequential-after', minStemLength: 2 },
+  { pattern: '하기전에', confidence: 0.85, conjugationType: 'sequential-before', minStemLength: 1 },
+  { pattern: '하기 전에', confidence: 0.85, conjugationType: 'sequential-before', minStemLength: 1 },
+  { pattern: '기전에', confidence: 0.82, conjugationType: 'sequential-before', minStemLength: 2 },
+  { pattern: '기 전에', confidence: 0.82, conjugationType: 'sequential-before', minStemLength: 2 },
+  { pattern: '하자마자', confidence: 0.88, conjugationType: 'immediate', minStemLength: 1 },
+  { pattern: '자마자', confidence: 0.85, conjugationType: 'immediate', minStemLength: 2 },
+
   // Conditional forms - most natural for event handlers (longest first)
   // These are critical for native Korean idioms like "클릭하면 증가"
   { pattern: '하니까', confidence: 0.85, conjugationType: 'causal-nikka', minStemLength: 1 },
@@ -116,6 +137,23 @@ const KOREAN_SUFFIX_RULES: readonly SuffixRule[] = [
  * e.g., 토글 + 하다 = 토글하다 (to toggle)
  */
 const HADA_PATTERNS: readonly { pattern: string; confidence: number; conjugationType: ConjugationType }[] = [
+  // Honorific forms (-시- infix) - polite/formal Korean
+  // 클릭하시면 → 클릭 (if you click - honorific)
+  { pattern: '하시니까', confidence: 0.88, conjugationType: 'honorific-causal' },
+  { pattern: '하실때', confidence: 0.88, conjugationType: 'honorific-temporal' },
+  { pattern: '하실 때', confidence: 0.88, conjugationType: 'honorific-temporal' },
+  { pattern: '하시면', confidence: 0.88, conjugationType: 'honorific-conditional' },
+  { pattern: '하셨어요', confidence: 0.85, conjugationType: 'honorific-past' },
+  { pattern: '하셨어', confidence: 0.85, conjugationType: 'honorific-past' },
+  { pattern: '하십니다', confidence: 0.85, conjugationType: 'honorific-polite' },
+
+  // Sequential/temporal forms - "after doing", "before doing", "as soon as"
+  { pattern: '하고나서', confidence: 0.88, conjugationType: 'sequential-after' },
+  { pattern: '하고 나서', confidence: 0.88, conjugationType: 'sequential-after' },
+  { pattern: '하기전에', confidence: 0.88, conjugationType: 'sequential-before' },
+  { pattern: '하기 전에', confidence: 0.88, conjugationType: 'sequential-before' },
+  { pattern: '하자마자', confidence: 0.88, conjugationType: 'immediate' },
+
   // Conditional forms - most natural for event handlers (highest priority)
   // 클릭하면 → 클릭 (if clicked)
   { pattern: '하니까', confidence: 0.88, conjugationType: 'causal-nikka' },
