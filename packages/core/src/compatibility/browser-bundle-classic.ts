@@ -282,8 +282,11 @@ if (typeof window !== 'undefined') {
       await attributeProcessor.init();
     });
   } else {
-    // DOM already loaded
-    void attributeProcessor.init();
+    // DOM already loaded - use setTimeout(0) to allow other scripts to load first
+    // This enables external behaviors packages to set __hyperfixi_behaviors_ready
+    setTimeout(async () => {
+      await attributeProcessor.init();
+    }, 0);
   }
 }
 

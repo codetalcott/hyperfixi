@@ -36,7 +36,7 @@
 export const draggableSource = `
 behavior Draggable(dragHandle)
   init
-    if no dragHandle set the dragHandle to me
+    if no dragHandle set dragHandle to me
   end
   on pointerdown(clientX, clientY) from dragHandle
     halt the event
@@ -95,7 +95,7 @@ export const draggableMetadata = {
  * ```
  */
 export async function registerDraggable(
-  hyperfixi?: { compile: (code: string) => any; execute: (ast: any, ctx: any) => Promise<any> }
+  hyperfixi?: { compile: (code: string, options?: { disableSemanticParsing?: boolean }) => any; execute: (ast: any, ctx: any) => Promise<any>; createContext: () => any }
 ): Promise<void> {
   // Get hyperfixi instance
   const hf = hyperfixi || (typeof window !== 'undefined' ? (window as any).hyperfixi : null);
@@ -106,15 +106,16 @@ export async function registerDraggable(
     );
   }
 
-  // Compile the behavior source
-  const result = hf.compile(draggableSource);
+  // Disable semantic parsing for behaviors - they use complex control flow
+  const result = hf.compile(draggableSource, { disableSemanticParsing: true });
 
   if (!result.success) {
     throw new Error(`Failed to compile Draggable behavior: ${JSON.stringify(result.errors)}`);
   }
 
-  // Execute to register the behavior
-  await hf.execute(result.ast, {});
+  // Use createContext() to get a proper execution context with locals Map
+  const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
+  await hf.execute(result.ast, ctx);
 }
 
 // Auto-register when loaded as a script tag (IIFE/global build)

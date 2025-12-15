@@ -106,7 +106,7 @@ describe('@hyperfixi/behaviors', () => {
     });
 
     it('should default to "active" class', () => {
-      expect(toggleableSource).toContain('set the class to "active"');
+      expect(toggleableSource).toContain('set cls to "active"');
     });
   });
 

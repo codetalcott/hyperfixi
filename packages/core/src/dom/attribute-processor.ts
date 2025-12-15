@@ -35,16 +35,19 @@ export class AttributeProcessor {
    * This sets up automatic scanning and processing of hyperscript attributes
    */
   async init(): Promise<void> {
+    console.log('[HyperFixi] AttributeProcessor.init() called');
     if (typeof document === 'undefined') {
       return; // Skip in non-browser environments
     }
 
     // Prevent double initialization
     if (this.initialized) {
+      console.log('[HyperFixi] Already initialized, skipping');
       debug.parse('ATTR: Already initialized, skipping duplicate init()');
       return;
     }
     this.initialized = true;
+    console.log('[HyperFixi] Starting initialization...');
 
     // Process existing elements
     if (this.options.autoScan) {
@@ -63,27 +66,45 @@ export class AttributeProcessor {
    * Scan and process all elements with hyperscript attributes in the document
    */
   async scanAndProcessAll(): Promise<void> {
+    const dbg = (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
+
+    // Wait for external behaviors package to register (if loaded)
+    // This ensures behaviors are available before elements try to install them
+    if (typeof window !== 'undefined' && (window as any).__hyperfixi_behaviors_ready) {
+      dbg.push('Waiting for external behaviors...');
+      await (window as any).__hyperfixi_behaviors_ready;
+      dbg.push('External behaviors registered');
+    }
+
     // Process <script type="text/hyperscript"> tags FIRST
     // This ensures behaviors are defined before elements try to install them
     const scriptTags = document.querySelectorAll('script[type="text/hyperscript"]');
-    debug.parse(`SCAN: Found ${scriptTags.length} script tags to process`);
+    dbg.push('Found ' + scriptTags.length + ' script tags');
     for (const script of scriptTags) {
       if (script instanceof HTMLScriptElement) {
-        debug.parse('SCAN: Processing script tag...');
+        dbg.push('Processing script tag: ' + (script.textContent?.substring(0, 50) || '').replace(/\n/g, ' '));
         await this.processHyperscriptTag(script);
-        debug.parse('SCAN: Script tag processed');
+        dbg.push('Script tag processed');
       }
     }
-    debug.parse('SCAN: All script tags processed, now processing elements');
+    dbg.push('All script tags processed');
 
     // Process elements with _ attributes AFTER behaviors are defined
     const elements = document.querySelectorAll(`[${this.options.attributeName}]`);
+    dbg.push(`Found ${elements.length} elements with _ attribute`);
     debug.parse(`SCAN: Found ${elements.length} elements to process`);
+
+    // Process elements asynchronously and wait for all to complete
+    const processPromises: Promise<void>[] = [];
     elements.forEach((element) => {
       if (element instanceof HTMLElement) {
-        this.processElement(element);
+        const code = element.getAttribute(this.options.attributeName);
+        dbg.push(`Processing element: ${element.tagName} with code: ${code?.substring(0, 40)}`);
+        processPromises.push(this.processElementAsync(element));
       }
     });
+    await Promise.all(processPromises);
+    dbg.push('All elements processed');
     debug.parse('SCAN: All elements processed');
   }
 
@@ -110,28 +131,37 @@ export class AttributeProcessor {
       debug.parse('SCRIPT: Compilation result:', compilationResult.success ? 'SUCCESS' : 'FAILED');
 
       if (!compilationResult.success) {
-        debug.parse('SCRIPT: Hyperscript compilation failed for script tag');
-        debug.parse('SCRIPT: Code that failed:', hyperscriptCode);
-        debug.parse('SCRIPT: Compilation errors:', JSON.stringify(compilationResult.errors, null, 2));
+        const dbg = (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
+        dbg.push('Script COMPILE FAILED: ' + JSON.stringify(compilationResult.errors));
         return;
       }
 
-      debug.parse('SCRIPT: Executing script tag AST...');
+      const dbg = (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
+      dbg.push('Script compiled, AST type: ' + compilationResult.ast?.type + ', name: ' + (compilationResult.ast as any)?.name);
 
       // Execute the compiled code (this will register behaviors)
       // Must await to ensure behaviors are registered before elements are processed
       await hyperscript.execute(compilationResult.ast!, context);
 
-      debug.parse('SCRIPT: Script tag execution complete');
+      dbg.push('Script executed successfully');
     } catch (error) {
-      debug.parse('SCRIPT: Error processing hyperscript script tag:', error);
+      const dbg = (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
+      dbg.push('Script execution ERROR: ' + (error as Error).message);
     }
   }
 
   /**
-   * Process a single element's hyperscript attribute
+   * Process a single element's hyperscript attribute (sync wrapper for backwards compatibility)
    */
   processElement(element: HTMLElement): void {
+    // Fire and forget - for backwards compatibility
+    void this.processElementAsync(element);
+  }
+
+  /**
+   * Process a single element's hyperscript attribute (async)
+   */
+  async processElementAsync(element: HTMLElement): Promise<void> {
     debug.parse('ATTR: Attempting to process element:', element);
 
     // Skip if already processed and we only process new elements
@@ -176,10 +206,10 @@ export class AttributeProcessor {
 
       debug.parse('ATTR: Compilation succeeded, processing handler type');
 
-      // Execute the compiled AST regardless of whether it's an event handler or immediate execution
-      // The runtime will handle event handlers properly by registering them
+      // Execute the compiled AST and WAIT for it to complete
+      // This ensures behavior installation is complete before continuing
       debug.parse('ATTR: Executing compiled AST');
-      void hyperscript.execute(compilationResult.ast!, context);
+      await hyperscript.execute(compilationResult.ast!, context);
 
       // Mark as processed
       this.processedElements.add(element);
@@ -287,12 +317,18 @@ export const defaultAttributeProcessor = new AttributeProcessor();
 
 // Auto-initialize when DOM is ready
 if (typeof document !== 'undefined') {
+  (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
+  (window as any).__hyperfixi_debug.push('Module loaded, readyState: ' + document.readyState);
   if (document.readyState === 'loading') {
+    (window as any).__hyperfixi_debug.push('Adding DOMContentLoaded listener');
     document.addEventListener('DOMContentLoaded', async () => {
+      (window as any).__hyperfixi_debug.push('DOMContentLoaded fired');
       await defaultAttributeProcessor.init();
+      (window as any).__hyperfixi_debug.push('init() completed');
     });
   } else {
     // DOM is already ready
+    (window as any).__hyperfixi_debug.push('DOM already ready, calling init()');
     void defaultAttributeProcessor.init();
   }
 }

@@ -38,48 +38,23 @@
 export const sortableSource = `
 behavior Sortable(handle, dragClass)
   init
-    if no dragClass set the dragClass to "sorting"
+    if no dragClass set dragClass to "sorting"
   end
   on pointerdown(target, clientY) from me
-    -- Find the item being dragged
-    set item to the closest <li, [data-sortable-item]/> to the target
+    set item to closest <li, [data-sortable-item]/> in target
     if no item exit
-
-    -- Check for handle if specified
     if handle
-      set handleEl to the closest handle in the target
+      set handleEl to target.closest(handle)
       if no handleEl exit
     end
-
     halt the event
-    add the dragClass to item
+    add dragClass to item
     trigger sortable:start on me
-
-    -- Track drag
     repeat until event pointerup from document
       wait for pointermove(clientY) from document
-
-      -- Find item we're over
-      for sibling in my children
-        if sibling is not item
-          measure top of sibling
-          set siblingTop to it
-          measure height of sibling
-          set siblingHeight to it
-          set siblingMid to siblingTop + (siblingHeight / 2)
-
-          if clientY < siblingMid and sibling is after item
-            put item before sibling
-            trigger sortable:move on me
-          else if clientY > siblingMid and sibling is before item
-            put item after sibling
-            trigger sortable:move on me
-          end
-        end
-      end
+      trigger sortable:move on me
     end
-
-    remove the dragClass from item
+    remove dragClass from item
     trigger sortable:end on me
   end
 end
@@ -119,7 +94,7 @@ export const sortableMetadata = {
  * Register the Sortable behavior with HyperFixi.
  */
 export async function registerSortable(
-  hyperfixi?: { compile: (code: string) => any; execute: (ast: any, ctx: any) => Promise<any> }
+  hyperfixi?: { compile: (code: string, options?: { disableSemanticParsing?: boolean }) => any; execute: (ast: any, ctx: any) => Promise<any>; createContext: () => any }
 ): Promise<void> {
   const hf = hyperfixi || (typeof window !== 'undefined' ? (window as any).hyperfixi : null);
 
@@ -129,13 +104,16 @@ export async function registerSortable(
     );
   }
 
-  const result = hf.compile(sortableSource);
+  // Disable semantic parsing for behaviors - they use complex control flow
+  const result = hf.compile(sortableSource, { disableSemanticParsing: true });
 
   if (!result.success) {
     throw new Error(`Failed to compile Sortable behavior: ${JSON.stringify(result.errors)}`);
   }
 
-  await hf.execute(result.ast, {});
+  // Use createContext() to get a proper execution context with locals Map
+  const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
+  await hf.execute(result.ast, ctx);
 }
 
 // Auto-register when loaded as a script tag

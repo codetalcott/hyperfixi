@@ -12,8 +12,8 @@
  * <!-- With confirmation -->
  * <div _="install Removable(confirm: true)">Click to remove (with confirm)</div>
  *
- * <!-- With fade transition -->
- * <div _="install Removable(transition: fade)">Click to fade out</div>
+ * <!-- With fade effect -->
+ * <div _="install Removable(effect: fade)">Click to fade out</div>
  * ```
  *
  * @events
@@ -25,7 +25,7 @@
  * The hyperscript source code for the Removable behavior.
  */
 export const removableSource = `
-behavior Removable(confirm, transition)
+behavior Removable(confirm, effect)
   on click
     if confirm
       if not window.confirm("Are you sure?")
@@ -33,7 +33,7 @@ behavior Removable(confirm, transition)
       end
     end
     trigger removable:before
-    if transition is "fade"
+    if effect is "fade"
       transition opacity to 0 over 300ms
     end
     trigger removable:removed
@@ -58,7 +58,7 @@ export const removableMetadata = {
       description: 'Show confirmation dialog before removal',
     },
     {
-      name: 'transition',
+      name: 'effect',
       type: 'string',
       optional: true,
       default: 'none',
@@ -75,7 +75,7 @@ export const removableMetadata = {
  * Register the Removable behavior with HyperFixi.
  */
 export async function registerRemovable(
-  hyperfixi?: { compile: (code: string) => any; execute: (ast: any, ctx: any) => Promise<any> }
+  hyperfixi?: { compile: (code: string, options?: { disableSemanticParsing?: boolean }) => any; execute: (ast: any, ctx: any) => Promise<any>; createContext: () => any }
 ): Promise<void> {
   const hf = hyperfixi || (typeof window !== 'undefined' ? (window as any).hyperfixi : null);
 
@@ -85,13 +85,16 @@ export async function registerRemovable(
     );
   }
 
-  const result = hf.compile(removableSource);
+  // Disable semantic parsing for behaviors - they use complex control flow
+  const result = hf.compile(removableSource, { disableSemanticParsing: true });
 
   if (!result.success) {
     throw new Error(`Failed to compile Removable behavior: ${JSON.stringify(result.errors)}`);
   }
 
-  await hf.execute(result.ast, {});
+  // Use createContext() to get a proper execution context with locals Map
+  const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
+  await hf.execute(result.ast, ctx);
 }
 
 // Auto-register when loaded as a script tag

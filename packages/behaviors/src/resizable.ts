@@ -35,17 +35,10 @@
 export const resizableSource = `
 behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
   init
-    if no minWidth set the minWidth to 50
-    if no minHeight set the minHeight to 50
-    if no maxWidth set the maxWidth to 9999
-    if no maxHeight set the maxHeight to 9999
-    if no handle
-      -- Create default resize handle
-      make <div.hyperfixi-resize-handle/>
-      put it at the end of me
-      set the handle to it
-      add { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: se-resize; } to the handle
-    end
+    if no minWidth set minWidth to 50
+    if no minHeight set minHeight to 50
+    if no maxWidth set maxWidth to 9999
+    if no maxHeight set maxHeight to 9999
   end
   on pointerdown(clientX, clientY) from handle
     halt the event
@@ -61,7 +54,6 @@ behavior Resizable(handle, minWidth, minHeight, maxWidth, maxHeight)
                pointerup from document
       set newWidth to startWidth + (clientX - startX)
       set newHeight to startHeight + (clientY - startY)
-      -- Apply constraints
       if newWidth < minWidth set newWidth to minWidth
       if newWidth > maxWidth set newWidth to maxWidth
       if newHeight < minHeight set newHeight to minHeight
@@ -129,7 +121,7 @@ export const resizableMetadata = {
  * Register the Resizable behavior with HyperFixi.
  */
 export async function registerResizable(
-  hyperfixi?: { compile: (code: string) => any; execute: (ast: any, ctx: any) => Promise<any> }
+  hyperfixi?: { compile: (code: string, options?: { disableSemanticParsing?: boolean }) => any; execute: (ast: any, ctx: any) => Promise<any>; createContext: () => any }
 ): Promise<void> {
   const hf = hyperfixi || (typeof window !== 'undefined' ? (window as any).hyperfixi : null);
 
@@ -139,13 +131,16 @@ export async function registerResizable(
     );
   }
 
-  const result = hf.compile(resizableSource);
+  // Disable semantic parsing for behaviors - they use complex control flow
+  const result = hf.compile(resizableSource, { disableSemanticParsing: true });
 
   if (!result.success) {
     throw new Error(`Failed to compile Resizable behavior: ${JSON.stringify(result.errors)}`);
   }
 
-  await hf.execute(result.ast, {});
+  // Use createContext() to get a proper execution context with locals Map
+  const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
+  await hf.execute(result.ast, ctx);
 }
 
 // Auto-register when loaded as a script tag

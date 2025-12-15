@@ -114,7 +114,7 @@ export const behaviors = {
  * ```
  */
 export async function registerAll(
-  hyperfixi?: { compile: (code: string) => any; execute: (ast: any, ctx: any) => Promise<any> }
+  hyperfixi?: { compile: (code: string) => any; execute: (ast: any, ctx: any) => Promise<any>; createContext: () => any }
 ): Promise<void> {
   const registrations = Object.values(behaviors).map(register => register(hyperfixi));
   await Promise.all(registrations);
@@ -145,4 +145,18 @@ export function getAllBehaviorMetadata(): Array<BehaviorModule['metadata']> {
     sortableMetadata,
     resizableMetadata,
   ];
+}
+
+/**
+ * Promise that resolves when all behaviors are registered.
+ * This is set when the package auto-registers in browser environments.
+ */
+export let ready: Promise<void> | null = null;
+
+// Auto-register all behaviors when loaded in browser with hyperfixi available
+if (typeof window !== 'undefined' && (window as any).hyperfixi) {
+  // Register all behaviors and track the promise
+  ready = registerAll();
+  // Expose on window so attribute processor can wait for it
+  (window as any).__hyperfixi_behaviors_ready = ready;
 }

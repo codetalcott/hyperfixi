@@ -53,9 +53,14 @@ export interface CompilationResult {
   compilationTime: number;
 }
 
+export interface CompileOptions {
+  /** Disable semantic parsing (use traditional parser only). Useful for complex behaviors. */
+  disableSemanticParsing?: boolean;
+}
+
 export interface HyperscriptAPI {
   // Core compilation and execution
-  compile(code: string): CompilationResult;
+  compile(code: string, options?: CompileOptions): CompilationResult;
   execute(ast: ASTNode, context?: ExecutionContext): Promise<unknown>;
   run(code: string, context?: ExecutionContext): Promise<unknown>;
   evaluate(code: string, context?: ExecutionContext): Promise<unknown>; // Alias for run
@@ -202,8 +207,9 @@ function parse(code: string): ASTNode {
  * Compile hyperscript code into an Abstract Syntax Tree (AST)
  *
  * Uses semantic-first parsing with confidence-based fallback by default.
+ * Pass { disableSemanticParsing: true } for complex behaviors that need traditional parsing.
  */
-function compile(code: string): CompilationResult {
+function compile(code: string, options?: CompileOptions): CompilationResult {
   debug.runtime('COMPILE: hyperscript-api compile() called', {
     code,
     codeLength: code.length,
@@ -218,8 +224,10 @@ function compile(code: string): CompilationResult {
   const startTime = performance.now();
 
   try {
-    debug.runtime('COMPILE: about to call parse() with semantic options');
-    const parseResult = parseToResult(code, getDefaultParserOptions());
+    // Use traditional parsing if semantic parsing is disabled
+    const parserOptions = options?.disableSemanticParsing ? {} : getDefaultParserOptions();
+    debug.runtime('COMPILE: about to call parse()', { disableSemanticParsing: options?.disableSemanticParsing });
+    const parseResult = parseToResult(code, parserOptions);
     debug.runtime('COMPILE: parse() returned', {
       success: parseResult.success,
       hasNode: !!parseResult.node,

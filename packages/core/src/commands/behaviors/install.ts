@@ -138,12 +138,8 @@ export class InstallCommand {
 
     // Second arg (if present) is parameters object
     let parameters: Record<string, unknown> | undefined;
-    console.log('[INSTALL DEBUG] raw.args.length:', raw.args.length);
-    console.log('[INSTALL DEBUG] raw.args:', JSON.stringify(raw.args, null, 2).substring(0, 500));
     if (raw.args.length >= 2) {
-      console.log('[INSTALL DEBUG] Evaluating args[1]:', JSON.stringify(raw.args[1]).substring(0, 200));
       const params = await evaluator.evaluate(raw.args[1], context);
-      console.log('[INSTALL DEBUG] Evaluated params:', params);
       if (params && typeof params === 'object' && !Array.isArray(params)) {
         parameters = params as Record<string, unknown>;
 

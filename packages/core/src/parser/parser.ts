@@ -2801,9 +2801,31 @@ export class Parser {
       // Commands with complex syntax that semantic parsing doesn't handle correctly yet:
       // - 'install' has complex 'install Behavior(param: value)' syntax with named params
       'install',
-      // Control flow commands handled via semantic parsing:
-      // - 'for' via buildRepeatCommandNode with loopType='for'
+      // TODO: Add semantic parsing support for these commands
+      // - 'wait' has complex multiline 'or' continuation and 'from' clauses
+      'wait',
+      // - 'repeat' has nested command blocks and 'until event X from Y' syntax
+      'repeat',
+      // - 'for' has nested command blocks (for x in collection)
+      'for',
+      // - 'set' has complex target expressions (possessive, CSS properties, etc.)
+      'set',
+      // - 'put' has complex positioning (at start/end of, before, after, into)
+      'put',
+      // - 'add' can have CSS object literals with special syntax
+      'add',
+      // Control flow commands:
       // - 'if'/'unless' via buildIfCommandNode with condition role
+      'if',
+      'unless',
+      // Other commands with complex syntax:
+      'make',
+      'measure',
+      'trigger',
+      'halt',
+      'remove',
+      'exit',
+      'closest',
     ];
 
     if (this.semanticAdapter && !skipSemanticParsing.includes(commandName.toLowerCase())) {

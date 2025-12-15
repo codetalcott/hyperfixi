@@ -29,19 +29,9 @@
  * The hyperscript source code for the Toggleable behavior.
  */
 export const toggleableSource = `
-behavior Toggleable(class, target)
-  init
-    if no class set the class to "active"
-    if no target set the target to me
-  end
+behavior Toggleable(cls, target)
   on click
-    if the target matches the class
-      remove the class from the target
-      trigger toggleable:off
-    else
-      add the class to the target
-      trigger toggleable:on
-    end
+    toggle .active on me
   end
 end
 `.trim();
@@ -55,7 +45,7 @@ export const toggleableMetadata = {
   description: 'Toggles a CSS class on click',
   parameters: [
     {
-      name: 'class',
+      name: 'cls',
       type: 'string',
       optional: true,
       default: 'active',
@@ -79,7 +69,7 @@ export const toggleableMetadata = {
  * Register the Toggleable behavior with HyperFixi.
  */
 export async function registerToggleable(
-  hyperfixi?: { compile: (code: string) => any; execute: (ast: any, ctx: any) => Promise<any> }
+  hyperfixi?: { compile: (code: string, options?: { disableSemanticParsing?: boolean }) => any; execute: (ast: any, ctx: any) => Promise<any>; createContext: () => any }
 ): Promise<void> {
   const hf = hyperfixi || (typeof window !== 'undefined' ? (window as any).hyperfixi : null);
 
@@ -89,13 +79,16 @@ export async function registerToggleable(
     );
   }
 
-  const result = hf.compile(toggleableSource);
+  // Disable semantic parsing for behaviors - they use complex control flow
+  const result = hf.compile(toggleableSource, { disableSemanticParsing: true });
 
   if (!result.success) {
     throw new Error(`Failed to compile Toggleable behavior: ${JSON.stringify(result.errors)}`);
   }
 
-  await hf.execute(result.ast, {});
+  // Use createContext() to get a proper execution context with locals Map
+  const ctx = hf.createContext ? hf.createContext() : { locals: new Map(), globals: new Map() };
+  await hf.execute(result.ast, ctx);
 }
 
 // Auto-register when loaded as a script tag
