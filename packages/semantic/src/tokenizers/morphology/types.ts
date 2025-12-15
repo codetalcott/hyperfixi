@@ -79,6 +79,17 @@ export type ConjugationType =
   | 'reflexive-imperative'
   | 'gerund'
   | 'participle'
+  // Arabic-specific
+  | 'conditional-idha'    // إذا - if/when (hypothetical)
+  | 'temporal-indama'     // عندما - when (temporal conjunction)
+  | 'temporal-hina'       // حين - at the time of
+  | 'temporal-lamma'      // لمّا - when (past emphasis)
+  | 'past-verb'           // فعل ماضي - past tense verb
+  // Turkish-specific
+  | 'conditional-se'      // -se/-sa - if (hypothetical)
+  | 'temporal-ince'       // -ince/-ınca/-unca/-ünce - when/as
+  | 'temporal-dikce'      // -dikçe/-dıkça/-dukça/-dükçe - as/while
+  | 'aorist'              // -ir/-ar - habitual/general
   // Compound
   | 'te-form' // Japanese て-form
   | 'dictionary'; // Base/infinitive form

@@ -134,6 +134,11 @@ const ARABIC_KEYWORDS: Map<string, string> = new Map([
   ['عند', 'on'],
   ['لدى', 'on'],
   ['حين', 'on'],
+  // Native idiom temporal conjunctions (higher priority)
+  ['عندما', 'on'],     // when (temporal conjunction) - most natural
+  ['حينما', 'on'],     // when (alternative)
+  ['لمّا', 'on'],       // when (past emphasis)
+  ['لما', 'on'],        // when (without shadda)
   ['تشغيل', 'trigger'],
   ['شغّل', 'trigger'],
   ['شغل', 'trigger'],

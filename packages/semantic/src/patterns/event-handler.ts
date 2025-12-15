@@ -419,7 +419,7 @@ const eventArabicWithSource: LanguagePattern = {
 
 /**
  * Arabic: "إذا نُقر {body...}"
- * Alternative conditional form using إذا (if/when)
+ * Conditional form using إذا (if/when)
  *
  * إذا (idhā) = if, when (conditional)
  * نُقر (nuqira) = was clicked (passive)
@@ -439,6 +439,236 @@ const eventArabicConditional: LanguagePattern = {
   },
   extraction: {
     event: { position: 1 },
+  },
+};
+
+/**
+ * Arabic: "عندما نقر {body...}"
+ * Native temporal conjunction form using عندما (when)
+ * More natural for event handlers than عند.
+ *
+ * عندما (ʿindamā) = when (temporal conjunction)
+ * This is the most natural Arabic form for "when X happens".
+ */
+const eventArabicTemporalIndama: LanguagePattern = {
+  id: 'event-ar-temporal-indama',
+  language: 'ar',
+  command: 'on',
+  priority: 105, // Higher than standard - prefer native idiom
+  template: {
+    format: 'عندما {event} {body}',
+    tokens: [
+      { type: 'literal', value: 'عندما' },
+      { type: 'role', role: 'event' },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 1 },
+  },
+};
+
+/**
+ * Arabic: "حين النقر {body...}"
+ * Temporal form using حين (at the time of)
+ * Common in formal/literary Arabic.
+ *
+ * حين (ḥīna) = at the time of, when
+ */
+const eventArabicTemporalHina: LanguagePattern = {
+  id: 'event-ar-temporal-hina',
+  language: 'ar',
+  command: 'on',
+  priority: 102,
+  template: {
+    format: 'حين {event} {body}',
+    tokens: [
+      { type: 'literal', value: 'حين', alternatives: ['حينما'] },
+      { type: 'role', role: 'event' },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 1 },
+  },
+};
+
+/**
+ * Arabic: "لمّا نقر {body...}"
+ * Temporal form using لمّا (when - past emphasis)
+ * Used for completed/past actions triggering something.
+ *
+ * لمّا (lammā) = when (with past tense, emphatic)
+ */
+const eventArabicTemporalLamma: LanguagePattern = {
+  id: 'event-ar-temporal-lamma',
+  language: 'ar',
+  command: 'on',
+  priority: 103,
+  template: {
+    format: 'لمّا {event} {body}',
+    tokens: [
+      { type: 'literal', value: 'لمّا', alternatives: ['لما'] },
+      { type: 'role', role: 'event' },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 1 },
+  },
+};
+
+/**
+ * Arabic: "عندما نقر من #button {body...}"
+ * Native temporal form with source filter.
+ */
+const eventArabicTemporalWithSource: LanguagePattern = {
+  id: 'event-ar-temporal-source',
+  language: 'ar',
+  command: 'on',
+  priority: 115, // Highest - most specific
+  template: {
+    format: 'عندما {event} من {source} {body}',
+    tokens: [
+      { type: 'literal', value: 'عندما', alternatives: ['حين', 'لمّا'] },
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: 'من' },
+      { type: 'role', role: 'source' },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 1 },
+    source: { marker: 'من' },
+  },
+};
+
+// =============================================================================
+// Turkish Patterns (SOV)
+// =============================================================================
+
+/**
+ * Turkish: "tıklandığında {body...}"
+ * Native conditional form using -dığında (when X happens)
+ * This is the most natural form for event handlers in Turkish.
+ *
+ * -dığında = conditional/temporal suffix
+ * tıklandığında = "when clicked"
+ */
+const eventTurkishConditionalDiginda: LanguagePattern = {
+  id: 'event-tr-conditional-diginda',
+  language: 'tr',
+  command: 'on',
+  priority: 105, // Higher than standard - prefer native idiom
+  template: {
+    format: '{event}dığında {body}',
+    tokens: [
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: 'dığında', alternatives: ['dıgında', 'duğunda', 'düğünde'] },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 0 },
+  },
+};
+
+/**
+ * Turkish: "tıklayınca {body...}"
+ * Native temporal form using -ınca/-ince (when/as)
+ * Common alternative to -dığında.
+ *
+ * -ınca/-ince/-unca/-ünce = "when" (temporal converb)
+ */
+const eventTurkishTemporalInca: LanguagePattern = {
+  id: 'event-tr-temporal-inca',
+  language: 'tr',
+  command: 'on',
+  priority: 103,
+  template: {
+    format: '{event}ınca {body}',
+    tokens: [
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: 'ınca', alternatives: ['ince', 'unca', 'ünce', 'yınca', 'yince'] },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 0 },
+  },
+};
+
+/**
+ * Turkish: "tıklarsa {body...}"
+ * Conditional form using -rsa/-rse (if/hypothetical)
+ * Used for hypothetical conditions.
+ *
+ * -rsa/-rse = "if" (conditional)
+ */
+const eventTurkishConditionalSa: LanguagePattern = {
+  id: 'event-tr-conditional-sa',
+  language: 'tr',
+  command: 'on',
+  priority: 102,
+  template: {
+    format: '{event}rsa {body}',
+    tokens: [
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: 'rsa', alternatives: ['rse', 'sa', 'se'] },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 0 },
+  },
+};
+
+/**
+ * Turkish: "tıklama olduğunda {body...}"
+ * Standard event handler form with olduğunda (when it happens).
+ */
+const eventTurkishStandard: LanguagePattern = {
+  id: 'event-tr-standard',
+  language: 'tr',
+  command: 'on',
+  priority: 100,
+  template: {
+    format: '{event} olduğunda {body}',
+    tokens: [
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: 'olduğunda', alternatives: ['oldugunda', 'de', 'da'] },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    event: { position: 0 },
+  },
+};
+
+/**
+ * Turkish: "#button den tıklandığında {body...}"
+ * Conditional form with source filter.
+ *
+ * -den/-dan = from (ablative case)
+ */
+const eventTurkishConditionalWithSource: LanguagePattern = {
+  id: 'event-tr-conditional-source',
+  language: 'tr',
+  command: 'on',
+  priority: 115, // Highest - most specific
+  template: {
+    format: '{source} den {event}dığında {body}',
+    tokens: [
+      { type: 'role', role: 'source' },
+      { type: 'literal', value: 'den', alternatives: ['dan', 'ten', 'tan'] },
+      { type: 'role', role: 'event' },
+      { type: 'literal', value: 'dığında', alternatives: ['dıgında', 'duğunda'] },
+      // Body captured as remaining tokens
+    ],
+  },
+  extraction: {
+    source: { position: 0 },
+    event: { marker: 'den', markerAlternatives: ['dan', 'ten', 'tan'] },
   },
 };
 
@@ -597,6 +827,27 @@ export const eventNameTranslations: Record<string, Record<string, string>> = {
     'carga': 'load',
     'desplazamiento': 'scroll',
   },
+  // Turkish event names → English
+  tr: {
+    'tıklama': 'click',
+    'tıkla': 'click',
+    'tık': 'click',
+    'giriş': 'input',
+    'girdi': 'input',
+    'değişiklik': 'change',
+    'değişim': 'change',
+    'gönderme': 'submit',
+    'gönder': 'submit',
+    'tuşbasma': 'keydown',
+    'tuşbırakma': 'keyup',
+    'fareiçinde': 'mouseover',
+    'faredışında': 'mouseout',
+    'odaklanma': 'focus',
+    'odak': 'focus',
+    'bulanıklık': 'blur',
+    'yükleme': 'load',
+    'kaydırma': 'scroll',
+  },
 };
 
 /**
@@ -631,10 +882,20 @@ export const eventHandlerPatterns: LanguagePattern[] = [
   eventKoreanTemporalTtae,
   eventKoreanWithSource,
   // Note: eventKoreanStandard disabled - 에 is ambiguous (event vs destination)
-  // Arabic
+  // Arabic - native idiom patterns first (higher priority)
+  eventArabicTemporalWithSource,
+  eventArabicTemporalIndama,
+  eventArabicTemporalLamma,
+  eventArabicTemporalHina,
   eventArabicStandard,
   eventArabicWithSource,
   eventArabicConditional,
+  // Turkish - native idiom patterns first (higher priority)
+  eventTurkishConditionalWithSource,
+  eventTurkishConditionalDiginda,
+  eventTurkishTemporalInca,
+  eventTurkishConditionalSa,
+  eventTurkishStandard,
   // Spanish
   eventSpanishStandard,
   eventSpanishWithSource,
