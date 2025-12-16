@@ -235,38 +235,6 @@
             </div>
         </header>
 
-        <!-- Debug Demo Section -->
-        <div class="section" style="border-left: 4px solid #9c27b0; background: linear-gradient(135deg, rgba(156, 39, 176, 0.05) 0%, rgba(103, 58, 183, 0.08) 100%);">
-            <h2><span class="icon">🔬</span> Semantic Debug Panel</h2>
-            <p class="section-description">
-                Click the <strong>🔬 button</strong> in the bottom-right corner to open the debug panel.
-                Then interact with these demo elements to see semantic parsing in action!
-            </p>
-            <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px;">
-                <button
-                    style="padding: 12px 24px; font-size: 16px; border-radius: 8px; border: 2px solid #667eea; background: white; cursor: pointer; transition: all 0.2s;"
-                    _="on click toggle .active on me then put 'Clicked!' into the next <span/>"
-                >Toggle Active</button>
-                <span style="padding: 12px; color: #666;">Ready</span>
-
-                <button
-                    style="padding: 12px 24px; font-size: 16px; border-radius: 8px; border: 2px solid #4caf50; background: white; cursor: pointer;"
-                    _="on click increment :counter then put :counter into #counter-display"
-                >Increment Counter</button>
-                <span id="counter-display" style="padding: 12px 20px; background: #f0f0f0; border-radius: 8px; font-weight: bold;">0</span>
-
-                <button
-                    style="padding: 12px 24px; font-size: 16px; border-radius: 8px; border: 2px solid #ff9800; background: white; cursor: pointer;"
-                    _="on click add .highlight to #highlight-target"
-                >Add Highlight</button>
-                <span id="highlight-target" style="padding: 12px 20px; background: #f5f5f5; border-radius: 8px; transition: all 0.3s;">Target Element</span>
-            </div>
-            <style>
-                .active { background: #667eea !important; color: white !important; }
-                .highlight { background: #fff3e0 !important; box-shadow: 0 0 0 3px #ff9800 !important; }
-            </style>
-        </div>
-
         <!-- Basics Section -->
         <div class="section">
             <h2><span class="icon">🌱</span> Basics</h2>

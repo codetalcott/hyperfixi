@@ -1,5 +1,6 @@
 /**
  * Test to verify the specific example works: hyperscript.evaluate('on click toggle .active on me')
+ * @vitest-environment jsdom
  */
 
 import { describe, it, expect } from 'vitest';
