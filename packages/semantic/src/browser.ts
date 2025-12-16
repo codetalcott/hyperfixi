@@ -76,6 +76,12 @@ export {
 export type { SemanticAnalyzer, SemanticAnalysisResult } from './core-bridge';
 
 // =============================================================================
+// AST Builder (direct semantic-to-AST conversion)
+// =============================================================================
+
+export { buildAST, ASTBuilder, getCommandMapper, registerCommandMapper } from './ast-builder';
+
+// =============================================================================
 // Tokenizers (for advanced usage)
 // =============================================================================
 

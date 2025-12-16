@@ -19,6 +19,22 @@ import {
 // Singleton semantic analyzer instance (lazy-initialized)
 let semanticAnalyzerInstance: SemanticAnalyzer | null = null;
 
+// Singleton bridge instance for direct AST path (lazy-initialized)
+let bridgeInstance: import('../multilingual/bridge').SemanticGrammarBridge | null = null;
+
+/**
+ * Get or create the singleton bridge instance for direct AST path.
+ * Lazy initialization to avoid overhead if not used.
+ */
+async function getOrCreateBridge(): Promise<import('../multilingual/bridge').SemanticGrammarBridge> {
+  if (!bridgeInstance) {
+    const { SemanticGrammarBridge } = await import('../multilingual/bridge');
+    bridgeInstance = new SemanticGrammarBridge();
+    await bridgeInstance.initialize();
+  }
+  return bridgeInstance;
+}
+
 /**
  * Get or create the singleton semantic analyzer instance.
  * Lazy initialization to avoid overhead if not used.
@@ -56,11 +72,26 @@ export interface CompilationResult {
 export interface CompileOptions {
   /** Disable semantic parsing (use traditional parser only). Useful for complex behaviors. */
   disableSemanticParsing?: boolean;
+  /** Language code for multilingual input (e.g., 'en', 'ja', 'ar'). Defaults to 'en'. */
+  language?: string;
+}
+
+/**
+ * Extended compilation result with direct AST path metadata
+ */
+export interface MultilingualCompilationResult extends CompilationResult {
+  /** Whether the direct AST path was used (bypassing English text generation) */
+  usedDirectPath?: boolean;
+  /** Confidence score from semantic parsing (0-1) */
+  confidence?: number;
+  /** Language used for parsing */
+  language?: string;
 }
 
 export interface HyperscriptAPI {
   // Core compilation and execution
   compile(code: string, options?: CompileOptions): CompilationResult;
+  compileMultilingual(code: string, options?: CompileOptions): Promise<MultilingualCompilationResult>;
   execute(ast: ASTNode, context?: ExecutionContext): Promise<unknown>;
   run(code: string, context?: ExecutionContext): Promise<unknown>;
   evaluate(code: string, context?: ExecutionContext): Promise<unknown>; // Alias for run
@@ -266,6 +297,85 @@ function compile(code: string, options?: CompileOptions): CompilationResult {
       ],
       tokens: [],
       compilationTime,
+    };
+  }
+}
+
+/**
+ * Compile hyperscript code using the direct AST path for non-English input.
+ *
+ * This uses the semantic parser's buildAST() to go directly from
+ * SemanticNode to AST, bypassing English text generation and re-parsing.
+ *
+ * Flow: Input → Semantic Parser → AST Builder → AST
+ * (vs traditional: Input → Semantic Parser → English → Core Parser → AST)
+ *
+ * Falls back to traditional compilation if:
+ * - Language is 'en' (use traditional parser for best accuracy)
+ * - Semantic parsing confidence is too low
+ * - Direct AST building fails
+ */
+async function compileMultilingual(
+  code: string,
+  options?: CompileOptions
+): Promise<MultilingualCompilationResult> {
+  const lang = options?.language || 'en';
+  const startTime = performance.now();
+
+  debug.runtime('COMPILE_MULTILINGUAL: called', { code, lang });
+
+  // For English or when semantic parsing is disabled, use traditional path
+  if (lang === 'en' || options?.disableSemanticParsing) {
+    const result = compile(code, options);
+    return {
+      ...result,
+      usedDirectPath: false,
+      language: lang,
+    };
+  }
+
+  // Try direct AST path for non-English
+  try {
+    const bridge = await getOrCreateBridge();
+    const astResult = await bridge.parseToASTWithDetails(code, lang);
+
+    debug.runtime('COMPILE_MULTILINGUAL: bridge result', {
+      usedDirectPath: astResult.usedDirectPath,
+      confidence: astResult.confidence,
+      hasAST: !!astResult.ast,
+    });
+
+    if (astResult.usedDirectPath && astResult.ast) {
+      const compilationTime = performance.now() - startTime;
+      return {
+        success: true,
+        ast: astResult.ast,
+        errors: [],
+        tokens: [], // Direct path doesn't produce tokens
+        compilationTime,
+        usedDirectPath: true,
+        confidence: astResult.confidence,
+        language: lang,
+      };
+    }
+
+    // Direct path failed, fall back to traditional
+    debug.runtime('COMPILE_MULTILINGUAL: falling back to traditional path');
+    const result = compile(code, options);
+    return {
+      ...result,
+      usedDirectPath: false,
+      confidence: astResult.confidence,
+      language: lang,
+    };
+  } catch (error) {
+    debug.runtime('COMPILE_MULTILINGUAL: error, falling back', { error });
+    // Fall back to traditional compilation on any error
+    const result = compile(code, options);
+    return {
+      ...result,
+      usedDirectPath: false,
+      language: lang,
     };
   }
 }
@@ -501,9 +611,98 @@ function processNode(element: Element): void {
 }
 
 /**
+ * Detect language from element attributes or document.
+ * Checks: data-lang, lang attribute, closest parent with lang, document lang.
+ */
+function detectLanguage(element: Element): string {
+  // Check data-lang attribute on element (explicit hyperscript language)
+  const dataLang = element.getAttribute('data-lang');
+  if (dataLang) return dataLang;
+
+  // Check lang attribute (HTML standard) on element or closest parent
+  const langAttr = element.closest('[lang]')?.getAttribute('lang');
+  if (langAttr) return langAttr.split('-')[0]; // 'en-US' → 'en'
+
+  // Check document language
+  if (typeof document !== 'undefined') {
+    const docLang = document.documentElement?.lang;
+    if (docLang) return docLang.split('-')[0];
+  }
+
+  // Default to English
+  return 'en';
+}
+
+/**
  * Process a single hyperscript attribute on an element
  */
 function processHyperscriptAttribute(element: Element, hyperscriptCode: string): void {
+  // Detect language from element
+  const lang = detectLanguage(element);
+
+  // For non-English, use async multilingual path
+  if (lang !== 'en') {
+    void processHyperscriptAttributeAsync(element, hyperscriptCode, lang);
+    return;
+  }
+
+  // For English, use synchronous path
+  processHyperscriptAttributeSync(element, hyperscriptCode);
+}
+
+/**
+ * Async processing for multilingual hyperscript (uses direct AST path)
+ */
+async function processHyperscriptAttributeAsync(
+  element: Element,
+  hyperscriptCode: string,
+  lang: string
+): Promise<void> {
+  try {
+    debug.runtime('Processing multilingual hyperscript:', { code: hyperscriptCode, lang });
+
+    // Use direct AST path
+    const compileResult = await compileMultilingual(hyperscriptCode, { language: lang });
+
+    if (!compileResult.success) {
+      console.error(`❌ Failed to compile ${lang} hyperscript on element:`, element);
+      console.error(`❌ Hyperscript code: "${hyperscriptCode}"`);
+      console.error(`❌ Parse errors:`, compileResult.errors);
+      return;
+    }
+
+    if (!compileResult.ast) {
+      console.warn('⚠️ No AST generated for hyperscript:', hyperscriptCode);
+      return;
+    }
+
+    debug.runtime('Successfully compiled multilingual hyperscript:', {
+      code: hyperscriptCode,
+      lang,
+      usedDirectPath: compileResult.usedDirectPath,
+      confidence: compileResult.confidence,
+    });
+
+    // Create execution context for this element
+    const context = createHyperscriptContext(element as HTMLElement);
+
+    // Check if this is an event handler (starts with "on ")
+    if (hyperscriptCode.trim().startsWith('on ') || compileResult.ast.type === 'eventHandler') {
+      debug.event('Setting up multilingual event handler:', { code: hyperscriptCode, lang });
+      setupEventHandler(element, compileResult.ast, context);
+    } else {
+      debug.runtime('Executing immediate multilingual hyperscript:', hyperscriptCode);
+      void executeHyperscriptAST(compileResult.ast, context);
+    }
+  } catch (error) {
+    console.error('❌ Error processing multilingual hyperscript:', error, 'on element:', element);
+  }
+}
+
+/**
+ * Synchronous processing for English hyperscript (traditional path)
+ */
+function processHyperscriptAttributeSync(element: Element, hyperscriptCode: string): void {
   try {
     debug.runtime('Processing hyperscript:', hyperscriptCode);
 
@@ -741,6 +940,7 @@ function process(element: Element): void {
 export const hyperscript: HyperscriptAPI = {
   // Core compilation and execution
   compile,
+  compileMultilingual,
   execute,
   run,
   evaluate: run, // Alias for run - compile and execute in one step

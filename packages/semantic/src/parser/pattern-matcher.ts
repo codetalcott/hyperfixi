@@ -719,12 +719,12 @@ export class PatternMatcher {
           score += 1;
         }
       } else if (token.type === 'group') {
-        // Group tokens contribute to score
+        // Group tokens contribute to score (optional groups get 80% weight)
         for (const subToken of token.tokens) {
           if (subToken.type === 'role') {
-            maxScore += 0.5; // Optional groups count less
+            maxScore += 0.8; // Optional groups: 80% weight (was 0.5)
             if (captured.has(subToken.role)) {
-              score += 0.5;
+              score += 0.8;
             }
           }
         }

@@ -259,7 +259,7 @@ export const showSchema: CommandSchema = {
     {
       role: 'patient',
       description: 'The element to show',
-      required: false,
+      required: true, // Changed from false - patient is primary role
       expectedTypes: ['selector', 'reference'],
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,
@@ -288,7 +288,7 @@ export const hideSchema: CommandSchema = {
     {
       role: 'patient',
       description: 'The element to hide',
-      required: false,
+      required: true, // Changed from false - patient is primary role
       expectedTypes: ['selector', 'reference'],
       default: { type: 'reference', value: 'me' },
       svoPosition: 1,

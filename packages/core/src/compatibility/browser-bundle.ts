@@ -55,6 +55,7 @@ declare global {
       evalHyperScriptSmart: typeof evalHyperScriptSmart;
       tailwindExtension: typeof tailwindExtension;
       compile: typeof hyperscript.compile;
+      compileMultilingual: typeof hyperscript.compileMultilingual;
       execute: typeof hyperscript.execute;
       run: typeof hyperscript.run;
       createContext: typeof hyperscript.createContext;
@@ -121,6 +122,7 @@ const hyperfixi = {
 
     return result;
   },
+  compileMultilingual: hyperscript.compileMultilingual,
   execute: hyperscript.execute,
   run: hyperscript.run,
   createContext: hyperscript.createContext,

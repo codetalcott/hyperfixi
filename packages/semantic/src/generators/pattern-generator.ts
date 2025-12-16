@@ -99,7 +99,7 @@ export function generateSimplePattern(
   return {
     ...pattern,
     id: `${schema.action}-${profile.code}-simple`,
-    priority: (config.basePriority ?? 100) - 10, // Lower priority than full pattern
+    priority: (config.basePriority ?? 100) - 5, // Lower priority than full pattern (was -10)
     extraction: buildExtractionRulesWithDefaults(schema, profile),
   };
 }
