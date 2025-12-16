@@ -10,7 +10,8 @@ import {
   buildAST,
   type EventHandlerNode,
   type ConditionalNode,
-  type CompoundNode,
+  type CommandSequenceNode,
+  type CommandNode,
 } from '../src/ast-builder/index';
 import { convertValue, convertLiteral, convertSelector, convertReference } from '../src/ast-builder/value-converters';
 import { getCommandMapper } from '../src/ast-builder/command-mappers';
@@ -311,8 +312,12 @@ describe('ASTBuilder', () => {
 
       const result = builder.build(node);
 
-      expect(result.type).toBe('if');
-      expect((result as any).thenBranch).toHaveLength(1);
+      // Now produces CommandNode format for runtime compatibility
+      expect(result.type).toBe('command');
+      expect((result as any).name).toBe('if');
+      expect((result as any).args).toHaveLength(2); // condition + then block
+      expect((result as any).args[1].type).toBe('block');
+      expect((result as any).args[1].commands).toHaveLength(1);
     });
 
     it('should handle else branch', () => {
@@ -343,8 +348,12 @@ describe('ASTBuilder', () => {
 
       const result = builder.build(node);
 
-      expect(result.type).toBe('if');
-      expect((result as any).elseBranch).toHaveLength(1);
+      // Now produces CommandNode format for runtime compatibility
+      expect(result.type).toBe('command');
+      expect((result as any).name).toBe('if');
+      expect((result as any).args).toHaveLength(3); // condition + then block + else block
+      expect((result as any).args[2].type).toBe('block');
+      expect((result as any).args[2].commands).toHaveLength(1);
     });
   });
 });
@@ -1025,11 +1034,11 @@ describe('Compound Statement Building', () => {
         chainType: 'then',
       };
 
-      const result = builder.build(node) as CompoundNode;
+      const result = builder.build(node);
 
-      expect(result.type).toBe('compound');
-      expect(result.chainType).toBe('then');
-      expect(result.statements).toHaveLength(3);
+      // Now produces CommandSequence for runtime compatibility
+      expect(result.type).toBe('CommandSequence');
+      expect((result as any).commands).toHaveLength(3);
     });
 
     it('should unwrap single-statement compound', () => {
@@ -1073,7 +1082,7 @@ describe('Compound Statement Building', () => {
   });
 
   describe('async chains', () => {
-    it('should preserve async chain type', () => {
+    it('should build async chain as command sequence', () => {
       const node: CompoundSemanticNode = {
         kind: 'compound',
         action: 'compound',
@@ -1097,14 +1106,18 @@ describe('Compound Statement Building', () => {
         chainType: 'async',
       };
 
-      const result = builder.build(node) as CompoundNode;
+      const result = builder.build(node) as CommandSequenceNode;
 
-      expect(result.chainType).toBe('async');
+      // Async chains produce CommandSequence for runtime compatibility
+      expect(result.type).toBe('CommandSequence');
+      expect(result.commands).toHaveLength(2);
+      expect((result.commands[0] as any).name).toBe('fetch');
+      expect((result.commands[1] as any).name).toBe('log');
     });
   });
 
   describe('and chains (parallel)', () => {
-    it('should preserve and chain type', () => {
+    it('should build and chain as command sequence', () => {
       const node: CompoundSemanticNode = {
         kind: 'compound',
         action: 'compound',
@@ -1128,9 +1141,13 @@ describe('Compound Statement Building', () => {
         chainType: 'and',
       };
 
-      const result = builder.build(node) as CompoundNode;
+      const result = builder.build(node) as CommandSequenceNode;
 
-      expect(result.chainType).toBe('and');
+      // And chains produce CommandSequence for runtime compatibility
+      expect(result.type).toBe('CommandSequence');
+      expect(result.commands).toHaveLength(2);
+      expect((result.commands[0] as any).name).toBe('add');
+      expect((result.commands[1] as any).name).toBe('toggle');
     });
   });
 });
@@ -1161,12 +1178,15 @@ describe('Conditional Node Building', () => {
         ],
       };
 
-      const result = builder.build(node) as ConditionalNode;
+      const result = builder.build(node) as CommandNode;
 
-      expect(result.type).toBe('if');
-      expect(result.condition).toBeDefined();
-      expect(result.thenBranch).toHaveLength(1);
-      expect(result.elseBranch).toBeUndefined();
+      // Conditionals now produce CommandNode format for runtime compatibility
+      expect(result.type).toBe('command');
+      expect(result.name).toBe('if');
+      expect(result.args).toHaveLength(2); // condition + then block
+      expect(result.args[0]).toBeDefined(); // condition
+      expect((result.args[1] as any).type).toBe('block');
+      expect((result.args[1] as any).commands).toHaveLength(1); // then branch
     });
 
     it('should build conditional with else branch', () => {
@@ -1196,11 +1216,14 @@ describe('Conditional Node Building', () => {
         ],
       };
 
-      const result = builder.build(node) as ConditionalNode;
+      const result = builder.build(node) as CommandNode;
 
-      expect(result.type).toBe('if');
-      expect(result.thenBranch).toHaveLength(1);
-      expect(result.elseBranch).toHaveLength(1);
+      // Conditionals with else produce 3 args: condition, then block, else block
+      expect(result.type).toBe('command');
+      expect(result.name).toBe('if');
+      expect(result.args).toHaveLength(3);
+      expect((result.args[1] as any).commands).toHaveLength(1); // then branch
+      expect((result.args[2] as any).commands).toHaveLength(1); // else branch
     });
 
     it('should handle multiple commands in branches', () => {
@@ -1235,9 +1258,9 @@ describe('Conditional Node Building', () => {
         ],
       };
 
-      const result = builder.build(node) as ConditionalNode;
+      const result = builder.build(node) as CommandNode;
 
-      expect(result.thenBranch).toHaveLength(3);
+      expect((result.args[1] as any).commands).toHaveLength(3); // then branch has 3 commands
     });
 
     it('should throw error when condition is missing', () => {

@@ -17,6 +17,7 @@ import type {
   EventHandlerSemanticNode,
   ConditionalSemanticNode,
   CompoundSemanticNode,
+  LoopSemanticNode,
 } from '../types';
 
 import type { SemanticRole } from '@hyperfixi/i18n/src/grammar/types';
@@ -82,6 +83,10 @@ export interface EventHandlerNode extends ASTNode {
 
 /**
  * Conditional AST node (if/else)
+ *
+ * Note: For runtime compatibility, buildConditional() now produces a CommandNode
+ * with condition and branches as args, matching what IfCommand expects.
+ * This interface is retained for reference but not used as output.
  */
 export interface ConditionalNode extends ASTNode {
   readonly type: 'if';
@@ -91,14 +96,12 @@ export interface ConditionalNode extends ASTNode {
 }
 
 /**
- * Compound statement node (command chains)
+ * Command sequence node (runtime-compatible format for chained commands)
  */
-export interface CompoundNode extends ASTNode {
-  readonly type: 'compound';
-  /** Chain type: 'then' for sequential, 'and' for parallel-like, 'async' for async */
-  readonly chainType: 'then' | 'and' | 'async';
-  /** Statements in the compound */
-  readonly statements: ASTNode[];
+export interface CommandSequenceNode extends ASTNode {
+  readonly type: 'CommandSequence';
+  /** Commands in the sequence */
+  readonly commands: ASTNode[];
 }
 
 /**
@@ -145,6 +148,8 @@ export class ASTBuilder {
         return this.buildConditional(node as ConditionalSemanticNode);
       case 'compound':
         return this.buildCompound(node as CompoundSemanticNode);
+      case 'loop':
+        return this.buildLoop(node as LoopSemanticNode);
       default:
         throw new Error(`Unknown semantic node kind: ${(node as SemanticNode).kind}`);
     }
@@ -286,6 +291,9 @@ export class ASTBuilder {
       }
     }
 
+    // Extract event parameter names for destructuring (e.g., on click(clientX, clientY))
+    const args = node.parameterNames ? [...node.parameterNames] : undefined;
+
     // Build result with spread for optional properties (exactOptionalPropertyTypes compliant)
     return {
       type: 'eventHandler' as const,
@@ -296,13 +304,21 @@ export class ASTBuilder {
       ...(target ? { target } : {}),
       ...(condition ? { condition: condition as ASTNode } : {}),
       ...(watchTarget ? { watchTarget } : {}),
+      ...(args && args.length > 0 ? { args, params: args } : {}),
     };
   }
 
   /**
-   * Build a ConditionalNode from a ConditionalSemanticNode.
+   * Build a CommandNode from a ConditionalSemanticNode.
+   *
+   * Produces a command node with:
+   * - args[0]: condition expression
+   * - args[1]: then block (wrapped in { type: 'block', commands: [...] })
+   * - args[2]: else block (optional, same format)
+   *
+   * This format matches what IfCommand.parseInput() expects.
    */
-  private buildConditional(node: ConditionalSemanticNode): ConditionalNode {
+  private buildConditional(node: ConditionalSemanticNode): CommandNode {
     const conditionValue = node.roles.get('condition');
     if (!conditionValue) {
       throw new Error('Conditional node missing condition');
@@ -312,27 +328,36 @@ export class ASTBuilder {
     const thenBranch = node.thenBranch.map(child => this.build(child));
     const elseBranch = node.elseBranch?.map(child => this.build(child));
 
-    const result: ConditionalNode = {
-      type: 'if',
+    // Build args array matching IfCommand expected format
+    const args: ExpressionNode[] = [
       condition,
-      thenBranch,
-    };
+      // args[1]: then block wrapped as block node
+      {
+        type: 'block',
+        commands: thenBranch,
+      } as unknown as ExpressionNode,
+    ];
 
-    // Only add elseBranch if present (avoid exactOptionalPropertyTypes issue)
+    // args[2]: else block (if present)
     if (elseBranch && elseBranch.length > 0) {
-      return { ...result, elseBranch };
+      args.push({
+        type: 'block',
+        commands: elseBranch,
+      } as unknown as ExpressionNode);
     }
 
-    return result;
+    return {
+      type: 'command',
+      name: 'if',
+      args,
+    };
   }
 
   /**
    * Build AST nodes from a CompoundSemanticNode.
    *
-   * Handles different chain types:
-   * - 'then': Sequential execution (default for hyperscript)
-   * - 'and': Parallel-like execution (both actions happen)
-   * - 'async': Async execution (commands run asynchronously)
+   * Converts to CommandSequence for runtime compatibility.
+   * The runtime recognizes 'CommandSequence' type and executes commands in order.
    */
   private buildCompound(node: CompoundSemanticNode): ASTNode {
     // Build all statements recursively
@@ -351,18 +376,89 @@ export class ASTBuilder {
       };
     }
 
-    // For 'then' chains, we can either:
-    // 1. Return a compound node (for explicit chain handling)
-    // 2. Attach 'next' pointers to create linked commands (like core parser)
-    //
-    // We use option 1 for now as it's more explicit and easier to process
-    const result: CompoundNode = {
-      type: 'compound',
-      chainType: node.chainType,
-      statements,
+    // Convert to CommandSequence for runtime compatibility
+    // Runtime handles 'CommandSequence' type in executeCommandSequence()
+    const result: CommandSequenceNode = {
+      type: 'CommandSequence',
+      commands: statements,
     };
 
     return result;
+  }
+
+  /**
+   * Build a CommandNode from a LoopSemanticNode.
+   *
+   * Produces a 'repeat' command with:
+   * - args[0]: loop type identifier (forever, times, for, while, until)
+   * - args[1]: count/condition/variable depending on loop type
+   * - args[2]: collection (for 'for' loops)
+   * - args[last]: body block
+   *
+   * This format matches what the repeat command parser produces.
+   */
+  private buildLoop(node: LoopSemanticNode): CommandNode {
+    // Build body commands recursively
+    const bodyCommands = node.body.map(child => this.build(child));
+
+    const args: ExpressionNode[] = [
+      // args[0]: loop type identifier
+      {
+        type: 'identifier',
+        name: node.loopVariant,
+      } as unknown as ExpressionNode,
+    ];
+
+    // Add loop-specific arguments based on variant
+    switch (node.loopVariant) {
+      case 'times': {
+        // args[1]: count expression
+        const quantity = node.roles.get('quantity');
+        if (quantity) {
+          args.push(convertValue(quantity));
+        }
+        break;
+      }
+      case 'for': {
+        // args[1]: loop variable name
+        if (node.loopVariable) {
+          args.push({
+            type: 'string',
+            value: node.loopVariable,
+          } as unknown as ExpressionNode);
+        }
+        // args[2]: collection/source
+        const source = node.roles.get('source');
+        if (source) {
+          args.push(convertValue(source));
+        }
+        break;
+      }
+      case 'while':
+      case 'until': {
+        // args[1]: condition expression
+        const condition = node.roles.get('condition');
+        if (condition) {
+          args.push(convertValue(condition));
+        }
+        break;
+      }
+      case 'forever':
+        // No additional args needed for forever loops
+        break;
+    }
+
+    // args[last]: body block
+    args.push({
+      type: 'block',
+      commands: bodyCommands,
+    } as unknown as ExpressionNode);
+
+    return {
+      type: 'command',
+      name: 'repeat',
+      args,
+    };
   }
 
   /**

@@ -142,7 +142,7 @@ export interface ExpressionValue {
  * Semantic nodes capture the MEANING of hyperscript constructs.
  */
 export interface SemanticNode {
-  readonly kind: 'command' | 'event-handler' | 'conditional' | 'compound';
+  readonly kind: 'command' | 'event-handler' | 'conditional' | 'compound' | 'loop';
   readonly action: ActionType;
   readonly roles: ReadonlyMap<SemanticRole, SemanticValue>;
   readonly metadata?: SemanticMetadata;
@@ -181,6 +181,11 @@ export interface EventHandlerSemanticNode extends SemanticNode {
   readonly action: 'on';
   readonly body: SemanticNode[];
   readonly eventModifiers?: EventModifiers;
+  /**
+   * Event parameter names for destructuring.
+   * E.g., for "on click(clientX, clientY)", this would be ['clientX', 'clientY']
+   */
+  readonly parameterNames?: readonly string[];
 }
 
 export interface EventModifiers {
@@ -208,6 +213,32 @@ export interface CompoundSemanticNode extends SemanticNode {
   readonly kind: 'compound';
   readonly statements: SemanticNode[];
   readonly chainType: 'then' | 'and' | 'async';
+}
+
+/**
+ * Loop variant discriminant for different loop types.
+ */
+export type LoopVariant =
+  | 'forever'      // repeat forever
+  | 'times'        // repeat 5 times
+  | 'for'          // for item in collection
+  | 'while'        // while condition
+  | 'until';       // until condition
+
+/**
+ * A loop semantic node - represents repeat/for/while loops.
+ */
+export interface LoopSemanticNode extends SemanticNode {
+  readonly kind: 'loop';
+  readonly action: 'repeat' | 'for' | 'while';
+  /** The type of loop (forever, times, for, while, until) */
+  readonly loopVariant: LoopVariant;
+  /** Commands to execute in each iteration */
+  readonly body: SemanticNode[];
+  /** Loop variable name for 'for' loops (e.g., 'item' in 'for item in list') */
+  readonly loopVariable?: string;
+  /** Index variable name if specified (e.g., 'i' in 'for item with index i') */
+  readonly indexVariable?: string;
 }
 
 // =============================================================================
@@ -546,7 +577,8 @@ export function createEventHandler(
   event: SemanticValue,
   body: SemanticNode[],
   modifiers?: EventModifiers,
-  metadata?: SemanticMetadata
+  metadata?: SemanticMetadata,
+  parameterNames?: string[]
 ): EventHandlerSemanticNode {
   const roles = new Map<SemanticRole, SemanticValue>();
   roles.set('event', event);
@@ -563,6 +595,9 @@ export function createEventHandler(
   }
   if (metadata !== undefined) {
     (node as { metadata?: SemanticMetadata }).metadata = metadata;
+  }
+  if (parameterNames !== undefined && parameterNames.length > 0) {
+    (node as { parameterNames?: readonly string[] }).parameterNames = parameterNames;
   }
 
   return node;
@@ -613,6 +648,41 @@ export function createConditionalNode(
   if (metadata !== undefined) {
     (node as { metadata?: SemanticMetadata }).metadata = metadata;
   }
+  return node;
+}
+
+/**
+ * Create a loop semantic node.
+ */
+export function createLoopNode(
+  action: 'repeat' | 'for' | 'while',
+  loopVariant: LoopVariant,
+  roles: Record<string, SemanticValue>,
+  body: SemanticNode[],
+  options?: {
+    loopVariable?: string;
+    indexVariable?: string;
+    metadata?: SemanticMetadata;
+  }
+): LoopSemanticNode {
+  const node: LoopSemanticNode = {
+    kind: 'loop',
+    action,
+    loopVariant,
+    roles: new Map(Object.entries(roles) as [SemanticRole, SemanticValue][]),
+    body,
+  };
+
+  if (options?.loopVariable) {
+    (node as { loopVariable?: string }).loopVariable = options.loopVariable;
+  }
+  if (options?.indexVariable) {
+    (node as { indexVariable?: string }).indexVariable = options.indexVariable;
+  }
+  if (options?.metadata) {
+    (node as { metadata?: SemanticMetadata }).metadata = options.metadata;
+  }
+
   return node;
 }
 

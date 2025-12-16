@@ -46,6 +46,8 @@ export type {
   EventHandlerSemanticNode,
   ConditionalSemanticNode,
   CompoundSemanticNode,
+  LoopSemanticNode,
+  LoopVariant,
   SemanticMetadata,
   SourcePosition,
   EventModifiers,
@@ -86,6 +88,9 @@ export {
   createPropertyPath,
   createCommandNode,
   createEventHandler,
+  createCompoundNode,
+  createConditionalNode,
+  createLoopNode,
 } from './types';
 
 // =============================================================================
@@ -355,7 +360,7 @@ export {
   type CommandNode,
   type EventHandlerNode,
   type ConditionalNode,
-  type CompoundNode,
+  type CommandSequenceNode,
   type BlockNode,
   type ASTBuilderOptions,
   type CommandMapper,
