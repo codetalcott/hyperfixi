@@ -222,13 +222,35 @@ npx playwright test --grep "Grammar Transformation"
 
 ## Browser Bundles
 
-| Bundle | Global | Size |
-|--------|--------|------|
-| `packages/core/dist/hyperfixi-browser.js` | `window.hyperfixi` | 224 KB |
-| `packages/i18n/dist/hyperfixi-i18n.min.js` | `window.HyperFixiI18n` | ~50 KB |
-| `packages/semantic/dist/hyperfixi-semantic.browser.global.js` | `window.HyperFixiSemantic` | ~60 KB |
+| Bundle | Global | Size | Use Case |
+|--------|--------|------|----------|
+| `packages/core/dist/hyperfixi-browser.js` | `window.hyperfixi` | 663 KB | Full bundle with parser |
+| `packages/core/dist/hyperfixi-multilingual.js` | `window.hyperfixi` | 250 KB | Multilingual (no parser) |
+| `packages/semantic/dist/hyperfixi-semantic.browser.global.js` | `window.HyperFixiSemantic` | 261 KB | Semantic parsing |
+| `packages/i18n/dist/hyperfixi-i18n.min.js` | `window.HyperFixiI18n` | 68 KB | Grammar transformation |
 
-Usage:
+### Multilingual Bundle (Recommended for i18n)
+
+For developers writing hyperscript in their native language:
+
+```html
+<!-- Load both bundles -->
+<script src="hyperfixi-semantic.browser.global.js"></script>
+<script src="hyperfixi-multilingual.js"></script>
+<script>
+  // Execute in any of 13 supported languages
+  await hyperfixi.execute('토글 .active', 'ko');      // Korean
+  await hyperfixi.execute('トグル .active', 'ja');    // Japanese
+  await hyperfixi.execute('alternar .active', 'es');  // Spanish
+
+  // Translate between languages
+  const korean = await hyperfixi.translate('toggle .active', 'en', 'ko');
+</script>
+```
+
+**Total size:** ~511 KB (250 KB + 261 KB) vs 924 KB with full bundle
+
+### Full Bundle Usage
 
 ```html
 <script src="hyperfixi-browser.js"></script>
