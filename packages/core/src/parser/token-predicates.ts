@@ -19,7 +19,7 @@
  */
 
 import type { Token } from '../types/core';
-import { TokenType } from './tokenizer';
+import { TokenType, TokenKind } from './tokenizer';
 import {
   COMMANDS,
   CONTEXT_VARS,
@@ -289,6 +289,88 @@ export function isCommandTerminator(token: Token): boolean {
 }
 
 // ============================================================================
+// PHASE 5: TokenKind-Based Predicates
+// These predicates use the simplified `kind` field when available.
+// They provide forward compatibility with the new TokenKind enum while
+// maintaining backward compatibility with tokens that only have `type`.
+// ============================================================================
+
+/**
+ * Check if token has a specific TokenKind.
+ * Falls back to checking TokenType if kind is not available.
+ */
+export function hasKind(token: Token, kind: TokenKind): boolean {
+  if (token.kind !== undefined) {
+    return token.kind === kind;
+  }
+  // Fallback: map TokenType to expected TokenKind
+  switch (kind) {
+    case TokenKind.IDENTIFIER:
+      return isIdentifierLike(token);
+    case TokenKind.STRING:
+      return token.type === TokenType.STRING;
+    case TokenKind.NUMBER:
+      return token.type === TokenType.NUMBER || token.type === TokenType.BOOLEAN;
+    case TokenKind.SELECTOR:
+      return isSelector(token);
+    case TokenKind.OPERATOR:
+      return isOperator(token);
+    case TokenKind.TIME:
+      return token.type === TokenType.TIME_EXPRESSION;
+    case TokenKind.TEMPLATE:
+      return token.type === TokenType.TEMPLATE_LITERAL;
+    case TokenKind.COMMENT:
+      return token.type === TokenType.COMMENT;
+    case TokenKind.SYMBOL:
+      return token.type === TokenType.SYMBOL;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Check if token is lexically an identifier (using kind field when available)
+ */
+export function isKindIdentifier(token: Token): boolean {
+  return hasKind(token, TokenKind.IDENTIFIER);
+}
+
+/**
+ * Check if token is lexically a string (using kind field when available)
+ */
+export function isKindString(token: Token): boolean {
+  return hasKind(token, TokenKind.STRING);
+}
+
+/**
+ * Check if token is lexically a number (using kind field when available)
+ */
+export function isKindNumber(token: Token): boolean {
+  return hasKind(token, TokenKind.NUMBER);
+}
+
+/**
+ * Check if token is lexically a selector (using kind field when available)
+ */
+export function isKindSelector(token: Token): boolean {
+  return hasKind(token, TokenKind.SELECTOR);
+}
+
+/**
+ * Check if token is lexically an operator (using kind field when available)
+ */
+export function isKindOperator(token: Token): boolean {
+  return hasKind(token, TokenKind.OPERATOR);
+}
+
+/**
+ * Check if token is lexically a time expression (using kind field when available)
+ */
+export function isKindTime(token: Token): boolean {
+  return hasKind(token, TokenKind.TIME);
+}
+
+// ============================================================================
 // NAMESPACE EXPORT - For convenient importing
 // ============================================================================
 
@@ -325,6 +407,15 @@ export const TokenPredicates = {
   // Compound predicates
   canStartExpression,
   isCommandTerminator,
+
+  // TokenKind-based predicates (Phase 5)
+  hasKind,
+  isKindIdentifier,
+  isKindString,
+  isKindNumber,
+  isKindSelector,
+  isKindOperator,
+  isKindTime,
 };
 
 export default TokenPredicates;

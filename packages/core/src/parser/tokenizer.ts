@@ -16,6 +16,107 @@ import {
 // Re-export Token for use in other parser files
 export type { Token } from '../types/core';
 
+// ============================================================================
+// PHASE 5: Simplified TokenKind Enum (10 values vs 24 TokenType values)
+// ============================================================================
+// TokenKind represents lexical categories - what the token IS structurally.
+// TokenType represents semantic categories - what the token MEANS in hyperscript.
+// The parser uses predicates (token-predicates.ts) for semantic classification.
+
+/**
+ * Simplified lexical token categories.
+ *
+ * This enum represents pure lexical categories without semantic classification.
+ * The tokenizer can output both TokenKind (lexical) and TokenType (semantic)
+ * during the migration period.
+ *
+ * @example
+ * // 'toggle' has:
+ * //   kind: TokenKind.IDENTIFIER (it's a word-like token)
+ * //   type: TokenType.COMMAND (it's semantically a command)
+ */
+export enum TokenKind {
+  /** Any word-like token (commands, keywords, events, identifiers, context vars) */
+  IDENTIFIER = 'identifier',
+  /** Quoted strings (single, double, or backtick) */
+  STRING = 'string',
+  /** Numeric literals (integers, floats) */
+  NUMBER = 'number',
+  /** CSS selectors (#id, .class, <query/>) */
+  SELECTOR = 'selector',
+  /** All operators (+, -, *, /, ==, 's, etc.) */
+  OPERATOR = 'operator',
+  /** Time expressions (5s, 100ms, 2h) */
+  TIME = 'time',
+  /** Template literals with interpolation */
+  TEMPLATE = 'template',
+  /** Comments (-- or //) */
+  COMMENT = 'comment',
+  /** Attribute symbols (@attr) */
+  SYMBOL = 'symbol',
+  /** Unrecognized tokens */
+  UNKNOWN = 'unknown',
+}
+
+/**
+ * Map TokenType to TokenKind for dual-output mode.
+ * This enables gradual migration from semantic to lexical classification.
+ */
+export function getTokenKind(tokenType: TokenType): TokenKind {
+  switch (tokenType) {
+    // All word-like tokens map to IDENTIFIER
+    case TokenType.KEYWORD:
+    case TokenType.COMMAND:
+    case TokenType.EXPRESSION:
+    case TokenType.CONTEXT_VAR:
+    case TokenType.GLOBAL_VAR:
+    case TokenType.EVENT:
+    case TokenType.IDENTIFIER:
+      return TokenKind.IDENTIFIER;
+
+    // Literals
+    case TokenType.STRING:
+      return TokenKind.STRING;
+    case TokenType.NUMBER:
+    case TokenType.BOOLEAN:
+      return TokenKind.NUMBER; // Booleans are lexically similar to identifiers but we keep them as NUMBER for now
+    case TokenType.TEMPLATE_LITERAL:
+      return TokenKind.TEMPLATE;
+
+    // Selectors
+    case TokenType.CSS_SELECTOR:
+    case TokenType.ID_SELECTOR:
+    case TokenType.CLASS_SELECTOR:
+    case TokenType.QUERY_REFERENCE:
+      return TokenKind.SELECTOR;
+
+    // Operators
+    case TokenType.OPERATOR:
+    case TokenType.LOGICAL_OPERATOR:
+    case TokenType.COMPARISON_OPERATOR:
+      return TokenKind.OPERATOR;
+
+    // Special types
+    case TokenType.TIME_EXPRESSION:
+      return TokenKind.TIME;
+    case TokenType.COMMENT:
+      return TokenKind.COMMENT;
+    case TokenType.SYMBOL:
+      return TokenKind.SYMBOL;
+
+    // Objects and arrays are complex - treat as unknown for now
+    case TokenType.OBJECT_LITERAL:
+    case TokenType.ARRAY_LITERAL:
+    case TokenType.UNKNOWN:
+    default:
+      return TokenKind.UNKNOWN;
+  }
+}
+
+// ============================================================================
+// LEGACY: TokenType Enum (24 values) - Will be deprecated after migration
+// ============================================================================
+
 // Token types based on hyperscript language elements
 // Note: Reduced from 28 to 24 values by removing unused types (FEATURE, PROPERTY_ACCESS, WHITESPACE, NEWLINE)
 export enum TokenType {
@@ -107,6 +208,39 @@ export function disableDeferredClassification(): void {
  */
 export function isDeferredClassificationEnabled(): boolean {
   return DEFER_IDENTIFIER_CLASSIFICATION;
+}
+
+// ============================================================================
+// PHASE 5: Dual Output Mode (TokenType + TokenKind)
+// ============================================================================
+
+/**
+ * When enabled, tokens include both `type` (TokenType) and `kind` (TokenKind).
+ * This allows gradual migration to TokenKind-based predicates.
+ *
+ * When disabled (default), tokens only include `type` for backward compatibility.
+ */
+let EMIT_TOKEN_KIND = false;
+
+/**
+ * Enable dual output mode (emit both type and kind)
+ */
+export function enableDualOutput(): void {
+  EMIT_TOKEN_KIND = true;
+}
+
+/**
+ * Disable dual output mode (default behavior)
+ */
+export function disableDualOutput(): void {
+  EMIT_TOKEN_KIND = false;
+}
+
+/**
+ * Check if dual output mode is enabled
+ */
+export function isDualOutputEnabled(): boolean {
+  return EMIT_TOKEN_KIND;
 }
 
 export interface Tokenizer {
@@ -426,14 +560,22 @@ function addToken(
     tokenColumn = start - lastNewlinePos;
   }
 
-  tokenizer.tokens.push({
+  // Phase 5: Include kind field when dual output mode is enabled
+  const token: import('../types/core').Token = {
     type: type as string,
     value,
     start: tokenStart,
     end: tokenEnd,
     line: getLineAtPosition(tokenizer, tokenStart),
     column: tokenColumn,
-  });
+  };
+
+  // Add kind field when dual output is enabled
+  if (EMIT_TOKEN_KIND) {
+    token.kind = getTokenKind(type);
+  }
+
+  tokenizer.tokens.push(token);
 }
 
 function getLineAtPosition(tokenizer: Tokenizer, position: number): number {
