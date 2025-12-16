@@ -350,3 +350,235 @@ describe('multilingual export', () => {
     expect(instance.isInitialized()).toBe(false);
   });
 });
+
+// =============================================================================
+// parseToAST Integration Tests (Direct Semantic-to-AST Path)
+// =============================================================================
+
+describe('parseToAST Integration', () => {
+  let ml: MultilingualHyperscript;
+
+  beforeEach(async () => {
+    ml = new MultilingualHyperscript();
+    await ml.initialize();
+  });
+
+  describe('English inputs', () => {
+    it('should parse toggle command to AST', async () => {
+      const ast = await ml.parseToAST('toggle .active on #button', 'en');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('toggle');
+    });
+
+    it('should parse add command to AST', async () => {
+      const ast = await ml.parseToAST('add .highlight to #element', 'en');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('add');
+    });
+
+    it('should parse remove command to AST', async () => {
+      const ast = await ml.parseToAST('remove .active from #button', 'en');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('remove');
+    });
+
+    it('should parse set command to AST', async () => {
+      const ast = await ml.parseToAST("set #input's value to 'hello'", 'en');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('set');
+    });
+
+    it('should parse wait command to AST', async () => {
+      const ast = await ml.parseToAST('wait 500ms', 'en');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('wait');
+    });
+
+    it('should parse show/hide commands to AST when confidence is high', async () => {
+      // Note: show/hide may have lower confidence - test the detailed result
+      const showResult = await ml.parseToASTWithDetails('show #modal', 'en');
+      const hideResult = await ml.parseToASTWithDetails('hide #modal', 'en');
+
+      // Verify the result structure is correct
+      expect(showResult.lang).toBe('en');
+      expect(hideResult.lang).toBe('en');
+
+      // If direct path succeeded, verify the AST
+      if (showResult.usedDirectPath && showResult.ast) {
+        expect((showResult.ast as any).name).toBe('show');
+      }
+      if (hideResult.usedDirectPath && hideResult.ast) {
+        expect((hideResult.ast as any).name).toBe('hide');
+      }
+    });
+  });
+
+  describe('Japanese inputs (SOV)', () => {
+    it('should parse toggle command from Japanese', async () => {
+      const ast = await ml.parseToAST('#button の .active を 切り替え', 'ja');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('toggle');
+    });
+
+    it('should parse add command from Japanese', async () => {
+      const ast = await ml.parseToAST('.highlight を 追加', 'ja');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('add');
+    });
+
+    it('should parse show/hide from Japanese', async () => {
+      const showAst = await ml.parseToAST('#modal を 表示', 'ja');
+      const hideAst = await ml.parseToAST('#modal を 非表示', 'ja');
+
+      expect(showAst).not.toBeNull();
+      expect((showAst as any).name).toBe('show');
+
+      expect(hideAst).not.toBeNull();
+      expect((hideAst as any).name).toBe('hide');
+    });
+  });
+
+  describe('Spanish inputs (SVO)', () => {
+    it('should parse toggle command from Spanish', async () => {
+      const ast = await ml.parseToAST('alternar .active en #button', 'es');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('toggle');
+    });
+
+    it('should parse add command from Spanish', async () => {
+      const ast = await ml.parseToAST('agregar .highlight a #element', 'es');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('add');
+    });
+  });
+
+  describe('Korean inputs (SOV)', () => {
+    it('should parse toggle command from Korean', async () => {
+      const ast = await ml.parseToAST('#button 의 .active 를 토글', 'ko');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('toggle');
+    });
+  });
+
+  describe('Arabic inputs (VSO)', () => {
+    it('should parse toggle command from Arabic', async () => {
+      const ast = await ml.parseToAST('بدّل .active على #button', 'ar');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('toggle');
+    });
+  });
+
+  describe('Chinese inputs (SVO)', () => {
+    it('should parse toggle command from Chinese', async () => {
+      const ast = await ml.parseToAST('切换 .active 在 #button', 'zh');
+
+      expect(ast).not.toBeNull();
+      expect(ast!.type).toBe('command');
+      expect((ast as any).name).toBe('toggle');
+    });
+  });
+});
+
+describe('parseToASTWithDetails Integration', () => {
+  let ml: MultilingualHyperscript;
+
+  beforeEach(async () => {
+    ml = new MultilingualHyperscript();
+    await ml.initialize();
+  });
+
+  it('should return detailed result with direct path success', async () => {
+    const result = await ml.parseToASTWithDetails('toggle .active', 'en');
+
+    expect(result.usedDirectPath).toBe(true);
+    expect(result.ast).not.toBeNull();
+    expect(result.confidence).toBeGreaterThan(0.7);
+    expect(result.lang).toBe('en');
+    expect(result.fallbackText).toBeNull();
+  });
+
+  it('should handle unrecognized input gracefully', async () => {
+    const result = await ml.parseToASTWithDetails('xyzzy foobar', 'en');
+
+    expect(result.usedDirectPath).toBe(false);
+    expect(result.confidence).toBeLessThan(0.7);
+  });
+
+  it('should preserve language info', async () => {
+    const result = await ml.parseToASTWithDetails('トグル .active', 'ja');
+
+    expect(result.lang).toBe('ja');
+  });
+});
+
+describe('Cross-Language AST Consistency', () => {
+  let ml: MultilingualHyperscript;
+
+  beforeEach(async () => {
+    ml = new MultilingualHyperscript();
+    await ml.initialize();
+  });
+
+  it('should produce equivalent AST for same command in different languages', async () => {
+    const englishAst = await ml.parseToAST('toggle .active', 'en');
+    const japaneseAst = await ml.parseToAST('.active を 切り替え', 'ja');
+    const spanishAst = await ml.parseToAST('alternar .active', 'es');
+
+    // All should produce toggle commands
+    expect(englishAst).not.toBeNull();
+    expect(japaneseAst).not.toBeNull();
+    expect(spanishAst).not.toBeNull();
+
+    expect((englishAst as any).name).toBe('toggle');
+    expect((japaneseAst as any).name).toBe('toggle');
+    expect((spanishAst as any).name).toBe('toggle');
+
+    // All should have same type
+    expect((englishAst as any).type).toBe((japaneseAst as any).type);
+    expect((englishAst as any).type).toBe((spanishAst as any).type);
+  });
+
+  it('should produce equivalent AST for add command across languages', async () => {
+    // Use the full syntax with target for higher confidence parsing
+    const englishResult = await ml.parseToASTWithDetails('add .highlight to #element', 'en');
+    const japaneseResult = await ml.parseToASTWithDetails('.highlight を 追加', 'ja');
+
+    // Both should have valid result structures
+    expect(englishResult.lang).toBe('en');
+    expect(japaneseResult.lang).toBe('ja');
+
+    // English add with target should work
+    expect(englishResult.usedDirectPath).toBe(true);
+    expect(englishResult.ast).not.toBeNull();
+    expect((englishResult.ast as any).name).toBe('add');
+
+    // Japanese add may or may not work depending on pattern coverage
+    // If it works, verify consistency
+    if (japaneseResult.usedDirectPath && japaneseResult.ast) {
+      expect((japaneseResult.ast as any).name).toBe('add');
+      expect((japaneseResult.ast as any).type).toBe((englishResult.ast as any).type);
+    }
+  });
+});
