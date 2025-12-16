@@ -35,6 +35,23 @@ import {
   PUT_OPERATION_KEYWORDS,
   KEYWORDS,
 } from './parser-constants';
+
+// Phase 4: Import token predicates for decoupled classification
+import {
+  isCommand as isCommandPredicate,
+  isKeyword as isKeywordPredicate,
+  isSelector,
+  isBasicSelector,
+  isLiteral,
+  isIdentifierLike,
+  isOperator,
+  isReference,
+  isContextVar,
+  isEvent,
+  isCommandTerminator,
+  hasValue,
+  hasValueIn,
+} from './token-predicates';
 import { CommandNodeBuilder } from './command-node-builder';
 import { TokenConsumer } from './token-consumer';
 
@@ -640,11 +657,7 @@ export class Parser {
               if (command) {
                 expr = command;
               }
-            } else if (
-              this.checkTokenType(TokenType.CSS_SELECTOR) ||
-              this.checkTokenType(TokenType.ID_SELECTOR) ||
-              this.checkTokenType(TokenType.CLASS_SELECTOR)
-            ) {
+            } else if (this.checkSelector()) {
               // Other simple commands with selectors become binary expressions
               const right = this.parseCall();
               expr = this.createBinaryExpression(' ', expr, right);
@@ -654,11 +667,7 @@ export class Parser {
           }
         } else {
           // Not a command - handle as regular identifier followed by selector
-          if (
-            this.checkTokenType(TokenType.CSS_SELECTOR) ||
-            this.checkTokenType(TokenType.ID_SELECTOR) ||
-            this.checkTokenType(TokenType.CLASS_SELECTOR)
-          ) {
+          if (this.checkSelector()) {
             const right = this.parseCall();
             expr = this.createBinaryExpression(' ', expr, right);
           } else {
@@ -1190,11 +1199,7 @@ export class Parser {
     }
 
     // Handle CSS selectors
-    if (
-      this.matchTokenType(TokenType.CSS_SELECTOR) ||
-      this.matchTokenType(TokenType.ID_SELECTOR) ||
-      this.matchTokenType(TokenType.CLASS_SELECTOR)
-    ) {
+    if (this.matchSelector()) {
       return this.createSelector(this.previous().value);
     }
 
@@ -3292,6 +3297,111 @@ export class Parser {
     return this.peek().type === tokenType;
   }
 
+  // ============================================================================
+  // PREDICATE-BASED TOKEN CHECKING (Phase 4)
+  // These methods use token predicates for semantic classification,
+  // enabling migration from TokenType enum checks to predicate functions.
+  // ============================================================================
+
+  /**
+   * Check if current token satisfies a predicate
+   */
+  private checkPredicate(predicate: (token: Token) => boolean): boolean {
+    if (this.isAtEnd()) return false;
+    return predicate(this.peek());
+  }
+
+  /**
+   * Match and advance if current token satisfies a predicate
+   */
+  private matchPredicate(predicate: (token: Token) => boolean): boolean {
+    if (this.checkPredicate(predicate)) {
+      this.advance();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Check if current token is a basic selector (ID, class, or CSS selector)
+   * Note: Use this when query references need separate handling
+   */
+  private checkSelector(): boolean {
+    return this.checkPredicate(isBasicSelector);
+  }
+
+  /**
+   * Match and advance if current token is a basic selector
+   * Note: Use this when query references need separate handling
+   */
+  private matchSelector(): boolean {
+    return this.matchPredicate(isBasicSelector);
+  }
+
+  /**
+   * Check if current token is any selector including query reference
+   */
+  private checkAnySelector(): boolean {
+    return this.checkPredicate(isSelector);
+  }
+
+  /**
+   * Check if current token is a literal (string, number, boolean, template)
+   */
+  private checkLiteral(): boolean {
+    return this.checkPredicate(isLiteral);
+  }
+
+  /**
+   * Check if current token is identifier-like (identifier, keyword, command, event, context var)
+   */
+  private checkIdentifierLike(): boolean {
+    return this.checkPredicate(isIdentifierLike);
+  }
+
+  /**
+   * Check if current token is a command (by type or by value)
+   */
+  private checkIsCommand(): boolean {
+    return this.checkPredicate(isCommandPredicate);
+  }
+
+  /**
+   * Check if current token is a command terminator (then, and, else, end, on)
+   */
+  private checkCommandTerminator(): boolean {
+    return this.checkPredicate(isCommandTerminator);
+  }
+
+  /**
+   * Check if current token is a reference (context var, global var, or identifier)
+   */
+  private checkReference(): boolean {
+    return this.checkPredicate(isReference);
+  }
+
+  /**
+   * Check if current token is a time expression (5s, 100ms)
+   */
+  private checkTimeExpression(): boolean {
+    if (this.isAtEnd()) return false;
+    return this.peek().type === TokenType.TIME_EXPRESSION;
+  }
+
+  /**
+   * Check if current token is a DOM event
+   */
+  private checkEvent(): boolean {
+    return this.checkPredicate(isEvent);
+  }
+
+  /**
+   * Check if current token is a context variable (me, it, you, result, etc.)
+   */
+  private checkContextVar(): boolean {
+    return this.checkPredicate(isContextVar);
+  }
+
   private advance(): Token {
     if (!this.isAtEnd()) this.current++;
     return this.previous();
@@ -3486,6 +3596,18 @@ export class Parser {
       consume: this.consume.bind(this),
       check: this.check.bind(this),
       checkTokenType: this.checkTokenType.bind(this),
+
+      // Predicate-Based Token Checking (Phase 4)
+      checkIdentifierLike: this.checkIdentifierLike.bind(this),
+      checkSelector: this.checkSelector.bind(this),
+      checkAnySelector: this.checkAnySelector.bind(this),
+      checkLiteral: this.checkLiteral.bind(this),
+      checkReference: this.checkReference.bind(this),
+      checkTimeExpression: this.checkTimeExpression.bind(this),
+      checkEvent: this.checkEvent.bind(this),
+      checkIsCommand: this.checkIsCommand.bind(this),
+      checkContextVar: this.checkContextVar.bind(this),
+
       match: this.match.bind(this),
       matchTokenType: this.matchTokenType.bind(this),
       matchOperator: this.matchOperator.bind(this),

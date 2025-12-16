@@ -11,8 +11,8 @@
 
 import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, ExpressionNode, Token } from '../../types/core';
-import { TokenType } from '../tokenizer';
 import { KEYWORDS } from '../parser-constants';
+// Phase 4: TokenType import removed - using value-based checks instead
 
 /**
  * Parse set command
@@ -106,6 +106,9 @@ export function parseSetCommand(
 
           const targetToken = ctx.advance();
 
+          // Phase 4: Using value-based check instead of TokenType
+          // ID selectors start with '#', class selectors with '.', CSS selectors in '<>'
+          const isIdSelector = targetToken.value.startsWith('#');
           targetExpression = {
             type: 'propertyOfExpression',
             property: {
@@ -115,7 +118,7 @@ export function parseSetCommand(
               end: propertyToken.end,
             },
             target: {
-              type: targetToken.type === TokenType.ID_SELECTOR ? 'idSelector' : 'cssSelector',
+              type: isIdSelector ? 'idSelector' : 'cssSelector',
               value: targetToken.value,
               start: targetToken.start,
               end: targetToken.end,

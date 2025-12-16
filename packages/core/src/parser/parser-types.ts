@@ -164,6 +164,39 @@ export interface ParserContext {
   /** Check if current token type matches */
   checkTokenType(type: TokenType): boolean;
 
+  // ==========================================
+  // Predicate-Based Token Checking (Phase 4)
+  // These methods use token predicates for semantic classification,
+  // enabling migration from TokenType enum checks to predicate functions.
+  // ==========================================
+
+  /** Check if current token is identifier-like (IDENTIFIER, CONTEXT_VAR, KEYWORD, COMMAND, EVENT) */
+  checkIdentifierLike(): boolean;
+
+  /** Check if current token is a basic CSS selector (ID, class, or CSS selector, excluding query reference) */
+  checkSelector(): boolean;
+
+  /** Check if current token is any selector including query reference */
+  checkAnySelector(): boolean;
+
+  /** Check if current token is a literal (STRING, NUMBER, BOOLEAN, TEMPLATE_LITERAL) */
+  checkLiteral(): boolean;
+
+  /** Check if current token is a reference (CONTEXT_VAR, GLOBAL_VAR, IDENTIFIER) */
+  checkReference(): boolean;
+
+  /** Check if current token is a time expression */
+  checkTimeExpression(): boolean;
+
+  /** Check if current token is a DOM event */
+  checkEvent(): boolean;
+
+  /** Check if current token is a command token or command identifier */
+  checkIsCommand(): boolean;
+
+  /** Check if current token is a context variable */
+  checkContextVar(): boolean;
+
   /** Match and consume if current token matches any given types */
   match(...types: Array<string | TokenType>): boolean;
 

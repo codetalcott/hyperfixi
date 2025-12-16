@@ -11,9 +11,10 @@
 
 import type { ParserContext, IdentifierNode, LiteralNode } from '../parser-types';
 import type { ASTNode, ExpressionNode, Token } from '../../types/core';
-import { TokenType } from '../tokenizer';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
+// Phase 4: Import token predicates for direct token checks
+import { isIdentifierLike } from '../token-predicates';
 
 /**
  * Parse wait command
@@ -46,7 +47,8 @@ export function parseWaitCommand(
   const args: ASTNode[] = [];
 
   // Check if this is a simple time-based wait (e.g., "wait 1s")
-  if (ctx.checkTokenType(TokenType.TIME_EXPRESSION) || ctx.checkTokenType(TokenType.NUMBER)) {
+  // Phase 4: Using predicate methods
+  if (ctx.checkTimeExpression() || ctx.checkLiteral()) {
     // Simple wait with time
     const timeExpr = ctx.parsePrimary();
     args.push(timeExpr);
@@ -72,8 +74,9 @@ export function parseWaitCommand(
 
     do {
       // Parse event name
+      // Phase 4: Using predicate for direct token check
       const eventToken = ctx.peek();
-      if (eventToken.type !== TokenType.IDENTIFIER) {
+      if (!isIdentifierLike(eventToken)) {
         throw new Error('Expected event name after "for"');
       }
       const eventName = eventToken.value;
@@ -85,9 +88,10 @@ export function parseWaitCommand(
         ctx.advance(); // consume '('
 
         // Parse parameter list
+        // Phase 4: Using predicate for direct token check
         while (!ctx.isAtEnd() && !ctx.check(')')) {
           const paramToken = ctx.peek();
-          if (paramToken.type === TokenType.IDENTIFIER) {
+          if (isIdentifierLike(paramToken)) {
             eventParams.push(paramToken.value);
             ctx.advance();
 
@@ -211,7 +215,8 @@ export function parseInstallCommand(
   const args: ASTNode[] = [];
 
   // Parse behavior name (identifier)
-  if (!ctx.checkTokenType(TokenType.IDENTIFIER)) {
+  // Phase 4: Using predicate method
+  if (!ctx.checkIdentifierLike()) {
     throw new Error('Expected behavior name after "install"');
   }
 
@@ -238,7 +243,8 @@ export function parseInstallCommand(
       const checkpoint = ctx.current;
       let paramName: string | undefined;
 
-      if (ctx.checkTokenType(TokenType.IDENTIFIER)) {
+      // Phase 4: Using predicate method
+      if (ctx.checkIdentifierLike()) {
         const possibleName = ctx.peek().value;
         ctx.advance(); // consume identifier
 

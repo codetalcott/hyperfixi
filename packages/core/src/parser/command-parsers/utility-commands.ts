@@ -11,10 +11,10 @@
 
 import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, Token, ExpressionNode, CommandNode } from '../../types/core';
-import { TokenType } from '../tokenizer';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { isKeyword, isCommandBoundary } from '../helpers/parsing-helpers';
 import { KEYWORDS } from '../parser-constants';
+// Phase 4: TokenType import removed - using predicate methods instead
 
 // Import command parsers from other modules for compound command routing
 import * as eventCommands from './event-commands';
@@ -116,19 +116,17 @@ export function parseRegularCommand(
   const args: ASTNode[] = [];
 
   // Parse command arguments (space-separated, not comma-separated)
+  // Phase 4: Using predicate methods instead of direct TokenType checks
   while (!isCommandBoundary(ctx, ['catch', 'finally'])) {
     // Include EVENT tokens to allow DOM event names as arguments (e.g., 'send reset to #element')
+    // checkIdentifierLike() covers: IDENTIFIER, CONTEXT_VAR, KEYWORD, COMMAND, EVENT
+    // checkSelector() covers: CSS_SELECTOR, ID_SELECTOR, CLASS_SELECTOR
+    // checkLiteral() covers: STRING, NUMBER, BOOLEAN, TEMPLATE_LITERAL
     if (
-      ctx.checkTokenType(TokenType.CONTEXT_VAR) ||
-      ctx.checkTokenType(TokenType.IDENTIFIER) ||
-      ctx.checkTokenType(TokenType.KEYWORD) ||
-      ctx.checkTokenType(TokenType.EVENT) ||
-      ctx.checkTokenType(TokenType.CSS_SELECTOR) ||
-      ctx.checkTokenType(TokenType.ID_SELECTOR) ||
-      ctx.checkTokenType(TokenType.CLASS_SELECTOR) ||
-      ctx.checkTokenType(TokenType.STRING) ||
-      ctx.checkTokenType(TokenType.NUMBER) ||
-      ctx.checkTokenType(TokenType.TIME_EXPRESSION) ||
+      ctx.checkIdentifierLike() ||
+      ctx.checkSelector() ||
+      ctx.checkLiteral() ||
+      ctx.checkTimeExpression() ||
       ctx.match('<')
     ) {
       args.push(ctx.parsePrimary());
@@ -278,10 +276,8 @@ export function parseJsCommand(
   if (ctx.match('(')) {
     while (!ctx.check(')') && !ctx.isAtEnd()) {
       // Collect parameter names as identifier strings
-      if (ctx.checkTokenType(TokenType.IDENTIFIER)) {
-        parameters.push(ctx.advance().value);
-      } else if (ctx.checkTokenType(TokenType.CONTEXT_VAR)) {
-        // Also allow context vars like 'me', 'it', etc.
+      // Phase 4: Using predicate methods - checkIdentifierLike() covers both IDENTIFIER and CONTEXT_VAR
+      if (ctx.checkIdentifierLike()) {
         parameters.push(ctx.advance().value);
       }
       // Skip commas between parameters

@@ -133,6 +133,18 @@ export function isSelector(token: Token): boolean {
 }
 
 /**
+ * Check if token is a basic CSS selector (ID, class, or CSS selector, excluding query reference)
+ * Use this when query references need separate handling
+ */
+export function isBasicSelector(token: Token): boolean {
+  return (
+    token.type === TokenType.ID_SELECTOR ||
+    token.type === TokenType.CLASS_SELECTOR ||
+    token.type === TokenType.CSS_SELECTOR
+  );
+}
+
+/**
  * Check if token is a literal value (string, number, boolean, template)
  */
 export function isLiteral(token: Token): boolean {
@@ -292,6 +304,7 @@ export const TokenPredicates = {
   // Lexical predicates
   isIdentifierLike,
   isSelector,
+  isBasicSelector,
   isLiteral,
   isOperator,
   isReference,

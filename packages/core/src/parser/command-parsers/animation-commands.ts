@@ -11,9 +11,10 @@
 
 import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, ExpressionNode, Token } from '../../types/core';
-import { TokenType } from '../tokenizer';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
+// Phase 4: Import token predicates for direct token checks
+import { isIdentifierLike } from '../token-predicates';
 
 /**
  * Parse measure command
@@ -55,12 +56,10 @@ export function parseMeasureCommand(
 
   // Parse optional target (selector or expression)
   // If next token is a selector, identifier, or context var, parse it as target
+  // Phase 4: Using predicate methods instead of direct TokenType checks
   if (
-    ctx.checkTokenType(TokenType.CSS_SELECTOR) ||
-    ctx.checkTokenType(TokenType.ID_SELECTOR) ||
-    ctx.checkTokenType(TokenType.CLASS_SELECTOR) ||
-    ctx.checkTokenType(TokenType.QUERY_REFERENCE) ||
-    ctx.checkTokenType(TokenType.CONTEXT_VAR) ||
+    ctx.checkAnySelector() ||
+    ctx.checkContextVar() ||
     ctx.match('<')
   ) {
     // Parse the target element expression
@@ -75,7 +74,8 @@ export function parseMeasureCommand(
     // Check for CSS property shorthand: * followed by identifier
     if (ctx.match('*')) {
       // Next token should be the CSS property name
-      if (ctx.checkTokenType(TokenType.IDENTIFIER)) {
+      // Phase 4: Using predicate method
+      if (ctx.checkIdentifierLike()) {
         const propName = ctx.advance();
         // Create identifier node with * prefix
         args.push({
@@ -87,17 +87,13 @@ export function parseMeasureCommand(
           column: propName.column,
         } as IdentifierNode);
       }
-    } else if (
-      ctx.checkTokenType(TokenType.IDENTIFIER) ||
-      ctx.checkTokenType(TokenType.KEYWORD)
-    ) {
+    } else if (ctx.checkIdentifierLike()) {
+      // Phase 4: Combined IDENTIFIER/KEYWORD check into single predicate
       const property = ctx.parsePrimary();
       args.push(property);
     }
-  } else if (
-    ctx.checkTokenType(TokenType.IDENTIFIER) ||
-    ctx.checkTokenType(TokenType.KEYWORD)
-  ) {
+  } else if (ctx.checkIdentifierLike()) {
+    // Phase 4: Combined IDENTIFIER/KEYWORD check into single predicate
     // Just a property name without target: "measure width"
     const property = ctx.parsePrimary();
     args.push(property);
@@ -106,7 +102,8 @@ export function parseMeasureCommand(
   // Parse optional "and set <variable>" modifier
   if (ctx.match('and')) {
     if (ctx.match('set')) {
-      if (ctx.checkTokenType(TokenType.IDENTIFIER)) {
+      // Phase 4: Using predicate method for variable name check
+      if (ctx.checkIdentifierLike()) {
         const variableName = ctx.advance();
         modifiers['set'] = {
           type: 'identifier',
@@ -168,7 +165,8 @@ export function parseTransitionCommand(
   // Property can be:
   // - identifier (opacity, width, etc.)
   // - identifier with * prefix (*background-color)
-  if (firstToken.type === TokenType.IDENTIFIER || firstToken.value === '*') {
+  // Phase 4: Using predicate for direct token check
+  if (isIdentifierLike(firstToken) || firstToken.value === '*') {
     let propertyValue = '';
 
     // Handle wildcard prefix
@@ -178,7 +176,8 @@ export function parseTransitionCommand(
     }
 
     // Get property name
-    if (ctx.checkTokenType(TokenType.IDENTIFIER)) {
+    // Phase 4: Using predicate method for property name checks
+    if (ctx.checkIdentifierLike()) {
       propertyValue += ctx.peek().value;
       ctx.advance();
 
@@ -186,7 +185,7 @@ export function parseTransitionCommand(
       while (ctx.check('-') && !ctx.isAtEnd()) {
         propertyValue += '-';
         ctx.advance();
-        if (ctx.checkTokenType(TokenType.IDENTIFIER)) {
+        if (ctx.checkIdentifierLike()) {
           propertyValue += ctx.peek().value;
           ctx.advance();
         }

@@ -11,10 +11,10 @@
 
 import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, CommandNode } from '../../types/core';
-import { TokenType } from '../tokenizer';
 import { CommandNodeBuilder } from '../command-node-builder';
 import { KEYWORDS } from '../parser-constants';
 import { isCommandBoundary } from '../helpers/parsing-helpers';
+// Phase 4: TokenType import removed - using predicate methods instead
 
 /**
  * Parse trigger command
@@ -50,7 +50,8 @@ export function parseTriggerCommand(
   let eventColumn = ctx.peek().column || 1;
 
   // Check if first token is an identifier (event name)
-  if (ctx.checkTokenType(TokenType.IDENTIFIER) || ctx.checkTokenType(TokenType.KEYWORD)) {
+  // Phase 4: Using predicate method - checkIdentifierLike() covers IDENTIFIER and KEYWORD
+  if (ctx.checkIdentifierLike()) {
     eventName = ctx.advance().value;
 
     // Check for colon-separated parts (e.g., "draggable:start")
@@ -58,7 +59,7 @@ export function parseTriggerCommand(
       ctx.advance(); // consume ':'
       eventName += ':';
       // Next part should be an identifier or keyword
-      if (ctx.checkTokenType(TokenType.IDENTIFIER) || ctx.checkTokenType(TokenType.KEYWORD)) {
+      if (ctx.checkIdentifierLike()) {
         eventName += ctx.advance().value;
       }
     }
