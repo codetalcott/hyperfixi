@@ -19,6 +19,9 @@ import {
   resolveElements as resolveElementsHelper,
   resolvePossessive,
 } from '../helpers/element-resolution';
+import { isCSSPropertySyntax, setStyleValue } from '../helpers/style-manipulation';
+import { isAttributeSyntax } from '../helpers/attribute-manipulation';
+import { isValidType } from '../helpers/input-validator';
 import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 /**
@@ -237,9 +240,9 @@ export class SetCommand implements DecoratedCommand {
       return this.parseTheXofY(firstValue, raw, evaluator, context);
     }
 
-    // Check for CSS shorthand: *property
-    if (typeof firstValue === 'string' && firstValue.startsWith('*')) {
-      const property = firstValue.substring(1);
+    // Check for CSS shorthand: *property (using shared helper)
+    if (typeof firstValue === 'string' && isCSSPropertySyntax(firstValue)) {
+      const property = firstValue.substring(1).trim();
       const value = await this.extractValue(raw, evaluator, context);
       const element = await this.resolveElement(raw.modifiers.on, evaluator, context);
       return {
@@ -250,9 +253,9 @@ export class SetCommand implements DecoratedCommand {
       };
     }
 
-    // Check for attribute syntax: @attr
-    if (typeof firstValue === 'string' && firstValue.startsWith('@')) {
-      const attributeName = firstValue.substring(1);
+    // Check for attribute syntax: @attr (using shared helper)
+    if (typeof firstValue === 'string' && isAttributeSyntax(firstValue)) {
+      const attributeName = firstValue.substring(1).trim();
       const value = await this.extractValue(raw, evaluator, context);
       const element = await this.resolveElement(raw.modifiers.on, evaluator, context);
       return {
@@ -346,7 +349,7 @@ export class SetCommand implements DecoratedCommand {
         return this.setProperty(context, input.element, input.property, input.value);
 
       case 'style':
-        input.element.style.setProperty(input.property, input.value);
+        setStyleValue(input.element, input.property, input.value);
         Object.assign(context, { it: input.value });
         return {
           target: input.element,
@@ -388,8 +391,8 @@ export class SetCommand implements DecoratedCommand {
 
     const typed = input as Partial<SetCommandInput>;
 
-    // Check type discriminator
-    if (!typed.type || !['variable', 'attribute', 'property', 'style', 'object-literal'].includes(typed.type)) {
+    // Check type discriminator using shared helper
+    if (!isValidType(typed.type, ['variable', 'attribute', 'property', 'style', 'object-literal'] as const)) {
       return false;
     }
 
