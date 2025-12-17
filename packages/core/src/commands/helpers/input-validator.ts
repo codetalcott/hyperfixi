@@ -136,15 +136,26 @@ export function validateStringArray(
     };
   }
 
+  // Also reject empty strings
+  const emptyStrings = arr.filter(item => typeof item === 'string' && item.length === 0);
+  if (emptyStrings.length > 0) {
+    return {
+      valid: false,
+      error: `${fieldName} items cannot be empty strings`,
+    };
+  }
+
   return { valid: true };
 }
 
 /**
  * Type guard to validate string array and narrow type
  *
+ * Validates that all items are non-empty strings.
+ *
  * @param arr - Array to validate
  * @param minLength - Minimum required length (default: 1)
- * @returns true if arr is a string array with at least minLength items
+ * @returns true if arr is a string array with at least minLength non-empty items
  */
 export function isValidStringArray(
   arr: unknown[],
@@ -153,7 +164,7 @@ export function isValidStringArray(
   return (
     Array.isArray(arr) &&
     arr.length >= minLength &&
-    arr.every(item => typeof item === 'string')
+    arr.every(item => typeof item === 'string' && item.length > 0)
   );
 }
 

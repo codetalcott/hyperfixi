@@ -19,6 +19,10 @@ import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import { parseClasses } from '../helpers/class-manipulation';
 import { isAttributeSyntax, parseAttributeName } from '../helpers/attribute-manipulation';
+import { isCSSPropertySyntax, removeStyleProperty } from '../helpers/style-manipulation';
+import { isClassSelectorNode, extractSelectorValue } from '../helpers/selector-type-detection';
+import { isValidTargetArray, isValidStringArray, isValidType } from '../helpers/input-validator';
+import { removeElement } from '../helpers/dom-mutation';
 import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 /**
@@ -100,19 +104,10 @@ export class RemoveCommand implements DecoratedCommand {
     // Handle CSS selector nodes directly without evaluation
     // For "remove .active", .active is a selector node with value='.active'
     // not evaluated as a DOM query (which would return an empty NodeList)
-    //
-    // Parser creates TWO different node types:
-    // - { type: 'selector', value: '.active' } - uses 'value' property
-    // - { type: 'cssSelector', selectorType: 'class', selector: '.active' } - uses 'selector' property
     let firstValue: unknown;
-    const argValue = firstArg['value'] || firstArg['selector'];
-    if (
-      (firstArg.type === 'selector' || firstArg.type === 'cssSelector' || firstArg.type === 'classSelector') &&
-      typeof argValue === 'string' &&
-      argValue.startsWith('.')
-    ) {
+    if (isClassSelectorNode(firstArg)) {
       // Use value directly for class names (includes the leading dot)
-      firstValue = argValue;
+      firstValue = extractSelectorValue(firstArg);
     } else {
       firstValue = await evaluator.evaluate(firstArg, context);
     }
@@ -141,8 +136,8 @@ export class RemoveCommand implements DecoratedCommand {
       }
 
       // CSS property shorthand: *property
-      if (trimmed.startsWith('*')) {
-        const property = trimmed.substring(1);
+      if (isCSSPropertySyntax(trimmed)) {
+        const property = trimmed.substring(1).trim();
         const targetArgs = raw.args.slice(1);
         const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'remove', { filterPrepositions: true, fallbackModifierKey: 'from' }, raw.modifiers);
         return { type: 'styles', properties: [property], targets };
@@ -194,19 +189,18 @@ export class RemoveCommand implements DecoratedCommand {
         break;
 
       case 'styles':
-        // Remove inline styles
+        // Remove inline styles using helper
         for (const element of input.targets) {
           for (const property of input.properties) {
-            // Use removeProperty for type-safe style removal
-            element.style.removeProperty(property);
+            removeStyleProperty(element, property);
           }
         }
         break;
 
       case 'element':
-        // Remove elements from the DOM entirely
+        // Remove elements from the DOM using helper
         for (const element of input.targets) {
-          element.remove();
+          removeElement(element);
         }
         break;
     }
@@ -216,6 +210,7 @@ export class RemoveCommand implements DecoratedCommand {
    * Validate parsed input (optional but recommended)
    *
    * Runtime validation to catch parsing errors early.
+   * Uses helper functions for consistent validation.
    *
    * @param input - Input to validate
    * @returns true if input is valid RemoveCommandInput
@@ -225,30 +220,30 @@ export class RemoveCommand implements DecoratedCommand {
 
     const typed = input as Partial<RemoveCommandInput>;
 
-    // Check type discriminator
-    if (!typed.type || !['classes', 'attribute', 'styles', 'element'].includes(typed.type)) {
+    // Check type discriminator using helper
+    if (!isValidType(typed.type, ['classes', 'attribute', 'styles', 'element'] as const)) {
       return false;
     }
 
-    // Validate targets (required for all types)
-    if (!Array.isArray(typed.targets)) return false;
-    if (typed.targets.length === 0) return false; // Must have at least one target
-    if (!typed.targets.every(t => isHTMLElement(t))) return false;
+    // Validate targets using helper (required for all types)
+    if (!Array.isArray(typed.targets) || !isValidTargetArray(typed.targets)) {
+      return false;
+    }
 
-    // Type-specific validation
+    // Type-specific validation using helpers
     if (typed.type === 'classes') {
       const classInput = input as Partial<{ type: 'classes'; classes: unknown; targets: unknown }>;
-      if (!Array.isArray(classInput.classes)) return false;
-      if (classInput.classes.length === 0) return false;
-      if (!classInput.classes.every(c => typeof c === 'string' && c.length > 0)) return false;
+      if (!Array.isArray(classInput.classes) || !isValidStringArray(classInput.classes, 1)) {
+        return false;
+      }
     } else if (typed.type === 'attribute') {
       const attrInput = input as Partial<{ type: 'attribute'; name: unknown; targets: unknown }>;
       if (typeof attrInput.name !== 'string' || attrInput.name.length === 0) return false;
     } else if (typed.type === 'styles') {
       const styleInput = input as Partial<{ type: 'styles'; properties: unknown; targets: unknown }>;
-      if (!Array.isArray(styleInput.properties)) return false;
-      if (styleInput.properties.length === 0) return false;
-      if (!styleInput.properties.every(p => typeof p === 'string' && p.length > 0)) return false;
+      if (!Array.isArray(styleInput.properties) || !isValidStringArray(styleInput.properties, 1)) {
+        return false;
+      }
     }
 
     return true;

@@ -28,6 +28,24 @@ import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import { parseClasses } from '../helpers/class-manipulation';
 import { parseAttribute } from '../helpers/attribute-manipulation';
 import { parseDuration } from '../helpers/duration-parsing';
+import {
+  parseToggleableCSSProperty,
+  toggleCSSProperty,
+  type ToggleableCSSProperty,
+} from '../helpers/style-manipulation';
+import {
+  isSmartElementSelector,
+  isBareSmartElementNode,
+  isClassSelectorNode,
+  extractSelectorValue,
+} from '../helpers/selector-type-detection';
+import {
+  detectSmartElementType,
+  resolveSmartElementTargets,
+  toggleDialog,
+  toggleDetails,
+  toggleSelect,
+} from '../helpers/smart-element';
 import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 /**
@@ -72,8 +90,10 @@ export type ToggleCommandInput =
 /**
  * ToggleCommand - Toggles classes, attributes, or interactive elements
  *
- * Before: 716 lines
- * After: ~620 lines (13% reduction)
+ * Refactored to use Phase 3 helper modules:
+ * - style-manipulation.ts for CSS property toggling
+ * - selector-type-detection.ts for selector parsing
+ * - smart-element.ts for dialog/details/select toggling
  */
 @meta({
   description: 'Toggle classes, attributes, or interactive elements',
@@ -155,22 +175,10 @@ export class ToggleCommand implements DecoratedCommand {
     //
     // ID selectors (#id) should be EVALUATED to get the actual DOM element
     // because they reference specific elements that exist in the DOM
-    //
-    // Parser creates TWO different node types:
-    // - { type: 'selector', value: '.active' } - uses 'value' property
-    // - { type: 'cssSelector', selectorType: 'class', selector: '.active' } - uses 'selector' property
     let firstValue: unknown;
-    const argValue = (firstArg as any)?.value || (firstArg as any)?.selector;
-    const isClassSelector = typeof argValue === 'string' && argValue.startsWith('.');
-    if (
-      ((firstArg as any)?.type === 'selector' ||
-       (firstArg as any)?.type === 'cssSelector' ||
-       (firstArg as any)?.type === 'classSelector') &&
-      typeof argValue === 'string' &&
-      isClassSelector  // Only extract CLASS selectors directly, not ID selectors
-    ) {
+    if (isClassSelectorNode(firstArg)) {
       // Extract value directly from class selector node
-      firstValue = argValue;
+      firstValue = extractSelectorValue(firstArg);
     } else {
       // Evaluate normally for ID selectors and other node types
       // This allows #myDialog to resolve to the actual DOM element
@@ -189,10 +197,7 @@ export class ToggleCommand implements DecoratedCommand {
     // Check if firstArg is a bare identifier for smart element tag names
     // e.g., "toggle details" where 'details' is an identifier node
     const firstArgName = (firstArg as any)?.name;
-    const isBareSmartElementTag =
-      (firstArg as any)?.type === 'identifier' &&
-      typeof firstArgName === 'string' &&
-      this.isSmartElementSelector(firstArgName);
+    const isBareSmartElementTag = isBareSmartElementNode(firstArg);
 
     if (isHTMLElement(firstValue) || Array.isArray(firstValue) && firstValue.every(el => isHTMLElement(el))) {
       expressionType = 'element';
@@ -209,7 +214,7 @@ export class ToggleCommand implements DecoratedCommand {
         expressionType = 'css-property';
       } else if (expression.startsWith('.')) {
         expressionType = 'class';
-      } else if (expression.startsWith('#') || this.isSmartElementSelector(expression)) {
+      } else if (expression.startsWith('#') || isSmartElementSelector(expression)) {
         expressionType = 'element';
       } else {
         // Default to class if no special prefix
@@ -227,7 +232,7 @@ export class ToggleCommand implements DecoratedCommand {
       }
 
       case 'css-property': {
-        const property = this.parseCSSProperty(expression);
+        const property = parseToggleableCSSProperty(expression);
         if (!property) {
           throw new Error(`Invalid CSS property: ${expression}`);
         }
@@ -287,22 +292,14 @@ export class ToggleCommand implements DecoratedCommand {
           }
         }
 
-        // Detect element type
-        const smartType = this.detectSmartElementType(elements);
+        // Detect element type using helper
+        const smartType = detectSmartElementType(elements);
 
         if (smartType === 'dialog') {
           return { type: 'dialog', mode, targets: elements as HTMLDialogElement[] };
         } else if (smartType === 'details') {
-          // Handle SUMMARY elements - need to get parent DETAILS
-          let detailsElements: HTMLDetailsElement[];
-          if (elements.length > 0 && elements[0].tagName === 'SUMMARY') {
-            // Summary elements: find parent details
-            detailsElements = elements
-              .map(el => el.closest('details'))
-              .filter((parent): parent is HTMLDetailsElement => parent !== null);
-          } else {
-            detailsElements = elements as HTMLDetailsElement[];
-          }
+          // Handle SUMMARY elements - use helper to resolve to parent DETAILS
+          const detailsElements = resolveSmartElementTargets(elements) as HTMLDetailsElement[];
           return { type: 'details', targets: detailsElements };
         } else if (smartType === 'select') {
           return { type: 'select', targets: elements as HTMLSelectElement[] };
@@ -378,28 +375,28 @@ export class ToggleCommand implements DecoratedCommand {
 
       case 'css-property':
         for (const element of input.targets) {
-          this.toggleCSSProperty(element, input.property);
+          toggleCSSProperty(element, input.property);
           modifiedElements.push(element);
         }
         break;
 
       case 'dialog':
         for (const dialog of input.targets) {
-          this.toggleDialog(dialog, input.mode);
+          toggleDialog(dialog, input.mode);
           modifiedElements.push(dialog);
         }
         break;
 
       case 'details':
         for (const details of input.targets) {
-          this.toggleDetails(details);
+          toggleDetails(details);
           modifiedElements.push(details);
         }
         break;
 
       case 'select':
         for (const select of input.targets) {
-          this.toggleSelect(select);
+          toggleSelect(select);
           modifiedElements.push(select);
         }
         break;
@@ -437,175 +434,6 @@ export class ToggleCommand implements DecoratedCommand {
       } else {
         element.setAttribute(name, '');
       }
-    }
-  }
-
-  /**
-   * Parse CSS property from expression
-   *
-   * Supports: *display, *visibility, *opacity
-   *
-   * @param expression - CSS property expression (e.g., "*display")
-   * @returns Property name or null if invalid
-   */
-  private parseCSSProperty(expression: string): 'display' | 'visibility' | 'opacity' | null {
-    const trimmed = expression.trim();
-
-    if (!trimmed.startsWith('*')) {
-      return null;
-    }
-
-    const property = trimmed.substring(1).trim();
-    const supportedProperties = ['display', 'visibility', 'opacity'];
-
-    if (supportedProperties.includes(property)) {
-      return property as 'display' | 'visibility' | 'opacity';
-    }
-
-    return null;
-  }
-
-  /**
-   * Toggle CSS property on element
-   *
-   * - display: toggles between 'none' and previous value (or 'block')
-   * - visibility: toggles between 'hidden' and 'visible'
-   * - opacity: toggles between '0' and '1'
-   *
-   * @param element - Element to modify
-   * @param property - CSS property to toggle
-   */
-  private toggleCSSProperty(
-    element: HTMLElement,
-    property: 'display' | 'visibility' | 'opacity'
-  ): void {
-    const currentStyle = window.getComputedStyle(element);
-
-    switch (property) {
-      case 'display':
-        if (currentStyle.display === 'none') {
-          const previousDisplay = element.dataset.previousDisplay || 'block';
-          element.style.display = previousDisplay;
-          delete element.dataset.previousDisplay;
-        } else {
-          element.dataset.previousDisplay = currentStyle.display;
-          element.style.display = 'none';
-        }
-        break;
-
-      case 'visibility':
-        element.style.visibility = currentStyle.visibility === 'hidden' ? 'visible' : 'hidden';
-        break;
-
-      case 'opacity':
-        element.style.opacity = parseFloat(currentStyle.opacity) === 0 ? '1' : '0';
-        break;
-    }
-  }
-
-  /**
-   * Check if selector is a smart element selector
-   *
-   * @param selector - Selector to check
-   * @returns true if selector targets dialog, details, summary, or select
-   */
-  private isSmartElementSelector(selector: string): boolean {
-    const lower = selector.toLowerCase();
-    return ['dialog', 'details', 'summary', 'select'].some(tag => lower.includes(tag));
-  }
-
-  /**
-   * Detect smart element type from elements
-   *
-   * @param elements - Elements to check
-   * @returns Element type or null if not a smart element
-   */
-  private detectSmartElementType(
-    elements: HTMLElement[]
-  ): 'dialog' | 'details' | 'select' | null {
-    if (elements.length === 0) return null;
-
-    const firstTag = elements[0].tagName;
-    const allSameType = elements.every(el => el.tagName === firstTag);
-
-    if (!allSameType) return null;
-
-    switch (firstTag) {
-      case 'DIALOG':
-        return 'dialog';
-      case 'DETAILS':
-        return 'details';
-      case 'SELECT':
-        return 'select';
-      case 'SUMMARY':
-        // Summary elements toggle their parent details
-        const parentDetails = elements
-          .map(el => el.closest('details'))
-          .filter((parent): parent is HTMLDetailsElement => parent !== null);
-        return parentDetails.length > 0 ? 'details' : null;
-      default:
-        return null;
-    }
-  }
-
-  /**
-   * Toggle dialog element
-   *
-   * @param dialog - Dialog element
-   * @param mode - Modal mode ('modal' or 'non-modal')
-   */
-  private toggleDialog(dialog: HTMLDialogElement, mode: 'modal' | 'non-modal'): void {
-    if (dialog.open) {
-      dialog.close();
-    } else {
-      if (mode === 'modal') {
-        dialog.showModal();
-      } else {
-        dialog.show();
-      }
-    }
-  }
-
-  /**
-   * Toggle details element
-   *
-   * @param details - Details element
-   */
-  private toggleDetails(details: HTMLDetailsElement): void {
-    details.open = !details.open;
-  }
-
-  /**
-   * Toggle select dropdown
-   *
-   * Uses the modern showPicker() API when available, with fallbacks.
-   * Note: Programmatically opening select dropdowns is limited by browser security.
-   *
-   * @param select - Select element
-   */
-  private toggleSelect(select: HTMLSelectElement): void {
-    if (document.activeElement === select) {
-      select.blur();
-    } else {
-      select.focus();
-
-      // Try modern showPicker() API first (Chrome 99+, Safari 16+, Firefox 101+)
-      if ('showPicker' in select && typeof (select as any).showPicker === 'function') {
-        try {
-          (select as any).showPicker();
-          return;
-        } catch {
-          // showPicker() may throw if not triggered by user gesture
-        }
-      }
-
-      // Fallback: dispatch click event (more reliable than mousedown)
-      const clickEvent = new MouseEvent('click', {
-        view: window,
-        bubbles: true,
-        cancelable: true,
-      });
-      select.dispatchEvent(clickEvent);
     }
   }
 

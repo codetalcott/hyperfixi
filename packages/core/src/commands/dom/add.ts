@@ -15,10 +15,12 @@
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import { parseClasses } from '../helpers/class-manipulation';
 import { isAttributeSyntax, parseAttributeWithValue } from '../helpers/attribute-manipulation';
+import { isCSSPropertySyntax } from '../helpers/style-manipulation';
+import { isClassSelectorNode, extractSelectorValue } from '../helpers/selector-type-detection';
+import { isValidTargetArray, isValidStringArray, isValidType } from '../helpers/input-validator';
 import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 /**
@@ -96,19 +98,10 @@ export class AddCommand implements DecoratedCommand {
     // Handle CSS selector nodes directly without evaluation
     // For "add .active", .active is a selector node with value='.active'
     // not evaluated as a DOM query (which would return an empty NodeList)
-    //
-    // Parser creates TWO different node types:
-    // - { type: 'selector', value: '.active' } - uses 'value' property
-    // - { type: 'cssSelector', selectorType: 'class', selector: '.active' } - uses 'selector' property
     let firstValue: unknown;
-    const argValue = firstArg['value'] || firstArg['selector'];
-    if (
-      (firstArg.type === 'selector' || firstArg.type === 'cssSelector' || firstArg.type === 'classSelector') &&
-      typeof argValue === 'string' &&
-      argValue.startsWith('.')
-    ) {
+    if (isClassSelectorNode(firstArg)) {
       // Use value directly for class names (includes the leading dot)
-      firstValue = argValue;
+      firstValue = extractSelectorValue(firstArg);
     } else {
       firstValue = await evaluator.evaluate(firstArg, context);
     }
@@ -136,8 +129,8 @@ export class AddCommand implements DecoratedCommand {
       }
 
       // CSS property shorthand: *property
-      if (trimmed.startsWith('*')) {
-        const property = trimmed.substring(1);
+      if (isCSSPropertySyntax(trimmed)) {
+        const property = trimmed.substring(1).trim();
         // Next arg should be the value
         if (raw.args.length < 2) {
           throw new Error('add *property requires a value argument');
@@ -212,6 +205,7 @@ export class AddCommand implements DecoratedCommand {
    * Validate parsed input (optional but recommended)
    *
    * Runtime validation to catch parsing errors early.
+   * Uses helper functions for consistent validation.
    *
    * @param input - Input to validate
    * @returns true if input is valid AddCommandInput
@@ -221,22 +215,22 @@ export class AddCommand implements DecoratedCommand {
 
     const typed = input as Partial<AddCommandInput>;
 
-    // Check type discriminator
-    if (!typed.type || !['classes', 'attribute', 'styles'].includes(typed.type)) {
+    // Check type discriminator using helper
+    if (!isValidType(typed.type, ['classes', 'attribute', 'styles'] as const)) {
       return false;
     }
 
-    // Validate targets (required for all types)
-    if (!Array.isArray(typed.targets)) return false;
-    if (typed.targets.length === 0) return false; // Must have at least one target
-    if (!typed.targets.every(t => isHTMLElement(t))) return false;
+    // Validate targets using helper (required for all types)
+    if (!Array.isArray(typed.targets) || !isValidTargetArray(typed.targets)) {
+      return false;
+    }
 
-    // Type-specific validation
+    // Type-specific validation using helpers
     if (typed.type === 'classes') {
       const classInput = input as Partial<{ type: 'classes'; classes: unknown; targets: unknown }>;
-      if (!Array.isArray(classInput.classes)) return false;
-      if (classInput.classes.length === 0) return false;
-      if (!classInput.classes.every(c => typeof c === 'string' && c.length > 0)) return false;
+      if (!Array.isArray(classInput.classes) || !isValidStringArray(classInput.classes, 1)) {
+        return false;
+      }
     } else if (typed.type === 'attribute') {
       const attrInput = input as Partial<{ type: 'attribute'; name: unknown; value: unknown; targets: unknown }>;
       if (typeof attrInput.name !== 'string' || attrInput.name.length === 0) return false;
