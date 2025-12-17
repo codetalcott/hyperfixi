@@ -269,6 +269,7 @@ export const japaneseProfile: LanguageProfile = {
     destination: { primary: 'に', alternatives: ['へ', 'で'], position: 'after' },
     source: { primary: 'から', position: 'after' },
     style: { primary: 'で', position: 'after' },
+    event: { primary: 'を', position: 'after' }, // Event as object marker
     // Possession marker for "X's Y" patterns
     // Note: の is used between target and patient: #button の .active
   },
@@ -615,6 +616,7 @@ export const koreanProfile: LanguageProfile = {
     destination: { primary: '에', alternatives: ['으로', '로', '에서'], position: 'after' },
     source: { primary: '에서', alternatives: ['부터'], position: 'after' },
     style: { primary: '로', alternatives: ['으로'], position: 'after' },
+    event: { primary: '을', alternatives: ['를'], position: 'after' }, // Event as object marker
   },
   keywords: {
     // Class/Attribute operations
@@ -841,6 +843,7 @@ export const turkishProfile: LanguageProfile = {
     destination: { primary: 'e', alternatives: ['a', 'de', 'da', 'te', 'ta'], position: 'after' }, // Dative/Locative
     source: { primary: 'den', alternatives: ['dan', 'ten', 'tan'], position: 'after' }, // Ablative
     style: { primary: 'le', alternatives: ['la', 'yle', 'yla'], position: 'after' }, // Instrumental
+    event: { primary: 'i', alternatives: ['ı', 'u', 'ü'], position: 'after' }, // Event as accusative
   },
   keywords: {
     // Class/Attribute operations
@@ -1351,6 +1354,7 @@ export const quechuaProfile: LanguageProfile = {
     destination: { primary: '-man', position: 'after' },
     source: { primary: '-manta', position: 'after' },
     style: { primary: '-wan', position: 'after' },
+    event: { primary: '-ta', position: 'after' }, // Event as accusative
   },
   keywords: {
     toggle: { primary: "t'ikray", alternatives: ['tikray', 'kutichiy'], normalized: 'toggle' },

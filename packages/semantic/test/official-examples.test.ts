@@ -688,11 +688,12 @@ describe('Newly Wired Commands', () => {
       expect(node.roles.get('event')?.value).toBe('click');
     });
 
-    it('Japanese: #button に click 引き金', () => {
+    it('Japanese: #button に click を 引き金', () => {
       // Generated pattern uses 引き金 not トリガー
-      expect(canParse('#button に click 引き金', 'ja')).toBe(true);
+      // SOV with particles: destination に event を verb
+      expect(canParse('#button に click を 引き金', 'ja')).toBe(true);
 
-      const node = parse('#button に click 引き金', 'ja');
+      const node = parse('#button に click を 引き金', 'ja');
       expect(node.action).toBe('trigger');
     });
 
