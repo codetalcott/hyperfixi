@@ -87,3 +87,81 @@ export {
   extractSearchParams,
   buildUrlWithParams,
 } from './url-validation';
+
+// Style manipulation helpers (Phase 3)
+export {
+  parseCSSProperty,
+  isCSSPropertySyntax,
+  parseToggleableCSSProperty,
+  getComputedStyleValue,
+  setStyleValue,
+  removeStyleProperty,
+  toggleCSSProperty,
+  isDisplayNone,
+  isVisibilityHidden,
+  isOpacityZero,
+} from './style-manipulation';
+export type { ToggleableCSSProperty, ParsedCSSProperty } from './style-manipulation';
+
+// Selector type detection helpers (Phase 3)
+export {
+  detectSelectorType,
+  isSmartElementTag,
+  isSmartElementSelector,
+  extractSelectorValue,
+  isClassSelectorNode,
+  isIdSelectorNode,
+  isBareSmartElementNode,
+  SMART_ELEMENT_TAGS,
+} from './selector-type-detection';
+export type { SelectorType, SmartElementTag } from './selector-type-detection';
+
+// Input validation helpers (Phase 3)
+export {
+  validateTargetArray,
+  isValidTargetArray,
+  validateStringArray,
+  isValidStringArray,
+  validateTypeDiscriminator,
+  isValidType,
+  validateDefined,
+  isDefined,
+  validateNonEmptyString,
+  isNonEmptyString,
+  combineValidations,
+  createValidator,
+} from './input-validator';
+export type { ValidationResult as InputValidationResult } from './input-validator';
+
+// Smart element helpers (Phase 3)
+export {
+  detectSmartElementType,
+  resolveSmartElementTargets,
+  toggleDialog,
+  toggleDetails,
+  toggleSelect,
+  toggleSmartElement,
+  isSmartElement,
+  isDialogElement,
+  isDetailsElement,
+  isSelectElement,
+  isSummaryElement,
+} from './smart-element';
+export type { SmartElementType, DialogMode } from './smart-element';
+
+// DOM mutation helpers (Phase 3)
+export {
+  toInsertPosition,
+  looksLikeHTML,
+  insertContent,
+  insertContentSemantic,
+  removeElement,
+  removeElements,
+  swapElements,
+  cloneElement,
+  createElementFromHTML,
+  setInnerHTML,
+  setTextContent,
+  clearElement,
+} from './dom-mutation';
+export type { ContentInsertPosition, SemanticPosition } from './dom-mutation';
