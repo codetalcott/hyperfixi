@@ -1,31 +1,36 @@
 /**
- * HyperFixi Minimal Browser Bundle V2 - Experimental
- * Uses RuntimeBase + CommandAdapterV2 + V2 Commands
+ * HyperFixi Minimal Browser Bundle V2 - Tree-Shakeable
  *
- * This bundle uses the experimental RuntimeExperimental class which:
- * - Extends RuntimeBase (generic, zero direct command imports)
- * - Uses CommandRegistryV2 (parseInput() adapter)
- * - Imports V2 commands with parseInput() methods
+ * This bundle uses true tree-shaking by importing:
+ * - createTreeShakeableRuntime (zero module-level command imports)
+ * - createCoreExpressionEvaluator (only 3 expression categories)
+ * - Only the 8 commands needed for minimal functionality
  *
  * Commands included (8 minimal):
  * - add, remove, toggle (DOM manipulation)
- * - put (content insertion, with memberExpression fix)
+ * - put (content insertion)
  * - set (variable assignment)
  * - log (debugging)
  * - send (event dispatch)
  * - wait (async timing)
  *
- * Expected size: ~180KB uncompressed (~60KB gzipped)
- * Full bundle: ~511KB uncompressed (~112KB gzipped)
- * Reduction: ~60% smaller
+ * Expression categories included (3 of 6):
+ * - references: CSS selectors, me, you, it
+ * - logical: comparisons, boolean operators
+ * - special: literals, basic math
+ *
+ * Expected size: ~120KB uncompressed (~40KB gzipped)
+ * Full bundle: ~672KB uncompressed (~148KB gzipped)
+ * Reduction: ~82% smaller
  */
 
 import { parse } from '../parser/parser';
-import { createMinimalRuntime } from '../runtime/runtime-experimental';
+import { createTreeShakeableRuntime } from '../runtime/runtime-factory';
+import { createCoreExpressionEvaluator } from '../expressions/bundles/core-expressions';
 import { createMinimalAttributeProcessor } from '../dom/minimal-attribute-processor';
 import { createContext } from '../core/context';
 
-// Import ONLY the 8 minimal V2 commands (tree-shaking works!)
+// Import ONLY the 8 minimal commands (true tree-shaking!)
 import { createAddCommand } from '../commands/dom/add';
 import { createRemoveCommand } from '../commands/dom/remove';
 import { createToggleCommand } from '../commands/dom/toggle';
@@ -35,20 +40,25 @@ import { createSendCommand } from '../commands/events/send';
 import { createLogCommand } from '../commands/utility/log';
 import { createWaitCommand } from '../commands/async/wait';
 
-// Create runtime instance with minimal commands
-const runtimeExperimental = createMinimalRuntime([
-  createAddCommand(),
-  createRemoveCommand(),
-  createToggleCommand(),
-  createPutCommand(),      // Includes memberExpression fix for "put X into #el.innerHTML"
-  createSetCommand(),
-  createSendCommand(),
-  createLogCommand(),
-  createWaitCommand(),
-]);
+// Create runtime with ONLY the commands and expressions we need
+const runtime = createTreeShakeableRuntime(
+  [
+    createAddCommand(),
+    createRemoveCommand(),
+    createToggleCommand(),
+    createPutCommand(),
+    createSetCommand(),
+    createSendCommand(),
+    createLogCommand(),
+    createWaitCommand(),
+  ],
+  {
+    expressionEvaluator: createCoreExpressionEvaluator(),
+  }
+);
 
 // Create adapter for MinimalAttributeProcessor
-// RuntimeExperimental has execute(node, context), but MinimalAttributeProcessor needs execute(code, context)
+// RuntimeBase has execute(node, context), but MinimalAttributeProcessor needs execute(code, context)
 const runtimeAdapter = {
   parse: (code: string) => parse(code),
   execute: async (code: string, context?: any) => {
@@ -57,7 +67,7 @@ const runtimeAdapter = {
     if (!parseResult.success || !parseResult.node) {
       throw new Error(parseResult.error?.message || 'Parse failed');
     }
-    return await runtimeExperimental.execute(parseResult.node, ctx);
+    return await runtime.execute(parseResult.node, ctx);
   }
 };
 
@@ -71,7 +81,7 @@ const api = {
   execute: async (code: string, context?: any) => runtimeAdapter.execute(code, context),
   createContext,
   attributeProcessor,
-  version: '1.1.0-minimal-v2-experimental',
+  version: '1.1.0-minimal-v2-tree-shakeable',
   commands: ['add', 'remove', 'toggle', 'put', 'set', 'send', 'log', 'wait'],
 
   /**
