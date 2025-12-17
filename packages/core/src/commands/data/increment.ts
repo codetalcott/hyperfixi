@@ -10,7 +10,7 @@
  * - increment global score by 10
  */
 
-import type { ExecutionContext } from '../../types/base-types';
+import type { TypedExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 import {
@@ -50,7 +50,7 @@ export class IncrementCommand implements DecoratedCommand {
   async parseInput(
     raw: NumericTargetRawInput,
     evaluator: ExpressionEvaluator,
-    context: ExecutionContext
+    context: TypedExecutionContext
   ): Promise<NumericTargetInput> {
     return parseNumericTargetInput(raw, evaluator, context, 'increment');
   }
@@ -58,7 +58,7 @@ export class IncrementCommand implements DecoratedCommand {
   /**
    * Execute the increment command
    */
-  async execute(input: NumericTargetInput, context: ExecutionContext): Promise<number> {
+  async execute(input: NumericTargetInput, context: TypedExecutionContext): Promise<number> {
     const { target, property, scope, amount = 1 } = input;
 
     // Get current value using shared helper

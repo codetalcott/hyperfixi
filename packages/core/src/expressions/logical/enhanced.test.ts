@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { JSDOM } from 'jsdom';
 import { equalsExpression, andExpression, matchesExpression } from './index';
 import type { ExecutionContext } from '../../types/core';
-import type { TypedExpressionContext } from '../../types/expression-types';
+import type { TypedExpressionContext } from '../../types/base-types';
 
 // Mock DOM environment
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');

@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createTypedExecutionContext } from '../../test-setup';
-import type { TypedExpressionContext } from '../../types/expression-types';
+import type { TypedExpressionContext } from '../../types/base-types';
 import {
   StringLiteralExpression,
   NumberLiteralExpression,

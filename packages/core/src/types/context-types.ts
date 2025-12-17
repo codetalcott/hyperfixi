@@ -13,18 +13,10 @@ import type {
   ValidationResult,
 } from './expression-types';
 import type { LLMDocumentation } from './command-types';
+import type { EvaluationResult } from './base-types';
 
-// ============================================================================
-// Enhanced Context Result Types
-// ============================================================================
-
-export interface EvaluationResult<TOutput> {
-  success: boolean;
-  value?: TOutput;
-  errors?: Array<{ type: string; message: string; path?: string }>;
-  suggestions?: string[];
-  type?: EvaluationType;
-}
+// Re-export EvaluationResult from base-types (single source of truth)
+export type { EvaluationResult } from './base-types';
 
 // ============================================================================
 // Context Categories

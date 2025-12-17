@@ -100,7 +100,7 @@ export interface ExpressionMetadata {
   examples?: {
     input: string;
     description: string;
-    expectedOutput: any;
+    expectedOutput: unknown;
     context?: Partial<ExecutionContext>;
   }[];
   relatedExpressions?: string[];

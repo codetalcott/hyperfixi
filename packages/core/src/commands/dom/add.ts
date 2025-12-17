@@ -164,10 +164,10 @@ export class AddCommand implements DecoratedCommand {
    * @param _context - Typed execution context (unused but required by interface)
    * @returns void (command performs side effects)
    */
-  execute(
+  async execute(
     input: AddCommandInput,
     _context: TypedExecutionContext
-  ): void {
+  ): Promise<void> {
     // Handle different input types using discriminated union
     switch (input.type) {
       case 'classes':

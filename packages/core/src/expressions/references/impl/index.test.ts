@@ -12,7 +12,7 @@ import {
   CSSSelectorExpression,
   referenceExpressions,
 } from './index';
-import type { TypedExpressionContext } from '../../../types/expression-types';
+import type { TypedExpressionContext } from '../../../types/base-types';
 
 // Mock DOM environment - url required to avoid localStorage "opaque origin" errors
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {

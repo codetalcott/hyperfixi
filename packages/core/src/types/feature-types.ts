@@ -17,15 +17,15 @@ import type {
 export interface TypedFeatureContext {
   // Core context
   me: HTMLElement | null;
-  it: any;
+  it: unknown;
   you: HTMLElement | null;
-  result: any;
+  result: unknown;
   event?: Event;
 
   // Variable storage
-  variables: Map<string, any>;
-  locals: Map<string, any>;
-  globals: Map<string, any>;
+  variables: Map<string, unknown>;
+  locals: Map<string, unknown>;
+  globals: Map<string, unknown>;
 
   // Feature-specific context
   feature: string; // Feature name

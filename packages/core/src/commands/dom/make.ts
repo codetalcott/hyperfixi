@@ -9,7 +9,7 @@
  *   make a URL from "/path/", "origin"
  */
 
-import type { ASTNode, ExecutionContext } from '../../types/base-types';
+import type { ASTNode, TypedTypedExecutionContext } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
@@ -70,7 +70,7 @@ export class MakeCommand implements DecoratedCommand {
   private async resolveConstructorArgs(
     fromModifier: ASTNode | undefined,
     evaluator: ExpressionEvaluator,
-    context: ExecutionContext
+    context: TypedExecutionContext
   ): Promise<any[]> {
     if (!fromModifier) {
       return [];
@@ -109,7 +109,7 @@ export class MakeCommand implements DecoratedCommand {
   private async resolveVariableName(
     calledModifier: ASTNode | undefined,
     evaluator: ExpressionEvaluator,
-    context: ExecutionContext
+    context: TypedExecutionContext
   ): Promise<string | undefined> {
     if (!calledModifier) {
       return undefined;
@@ -196,7 +196,7 @@ export class MakeCommand implements DecoratedCommand {
   private createClassInstance(
     className: string | HTMLElement,
     constructorArgs: any[],
-    context: ExecutionContext
+    context: TypedExecutionContext
   ): any {
     if (isHTMLElement(className)) {
       return className as HTMLElement;
@@ -247,7 +247,7 @@ export class MakeCommand implements DecoratedCommand {
    * @param value - Value to set
    * @param context - Execution context
    */
-  private setVariableValue(name: string, value: any, context: ExecutionContext): void {
+  private setVariableValue(name: string, value: any, context: TypedExecutionContext): void {
     // Set in local variables by default
     context.locals.set(name, value);
   }
@@ -281,7 +281,7 @@ export class MakeCommand implements DecoratedCommand {
   async parseInput(
     raw: MakeCommandRawInput,
     evaluator: ExpressionEvaluator,
-    context: ExecutionContext
+    context: TypedExecutionContext
   ): Promise<MakeCommandInput> {
     // Evaluate expression from first argument
     const expression =
@@ -329,7 +329,7 @@ export class MakeCommand implements DecoratedCommand {
    * @param context - Execution context
    * @returns Created instance (HTMLElement or class instance)
    */
-  async execute(input: MakeCommandInput, context: ExecutionContext): Promise<any> {
+  async execute(input: MakeCommandInput, context: TypedExecutionContext): Promise<any> {
     const { expression, constructorArgs = [], variableName } = input;
 
     let result: any;

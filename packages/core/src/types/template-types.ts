@@ -110,11 +110,14 @@ export interface EnhancedTemplateDirective<TInput = unknown, TOutput = string>
  * Input schema for @if directive
  */
 export const IfDirectiveInputSchema = v.object({
-  condition: v.any(), // Any value that can be evaluated for truthiness
+  condition: v.unknown(), // Any value that can be evaluated for truthiness
   templateContent: v.string(),
 });
 
-export type IfDirectiveInput = any; // Inferred from RuntimeValidator
+export interface IfDirectiveInput {
+  condition: unknown;
+  templateContent: string;
+}
 
 /**
  * Input schema for @else directive
@@ -123,18 +126,24 @@ export const ElseDirectiveInputSchema = v.object({
   templateContent: v.string(),
 });
 
-export type ElseDirectiveInput = any; // Inferred from RuntimeValidator
+export interface ElseDirectiveInput {
+  templateContent: string;
+}
 
 /**
  * Input schema for @repeat directive
  */
 export const RepeatDirectiveInputSchema = v.object({
-  collection: v.any(), // Collection to iterate over
+  collection: v.unknown(), // Collection to iterate over
   iteratorVariable: v.string().optional(), // Variable name for current item (defaults to 'it')
   templateContent: v.string(),
 });
 
-export type RepeatDirectiveInput = any; // Inferred from RuntimeValidator
+export interface RepeatDirectiveInput {
+  collection: unknown;
+  iteratorVariable?: string;
+  templateContent: string;
+}
 
 // ============================================================================
 // Template Compilation Types

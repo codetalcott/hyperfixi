@@ -19,9 +19,12 @@ import { command, meta, createFactory, type DecoratedCommand , type CommandMetad
  * Typed input for IfCommand
  */
 export interface IfCommandInput {
-  condition: any;
-  thenCommands: any;
-  elseCommands?: any;
+  /** The evaluated condition value (will be coerced to boolean) */
+  condition: unknown;
+  /** AST node(s) for the then branch commands */
+  thenCommands: ASTNode | ASTNode[];
+  /** AST node(s) for the else branch commands (optional) */
+  elseCommands?: ASTNode | ASTNode[];
 }
 
 /**
@@ -30,7 +33,8 @@ export interface IfCommandInput {
 export interface IfCommandOutput {
   conditionResult: boolean;
   executedBranch: 'then' | 'else' | 'none';
-  result: any;
+  /** Result from the executed branch (unknown type depends on commands) */
+  result: unknown;
 }
 
 /**
@@ -59,8 +63,8 @@ export class IfCommand implements DecoratedCommand {
       throw new Error('if command requires a condition to evaluate');
     }
 
-    let thenCommands: any;
-    let elseCommands: any;
+    let thenCommands: ASTNode | ASTNode[] | undefined;
+    let elseCommands: ASTNode | ASTNode[] | undefined;
 
     if (raw.args.length >= 2 && raw.args[1]) {
       thenCommands = raw.args[1];

@@ -21,41 +21,10 @@ export type { CoreExecutionContext } from './core-context';
 export { createCoreContext, isCoreExecutionContext, assertHTMLElement, asHTMLElement } from './core-context';
 
 // ============================================================================
-// Core Validation Types
+// Core Validation Types - Re-exported from base-types (single source of truth)
 // ============================================================================
 
-/**
- * Unified validation error interface - replaces all fragmented error types
- */
-export interface ValidationError {
-  readonly type:
-    | 'type-mismatch'
-    | 'missing-argument'
-    | 'runtime-error'
-    | 'validation-error'
-    | 'syntax-error'
-    | 'invalid-argument'
-    | 'invalid-input'
-    | 'empty-config'
-    | 'schema-validation'
-    | 'context-error'
-    | 'invalid-syntax'
-    | 'security-warning';
-  readonly message: string;
-  readonly suggestions: string[]; // Always array, never string
-  readonly path?: string;
-  readonly code?: string;
-}
-
-/**
- * Unified validation result interface - replaces all ValidationResult variants
- */
-export interface ValidationResult<T = unknown> {
-  readonly isValid: boolean;
-  readonly errors: ValidationError[];
-  readonly suggestions: string[];
-  readonly data?: T;
-}
+export type { ValidationError, ValidationResult } from './base-types';
 
 // ============================================================================
 // Core Value Types

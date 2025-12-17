@@ -55,6 +55,36 @@ export {
 } from './unified-types';
 
 // ============================================================================
+// Type Guards (eliminates as any casts)
+// ============================================================================
+
+export {
+  isInputElement,
+  isFormElement,
+  isHTMLElement,
+  isDOMElement,
+  isDOMNode,
+  isOptionElement,
+  isArrayLike,
+  isNodeList,
+  isHTMLCollection,
+  isPlainObject,
+  isObject,
+  isFunction,
+  isPromiseLike,
+  getProperty,
+  setProperty,
+  hasProperty,
+  toNumber,
+  compareValues,
+  getFormValue,
+  getChecked,
+  getDisabled,
+  getSelected,
+  getHidden,
+} from './type-guards';
+
+// ============================================================================
 // Migration Support (removed - migration-adapters.ts deleted)
 // ============================================================================
 // Migration adapters removed as they were unused (0 imports)

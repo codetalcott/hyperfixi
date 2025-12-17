@@ -12,6 +12,12 @@
  */
 
 import { isFunction, isObject } from './type-helpers';
+import {
+  isFormElement,
+  isInputElement,
+  isOptionElement,
+  isHTMLElement as isHTMLEl,
+} from '../types/type-guards';
 
 // ============================================================================
 // Type Guards
@@ -111,7 +117,7 @@ export function hasAttribute(element: Element, attrName: string): boolean {
  * Special DOM property mappings
  * Maps hyperscript property names to actual DOM properties
  */
-const SPECIAL_DOM_PROPERTIES: Record<string, (element: Element) => any> = {
+const SPECIAL_DOM_PROPERTIES: Record<string, (element: Element) => unknown> = {
   'id': (el) => el.id,
   'classname': (el) => el.className,
   'class': (el) => el.className,
@@ -119,11 +125,11 @@ const SPECIAL_DOM_PROPERTIES: Record<string, (element: Element) => any> = {
   'innertext': (el) => el.textContent?.trim(),
   'innerHTML': (el) => el.innerHTML,
   'outerhtml': (el) => el.outerHTML,
-  'value': (el) => (el as any).value,
-  'checked': (el) => (el as any).checked,
-  'disabled': (el) => (el as any).disabled,
-  'selected': (el) => (el as any).selected,
-  'hidden': (el) => (el as any).hidden,
+  'value': (el) => isFormElement(el) ? el.value : undefined,
+  'checked': (el) => isInputElement(el) ? el.checked : undefined,
+  'disabled': (el) => isFormElement(el) ? el.disabled : undefined,
+  'selected': (el) => isOptionElement(el) ? el.selected : undefined,
+  'hidden': (el) => isHTMLEl(el) ? el.hidden : undefined,
   'style': (el) => getComputedStyle(el),
   'children': (el) => Array.from(el.children),
   'parent': (el) => el.parentElement,
@@ -147,7 +153,7 @@ const SPECIAL_DOM_PROPERTIES: Record<string, (element: Element) => any> = {
  * @param property - Property name
  * @returns Property value (with methods bound to element)
  */
-export function getElementProperty(element: Element, property: string): any {
+export function getElementProperty(element: Element, property: string): unknown {
   // Handle CSS computed style properties with computed- prefix
   if (property.startsWith('computed-')) {
     const cssProperty = property.slice('computed-'.length);
@@ -169,14 +175,14 @@ export function getElementProperty(element: Element, property: string): any {
     return accessAttribute(element, property);
   }
 
-  // Try as regular property
-  const value = (element as any)[property];
+  // Try as regular property using index signature
+  const value = (element as unknown as Record<string, unknown>)[property];
 
   // Bind functions to element for proper 'this' context
   // This is critical for DOM methods like closest(), querySelector(), etc.
   // Without binding, these methods lose their 'this' reference and fail
   if (isFunction(value)) {
-    return (value as Function).bind(element);
+    return value.bind(element);
   }
 
   return value;
@@ -189,7 +195,7 @@ export function getElementProperty(element: Element, property: string): any {
  * @param property - Property name
  * @returns Property value or null
  */
-export function accessObjectProperty(object: unknown, property: string): any {
+export function accessObjectProperty(object: unknown, property: string): unknown {
   if (!isObject(object)) {
     return null;
   }
@@ -218,7 +224,7 @@ export function accessObjectProperty(object: unknown, property: string): any {
 export async function accessProperty(
   object: unknown,
   property: string
-): Promise<any> {
+): Promise<unknown> {
   // Handle null/undefined
   if (object === null || object === undefined) {
     return null;

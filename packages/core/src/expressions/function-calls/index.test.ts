@@ -10,7 +10,7 @@ import {
   callFunction,
 } from './index';
 import { createTypedExpressionContext } from '../../test-utilities';
-import type { TypedExpressionContext } from '../../types/command-types';
+import type { TypedExpressionContext } from '../../types/base-types';
 
 describe('Enhanced Function Call Expression', () => {
   let functionCallExpression: FunctionCallExpression;

@@ -6,7 +6,7 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { SymbolExpression, createSymbolExpression, resolveSymbol } from './index';
 import { createTypedExpressionContext } from '../../test-utilities';
-import type { TypedExpressionContext } from '../../types/command-types';
+import type { TypedExpressionContext } from '../../types/base-types';
 
 describe('Enhanced Symbol Expression', () => {
   let symbolExpression: SymbolExpression;
