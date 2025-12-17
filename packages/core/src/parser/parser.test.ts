@@ -1037,32 +1037,50 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should parse :variable in INCREMENT command', () => {
+      // Note: increment is now transformed to set at parse time (Phase 1 Bundle Reduction)
+      // increment :counter by 1 → set :counter to (:counter + 1)
       const result = parse('increment :counter by 1');
       expect(result.success).toBe(true);
       const command = result.node as any;
       expect(command.type).toBe('command');
-      expect(command.name).toBe('increment');
+      expect(command.name).toBe('set'); // Transformed from 'increment'
+      expect(command.originalCommand).toBe('increment'); // Original preserved
+      // args structure: [target, 'to', binaryExpression]
       expect(command.args[0]).toMatchObject({
         type: 'identifier',
         name: 'counter',
         scope: 'local',
       });
+      expect(command.args[1]).toMatchObject({
+        type: 'identifier',
+        name: 'to',
+      });
+      expect(command.args[2]).toMatchObject({
+        type: 'binaryExpression',
+        operator: '+',
+      });
     });
 
     it('should parse :variable in arithmetic expressions', () => {
+      // Note: increment is now transformed to set at parse time (Phase 1 Bundle Reduction)
+      // increment :sum by :amount → set :sum to (:sum + :amount)
       const result = parse('increment :sum by :amount');
       expect(result.success).toBe(true);
       const command = result.node as any;
       expect(command.type).toBe('command');
-      expect(command.name).toBe('increment');
-      // Both :sum and :amount should have scope: 'local'
+      expect(command.name).toBe('set'); // Transformed from 'increment'
+      // Target :sum should have scope: 'local'
       expect(command.args[0]).toMatchObject({
         type: 'identifier',
         name: 'sum',
         scope: 'local',
       });
-      // Second arg should be :amount
-      expect(command.args[1]).toMatchObject({
+      // Binary expression contains target and amount
+      const binaryExpr = command.args[2];
+      expect(binaryExpr.type).toBe('binaryExpression');
+      expect(binaryExpr.operator).toBe('+');
+      // The right side of the expression is :amount
+      expect(binaryExpr.right).toMatchObject({
         type: 'identifier',
         name: 'amount',
         scope: 'local',
@@ -1168,31 +1186,50 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should parse ::variable in INCREMENT command', () => {
+      // Note: increment is now transformed to set at parse time (Phase 1 Bundle Reduction)
+      // increment ::total by 5 → set ::total to (::total + 5)
       const result = parse('increment ::total by 5');
       expect(result.success).toBe(true);
       const command = result.node as any;
       expect(command.type).toBe('command');
-      expect(command.name).toBe('increment');
+      expect(command.name).toBe('set'); // Transformed from 'increment'
+      expect(command.originalCommand).toBe('increment'); // Original preserved
+      // args structure: [target, 'to', binaryExpression]
       expect(command.args[0]).toMatchObject({
         type: 'identifier',
         name: 'total',
         scope: 'global',
       });
+      expect(command.args[1]).toMatchObject({
+        type: 'identifier',
+        name: 'to',
+      });
+      expect(command.args[2]).toMatchObject({
+        type: 'binaryExpression',
+        operator: '+',
+      });
     });
 
     it('should parse ::variable in arithmetic expressions', () => {
+      // Note: increment is now transformed to set at parse time (Phase 1 Bundle Reduction)
+      // increment ::sum by ::amount → set ::sum to (::sum + ::amount)
       const result = parse('increment ::sum by ::amount');
       expect(result.success).toBe(true);
       const command = result.node as any;
       expect(command.type).toBe('command');
-      expect(command.name).toBe('increment');
-      // Both ::sum and ::amount should have scope: 'global'
+      expect(command.name).toBe('set'); // Transformed from 'increment'
+      // Target ::sum should have scope: 'global'
       expect(command.args[0]).toMatchObject({
         type: 'identifier',
         name: 'sum',
         scope: 'global',
       });
-      expect(command.args[1]).toMatchObject({
+      // Binary expression contains target and amount
+      const binaryExpr = command.args[2];
+      expect(binaryExpr.type).toBe('binaryExpression');
+      expect(binaryExpr.operator).toBe('+');
+      // The right side of the expression is ::amount
+      expect(binaryExpr.right).toMatchObject({
         type: 'identifier',
         name: 'amount',
         scope: 'global',
@@ -1243,17 +1280,24 @@ describe('Hyperscript AST Parser', () => {
     });
 
     it('should handle mixed :local and ::global in same expression', () => {
+      // Note: increment is now transformed to set at parse time (Phase 1 Bundle Reduction)
+      // increment ::globalSum by :localAmount → set ::globalSum to (::globalSum + :localAmount)
       const result = parse('increment ::globalSum by :localAmount');
       expect(result.success).toBe(true);
       const command = result.node as any;
+      expect(command.name).toBe('set'); // Transformed from 'increment'
       // Target should be global
       expect(command.args[0]).toMatchObject({
         type: 'identifier',
         name: 'globalSum',
         scope: 'global',
       });
+      // Binary expression contains target and amount
+      const binaryExpr = command.args[2];
+      expect(binaryExpr.type).toBe('binaryExpression');
+      expect(binaryExpr.operator).toBe('+');
       // Amount should be local
-      expect(command.args[1]).toMatchObject({
+      expect(binaryExpr.right).toMatchObject({
         type: 'identifier',
         name: 'localAmount',
         scope: 'local',

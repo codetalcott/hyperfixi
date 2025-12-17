@@ -12,6 +12,7 @@
 import type { ParserContext, IdentifierNode } from '../parser-types';
 import type { ASTNode, ExpressionNode, Token } from '../../types/core';
 import { KEYWORDS } from '../parser-constants';
+import { createBinaryExpression, createLiteral, createIdentifier } from '../helpers/ast-helpers';
 // Phase 4: TokenType import removed - using value-based checks instead
 
 /**
@@ -272,6 +273,15 @@ export function parseSetCommand(
  * - Custom increment/decrement amount via 'by' keyword
  * - Default increment/decrement of 1
  *
+ * IMPLEMENTATION NOTE (Phase 1 - Parser Sugar):
+ * This function now transforms increment/decrement into a `set` command at parse time:
+ *   - `increment x` → `set x to (x + 1)`
+ *   - `increment x by 5` → `set x to (x + 5)`
+ *   - `decrement x` → `set x to (x - 1)`
+ *
+ * This eliminates the need for separate increment/decrement runtime implementations,
+ * reducing bundle size while maintaining backward compatibility at the syntax level.
+ *
  * Examples:
  *   - increment count
  *   - increment count by 5
@@ -280,16 +290,18 @@ export function parseSetCommand(
  *
  * @param ctx - Parser context providing access to parser state and methods
  * @param commandToken - The 'increment' or 'decrement' command token
- * @returns CommandNode representing the increment/decrement command
+ * @returns CommandNode representing a `set` command with binary expression
  *
  * Phase 9-3b: Extracted from Parser.parseCommand (special handling section)
+ * Phase 1 (Bundle Reduction): Transformed to emit `set` command
  */
 export function parseIncrementDecrementCommand(
   ctx: ParserContext,
   commandToken: Token
 ) {
-  const args: ASTNode[] = [];
   const commandName = commandToken.value;
+  const isIncrement = commandName === 'increment';
+  const operator = isIncrement ? '+' : '-';
 
   // Check for 'global' keyword first
   let hasGlobal = false;
@@ -300,41 +312,65 @@ export function parseIncrementDecrementCommand(
 
   // Parse the target (variable name or element reference)
   const target = ctx.parseExpression();
-  if (target) {
-    args.push(target);
+  if (!target) {
+    throw new Error(`Expected variable or expression after ${commandName}`);
   }
 
   // Check for 'by' keyword followed by amount
+  let amount: ASTNode;
   if (ctx.check(KEYWORDS.BY)) {
     ctx.advance(); // consume 'by'
-    const amount = ctx.parseExpression();
-    if (amount) {
-      args.push(amount);
+    const parsedAmount = ctx.parseExpression();
+    if (!parsedAmount) {
+      throw new Error(`Expected amount after 'by' in ${commandName} command`);
     }
-  }
-
-  // Add global scope indicator if present
-  if (hasGlobal) {
-    args.push({
-      type: 'literal',
-      value: KEYWORDS.GLOBAL,
-      dataType: 'string',
+    amount = parsedAmount;
+  } else {
+    // Default amount is 1
+    const pos = {
       start: commandToken.start,
-      end: commandToken.end,
+      end: ctx.previous().end,
       line: commandToken.line,
       column: commandToken.column,
-      raw: 'global',
-    } as any);
+    };
+    amount = createLiteral(1, '1', pos);
   }
 
+  // If global scope, mark the target with scope
+  let targetWithScope = target;
+  if (hasGlobal && target.type === 'identifier') {
+    targetWithScope = {
+      ...target,
+      scope: 'global',
+    } as typeof target;
+  }
+
+  // Create the binary expression: target + amount OR target - amount
+  const pos = {
+    start: commandToken.start,
+    end: ctx.previous().end,
+    line: commandToken.line,
+    column: commandToken.column,
+  };
+  const binaryExpr = createBinaryExpression(operator, target, amount, pos);
+
+  // Create the 'to' keyword identifier
+  const toIdentifier = createIdentifier(KEYWORDS.TO, pos);
+
+  // Build args for set command: [target, 'to', binaryExpression]
+  const args: ASTNode[] = [targetWithScope, toIdentifier, binaryExpr];
+
+  // Return a `set` command node instead of increment/decrement
   return {
     type: 'command' as const,
-    name: commandName,
+    name: 'set',
     args: args as ExpressionNode[],
     isBlocking: false,
     start: commandToken.start,
     end: ctx.previous().end,
     line: commandToken.line,
     column: commandToken.column,
+    // Store original command name for debugging/compatibility
+    originalCommand: commandName,
   };
 }
