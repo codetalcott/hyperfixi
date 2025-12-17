@@ -2,20 +2,21 @@
  * Enhanced Pattern Matching Expressions - TypeScript Integration
  * Implements pattern matching (matches, contains, in) with type safety
  *
+ * Refactored to use BaseExpressionImpl for reduced bundle size (~100 lines savings)
  * Uses centralized type-helpers for consistent type checking.
  */
 
 import { v } from '../../../validation/lightweight-validators';
 import type {
-  TypedExpressionImplementation,
   TypedExpressionContext,
   ExpressionCategory,
   EvaluationType,
   ExpressionMetadata,
   ValidationResult,
 } from '../../../types/expression-types';
-import type { EvaluationResult, LLMDocumentation } from '../../../types/command-types';
+import type { EvaluationResult } from '../../../types/command-types';
 import { isString } from '../../type-helpers';
+import { BaseExpressionImpl } from '../../base-expression';
 
 // ============================================================================
 // Input Schemas
@@ -49,12 +50,29 @@ type ContainsInput = any; // Inferred from RuntimeValidator
 type InInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
+// Shared Helper Functions
+// ============================================================================
+
+/**
+ * Check if item is contained in container (array, string, or object)
+ * Shared between ContainsExpression and InExpression
+ */
+function checkContainment(container: unknown, item: unknown): boolean {
+  if (Array.isArray(container)) {
+    return container.includes(item);
+  } else if (typeof container === 'string') {
+    return container.includes(String(item));
+  } else if (typeof container === 'object' && container !== null) {
+    return String(item) in container;
+  }
+  return false;
+}
+
+// ============================================================================
 // Matches Expression
 // ============================================================================
 
-export class MatchesExpression
-  implements TypedExpressionImplementation<PatternMatchInput, boolean>
-{
+export class MatchesExpression extends BaseExpressionImpl<PatternMatchInput, boolean> {
   public readonly name = 'matches';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'value matches pattern';
@@ -67,8 +85,6 @@ export class MatchesExpression
     complexity: 'medium',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: PatternMatchInput
@@ -78,141 +94,73 @@ export class MatchesExpression
     try {
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          error: validation.errors[0],
-        };
+        return { success: false, error: validation.errors[0] };
       }
 
       let result: boolean;
 
-      // Handle different pattern types
       if (input.pattern instanceof RegExp) {
-        // Regular expression matching
-        result = this.matchRegex(input.value, input.pattern);
+        result = input.pattern.test(String(input.value));
       } else if (typeof input.pattern === 'string') {
-        // Determine pattern type
         if (this.isCSSSelector(input.pattern)) {
-          // CSS selector matching
           result = this.matchCSSSelector(input.value, input.pattern);
         } else {
-          // String substring matching
-          result = this.matchString(input.value, input.pattern);
+          result = String(input.value).includes(input.pattern);
         }
       } else {
         throw new Error('Unsupported pattern type');
       }
 
-      this.trackPerformance(context, startTime, true, result);
-
-      return {
-        success: true,
-        value: result,
-        type: 'boolean',
-      };
+      this.trackSimple(context, startTime, true, result);
+      return this.success(result, 'boolean');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `Pattern matching failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      this.trackSimple(context, startTime, false);
+      return this.failure<boolean>(
+        'MatchesError',
+        'runtime-error',
+        `Pattern matching failed: ${error instanceof Error ? error.message : String(error)}`,
+        'PATTERN_MATCH_FAILED'
+      );
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid matches input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: ['Provide value and pattern', 'Use string or RegExp for pattern'],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid matches input',
+          ['Provide value and pattern', 'Use string or RegExp for pattern']
+        );
       }
 
-      // Additional validation for pattern
       const { pattern } = parsed.data as { value: unknown; pattern: string | RegExp };
-
-      if (isString(pattern)) {
-        // Validate CSS selector syntax if it looks like a selector
-        if (this.isCSSSelector(pattern as string) && !this.isValidCSSSelector(pattern as string)) {
-          return {
-            isValid: false,
-            error: {
-              type: 'syntax-error',
-              message: `Invalid CSS selector: ${pattern}`,
-              suggestions: [],
-            },
-            suggestions: [
-              'Check CSS selector syntax',
-              'Use valid selector patterns like .class, #id, tag[attr]',
-            ],
-            errors: [],
-          };
-        }
+      if (isString(pattern) && this.isCSSSelector(pattern as string) && !this.isValidCSSSelector(pattern as string)) {
+        return this.validationFailure(
+          'syntax-error',
+          `Invalid CSS selector: ${pattern}`,
+          ['Check CSS selector syntax', 'Use valid selector patterns like .class, #id, tag[attr]']
+        );
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
-  }
-
-  private matchRegex(value: unknown, pattern: RegExp): boolean {
-    const stringValue = String(value);
-    return pattern.test(stringValue);
   }
 
   private matchCSSSelector(value: unknown, selector: string): boolean {
-    // For CSS selector matching, value should be an HTMLElement
-    if (!(value instanceof HTMLElement)) {
-      return false;
-    }
-
+    if (!this.isElement(value)) return false;
     try {
-      return value.matches(selector);
-    } catch (error) {
-      // Invalid CSS selector
+      return (value as Element).matches(selector);
+    } catch {
       return false;
     }
-  }
-
-  private matchString(value: unknown, pattern: string): boolean {
-    const stringValue = String(value);
-    return stringValue.includes(pattern);
   }
 
   private isCSSSelector(pattern: string): boolean {
-    // Simple heuristic to detect CSS selectors
-    return (
-      /^[.#[]/.test(pattern) || // Starts with . # or [
-      /[>+~]/.test(pattern) || // Contains combinators
-      /:/.test(pattern)
-    ); // Contains pseudo-selectors
+    return /^[.#[]/.test(pattern) || /[>+~]/.test(pattern) || /:/.test(pattern);
   }
 
   private isValidCSSSelector(selector: string): boolean {
@@ -223,34 +171,13 @@ export class MatchesExpression
       return false;
     }
   }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'pattern matching',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
-    }
-  }
 }
 
 // ============================================================================
 // Contains Expression
 // ============================================================================
 
-export class ContainsExpression
-  implements TypedExpressionImplementation<ContainsInput, boolean>
-{
+export class ContainsExpression extends BaseExpressionImpl<ContainsInput, boolean> {
   public readonly name = 'contains';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'container contains item';
@@ -263,8 +190,6 @@ export class ContainsExpression
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: ContainsInput
@@ -274,105 +199,36 @@ export class ContainsExpression
     try {
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          error: validation.errors[0],
-        };
+        return { success: false, error: validation.errors[0] };
       }
 
-      let result: boolean;
-
-      if (Array.isArray(input.container)) {
-        // Array contains item
-        result = input.container.includes(input.item);
-      } else if (typeof input.container === 'string') {
-        // String contains substring
-        const itemStr = String(input.item);
-        result = input.container.includes(itemStr);
-      } else if (typeof input.container === 'object' && input.container !== null) {
-        // Object contains property
-        const itemStr = String(input.item);
-        result = itemStr in input.container;
-      } else {
-        result = false;
-      }
-
-      this.trackPerformance(context, startTime, true, result);
-
-      return {
-        success: true,
-        value: result,
-        type: 'boolean',
-      };
+      const result = checkContainment(input.container, input.item);
+      this.trackSimple(context, startTime, true, result);
+      return this.success(result, 'boolean');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `Contains operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      this.trackSimple(context, startTime, false);
+      return this.failure<boolean>(
+        'ContainsError',
+        'runtime-error',
+        `Contains operation failed: ${error instanceof Error ? error.message : String(error)}`,
+        'CONTAINS_FAILED'
+      );
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid contains input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: [
-            'Provide container and item',
-            'Ensure container is array, string, or object',
-          ],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid contains input',
+          ['Provide container and item', 'Ensure container is array, string, or object']
+        );
       }
-
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'contains operation',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
   }
 }
@@ -381,7 +237,7 @@ export class ContainsExpression
 // In Expression
 // ============================================================================
 
-export class InExpression implements TypedExpressionImplementation<InInput, boolean> {
+export class InExpression extends BaseExpressionImpl<InInput, boolean> {
   public readonly name = 'in';
   public readonly category: ExpressionCategory = 'Logical';
   public readonly syntax = 'item in container';
@@ -394,8 +250,6 @@ export class InExpression implements TypedExpressionImplementation<InInput, bool
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: InInput
@@ -405,96 +259,37 @@ export class InExpression implements TypedExpressionImplementation<InInput, bool
     try {
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          error: validation.errors[0],
-        };
+        return { success: false, error: validation.errors[0] };
       }
 
-      // Delegate to contains expression with swapped parameters
-      const containsExpr = new ContainsExpression();
-      const containsResult = await containsExpr.evaluate(context, {
-        container: input.container,
-        item: input.item,
-      });
-
-      this.trackPerformance(
-        context,
-        startTime,
-        containsResult.success,
-        containsResult.success ? containsResult.value : undefined
-      );
-
-      return containsResult;
+      // Use shared containment check directly (no need to create ContainsExpression)
+      const result = checkContainment(input.container, input.item);
+      this.trackSimple(context, startTime, true, result);
+      return this.success(result, 'boolean');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          type: 'runtime-error',
-          message: `In operation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      this.trackSimple(context, startTime, false);
+      return this.failure<boolean>(
+        'InError',
+        'runtime-error',
+        `In operation failed: ${error instanceof Error ? error.message : String(error)}`,
+        'IN_FAILED'
+      );
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid in input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: [
-            'Provide item and container',
-            'Ensure container is array, string, or object',
-          ],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid in input',
+          ['Provide item and container', 'Ensure container is array, string, or object']
+        );
       }
-
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: {
-          type: 'runtime-error',
-          message: 'Validation failed with exception',
-          suggestions: [],
-        },
-        suggestions: ['Check input structure and types'],
-        errors: [],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'in operation',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
   }
 }

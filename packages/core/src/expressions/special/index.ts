@@ -2,12 +2,12 @@
  * Special Expressions for HyperScript
  * Provides deep TypeScript integration for literals and mathematical operations
  *
+ * Refactored to use BaseExpressionImpl for reduced bundle size (~180 lines savings)
  * Uses centralized type-helpers for consistent type checking.
  */
 
 import { v } from '../../validation/lightweight-validators';
 import type {
-  BaseTypedExpression,
   TypedExpressionContext,
   EvaluationType,
   ExpressionMetadata,
@@ -17,6 +17,7 @@ import type {
 import type { ExpressionCategory } from '../../types/expression-types';
 import { isString, isNumber, isBoolean } from '../type-helpers';
 import { toNumber } from '../shared';
+import { BaseExpressionImpl } from '../base-expression';
 
 // ============================================================================
 // Input Schemas
@@ -56,7 +57,7 @@ type BinaryOperationInput = any; // Inferred from RuntimeValidator
 // Enhanced String Literal Expression
 // ============================================================================
 
-export class StringLiteralExpression implements BaseTypedExpression<string> {
+export class StringLiteralExpression extends BaseExpressionImpl<StringLiteralInput, string> {
   public readonly name = 'stringLiteral';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = '"string" or \'string\'';
@@ -69,8 +70,6 @@ export class StringLiteralExpression implements BaseTypedExpression<string> {
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: StringLiteralInput
@@ -80,82 +79,51 @@ export class StringLiteralExpression implements BaseTypedExpression<string> {
     try {
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          error: {
-            name: 'ValidationError',
-            type: 'validation-error',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions,
-          },
-        };
+        const result = this.failure<string>(
+          'ValidationError',
+          'validation-error',
+          validation.errors.map(e => e.message).join(', '),
+          'VALIDATION_FAILED',
+          validation.suggestions
+        );
+        this.trackSimple(context, startTime, false);
+        return result;
       }
 
-      let result = input.value;
+      let resultValue = input.value;
 
       // Handle template interpolation if present
-      if (result.includes('${') || result.includes('$')) {
-        result = this.interpolateString(result, context);
+      if (resultValue.includes('${') || resultValue.includes('$')) {
+        resultValue = this.interpolateString(resultValue, context);
       }
 
-      this.trackPerformance(context, startTime, true, result);
-
-      return {
-        success: true,
-        value: result,
-        type: 'string',
-      };
+      const result = this.success(resultValue, 'string');
+      this.trackSimple(context, startTime, true, resultValue);
+      return result;
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          name: 'StringEvaluationError',
-          type: 'runtime-error',
-          code: 'STRING_EVALUATION_FAILED',
-          message: `String literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      this.trackSimple(context, startTime, false);
+      return this.failure<string>(
+        'StringEvaluationError',
+        'runtime-error',
+        `String literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
+        'STRING_EVALUATION_FAILED'
+      );
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid string literal input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: ['Provide a value parameter', 'Ensure value is a string'],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid string literal input',
+          ['Provide a value parameter', 'Ensure value is a string']
+        );
       }
-
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: 'Validation failed with exception',
-            suggestions: [],
-          },
-        ],
-        suggestions: ['Check input structure and types'],
-      };
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
   }
 
@@ -165,7 +133,7 @@ export class StringLiteralExpression implements BaseTypedExpression<string> {
       try {
         const value = this.resolveExpression(expression.trim(), context);
         return value !== undefined ? String(value) : '';
-      } catch (error) {
+      } catch (_error) {
         return '';
       }
     });
@@ -175,7 +143,7 @@ export class StringLiteralExpression implements BaseTypedExpression<string> {
       try {
         const value = this.resolveVariable(varName, context);
         return value !== undefined ? String(value) : '';
-      } catch (error) {
+      } catch (_error) {
         return '';
       }
     });
@@ -218,32 +186,13 @@ export class StringLiteralExpression implements BaseTypedExpression<string> {
 
     return undefined;
   }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'string literal',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
-    }
-  }
 }
 
 // ============================================================================
 // Enhanced Number Literal Expression
 // ============================================================================
 
-export class NumberLiteralExpression implements BaseTypedExpression<number> {
+export class NumberLiteralExpression extends BaseExpressionImpl<NumberLiteralInput, number> {
   public readonly name = 'numberLiteral';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = '123 or 3.14';
@@ -256,8 +205,6 @@ export class NumberLiteralExpression implements BaseTypedExpression<number> {
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: NumberLiteralInput
@@ -267,121 +214,61 @@ export class NumberLiteralExpression implements BaseTypedExpression<number> {
     try {
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          error: {
-            name: 'ValidationError',
-            type: 'validation-error',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions,
-          },
-        };
+        this.trackSimple(context, startTime, false);
+        return this.failure<number>(
+          'ValidationError',
+          'validation-error',
+          validation.errors.map(e => e.message).join(', '),
+          'VALIDATION_FAILED',
+          validation.suggestions
+        );
       }
 
       if (!isFinite(input.value)) {
-        return {
-          success: false,
-          error: {
-            name: 'NumberValidationError',
-            type: 'invalid-argument',
-            code: 'NUMBER_NOT_FINITE',
-            message: 'Number literal must be finite',
-            suggestions: [],
-          },
-        };
+        this.trackSimple(context, startTime, false);
+        return this.failure<number>(
+          'NumberValidationError',
+          'invalid-argument',
+          'Number literal must be finite',
+          'NUMBER_NOT_FINITE'
+        );
       }
 
-      this.trackPerformance(context, startTime, true, input.value);
-
-      return {
-        success: true,
-        value: input.value,
-        type: 'number',
-      };
+      this.trackSimple(context, startTime, true, input.value);
+      return this.success(input.value, 'number');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          name: 'NumberEvaluationError',
-          type: 'runtime-error',
-          code: 'NUMBER_EVALUATION_FAILED',
-          message: `Number literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      this.trackSimple(context, startTime, false);
+      return this.failure<number>(
+        'NumberEvaluationError',
+        'runtime-error',
+        `Number literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
+        'NUMBER_EVALUATION_FAILED'
+      );
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid number literal input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: ['Provide a value parameter', 'Ensure value is a number'],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid number literal input',
+          ['Provide a value parameter', 'Ensure value is a number']
+        );
       }
 
       if (!isFinite((parsed.data as any).value)) {
-        return {
-          isValid: false,
-          errors: [
-            {
-              type: 'invalid-argument',
-              message: 'Number literal value must be finite',
-              suggestions: [],
-            },
-          ],
-          suggestions: ['Use finite numbers only', 'Avoid Infinity and NaN values'],
-        };
+        return this.validationFailure(
+          'invalid-argument',
+          'Number literal value must be finite',
+          ['Use finite numbers only', 'Avoid Infinity and NaN values']
+        );
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: 'Validation failed with exception',
-            suggestions: [],
-          },
-        ],
-        suggestions: ['Check input structure and types'],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'number literal',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
   }
 }
@@ -390,7 +277,7 @@ export class NumberLiteralExpression implements BaseTypedExpression<number> {
 // Enhanced Boolean Literal Expression
 // ============================================================================
 
-export class BooleanLiteralExpression implements BaseTypedExpression<boolean> {
+export class BooleanLiteralExpression extends BaseExpressionImpl<BooleanLiteralInput, boolean> {
   public readonly name = 'booleanLiteral';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'true or false';
@@ -403,8 +290,6 @@ export class BooleanLiteralExpression implements BaseTypedExpression<boolean> {
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: BooleanLiteralInput
@@ -414,94 +299,42 @@ export class BooleanLiteralExpression implements BaseTypedExpression<boolean> {
     try {
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          error: {
-            name: 'ValidationError',
-            type: 'validation-error',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions,
-          },
-        };
+        this.trackSimple(context, startTime, false);
+        return this.failure<boolean>(
+          'ValidationError',
+          'validation-error',
+          validation.errors.map(e => e.message).join(', '),
+          'VALIDATION_FAILED',
+          validation.suggestions
+        );
       }
 
-      this.trackPerformance(context, startTime, true, input.value);
-
-      return {
-        success: true,
-        value: input.value,
-        type: 'boolean',
-      };
+      this.trackSimple(context, startTime, true, input.value);
+      return this.success(input.value, 'boolean');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          name: 'BooleanEvaluationError',
-          type: 'runtime-error',
-          code: 'BOOLEAN_EVALUATION_FAILED',
-          message: `Boolean literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      this.trackSimple(context, startTime, false);
+      return this.failure<boolean>(
+        'BooleanEvaluationError',
+        'runtime-error',
+        `Boolean literal evaluation failed: ${error instanceof Error ? error.message : String(error)}`,
+        'BOOLEAN_EVALUATION_FAILED'
+      );
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid boolean literal input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: ['Provide a value parameter', 'Ensure value is a boolean'],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid boolean literal input',
+          ['Provide a value parameter', 'Ensure value is a boolean']
+        );
       }
-
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: 'Validation failed with exception',
-            suggestions: [],
-          },
-        ],
-        suggestions: ['Check input structure and types'],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'boolean literal',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
   }
 }
@@ -510,7 +343,7 @@ export class BooleanLiteralExpression implements BaseTypedExpression<boolean> {
 // Addition Expression
 // ============================================================================
 
-export class AdditionExpression implements BaseTypedExpression<number> {
+export class AdditionExpression extends BaseExpressionImpl<BinaryOperationInput, number> {
   public readonly name = 'addition';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left + right';
@@ -523,8 +356,6 @@ export class AdditionExpression implements BaseTypedExpression<number> {
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: BinaryOperationInput
@@ -534,100 +365,47 @@ export class AdditionExpression implements BaseTypedExpression<number> {
     try {
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          error: {
-            name: 'ValidationError',
-            type: 'validation-error',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions,
-          },
-        };
+        this.trackSimple(context, startTime, false);
+        return this.failure<number>(
+          'ValidationError',
+          'validation-error',
+          validation.errors.map(e => e.message).join(', '),
+          'VALIDATION_FAILED',
+          validation.suggestions
+        );
       }
 
       // Use shared toNumber primitive for consistent number conversion
       const leftNum = toNumber(input.left, 'left operand');
       const rightNum = toNumber(input.right, 'right operand');
-
       const result = leftNum + rightNum;
 
-      this.trackPerformance(context, startTime, true, result);
-
-      return {
-        success: true,
-        value: result,
-        type: 'number',
-      };
+      this.trackSimple(context, startTime, true, result);
+      return this.success(result, 'number');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          name: 'AdditionError',
-          type: 'runtime-error',
-          code: 'ADDITION_FAILED',
-          message: `Addition failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      this.trackSimple(context, startTime, false);
+      return this.failure<number>(
+        'AdditionError',
+        'runtime-error',
+        `Addition failed: ${error instanceof Error ? error.message : String(error)}`,
+        'ADDITION_FAILED'
+      );
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid addition input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: ['Provide left and right operands'],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid addition input',
+          ['Provide left and right operands']
+        );
       }
-
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: 'Validation failed with exception',
-            suggestions: [],
-          },
-        ],
-        suggestions: ['Check input structure and types'],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'addition operation',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
   }
 }
@@ -636,7 +414,7 @@ export class AdditionExpression implements BaseTypedExpression<number> {
 // Enhanced String Concatenation Expression
 // ============================================================================
 
-export class StringConcatenationExpression implements BaseTypedExpression<string> {
+export class StringConcatenationExpression extends BaseExpressionImpl<BinaryOperationInput, string> {
   public readonly name = 'stringConcatenation';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left + right (string concatenation)';
@@ -649,8 +427,6 @@ export class StringConcatenationExpression implements BaseTypedExpression<string
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: BinaryOperationInput
@@ -660,69 +436,45 @@ export class StringConcatenationExpression implements BaseTypedExpression<string
     try {
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          error: {
-            name: 'ValidationError',
-            type: 'validation-error',
-            message: validation.errors[0]?.message || 'Invalid input',
-            code: 'STRING_CONCATENATION_VALIDATION_FAILED',
-            suggestions: validation.suggestions,
-          },
-        };
+        this.trackSimple(context, startTime, false);
+        return this.failure<string>(
+          'ValidationError',
+          'validation-error',
+          validation.errors[0]?.message || 'Invalid input',
+          'STRING_CONCATENATION_VALIDATION_FAILED',
+          validation.suggestions
+        );
       }
 
       // Convert both operands to strings
       const leftStr = this.convertToString(input.left);
       const rightStr = this.convertToString(input.right);
-
       const result = leftStr + rightStr;
 
-      this.trackPerformance(context, startTime, true, result);
-
-      return {
-        success: true,
-        value: result,
-        type: 'string',
-      };
+      this.trackSimple(context, startTime, true, result);
+      return this.success(result, 'string');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          name: 'StringConcatenationError',
-          type: 'runtime-error',
-          message: error instanceof Error ? error.message : 'String concatenation failed',
-          code: 'STRING_CONCATENATION_ERROR',
-          suggestions: ['Check that operands can be converted to strings'],
-        },
-      };
+      this.trackSimple(context, startTime, false);
+      return this.failure<string>(
+        'StringConcatenationError',
+        'runtime-error',
+        error instanceof Error ? error.message : 'String concatenation failed',
+        'STRING_CONCATENATION_ERROR',
+        ['Check that operands can be converted to strings']
+      );
     }
   }
 
-  validate(input: unknown): ValidationResult<BinaryOperationInput> {
+  validate(input: unknown): ValidationResult {
     const parsed = BinaryOperationInputSchema.safeParse(input);
-
     if (!parsed.success) {
-      return {
-        isValid: false,
-        errors:
-          parsed.error?.errors.map(err => ({
-            type: 'type-mismatch',
-            message: `Invalid string concatenation input: ${err.message}`,
-            suggestions: [],
-          })) ?? [],
-        suggestions: ['Provide left and right operands for concatenation'],
-      };
+      return this.validationFailure(
+        'type-mismatch',
+        parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid string concatenation input',
+        ['Provide left and right operands for concatenation']
+      );
     }
-
-    return {
-      isValid: true,
-      errors: [],
-      suggestions: [],
-      data: parsed.data,
-    };
+    return this.validationSuccess();
   }
 
   private convertToString(value: unknown): string {
@@ -739,32 +491,13 @@ export class StringConcatenationExpression implements BaseTypedExpression<string
       return '[object Object]';
     }
   }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'string concatenation operation',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
-    }
-  }
 }
 
 // ============================================================================
 // Multiplication Expression
 // ============================================================================
 
-export class MultiplicationExpression implements BaseTypedExpression<number> {
+export class MultiplicationExpression extends BaseExpressionImpl<BinaryOperationInput, number> {
   public readonly name = 'multiplication';
   public readonly category: ExpressionCategory = 'Special';
   public readonly syntax = 'left * right';
@@ -777,8 +510,6 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: BinaryOperationInput
@@ -788,100 +519,47 @@ export class MultiplicationExpression implements BaseTypedExpression<number> {
     try {
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          error: {
-            name: 'ValidationError',
-            type: 'validation-error',
-            message: validation.errors.map(e => e.message).join(', '),
-            code: 'VALIDATION_FAILED',
-            suggestions: validation.suggestions,
-          },
-        };
+        this.trackSimple(context, startTime, false);
+        return this.failure<number>(
+          'ValidationError',
+          'validation-error',
+          validation.errors.map(e => e.message).join(', '),
+          'VALIDATION_FAILED',
+          validation.suggestions
+        );
       }
 
       // Use shared toNumber primitive for consistent number conversion
       const leftNum = toNumber(input.left, 'left operand');
       const rightNum = toNumber(input.right, 'right operand');
-
       const result = leftNum * rightNum;
 
-      this.trackPerformance(context, startTime, true, result);
-
-      return {
-        success: true,
-        value: result,
-        type: 'number',
-      };
+      this.trackSimple(context, startTime, true, result);
+      return this.success(result, 'number');
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
-      return {
-        success: false,
-        error: {
-          name: 'MultiplicationError',
-          type: 'runtime-error',
-          code: 'MULTIPLICATION_FAILED',
-          message: `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`,
-          suggestions: [],
-        },
-      };
+      this.trackSimple(context, startTime, false);
+      return this.failure<number>(
+        'MultiplicationError',
+        'runtime-error',
+        `Multiplication failed: ${error instanceof Error ? error.message : String(error)}`,
+        'MULTIPLICATION_FAILED'
+      );
     }
   }
 
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid multiplication input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: ['Provide left and right operands'],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid multiplication input',
+          ['Provide left and right operands']
+        );
       }
-
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: 'Validation failed with exception',
-            suggestions: [],
-          },
-        ],
-        suggestions: ['Check input structure and types'],
-      };
-    }
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean,
-    output?: any
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'multiplication operation',
-        output: success ? output : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
   }
 }

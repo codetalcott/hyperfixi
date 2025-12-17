@@ -3,6 +3,7 @@
  * Implements property access operations (my, its, possessive syntax) with comprehensive validation
  * Enhanced for LLM code agents with full type safety and context awareness
  *
+ * Refactored to use BaseExpressionImpl for reduced bundle size (~100 lines savings)
  * Uses centralized type-helpers for consistent type checking.
  */
 
@@ -13,24 +14,10 @@ import type {
   EvaluationType as EvaluationType,
   ExpressionMetadata as ExpressionMetadata,
   TypedResult as TypedResult,
-  LLMDocumentation as LLMDocumentation,
   ExpressionCategory as ExpressionCategory,
   HyperScriptValue as HyperScriptValue,
 } from '../../types/index';
-import { isString, isNumber, isBoolean, isObject } from '../type-helpers';
-
-// Define BaseTypedExpression locally for now
-interface BaseTypedExpression<T> {
-  readonly name: string;
-  readonly category: string;
-  readonly syntax: string;
-  readonly outputType: EvaluationType;
-  readonly inputSchema: any;
-  readonly metadata: ExpressionMetadata;
-  readonly documentation?: LLMDocumentation;
-  evaluate(context: TypedExpressionContext, input: unknown): Promise<TypedResult<T>>;
-  validate(input: unknown): ValidationResult;
-}
+import { BaseExpressionImpl } from '../base-expression';
 
 // ============================================================================
 // Input Schemas
@@ -61,15 +48,42 @@ type PossessiveAccessInput = any; // Inferred from RuntimeValidator
 type AttributeAccessInput = any; // Inferred from RuntimeValidator
 
 // ============================================================================
+// Shared Helper Functions
+// ============================================================================
+
+/**
+ * Get property value with support for nested property paths
+ * Shared between MyExpression and ItsExpression
+ */
+function getPropertyValue(target: unknown, propertyPath: string): HyperScriptValue {
+  if (target == null) return undefined;
+
+  // Handle simple property access
+  if (!propertyPath.includes('.')) {
+    return (target as Record<string, unknown>)[propertyPath] as HyperScriptValue;
+  }
+
+  // Handle nested property access (e.g., "dataset.value", "style.color")
+  const parts = propertyPath.split('.');
+  let current: unknown = target;
+
+  for (const part of parts) {
+    if (current == null) return undefined;
+    current = (current as Record<string, unknown>)[part];
+  }
+
+  return current as HyperScriptValue;
+}
+
+// ============================================================================
 // My Expression (Context Property Access)
 // ============================================================================
 
-export class MyExpression implements BaseTypedExpression<unknown> {
+export class MyExpression extends BaseExpressionImpl<PropertyAccessInput, HyperScriptValue> {
   public readonly name = 'my';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'my property';
-  public readonly description =
-    'Accesses properties of the current context element (me) with validation';
+  public readonly description = 'Accesses properties of the current context element (me) with validation';
   public readonly inputSchema = PropertyAccessInputSchema;
   public readonly outputType: EvaluationType = 'Any';
 
@@ -78,8 +92,6 @@ export class MyExpression implements BaseTypedExpression<unknown> {
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: PropertyAccessInput
@@ -87,63 +99,30 @@ export class MyExpression implements BaseTypedExpression<unknown> {
     const startTime = Date.now();
 
     try {
-      // Validate input
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          errors: validation.errors,
-          suggestions: validation.suggestions,
-        };
+        return { success: false, errors: validation.errors, suggestions: validation.suggestions };
       }
 
-      // Check if 'me' context exists
       if (!context.me) {
         return {
           success: false,
-          errors: [
-            {
-              type: 'context-error',
-              message: 'No current element (me) available in context for property access',
-              suggestions: [],
-            },
-          ],
-          suggestions: [
-            'Ensure this expression is used within an element context',
-            'Check that the element reference is properly set',
-            'Verify the expression is called from an event or command context',
-          ],
+          errors: [{ type: 'context-error', message: 'No current element (me) available in context for property access', suggestions: [] }],
+          suggestions: ['Ensure this expression is used within an element context', 'Check that the element reference is properly set'],
         };
       }
 
-      // Access the property
-      const value = this.getPropertyValue(context.me, input.property);
-
-      // Track performance
-      this.trackPerformance(context, startTime, true);
-
-      return {
-        success: true,
-        value,
-        type: this.inferType(value),
-      };
+      const value = getPropertyValue(context.me, input.property);
+      this.trackSimple(context, startTime, true, value);
+      // Return 'Any' for undefined to match original behavior
+      const resultType = value === undefined ? 'Any' : this.inferType(value);
+      return { success: true, value, type: resultType as EvaluationType };
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
+      this.trackSimple(context, startTime, false);
       return {
         success: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`,
-            suggestions: [],
-          },
-        ],
-        suggestions: [
-          'Check that the property name is valid',
-          'Ensure the current element supports the requested property',
-          'Verify the property path syntax is correct',
-        ],
+        errors: [{ type: 'runtime-error', message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`, suggestions: [] }],
+        suggestions: ['Check that the property name is valid', 'Ensure the current element supports the requested property'],
       };
     }
   }
@@ -151,119 +130,22 @@ export class MyExpression implements BaseTypedExpression<unknown> {
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid property access input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: [
-            'Provide a valid property name as a string',
-            'Ensure the property name is not empty',
-          ],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid property access input',
+          ['Provide a valid property name as a string', 'Ensure the property name is not empty']
+        );
       }
 
       const { property } = parsed.data as { property: string };
-
-      // Validate property name
       if (property.trim() === '') {
-        return {
-          isValid: false,
-          errors: [
-            {
-              type: 'validation-error',
-              message: 'Property name cannot be empty',
-              suggestions: [],
-            },
-          ],
-          suggestions: ['Provide a non-empty property name'],
-        };
+        return this.validationFailure('validation-error', 'Property name cannot be empty', ['Provide a non-empty property name']);
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: 'Validation failed with exception',
-            suggestions: [],
-          },
-        ],
-        suggestions: ['Check input structure and types'],
-      };
-    }
-  }
-
-  /**
-   * Get property value with support for nested property paths
-   */
-  private getPropertyValue(target: any, propertyPath: string): HyperScriptValue {
-    if (target == null) {
-      return undefined;
-    }
-
-    // Handle simple property access
-    if (!propertyPath.includes('.')) {
-      return target[propertyPath];
-    }
-
-    // Handle nested property access (e.g., "dataset.value", "style.color")
-    const parts = propertyPath.split('.');
-    let current = target;
-
-    for (const part of parts) {
-      if (current == null) {
-        return undefined;
-      }
-      current = current[part];
-    }
-
-    return current;
-  }
-
-  /**
-   * Infer the type of a value for result metadata
-   */
-  private inferType(value: unknown): EvaluationType {
-    if (value === null) return 'null';
-    if (value === undefined) return 'Any';
-    if (isBoolean(value)) return 'boolean';
-    if (isNumber(value)) return 'number';
-    if (isString(value)) return 'string';
-    if (Array.isArray(value)) return 'array';
-    if (isObject(value)) return 'object';
-    return 'Any';
-  }
-
-  /**
-   * Track performance for debugging and optimization
-   */
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'property access',
-        output: success ? 'value' : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
   }
 }
@@ -272,7 +154,7 @@ export class MyExpression implements BaseTypedExpression<unknown> {
 // Its Expression (Generic Property Access)
 // ============================================================================
 
-export class ItsExpression implements BaseTypedExpression<HyperScriptValue> {
+export class ItsExpression extends BaseExpressionImpl<PossessiveAccessInput, HyperScriptValue> {
   public readonly name = 'its';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = 'target its property';
@@ -285,8 +167,6 @@ export class ItsExpression implements BaseTypedExpression<HyperScriptValue> {
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: PossessiveAccessInput
@@ -294,44 +174,22 @@ export class ItsExpression implements BaseTypedExpression<HyperScriptValue> {
     const startTime = Date.now();
 
     try {
-      // Validate input
       const validation = this.validate(input);
       if (!validation.isValid) {
-        return {
-          success: false,
-          errors: validation.errors,
-          suggestions: validation.suggestions,
-        };
+        return { success: false, errors: validation.errors, suggestions: validation.suggestions };
       }
 
-      // Access the property
-      const value = this.getPropertyValue(input.target, input.property);
-
-      // Track performance
-      this.trackPerformance(context, startTime, true);
-
-      return {
-        success: true,
-        value,
-        type: this.inferType(value),
-      };
+      const value = getPropertyValue(input.target, input.property);
+      this.trackSimple(context, startTime, true, value);
+      // Return 'Any' for undefined to match original behavior
+      const resultType = value === undefined ? 'Any' : this.inferType(value);
+      return { success: true, value, type: resultType as EvaluationType };
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
+      this.trackSimple(context, startTime, false);
       return {
         success: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`,
-            suggestions: [],
-          },
-        ],
-        suggestions: [
-          'Check that the target object is not null or undefined',
-          'Ensure the property name is valid',
-          'Verify the property path syntax is correct',
-        ],
+        errors: [{ type: 'runtime-error', message: `Property access failed: ${error instanceof Error ? error.message : String(error)}`, suggestions: [] }],
+        suggestions: ['Check that the target object is not null or undefined', 'Ensure the property name is valid'],
       };
     }
   }
@@ -339,87 +197,22 @@ export class ItsExpression implements BaseTypedExpression<HyperScriptValue> {
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid possessive access input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: [
-            'Provide both target and property parameters',
-            'Ensure property name is a string',
-          ],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid possessive access input',
+          ['Provide both target and property parameters', 'Ensure property name is a string']
+        );
       }
 
       const { property } = parsed.data as { property: string };
-
-      // Validate property name
       if (property.trim() === '') {
-        return {
-          isValid: false,
-          errors: [
-            {
-              type: 'validation-error',
-              message: 'Property name cannot be empty',
-              suggestions: [],
-            },
-          ],
-          suggestions: ['Provide a non-empty property name'],
-        };
+        return this.validationFailure('validation-error', 'Property name cannot be empty', ['Provide a non-empty property name']);
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: 'Validation failed with exception',
-            suggestions: [],
-          },
-        ],
-        suggestions: ['Check input structure and types'],
-      };
-    }
-  }
-
-  private getPropertyValue(target: any, propertyPath: string): HyperScriptValue {
-    // Reuse the same logic as MyExpression
-    const myExpr = new MyExpression();
-    return myExpr['getPropertyValue'](target, propertyPath);
-  }
-
-  private inferType(value: unknown): EvaluationType {
-    // Reuse the same logic as MyExpression
-    const myExpr = new MyExpression();
-    return myExpr['inferType'](value);
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'possessive access',
-        output: success ? 'value' : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
   }
 }
@@ -428,7 +221,7 @@ export class ItsExpression implements BaseTypedExpression<HyperScriptValue> {
 // Attribute Expression (@attribute syntax)
 // ============================================================================
 
-export class AttributeExpression implements BaseTypedExpression<string | null> {
+export class AttributeExpression extends BaseExpressionImpl<AttributeAccessInput, string | null> {
   public readonly name = 'attribute';
   public readonly category: ExpressionCategory = 'Property';
   public readonly syntax = '@attribute or element@attribute';
@@ -441,8 +234,6 @@ export class AttributeExpression implements BaseTypedExpression<string | null> {
     complexity: 'simple',
   };
 
-  
-
   async evaluate(
     context: TypedExpressionContext,
     input: AttributeAccessInput
@@ -450,63 +241,29 @@ export class AttributeExpression implements BaseTypedExpression<string | null> {
     const startTime = Date.now();
 
     try {
-      // Validate input
       const validation = this.validate(input);
       if (!validation.isValid) {
+        return { success: false, errors: validation.errors, suggestions: validation.suggestions };
+      }
+
+      // Use inherited isElement from BaseExpressionImpl
+      if (!this.isElement(input.element)) {
         return {
           success: false,
-          errors: validation.errors,
-          suggestions: validation.suggestions,
+          errors: [{ type: 'type-mismatch', message: 'Target must be a DOM element for attribute access', suggestions: [] }],
+          suggestions: ['Ensure the target is a valid DOM element', 'Check that the element reference is correct'],
         };
       }
 
-      // Ensure element is a DOM element
-      if (!this.isDOMElement(input.element)) {
-        return {
-          success: false,
-          errors: [
-            {
-              type: 'type-mismatch',
-              message: 'Target must be a DOM element for attribute access',
-              suggestions: [],
-            },
-          ],
-          suggestions: [
-            'Ensure the target is a valid DOM element',
-            'Check that the element reference is correct',
-            'Verify the element exists in the DOM',
-          ],
-        };
-      }
-
-      // Access the attribute
-      const value = input.element.getAttribute(input.attribute);
-
-      // Track performance
-      this.trackPerformance(context, startTime, true);
-
-      return {
-        success: true,
-        value,
-        type: value === null ? 'null' : 'string',
-      };
+      const value = (input.element as Element).getAttribute(input.attribute);
+      this.trackSimple(context, startTime, true, value);
+      return { success: true, value, type: value === null ? 'null' : 'string' };
     } catch (error) {
-      this.trackPerformance(context, startTime, false);
-
+      this.trackSimple(context, startTime, false);
       return {
         success: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: `Attribute access failed: ${error instanceof Error ? error.message : String(error)}`,
-            suggestions: [],
-          },
-        ],
-        suggestions: [
-          'Check that the element supports getAttribute',
-          'Ensure the attribute name is valid',
-          'Verify the element is properly connected to the DOM',
-        ],
+        errors: [{ type: 'runtime-error', message: `Attribute access failed: ${error instanceof Error ? error.message : String(error)}`, suggestions: [] }],
+        suggestions: ['Check that the element supports getAttribute', 'Ensure the attribute name is valid'],
       };
     }
   }
@@ -514,89 +271,22 @@ export class AttributeExpression implements BaseTypedExpression<string | null> {
   validate(input: unknown): ValidationResult {
     try {
       const parsed = this.inputSchema.safeParse(input);
-
       if (!parsed.success) {
-        return {
-          isValid: false,
-          errors:
-            parsed.error?.errors.map(err => ({
-              type: 'type-mismatch',
-              message: `Invalid attribute access input: ${err.message}`,
-              suggestions: [],
-            })) ?? [],
-          suggestions: [
-            'Provide both element and attribute parameters',
-            'Ensure attribute name is a string',
-          ],
-        };
+        return this.validationFailure(
+          'type-mismatch',
+          parsed.error?.errors.map(err => err.message).join(', ') || 'Invalid attribute access input',
+          ['Provide both element and attribute parameters', 'Ensure attribute name is a string']
+        );
       }
 
       const { attribute } = parsed.data as { attribute: string };
-
-      // Validate attribute name
       if (attribute.trim() === '') {
-        return {
-          isValid: false,
-          errors: [
-            {
-              type: 'validation-error',
-              message: 'Attribute name cannot be empty',
-              suggestions: [],
-            },
-          ],
-          suggestions: ['Provide a non-empty attribute name'],
-        };
+        return this.validationFailure('validation-error', 'Attribute name cannot be empty', ['Provide a non-empty attribute name']);
       }
 
-      return {
-        isValid: true,
-        errors: [],
-        suggestions: [],
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: 'Validation failed with exception',
-            suggestions: [],
-          },
-        ],
-        suggestions: ['Check input structure and types'],
-      };
-    }
-  }
-
-  /**
-   * Check if a value is a DOM element
-   */
-  private isDOMElement(value: unknown): value is Element {
-    return (
-      value != null &&
-      isObject(value) &&
-      'getAttribute' in (value as object) &&
-      'setAttribute' in (value as object) &&
-      'nodeType' in (value as object) &&
-      (value as any).nodeType === 1
-    ); // Element node
-  }
-
-  private trackPerformance(
-    context: TypedExpressionContext,
-    startTime: number,
-    success: boolean
-  ): void {
-    if (context.evaluationHistory) {
-      context.evaluationHistory.push({
-        expressionName: this.name,
-        category: this.category,
-        input: 'attribute access',
-        output: success ? 'string|null' : 'error',
-        timestamp: startTime,
-        duration: Date.now() - startTime,
-        success,
-      });
+      return this.validationSuccess();
+    } catch (_error) {
+      return this.validationFailure('runtime-error', 'Validation failed with exception', ['Check input structure and types']);
     }
   }
 }
