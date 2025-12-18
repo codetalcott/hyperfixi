@@ -1090,6 +1090,33 @@ export class BaseExpressionEvaluator {
 
   /**
    * Evaluate call expressions (function calls)
+   *
+   * This method handles function/method calls that have been PARSED INTO AST NODES
+   * by the hyperscript parser. It processes:
+   * - Constructor calls: `new Date()`
+   * - Method calls: `#dialog.showModal()`, `element.getAttribute('id')`
+   * - Function calls: `myFunction(arg1, arg2)`
+   *
+   * ARCHITECTURAL NOTE - Compare with FunctionCallExpression:
+   * ───────────────────────────────────────────────────────
+   * This method (BaseExpressionEvaluator):
+   *   - Input: AST nodes from parser (callExpression with memberExpression/propertyAccess)
+   *   - Processing: Extracts callee from AST, evaluates object and property separately
+   *   - Structure: Type-safe, explicit AST structure with object/property fields
+   *   - Error handling: Try-catch with exceptions
+   *
+   * FunctionCallExpression (expressions/function-calls):
+   *   - Input: String paths or direct function references ("Math.max")
+   *   - Processing: Parses string paths at runtime, traverses object hierarchy
+   *   - Structure: Flexible string-based resolution with multi-context lookup
+   *   - Error handling: Result-based pattern (no exceptions thrown)
+   *
+   * Both approaches coexist because they serve different execution pipelines:
+   * 1. Parser-based (this method): Structured, from parsed hyperscript code
+   * 2. Expression-based (FunctionCallExpression): Flexible, from runtime expressions
+   *
+   * @see FunctionCallExpression in packages/core/src/expressions/function-calls/index.ts
+   * @see evaluateMethodCall() for the unified method call handler
    */
   protected async evaluateCallExpression(node: any, context: ExecutionContext): Promise<any> {
     const { callee, arguments: args, isConstructor } = node;
@@ -1152,6 +1179,21 @@ export class BaseExpressionEvaluator {
   /**
    * Evaluate method calls on objects (both memberExpression and propertyAccess)
    * Handles: obj.method(), #selector.method(), element.showModal(), etc.
+   *
+   * This is a helper method used by evaluateCallExpression() to handle method
+   * invocation on both regular objects and CSS selector results.
+   *
+   * DISTINGUISHING FEATURE:
+   * This method works with ALREADY-PARSED AST STRUCTURES (from evaluateCallExpression).
+   * For runtime string-based function resolution, see FunctionCallExpression#evaluate().
+   *
+   * The separation of concerns:
+   * - evaluateCallExpression(): Dispatches different AST node types
+   * - evaluateMethodCall(): Handles unified execution for memberExpression/propertyAccess
+   * - FunctionCallExpression: Handles string paths and runtime resolution
+   *
+   * @see FunctionCallExpression#evaluate() in packages/core/src/expressions/function-calls/index.ts
+   * @see evaluateCallExpression() for the dispatcher method
    */
   private async evaluateMethodCall(
     callee: any,

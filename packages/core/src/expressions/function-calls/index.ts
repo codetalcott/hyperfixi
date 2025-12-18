@@ -9,24 +9,40 @@
  * - Async function invocation with automatic promise awaiting
  * - Proper this binding for method calls
  *
- * IMPORTANT ARCHITECTURAL DISTINCTION:
- * This class handles FUNCTION CALLS from the expression system using STRING PATHS.
- * Compare with BaseExpressionEvaluator.evaluateCallExpression() which handles:
- * - AST-based method calls from the parser (e.g., `#dialog.showModal()`)
- * - Both memberExpression and propertyAccess AST node types
+ * RELATED COMPONENT - See BaseExpressionEvaluator:
+ * ──────────────────────────────────────────────
+ * BaseExpressionEvaluator.evaluateCallExpression() handles AST-based function calls
+ * from the parser (e.g., `call #dialog.showModal()`) using explicit AST structures.
  *
- * The difference:
- * - BaseExpressionEvaluator: Parser creates callExpression AST with property access
- * - FunctionCallExpression: Expression system receives string paths ("Math.max") or
- *   direct function references
+ * COMPARISON:
+ * ┌──────────────────┬──────────────────────┬──────────────────────────┐
+ * │ Aspect           │ BaseExpressionEval   │ FunctionCallExpression   │
+ * ├──────────────────┼──────────────────────┼──────────────────────────┤
+ * │ Entry Point      │ evaluateCallExpr()   │ evaluate() method        │
+ * │ Input Type       │ AST callExpression   │ String path/function ref │
+ * │ Source           │ Parser generates     │ Expression system        │
+ * │ Callee Types     │ memberExpression     │ String paths or direct   │
+ * │                  │ propertyAccess       │ function references      │
+ * │ Resolution       │ Evaluate AST parts   │ String split + context   │
+ * │ Error Handling   │ Try-catch exceptions │ Result-based pattern     │
+ * │ Use Case         │ Parsed hyperscript   │ Runtime expressions      │
+ * └──────────────────┴──────────────────────┴──────────────────────────┘
  *
- * These two approaches serve different use cases and should not be merged.
+ * WHEN TO USE WHICH:
+ * - BaseExpressionEvaluator: You have parsed hyperscript code (AST nodes)
+ * - FunctionCallExpression: You need flexible runtime function resolution
+ *
+ * Both approaches coexist because they serve different execution pipelines.
+ * They are complementary, not redundant.
  *
  * Implementation uses:
  * - Result-based error handling (returns EvaluationResult<T> not exceptions)
  * - String path resolution: "obj.method" → traverse object hierarchy
  * - Multi-context resolution: locals → variables → meta → context → element → global
  * - Type inference via centralized type-helpers for consistency
+ *
+ * @see BaseExpressionEvaluator#evaluateCallExpression() in packages/core/src/core/base-expression-evaluator.ts
+ * @see BaseExpressionEvaluator#evaluateMethodCall() for AST-based method call handler
  */
 
 import { v, z } from '../../validation/lightweight-validators';
@@ -141,6 +157,9 @@ export type FunctionCallExpressionInput = any; // Inferred from RuntimeValidator
  * 2. Expression-based (FunctionCallExpression): Flexible, runtime resolution
  *
  * They serve different parts of the execution pipeline and are not redundant.
+ *
+ * @see BaseExpressionEvaluator#evaluateCallExpression() in packages/core/src/core/base-expression-evaluator.ts
+ * @see BaseExpressionEvaluator#evaluateMethodCall() for the AST-based method call handler
  */
 export class FunctionCallExpression
   implements TypedExpressionImplementation<HyperScriptValue, TypedExpressionContext>
