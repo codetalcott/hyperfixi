@@ -18,7 +18,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT_ROOT = join(__dirname, '../../..');
-const ORIGINAL_PATH = '/Users/williamtalcott/projects/_hyperscript/src/_hyperscript.js';
+
+// Try multiple locations for original _hyperscript
+const ORIGINAL_PATHS = [
+  '/Users/williamtalcott/projects/3rd-party-clones/_hyperscript/src/_hyperscript.js',
+  '/Users/williamtalcott/projects/_hyperscript/src/_hyperscript.js',
+];
+let ORIGINAL_PATH = ORIGINAL_PATHS.find(path => existsSync(path)) || ORIGINAL_PATHS[0];
+
 const OUTPUT_DIR = join(PROJECT_ROOT, 'analysis-output/comparison');
 
 /**

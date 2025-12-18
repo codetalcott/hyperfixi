@@ -19,8 +19,20 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT_ROOT = join(__dirname, '../../..');
-const ORIGINAL_PATH = '/Users/williamtalcott/projects/_hyperscript/src/_hyperscript.js';
-const HYPERFIXI_COMMANDS = join(PROJECT_ROOT, 'packages/core/src/commands');
+
+// Try multiple locations for original _hyperscript
+const ORIGINAL_PATHS = [
+  '/Users/williamtalcott/projects/3rd-party-clones/_hyperscript/src/_hyperscript.js',
+  '/Users/williamtalcott/projects/_hyperscript/src/_hyperscript.js',
+];
+let ORIGINAL_PATH = ORIGINAL_PATHS.find(path => existsSync(path)) || ORIGINAL_PATHS[0];
+
+// Support both v1 and v2 command layouts
+const HYPERFIXI_COMMAND_DIRS = [
+  join(PROJECT_ROOT, 'packages/core/src/commands-v2/'),
+  join(PROJECT_ROOT, 'packages/core/src/commands/'),
+].filter(dir => existsSync(dir));
+
 const OUTPUT_DIR = join(PROJECT_ROOT, 'analysis-output/comparison');
 
 // Command name mapping (HyperFixi name -> original name if different)
@@ -119,6 +131,20 @@ async function extractOriginalCommands(content) {
   }
 
   return commands;
+}
+
+/**
+ * Estimate minified size of content
+ */
+function estimateMinifiedSize(content) {
+  // Remove comments, whitespace, and estimate minified output
+  let minified = content
+    .replace(/\/\*[\s\S]*?\*\//g, '')        // Remove block comments
+    .replace(/\/\/.*/g, '')                  // Remove line comments
+    .replace(/\s+/g, ' ')                    // Collapse whitespace
+    .replace(/\s*([{}();,:])\s*/g, '$1');    // Remove spaces around symbols
+
+  return minified.length;
 }
 
 /**
@@ -236,6 +262,11 @@ async function extractHyperFixiCommand(filePath) {
   const boilerplate = importLines + typeLines + decoratorLines + validateLines;
   const boilerplateRatio = boilerplate / totalLines;
 
+  // Calculate minified size
+  const sourceBytes = Buffer.byteLength(content, 'utf-8');
+  const estimatedMinifiedBytes = estimateMinifiedSize(content);
+  const compressionRatio = Math.round((estimatedMinifiedBytes / sourceBytes) * 100) / 100;
+
   return {
     name,
     file: relative(PROJECT_ROOT, filePath),
@@ -251,6 +282,9 @@ async function extractHyperFixiCommand(filePath) {
     helperCalls,
     extendsBase,
     baseClass,
+    sourceBytes,
+    estimatedMinifiedBytes,
+    compressionRatio,
   };
 }
 
@@ -259,6 +293,8 @@ async function extractHyperFixiCommand(filePath) {
  */
 async function findCommandFiles(dir) {
   const files = [];
+  if (!existsSync(dir)) return files;
+
   const entries = await readdir(dir, { withFileTypes: true });
 
   for (const entry of entries) {
@@ -274,6 +310,40 @@ async function findCommandFiles(dir) {
   }
 
   return files;
+}
+
+/**
+ * Find all command files across v1 and v2 directories
+ */
+async function findAllCommandFiles() {
+  const allFiles = [];
+  const seenCommands = new Set();
+
+  for (const dir of HYPERFIXI_COMMAND_DIRS) {
+    const files = await findCommandFiles(dir);
+
+    for (const file of files) {
+      // Extract command name from file content
+      try {
+        const content = await readFile(file, 'utf-8');
+        const nameMatch = content.match(/@command\(\s*\{\s*name:\s*['"](\w+)['"]/);
+        const className = file.match(/\/(\w+)\./);
+        const name = nameMatch?.[1] ||
+                     className?.[1]?.replace(/Command$/, '').toLowerCase() ||
+                     'unknown';
+
+        // Prefer v2 implementations (more recent, first in dir list)
+        if (!seenCommands.has(name)) {
+          allFiles.push(file);
+          seenCommands.add(name);
+        }
+      } catch (err) {
+        // Skip files we can't parse
+      }
+    }
+  }
+
+  return allFiles;
 }
 
 /**
@@ -441,8 +511,8 @@ async function main() {
     console.log(`Found ${Object.keys(originalCommands).length} commands in original _hyperscript`);
   }
 
-  // Extract HyperFixi commands
-  const commandFiles = await findCommandFiles(HYPERFIXI_COMMANDS);
+  // Extract HyperFixi commands from all directories
+  const commandFiles = await findAllCommandFiles();
   const hyperfixiCommands = [];
 
   for (const file of commandFiles) {
@@ -458,6 +528,7 @@ async function main() {
 
   if (!jsonOutput) {
     console.log(`Found ${hyperfixiCommands.length} command files in HyperFixi`);
+    console.log(`  Searched in: ${HYPERFIXI_COMMAND_DIRS.join(', ')}`);
   }
 
   // Calculate comparison
@@ -473,7 +544,7 @@ async function main() {
         totalCommands: Object.keys(originalCommands).length,
       },
       hyperfixi: {
-        path: HYPERFIXI_COMMANDS,
+        paths: HYPERFIXI_COMMAND_DIRS,
         commands: hyperfixiCommands,
         totalCommands: hyperfixiCommands.length,
       },
