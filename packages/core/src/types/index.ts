@@ -258,8 +258,10 @@ export type {
   SwapCommandInput,
 } from '../commands/dom/swap';
 
-// URL Command types
+// URL Command types (consolidated in HistoryCommand)
 export type {
+  HistoryCommandInput,
+  HistoryMode,
   PushUrlCommandInput,
 } from '../commands/navigation/push-url';
 

@@ -158,6 +158,8 @@ export class CommandAdapterV2 implements RuntimeCommand {
             {
               args: rawInput.args || [],
               modifiers: rawInput.modifiers || {},
+              // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
+              commandName: rawInput.commandName,
             },
             this.expressionEvaluator,
             context
@@ -220,6 +222,7 @@ export class CommandRegistryV2 {
   /**
    * Register a command (V1 or V2 format)
    * Uses 'any' to accept all command implementations with compatible structure
+   * Also registers any aliases defined in metadata
    */
   register(impl: any): void {
     const name = (impl.name || impl.metadata?.name).toLowerCase();
@@ -227,7 +230,18 @@ export class CommandRegistryV2 {
     debug.runtime(`CommandRegistryV2: Registering command '${name}'`);
 
     this.implementations.set(name, impl);
-    this.adapters.set(name, new CommandAdapterV2(impl));
+    const adapter = new CommandAdapterV2(impl);
+    this.adapters.set(name, adapter);
+
+    // Register aliases (for consolidated commands)
+    const aliases = impl.metadata?.aliases;
+    if (aliases && Array.isArray(aliases)) {
+      for (const alias of aliases) {
+        const aliasLower = alias.toLowerCase();
+        this.implementations.set(aliasLower, impl);
+        this.adapters.set(aliasLower, adapter);
+      }
+    }
   }
 
   /**

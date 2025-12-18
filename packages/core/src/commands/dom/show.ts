@@ -2,6 +2,7 @@
  * ShowCommand - Decorated Implementation
  *
  * Shows HTML elements by restoring display property. Uses Stage 3 decorators.
+ * Shares visibility helpers with HideCommand.
  *
  * Syntax:
  *   show                    # Show current element (me)
@@ -25,9 +26,6 @@ export interface ShowCommandInput extends VisibilityInput {
 
 /**
  * ShowCommand - Restores element visibility
- *
- * Before: 203 lines
- * After: ~65 lines (68% reduction)
  */
 @meta({
   description: 'Show elements by restoring display property',
@@ -37,7 +35,6 @@ export interface ShowCommandInput extends VisibilityInput {
 })
 @command({ name: 'show', category: 'dom' })
 export class ShowCommand implements DecoratedCommand {
-  // Properties set by decorators
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;
 

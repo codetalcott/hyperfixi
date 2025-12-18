@@ -1,77 +1,120 @@
 /**
- * PushUrlCommand - Decorated Implementation
+ * HistoryCommand - Consolidated Push/Replace URL Implementation
  *
- * Push URL to browser history (htmx 4 pattern).
- * Uses Stage 3 decorators for reduced boilerplate.
+ * Handles both push and replace URL operations via unified command.
+ * Uses Stage 3 decorators with alias support.
  *
  * Syntax:
  *   push url "/path"
  *   push url "/page" with title "Page Title"
+ *   replace url "/path"
+ *   replace url "/page" with title "Page Title"
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 import { parseUrlArguments, type UrlCommandInput } from '../helpers/url-argument-parser';
 
 /**
- * Typed input for PushUrlCommand
+ * History operation mode
  */
-export interface PushUrlCommandInput extends UrlCommandInput {}
+export type HistoryMode = 'push' | 'replace';
 
 /**
- * Output from push url command
+ * Typed input for HistoryCommand
  */
-export interface PushUrlCommandOutput {
-  url: string;
-  title?: string;
+export interface HistoryCommandInput extends UrlCommandInput {
+  mode: HistoryMode;
 }
 
 /**
- * PushUrlCommand - Push URL to browser history
+ * Output from history command
+ */
+export interface HistoryCommandOutput {
+  url: string;
+  title?: string;
+  mode: HistoryMode;
+}
+
+/**
+ * HistoryCommand - Unified push/replace URL handler
  *
- * Before: 175 lines
- * After: ~65 lines (63% reduction)
+ * Consolidates PushUrlCommand and ReplaceUrlCommand into single implementation.
+ * Registered under both 'push' and 'replace' names via aliases.
  */
 @meta({
-  description: 'Push URL to browser history without page reload',
-  syntax: ['push url <url>', 'push url <url> with title <title>'],
-  examples: ['push url "/page/2"', 'push url "/search" with title "Search Results"'],
+  description: 'Modify browser history URL without page reload',
+  syntax: [
+    'push url <url>',
+    'push url <url> with title <title>',
+    'replace url <url>',
+    'replace url <url> with title <title>',
+  ],
+  examples: [
+    'push url "/page/2"',
+    'push url "/search" with title "Search Results"',
+    'replace url "/search?q=test"',
+    'replace url "/page" with title "Updated Page"',
+  ],
   sideEffects: ['navigation'],
+  aliases: ['replace'],
 })
 @command({ name: 'push', category: 'navigation' })
-export class PushUrlCommand implements DecoratedCommand {
+export class HistoryCommand implements DecoratedCommand {
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
-  ): Promise<PushUrlCommandInput> {
-    return parseUrlArguments(raw.args, evaluator, context, 'push url');
+  ): Promise<HistoryCommandInput> {
+    // Detect mode from command name
+    const mode: HistoryMode = raw.commandName?.toLowerCase().includes('replace') ? 'replace' : 'push';
+    const baseInput = await parseUrlArguments(raw.args, evaluator, context, `${mode} url`);
+    return { ...baseInput, mode };
   }
 
   async execute(
-    input: PushUrlCommandInput,
+    input: HistoryCommandInput,
     _context: TypedExecutionContext
-  ): Promise<PushUrlCommandOutput> {
-    const { url, title, state } = input;
+  ): Promise<HistoryCommandOutput> {
+    const { url, title, state, mode } = input;
 
-    window.history.pushState(state || null, '', url);
+    if (mode === 'push') {
+      window.history.pushState(state || null, '', url);
+    } else {
+      window.history.replaceState(state || null, '', url);
+    }
 
     if (title) {
       document.title = title;
     }
 
-    window.dispatchEvent(new CustomEvent('hyperfixi:pushurl', {
+    const eventName = mode === 'push' ? 'hyperfixi:pushurl' : 'hyperfixi:replaceurl';
+    window.dispatchEvent(new CustomEvent(eventName, {
       detail: { url, title, state },
     }));
 
-    return { url, title };
+    return { url, title, mode };
   }
 }
 
-export const createPushUrlCommand = createFactory(PushUrlCommand);
-export default PushUrlCommand;
+// Backwards compatibility exports
+export { HistoryCommand as PushUrlCommand };
+export { HistoryCommand as ReplaceUrlCommand };
+
+// Type aliases for backwards compatibility
+export type PushUrlCommandInput = HistoryCommandInput;
+export type ReplaceUrlCommandInput = HistoryCommandInput;
+export type PushUrlCommandOutput = HistoryCommandOutput;
+export type ReplaceUrlCommandOutput = HistoryCommandOutput;
+
+// Factory functions
+export const createHistoryCommand = createFactory(HistoryCommand);
+export const createPushUrlCommand = createFactory(HistoryCommand);
+export const createReplaceUrlCommand = createFactory(HistoryCommand);
+
+export default HistoryCommand;

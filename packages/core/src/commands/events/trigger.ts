@@ -1,13 +1,14 @@
 /**
- * TriggerCommand - Decorated Implementation
+ * EventDispatchCommand - Consolidated Trigger/Send Implementation
  *
- * Triggers events on target elements using "trigger X on Y" syntax.
- * Uses Stage 3 decorators for reduced boilerplate.
+ * Dispatches events on target elements using either "trigger X on Y" or "send X to Y" syntax.
+ * Uses Stage 3 decorators with alias support.
  *
  * Syntax:
  *   trigger <event> on <target>
  *   trigger <event>(<detail>) on <target>
- *   trigger <event> on <target> with bubbles
+ *   send <event> to <target>
+ *   send <event>(<detail>) to <target>
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
@@ -16,43 +17,68 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { createCustomEvent, parseEventValue } from '../helpers/event-helpers';
 import type { EventOptions } from '../helpers/event-helpers';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 export type { EventOptions } from '../helpers/event-helpers';
 
 /**
- * Typed input for TriggerCommand
+ * Event dispatch mode
  */
-export interface TriggerCommandInput {
+export type EventDispatchMode = 'trigger' | 'send';
+
+/**
+ * Typed input for EventDispatchCommand
+ */
+export interface EventDispatchInput {
   eventName: string;
   detail?: any;
   targets: EventTarget[];
   options: EventOptions;
+  mode: EventDispatchMode;
 }
 
+// Backwards compatibility type aliases
+export type TriggerCommandInput = Omit<EventDispatchInput, 'mode'>;
+export type SendCommandInput = Omit<EventDispatchInput, 'mode'>;
+
 /**
- * TriggerCommand - Dispatch events with "on" syntax
+ * EventDispatchCommand - Unified trigger/send implementation
  *
- * Before: 479 lines
- * After: ~200 lines (58% reduction)
+ * Consolidates TriggerCommand and SendCommand into single implementation.
+ * Registered under both 'trigger' and 'send' names via aliases.
  */
 @meta({
-  description: 'Trigger events on elements using "trigger X on Y" syntax',
-  syntax: ['trigger <event> on <target>', 'trigger <event>(<detail>) on <target>'],
-  examples: ['trigger click on #button', 'trigger customEvent on me', 'trigger dataEvent(count: 42) on #target'],
+  description: 'Dispatch events on elements',
+  syntax: [
+    'trigger <event> on <target>',
+    'trigger <event>(<detail>) on <target>',
+    'send <event> to <target>',
+    'send <event>(<detail>) to <target>',
+  ],
+  examples: [
+    'trigger click on #button',
+    'trigger customEvent on me',
+    'send dataEvent to #target',
+    'send myEvent(count: 42) to me',
+  ],
   sideEffects: ['event-dispatch'],
+  aliases: ['send'],
 })
 @command({ name: 'trigger', category: 'event' })
-export class TriggerCommand implements DecoratedCommand {
+export class EventDispatchCommand implements DecoratedCommand {
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
-  ): Promise<TriggerCommandInput> {
-    if (!raw.args?.length) throw new Error('trigger command requires an event name');
+  ): Promise<EventDispatchInput> {
+    // Detect mode from command name
+    const mode: EventDispatchMode = raw.commandName?.toLowerCase() === 'send' ? 'send' : 'trigger';
+    const cmdName = mode; // for error messages
+
+    if (!raw.args?.length) throw new Error(`${cmdName} command requires an event name`);
 
     const nodeType = (n: ASTNode) => (n as any)?.type || 'unknown';
     const firstArg = raw.args[0];
@@ -71,30 +97,40 @@ export class TriggerCommand implements DecoratedCommand {
       eventName = typeof eval1 === 'string' ? eval1 : String(eval1);
     }
 
-    const onIdx = raw.args.findIndex((a, i) => i > 0 && ((a as any).name || (a as any).value) === 'on');
+    // Find target keyword: 'on' for trigger, 'to' or 'on' for send
+    const targetKeywordIndex = raw.args.findIndex((a, i) => {
+      if (i === 0) return false;
+      const val = (a as any).name || (a as any).value;
+      return val === 'on' || val === 'to';
+    });
 
     let targets: EventTarget[];
-    if (onIdx === -1 || onIdx >= raw.args.length - 1) {
-      if (!context.me) throw new Error('trigger: no target specified and context.me is null');
+    if (targetKeywordIndex === -1 || targetKeywordIndex >= raw.args.length - 1) {
+      if (!context.me) throw new Error(`${cmdName}: no target specified and context.me is null`);
       targets = [context.me as EventTarget];
     } else {
-      const afterOn = raw.args.slice(onIdx + 1);
-      const withIdx = afterOn.findIndex(a => ((a as any).name || (a as any).value) === 'with');
-      const targetArgs = withIdx === -1 ? afterOn : afterOn.slice(0, withIdx);
-      targets = await this.resolveTargets(targetArgs, evaluator, context);
+      const afterTarget = raw.args.slice(targetKeywordIndex + 1);
+      const withIdx = afterTarget.findIndex(a => ((a as any).name || (a as any).value) === 'with');
+      const targetArgs = withIdx === -1 ? afterTarget : afterTarget.slice(0, withIdx);
+      targets = await this.resolveTargets(targetArgs, evaluator, context, cmdName);
     }
 
     const options = await this.parseEventOptions(raw.args, evaluator, context);
-    return { eventName, detail, targets, options };
+    return { eventName, detail, targets, options, mode };
   }
 
-  async execute(input: TriggerCommandInput, context: TypedExecutionContext): Promise<void> {
+  async execute(input: EventDispatchInput, context: TypedExecutionContext): Promise<void> {
     const event = createCustomEvent(input.eventName, input.detail, input.options);
     for (const target of input.targets) target.dispatchEvent(event);
     (context as any).it = event;
   }
 
-  private async resolveTargets(args: ASTNode[], evaluator: ExpressionEvaluator, context: ExecutionContext): Promise<EventTarget[]> {
+  private async resolveTargets(
+    args: ASTNode[],
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext,
+    cmdName: string
+  ): Promise<EventTarget[]> {
     const targets: EventTarget[] = [];
     for (const arg of args) {
       const val = await evaluator.evaluate(arg, context);
@@ -112,7 +148,7 @@ export class TriggerCommand implements DecoratedCommand {
       if (val && typeof val === 'object' && 'addEventListener' in val) { targets.push(val as EventTarget); continue; }
       throw new Error(`Invalid target: ${typeof val}`);
     }
-    if (!targets.length) throw new Error('trigger: no valid targets');
+    if (!targets.length) throw new Error(`${cmdName}: no valid targets`);
     return targets;
   }
 
@@ -150,5 +186,13 @@ export class TriggerCommand implements DecoratedCommand {
   }
 }
 
-export const createTriggerCommand = createFactory(TriggerCommand);
-export default TriggerCommand;
+// Backwards compatibility exports
+export { EventDispatchCommand as TriggerCommand };
+export { EventDispatchCommand as SendCommand };
+
+// Factory functions
+export const createEventDispatchCommand = createFactory(EventDispatchCommand);
+export const createTriggerCommand = createFactory(EventDispatchCommand);
+export const createSendCommand = createFactory(EventDispatchCommand);
+
+export default EventDispatchCommand;

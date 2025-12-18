@@ -2,6 +2,7 @@
  * HideCommand - Decorated Implementation
  *
  * Hides HTML elements by setting display: none. Uses Stage 3 decorators.
+ * Shares visibility helpers with ShowCommand.
  *
  * Syntax:
  *   hide                    # Hide current element (me)
@@ -23,9 +24,6 @@ export type HideCommandInput = VisibilityInput;
 
 /**
  * HideCommand - Hides elements
- *
- * Before: 189 lines
- * After: ~55 lines (71% reduction)
  */
 @meta({
   description: 'Hide elements by setting display to none',
@@ -35,7 +33,6 @@ export type HideCommandInput = VisibilityInput;
 })
 @command({ name: 'hide', category: 'dom' })
 export class HideCommand implements DecoratedCommand {
-  // Properties set by decorators
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;
 

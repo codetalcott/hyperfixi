@@ -23,6 +23,7 @@ export class MinimalCommandRegistry {
 
   /**
    * Register a command instance
+   * Also registers any aliases defined in metadata
    */
   register(command: any): void {
     const name = command.metadata?.name || command.name;
@@ -30,6 +31,14 @@ export class MinimalCommandRegistry {
       throw new Error('Command must have a name in metadata or as a property');
     }
     this.commands.set(name.toLowerCase(), command);
+
+    // Register aliases (for consolidated commands)
+    const aliases = command.metadata?.aliases;
+    if (aliases && Array.isArray(aliases)) {
+      for (const alias of aliases) {
+        this.commands.set(alias.toLowerCase(), command);
+      }
+    }
   }
 
   /**

@@ -26,23 +26,23 @@ export { FetchCommand, createFetchCommand } from './async/fetch';
 // Data Commands
 export { SetCommand, createSetCommand } from './data/set';
 export { GetCommand, createGetCommand } from './data/get';
-export { IncrementCommand, createIncrementCommand } from './data/increment';
+export { NumericModifyCommand, createNumericModifyCommand, IncrementCommand, createIncrementCommand } from './data/increment';
 export { DecrementCommand, createDecrementCommand } from './data/decrement';
 
 // Utility Commands
 export { LogCommand, createLogCommand } from './utility/log';
 
 // Event Commands
-export { TriggerCommand, createTriggerCommand } from './events/trigger';
+export { EventDispatchCommand, createEventDispatchCommand, TriggerCommand, createTriggerCommand } from './events/trigger';
 export { SendCommand, createSendCommand } from './events/send';
 
 // Navigation Commands
 export { GoCommand, createGoCommand } from './navigation/go';
-export { PushUrlCommand, createPushUrlCommand } from './navigation/push-url';
+export { HistoryCommand, createHistoryCommand, PushUrlCommand, createPushUrlCommand } from './navigation/push-url';
 export { ReplaceUrlCommand, createReplaceUrlCommand } from './navigation/replace-url';
 
 // Control Flow Commands
-export { IfCommand, createIfCommand } from './control-flow/if';
+export { ConditionalCommand, createConditionalCommand, IfCommand, createIfCommand } from './control-flow/if';
 export { RepeatCommand, createRepeatCommand } from './control-flow/repeat';
 export { BreakCommand, createBreakCommand } from './control-flow/break';
 export { ContinueCommand, createContinueCommand } from './control-flow/continue';
@@ -106,15 +106,15 @@ export type { WaitCommandInput } from './async/wait';
 export type { FetchCommandInput } from './async/fetch';
 export type { SetCommandInput } from './data/set';
 export type { GetCommandInput } from './data/get';
-export type { IncrementCommandInput } from './data/increment';
+export type { NumericModifyInput, NumericOperation, IncrementCommandInput } from './data/increment';
 export type { DecrementCommandInput } from './data/decrement';
 export type { LogCommandInput } from './utility/log';
-export type { TriggerCommandInput } from './events/trigger';
+export type { EventDispatchInput, EventDispatchMode, TriggerCommandInput } from './events/trigger';
 export type { SendCommandInput } from './events/send';
 export type { GoCommandInput } from './navigation/go';
-export type { PushUrlCommandInput } from './navigation/push-url';
+export type { HistoryCommandInput, HistoryMode, PushUrlCommandInput } from './navigation/push-url';
 export type { ReplaceUrlCommandInput } from './navigation/replace-url';
-export type { IfCommandInput } from './control-flow/if';
+export type { ConditionalCommandInput, ConditionalCommandOutput, ConditionalMode, IfCommandInput, IfCommandOutput } from './control-flow/if';
 export type { RepeatCommandInput } from './control-flow/repeat';
 export type { BreakCommandInput } from './control-flow/break';
 export type { ContinueCommandInput } from './control-flow/continue';

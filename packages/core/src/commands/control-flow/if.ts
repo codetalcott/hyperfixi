@@ -1,5 +1,5 @@
 /**
- * IfCommand - Decorated Implementation
+ * ConditionalCommand - Consolidated If/Unless Implementation
  *
  * Conditional execution based on boolean expressions.
  * Uses Stage 3 decorators for reduced boilerplate.
@@ -7,102 +7,142 @@
  * Syntax:
  *   if <condition> then <commands>
  *   if <condition> then <commands> else <commands>
+ *   unless <condition> <commands>
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
 import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { evaluateCondition } from '../helpers/condition-helpers';
-import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
+
+/** Conditional mode type */
+export type ConditionalMode = 'if' | 'unless';
 
 /**
- * Typed input for IfCommand
+ * Typed input for ConditionalCommand
  */
-export interface IfCommandInput {
+export interface ConditionalCommandInput {
+  /** The mode determines condition interpretation: 'if' executes on TRUE, 'unless' on FALSE */
+  mode: ConditionalMode;
   /** The evaluated condition value (will be coerced to boolean) */
   condition: unknown;
-  /** AST node(s) for the then branch commands */
+  /** AST node(s) for the then branch commands (or 'unless' commands) */
   thenCommands: ASTNode | ASTNode[];
-  /** AST node(s) for the else branch commands (optional) */
+  /** AST node(s) for the else branch commands (optional, only for 'if' mode) */
   elseCommands?: ASTNode | ASTNode[];
 }
 
+// Backwards compatibility type aliases
+export interface IfCommandInput extends ConditionalCommandInput {}
+export interface UnlessCommandInput {
+  condition: unknown;
+  commands: ASTNode[];
+}
+
 /**
- * Output from If command execution
+ * Output from ConditionalCommand execution
  */
-export interface IfCommandOutput {
+export interface ConditionalCommandOutput {
+  mode: ConditionalMode;
   conditionResult: boolean;
   executedBranch: 'then' | 'else' | 'none';
   /** Result from the executed branch (unknown type depends on commands) */
   result: unknown;
 }
 
+// Backwards compatibility type alias
+export interface IfCommandOutput extends ConditionalCommandOutput {}
+
 /**
- * IfCommand - Conditional execution
+ * ConditionalCommand - Consolidated if/unless execution
  *
- * Before: 303 lines
- * After: ~130 lines (57% reduction)
+ * Handles both 'if' and 'unless' syntax through mode detection.
+ * - 'if' mode: executes then-branch when condition is TRUE
+ * - 'unless' mode: executes then-branch when condition is FALSE
  */
 @meta({
   description: 'Conditional execution based on boolean expressions',
-  syntax: ['if <condition> then <commands>', 'if <condition> then <commands> else <commands>'],
-  examples: ['if x > 5 then add .active', 'if user.isAdmin then show #adminPanel else hide #adminPanel'],
+  syntax: ['if <condition> then <commands>', 'if <condition> then <commands> else <commands>', 'unless <condition> <commands>'],
+  examples: ['if x > 5 then add .active', 'if user.isAdmin then show #adminPanel else hide #adminPanel', 'unless user.isLoggedIn showLoginForm'],
   sideEffects: ['conditional-execution'],
+  aliases: ['unless'],
 })
 @command({ name: 'if', category: 'control-flow' })
-export class IfCommand implements DecoratedCommand {
+export class ConditionalCommand implements DecoratedCommand {
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode>; commandName?: string },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
-  ): Promise<IfCommandInput> {
+  ): Promise<ConditionalCommandInput> {
+    // Detect mode from command name
+    const mode: ConditionalMode = raw.commandName?.toLowerCase() === 'unless' ? 'unless' : 'if';
+
     if (!raw.args || raw.args.length === 0) {
-      throw new Error('if command requires a condition to evaluate');
+      throw new Error(`${mode} command requires a condition to evaluate`);
     }
 
     let thenCommands: ASTNode | ASTNode[] | undefined;
     let elseCommands: ASTNode | ASTNode[] | undefined;
 
-    if (raw.args.length >= 2 && raw.args[1]) {
-      thenCommands = raw.args[1];
-      elseCommands = raw.args.length >= 3 ? raw.args[2] : undefined;
-    } else if (raw.modifiers?.then) {
-      thenCommands = raw.modifiers.then;
-      elseCommands = raw.modifiers.else;
-    }
+    if (mode === 'unless') {
+      // unless <condition> <commands...> - simpler syntax, no else
+      if (raw.args.length < 2) {
+        throw new Error('unless command requires a condition and at least one command');
+      }
+      thenCommands = raw.args.slice(1);
+    } else {
+      // if <condition> then <commands> [else <commands>]
+      if (raw.args.length >= 2 && raw.args[1]) {
+        thenCommands = raw.args[1];
+        elseCommands = raw.args.length >= 3 ? raw.args[2] : undefined;
+      } else if (raw.modifiers?.then) {
+        thenCommands = raw.modifiers.then;
+        elseCommands = raw.modifiers.else;
+      }
 
-    if (!thenCommands) {
-      throw new Error('if command requires "then" branch with commands');
+      if (!thenCommands) {
+        throw new Error('if command requires "then" branch with commands');
+      }
     }
 
     const condition = await evaluator.evaluate(raw.args[0], context);
-    return { condition, thenCommands, elseCommands };
+    return { mode, condition, thenCommands: thenCommands!, elseCommands };
   }
 
   async execute(
-    input: IfCommandInput,
+    input: ConditionalCommandInput,
     context: TypedExecutionContext
-  ): Promise<IfCommandOutput> {
-    const { condition, thenCommands, elseCommands } = input;
-    const conditionResult = evaluateCondition(condition, context);
+  ): Promise<ConditionalCommandOutput> {
+    const { mode, condition, thenCommands, elseCommands } = input;
+    const rawConditionResult = evaluateCondition(condition, context);
+
+    // For 'unless' mode, we invert the condition logic:
+    // - 'if' executes then-branch when TRUE
+    // - 'unless' executes then-branch when FALSE
+    const shouldExecuteThen = mode === 'unless' ? !rawConditionResult : rawConditionResult;
 
     let executedBranch: 'then' | 'else' | 'none';
     let result: any;
 
-    if (conditionResult) {
+    if (shouldExecuteThen) {
       executedBranch = 'then';
       result = await this.executeCommandsOrBlock(thenCommands, context);
-    } else if (elseCommands) {
+      // For 'unless' mode, update 'it' with last result (matching original behavior)
+      if (mode === 'unless') {
+        Object.assign(context, { it: result });
+      }
+    } else if (elseCommands && mode === 'if') {
       executedBranch = 'else';
       result = await this.executeCommandsOrBlock(elseCommands, context);
     } else {
       executedBranch = 'none';
     }
 
-    return { conditionResult, executedBranch, result };
+    return { mode, conditionResult: rawConditionResult, executedBranch, result };
   }
 
   private async executeCommandsOrBlock(commandsOrBlock: any, context: TypedExecutionContext): Promise<any> {
@@ -139,5 +179,15 @@ export class IfCommand implements DecoratedCommand {
   }
 }
 
-export const createIfCommand = createFactory(IfCommand);
-export default IfCommand;
+// Primary exports
+export const createConditionalCommand = createFactory(ConditionalCommand);
+
+// Backwards compatibility - IfCommand alias
+export { ConditionalCommand as IfCommand };
+export const createIfCommand = createConditionalCommand;
+
+// Backwards compatibility - UnlessCommand alias
+export { ConditionalCommand as UnlessCommand };
+export const createUnlessCommand = createConditionalCommand;
+
+export default ConditionalCommand;

@@ -241,6 +241,8 @@ export class RuntimeBase {
             return await adapter.execute(context, {
                 args: args || [],
                 modifiers: modifiers || {},
+                // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
+                commandName,
                 // Pass runtime reference just in case command needs to re-enter runtime
                 runtime: this
             });
@@ -336,6 +338,8 @@ export class RuntimeBase {
       const result = await adapter.execute(context, {
         args: args || [],
         modifiers: modifiers || {},
+        // Pass command name for consolidated commands (e.g., show/hide → VisibilityCommand)
+        commandName,
         runtime: this
       });
       return ok(result);
