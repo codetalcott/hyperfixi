@@ -304,7 +304,7 @@ export class ObjectLiteralExpression
       // Handle function calls for dynamic evaluation
       if (isFunction(value)) {
         try {
-          const result = await value(context);
+          const result = await (value as Function)(context);
           return {
             success: true,
             value: result as HyperScriptValue,

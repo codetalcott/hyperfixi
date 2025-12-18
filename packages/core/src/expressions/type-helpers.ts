@@ -151,7 +151,7 @@ export function isArrayLike(value: unknown): boolean {
  * @param value - Value to infer type for
  * @returns The HyperScriptValueType
  */
-export function inferType(value: unknown): string {
+export function inferType(value: unknown): 'string' | 'number' | 'boolean' | 'element' | 'array' | 'object' | 'null' | 'undefined' | 'function' | 'unknown' {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
   if (typeof value === 'string') return 'string';

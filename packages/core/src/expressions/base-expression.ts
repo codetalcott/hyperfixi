@@ -18,8 +18,8 @@ import type {
   ValidationError,
   ExpressionMetadata,
   EvaluationType,
+  ExpressionCategory,
 } from '../types/base-types';
-import type { ExpressionCategory } from '../types/expression-types';
 import { isString, isNumber, isBoolean, isObject, isFunction } from './type-helpers';
 
 /**

@@ -310,7 +310,7 @@ export class FunctionCallExpression
       };
     }
 
-    const functionPath = functionReference;
+    const functionPath = functionReference as string;
     const pathParts = functionPath.split('.');
 
     try {

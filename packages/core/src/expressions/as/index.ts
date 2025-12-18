@@ -189,7 +189,7 @@ export class AsExpression implements TypedExpressionImplementation<HyperScriptVa
       return Promise.resolve({
         success: true,
         value: convertedValue,
-        type: inferType(convertedValue),
+        type: inferType(convertedValue) as HyperScriptValueType,
       });
     } catch (error) {
       return Promise.resolve({

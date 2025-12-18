@@ -143,7 +143,7 @@ export class ExpressionAdapter {
    */
   static getExpressionDocumentation(expressionName: string) {
     const expression = referenceExpressions[expressionName as keyof typeof referenceExpressions];
-    return expression?.documentation;
+    return (expression as { documentation?: unknown } | undefined)?.documentation;
   }
 
   /**

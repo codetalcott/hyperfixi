@@ -182,7 +182,7 @@ export function getElementProperty(element: Element, property: string): unknown 
   // This is critical for DOM methods like closest(), querySelector(), etc.
   // Without binding, these methods lose their 'this' reference and fail
   if (isFunction(value)) {
-    return value.bind(element);
+    return (value as Function).bind(element);
   }
 
   return value;

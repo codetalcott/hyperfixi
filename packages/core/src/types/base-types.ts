@@ -155,7 +155,8 @@ export type ExpressionCategory =
   | 'Positional' // first, last, array navigation
   | 'Property' // possessive syntax, attribute access
   | 'Special' // literals, math operations, string manipulation
-  | 'Template'; // template directives, conditional rendering, iteration
+  | 'Template' // template directives, conditional rendering, iteration
+  | 'Mathematical'; // arithmetic operations
 
 // ============================================================================
 // Execution Context Types (Unified System)

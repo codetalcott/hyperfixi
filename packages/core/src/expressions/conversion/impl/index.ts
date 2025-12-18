@@ -6,7 +6,7 @@
  * Uses centralized type-helpers for consistent type checking.
  */
 
-import { v } from '../../../validation/lightweight-validators';
+import { v, type RuntimeValidator } from '../../../validation/lightweight-validators';
 import type {
   TypedExpressionContext,
   EvaluationResult,
@@ -14,6 +14,7 @@ import type {
   BaseTypedExpression,
   ValidationResult,
   EvaluationType,
+  HyperScriptValueType,
 } from '../../../types/base-types';
 import type { ExpressionCategory, LLMDocumentation } from '../../../types/expression-types';
 import { BaseExpressionImpl } from '../../base-expression';
@@ -38,7 +39,7 @@ function converterError(
 }
 
 /** Create a standardized success result */
-function success<T>(value: T, type: string): EvaluationResult<T> {
+function success<T>(value: T, type: HyperScriptValueType): EvaluationResult<T> {
   return { success: true, value, type };
 }
 
@@ -265,7 +266,8 @@ export class AsExpression
   readonly syntax = 'value as Type';
   readonly description = 'Converts values between different types using the "as" keyword';
   readonly outputType: EvaluationType = 'Any';
-  readonly inputSchema = AsExpressionInputSchema;
+  // Type assertion needed because v.object inference differs from explicit generic parameter
+  readonly inputSchema = AsExpressionInputSchema as RuntimeValidator<{ value: unknown; type: string }>;
 
   readonly metadata: ExpressionMetadata = {
     category: 'Conversion',
@@ -542,7 +544,7 @@ export class IsExpression
   readonly syntax = 'value is Type';
   readonly description = 'Checks if a value is of a specific type';
   readonly outputType: EvaluationType = 'Boolean';
-  readonly inputSchema = IsExpressionInputSchema;
+  readonly inputSchema = IsExpressionInputSchema as RuntimeValidator<{ value: unknown; type: string }>;
 
   readonly metadata: ExpressionMetadata = {
     category: 'Conversion',

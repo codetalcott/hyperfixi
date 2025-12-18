@@ -139,7 +139,7 @@ export class PositionalAdapter {
    */
   static getExpressionDocumentation(expressionName: string) {
     const expression = positionalExpressions[expressionName as keyof typeof positionalExpressions];
-    return expression?.documentation;
+    return (expression as { documentation?: unknown } | undefined)?.documentation;
   }
 
   /**

@@ -165,7 +165,8 @@ export type ExpressionCategory =
   | 'Mathematical'
   | 'Conversion'
   | 'Positional'
-  | 'Special';
+  | 'Special'
+  | 'Template';
 
 /**
  * Unified expression metadata
