@@ -322,8 +322,7 @@ export class TypedWebWorkerFeatureImplementation {
       if (!validation.isValid) {
         return {
           success: false,
-          errors: validation.errors,
-          suggestions: validation.suggestions ? [...validation.suggestions] : undefined,
+          error: validation.errors[0],
         };
       }
 
@@ -402,25 +401,23 @@ export class TypedWebWorkerFeatureImplementation {
       return {
         success: true,
         value: context,
-        type: 'Context',
+        type: 'object',
       };
     } catch (error) {
       this.trackPerformance(startTime, false);
 
       return {
         success: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: `WebWorker feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
-          },
-        ],
-        suggestions: [
-          'Verify worker script URL is accessible',
-          'Check browser supports Web Workers',
-          'Ensure script has valid JavaScript syntax',
-          'Validate worker configuration parameters',
-        ],
+        error: {
+          type: 'runtime-error',
+          message: `WebWorker feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: [
+            'Verify worker script URL is accessible',
+            'Check browser supports Web Workers',
+            'Ensure script has valid JavaScript syntax',
+            'Validate worker configuration parameters',
+          ],
+        },
       };
     }
   }

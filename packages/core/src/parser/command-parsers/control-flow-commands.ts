@@ -161,7 +161,7 @@ export function parseRepeatCommand(
       const eventToken = ctx.peek();
       debug.parse('📍 Parsing event name, current token:', {
         value: eventToken.value,
-        type: eventToken.type,
+        kind: eventToken.kind,
       });
       // Accept both IDENTIFIER and EVENT token types for the event name
       // (tokenizer marks known DOM events like 'mouseup', 'click' as EVENT type)
@@ -190,7 +190,7 @@ export function parseRepeatCommand(
         const beforePrimary = ctx.peek();
         debug.parse('🔍 Before parsePrimary for event target:', {
           value: beforePrimary.value,
-          type: beforePrimary.type,
+          kind: beforePrimary.kind,
           position: beforePrimary.start,
         });
         eventTarget = ctx.parsePrimary();

@@ -322,8 +322,7 @@ export class TypedInitFeatureImplementation {
       if (!validation.isValid) {
         return {
           success: false,
-          errors: validation.errors,
-          suggestions: validation.suggestions ? [...validation.suggestions] : undefined,
+          error: validation.errors[0],
         };
       }
 
@@ -398,25 +397,23 @@ export class TypedInitFeatureImplementation {
       return {
         success: true,
         value: context,
-        type: 'Object',
+        type: 'object',
       };
     } catch (error) {
       this.trackPerformance(startTime, false);
 
       return {
         success: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: `Init feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
-          },
-        ],
-        suggestions: [
-          'Verify target element exists or selector is valid',
-          'Check commands array contains valid command objects',
-          'Ensure DOM is ready for initialization',
-          'Validate timing and lifecycle configurations',
-        ],
+        error: {
+          type: 'runtime-error',
+          message: `Init feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: [
+            'Verify target element exists or selector is valid',
+            'Check commands array contains valid command objects',
+            'Ensure DOM is ready for initialization',
+            'Validate timing and lifecycle configurations',
+          ],
+        },
       };
     }
   }

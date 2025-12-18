@@ -573,21 +573,21 @@ export class BaseExpressionEvaluator {
       case 'it':
         return context.result;
       case 'you':
-        return context.target || context.you;
+        return context.you;
       case 'event':
         return context.event;
       case 'body':
-        return context.meta?.ownerDocument?.body || document?.body;
+        return (context.meta as { ownerDocument?: Document })?.ownerDocument?.body || document?.body;
       case 'detail':
         return (context.event as CustomEvent)?.detail;
       case 'target':
-        return context.target || (context.event as Event)?.target;
+        return context.you || (context.event as Event)?.target;
       case 'sender':
         return (context.event as Event)?.target;
       default:
         // For unknown context types, try to look up in locals
-        if (context.locals && contextType in context.locals) {
-          return context.locals[contextType];
+        if (context.locals && context.locals.has(contextType)) {
+          return context.locals.get(contextType);
         }
         debug.expressions(`Unknown context reference type: ${contextType}`);
         return undefined;

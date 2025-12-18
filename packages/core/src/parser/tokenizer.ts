@@ -414,15 +414,15 @@ export function tokenize(input: string): Token[] {
       // Check for event handler condition syntax
       const isEventCondition =
         prevToken &&
-        (prevToken.type === TokenType.EVENT ||
-          (prevToken.type === TokenType.IDENTIFIER && DOM_EVENTS.has(prevToken.value))) &&
+        (prevToken.kind === TokenType.EVENT ||
+          (prevToken.kind === TokenType.IDENTIFIER && DOM_EVENTS.has(prevToken.value))) &&
         tokenizer.tokens.length >= 2 &&
         tokenizer.tokens[tokenizer.tokens.length - 2]?.value === 'on';
 
       const isMemberAccess =
         prevToken &&
-        (prevToken.type === TokenType.IDENTIFIER ||
-          prevToken.type === TokenType.CONTEXT_VAR ||
+        (prevToken.kind === TokenType.IDENTIFIER ||
+          prevToken.kind === TokenType.CONTEXT_VAR ||
           prevToken.value === ')' ||
           prevToken.value === ']') &&
         !isEventCondition; // Don't treat as member access if it's an event condition
@@ -965,10 +965,10 @@ function tryTokenizeCompoundOperator(
   const prevToken = tokenizer.tokens[tokenizer.tokens.length - 1];
   if (
     prevToken &&
-    (prevToken.type === 'identifier' ||
-      prevToken.type === 'id_selector' ||
-      prevToken.type === 'class_selector' ||
-      prevToken.type === 'context_var')
+    (prevToken.kind === 'identifier' ||
+      prevToken.kind === 'id_selector' ||
+      prevToken.kind === 'class_selector' ||
+      prevToken.kind === 'context_var')
   ) {
     const nextChar =
       tokenizer.position < tokenizer.input.length ? tokenizer.input[tokenizer.position] : '';

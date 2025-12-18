@@ -1032,7 +1032,7 @@ function parsePrimaryExpression(state: ParseState): ASTNode {
         advance(state);
         key = createLiteralNode(keyToken.value.slice(1, -1), 'string', keyToken);
       } else {
-        throw new ExpressionParseError(`Expected property key, got: ${keyToken.type}`);
+        throw new ExpressionParseError(`Expected property key, got: ${keyToken.kind}`);
       }
 
       // Expect colon

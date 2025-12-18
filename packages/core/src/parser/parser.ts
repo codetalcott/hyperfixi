@@ -847,8 +847,8 @@ export class Parser {
       debug.parse(
         '📍 Loop iteration, current token:',
         this.peek().value,
-        'type:',
-        this.peek().type
+        'kind:',
+        this.peek().kind
       );
       // Try to parse a command
       let parsedCommand = false;
@@ -1914,7 +1914,7 @@ export class Parser {
     // Look for commands after the event (and optional selector)
     while (!this.isAtEnd()) {
       debug.parse(
-        `✅ parseEventHandler: Loop iteration, current token: ${this.peek().value}, type: ${this.peek().type}`
+        `✅ parseEventHandler: Loop iteration, current token: ${this.peek().value}, kind: ${this.peek().kind}`
       );
 
       // Stop parsing commands if we encounter another event handler (on ...)

@@ -357,8 +357,7 @@ export class TypedBehaviorsFeatureImplementation {
         }
         return {
           success: false,
-          errors: validation.errors,
-          suggestions: validation.suggestions ? [...validation.suggestions] : undefined,
+          error: validation.errors[0],
         };
       }
 
@@ -443,25 +442,23 @@ export class TypedBehaviorsFeatureImplementation {
       return {
         success: true,
         value: context,
-        type: 'Context',
+        type: 'object',
       };
     } catch (error) {
       this.trackPerformance(startTime, false);
 
       return {
         success: false,
-        errors: [
-          {
-            type: 'runtime-error',
-            message: `Behaviors feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
-          },
-        ],
-        suggestions: [
-          'Verify behavior definition syntax is correct',
-          'Check event handler configurations are valid',
-          'Ensure parameter names are valid identifiers',
-          'Validate lifecycle hooks contain valid commands',
-        ],
+        error: {
+          type: 'runtime-error',
+          message: `Behaviors feature initialization failed: ${error instanceof Error ? error.message : String(error)}`,
+          suggestions: [
+            'Verify behavior definition syntax is correct',
+            'Check event handler configurations are valid',
+            'Ensure parameter names are valid identifiers',
+            'Validate lifecycle hooks contain valid commands',
+          ],
+        },
       };
     }
   }
