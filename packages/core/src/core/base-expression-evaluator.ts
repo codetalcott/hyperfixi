@@ -1107,40 +1107,10 @@ export class BaseExpressionEvaluator {
       throw new Error(`Unknown constructor: ${constructorName}`);
     }
 
-    // Handle member expression calls
-    if (callee.type === 'memberExpression') {
-      const thisContext = this.unwrapSelectorResult(await this.evaluate(callee.object, context));
-      const propertyName = callee.property?.name || callee.property;
-      const func = thisContext?.[propertyName];
-
-      if (typeof func === 'function') {
-        const evaluatedArgs = await Promise.all(
-          args.map((arg: any) => this.evaluate(arg, context))
-        );
-        return func.apply(thisContext, evaluatedArgs);
-      }
-
-      throw new Error(
-        `Member expression does not evaluate to a function: ${propertyName || 'unknown'}`
-      );
-    }
-
-    // Handle property access calls (e.g., #dialog.showModal())
-    if (callee.type === 'propertyAccess') {
-      const thisContext = this.unwrapSelectorResult(await this.evaluate(callee.object, context));
-      const propertyName = callee.property?.name || callee.property?.value;
-      const func = thisContext?.[propertyName];
-
-      if (typeof func === 'function') {
-        const evaluatedArgs = await Promise.all(
-          args.map((arg: any) => this.evaluate(arg, context))
-        );
-        return func.apply(thisContext, evaluatedArgs);
-      }
-
-      throw new Error(
-        `Property does not evaluate to a function: ${propertyName || 'unknown'}`
-      );
+    // Handle member expression and property access calls (obj.method() or #selector.method())
+    // Both create similar AST structures with object and property
+    if (callee.type === 'memberExpression' || callee.type === 'propertyAccess') {
+      return await this.evaluateMethodCall(callee, args, context);
     }
 
     const functionName = callee.name || callee;
@@ -1155,7 +1125,7 @@ export class BaseExpressionEvaluator {
       const needsCollection = collectionFunctions.includes(functionName);
 
       const evaluatedArgs = await Promise.all(
-        args.map(async (arg: any) => {
+        args.map((arg: any) => {
           if (needsSelectorString && arg && arg.type === 'selector' && typeof arg.value === 'string') {
             return arg.value;
           }
@@ -1177,6 +1147,54 @@ export class BaseExpressionEvaluator {
     }
 
     throw new Error(`Unknown function: ${functionName}`);
+  }
+
+  /**
+   * Evaluate method calls on objects (both memberExpression and propertyAccess)
+   * Handles: obj.method(), #selector.method(), element.showModal(), etc.
+   */
+  private async evaluateMethodCall(
+    callee: any,
+    args: any[],
+    context: ExecutionContext
+  ): Promise<any> {
+    try {
+      // Evaluate the object and extract the method
+      const object = await this.evaluate(callee.object, context);
+      const thisContext = this.unwrapSelectorResult(object);
+
+      if (thisContext === null || thisContext === undefined) {
+        throw new Error(`Cannot call method on null or undefined`);
+      }
+
+      // Extract property name (handle both memberExpression and propertyAccess formats)
+      const propertyName = callee.property?.name || callee.property?.value || callee.property;
+      if (!propertyName || typeof propertyName !== 'string') {
+        throw new Error(`Invalid method name: ${propertyName}`);
+      }
+
+      const func = thisContext[propertyName];
+
+      if (typeof func !== 'function') {
+        throw new Error(
+          `Property "${propertyName}" is not a function on ${
+            thisContext.constructor?.name || typeof thisContext
+          }`
+        );
+      }
+
+      // Evaluate arguments
+      const evaluatedArgs = await Promise.all(args.map((arg: any) => this.evaluate(arg, context)));
+
+      // Call the method with proper 'this' binding
+      return func.apply(thisContext, evaluatedArgs);
+    } catch (error) {
+      // Re-throw with additional context if needed
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error(`Failed to evaluate method call: ${error}`);
+    }
   }
 
   /**
