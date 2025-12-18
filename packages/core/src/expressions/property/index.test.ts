@@ -141,7 +141,7 @@ describe('MyExpression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value!).toBe(undefined);
-        expect(result.type).toBe('Any');
+        expect(result.type).toBe('unknown');
       }
     });
   });
@@ -154,8 +154,8 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors![0].type).toBe('context-error');
-        expect(result.errors![0].message).toContain('No current element (me) available');
+        expect(result.error?.type).toBe('context-error');
+        expect(result.error?.message).toContain('No current element (me) available');
       }
     });
 
@@ -165,7 +165,7 @@ describe('MyExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors![0].type).toBe('context-error');
+        expect(result.error?.type).toBe('context-error');
       }
     });
   });
@@ -180,7 +180,7 @@ describe('MyExpression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value!).toBe(undefined);
-        expect(result.type).toBe('Any');
+        expect(result.type).toBe('unknown');
       }
     });
 
@@ -387,7 +387,7 @@ describe('ItsExpression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value!).toBe(undefined);
-        expect(result.type).toBe('Any');
+        expect(result.type).toBe('unknown');
       }
     });
   });
@@ -399,7 +399,7 @@ describe('ItsExpression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value!).toBe(undefined);
-        expect(result.type).toBe('Any');
+        expect(result.type).toBe('unknown');
       }
     });
 
@@ -409,7 +409,7 @@ describe('ItsExpression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value!).toBe(undefined);
-        expect(result.type).toBe('Any');
+        expect(result.type).toBe('unknown');
       }
     });
   });
@@ -571,8 +571,8 @@ describe('AttributeExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors![0].type).toBe('type-mismatch');
-        expect(result.errors![0].message).toContain('Target must be a DOM element');
+        expect(result.error?.type).toBe('type-mismatch');
+        expect(result.error?.message).toContain('Target must be a DOM element');
       }
     });
 
@@ -584,7 +584,7 @@ describe('AttributeExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors![0].type).toBe('type-mismatch');
+        expect(result.error?.type).toBe('type-mismatch');
       }
     });
 
@@ -596,7 +596,7 @@ describe('AttributeExpression', () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.errors![0].type).toBe('type-mismatch');
+        expect(result.error?.type).toBe('type-mismatch');
       }
     });
   });
