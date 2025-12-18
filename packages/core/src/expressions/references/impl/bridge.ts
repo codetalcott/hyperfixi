@@ -122,9 +122,9 @@ export class ExpressionAdapter {
       console.warn('Enhanced CSS selector expression failed:', result.error);
       // Fallback to basic DOM query
       if (single) {
-        return document.querySelector(selector);
+        return document.querySelector(selector) as HTMLElement | null;
       } else {
-        const elements = Array.from(document.querySelectorAll(selector));
+        const elements = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
         return elements.length > 0 ? elements : null;
       }
     }

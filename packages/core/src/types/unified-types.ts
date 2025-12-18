@@ -113,7 +113,7 @@ export interface Result<T = unknown> {
  */
 export interface TypedResult<T = unknown> extends Result<T> {
   readonly errors?: ValidationError[];
-  readonly suggestions?: string[];
+  readonly suggestions?: readonly string[] | string[];
 }
 
 // ============================================================================

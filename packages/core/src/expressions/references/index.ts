@@ -94,7 +94,7 @@ export const querySelectorExpression: ExpressionImplementation = {
 
     // Always search from document to find any element
     // This matches hyperscript's behavior where selectors are global by default
-    return document.querySelector(selector);
+    return document.querySelector(selector) as HTMLElement | null;
   },
 
   validate(args: unknown[]): string | null {

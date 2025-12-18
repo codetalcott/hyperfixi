@@ -18,6 +18,7 @@ import type {
   ValidationError,
   HyperScriptValueType,
   EvaluationResult,
+  EvaluationType,
   TypedExecutionContext,
 } from './base-types';
 
@@ -50,7 +51,7 @@ export type HyperScriptValue = unknown;
 /**
  * Use unified result type
  */
-export type { EvaluationResult } from './base-types';
+export type { EvaluationResult, EvaluationType, HyperScriptValueType } from './base-types';
 
 /**
  * Runtime type validation schema

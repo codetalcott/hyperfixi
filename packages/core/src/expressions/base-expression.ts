@@ -15,6 +15,7 @@ import type {
   TypedExpressionContext,
   EvaluationResult,
   ValidationResult,
+  ValidationError,
   ExpressionMetadata,
   EvaluationType,
 } from '../types/base-types';
@@ -136,10 +137,10 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
    */
   protected failure<T>(
     name: string,
-    type: 'runtime-error' | 'validation-error' | 'type-mismatch' | 'invalid-argument',
+    type: ValidationError['type'],
     message: string,
     code: string,
-    suggestions: string[] = []
+    suggestions: readonly string[] | string[] = []
   ): EvaluationResult<T> {
     return {
       success: false,
@@ -168,7 +169,7 @@ export abstract class BaseExpressionImpl<TInput = unknown, TOutput = unknown> {
    * Create a failed validation result
    */
   protected validationFailure(
-    type: 'type-mismatch' | 'runtime-error' | 'validation-error' | 'syntax-error',
+    type: ValidationError['type'],
     message: string,
     suggestions: string[] = []
   ): ValidationResult {
