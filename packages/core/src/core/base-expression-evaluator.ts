@@ -1125,6 +1125,24 @@ export class BaseExpressionEvaluator {
       );
     }
 
+    // Handle property access calls (e.g., #dialog.showModal())
+    if (callee.type === 'propertyAccess') {
+      const thisContext = this.unwrapSelectorResult(await this.evaluate(callee.object, context));
+      const propertyName = callee.property?.name || callee.property?.value;
+      const func = thisContext?.[propertyName];
+
+      if (typeof func === 'function') {
+        const evaluatedArgs = await Promise.all(
+          args.map((arg: any) => this.evaluate(arg, context))
+        );
+        return func.apply(thisContext, evaluatedArgs);
+      }
+
+      throw new Error(
+        `Property does not evaluate to a function: ${propertyName || 'unknown'}`
+      );
+    }
+
     const functionName = callee.name || callee;
 
     // Check if it's a registered expression function
