@@ -1,8 +1,9 @@
 /**
- * SetCommand - Decorated Implementation
+ * SetCommand - Optimized Implementation
  *
  * Sets values to variables, element attributes, or properties.
- * Uses Stage 3 decorators for reduced boilerplate.
+ *
+ * Optimized: 622 lines → ~350 lines
  *
  * Syntax:
  *   set myVar to "value"
@@ -21,78 +22,59 @@ import {
 } from '../helpers/element-resolution';
 import { isCSSPropertySyntax, setStyleValue } from '../helpers/style-manipulation';
 import { isAttributeSyntax } from '../helpers/attribute-manipulation';
-import { isValidType } from '../helpers/input-validator';
 import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
-/**
- * Typed input for SetCommand (Discriminated Union)
- * Represents parsed arguments ready for execution
- *
- * Supports multiple assignment types:
- * - Variable: set x to value
- * - Attribute: set @attr to value
- * - Property: set my property to value, set the property of element to value
- * - Style: set *property to value
- * - Object literal: set { prop: value } on element
- */
+/** Typed input for SetCommand (Discriminated Union) */
 export type SetCommandInput =
-  | {
-      type: 'variable';
-      name: string;
-      value: unknown;
-    }
-  | {
-      type: 'attribute';
-      element: HTMLElement;
-      name: string;
-      value: unknown;
-    }
-  | {
-      type: 'property';
-      element: HTMLElement;
-      property: string;
-      value: unknown;
-    }
-  | {
-      type: 'style';
-      element: HTMLElement;
-      property: string;
-      value: string;
-    }
-  | {
-      type: 'object-literal';
-      properties: Record<string, unknown>;
-      targets: HTMLElement[];
-    };
+  | { type: 'variable'; name: string; value: unknown }
+  | { type: 'attribute'; element: HTMLElement; name: string; value: unknown }
+  | { type: 'property'; element: HTMLElement; property: string; value: unknown }
+  | { type: 'style'; element: HTMLElement; property: string; value: string }
+  | { type: 'object-literal'; properties: Record<string, unknown>; targets: HTMLElement[] };
 
-/**
- * Output from SetCommand execution
- */
+/** Output from SetCommand execution */
 export interface SetCommandOutput {
-  /** Target that was set */
   target: string | HTMLElement;
-  /** Value that was set */
   value: unknown;
-  /** Type of target */
   targetType: 'variable' | 'attribute' | 'property';
 }
 
-/** Property setter lookup table for common DOM properties */
-const PROPERTY_SETTERS: Record<string, (el: HTMLElement, val: unknown) => void> = {
-  textContent: (el, val) => { el.textContent = String(val); },
-  innerHTML: (el, val) => { el.innerHTML = String(val); },
-  innerText: (el, val) => { el.innerText = String(val); },
-  id: (el, val) => { el.id = String(val); },
-  className: (el, val) => { el.className = String(val); },
-  value: (el, val) => { if ('value' in el) (el as HTMLInputElement).value = String(val); },
-};
+/** Set element property (handles common DOM properties and styles) */
+function setElementProperty(element: HTMLElement, property: string, value: unknown): void {
+  const strValue = String(value);
+  switch (property) {
+    case 'textContent': element.textContent = strValue; return;
+    case 'innerHTML': element.innerHTML = strValue; return;
+    case 'innerText': element.innerText = strValue; return;
+    case 'id': element.id = strValue; return;
+    case 'className': element.className = strValue; return;
+    case 'value':
+      if ('value' in element) (element as HTMLInputElement).value = strValue;
+      return;
+  }
+  // CSS style property
+  if (property.includes('-') || property in element.style) {
+    element.style.setProperty(property, strValue);
+    return;
+  }
+  // Generic property with readonly protection
+  try {
+    (element as Record<string, unknown>)[property] = value;
+  } catch (error) {
+    if (!(error instanceof TypeError && (error.message.includes('only a getter') || error.message.includes('read only')))) {
+      throw new Error(`Cannot set property '${property}': ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+}
 
-/**
- * SetCommand - Core assignment command
- *
- * Before: 682 lines
- * After: ~600 lines (12% reduction)
- */
+/** Check if value is a plain object (not array, not null, not DOM node) */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  if (isHTMLElement(value) || value instanceof Node) return false;
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
+}
+
 @meta({
   description: 'Set values to variables, attributes, or properties',
   syntax: ['set <target> to <value>'],
@@ -104,206 +86,84 @@ export class SetCommand implements DecoratedCommand {
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;
 
-  /**
-   * Parse raw AST nodes into typed command input
-   *
-   * Detects input type and parses accordingly:
-   * - Object literal: set { x: 1 } on element
-   * - CSS shorthand: set *property to value
-   * - "the X of Y": set the property of element to value
-   * - Attribute: set @attr to value
-   * - Property: set my property to value
-   * - Variable: set x to value
-   *
-   * @param raw - Raw command node with args and modifiers from AST
-   * @param evaluator - Expression evaluator for evaluating AST nodes
-   * @param context - Execution context with me, you, it, etc.
-   * @returns Typed input object for execute()
-   */
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SetCommandInput> {
-    if (!raw.args || raw.args.length === 0) {
+    if (!raw.args?.length) {
       throw new Error('set command requires a target');
     }
 
-    // Extract first argument
-    const firstArg = raw.args[0] as any;
+    const firstArg = raw.args[0] as Record<string, unknown>;
+    const argName = (firstArg?.name || firstArg?.value) as string | undefined;
 
-    // Handle identifier nodes directly without evaluation
-    // For "set x to 42", x is an identifier node that should become a variable name
-    // not evaluated as a variable lookup (which would return undefined)
-    //
-    // Parser may create:
-    // - { type: 'identifier', name: 'x' } - standard identifier
-    // - { type: 'variable', name: 'x' } - alternative variable node
-    let firstValue: unknown;
-    const argName = firstArg?.name || firstArg?.value;
-
-    // Handle possessiveExpression for element property/style access: "set #element's *opacity to X"
-    // Parser creates: { type: 'possessiveExpression', object: {selector}, property: {cssProperty} }
-    // Must handle BEFORE evaluation to extract element and property separately
+    // Handle possessiveExpression: "set #element's *opacity to X"
     if (firstArg?.type === 'possessiveExpression') {
-      const objectNode = firstArg['object'] as any;
-      const propertyNode = firstArg['property'] as any;
-
-      // Evaluate the object to get the element
-      let element = await evaluator.evaluate(objectNode, context);
-
-      // Handle array result from selector (querySelectorAll returns NodeList converted to array)
-      if (Array.isArray(element) && element.length > 0) {
-        element = element[0];
-      }
-
-      if (!isHTMLElement(element)) {
-        throw new Error('set command: possessive object must resolve to an HTMLElement');
-      }
-
-      // Get property name
-      const propertyName = propertyNode?.name || propertyNode?.value;
-
-      if (!propertyName) {
-        throw new Error('set command: possessive property name not found');
-      }
-
-      const value = await this.extractValue(raw, evaluator, context);
-
-      // Check if it's a CSS style property (from *opacity syntax)
-      // Parser creates { type: 'cssProperty', name: 'opacity' } for *opacity
-      if (propertyNode?.type === 'cssProperty' || propertyName.startsWith('*')) {
-        const styleProp = propertyName.startsWith('*') ? propertyName.substring(1) : propertyName;
-        return {
-          type: 'style',
-          element,
-          property: styleProp,
-          value: String(value),
-        };
-      }
-
-      // Regular property assignment
-      return {
-        type: 'property',
-        element,
-        property: propertyName,
-        value,
-      };
+      return this.parsePossessiveExpression(firstArg, raw, evaluator, context);
     }
 
-    // Handle memberExpression for possessive property access: "set my innerHTML to X"
-    // Parser creates: { type: 'memberExpression', object: {name: 'me'}, property: {name: 'innerHTML'} }
+    // Handle memberExpression: "set my innerHTML to X"
     if (firstArg?.type === 'memberExpression') {
-      const objectNode = firstArg['object'] as { type: string; name?: string } | undefined;
-      const propertyNode = firstArg['property'] as { type: string; name?: string } | undefined;
-
-      if (objectNode?.name && propertyNode?.name) {
-        const objectName = objectNode.name.toLowerCase();
-        // Check if object is a possessive context reference
-        if (['me', 'my', 'it', 'its', 'you', 'your'].includes(objectName)) {
-          const element = resolvePossessive(objectName, context);
-          const value = await this.extractValue(raw, evaluator, context);
-          return {
-            type: 'property',
-            element,
-            property: propertyNode.name,
-            value,
-          };
-        }
-      }
+      const result = this.tryParseMemberExpression(firstArg, raw, evaluator, context);
+      if (result) return result;
     }
 
-    // Check for identifier or variable node types
-    // These should NOT be evaluated (would return undefined for undefined variables)
-    if (
-      (firstArg?.type === 'identifier' || firstArg?.type === 'variable') &&
-      typeof argName === 'string'
-    ) {
-      // Use identifier name directly for variable assignment
+    // Get first value (identifier/variable nodes use name directly, others evaluated)
+    let firstValue: unknown;
+    if ((firstArg?.type === 'identifier' || firstArg?.type === 'variable') && typeof argName === 'string') {
       firstValue = argName;
     } else {
       firstValue = await evaluator.evaluate(firstArg, context);
     }
 
-    // Check for object literal: set { x: 1, y: 2 } on element
-    if (this.isPlainObject(firstValue)) {
+    // Object literal: set { x: 1, y: 2 } on element
+    if (isPlainObject(firstValue)) {
       const targets = await this.resolveTargets(raw.modifiers.on, evaluator, context);
-      return {
-        type: 'object-literal',
-        properties: firstValue as Record<string, unknown>,
-        targets,
-      };
+      return { type: 'object-literal', properties: firstValue, targets };
     }
 
-    // Check for "the X of Y" syntax: set the property of element to value
+    // "the X of Y" syntax
     if (typeof firstValue === 'string' && firstValue.toLowerCase().startsWith('the ')) {
       return this.parseTheXofY(firstValue, raw, evaluator, context);
     }
 
-    // Check for CSS shorthand: *property (using shared helper)
+    // CSS shorthand: *property
     if (typeof firstValue === 'string' && isCSSPropertySyntax(firstValue)) {
       const property = firstValue.substring(1).trim();
       const value = await this.extractValue(raw, evaluator, context);
       const element = await this.resolveElement(raw.modifiers.on, evaluator, context);
-      return {
-        type: 'style',
-        element,
-        property,
-        value: String(value),
-      };
+      return { type: 'style', element, property, value: String(value) };
     }
 
-    // Check for attribute syntax: @attr (using shared helper)
+    // Attribute syntax: @attr
     if (typeof firstValue === 'string' && isAttributeSyntax(firstValue)) {
-      const attributeName = firstValue.substring(1).trim();
+      const name = firstValue.substring(1).trim();
       const value = await this.extractValue(raw, evaluator, context);
       const element = await this.resolveElement(raw.modifiers.on, evaluator, context);
-      return {
-        type: 'attribute',
-        element,
-        name: attributeName,
-        value,
-      };
+      return { type: 'attribute', element, name, value };
     }
 
-    // Check for possessive syntax: my/its property
+    // Possessive syntax: my/its property
     if (typeof firstValue === 'string') {
-      const possessiveMatch = firstValue.match(/^(my|me|its?|your?)\s+(.+)$/i);
-      if (possessiveMatch) {
-        const [, possessive, property] = possessiveMatch;
-        const element = resolvePossessive(possessive, context);
+      const match = firstValue.match(/^(my|me|its?|your?)\s+(.+)$/i);
+      if (match) {
+        const element = resolvePossessive(match[1], context);
         const value = await this.extractValue(raw, evaluator, context);
-        return {
-          type: 'property',
-          element,
-          property,
-          value,
-        };
+        return { type: 'property', element, property: match[2], value };
       }
     }
 
-    // Check for element target: set #element to value (sets textContent)
-    // This handles CSS selector results like set #result to "clicked!"
+    // Element target: set #element to value (sets textContent)
     if (isHTMLElement(firstValue)) {
       const value = await this.extractValue(raw, evaluator, context);
-      return {
-        type: 'property',
-        element: firstValue,
-        property: 'textContent',
-        value,
-      };
+      return { type: 'property', element: firstValue, property: 'textContent', value };
     }
 
-    // Handle array of elements: set multiple elements' textContent
+    // Array of elements: set first element's textContent
     if (Array.isArray(firstValue) && firstValue.length > 0 && isHTMLElement(firstValue[0])) {
       const value = await this.extractValue(raw, evaluator, context);
-      // Set textContent on first element (common case for ID selectors)
-      return {
-        type: 'property',
-        element: firstValue[0],
-        property: 'textContent',
-        value,
-      };
+      return { type: 'property', element: firstValue[0], property: 'textContent', value };
     }
 
     // Default: variable assignment
@@ -312,309 +172,174 @@ export class SetCommand implements DecoratedCommand {
     }
 
     const value = await this.extractValue(raw, evaluator, context);
-    return {
-      type: 'variable',
-      name: firstValue,
-      value,
-    };
+    return { type: 'variable', name: firstValue, value };
   }
 
-  /**
-   * Execute the set command
-   *
-   * Sets value based on input type using discriminated union.
-   *
-   * @param input - Typed command input from parseInput()
-   * @param context - Typed execution context
-   * @returns Output with target type and value
-   */
-  async execute(
-    input: SetCommandInput,
-    context: TypedExecutionContext
-  ): Promise<SetCommandOutput> {
+  async execute(input: SetCommandInput, context: TypedExecutionContext): Promise<SetCommandOutput> {
     switch (input.type) {
       case 'variable':
-        return this.setVariable(context, input.name, input.value);
+        context.locals.set(input.name, input.value);
+        if (input.name === 'result' || input.name === 'it') {
+          Object.assign(context, { [input.name]: input.value });
+        }
+        Object.assign(context, { it: input.value });
+        return { target: input.name, value: input.value, targetType: 'variable' };
 
       case 'attribute':
         input.element.setAttribute(input.name, String(input.value));
         Object.assign(context, { it: input.value });
-        return {
-          target: `@${input.name}`,
-          value: input.value,
-          targetType: 'attribute',
-        };
+        return { target: `@${input.name}`, value: input.value, targetType: 'attribute' };
 
       case 'property':
-        return this.setProperty(context, input.element, input.property, input.value);
+        setElementProperty(input.element, input.property, input.value);
+        Object.assign(context, { it: input.value });
+        return { target: input.element, value: input.value, targetType: 'property' };
 
       case 'style':
         setStyleValue(input.element, input.property, input.value);
         Object.assign(context, { it: input.value });
-        return {
-          target: input.element,
-          value: input.value,
-          targetType: 'property',
-        };
+        return { target: input.element, value: input.value, targetType: 'property' };
 
       case 'object-literal':
-        // Set multiple properties on all targets
         for (const target of input.targets) {
-          for (const [key, value] of Object.entries(input.properties)) {
-            await this.setProperty(context, target, key, value);
+          for (const [key, val] of Object.entries(input.properties)) {
+            setElementProperty(target, key, val);
           }
         }
         Object.assign(context, { it: input.properties });
-        return {
-          target: input.targets[0] || 'unknown',
-          value: input.properties,
-          targetType: 'property',
-        };
+        return { target: input.targets[0] || 'unknown', value: input.properties, targetType: 'property' };
 
       default:
-        // TypeScript exhaustiveness check
-        const _exhaustive: never = input;
-        throw new Error(`Unknown input type: ${(_exhaustive as any).type}`);
+        throw new Error(`Unknown input type: ${(input as { type: string }).type}`);
     }
   }
 
-  /**
-   * Validate parsed input (discriminated union)
-   *
-   * Runtime validation to catch parsing errors early.
-   *
-   * @param input - Input to validate
-   * @returns true if input is valid SetCommandInput
-   */
-  validate(input: unknown): input is SetCommandInput {
-    if (typeof input !== 'object' || input === null) return false;
+  // ========== Private Helpers ==========
 
-    const typed = input as Partial<SetCommandInput>;
+  private async parsePossessiveExpression(
+    firstArg: Record<string, unknown>,
+    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<SetCommandInput> {
+    const objectNode = firstArg.object as ASTNode;
+    const propertyNode = firstArg.property as Record<string, unknown>;
 
-    // Check type discriminator using shared helper
-    if (!isValidType(typed.type, ['variable', 'attribute', 'property', 'style', 'object-literal'] as const)) {
-      return false;
+    let element = await evaluator.evaluate(objectNode, context);
+    if (Array.isArray(element) && element.length > 0) element = element[0];
+    if (!isHTMLElement(element)) {
+      throw new Error('set command: possessive object must resolve to an HTMLElement');
     }
 
-    // Type-specific validation
-    if (typed.type === 'variable') {
-      const varInput = input as Partial<{ type: 'variable'; name: string; value: unknown }>;
-      if (typeof varInput.name !== 'string' || varInput.name.length === 0) return false;
-    } else if (typed.type === 'attribute') {
-      const attrInput = input as Partial<{ type: 'attribute'; element: unknown; name: string; value: unknown }>;
-      if (!isHTMLElement(attrInput.element)) return false;
-      if (typeof attrInput.name !== 'string' || attrInput.name.length === 0) return false;
-    } else if (typed.type === 'property') {
-      const propInput = input as Partial<{ type: 'property'; element: unknown; property: string; value: unknown }>;
-      if (!isHTMLElement(propInput.element)) return false;
-      if (typeof propInput.property !== 'string' || propInput.property.length === 0) return false;
-    } else if (typed.type === 'style') {
-      const styleInput = input as Partial<{ type: 'style'; element: unknown; property: string; value: unknown }>;
-      if (!isHTMLElement(styleInput.element)) return false;
-      if (typeof styleInput.property !== 'string' || styleInput.property.length === 0) return false;
-      if (typeof styleInput.value !== 'string') return false;
-    } else if (typed.type === 'object-literal') {
-      const objInput = input as Partial<{ type: 'object-literal'; properties: unknown; targets: unknown }>;
-      if (typeof objInput.properties !== 'object' || objInput.properties === null) return false;
-      if (!Array.isArray(objInput.targets)) return false;
-      if (objInput.targets.length === 0) return false;
-      if (!objInput.targets.every(t => isHTMLElement(t))) return false;
+    const propertyName = (propertyNode?.name || propertyNode?.value) as string;
+    if (!propertyName) throw new Error('set command: possessive property name not found');
+
+    const value = await this.extractValue(raw, evaluator, context);
+
+    // CSS style property from *opacity syntax
+    if (propertyNode?.type === 'cssProperty' || propertyName.startsWith('*')) {
+      const styleProp = propertyName.startsWith('*') ? propertyName.substring(1) : propertyName;
+      return { type: 'style', element, property: styleProp, value: String(value) };
     }
 
-    return true;
+    return { type: 'property', element, property: propertyName, value };
   }
 
-  // ========== Private Utility Methods ==========
+  private async tryParseMemberExpression(
+    firstArg: Record<string, unknown>,
+    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    evaluator: ExpressionEvaluator,
+    context: ExecutionContext
+  ): Promise<SetCommandInput | null> {
+    const objectNode = firstArg.object as { name?: string } | undefined;
+    const propertyNode = firstArg.property as { name?: string } | undefined;
 
-  /**
-   * Check if value is a plain object (not array, not null, not class instance)
-   *
-   * @param value - Value to check
-   * @returns true if plain object
-   */
-  private isPlainObject(value: unknown): boolean {
-    if (typeof value !== 'object' || value === null) return false;
-    if (Array.isArray(value)) return false;
-    if (isHTMLElement(value)) return false;
-    if (value instanceof Node) return false;
-    // Check if it's a plain object (not a class instance)
-    const proto = Object.getPrototypeOf(value);
-    return proto === Object.prototype || proto === null;
+    if (objectNode?.name && propertyNode?.name) {
+      const objectName = objectNode.name.toLowerCase();
+      if (['me', 'my', 'it', 'its', 'you', 'your'].includes(objectName)) {
+        const element = resolvePossessive(objectName, context);
+        const value = await this.extractValue(raw, evaluator, context);
+        return { type: 'property', element, property: propertyNode.name, value };
+      }
+    }
+    return null;
   }
 
-  /**
-   * Extract value from "to" modifier or second argument
-   *
-   * @param raw - Raw command node
-   * @param evaluator - Expression evaluator
-   * @param context - Execution context
-   * @returns Extracted value
-   */
   private async extractValue(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<unknown> {
-    // Check modifiers.to first (some parsers put value there)
     if (raw.modifiers.to) {
-      return await evaluator.evaluate(raw.modifiers.to, context);
+      return evaluator.evaluate(raw.modifiers.to, context);
     }
 
-    // Parser puts args as [target, 'to', value] - find the 'to' marker and get value after it
     const toIndex = raw.args.findIndex(
-      arg => arg.type === 'identifier' && arg['name'] === 'to'
+      arg => arg.type === 'identifier' && (arg as Record<string, unknown>).name === 'to'
     );
 
     if (toIndex >= 0 && raw.args.length > toIndex + 1) {
-      // Value is after the 'to' keyword
-      const valueNode = raw.args[toIndex + 1];
-      return await evaluator.evaluate(valueNode, context);
+      return evaluator.evaluate(raw.args[toIndex + 1], context);
     }
 
-    // Fallback: if no 'to' marker, try second arg (legacy format)
     if (raw.args.length >= 2) {
-      return await evaluator.evaluate(raw.args[1], context);
+      return evaluator.evaluate(raw.args[1], context);
     }
 
     throw new Error('set command requires a value (use "to" keyword)');
   }
 
-  /**
-   * Resolve single element from "on" modifier or context.me
-   *
-   * @param onModifier - "on" modifier expression
-   * @param evaluator - Expression evaluator
-   * @param context - Execution context
-   * @returns Resolved HTMLElement
-   */
   private async resolveElement(
     onModifier: ExpressionNode | undefined,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<HTMLElement> {
-    if (!onModifier) {
-      return resolveElementHelper(undefined, context);
-    }
+    if (!onModifier) return resolveElementHelper(undefined, context);
     const evaluated = await evaluator.evaluate(onModifier, context);
     return resolveElementHelper(evaluated as string | HTMLElement | undefined, context);
   }
 
-  /**
-   * Resolve multiple target elements from "on" modifier
-   *
-   * @param onModifier - "on" modifier expression
-   * @param evaluator - Expression evaluator
-   * @param context - Execution context
-   * @returns Array of resolved HTMLElements
-   */
   private async resolveTargets(
     onModifier: ExpressionNode | undefined,
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<HTMLElement[]> {
-    if (!onModifier) {
-      return resolveElementsHelper(undefined, context);
-    }
+    if (!onModifier) return resolveElementsHelper(undefined, context);
     const evaluated = await evaluator.evaluate(onModifier, context);
     return resolveElementsHelper(evaluated as string | HTMLElement | HTMLElement[] | NodeList | undefined, context);
   }
 
-  /**
-   * Parse "the X of Y" syntax: set the property of element to value
-   *
-   * @param expression - Expression starting with "the"
-   * @param raw - Raw command node
-   * @param evaluator - Expression evaluator
-   * @param context - Execution context
-   * @returns Parsed property input
-   */
   private async parseTheXofY(
     expression: string,
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<SetCommandInput> {
-    // Pattern: "the <property> of <target>"
     const match = expression.match(/^the\s+(.+?)\s+of\s+(.+)$/i);
-    if (!match) {
-      throw new Error('Invalid "the X of Y" syntax');
-    }
+    if (!match) throw new Error('Invalid "the X of Y" syntax');
 
     const [, property, targetExpr] = match;
     const element = resolveElementHelper(targetExpr, context);
     const value = await this.extractValue(raw, evaluator, context);
 
-    return {
-      type: 'property',
-      element,
-      property: property.trim(),
-      value,
-    };
+    return { type: 'property', element, property: property.trim(), value };
   }
 
-  /**
-   * Set variable in execution context
-   *
-   * Always sets in context.locals for proper scoping.
-   *
-   * @param context - Execution context
-   * @param variableName - Variable name
-   * @param value - Value to set
-   * @returns Output descriptor
-   */
-  private setVariable(
-    context: TypedExecutionContext,
-    variableName: string,
-    value: unknown
-  ): SetCommandOutput {
-    // Set in locals (proper scoping)
-    context.locals.set(variableName, value);
-
-    // Also set special context properties for commonly used variables
-    if (variableName === 'result' || variableName === 'it') {
-      Object.assign(context, { [variableName]: value });
+  /** Validate input conforms to SetCommandInput */
+  validate(input: unknown): input is SetCommandInput {
+    if (!input || typeof input !== 'object') return false;
+    const obj = input as Record<string, unknown>;
+    if (!obj.type || typeof obj.type !== 'string') return false;
+    const validTypes = ['variable', 'attribute', 'property', 'style', 'object-literal'];
+    if (!validTypes.includes(obj.type)) return false;
+    switch (obj.type) {
+      case 'variable': return typeof obj.name === 'string' && 'value' in obj;
+      case 'attribute': return typeof obj.name === 'string' && isHTMLElement(obj.element) && 'value' in obj;
+      case 'property': return typeof obj.property === 'string' && isHTMLElement(obj.element) && 'value' in obj;
+      case 'style': return typeof obj.property === 'string' && obj.property !== '' && isHTMLElement(obj.element) && typeof obj.value === 'string';
+      case 'object-literal': return obj.properties !== null && typeof obj.properties === 'object' && Array.isArray(obj.targets) && obj.targets.length > 0;
+      default: return false;
     }
-
-    // Update context.it
-    Object.assign(context, { it: value });
-
-    return {
-      target: variableName,
-      value,
-      targetType: 'variable',
-    };
-  }
-
-
-  /**
-   * Set element property using lookup table for common properties
-   */
-  private setProperty(
-    context: TypedExecutionContext,
-    element: HTMLElement,
-    property: string,
-    value: unknown
-  ): SetCommandOutput {
-    // Try lookup table first
-    const setter = PROPERTY_SETTERS[property];
-    if (setter) {
-      setter(element, value);
-    } else if (property.includes('-') || property in element.style) {
-      // CSS style property
-      element.style.setProperty(property, String(value));
-    } else {
-      // Generic property with readonly protection
-      try {
-        (element as any)[property] = value;
-      } catch (error) {
-        if (!(error instanceof TypeError && error.message.includes('only a getter'))) {
-          throw new Error(`Cannot set property '${property}': ${error instanceof Error ? error.message : 'Unknown error'}`);
-        }
-      }
-    }
-
-    Object.assign(context, { it: value });
-    return { target: element, value, targetType: 'property' };
   }
 }
 

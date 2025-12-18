@@ -221,3 +221,19 @@ export type {
   CleanupFn,
   TemporalModifierOptions,
 } from './temporal-modifiers';
+
+// Loop execution helpers (Phase 5 - Size Optimization)
+export {
+  executeLoop,
+  createForLoopConfig,
+  createTimesLoopConfig,
+  createWhileLoopConfig,
+  createUntilLoopConfig,
+  createUntilEventLoopConfig,
+  createForeverLoopConfig,
+} from './loop-executor';
+export type {
+  LoopConfig,
+  LoopIterationContext,
+  LoopResult,
+} from './loop-executor';

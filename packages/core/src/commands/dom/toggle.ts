@@ -1,23 +1,13 @@
 /**
- * ToggleCommand - Decorated Implementation
+ * ToggleCommand - Optimized Implementation
  *
  * Toggles CSS classes, attributes, or interactive elements.
- * Uses Stage 3 decorators for reduced boilerplate.
- *
- * Features:
- * - CSS class toggling (add if absent, remove if present)
- * - Attribute toggling (@disabled, [@disabled="true"])
- * - CSS property toggling (*display, *visibility, *opacity)
- * - Smart element detection (dialog, details, select, summary)
- * - Dialog modal/non-modal modes (show/showModal)
- * - Temporal modifiers (for <duration>, until <event>)
  *
  * Syntax:
- *   toggle .active                           # Toggle class on me
- *   toggle .active on <target>               # Toggle class on target
- *   toggle @disabled                         # Toggle attribute
- *   toggle #dialog as modal                  # Toggle dialog (modal)
- *   toggle .active for 2s                    # Temporal: toggle for duration
+ *   toggle .active [on <target>]
+ *   toggle @disabled
+ *   toggle #dialog [as modal]
+ *   toggle .active for 2s
  */
 
 import type { ExecutionContext, TypedExecutionContext } from '../../types/core';
@@ -28,370 +18,197 @@ import { resolveTargetsFromArgs } from '../helpers/element-resolution';
 import { parseClasses } from '../helpers/class-manipulation';
 import { parseAttribute } from '../helpers/attribute-manipulation';
 import { parseDuration } from '../helpers/duration-parsing';
-import {
-  parseToggleableCSSProperty,
-  toggleCSSProperty,
-  type ToggleableCSSProperty,
-} from '../helpers/style-manipulation';
-import {
-  isSmartElementSelector,
-  isBareSmartElementNode,
-  isClassSelectorNode,
-  evaluateFirstArg,
-} from '../helpers/selector-type-detection';
-import {
-  detectSmartElementType,
-  resolveSmartElementTargets,
-  toggleDialog,
-  toggleDetails,
-  toggleSelect,
-} from '../helpers/smart-element';
-import {
-  batchToggleClasses,
-  batchToggleAttribute,
-  batchApply,
-} from '../helpers/batch-dom-operations';
-import {
-  setupDurationReversion,
-  setupEventReversion,
-} from '../helpers/temporal-modifiers';
+import { parseToggleableCSSProperty, toggleCSSProperty } from '../helpers/style-manipulation';
+import { isSmartElementSelector, isBareSmartElementNode, evaluateFirstArg } from '../helpers/selector-type-detection';
+import { detectSmartElementType, resolveSmartElementTargets, toggleDialog, toggleDetails, toggleSelect } from '../helpers/smart-element';
+import { batchToggleClasses, batchToggleAttribute, batchApply } from '../helpers/batch-dom-operations';
+import { setupDurationReversion, setupEventReversion } from '../helpers/temporal-modifiers';
 import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
-/**
- * Typed input for ToggleCommand
- * Represents parsed arguments ready for execution
- */
+/** Typed input for ToggleCommand */
 export type ToggleCommandInput =
-  | {
-      type: 'classes';
-      classes: string[];
-      targets: HTMLElement[];
-      duration?: number;
-      untilEvent?: string;
-    }
-  | {
-      type: 'attribute';
-      name: string;
-      value?: string;
-      targets: HTMLElement[];
-      duration?: number;
-      untilEvent?: string;
-    }
-  | {
-      type: 'css-property';
-      property: 'display' | 'visibility' | 'opacity';
-      targets: HTMLElement[];
-    }
-  | {
-      type: 'dialog';
-      mode: 'modal' | 'non-modal';
-      targets: HTMLDialogElement[];
-    }
-  | {
-      type: 'details';
-      targets: HTMLDetailsElement[];
-    }
-  | {
-      type: 'select';
-      targets: HTMLSelectElement[];
-    };
+  | { type: 'classes'; classes: string[]; targets: HTMLElement[]; duration?: number; untilEvent?: string }
+  | { type: 'attribute'; name: string; value?: string; targets: HTMLElement[]; duration?: number; untilEvent?: string }
+  | { type: 'css-property'; property: 'display' | 'visibility' | 'opacity'; targets: HTMLElement[] }
+  | { type: 'dialog'; mode: 'modal' | 'non-modal'; targets: HTMLDialogElement[] }
+  | { type: 'details'; targets: HTMLDetailsElement[] }
+  | { type: 'select'; targets: HTMLSelectElement[] };
 
-/**
- * ToggleCommand - Toggles classes, attributes, or interactive elements
- *
- * Refactored to use Phase 3 helper modules:
- * - style-manipulation.ts for CSS property toggling
- * - selector-type-detection.ts for selector parsing
- * - smart-element.ts for dialog/details/select toggling
- */
+/** Parse modal mode from args and modifiers */
+async function parseModalMode(
+  args: ASTNode[],
+  modifiers: Record<string, ExpressionNode>,
+  evaluator: ExpressionEvaluator,
+  context: ExecutionContext
+): Promise<'modal' | 'non-modal'> {
+  if (modifiers?.as) {
+    const asValue = await evaluator.evaluate(modifiers.as, context);
+    if (typeof asValue === 'string' && asValue.toLowerCase() === 'modal') return 'modal';
+  }
+  if (args.length >= 2) {
+    const secondArg = await evaluator.evaluate(args[1], context);
+    if (typeof secondArg === 'string') {
+      const normalized = secondArg.toLowerCase();
+      if (normalized === 'modal' || normalized === 'as modal') return 'modal';
+      if (normalized === 'as' && args.length >= 3) {
+        const thirdArg = await evaluator.evaluate(args[2], context);
+        if (typeof thirdArg === 'string' && thirdArg.toLowerCase() === 'modal') return 'modal';
+      }
+    }
+  }
+  return 'non-modal';
+}
+
+/** Parse temporal modifiers (for duration, until event) */
+async function parseTemporalModifiers(
+  modifiers: Record<string, ExpressionNode>,
+  evaluator: ExpressionEvaluator,
+  context: ExecutionContext
+): Promise<{ duration?: number; untilEvent?: string }> {
+  let duration: number | undefined;
+  let untilEvent: string | undefined;
+  if (modifiers?.for) {
+    const val = await evaluator.evaluate(modifiers.for, context);
+    duration = typeof val === 'number' ? val : typeof val === 'string' ? parseDuration(val) : undefined;
+  }
+  if (modifiers?.until) {
+    const val = await evaluator.evaluate(modifiers.until, context);
+    if (typeof val === 'string') untilEvent = val;
+  }
+  return { duration, untilEvent };
+}
+
+/** Detect expression type from first value */
+function detectExpressionType(firstValue: unknown, firstArg: ASTNode): { type: 'class' | 'attribute' | 'css-property' | 'element'; expression: string } {
+  const firstArgName = (firstArg as Record<string, unknown>)?.name as string | undefined;
+  const isBareTag = isBareSmartElementNode(firstArg);
+
+  if (isHTMLElement(firstValue) || (Array.isArray(firstValue) && firstValue.every(el => isHTMLElement(el)))) {
+    return { type: 'element', expression: '' };
+  }
+  if (isBareTag && firstArgName) {
+    return { type: 'element', expression: firstArgName };
+  }
+  if (typeof firstValue === 'string') {
+    const expr = firstValue.trim();
+    if (expr.startsWith('@') || expr.startsWith('[@')) return { type: 'attribute', expression: expr };
+    if (expr.startsWith('*')) return { type: 'css-property', expression: expr };
+    if (expr.startsWith('.')) return { type: 'class', expression: expr };
+    if (expr.startsWith('#') || isSmartElementSelector(expr)) return { type: 'element', expression: expr };
+    return { type: 'class', expression: expr };
+  }
+  return { type: 'class', expression: '' };
+}
+
 @meta({
   description: 'Toggle classes, attributes, or interactive elements',
-  syntax: [
-    'toggle <class-expression> [on <target>]',
-    'toggle @attribute [on <target>]',
-    'toggle <element-selector> [as modal]',
-    'toggle <expression> for <duration>',
-  ],
-  examples: [
-    'toggle .active on me',
-    'toggle @disabled',
-    'toggle #myDialog as modal',
-    'toggle .loading for 2s',
-  ],
+  syntax: ['toggle <class> [on <target>]', 'toggle @attr', 'toggle <element> [as modal]', 'toggle <expr> for <duration>'],
+  examples: ['toggle .active on me', 'toggle @disabled', 'toggle #myDialog as modal', 'toggle .loading for 2s'],
   sideEffects: ['dom-mutation'],
 })
 @command({ name: 'toggle', category: 'dom' })
 export class ToggleCommand implements DecoratedCommand {
-  // Properties set by decorators
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;
 
-  /**
-   * Parse raw AST nodes into typed command input
-   *
-   * Detects toggle type (classes, attributes, CSS properties, or smart elements)
-   * and parses accordingly.
-   *
-   * Handles complex patterns:
-   * - "toggle .class" (implicit target: me)
-   * - "toggle .class on #target"
-   * - "toggle #dialog" (smart element detection)
-   * - "toggle #dialog as modal" (element with mode)
-   * - "toggle .class for 2s" (temporal modifier)
-   * - "toggle .class until click" (temporal modifier)
-   *
-   * @param raw - Raw command node with args and modifiers from AST
-   * @param evaluator - Expression evaluator for evaluating AST nodes
-   * @param context - Execution context with me, you, it, etc.
-   * @returns Typed input object for execute()
-   */
   async parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<ToggleCommandInput> {
-    if (!raw.args || raw.args.length === 0) {
-      throw new Error('toggle command requires an argument');
-    }
+    if (!raw.args?.length) throw new Error('toggle command requires an argument');
 
-    // Extract temporal modifiers from raw.modifiers
-    let duration: number | undefined;
-    let untilEvent: string | undefined;
-
-    if (raw.modifiers?.for) {
-      const durationValue = await evaluator.evaluate(raw.modifiers.for, context);
-      if (typeof durationValue === 'number') {
-        duration = durationValue;
-      } else if (typeof durationValue === 'string') {
-        // Parse duration strings like "2s", "500ms"
-        duration = parseDuration(durationValue);
-      }
-    }
-
-    if (raw.modifiers?.until) {
-      const eventValue = await evaluator.evaluate(raw.modifiers.until, context);
-      if (typeof eventValue === 'string') {
-        untilEvent = eventValue;
-      }
-    }
-
-    // Evaluate first argument to determine toggle type
-    // Use evaluateFirstArg to handle class selector nodes specially
-    // (extract value directly rather than evaluating as DOM query)
-    // ID selectors (#id) are evaluated normally to get actual DOM elements
+    const { duration, untilEvent } = await parseTemporalModifiers(raw.modifiers, evaluator, context);
     const firstArg = raw.args[0];
     const { value: firstValue } = await evaluateFirstArg(firstArg, evaluator, context);
+    const { type: exprType, expression } = detectExpressionType(firstValue, firstArg);
+    const resolveOpts = { filterPrepositions: true, fallbackModifierKey: 'on' } as const;
 
-    // Pattern detection:
-    // 1. Check if first value is an HTMLElement (smart element toggle)
-    // 2. Check if it's a string starting with special characters (@, *, ., #)
-    // 3. Check if firstArg is a bare identifier for smart element tag name (details, dialog, etc.)
-    // 4. Determine targets (either from explicit target arg or context.me)
-
-    let expressionType: 'class' | 'attribute' | 'css-property' | 'element' | 'unknown' = 'unknown';
-    let expression = '';
-
-    // Check if firstArg is a bare identifier for smart element tag names
-    // e.g., "toggle details" where 'details' is an identifier node
-    const firstArgName = (firstArg as any)?.name;
-    const isBareSmartElementTag = isBareSmartElementNode(firstArg);
-
-    if (isHTMLElement(firstValue) || Array.isArray(firstValue) && firstValue.every(el => isHTMLElement(el))) {
-      expressionType = 'element';
-    } else if (isBareSmartElementTag) {
-      // Bare tag name like "details", "dialog" - use as tag selector
-      expressionType = 'element';
-      expression = firstArgName;  // Use the tag name for DOM query
-    } else if (typeof firstValue === 'string') {
-      expression = firstValue.trim();
-
-      if (expression.startsWith('@') || expression.startsWith('[@')) {
-        expressionType = 'attribute';
-      } else if (expression.startsWith('*')) {
-        expressionType = 'css-property';
-      } else if (expression.startsWith('.')) {
-        expressionType = 'class';
-      } else if (expression.startsWith('#') || isSmartElementSelector(expression)) {
-        expressionType = 'element';
-      } else {
-        // Default to class if no special prefix
-        expressionType = 'class';
-      }
-    }
-
-    // Parse based on detected type
-    switch (expressionType) {
+    switch (exprType) {
       case 'attribute': {
         const { name, value } = parseAttribute(expression);
-        const targetArgs = raw.args.slice(1);
-        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true, fallbackModifierKey: 'on' }, raw.modifiers);
+        const targets = await resolveTargetsFromArgs(raw.args.slice(1), evaluator, context, 'toggle', resolveOpts, raw.modifiers);
         return { type: 'attribute', name, value, targets, duration, untilEvent };
       }
-
       case 'css-property': {
         const property = parseToggleableCSSProperty(expression);
-        if (!property) {
-          throw new Error(`Invalid CSS property: ${expression}`);
-        }
-        const targetArgs = raw.args.slice(1);
-        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true, fallbackModifierKey: 'on' }, raw.modifiers);
+        if (!property) throw new Error(`Invalid CSS property: ${expression}`);
+        const targets = await resolveTargetsFromArgs(raw.args.slice(1), evaluator, context, 'toggle', resolveOpts, raw.modifiers);
         return { type: 'css-property', property, targets };
       }
-
       case 'element': {
-        // Smart element toggle: detect element type and handle accordingly
         let elements: HTMLElement[];
-
         if (isHTMLElement(firstValue)) {
-          elements = [firstValue as HTMLElement];
+          elements = [firstValue];
         } else if (Array.isArray(firstValue) && firstValue.every(el => isHTMLElement(el))) {
           elements = firstValue as HTMLElement[];
-        } else if (isBareSmartElementTag && expression) {
-          // Bare tag name like "details" - query directly by tag name
+        } else if (expression) {
           const selected = document.querySelectorAll(expression);
-          elements = Array.from(selected).filter(
-            (el): el is HTMLElement => isHTMLElement(el)
-          );
+          elements = Array.from(selected).filter((el): el is HTMLElement => isHTMLElement(el));
         } else {
-          // Resolve from selector
-          elements = await resolveTargetsFromArgs([firstArg], evaluator, context, 'toggle', { filterPrepositions: true, fallbackModifierKey: 'on' }, raw.modifiers);
+          elements = await resolveTargetsFromArgs([firstArg], evaluator, context, 'toggle', resolveOpts, raw.modifiers);
         }
 
-        // Check for mode specifier (e.g., "as modal" or "modal")
-        // Can come from:
-        // 1. raw.modifiers.as (parsed as "as modal" modifier)
-        // 2. raw.args[1] being "modal" directly
-        // 3. raw.args[1] being "as" and raw.args[2] being "modal"
-        let mode: 'modal' | 'non-modal' = 'non-modal';
-
-        // Check modifiers.as first (e.g., toggle #dialog as modal)
-        if (raw.modifiers?.as) {
-          const asValue = await evaluator.evaluate(raw.modifiers.as, context);
-          if (typeof asValue === 'string' && asValue.toLowerCase() === 'modal') {
-            mode = 'modal';
-          }
-        }
-
-        // Check args for modal specifier
-        if (mode === 'non-modal' && raw.args.length >= 2) {
-          const secondArg = await evaluator.evaluate(raw.args[1], context);
-          if (typeof secondArg === 'string') {
-            const normalized = secondArg.toLowerCase();
-            if (normalized === 'modal' || normalized === 'as modal') {
-              mode = 'modal';
-            } else if (normalized === 'as' && raw.args.length >= 3) {
-              // Handle case where "as" and "modal" are separate args
-              const thirdArg = await evaluator.evaluate(raw.args[2], context);
-              if (typeof thirdArg === 'string' && thirdArg.toLowerCase() === 'modal') {
-                mode = 'modal';
-              }
-            }
-          }
-        }
-
-        // Detect element type using helper
         const smartType = detectSmartElementType(elements);
-
         if (smartType === 'dialog') {
+          const mode = await parseModalMode(raw.args, raw.modifiers, evaluator, context);
           return { type: 'dialog', mode, targets: elements as HTMLDialogElement[] };
-        } else if (smartType === 'details') {
-          // Handle SUMMARY elements - use helper to resolve to parent DETAILS
-          const detailsElements = resolveSmartElementTargets(elements) as HTMLDetailsElement[];
-          return { type: 'details', targets: detailsElements };
-        } else if (smartType === 'select') {
-          return { type: 'select', targets: elements as HTMLSelectElement[] };
-        } else {
-          // Fallback to class toggle for non-smart elements
-          const classes = parseClasses(expression);
-          return { type: 'classes', classes, targets: elements, duration, untilEvent };
         }
+        if (smartType === 'details') {
+          return { type: 'details', targets: resolveSmartElementTargets(elements) as HTMLDetailsElement[] };
+        }
+        if (smartType === 'select') {
+          return { type: 'select', targets: elements as HTMLSelectElement[] };
+        }
+        // Fallback to class toggle
+        const classes = parseClasses(expression);
+        return { type: 'classes', classes, targets: elements, duration, untilEvent };
       }
-
       case 'class':
       default: {
-        // Class toggle
         const classes = parseClasses(expression || firstValue);
-        if (classes.length === 0) {
-          throw new Error('toggle command: no valid class names found');
-        }
-        const targetArgs = raw.args.slice(1);
-        const targets = await resolveTargetsFromArgs(targetArgs, evaluator, context, 'toggle', { filterPrepositions: true, fallbackModifierKey: 'on' }, raw.modifiers);
+        if (!classes.length) throw new Error('toggle command: no valid class names found');
+        const targets = await resolveTargetsFromArgs(raw.args.slice(1), evaluator, context, 'toggle', resolveOpts, raw.modifiers);
         return { type: 'classes', classes, targets, duration, untilEvent };
       }
     }
   }
 
-  /**
-   * Execute the toggle command
-   *
-   * Toggles classes, attributes, CSS properties, or smart elements.
-   * Handles temporal modifiers for automatic reversion.
-   *
-   * @param input - Typed command input from parseInput()
-   * @param context - Typed execution context
-   * @returns Array of modified elements
-   */
-  async execute(
-    input: ToggleCommandInput,
-    context: TypedExecutionContext
-  ): Promise<HTMLElement[]> {
+  async execute(input: ToggleCommandInput, context: TypedExecutionContext): Promise<HTMLElement[]> {
     switch (input.type) {
       case 'classes':
-        // Toggle all classes on all targets
         batchToggleClasses(input.targets, input.classes);
-
-        // Setup temporal modifiers if specified (per-element)
-        if ((input.duration || input.untilEvent) && input.classes.length > 0) {
-          for (const element of input.targets) {
-            if (input.duration) {
-              setupDurationReversion(element, 'class', input.classes[0], input.duration);
-            }
-            if (input.untilEvent) {
-              setupEventReversion(element, 'class', input.classes[0], input.untilEvent);
-            }
+        if ((input.duration || input.untilEvent) && input.classes.length) {
+          for (const el of input.targets) {
+            if (input.duration) setupDurationReversion(el, 'class', input.classes[0], input.duration);
+            if (input.untilEvent) setupEventReversion(el, 'class', input.classes[0], input.untilEvent);
           }
         }
         return [...input.targets];
 
       case 'attribute':
-        // Toggle attribute on all targets
         batchToggleAttribute(input.targets, input.name, input.value);
-
-        // Setup temporal modifiers if specified (per-element)
         if (input.duration || input.untilEvent) {
-          for (const element of input.targets) {
-            if (input.duration) {
-              setupDurationReversion(element, 'attribute', input.name, input.duration);
-            }
-            if (input.untilEvent) {
-              setupEventReversion(element, 'attribute', input.name, input.untilEvent);
-            }
+          for (const el of input.targets) {
+            if (input.duration) setupDurationReversion(el, 'attribute', input.name, input.duration);
+            if (input.untilEvent) setupEventReversion(el, 'attribute', input.name, input.untilEvent);
           }
         }
         return [...input.targets];
 
       case 'css-property':
-        return batchApply(input.targets, (element) => {
-          toggleCSSProperty(element, input.property);
-        });
+        return batchApply(input.targets, el => toggleCSSProperty(el, input.property));
 
       case 'dialog':
-        return batchApply(input.targets as HTMLElement[], (dialog) => {
-          toggleDialog(dialog as HTMLDialogElement, input.mode);
-        });
+        return batchApply(input.targets as HTMLElement[], el => toggleDialog(el as HTMLDialogElement, input.mode));
 
       case 'details':
-        return batchApply(input.targets as HTMLElement[], (details) => {
-          toggleDetails(details as HTMLDetailsElement);
-        });
+        return batchApply(input.targets as HTMLElement[], el => toggleDetails(el as HTMLDetailsElement));
 
       case 'select':
-        return batchApply(input.targets as HTMLElement[], (select) => {
-          toggleSelect(select as HTMLSelectElement);
-        });
+        return batchApply(input.targets as HTMLElement[], el => toggleSelect(el as HTMLSelectElement));
     }
   }
-
 }
 
 export const createToggleCommand = createFactory(ToggleCommand);
