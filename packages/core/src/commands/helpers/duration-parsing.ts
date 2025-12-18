@@ -13,6 +13,31 @@
  */
 
 /**
+ * Internal helper to parse duration components from a string
+ * @returns { number, milliseconds } or null if invalid
+ */
+function _parseDurationComponents(value: string): { number: number; milliseconds: number } | null {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(\d+(?:\.\d+)?)\s*(s|ms|sec|seconds?|milliseconds?)?$/i);
+
+  if (!match) {
+    return null;
+  }
+
+  const number = parseFloat(match[1]);
+  const unit = (match[2] || 'ms').toLowerCase();
+
+  // Convert to milliseconds
+  if (unit === 'ms' || unit === 'millisecond' || unit === 'milliseconds') {
+    return { number, milliseconds: Math.floor(number) };
+  } else if (unit === 's' || unit === 'sec' || unit === 'second' || unit === 'seconds') {
+    return { number, milliseconds: Math.floor(number * 1000) };
+  }
+
+  return null;
+}
+
+/**
  * Parse duration value to milliseconds
  *
  * Supports:
@@ -31,26 +56,8 @@ export function parseDuration(value: unknown, defaultMs = 300): number {
 
   // Handle string with suffix
   if (typeof value === 'string') {
-    const trimmed = value.trim();
-
-    // Match patterns like "2s", "500ms", "2 seconds", etc.
-    const match = trimmed.match(/^(\d+(?:\.\d+)?)\s*(s|ms|sec|seconds?|milliseconds?)?$/i);
-
-    if (!match) {
-      return defaultMs;
-    }
-
-    const number = parseFloat(match[1]);
-    const unit = (match[2] || 'ms').toLowerCase();
-
-    // Convert to milliseconds
-    if (unit === 'ms' || unit === 'millisecond' || unit === 'milliseconds') {
-      return Math.floor(number);
-    } else if (unit === 's' || unit === 'sec' || unit === 'second' || unit === 'seconds') {
-      return Math.floor(number * 1000);
-    }
-
-    return defaultMs;
+    const result = _parseDurationComponents(value);
+    return result ? result.milliseconds : defaultMs;
   }
 
   return defaultMs;
@@ -74,26 +81,11 @@ export function parseDurationStrict(value: unknown): number {
 
   // Handle string with suffix
   if (typeof value === 'string') {
-    const trimmed = value.trim();
-
-    // Match patterns like "2s", "500ms", "2 seconds", etc.
-    const match = trimmed.match(/^(\d+(?:\.\d+)?)\s*(s|ms|sec|seconds?|milliseconds?)?$/i);
-
-    if (!match) {
+    const result = _parseDurationComponents(value);
+    if (!result) {
       throw new Error(`Invalid duration format: "${value}"`);
     }
-
-    const number = parseFloat(match[1]);
-    const unit = (match[2] || 'ms').toLowerCase();
-
-    // Convert to milliseconds
-    if (unit === 'ms' || unit === 'millisecond' || unit === 'milliseconds') {
-      return Math.floor(number);
-    } else if (unit === 's' || unit === 'sec' || unit === 'second' || unit === 'seconds') {
-      return Math.floor(number * 1000);
-    }
-
-    throw new Error(`Unknown time unit: "${unit}"`);
+    return result.milliseconds;
   }
 
   throw new Error(`Invalid duration type: ${typeof value}`);

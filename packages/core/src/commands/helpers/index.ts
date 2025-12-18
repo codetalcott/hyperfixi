@@ -24,6 +24,16 @@ export {
   setTargetValue,
 } from './variable-access';
 
+// Element property access helpers
+export {
+  getElementProperty,
+  setElementProperty,
+  getElementValue,
+  setElementValue,
+  isEmpty,
+  isPlainObject,
+} from './element-property-access';
+
 // Element resolution helpers
 export {
   resolveElement,
@@ -197,6 +207,7 @@ export {
   waitForTransitionEnd,
   waitForAnimationComplete,
   waitForFirst,
+  createGuardedFinisher,
   createOnceGuard,
   createCleanupManager,
 } from './event-waiting';

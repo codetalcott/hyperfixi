@@ -20,6 +20,10 @@ import {
   resolveElements as resolveElementsHelper,
   resolvePossessive,
 } from '../helpers/element-resolution';
+import {
+  setElementProperty,
+  isPlainObject,
+} from '../helpers/element-property-access';
 import { isCSSPropertySyntax, setStyleValue } from '../helpers/style-manipulation';
 import { isAttributeSyntax } from '../helpers/attribute-manipulation';
 import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
@@ -37,42 +41,6 @@ export interface SetCommandOutput {
   target: string | HTMLElement;
   value: unknown;
   targetType: 'variable' | 'attribute' | 'property';
-}
-
-/** Set element property (handles common DOM properties and styles) */
-function setElementProperty(element: HTMLElement, property: string, value: unknown): void {
-  const strValue = String(value);
-  switch (property) {
-    case 'textContent': element.textContent = strValue; return;
-    case 'innerHTML': element.innerHTML = strValue; return;
-    case 'innerText': element.innerText = strValue; return;
-    case 'id': element.id = strValue; return;
-    case 'className': element.className = strValue; return;
-    case 'value':
-      if ('value' in element) (element as HTMLInputElement).value = strValue;
-      return;
-  }
-  // CSS style property
-  if (property.includes('-') || property in element.style) {
-    element.style.setProperty(property, strValue);
-    return;
-  }
-  // Generic property with readonly protection
-  try {
-    (element as Record<string, unknown>)[property] = value;
-  } catch (error) {
-    if (!(error instanceof TypeError && (error.message.includes('only a getter') || error.message.includes('read only')))) {
-      throw new Error(`Cannot set property '${property}': ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  }
-}
-
-/** Check if value is a plain object (not array, not null, not DOM node) */
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
-  if (isHTMLElement(value) || value instanceof Node) return false;
-  const proto = Object.getPrototypeOf(value);
-  return proto === Object.prototype || proto === null;
 }
 
 @meta({

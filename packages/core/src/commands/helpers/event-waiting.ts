@@ -54,7 +54,6 @@ export function waitForEvent<T extends Event = Event>(
   }
 
   return new Promise((resolve) => {
-    let completed = false;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const cleanup = () => {
@@ -62,13 +61,7 @@ export function waitForEvent<T extends Event = Event>(
       if (timeoutId) clearTimeout(timeoutId);
     };
 
-    const finish = (result: EventWaitResult<T>) => {
-      if (!completed) {
-        completed = true;
-        cleanup();
-        resolve(result);
-      }
-    };
+    const finish = createGuardedFinisher<EventWaitResult<T>>(cleanup, resolve);
 
     const handler = (event: Event) => {
       finish({ event: event as T, timedOut: false, cancelled: false });
@@ -115,22 +108,6 @@ export function waitForTransitionEnd(
   duration: number
 ): Promise<TransitionWaitResult> {
   return new Promise((resolve) => {
-    let completed = false;
-
-    const cleanup = () => {
-      element.removeEventListener('transitionend', onEnd);
-      element.removeEventListener('transitioncancel', onCancel);
-      clearTimeout(timeoutId);
-    };
-
-    const finish = (result: TransitionWaitResult) => {
-      if (!completed) {
-        completed = true;
-        cleanup();
-        resolve(result);
-      }
-    };
-
     const onEnd = (e: TransitionEvent) => {
       if (e.target === element && e.propertyName === property) {
         finish({ completed: true, cancelled: false });
@@ -142,6 +119,14 @@ export function waitForTransitionEnd(
         finish({ completed: false, cancelled: true });
       }
     };
+
+    const cleanup = () => {
+      element.removeEventListener('transitionend', onEnd);
+      element.removeEventListener('transitioncancel', onCancel);
+      clearTimeout(timeoutId);
+    };
+
+    const finish = createGuardedFinisher<TransitionWaitResult>(cleanup, resolve);
 
     element.addEventListener('transitionend', onEnd);
     element.addEventListener('transitioncancel', onCancel);
@@ -179,23 +164,6 @@ export function waitForAnimationComplete(
   }
 
   return new Promise((resolve) => {
-    let completed = false;
-
-    const cleanup = () => {
-      element.removeEventListener('transitionend', onTransitionEnd);
-      element.removeEventListener('animationend', onAnimationEnd);
-      clearTimeout(animationTimeoutId);
-      clearTimeout(userTimeoutId);
-    };
-
-    const finish = (result: AnimationWaitResult) => {
-      if (!completed) {
-        completed = true;
-        cleanup();
-        resolve(result);
-      }
-    };
-
     const onTransitionEnd = (event: Event) => {
       if (event.target === element) {
         finish({ completed: true, type: 'transition' });
@@ -207,6 +175,15 @@ export function waitForAnimationComplete(
         finish({ completed: true, type: 'animation' });
       }
     };
+
+    const cleanup = () => {
+      element.removeEventListener('transitionend', onTransitionEnd);
+      element.removeEventListener('animationend', onAnimationEnd);
+      clearTimeout(animationTimeoutId);
+      clearTimeout(userTimeoutId);
+    };
+
+    const finish = createGuardedFinisher<AnimationWaitResult>(cleanup, resolve);
 
     element.addEventListener('transitionend', onTransitionEnd);
     element.addEventListener('animationend', onAnimationEnd);
@@ -275,6 +252,32 @@ export function waitForFirst(conditions: WaitCondition[]): Promise<RaceResult> {
 // ============================================================================
 // Cleanup Utilities
 // ============================================================================
+
+/**
+ * Create a guarded finisher function that ensures a promise resolves only once
+ *
+ * Wraps the common pattern of:
+ * - Maintaining a completion flag
+ * - Running cleanup when finished
+ * - Resolving the promise with the result
+ *
+ * @param cleanup - Function to call before resolving
+ * @param resolve - Promise resolve function
+ * @returns Finisher function that safely resolves the promise once
+ */
+export function createGuardedFinisher<T>(
+  cleanup: () => void,
+  resolve: (value: T) => void
+): (result: T) => void {
+  let completed = false;
+  return (result: T) => {
+    if (!completed) {
+      completed = true;
+      cleanup();
+      resolve(result);
+    }
+  };
+}
 
 /**
  * Create a guarded callback that only executes once

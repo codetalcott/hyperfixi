@@ -16,6 +16,13 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolvePossessive } from '../helpers/element-resolution';
 import { getVariableValue, setVariableValue } from '../helpers/variable-access';
+import {
+  getElementProperty,
+  setElementProperty,
+  getElementValue,
+  setElementValue,
+  isEmpty,
+} from '../helpers/element-property-access';
 import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
 /**
@@ -37,66 +44,6 @@ export interface DefaultCommandOutput {
   wasSet: boolean;
   existingValue?: unknown;
   targetType: 'variable' | 'attribute' | 'property' | 'element';
-}
-
-/** Get element property value (handles common DOM properties and styles) */
-function getElementProperty(element: HTMLElement, property: string): unknown {
-  // Handle common properties directly
-  switch (property) {
-    case 'textContent': return element.textContent;
-    case 'innerHTML': return element.innerHTML;
-    case 'innerText': return element.innerText;
-    case 'id': return element.id;
-    case 'className': return element.className;
-    case 'value': return 'value' in element ? (element as HTMLInputElement).value : undefined;
-  }
-  // Handle style properties
-  if (property.includes('-') || property in element.style) {
-    return element.style.getPropertyValue(property) || (element.style as Record<string, unknown>)[property];
-  }
-  // Generic property access
-  return (element as Record<string, unknown>)[property];
-}
-
-/** Set element property value (handles common DOM properties and styles) */
-function setElementProperty(element: HTMLElement, property: string, value: unknown): void {
-  const strValue = String(value);
-  switch (property) {
-    case 'textContent': element.textContent = strValue; return;
-    case 'innerHTML': element.innerHTML = strValue; return;
-    case 'innerText': element.innerText = strValue; return;
-    case 'id': element.id = strValue; return;
-    case 'className': element.className = strValue; return;
-    case 'value':
-      if ('value' in element) (element as HTMLInputElement).value = strValue;
-      return;
-  }
-  // Handle style properties
-  if (property.includes('-') || property in element.style) {
-    element.style.setProperty(property, strValue);
-    return;
-  }
-  // Generic property access
-  (element as Record<string, unknown>)[property] = value;
-}
-
-/** Get element's primary value (input value or textContent) */
-function getElementValue(element: HTMLElement): unknown {
-  return 'value' in element ? (element as HTMLInputElement).value : element.textContent;
-}
-
-/** Set element's primary value (input value or textContent) */
-function setElementValue(element: HTMLElement, value: unknown): void {
-  if ('value' in element) {
-    (element as HTMLInputElement).value = String(value);
-  } else {
-    element.textContent = String(value);
-  }
-}
-
-/** Check if value is "empty" for defaulting purposes */
-function isEmpty(value: unknown): boolean {
-  return value === undefined || value === null || value === '';
 }
 
 @meta({
