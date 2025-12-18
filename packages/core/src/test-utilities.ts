@@ -334,6 +334,8 @@ export function createTypedExpressionContext(
       averageExecutionTime: 0,
       lastEvaluationTime: 0,
     },
+    // Evaluation history for tracking (test-specific)
+    evaluationHistory: [] as Array<{ expression: string; result: unknown; timestamp: number }>,
     // Spread remaining properties for flexible test data
     ...rest,
   };

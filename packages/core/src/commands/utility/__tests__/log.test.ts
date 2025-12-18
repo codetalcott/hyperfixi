@@ -191,6 +191,9 @@ describe('LogCommand (Standalone V2)', () => {
   });
 
   describe('execute', () => {
+    // Note: execute() returns undefined by design to avoid overwriting 'it' in context
+    // This allows patterns like: fetch url; log it; put it.data into x
+
     it('should log empty line when no values', async () => {
       const context = createMockContext();
 
@@ -198,8 +201,8 @@ describe('LogCommand (Standalone V2)', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith();
-      expect(output.values).toEqual([]);
-      expect(output.loggedAt).toBeInstanceOf(Date);
+      // execute returns undefined by design
+      expect(output).toBeUndefined();
     });
 
     it('should log single string value', async () => {
@@ -209,8 +212,7 @@ describe('LogCommand (Standalone V2)', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith('Hello World');
-      expect(output.values).toEqual(['Hello World']);
-      expect(output.loggedAt).toBeInstanceOf(Date);
+      expect(output).toBeUndefined();
     });
 
     it('should log single number value', async () => {
@@ -220,7 +222,7 @@ describe('LogCommand (Standalone V2)', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith(42);
-      expect(output.values).toEqual([42]);
+      expect(output).toBeUndefined();
     });
 
     it('should log multiple values', async () => {
@@ -230,7 +232,7 @@ describe('LogCommand (Standalone V2)', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith('Result:', 42, true);
-      expect(output.values).toEqual(['Result:', 42, true]);
+      expect(output).toBeUndefined();
     });
 
     it('should log object value', async () => {
@@ -241,7 +243,7 @@ describe('LogCommand (Standalone V2)', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith(obj);
-      expect(output.values).toEqual([obj]);
+      expect(output).toBeUndefined();
     });
 
     it('should log array value', async () => {
@@ -252,7 +254,7 @@ describe('LogCommand (Standalone V2)', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith(arr);
-      expect(output.values).toEqual([arr]);
+      expect(output).toBeUndefined();
     });
 
     it('should log null and undefined', async () => {
@@ -262,30 +264,27 @@ describe('LogCommand (Standalone V2)', () => {
 
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith(null, undefined);
-      expect(output.values).toEqual([null, undefined]);
+      expect(output).toBeUndefined();
     });
 
-    it('should return timestamp', async () => {
+    it('should return undefined to preserve it context', async () => {
       const context = createMockContext();
-      const beforeTime = new Date();
 
       const output = await command.execute({ values: ['test'] }, context);
 
-      const afterTime = new Date();
-
-      expect(output.loggedAt).toBeInstanceOf(Date);
-      expect(output.loggedAt.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
-      expect(output.loggedAt.getTime()).toBeLessThanOrEqual(afterTime.getTime());
+      // execute returns undefined so 'it' is preserved in context
+      expect(output).toBeUndefined();
     });
 
-    it('should return all logged values in output', async () => {
+    it('should not modify the context it value', async () => {
       const context = createMockContext();
-      const values = ['a', 'b', 'c', 123, true, null];
+      const originalIt = { preserved: true };
+      context.it = originalIt;
 
-      const output = await command.execute({ values }, context);
+      await command.execute({ values: ['test'] }, context);
 
-      expect(output.values).toEqual(values);
-      expect(output.values).toBe(values); // Same reference
+      // Log should not overwrite 'it'
+      expect(context.it).toBe(originalIt);
     });
   });
 
@@ -349,9 +348,8 @@ describe('LogCommand (Standalone V2)', () => {
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith('Test Message');
 
-      // Verify output
-      expect(output.values).toEqual(['Test Message']);
-      expect(output.loggedAt).toBeInstanceOf(Date);
+      // Verify output is undefined (by design)
+      expect(output).toBeUndefined();
     });
 
     it('should log multiple values end-to-end', async () => {
@@ -387,8 +385,8 @@ describe('LogCommand (Standalone V2)', () => {
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith('X:', 100, 'Y:', 200);
 
-      // Verify output
-      expect(output.values).toEqual(['X:', 100, 'Y:', 200]);
+      // Verify output is undefined (by design)
+      expect(output).toBeUndefined();
     });
 
     it('should log empty line end-to-end', async () => {
@@ -412,8 +410,8 @@ describe('LogCommand (Standalone V2)', () => {
       expect(consoleLogSpy).toHaveBeenCalledTimes(1);
       expect(consoleLogSpy).toHaveBeenCalledWith();
 
-      // Verify output
-      expect(output.values).toEqual([]);
+      // Verify output is undefined (by design)
+      expect(output).toBeUndefined();
     });
   });
 });

@@ -63,7 +63,8 @@ describe('AttributeProcessor System Events', () => {
       });
 
       // Process all elements (this should trigger the ready event)
-      processor.scanAndProcessAll();
+      // Must await the async operation
+      await processor.scanAndProcessAll();
 
       // Manually dispatch since we're not using init()
       processor['dispatchReadyEvent']();
@@ -94,7 +95,7 @@ describe('AttributeProcessor System Events', () => {
         );
       });
 
-      processor.scanAndProcessAll();
+      await processor.scanAndProcessAll();
       processor['dispatchReadyEvent']();
 
       await eventPromise;
@@ -104,20 +105,18 @@ describe('AttributeProcessor System Events', () => {
       testContainer.innerHTML = `<div _="on click log 'test'"></div>`;
 
       let eventCount = 0;
-      const eventPromise = new Promise<void>(resolve => {
-        document.addEventListener('hyperscript:ready', () => {
-          eventCount++;
-          // Resolve after a small delay to ensure all duplicate attempts complete
-          setTimeout(resolve, 20);
-        });
+      document.addEventListener('hyperscript:ready', () => {
+        eventCount++;
       });
 
-      processor.scanAndProcessAll();
+      await processor.scanAndProcessAll();
       processor['dispatchReadyEvent']();
       processor['dispatchReadyEvent'](); // Try to dispatch again
       processor['dispatchReadyEvent'](); // And again
 
-      await eventPromise;
+      // Give a small delay for any potential duplicate events
+      await new Promise(resolve => setTimeout(resolve, 20));
+
       expect(eventCount).toBe(1);
     });
 
@@ -140,7 +139,7 @@ describe('AttributeProcessor System Events', () => {
         );
       });
 
-      processor.scanAndProcessAll();
+      await processor.scanAndProcessAll();
       processor['dispatchReadyEvent']();
 
       await eventPromise;
@@ -166,7 +165,7 @@ describe('AttributeProcessor System Events', () => {
         );
       });
 
-      processor.scanAndProcessAll();
+      await processor.scanAndProcessAll();
       processor['dispatchReadyEvent']();
 
       await eventPromise;
@@ -174,7 +173,7 @@ describe('AttributeProcessor System Events', () => {
   });
 
   describe('load Event (on element)', () => {
-    it('should dispatch load event on each processed element', () => {
+    it('should dispatch load event on each processed element', async () => {
       const elem1 = document.createElement('div');
       elem1.id = 'elem1';
       elem1.setAttribute('_', 'on click add .clicked');
@@ -198,7 +197,8 @@ describe('AttributeProcessor System Events', () => {
         loadedElements.push('elem2');
       });
 
-      processor.scanAndProcessAll();
+      // Use async version and await it
+      await processor.scanAndProcessAll();
 
       expect(loadCount).toBe(2);
       expect(loadedElements).toContain('elem1');
@@ -210,16 +210,17 @@ describe('AttributeProcessor System Events', () => {
       elem.setAttribute('_', 'on click add .clicked');
       testContainer.appendChild(elem);
 
-      let processingComplete = false;
+      let loadFired = false;
 
       elem.addEventListener('load', () => {
-        // Load event should fire after processing
-        expect(processingComplete).toBe(true);
-        // test complete
+        loadFired = true;
       });
 
-      processor.processElement(elem);
-      processingComplete = true;
+      // Use async version and await it
+      await processor.processElementAsync(elem);
+
+      // Load event should have fired after processing
+      expect(loadFired).toBe(true);
     });
 
     it('should not bubble load events', async () => {
@@ -234,22 +235,18 @@ describe('AttributeProcessor System Events', () => {
         parentGotEvent = true;
       });
 
-      const loadPromise = new Promise<void>(resolve => {
-        child.addEventListener('load', () => {
-          // Give time for potential bubbling
-          setTimeout(() => {
-            resolve();
-          }, 10);
-        });
+      let childGotEvent = false;
+      child.addEventListener('load', () => {
+        childGotEvent = true;
       });
 
-      processor.processElement(child);
-      await loadPromise;
+      await processor.processElementAsync(child);
 
+      expect(childGotEvent).toBe(true);
       expect(parentGotEvent).toBe(false);
     });
 
-    it('should dispatch load event only on successful processing', () => {
+    it('should dispatch load event only on successful processing', async () => {
       const goodElem = document.createElement('div');
       goodElem.id = 'good';
       goodElem.setAttribute('_', 'on click add .clicked');
@@ -271,13 +268,13 @@ describe('AttributeProcessor System Events', () => {
         badLoadFired = true;
       });
 
-      processor.scanAndProcessAll();
+      await processor.scanAndProcessAll();
 
       expect(goodLoadFired).toBe(true);
       expect(badLoadFired).toBe(false);
     });
 
-    it('should dispatch load event for event handler syntax', () => {
+    it('should dispatch load event for event handler syntax', async () => {
       const elem = document.createElement('button');
       elem.setAttribute('_', 'on click log "clicked"');
       testContainer.appendChild(elem);
@@ -287,12 +284,12 @@ describe('AttributeProcessor System Events', () => {
         loadFired = true;
       });
 
-      processor.processElement(elem);
+      await processor.processElementAsync(elem);
 
       expect(loadFired).toBe(true);
     });
 
-    it('should dispatch load event for command execution syntax', () => {
+    it('should dispatch load event for command execution syntax', async () => {
       const elem = document.createElement('div');
       // Use a simple command syntax that will compile successfully
       elem.setAttribute('_', 'log "test"');
@@ -303,7 +300,7 @@ describe('AttributeProcessor System Events', () => {
         loadFired = true;
       });
 
-      processor.processElement(elem);
+      await processor.processElementAsync(elem);
 
       expect(loadFired).toBe(true);
     });
@@ -313,19 +310,21 @@ describe('AttributeProcessor System Events', () => {
       elem.setAttribute('_', 'on click add .clicked');
       testContainer.appendChild(elem);
 
+      let capturedEvent: Event | null = null;
       elem.addEventListener('load', (event: Event) => {
-        // Verify event properties
-        expect(event.type).toBe('load');
-        expect(event.bubbles).toBe(false);
-        expect(event.cancelable).toBe(false);
-        expect(event.target).toBe(elem);
-        // test complete
+        capturedEvent = event;
       });
 
-      processor.processElement(elem);
+      await processor.processElementAsync(elem);
+
+      expect(capturedEvent).not.toBeNull();
+      expect(capturedEvent!.type).toBe('load');
+      expect(capturedEvent!.bubbles).toBe(false);
+      expect(capturedEvent!.cancelable).toBe(false);
+      expect(capturedEvent!.target).toBe(elem);
     });
 
-    it('should handle multiple elements with load events', () => {
+    it('should handle multiple elements with load events', async () => {
       const elements: HTMLElement[] = [];
       const loadedElements: number[] = [];
 
@@ -340,7 +339,7 @@ describe('AttributeProcessor System Events', () => {
         testContainer.appendChild(elem);
       }
 
-      processor.scanAndProcessAll();
+      await processor.scanAndProcessAll();
 
       expect(loadedElements).toHaveLength(5);
       expect(loadedElements).toEqual([0, 1, 2, 3, 4]);
@@ -369,19 +368,19 @@ describe('AttributeProcessor System Events', () => {
           'hyperscript:ready',
           () => {
             loadOrder.push('hyperscript:ready');
-
-            // Verify load events happened first
-            expect(loadOrder).toEqual(['load-elem1', 'load-elem2', 'hyperscript:ready']);
             resolve();
           },
           { once: true }
         );
       });
 
-      processor.scanAndProcessAll();
+      await processor.scanAndProcessAll();
       processor['dispatchReadyEvent']();
 
       await eventPromise;
+
+      // Verify load events happened first
+      expect(loadOrder).toEqual(['load-elem1', 'load-elem2', 'hyperscript:ready']);
     });
 
     it('should have correct processed count after all load events', async () => {
@@ -416,7 +415,7 @@ describe('AttributeProcessor System Events', () => {
         );
       });
 
-      processor.scanAndProcessAll();
+      await processor.scanAndProcessAll();
       processor['dispatchReadyEvent']();
 
       await eventPromise;
@@ -447,7 +446,7 @@ describe('AttributeProcessor System Events', () => {
         );
       });
 
-      processor.scanAndProcessAll();
+      await processor.scanAndProcessAll();
       processor['dispatchReadyEvent']();
 
       await eventPromise;

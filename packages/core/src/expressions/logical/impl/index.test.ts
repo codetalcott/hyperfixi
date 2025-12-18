@@ -545,7 +545,7 @@ describe('Enhanced Logical Expressions Integration', () => {
 
       expressions.forEach(expr => {
         expect(expr.category).toBe('Logical');
-        expect(expr.outputType).toBe('Boolean');
+        expect(expr.outputType).toBe('boolean');
         expect(expr.metadata.category).toBe('Logical');
         expect(expr.metadata.returnTypes).toContain('Boolean');
         expect(expr.documentation.summary).toBeTruthy();

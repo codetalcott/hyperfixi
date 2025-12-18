@@ -72,7 +72,7 @@ describe('Enhanced Reference Expressions', () => {
       expect(meExpression.name).toBe('me');
       expect(meExpression.category).toBe('Reference');
       expect(meExpression.syntax).toBe('me');
-      expect(meExpression.outputType).toBe('Element');
+      expect(meExpression.outputType).toBe('element');
       expect(meExpression.metadata.complexity).toBe('simple');
       expect(meExpression.metadata!.performance.complexity).toBe('O(1)');
     });
@@ -137,7 +137,7 @@ describe('Enhanced Reference Expressions', () => {
       expect(youExpression.name).toBe('you');
       expect(youExpression.category).toBe('Reference');
       expect(youExpression.syntax).toBe('you');
-      expect(youExpression.outputType).toBe('Element');
+      expect(youExpression.outputType).toBe('element');
     });
 
     it('should return the target element from context', async () => {
@@ -258,7 +258,7 @@ describe('Enhanced Reference Expressions', () => {
     it.skip('should have correct metadata', () => {
       expect(selectorExpression.name).toBe('css-selector');
       expect(selectorExpression.category).toBe('Reference');
-      expect(selectorExpression.outputType).toBe('ElementList');
+      expect(selectorExpression.outputType).toBe('element-list');
       expect(selectorExpression.metadata.complexity).toBe('medium');
       expect(selectorExpression.metadata.sideEffects).toContain('dom-query');
     });

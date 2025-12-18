@@ -5,6 +5,7 @@
 
 import { v, z } from '../validation/lightweight-validators';
 import {
+  ContextBase,
   EnhancedContextBase,
   BaseContextInputSchema,
   BaseContextOutputSchema,
