@@ -107,7 +107,7 @@ describe('Enhanced Lambda Expression', () => {
 
   describe('Error Handling', () => {
     test('handles invalid parameters', async () => {
-      const result = await expression.evaluate(context, 'not-array' as any, 'x + y');
+      const result = await expression.evaluate(context, 'not-array' as unknown as string[], 'x + y');
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -116,7 +116,7 @@ describe('Enhanced Lambda Expression', () => {
     });
 
     test.skip('handles invalid body', async () => {
-      const result = await expression.evaluate(context, ['x'], 123 as any);
+      const result = await expression.evaluate(context, ['x'], 123 as unknown as string);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -366,19 +366,19 @@ describe('Enhanced Error Expression', () => {
         expect(result.value).toBeInstanceOf(Error);
         expect(result.value!.message).toBe('Network timeout');
         expect(result.value!.name).toBe('NetworkError');
-        expect((result.value as any).code).toBe('E001');
+        expect((result.value as Error & { code: string }).code).toBe('E001');
       }
     });
 
     test('handles non-string inputs', async () => {
-      const result = await expression.evaluate(context, 123 as any, 456 as any, 789 as any);
+      const result = await expression.evaluate(context, 123 as unknown as string, 456 as unknown as string, 789 as unknown as string);
 
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.value).toBeInstanceOf(Error);
         expect(result.value!.message).toBe('123');
         expect(result.value!.name).toBe('456');
-        expect((result.value as any).code).toBe('789');
+        expect((result.value as Error & { code: string }).code).toBe('789');
       }
     });
   });
@@ -603,7 +603,7 @@ describe('Utility Functions', () => {
       expect(result.value).toBeInstanceOf(Error);
       expect(result.value!.message).toBe('Test error');
       expect(result.value!.name).toBe('TestError');
-      expect((result.value as any).code).toBe('T001');
+      expect((result.value as Error & { code: string }).code).toBe('T001');
     }
   });
 

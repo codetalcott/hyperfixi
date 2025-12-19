@@ -152,7 +152,7 @@ describe('Reference Expressions', () => {
 
       it('should throw error for non-string selector', async () => {
         await expect(
-          referenceExpressions.querySelector.evaluate(context, 123 as any)
+          referenceExpressions.querySelector.evaluate(context, 123 as unknown as string)
         ).rejects.toThrow('querySelector requires a string selector');
       });
     });
@@ -180,7 +180,7 @@ describe('Reference Expressions', () => {
         const result = await referenceExpressions.querySelectorAll.evaluate(context, 'div');
         expect(result.length).toBeGreaterThan(0);
         // Should find at least the container and nested divs
-        expect(result.some(el => el.id === 'container')).toBe(true);
+        expect(result.some((el: Element) => el.id === 'container')).toBe(true);
       });
 
       it('should validate selector argument', () => {
@@ -198,7 +198,7 @@ describe('Reference Expressions', () => {
 
       it('should throw error for non-string selector', async () => {
         await expect(
-          referenceExpressions.querySelectorAll.evaluate(context, 123 as any)
+          referenceExpressions.querySelectorAll.evaluate(context, 123 as unknown as string)
         ).rejects.toThrow('querySelectorAll requires a string selector');
       });
     });
@@ -228,7 +228,7 @@ describe('Reference Expressions', () => {
 
       it('should throw error for non-string ID', async () => {
         await expect(
-          referenceExpressions.getElementById.evaluate(context, 123 as any)
+          referenceExpressions.getElementById.evaluate(context, 123 as unknown as string)
         ).rejects.toThrow('getElementById requires a string ID');
       });
     });
@@ -277,7 +277,7 @@ describe('Reference Expressions', () => {
 
       it('should throw error for non-string className', async () => {
         await expect(
-          referenceExpressions.getElementsByClassName.evaluate(context, 123 as any)
+          referenceExpressions.getElementsByClassName.evaluate(context, 123 as unknown as string)
         ).rejects.toThrow('getElementsByClassName requires a string class name');
       });
     });
@@ -313,7 +313,7 @@ describe('Reference Expressions', () => {
       });
 
       it('should throw error for non-string selector', async () => {
-        await expect(referenceExpressions.closest.evaluate(context, 123 as any)).rejects.toThrow(
+        await expect(referenceExpressions.closest.evaluate(context, 123 as unknown as string)).rejects.toThrow(
           'closest requires a string selector'
         );
       });
@@ -437,7 +437,7 @@ describe('Reference Expressions', () => {
       });
 
       it('should throw error for non-string property', async () => {
-        await expect(referenceExpressions.styleRef.evaluate(context, 123 as any)).rejects.toThrow(
+        await expect(referenceExpressions.styleRef.evaluate(context, 123 as unknown as string)).rejects.toThrow(
           'StyleRef requires a string property name'
         );
       });
@@ -557,10 +557,10 @@ describe('Reference Expressions', () => {
 
       it('should throw error for non-string arguments', async () => {
         await expect(
-          referenceExpressions.possessiveStyleRef.evaluate(context, 123 as any, 'color')
+          referenceExpressions.possessiveStyleRef.evaluate(context, 123 as unknown as string, 'color')
         ).rejects.toThrow('Possessive styleRef requires possessor and property strings');
         await expect(
-          referenceExpressions.possessiveStyleRef.evaluate(context, 'my', 123 as any)
+          referenceExpressions.possessiveStyleRef.evaluate(context, 'my', 123 as unknown as string)
         ).rejects.toThrow('Possessive styleRef requires possessor and property strings');
       });
     });
@@ -673,10 +673,10 @@ describe('Reference Expressions', () => {
 
       it('should throw error for non-string arguments', async () => {
         await expect(
-          referenceExpressions.ofStyleRef.evaluate(context, 123 as any, 'me')
+          referenceExpressions.ofStyleRef.evaluate(context, 123 as unknown as string, 'me')
         ).rejects.toThrow('Of styleRef requires property and reference strings');
         await expect(
-          referenceExpressions.ofStyleRef.evaluate(context, 'color', 123 as any)
+          referenceExpressions.ofStyleRef.evaluate(context, 'color', 123 as unknown as string)
         ).rejects.toThrow('Of styleRef requires property and reference strings');
       });
     });
@@ -684,8 +684,8 @@ describe('Reference Expressions', () => {
 
   describe('Expression Metadata', () => {
     it('should have correct categories', () => {
-      Object.values(referenceExpressions).forEach(expr => {
-        expect(expr.category).toBe('Reference');
+      Object.values(referenceExpressions).forEach((expr: unknown) => {
+        expect((expr as { category: string }).category).toBe('Reference');
       });
     });
 

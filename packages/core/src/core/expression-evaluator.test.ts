@@ -88,7 +88,7 @@ describe('Expression Evaluator - Local Variables (:variable)', () => {
       scope: 'local',
     };
 
-    const result = await evaluator.evaluate(node as any, context);
+    const result = await evaluator.evaluate(node, context);
     expect(result).toBe(42);
   });
 
@@ -101,7 +101,7 @@ describe('Expression Evaluator - Local Variables (:variable)', () => {
       scope: 'local',
     };
 
-    const result = await evaluator.evaluate(node as any, context);
+    const result = await evaluator.evaluate(node, context);
     expect(result).toBeUndefined();
   });
 
@@ -116,7 +116,7 @@ describe('Expression Evaluator - Local Variables (:variable)', () => {
       scope: 'local',
     };
 
-    const result = await evaluator.evaluate(node as any, context);
+    const result = await evaluator.evaluate(node, context);
     // Should return undefined, NOT 100
     expect(result).toBeUndefined();
   });
@@ -132,7 +132,7 @@ describe('Expression Evaluator - Local Variables (:variable)', () => {
       // no scope property
     };
 
-    const result = await evaluator.evaluate(node as any, context);
+    const result = await evaluator.evaluate(node, context);
     // Should return local value (42), not global (100)
     expect(result).toBe(42);
   });
@@ -148,7 +148,7 @@ describe('Expression Evaluator - Local Variables (:variable)', () => {
       scope: 'global',
     };
 
-    const result = await evaluator.evaluate(node as any, context);
+    const result = await evaluator.evaluate(node, context);
     // Should return global value (100)
     expect(result).toBe(100);
   });
@@ -162,7 +162,7 @@ describe('Expression Evaluator - Local Variables (:variable)', () => {
       scope: 'local',
     };
 
-    const result = await evaluator.evaluate(node as any, context);
+    const result = await evaluator.evaluate(node, context);
     expect(result).toBe('Alice');
   });
 
@@ -175,7 +175,7 @@ describe('Expression Evaluator - Local Variables (:variable)', () => {
       scope: 'local',
     };
 
-    const result = await evaluator.evaluate(node as any, context);
+    const result = await evaluator.evaluate(node, context);
     expect(result).toBe(123);
   });
 
@@ -188,7 +188,7 @@ describe('Expression Evaluator - Local Variables (:variable)', () => {
       scope: 'local',
     };
 
-    const result = await evaluator.evaluate(node as any, context);
+    const result = await evaluator.evaluate(node, context);
     expect(result).toBe(true);
   });
 
@@ -202,7 +202,7 @@ describe('Expression Evaluator - Local Variables (:variable)', () => {
       scope: 'local',
     };
 
-    const result = await evaluator.evaluate(node as any, context);
+    const result = await evaluator.evaluate(node, context);
     expect(result).toEqual(obj);
   });
 
@@ -215,7 +215,7 @@ describe('Expression Evaluator - Local Variables (:variable)', () => {
       scope: 'local',
     };
 
-    const result = await evaluator.evaluate(node as any, context);
+    const result = await evaluator.evaluate(node, context);
     expect(result).toBeNull();
   });
 });
