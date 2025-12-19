@@ -21,7 +21,7 @@ function createMockContext(): ExecutionContext & TypedExecutionContext {
     locals: new Map(),
     target: document.createElement('div'),
     detail: undefined,
-  } as any;
+  } as unknown as ExecutionContext & TypedExecutionContext;
 }
 
 function createMockEvaluator() {
@@ -30,7 +30,7 @@ function createMockEvaluator() {
       // Simple mock - returns the node value directly
       // Real evaluator would parse AST
       if (typeof node === 'object' && node !== null && 'value' in node) {
-        return (node as any).value;
+        return (node as { value:unknown }).value;
       }
       return node;
     },
@@ -74,7 +74,7 @@ describe('LogCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         { args: [], modifiers: {} },
-        evaluator as any,
+        evaluator,
         context
       );
 
@@ -88,8 +88,8 @@ describe('LogCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: 'Hello World' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value:'Hello World' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -103,8 +103,8 @@ describe('LogCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: 42 } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value:42 }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -122,13 +122,13 @@ describe('LogCommand (Standalone V2)', () => {
       const input = await command.parseInput(
         {
           args: [
-            { value: 'Result:' } as any,
-            { value: 42 } as any,
-            { value: true } as any,
+            { value:'Result:' },
+            { value:42 },
+            { value:true },
           ],
           modifiers: {},
         },
-        evaluator as any,
+        evaluator,
         context
       );
 
@@ -143,8 +143,8 @@ describe('LogCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: obj } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value:obj }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -160,8 +160,8 @@ describe('LogCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: arr } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value:arr }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -179,10 +179,10 @@ describe('LogCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ value: null } as any, { value: undefined } as any],
+          args: [{ value:null }, { value:undefined }],
           modifiers: {},
         },
-        evaluator as any,
+        evaluator,
         context
       );
 
@@ -333,8 +333,8 @@ describe('LogCommand (Standalone V2)', () => {
 
       // Parse input
       const input = await command.parseInput(
-        { args: [{ value: 'Test Message' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value:'Test Message' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -364,14 +364,14 @@ describe('LogCommand (Standalone V2)', () => {
       const input = await command.parseInput(
         {
           args: [
-            { value: 'X:' } as any,
-            { value: 100 } as any,
-            { value: 'Y:' } as any,
-            { value: 200 } as any,
+            { value:'X:' },
+            { value:100 },
+            { value:'Y:' },
+            { value:200 },
           ],
           modifiers: {},
         },
-        evaluator as any,
+        evaluator,
         context
       );
 
@@ -396,7 +396,7 @@ describe('LogCommand (Standalone V2)', () => {
       // Parse input (no args)
       const input = await command.parseInput(
         { args: [], modifiers: {} },
-        evaluator as any,
+        evaluator,
         context
       );
 
