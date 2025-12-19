@@ -12,7 +12,7 @@ import type { TypedExpressionContext } from '../../types/base-types';
 // Mock DOM environment
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
 global.document = dom.window.document;
-global.window = dom.window as any;
+global.window = dom.window as unknown as Window & typeof globalThis;
 global.Element = dom.window.Element;
 
 describe('Enhanced Logical Expressions', () => {

@@ -164,7 +164,7 @@ describe('Positional Expressions', () => {
 
       it('should throw error for non-number index', async () => {
         await expect(
-          positionalExpressions.at.evaluate(context, 'invalid' as any, [])
+          positionalExpressions.at.evaluate(context, 'invalid' as unknown as number, [])
         ).rejects.toThrow('Index must be a number');
       });
 

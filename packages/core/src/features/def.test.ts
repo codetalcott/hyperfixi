@@ -160,7 +160,7 @@ describe('Def Feature', () => {
       // Mock the wait command to resolve immediately for testing
       vi.spyOn(global, 'setTimeout').mockImplementation((fn, delay) => {
         (fn as Function)();
-        return 1 as any;
+        return 1 as unknown as NodeJS.Timeout;
       });
 
       const result = await defFeature.executeFunction('delayTheAnswer', [], context);

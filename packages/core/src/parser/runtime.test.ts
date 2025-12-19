@@ -158,7 +158,12 @@ describe('Hyperscript Runtime Evaluator', () => {
 
     it('should handle invalid AST nodes', async () => {
       const context = createMockHyperscriptContext();
-      const invalidNode = { type: 'unknown', start: 0, end: 0, line: 1, column: 1 } as any;
+      const invalidNode = {
+        type: 'unknown' as 'Literal',
+        position: { start: 0, end: 0, line: 1, column: 1 },
+        value: null,
+        raw: 'null'
+      };
 
       await expect(evaluateAST(invalidNode, context)).rejects.toThrow();
     });

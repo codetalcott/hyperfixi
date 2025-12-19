@@ -639,7 +639,7 @@ describe('Enhanced Comparison Expressions Integration', () => {
 
       for (const expr of expressions) {
         // Test with invalid input (missing right operand)
-        const result = await expr.evaluate(context, { left: 5 } as any);
+        const result = await expr.evaluate(context, { left: 5, right: undefined });
 
         expect(result.success).toBe(false);
         if (!result.success) {
