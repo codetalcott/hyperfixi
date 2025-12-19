@@ -41,7 +41,7 @@ function createMockContext(me: HTMLElement): ExecutionContext & TypedExecutionCo
     locals: new Map(),
     target: me,
     detail: undefined,
-  } as any;
+  } as unknown as ExecutionContext & TypedExecutionContext;
 }
 
 function createMockEvaluator() {
@@ -50,7 +50,7 @@ function createMockEvaluator() {
       // Simple mock - returns the node value directly
       // Real evaluator would parse AST
       if (typeof node === 'object' && node !== null && 'value' in node) {
-        return (node as any).value;
+        return (node as { value: unknown }).value;
       }
       return node;
     },
@@ -96,7 +96,7 @@ describe('ShowCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         { args: [], modifiers: {} },
-        evaluator as any,
+        evaluator,
         context
       );
 
@@ -114,8 +114,8 @@ describe('ShowCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: element } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: element }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -133,8 +133,8 @@ describe('ShowCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '.target' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '.target' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -154,8 +154,8 @@ describe('ShowCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: nodeList } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: nodeList }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -173,8 +173,8 @@ describe('ShowCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: [el1, el2] } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: [el1, el2] }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -192,8 +192,8 @@ describe('ShowCommand (Standalone V2)', () => {
 
       await expect(
         command.parseInput(
-          { args: [{ value: '<<<invalid>>>' } as any], modifiers: {} },
-          evaluator as any,
+          { args: [{ value: '<<<invalid>>>' }], modifiers: {} },
+          evaluator,
           context
         )
       ).rejects.toThrow('Invalid CSS selector');
@@ -210,8 +210,8 @@ describe('ShowCommand (Standalone V2)', () => {
 
       await expect(
         command.parseInput(
-          { args: [{ value: 12345 } as any], modifiers: {} },
-          evaluator as any,
+          { args: [{ value: 12345 }], modifiers: {} },
+          evaluator,
           context
         )
       ).rejects.toThrow('Invalid show target');
@@ -228,8 +228,8 @@ describe('ShowCommand (Standalone V2)', () => {
 
       await expect(
         command.parseInput(
-          { args: [{ value: [] } as any], modifiers: {} },
-          evaluator as any,
+          { args: [{ value: [] }], modifiers: {} },
+          evaluator,
           context
         )
       ).rejects.toThrow('no valid targets found');
@@ -407,7 +407,7 @@ describe('ShowCommand (Standalone V2)', () => {
       // Parse input
       const input = await command.parseInput(
         { args: [], modifiers: {} },
-        evaluator as any,
+        evaluator,
         context
       );
 
@@ -439,8 +439,8 @@ describe('ShowCommand (Standalone V2)', () => {
 
       // Parse input
       const input = await command.parseInput(
-        { args: [{ value: '#parent .btn' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '#parent .btn' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -471,7 +471,7 @@ describe('ShowCommand (Standalone V2)', () => {
       // Now show should restore original
       const input = await command.parseInput(
         { args: [], modifiers: {} },
-        evaluator as any,
+        evaluator,
         context
       );
 

@@ -24,9 +24,9 @@ describe('Enhanced Function Call Expression', () => {
   afterEach(() => {
     // Clean up any global functions added during tests
     if (typeof globalThis !== 'undefined') {
-      delete (globalThis as any).testIdentity;
-      delete (globalThis as any).testAsync;
-      delete (globalThis as any).testObj;
+      delete (globalThis as Record<string, unknown>).testIdentity;
+      delete (globalThis as Record<string, unknown>).testAsync;
+      delete (globalThis as Record<string, unknown>).testObj;
     }
   });
 
@@ -77,7 +77,7 @@ describe('Enhanced Function Call Expression', () => {
   describe('Global Function Calls', () => {
     test('calls global function with string argument', async () => {
       // Setup global function
-      (globalThis as any).testIdentity = (x: string) => x;
+      (globalThis as Record<string, unknown>).testIdentity = (x: string) => x;
 
       const result = await functionCallExpression.evaluate(context, 'testIdentity', ['hello']);
 
@@ -90,7 +90,7 @@ describe('Enhanced Function Call Expression', () => {
 
     test('calls global function with multiple arguments', async () => {
       // Setup global function
-      (globalThis as any).testAdd = (a: number, b: number) => a + b;
+      (globalThis as Record<string, unknown>).testAdd = (a: number, b: number) => a + b;
 
       const result = await functionCallExpression.evaluate(context, 'testAdd', [5, 3]);
 
@@ -100,12 +100,12 @@ describe('Enhanced Function Call Expression', () => {
         expect(result.type).toBe('number');
       }
 
-      delete (globalThis as any).testAdd;
+      delete (globalThis as Record<string, unknown>).testAdd;
     });
 
     test('calls function with no arguments', async () => {
       // Setup global function
-      (globalThis as any).testNoArgs = () => 'no-args-result';
+      (globalThis as Record<string, unknown>).testNoArgs = () => 'no-args-result';
 
       const result = await functionCallExpression.evaluate(context, 'testNoArgs', []);
 
@@ -115,12 +115,12 @@ describe('Enhanced Function Call Expression', () => {
         expect(result.type).toBe('string');
       }
 
-      delete (globalThis as any).testNoArgs;
+      delete (globalThis as Record<string, unknown>).testNoArgs;
     });
 
     test('calls function without arguments parameter', async () => {
       // Setup global function
-      (globalThis as any).testNoArgsParam = () => 'no-args-param-result';
+      (globalThis as Record<string, unknown>).testNoArgsParam = () => 'no-args-param-result';
 
       const result = await functionCallExpression.evaluate(context, 'testNoArgsParam');
 
@@ -130,14 +130,14 @@ describe('Enhanced Function Call Expression', () => {
         expect(result.type).toBe('string');
       }
 
-      delete (globalThis as any).testNoArgsParam;
+      delete (globalThis as Record<string, unknown>).testNoArgsParam;
     });
   });
 
   describe('Method Calls on Objects', () => {
     test('calls method on global object', async () => {
       // Setup global object with method
-      (globalThis as any).testObj = {
+      (globalThis as Record<string, unknown>).testObj = {
         value: 'test-value',
         getValue() {
           return this.value;
@@ -155,7 +155,7 @@ describe('Enhanced Function Call Expression', () => {
 
     test('calls method with proper this binding', async () => {
       // Setup global object
-      (globalThis as any).testObj = {
+      (globalThis as Record<string, unknown>).testObj = {
         multiplier: 10,
         multiply(value: number) {
           return value * this.multiplier;
@@ -195,7 +195,7 @@ describe('Enhanced Function Call Expression', () => {
     });
 
     test('calls nested method', async () => {
-      (globalThis as any).testObj = {
+      (globalThis as Record<string, unknown>).testObj = {
         utils: {
           format: {
             capitalize(str: string) {
@@ -250,7 +250,7 @@ describe('Enhanced Function Call Expression', () => {
         return `async-${value}`;
       };
 
-      (globalThis as any).testAsync = asyncFunc;
+      (globalThis as Record<string, unknown>).testAsync = asyncFunc;
 
       const result = await functionCallExpression.evaluate(context, 'testAsync', ['test']);
 
@@ -265,7 +265,7 @@ describe('Enhanced Function Call Expression', () => {
       const promiseArg = Promise.resolve(42);
       const testFunc = (x: number) => x + 10;
 
-      (globalThis as any).testPromiseArg = testFunc;
+      (globalThis as Record<string, unknown>).testPromiseArg = testFunc;
 
       const result = await functionCallExpression.evaluate(context, 'testPromiseArg', [promiseArg]);
 
@@ -280,7 +280,7 @@ describe('Enhanced Function Call Expression', () => {
       const promise2 = Promise.resolve(20);
       const testFunc = (a: number, b: number) => a + b;
 
-      (globalThis as any).testMultiplePromises = testFunc;
+      (globalThis as Record<string, unknown>).testMultiplePromises = testFunc;
 
       const result = await functionCallExpression.evaluate(context, 'testMultiplePromises', [
         promise1,
@@ -333,7 +333,7 @@ describe('Enhanced Function Call Expression', () => {
 
     test('prioritizes local context over global', async () => {
       // Set global function
-      (globalThis as any).priorityTest = () => 'global';
+      (globalThis as Record<string, unknown>).priorityTest = () => 'global';
 
       // Set local function with same name
       const localFunc = () => 'local';
@@ -346,7 +346,7 @@ describe('Enhanced Function Call Expression', () => {
         expect(result.value).toBe('local'); // Should prefer local
       }
 
-      delete (globalThis as any).priorityTest;
+      delete (globalThis as Record<string, unknown>).priorityTest;
     });
   });
 
@@ -390,7 +390,7 @@ describe('Enhanced Function Call Expression', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Array.isArray(result.value)).toBe(true);
-        expect((result.value as Array<any>).length).toBe(5);
+        expect((result.value as Array<unknown>).length).toBe(5);
         expect(result.type).toBe('array');
       }
     });
@@ -414,7 +414,7 @@ describe('Enhanced Function Call Expression', () => {
         throw new Error('Constructor error');
       };
 
-      (globalThis as any).ErrorConstructor = errorConstructor;
+      (globalThis as Record<string, unknown>).ErrorConstructor = errorConstructor;
 
       const result = await functionCallExpression.evaluate(context, 'new', 'ErrorConstructor');
 
@@ -424,7 +424,7 @@ describe('Enhanced Function Call Expression', () => {
         expect(result.error!.message).toContain('Constructor error');
       }
 
-      delete (globalThis as any).ErrorConstructor;
+      delete (globalThis as Record<string, unknown>).ErrorConstructor;
     });
   });
 
@@ -482,7 +482,7 @@ describe('Enhanced Function Call Expression', () => {
         throw new Error('Test error');
       };
 
-      (globalThis as any).errorFunc = errorFunc;
+      (globalThis as Record<string, unknown>).errorFunc = errorFunc;
 
       const result = await functionCallExpression.evaluate(context, 'errorFunc', []);
 
@@ -492,7 +492,7 @@ describe('Enhanced Function Call Expression', () => {
         expect(result.error!.message).toContain('Test error');
       }
 
-      delete (globalThis as any).errorFunc;
+      delete (globalThis as Record<string, unknown>).errorFunc;
     });
 
     test('handles validation errors', async () => {
@@ -518,36 +518,36 @@ describe('Enhanced Function Call Expression', () => {
   describe('Type Inference', () => {
     test('correctly infers return types', async () => {
       // String function
-      (globalThis as any).stringFunc = () => 'string';
+      (globalThis as Record<string, unknown>).stringFunc = () => 'string';
       let result = await functionCallExpression.evaluate(context, 'stringFunc', []);
       expect(result.success && result.type).toBe('string');
 
       // Number function
-      (globalThis as any).numberFunc = () => 42;
+      (globalThis as Record<string, unknown>).numberFunc = () => 42;
       result = await functionCallExpression.evaluate(context, 'numberFunc', []);
       expect(result.success && result.type).toBe('number');
 
       // Boolean function
-      (globalThis as any).boolFunc = () => true;
+      (globalThis as Record<string, unknown>).boolFunc = () => true;
       result = await functionCallExpression.evaluate(context, 'boolFunc', []);
       expect(result.success && result.type).toBe('boolean');
 
       // Array function
-      (globalThis as any).arrayFunc = () => [1, 2, 3];
+      (globalThis as Record<string, unknown>).arrayFunc = () => [1, 2, 3];
       result = await functionCallExpression.evaluate(context, 'arrayFunc', []);
       expect(result.success && result.type).toBe('array');
 
       // Object function
-      (globalThis as any).objectFunc = () => ({ key: 'value' });
+      (globalThis as Record<string, unknown>).objectFunc = () => ({ key: 'value' });
       result = await functionCallExpression.evaluate(context, 'objectFunc', []);
       expect(result.success && result.type).toBe('object');
 
       // Cleanup
-      delete (globalThis as any).stringFunc;
-      delete (globalThis as any).numberFunc;
-      delete (globalThis as any).boolFunc;
-      delete (globalThis as any).arrayFunc;
-      delete (globalThis as any).objectFunc;
+      delete (globalThis as Record<string, unknown>).stringFunc;
+      delete (globalThis as Record<string, unknown>).numberFunc;
+      delete (globalThis as Record<string, unknown>).boolFunc;
+      delete (globalThis as Record<string, unknown>).arrayFunc;
+      delete (globalThis as Record<string, unknown>).objectFunc;
     });
   });
 
@@ -559,7 +559,7 @@ describe('Enhanced Function Call Expression', () => {
 
     test('callFunction utility works', async () => {
       const testFunc = (x: string) => `utility-${x}`;
-      (globalThis as any).utilityTest = testFunc;
+      (globalThis as Record<string, unknown>).utilityTest = testFunc;
 
       const result = await callFunction('utilityTest', ['test'], context);
 
@@ -568,7 +568,7 @@ describe('Enhanced Function Call Expression', () => {
         expect(result.value).toBe('utility-test');
       }
 
-      delete (globalThis as any).utilityTest;
+      delete (globalThis as Record<string, unknown>).utilityTest;
     });
 
     test('getMetadata provides comprehensive information', () => {
@@ -598,7 +598,7 @@ describe('Enhanced Function Call Expression', () => {
   describe('Performance Characteristics', () => {
     test('handles multiple concurrent calls efficiently', async () => {
       const testFunc = (x: number) => x * 2;
-      (globalThis as any).perfTest = testFunc;
+      (globalThis as Record<string, unknown>).perfTest = testFunc;
 
       const startTime = performance.now();
 
@@ -612,17 +612,17 @@ describe('Enhanced Function Call Expression', () => {
       const endTime = performance.now();
 
       // All should succeed
-      results.forEach((result, index) => {
-        expect(result.success).toBe(true);
-        if (result.success) {
-          expect(result.value).toBe(index * 2);
+      results.forEach((result: unknown, index: number) => {
+        expect((result as { success: boolean }).success).toBe(true);
+        if ((result as { success: boolean; value?: unknown }).success) {
+          expect((result as { value: unknown }).value).toBe(index * 2);
         }
       });
 
       // Should be reasonably fast
       expect(endTime - startTime).toBeLessThan(100); // Less than 100ms for 50 calls
 
-      delete (globalThis as any).perfTest;
+      delete (globalThis as Record<string, unknown>).perfTest;
     });
   });
 });

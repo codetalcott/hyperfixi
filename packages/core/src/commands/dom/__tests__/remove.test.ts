@@ -24,7 +24,7 @@ function createMockContext(): ExecutionContext & TypedExecutionContext {
     locals: new Map(),
     target: meElement,
     detail: undefined,
-  } as any;
+  } as unknown as ExecutionContext & TypedExecutionContext;
 }
 
 function createMockEvaluator() {
@@ -32,7 +32,7 @@ function createMockEvaluator() {
     evaluate: async (node: ASTNode, context: ExecutionContext) => {
       // Simple mock - returns the node value directly
       if (typeof node === 'object' && node !== null && 'value' in node) {
-        return (node as any).value;
+        return (node as unknown as { value: unknown }).value;
       }
       return node;
     },
@@ -72,7 +72,7 @@ describe('RemoveCommand (Standalone V2)', () => {
       const evaluator = createMockEvaluator();
 
       await expect(
-        command.parseInput({ args: [], modifiers: {} }, evaluator as any, context)
+        command.parseInput({ args: [], modifiers: {} }, evaluator, context)
       ).rejects.toThrow('remove command requires an argument');
     });
 
@@ -83,8 +83,8 @@ describe('RemoveCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '.active' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '.active' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -102,8 +102,8 @@ describe('RemoveCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: 'selected' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: 'selected' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -121,8 +121,8 @@ describe('RemoveCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: 'active selected highlighted' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: 'active selected highlighted' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -139,8 +139,8 @@ describe('RemoveCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '.active .selected .highlighted' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '.active .selected .highlighted' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -157,8 +157,8 @@ describe('RemoveCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: ['.active', 'selected', '.highlighted'] } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: ['.active', 'selected', '.highlighted'] }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -175,8 +175,8 @@ describe('RemoveCommand (Standalone V2)', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: 'valid-class 123invalid -also-valid _underscore' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: 'valid-class 123invalid -also-valid _underscore' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -195,8 +195,8 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       await expect(
         command.parseInput(
-          { args: [{ value: '123 456 789' } as any], modifiers: {} },
-          evaluator as any,
+          { args: [{ value: '123 456 789' }], modifiers: {} },
+          evaluator,
           context
         )
       ).rejects.toThrow('remove command: no valid class names found');
@@ -218,10 +218,10 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ value: 'active' } as any, { value: targetElement } as any],
+          args: [{ value: 'active' }, { value: targetElement }],
           modifiers: {},
         },
-        evaluator as any,
+        evaluator,
         context
       );
 
@@ -248,10 +248,10 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ value: 'active' } as any, { value: '#test-target' } as any],
+          args: [{ value: 'active' }, { value: '#test-target' }],
           modifiers: {},
         },
-        evaluator as any,
+        evaluator,
         context
       );
 
@@ -284,10 +284,10 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       const input = await command.parseInput(
         {
-          args: [{ value: 'active' } as any, { value: '.test-class' } as any],
+          args: [{ value: 'active' }, { value: '.test-class' }],
           modifiers: {},
         },
-        evaluator as any,
+        evaluator,
         context
       );
 
@@ -316,10 +316,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       await expect(
         command.parseInput(
           {
-            args: [{ value: 'active' } as any, { value: ':::invalid:::' } as any],
+            args: [{ value: 'active' }, { value: ':::invalid:::' }],
             modifiers: {},
           },
-          evaluator as any,
+          evaluator,
           context
         )
       ).rejects.toThrow('Invalid CSS selector');
@@ -341,10 +341,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       await expect(
         command.parseInput(
           {
-            args: [{ value: 'active' } as any, { value: '.nonexistent-element' } as any],
+            args: [{ value: 'active' }, { value: '.nonexistent-element' }],
             modifiers: {},
           },
-          evaluator as any,
+          evaluator,
           context
         )
       ).rejects.toThrow('remove command: no valid targets found');
@@ -537,8 +537,8 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       // Parse input
       const input = await command.parseInput(
-        { args: [{ value: '.active' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '.active' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -562,8 +562,8 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       // Parse input
       const input = await command.parseInput(
-        { args: [{ value: 'active selected highlighted' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: 'active selected highlighted' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -600,10 +600,10 @@ describe('RemoveCommand (Standalone V2)', () => {
       // Parse input
       const input = await command.parseInput(
         {
-          args: [{ value: '.active' } as any, { value: '#test-button' } as any],
+          args: [{ value: '.active' }, { value: '#test-button' }],
           modifiers: {},
         },
-        evaluator as any,
+        evaluator,
         context
       );
 
@@ -630,8 +630,8 @@ describe('RemoveCommand (Standalone V2)', () => {
 
       // Parse input
       const input = await command.parseInput(
-        { args: [{ value: '.remove-me' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '.remove-me' }], modifiers: {} },
+        evaluator,
         context
       );
 

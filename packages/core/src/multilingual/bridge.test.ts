@@ -125,7 +125,7 @@ describe('semanticNodeToParsedStatement', () => {
       metadata: { sourceText: 'toggle .active' },
     };
 
-    const statement = semanticNodeToParsedStatement(mockNode as any);
+    const statement = semanticNodeToParsedStatement(mockNode as unknown as Parameters<typeof semanticNodeToParsedStatement>[0]);
 
     expect(statement.type).toBe('command');
     expect(statement.roles.has('action')).toBe(true);
@@ -149,7 +149,7 @@ describe('semanticNodeToParsedStatement', () => {
       metadata: {},
     };
 
-    const statement = semanticNodeToParsedStatement(mockNode as any);
+    const statement = semanticNodeToParsedStatement(mockNode as unknown as Parameters<typeof semanticNodeToParsedStatement>[0]);
     expect(statement.roles.get('patient')?.value).toBe('me');
     expect(statement.roles.get('patient')?.isSelector).toBe(false);
   });
@@ -176,7 +176,7 @@ describe('semanticNodeToParsedStatement', () => {
       metadata: {},
     };
 
-    const statement = semanticNodeToParsedStatement(mockNode as any);
+    const statement = semanticNodeToParsedStatement(mockNode as unknown as Parameters<typeof semanticNodeToParsedStatement>[0]);
     expect(statement.roles.get('patient')?.value).toBe("#element's value");
   });
 });
@@ -369,7 +369,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('toggle');
+      expect((ast as { name: string }).name).toBe('toggle');
     });
 
     it('should parse add command to AST', async () => {
@@ -377,7 +377,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('add');
+      expect((ast as { name: string }).name).toBe('add');
     });
 
     it('should parse remove command to AST', async () => {
@@ -385,7 +385,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('remove');
+      expect((ast as { name: string }).name).toBe('remove');
     });
 
     it('should parse set command to AST', async () => {
@@ -393,7 +393,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('set');
+      expect((ast as { name: string }).name).toBe('set');
     });
 
     it('should parse wait command to AST', async () => {
@@ -401,7 +401,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('wait');
+      expect((ast as { name: string }).name).toBe('wait');
     });
 
     it('should parse show/hide commands to AST when confidence is high', async () => {
@@ -415,10 +415,10 @@ describe('parseToAST Integration', () => {
 
       // If direct path succeeded, verify the AST
       if (showResult.usedDirectPath && showResult.ast) {
-        expect((showResult.ast as any).name).toBe('show');
+        expect((showResult.ast as { name: string }).name).toBe('show');
       }
       if (hideResult.usedDirectPath && hideResult.ast) {
-        expect((hideResult.ast as any).name).toBe('hide');
+        expect((hideResult.ast as { name: string }).name).toBe('hide');
       }
     });
   });
@@ -429,7 +429,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('toggle');
+      expect((ast as { name: string }).name).toBe('toggle');
     });
 
     it('should parse add command from Japanese', async () => {
@@ -437,7 +437,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('add');
+      expect((ast as { name: string }).name).toBe('add');
     });
 
     it('should parse show/hide from Japanese', async () => {
@@ -445,10 +445,10 @@ describe('parseToAST Integration', () => {
       const hideAst = await ml.parseToAST('#modal を 非表示', 'ja');
 
       expect(showAst).not.toBeNull();
-      expect((showAst as any).name).toBe('show');
+      expect((showAst as { name: string }).name).toBe('show');
 
       expect(hideAst).not.toBeNull();
-      expect((hideAst as any).name).toBe('hide');
+      expect((hideAst as { name: string }).name).toBe('hide');
     });
   });
 
@@ -458,7 +458,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('toggle');
+      expect((ast as { name: string }).name).toBe('toggle');
     });
 
     it('should parse add command from Spanish', async () => {
@@ -466,7 +466,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('add');
+      expect((ast as { name: string }).name).toBe('add');
     });
   });
 
@@ -476,7 +476,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('toggle');
+      expect((ast as { name: string }).name).toBe('toggle');
     });
   });
 
@@ -486,7 +486,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('toggle');
+      expect((ast as { name: string }).name).toBe('toggle');
     });
   });
 
@@ -496,7 +496,7 @@ describe('parseToAST Integration', () => {
 
       expect(ast).not.toBeNull();
       expect(ast!.type).toBe('command');
-      expect((ast as any).name).toBe('toggle');
+      expect((ast as { name: string }).name).toBe('toggle');
     });
   });
 });
@@ -551,13 +551,13 @@ describe('Cross-Language AST Consistency', () => {
     expect(japaneseAst).not.toBeNull();
     expect(spanishAst).not.toBeNull();
 
-    expect((englishAst as any).name).toBe('toggle');
-    expect((japaneseAst as any).name).toBe('toggle');
-    expect((spanishAst as any).name).toBe('toggle');
+    expect((englishAst as { name: string }).name).toBe('toggle');
+    expect((japaneseAst as { name: string }).name).toBe('toggle');
+    expect((spanishAst as { name: string }).name).toBe('toggle');
 
     // All should have same type
-    expect((englishAst as any).type).toBe((japaneseAst as any).type);
-    expect((englishAst as any).type).toBe((spanishAst as any).type);
+    expect((englishAst as { type: string }).type).toBe((japaneseAst as { type: string }).type);
+    expect((englishAst as { type: string }).type).toBe((spanishAst as { type: string }).type);
   });
 
   it('should produce equivalent AST for add command across languages', async () => {
@@ -572,13 +572,13 @@ describe('Cross-Language AST Consistency', () => {
     // English add with target should work
     expect(englishResult.usedDirectPath).toBe(true);
     expect(englishResult.ast).not.toBeNull();
-    expect((englishResult.ast as any).name).toBe('add');
+    expect((englishResult.ast as { name: string }).name).toBe('add');
 
     // Japanese add may or may not work depending on pattern coverage
     // If it works, verify consistency
     if (japaneseResult.usedDirectPath && japaneseResult.ast) {
-      expect((japaneseResult.ast as any).name).toBe('add');
-      expect((japaneseResult.ast as any).type).toBe((englishResult.ast as any).type);
+      expect((japaneseResult.ast as { name: string }).name).toBe('add');
+      expect((japaneseResult.ast as { type: string }).type).toBe((englishResult.ast as { type: string }).type);
     }
   });
 });

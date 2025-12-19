@@ -25,7 +25,7 @@ function createMockContext(): ExecutionContext & TypedExecutionContext {
     globals: new Map(),
     target: meElement,
     detail: undefined,
-  } as any;
+  } as unknown as ExecutionContext & TypedExecutionContext;
 }
 
 function createMockEvaluator() {
@@ -33,7 +33,7 @@ function createMockEvaluator() {
     evaluate: async (node: ASTNode, context: ExecutionContext) => {
       // Simple mock - returns the node value directly
       if (typeof node === 'object' && node !== null && 'value' in node) {
-        return (node as any).value;
+        return (node as { value: unknown }).value;
       }
       return node;
     },
@@ -55,8 +55,8 @@ describe('AddCommand - Attribute Support (Feature Restoration)', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        { args: [{ value: '[@data-test="value"]' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '[@data-test="value"]' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -73,8 +73,8 @@ describe('AddCommand - Attribute Support (Feature Restoration)', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        { args: [{ value: '@data-value' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '@data-value' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -91,8 +91,8 @@ describe('AddCommand - Attribute Support (Feature Restoration)', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        { args: [{ value: "[@aria-label='Test Label']" } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: "[@aria-label='Test Label']" }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -108,8 +108,8 @@ describe('AddCommand - Attribute Support (Feature Restoration)', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        { args: [{ value: '[@disabled]' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '[@disabled]' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -235,8 +235,8 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        { args: [{ value: { opacity: '0.5', color: 'red' } } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: { opacity: '0.5', color: 'red' } }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -252,8 +252,8 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        { args: [{ value: '*opacity' } as any, { value: '0.5' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '*opacity' }, { value: '0.5' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -268,8 +268,8 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
       const evaluator = createMockEvaluator();
 
       const input = await command.parseInput(
-        { args: [{ value: '*background-color' } as any, { value: 'blue' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '*background-color' }, { value: 'blue' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -285,8 +285,8 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
 
       await expect(
         command.parseInput(
-          { args: [{ value: '*opacity' } as any], modifiers: {} },
-          evaluator as any,
+          { args: [{ value: '*opacity' }], modifiers: {} },
+          evaluator,
           context
         )
       ).rejects.toThrow('add *property requires a value argument');
@@ -378,13 +378,13 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
 
     it('should reject styles input with null styles', () => {
       const element = document.createElement('div');
-      const input = { type: 'styles' as const, styles: null as any, targets: [element] };
+      const input = { type: 'styles' as const, styles: null as unknown as Record<string, string>, targets: [element] };
       expect(command.validate(input)).toBe(false);
     });
 
     it('should reject styles input with array styles', () => {
       const element = document.createElement('div');
-      const input = { type: 'styles' as const, styles: ['opacity', '0.5'] as any, targets: [element] };
+      const input = { type: 'styles' as const, styles: ['opacity', '0.5'] as unknown as Record<string, string>, targets: [element] };
       expect(command.validate(input)).toBe(false);
     });
 
@@ -396,7 +396,7 @@ describe('AddCommand - Style Support (Feature Restoration)', () => {
 
     it('should reject styles input with non-string values', () => {
       const element = document.createElement('div');
-      const input = { type: 'styles' as const, styles: { opacity: 0.5 } as any, targets: [element] };
+      const input = { type: 'styles' as const, styles: { opacity: 0.5 } as unknown as Record<string, string>, targets: [element] };
       expect(command.validate(input)).toBe(false);
     });
   });

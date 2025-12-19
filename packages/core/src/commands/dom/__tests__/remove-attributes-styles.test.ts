@@ -31,14 +31,14 @@ function createMockContext(): ExecutionContext & TypedExecutionContext {
     locals: new Map(),
     target: meElement,
     detail: undefined,
-  } as any;
+  } as unknown as ExecutionContext & TypedExecutionContext;
 }
 
 function createMockEvaluator() {
   return {
     evaluate: async (node: ASTNode, context: ExecutionContext) => {
       if (typeof node === 'object' && node !== null && 'value' in node) {
-        return (node as any).value;
+        return (node as unknown as { value: unknown }).value;
       }
       return node;
     },
@@ -62,8 +62,8 @@ describe('RemoveCommand - Attribute Support', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '[@data-test]' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '[@data-test]' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -81,8 +81,8 @@ describe('RemoveCommand - Attribute Support', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '@data-value' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '@data-value' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -100,8 +100,8 @@ describe('RemoveCommand - Attribute Support', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '[@aria-label]' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '[@aria-label]' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -118,8 +118,8 @@ describe('RemoveCommand - Attribute Support', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '@disabled' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '@disabled' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -273,8 +273,8 @@ describe('RemoveCommand - Style Support', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '*opacity' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '*opacity' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -292,8 +292,8 @@ describe('RemoveCommand - Style Support', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '*background-color' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '*background-color' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -310,8 +310,8 @@ describe('RemoveCommand - Style Support', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '*backgroundColor' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '*backgroundColor' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -328,8 +328,8 @@ describe('RemoveCommand - Style Support', () => {
       };
 
       const input = await command.parseInput(
-        { args: [{ value: '*border-top-color' } as any], modifiers: {} },
-        evaluator as any,
+        { args: [{ value: '*border-top-color' }], modifiers: {} },
+        evaluator,
         context
       );
 
@@ -498,8 +498,8 @@ describe('RemoveCommand - Integration (Attributes & Styles)', () => {
 
     // Parse input
     const input = await command.parseInput(
-      { args: [{ value: '@data-temp' } as any], modifiers: {} },
-      evaluator as any,
+      { args: [{ value: '@data-temp' }], modifiers: {} },
+      evaluator,
       context
     );
 
@@ -522,8 +522,8 @@ describe('RemoveCommand - Integration (Attributes & Styles)', () => {
 
     // Parse input
     const input = await command.parseInput(
-      { args: [{ value: '*opacity' } as any], modifiers: {} },
-      evaluator as any,
+      { args: [{ value: '*opacity' }], modifiers: {} },
+      evaluator,
       context
     );
 
@@ -546,8 +546,8 @@ describe('RemoveCommand - Integration (Attributes & Styles)', () => {
     };
 
     const input = await command.parseInput(
-      { args: [{ value: '@data-remove' } as any], modifiers: {} },
-      evaluator as any,
+      { args: [{ value: '@data-remove' }], modifiers: {} },
+      evaluator,
       context
     );
 
@@ -567,8 +567,8 @@ describe('RemoveCommand - Integration (Attributes & Styles)', () => {
     };
 
     const input = await command.parseInput(
-      { args: [{ value: '*opacity' } as any], modifiers: {} },
-      evaluator as any,
+      { args: [{ value: '*opacity' }], modifiers: {} },
+      evaluator,
       context
     );
 
