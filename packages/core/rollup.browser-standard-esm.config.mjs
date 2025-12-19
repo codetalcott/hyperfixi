@@ -1,7 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 
 /**
  * ES Module Bundle Configuration for Standard Bundle
@@ -28,28 +28,28 @@ export default {
   plugins: [
     nodeResolve({
       browser: true,
-      preferBuiltins: false
+      preferBuiltins: false,
     }),
     commonjs(),
     typescript({
       tsconfig: 'tsconfig.json',
       declaration: false,
       sourceMap: true,
-      outDir: 'dist/esm'  // Match rollup output dir to avoid path validation error
+      outDir: 'dist/esm', // Match rollup output dir to avoid path validation error
     }),
     terser({
       compress: {
         pure_getters: true,
         unsafe: true,
         unsafe_comps: true,
-        module: true  // Enable ES module specific optimizations
+        module: true, // Enable ES module specific optimizations
       },
       mangle: {
-        properties: false // Keep property names for compatibility
+        properties: false, // Keep property names for compatibility
       },
       format: {
-        comments: false
-      }
-    })
-  ]
+        comments: false,
+      },
+    }),
+  ],
 };

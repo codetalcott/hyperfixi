@@ -1,7 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 
 export default {
   input: 'src/compatibility/browser-bundle-standard-v2.ts',
@@ -10,18 +10,18 @@ export default {
     format: 'iife',
     name: 'hyperfixi',
     sourcemap: true,
-    inlineDynamicImports: true
+    inlineDynamicImports: true,
   },
   plugins: [
     nodeResolve({
       browser: true,
-      preferBuiltins: false
+      preferBuiltins: false,
     }),
     commonjs(),
     typescript({
       tsconfig: 'tsconfig.json',
       declaration: false,
-      sourceMap: true
+      sourceMap: true,
     }),
     terser({
       compress: {
@@ -30,17 +30,17 @@ export default {
         unsafe_comps: true,
         passes: 2,
         dead_code: true,
-        unused: true
+        unused: true,
       },
       mangle: {
         // Mangle underscore-prefixed properties (internal/private) - 5% savings
         properties: {
-          regex: /^_/
-        }
+          regex: /^_/,
+        },
       },
       format: {
-        comments: false
-      }
-    })
-  ]
+        comments: false,
+      },
+    }),
+  ],
 };

@@ -1,7 +1,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 
 /**
  * Rollup config for semantic-complete bundle
@@ -20,26 +20,26 @@ export default {
     format: 'iife',
     name: 'hyperfixi',
     sourcemap: true,
-    inlineDynamicImports: true
+    inlineDynamicImports: true,
   },
   // NO EXTERNALS - @hyperfixi/semantic is bundled inline
   plugins: [
     nodeResolve({
       browser: true,
-      preferBuiltins: false
+      preferBuiltins: false,
     }),
     commonjs(),
     typescript({
       tsconfig: 'tsconfig.json',
       declaration: false,
-      sourceMap: true
+      sourceMap: true,
     }),
     terser({
       compress: {
         pure_getters: true,
         unsafe: true,
         unsafe_comps: true,
-        drop_console: false,  // Keep for LOG command
+        drop_console: false, // Keep for LOG command
         passes: 2,
         dead_code: true,
         unused: true,
@@ -52,18 +52,18 @@ export default {
           'debug.style',
           'debug.runtime',
           'debug.loop',
-          'debug.async'
-        ]
+          'debug.async',
+        ],
       },
       mangle: {
         // Mangle underscore-prefixed properties (internal/private)
         properties: {
-          regex: /^_/
-        }
+          regex: /^_/,
+        },
       },
       format: {
-        comments: false
-      }
-    })
-  ]
+        comments: false,
+      },
+    }),
+  ],
 };

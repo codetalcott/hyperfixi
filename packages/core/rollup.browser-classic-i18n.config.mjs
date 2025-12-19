@@ -11,7 +11,7 @@
 import typescript from '@rollup/plugin-typescript';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
-import { terser } from 'rollup-plugin-terser';
+import terser from '@rollup/plugin-terser';
 import alias from '@rollup/plugin-alias';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -25,19 +25,25 @@ export default {
     format: 'iife',
     name: 'hyperfixi',
     sourcemap: true,
-    inlineDynamicImports: true
+    inlineDynamicImports: true,
   },
   plugins: [
     // Alias @hyperfixi/i18n to the built dist files
     alias({
       entries: [
-        { find: '@hyperfixi/i18n/browser', replacement: path.resolve(__dirname, '../i18n/dist/hyperfixi-i18n.mjs') },
-        { find: '@hyperfixi/i18n', replacement: path.resolve(__dirname, '../i18n/dist/hyperfixi-i18n.mjs') }
-      ]
+        {
+          find: '@hyperfixi/i18n/browser',
+          replacement: path.resolve(__dirname, '../i18n/dist/hyperfixi-i18n.mjs'),
+        },
+        {
+          find: '@hyperfixi/i18n',
+          replacement: path.resolve(__dirname, '../i18n/dist/hyperfixi-i18n.mjs'),
+        },
+      ],
     }),
     nodeResolve({
       browser: true,
-      preferBuiltins: false
+      preferBuiltins: false,
     }),
     commonjs(),
     typescript({
@@ -51,9 +57,9 @@ export default {
         paths: {
           '@hyperfixi/i18n/browser': ['../i18n/src/browser.ts'],
           '@hyperfixi/i18n/*': ['../i18n/src/*'],
-          '@hyperfixi/i18n': ['../i18n/src/index.ts']
-        }
-      }
+          '@hyperfixi/i18n': ['../i18n/src/index.ts'],
+        },
+      },
     }),
     terser({
       compress: {
@@ -61,13 +67,13 @@ export default {
         unsafe: true,
         unsafe_comps: true,
         passes: 2,
-        drop_console: false // Keep console for debugging locales
+        drop_console: false, // Keep console for debugging locales
       },
       mangle: {
-        properties: false // Keep property names for compatibility
-      }
-    })
+        properties: false, // Keep property names for compatibility
+      },
+    }),
   ],
   // Don't externalize i18n - we want it bundled
-  external: []
+  external: [],
 };
