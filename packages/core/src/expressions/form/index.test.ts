@@ -282,7 +282,7 @@ describe('Enhanced Form Values Expression', () => {
 
   describe('Error Handling', () => {
     test('handles null form element', async () => {
-      const result = await expression.evaluate(context, null as any);
+      const result = await expression.evaluate(context, null as unknown as HTMLFormElement);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -291,7 +291,7 @@ describe('Enhanced Form Values Expression', () => {
     });
 
     test('handles invalid element type', async () => {
-      const result = await expression.evaluate(context, 'not an element' as any);
+      const result = await expression.evaluate(context, 'not an element' as unknown as HTMLFormElement);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -478,7 +478,7 @@ describe('Enhanced Form Validation Expression', () => {
 
   describe('Error Handling', () => {
     test('handles invalid form element', async () => {
-      const result = await expression.evaluate(context, null as any);
+      const result = await expression.evaluate(context, null as unknown as HTMLFormElement);
 
       expect(result.success).toBe(false);
       if (!result.success) {
@@ -618,7 +618,7 @@ describe('Enhanced Form Serialization Expression', () => {
 
   describe('Error Handling', () => {
     test('handles invalid form element', async () => {
-      const result = await expression.evaluate(context, null as any);
+      const result = await expression.evaluate(context, null as unknown as HTMLFormElement);
 
       expect(result.success).toBe(false);
       if (!result.success) {

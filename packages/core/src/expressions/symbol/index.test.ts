@@ -206,7 +206,7 @@ describe('Enhanced Symbol Expression', () => {
 
     test('resolves global variables when available', async () => {
       // Set a global variable
-      (globalThis as any).testGlobal = 'global-value';
+      (globalThis as Record<string, unknown>).testGlobal = 'global-value';
 
       const result = await symbolExpression.evaluate(context, 'testGlobal');
 
@@ -217,7 +217,7 @@ describe('Enhanced Symbol Expression', () => {
       }
 
       // Cleanup
-      delete (globalThis as any).testGlobal;
+      delete (globalThis as Record<string, unknown>).testGlobal;
     });
   });
 
@@ -273,7 +273,7 @@ describe('Enhanced Symbol Expression', () => {
 
     test('handles evaluation errors gracefully', async () => {
       // Force an error by corrupting the context
-      const corruptContext = { ...context, locals: null } as any;
+      const corruptContext = { ...context, locals: null } as unknown as TypedExecutionContext;
 
       // This should still work as it falls back to other resolution methods
       const result = await symbolExpression.evaluate(corruptContext, 'testValue');

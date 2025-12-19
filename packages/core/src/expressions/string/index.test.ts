@@ -48,9 +48,13 @@ describe('Enhanced String Interpolation Expression', () => {
     context = createMockContext();
 
     // Set up element properties for testing
-    (context.me as any).id = 'test-element';
-    (context.me as any).className = 'test-class';
-    (context.you as any).value = 'button-value';
+    if (context.me) {
+      (context.me as HTMLElement).id = 'test-element';
+      (context.me as HTMLElement).className = 'test-class';
+    }
+    if (context.you) {
+      (context.you as HTMLInputElement).value = 'button-value';
+    }
   });
 
   describe('Basic Interpolation', () => {

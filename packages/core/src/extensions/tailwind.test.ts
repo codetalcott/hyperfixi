@@ -330,18 +330,18 @@ describe('Tailwind CSS Extension', () => {
   describe('Error Handling', () => {
     it('should handle invalid strategy names gracefully', async () => {
       await expect(
-        extension.executeStrategy('invalidStrategy' as any, 'hide', testElement)
+        extension.executeStrategy('invalidStrategy' as unknown as string, 'hide', testElement)
       ).rejects.toThrow('Unknown Tailwind strategy: invalidStrategy');
     });
 
     it('should handle invalid operations gracefully', async () => {
       await expect(
-        extension.executeStrategy('twDisplay', 'invalidOp' as any, testElement)
+        extension.executeStrategy('twDisplay', 'invalidOp' as unknown as string, testElement)
       ).rejects.toThrow('Invalid operation: invalidOp');
     });
 
     it('should handle null elements gracefully', async () => {
-      await expect(extension.executeStrategy('twDisplay', 'hide', null as any)).rejects.toThrow(
+      await expect(extension.executeStrategy('twDisplay', 'hide', null as unknown as HTMLElement)).rejects.toThrow(
         'Element is required'
       );
     });

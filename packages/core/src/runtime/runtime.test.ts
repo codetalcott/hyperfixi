@@ -57,7 +57,7 @@ describe('Hyperscript Runtime', () => {
         args: [{ type: 'identifier', name: 'me' }],
       };
 
-      await runtime.execute(hideCommandAST as any, context);
+      await runtime.execute(hideCommandAST, context);
 
       expect(mockElement.style.display).toBe('none');
     });
@@ -113,7 +113,7 @@ describe('Hyperscript Runtime', () => {
         ],
       };
 
-      await runtime.execute(setCommandAST as any, context);
+      await runtime.execute(setCommandAST, context);
 
       expect(context.locals?.get('myVar')).toBe('test value');
     });
@@ -130,7 +130,7 @@ describe('Hyperscript Runtime', () => {
         ],
       };
 
-      await runtime.execute(setCommandAST as any, context);
+      await runtime.execute(setCommandAST, context);
 
       expect(context.result).toBe('completed');
     });
@@ -195,7 +195,7 @@ describe('Hyperscript Runtime', () => {
 
   describe('Error Handling', () => {
     it('should handle unknown commands gracefully', async () => {
-      const ast = { type: 'command', name: 'unknownCommand', args: [] } as any;
+      const ast = { type: 'command', name: 'unknownCommand', args: [] };
 
       await expect(runtime.execute(ast, context)).rejects.toThrow(
         'Unknown command: unknownCommand'
@@ -203,7 +203,7 @@ describe('Hyperscript Runtime', () => {
     });
 
     it('should provide meaningful error messages', async () => {
-      const invalidAst = { type: 'invalidNode' } as any;
+      const invalidAst = { type: 'invalidNode' };
 
       await expect(runtime.execute(invalidAst, context)).rejects.toThrow(
         'Unsupported AST node type for evaluation: invalidNode'

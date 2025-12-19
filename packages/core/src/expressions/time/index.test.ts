@@ -181,10 +181,10 @@ describe('Enhanced Time Parsing Expression', () => {
       });
 
       if (results.every(r => r.success)) {
-        expect((results[0] as any).value).toBe(120000); // 2 minutes
-        expect((results[1] as any).value).toBe(10800000); // 3 hours
-        expect((results[2] as any).value).toBe(345600000); // 4 days
-        expect((results[3] as any).value).toBe(1209600000); // 2 weeks
+        expect((results[0] as { success: true; value: number }).value).toBe(120000); // 2 minutes
+        expect((results[1] as { success: true; value: number }).value).toBe(10800000); // 3 hours
+        expect((results[2] as { success: true; value: number }).value).toBe(345600000); // 4 days
+        expect((results[3] as { success: true; value: number }).value).toBe(1209600000); // 2 weeks
       }
     });
 

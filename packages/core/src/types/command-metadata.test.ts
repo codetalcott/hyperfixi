@@ -115,7 +115,7 @@ describe('Command Metadata Validation', () => {
         syntax: 'test',
         examples: ['test', 'test2'],
         category: 'dom',
-        sideEffects: ['dom-mutation', 'unknown-effect' as any],
+        sideEffects: ['dom-mutation', 'unknown-effect' as string],
       };
 
       const result = validateCommandMetadata(metadata, 'test');
@@ -383,8 +383,8 @@ describe('CommandMetadataRegistry', () => {
           description: '',
           syntax: 'invalid',
           examples: [],
-          category: 'invalid-cat' as any,
-        } as any,
+          category: 'invalid-cat' as unknown as CommandCategory,
+        } as unknown as CommandMetadata,
         {}
       );
 

@@ -25,7 +25,7 @@ type TypedExpressionContext = TestExpressionContext;
 // Mock DOM environment
 const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
 global.document = dom.window.document;
-global.window = dom.window as any;
+global.window = dom.window as unknown as Window & typeof globalThis;
 global.Element = dom.window.Element;
 global.HTMLFormElement = dom.window.HTMLFormElement;
 global.HTMLInputElement = dom.window.HTMLInputElement;
@@ -87,7 +87,7 @@ describe.skip('Enhanced Conversion Bridge', () => {
         event: undefined,
       };
 
-      const typedContext = createTypedExpressionContext(contextWithNulls as any);
+      const typedContext = createTypedExpressionContext(contextWithNulls as unknown as ExecutionContext);
 
       expect(typedContext.locals).toBeInstanceOf(Map);
       expect(typedContext.globals).toBeInstanceOf(Map);
@@ -382,7 +382,7 @@ describe.skip('Enhanced Conversion Bridge', () => {
 
     it('should handle unexpected errors gracefully', async () => {
       // Mock a context that might cause issues
-      const badContext = null as any;
+      const badContext = null as unknown as ExecutionContext;
 
       const result = await ConversionUtilities.safeConvert(badContext, 'test', 'String');
       expect(result.success).toBe(false);

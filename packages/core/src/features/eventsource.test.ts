@@ -96,10 +96,10 @@ class MockEventSource {
 }
 
 // Mock global EventSource
-(globalThis as any).EventSource = MockEventSource;
+globalThis.EventSource = MockEventSource as unknown as typeof EventSource;
 
 // Mock URL constructor for validation
-(globalThis as any).URL = class MockURL {
+globalThis.URL = class MockURL {
   protocol: string;
   href: string;
 
@@ -113,15 +113,15 @@ class MockEventSource {
       throw new Error('Invalid URL');
     }
   }
-};
+} as unknown as typeof URL;
 
 // Mock window.location for URL validation
-(globalThis as any).window = {
+globalThis.window = {
   location: {
     href: 'https://example.com',
     origin: 'https://example.com',
   },
-};
+} as unknown as Window & typeof globalThis;
 
 // Skipped: Tests expect EventSource mocking and methods that differ from implementation
 describe.skip('Enhanced EventSource Feature Implementation', () => {
@@ -690,7 +690,7 @@ describe.skip('Enhanced EventSource Feature Implementation', () => {
 
     it('should handle initialization failures gracefully', async () => {
       const result = await eventsourceFeature.initialize({
-        source: {} as any, // Invalid source definition
+        source: {} as Record<string, never>, // Invalid empty source definition
       });
 
       expect(result.success).toBe(false);

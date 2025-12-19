@@ -868,7 +868,7 @@ describe('Enhanced Positional Expressions', () => {
 
       for (const testCase of testCases) {
         const startTime = Date.now();
-        const result = await testCase.expr.evaluate(context, testCase.input as any);
+        const result = await testCase.expr.evaluate(context, testCase.input);
         const duration = Date.now() - startTime;
 
         expect(result.success).toBe(true);
@@ -929,8 +929,8 @@ describe('Enhanced Positional Expressions', () => {
       expect(mapResult.success).toBe(true);
       if (mapResult.success) {
         expect(Array.isArray(mapResult.value)).toBe(true);
-        expect((mapResult.value as any[])[0]).toBe('a');
-        expect((mapResult.value as any[])[1]).toBe(1);
+        expect((mapResult.value as [string, number])[0]).toBe('a');
+        expect((mapResult.value as [string, number])[1]).toBe(1);
       }
 
       // Set

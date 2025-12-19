@@ -318,13 +318,13 @@ describe('Core System Validation', () => {
 
   describe('Integration with External Systems', () => {
     it('should handle window/global object access', async () => {
-      (globalThis as any).testGlobal = 'test-value';
+      (globalThis as Record<string, unknown>).testGlobal = 'test-value';
 
       try {
         const result = await evalHyperScript('window.testGlobal');
         expect(result).toBe('test-value');
       } finally {
-        delete (globalThis as any).testGlobal;
+        delete (globalThis as Record<string, unknown>).testGlobal;
       }
     });
 
@@ -344,13 +344,13 @@ describe('Core System Validation', () => {
         key: () => null,
       };
 
-      (globalThis as any).localStorage = mockStorage;
+      (globalThis as Record<string, unknown>).localStorage = mockStorage;
 
       try {
         const result = await evalHyperScript('localStorage.getItem("test")');
         expect(result).toBe('stored-value');
       } finally {
-        delete (globalThis as any).localStorage;
+        delete (globalThis as Record<string, unknown>).localStorage;
       }
     });
   });
