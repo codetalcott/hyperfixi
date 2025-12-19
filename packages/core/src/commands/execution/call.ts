@@ -48,20 +48,31 @@ export class CallCommand implements DecoratedCommand {
   declare readonly name: string;
   declare readonly metadata: CommandMetadata;
 
-  async parseInput(
+  parseInput(
     raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
-    evaluator: ExpressionEvaluator,
-    context: ExecutionContext
+    _evaluator: ExpressionEvaluator,
+    _context: ExecutionContext
   ): Promise<CallCommandInput> {
     if (!raw.args?.length) throw new Error('call command requires an expression');
-    const expression = await evaluator.evaluate(raw.args[0], context);
-    return { expression, alias: (raw as any).alias || 'call' };
+    // Store the raw AST node, NOT the evaluated result
+    // The expression will be evaluated during execute()
+    const alias = (raw as { alias?: 'call' | 'get' }).alias || 'call';
+    return Promise.resolve({ expression: raw.args[0], alias });
   }
 
   async execute(input: CallCommandInput, context: TypedExecutionContext): Promise<CallCommandOutput> {
-    const { expression } = input;
+    const { expression: expressionNode } = input;
 
-    let result: any;
+    // NOW evaluate the expression during the execute phase
+    // Get evaluator from locals where CommandAdapterV2 stored it
+    const evaluator = context.locals?.get('__evaluator') as ExpressionEvaluator | undefined;
+    if (!evaluator) {
+      throw new Error('[CALL.execute] No evaluator available in context');
+    }
+
+    const expression = await evaluator.evaluate(expressionNode, context);
+
+    let result: unknown;
     let wasAsync = false;
     let expressionType: 'function' | 'promise' | 'value';
 

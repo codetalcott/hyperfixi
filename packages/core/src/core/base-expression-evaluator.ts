@@ -1137,7 +1137,8 @@ export class BaseExpressionEvaluator {
     // Handle member expression and property access calls (obj.method() or #selector.method())
     // Both create similar AST structures with object and property
     if (callee.type === 'memberExpression' || callee.type === 'propertyAccess') {
-      return await this.evaluateMethodCall(callee, args, context);
+      const result = await this.evaluateMethodCall(callee, args, context);
+      return result;
     }
 
     const functionName = callee.name || callee;
@@ -1229,7 +1230,8 @@ export class BaseExpressionEvaluator {
       const evaluatedArgs = await Promise.all(args.map((arg: any) => this.evaluate(arg, context)));
 
       // Call the method with proper 'this' binding
-      return func.apply(thisContext, evaluatedArgs);
+      const result = func.apply(thisContext, evaluatedArgs);
+      return result;
     } catch (error) {
       // Re-throw with additional context if needed
       if (error instanceof Error) {

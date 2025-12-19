@@ -2841,6 +2841,9 @@ export class Parser {
       'remove',
       'exit',
       'closest',
+      // - 'call'/'get' need proper method call expression parsing (#element.method())
+      'call',
+      'get',
     ];
 
     if (this.semanticAdapter && !skipSemanticParsing.includes(commandName.toLowerCase())) {

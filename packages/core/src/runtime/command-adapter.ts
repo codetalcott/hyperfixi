@@ -138,6 +138,12 @@ export class CommandAdapterV2 implements RuntimeCommand {
     try {
       debug.command(`CommandAdapterV2: Executing '${this.name}' with args:`, args);
 
+      // Store evaluator in locals for commands that need it during execute()
+      if (!context.locals) {
+        context.locals = new Map();
+      }
+      context.locals.set('__evaluator', this.expressionEvaluator);
+
       // Convert to typed context
       const typedContext = ContextBridge.toTyped(context);
 

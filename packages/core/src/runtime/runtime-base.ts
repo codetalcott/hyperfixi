@@ -95,6 +95,7 @@ export class RuntimeBase {
    * Main Entry Point: Execute an AST node
    */
   async execute(node: ASTNode, context: ExecutionContext): Promise<unknown> {
+    const nodeName = (node as { name?: string })?.name || '';
     debug.runtime(`RUNTIME BASE: execute() called with node type: '${node.type}'`);
 
     // Inject behavior API
@@ -114,18 +115,22 @@ export class RuntimeBase {
         case 'command': {
           // Use Result-based execution when enabled (~12-18% faster)
           if (this.options.enableResultPattern) {
-            const result = await this.processCommandWithResult(node as CommandNode, context);
-            if (!isOk(result)) {
-              // Convert signal back to exception for backward compatibility
-              const signal = result.error;
-              const error = new Error(signal.type.toUpperCase() + '_EXECUTION') as any;
-              error['is' + signal.type.charAt(0).toUpperCase() + signal.type.slice(1)] = true;
-              if ('returnValue' in signal) {
-                error.returnValue = signal.returnValue;
+            try {
+              const result = await this.processCommandWithResult(node as CommandNode, context);
+              if (!isOk(result)) {
+                // Convert signal back to exception for backward compatibility
+                const signal = result.error;
+                const error = new Error(signal.type.toUpperCase() + '_EXECUTION') as Error & { [key: string]: unknown };
+                error['is' + signal.type.charAt(0).toUpperCase() + signal.type.slice(1)] = true;
+                if ('returnValue' in signal) {
+                  error.returnValue = signal.returnValue;
+                }
+                throw error;
               }
-              throw error;
+              return result.value;
+            } catch (e) {
+              throw e;
             }
-            return result.value;
           }
           return await this.processCommand(node as CommandNode, context);
         }
@@ -219,10 +224,6 @@ export class RuntimeBase {
     const { name, args, modifiers } = node;
     const commandName = name.toLowerCase();
 
-    console.log(`[PROCESSCOMMAND] name='${commandName}', args.length=${args?.length || 0}`);
-    if (commandName === 'install') {
-      console.log('[PROCESSCOMMAND] install args:', JSON.stringify(args, null, 2).substring(0, 800));
-    }
     debug.command(`RUNTIME BASE: Processing command '${commandName}'`);
 
     // 1. check registry
@@ -664,12 +665,9 @@ export class RuntimeBase {
     };
 
     // Hydrate parameters
-    console.log('[DEBUG] Behavior params definition:', behavior.parameters);
-    console.log('[DEBUG] Install params passed:', parameters);
     if (behavior.parameters) {
         for (const param of behavior.parameters) {
             const value = param in parameters ? parameters[param] : undefined;
-            console.log(`[DEBUG] Setting param '${param}' = ${JSON.stringify(value)}`);
             behaviorContext.locals.set(param, value);
         }
     }
@@ -742,7 +740,6 @@ export class RuntimeBase {
         debug.runtime(`BEHAVIOR: executeEventHandler - No targets found for event '${event}', returning early`);
         return;
     }
-    debug.runtime(`BEHAVIOR: executeEventHandler - Attaching '${eventNames.join(',')}' to ${targets.length} targets`);
 
     // SPECIAL CASE 1: Mutation Observer
     if (event === 'mutation' && attributeName) {
