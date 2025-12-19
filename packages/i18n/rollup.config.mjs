@@ -32,6 +32,11 @@ export default {
       tsconfig: './tsconfig.json',
       declaration: false, // Already handled by tsup
       declarationMap: false,
+      compilerOptions: {
+        // Ensure type-only exports are stripped
+        verbatimModuleSyntax: false,
+        isolatedModules: true,
+      },
     }),
   ],
   // Don't bundle @hyperfixi/core - it's loaded separately
