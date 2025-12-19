@@ -1,81 +1,77 @@
 /**
- * Global type declarations for HyperFixi browser bundles
+ * Global type augmentation for HyperFixi browser APIs
+ * 
+ * This file augments the Window and globalThis interfaces to include
+ * HyperFixi global variables, providing IDE autocomplete and type safety.
  */
 
-import type {
-  HyperFixiCoreAPI,
-  EvalHyperScriptFunction,
-  EvalHyperScriptAsyncFunction,
-  EvalHyperScriptSmartFunction,
-} from './core-api'
-import type { HyperFixiSemanticAPI } from './semantic-api'
-import type { HyperFixiI18nAPI } from './i18n-api'
+import type { HyperFixiCoreAPI } from './core-api';
+import type { HyperFixiSemanticAPI } from './semantic-api';
+import type { HyperFixiI18nAPI } from './i18n-api';
 
 declare global {
+  /**
+   * Window interface augmentation
+   */
   interface Window {
     /**
-     * Main HyperFixi core API
-     *
+     * HyperFixi Core - Main hyperscript runtime and parser
+     * 
+     * Loaded from: hyperfixi-browser.js or hyperfixi-multilingual.js
+     * 
      * @example
-     * ```html
-     * <script src="hyperfixi-browser.js"></script>
-     * <script>
-     *   window.hyperfixi.execute('toggle .active')
-     * </script>
+     * ```typescript
+     * window.hyperfixi.execute('toggle .active', document.body)
+     * window.hyperfixi.compile('on click add .highlight')
      * ```
      */
-    hyperfixi: HyperFixiCoreAPI
+    hyperfixi: HyperFixiCoreAPI;
 
     /**
-     * Shorthand: evaluate hyperscript code
-     * @example window.evalHyperScript('toggle .active')
-     */
-    evalHyperScript: EvalHyperScriptFunction
-
-    /**
-     * Async version of evalHyperScript
-     * @example await window.evalHyperScriptAsync('wait 1s then toggle .active')
-     */
-    evalHyperScriptAsync: EvalHyperScriptAsyncFunction
-
-    /**
-     * Smart evaluation: detects element context automatically
-     */
-    evalHyperScriptSmart: EvalHyperScriptSmartFunction
-
-    /**
-     * Semantic parser API (when semantic-parser bundle is loaded)
-     *
+     * Compatibility alias for hyperfixi (follows _hyperscript naming)
+     * 
      * @example
-     * ```html
-     * <script src="hyperfixi-semantic.browser.global.js"></script>
-     * <script>
-     *   const result = window.HyperFixiSemantic.parse('toggle .active', 'en')
-     * </script>
+     * ```typescript
+     * window._hyperscript.compile('on click toggle .active')
      * ```
      */
-    HyperFixiSemantic?: HyperFixiSemanticAPI
+    _hyperscript: HyperFixiCoreAPI;
 
     /**
-     * i18n/Grammar transformation API (when i18n bundle is loaded)
-     *
+     * HyperFixi Semantic - Multilingual semantic parsing (13 languages)
+     * 
+     * Loaded from: hyperfixi-semantic.browser.global.js
+     * 
      * @example
-     * ```html
-     * <script src="hyperfixi-i18n.min.js"></script>
-     * <script>
-     *   const result = window.HyperFixiI18n.translate('on click toggle .active', 'en', 'ja')
-     * </script>
+     * ```typescript
+     * const result = window.HyperFixiSemantic.parse('トグル .active', 'ja')
+     * const korean = window.HyperFixiSemantic.translate('toggle .active', 'en', 'ko')
      * ```
      */
-    HyperFixiI18n?: HyperFixiI18nAPI
+    HyperFixiSemantic: HyperFixiSemanticAPI;
+
+    /**
+     * HyperFixi I18n - Grammar transformation for natural language word order
+     * 
+     * Loaded from: hyperfixi-i18n.min.js
+     * 
+     * @example
+     * ```typescript
+     * const japanese = window.HyperFixiI18n.translate('on click toggle .active', 'en', 'ja')
+     * // Result: 'クリック で .active を 切り替え' (SOV word order)
+     * ```
+     */
+    HyperFixiI18n: HyperFixiI18nAPI;
   }
 
   /**
-   * globalThis augmentation (Node.js/non-browser environments)
+   * globalThis interface augmentation (same as Window for browser contexts)
    */
-  var hyperfixi: HyperFixiCoreAPI | undefined
-  var HyperFixiSemantic: HyperFixiSemanticAPI | undefined
-  var HyperFixiI18n: HyperFixiI18nAPI | undefined
+  var hyperfixi: HyperFixiCoreAPI;
+  var _hyperscript: HyperFixiCoreAPI;
+  var HyperFixiSemantic: HyperFixiSemanticAPI;
+  var HyperFixiI18n: HyperFixiI18nAPI;
 }
 
-export {}
+// This export ensures the file is treated as a module
+export {};

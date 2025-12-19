@@ -10,8 +10,6 @@ npm install --save-dev @hyperfixi/types-browser
 
 ## Usage
 
-### Option 1: tsconfig.json
-
 Add to your `tsconfig.json`:
 
 ```json
@@ -22,155 +20,70 @@ Add to your `tsconfig.json`:
 }
 ```
 
-### Option 2: Triple-slash directive
-
-Add to the top of your TypeScript files:
+Now you get full TypeScript autocomplete for browser globals:
 
 ```typescript
-/// <reference types="@hyperfixi/types-browser" />
+// Full IDE autocomplete and type safety!
+window.hyperfixi.execute('toggle .active', document.body)
+window._hyperscript.compile('on click add .highlight')
+
+window.HyperFixiSemantic.parse('トグル .active', 'ja')
+window.HyperFixiSemantic.translate('toggle .active', 'en', 'ko')
+
+window.HyperFixiI18n.translate('on click toggle .active', 'en', 'ja')
 ```
 
-## Global APIs
+## Provided Types
 
-### window.hyperfixi (Core API)
+### window.hyperfixi / window._hyperscript
 
-Available when `hyperfixi-browser.js` is loaded:
+Core HyperFixi API (from `hyperfixi-browser.js` or `hyperfixi-multilingual.js`):
 
-```typescript
-// Execute hyperscript
-await window.hyperfixi.execute('toggle .active')
+- `compile(source, options?)` - Compile hyperscript to AST
+- `execute(source, element?, context?)` - Execute hyperscript
+- `parse(source)` - Parse to AST
+- `processNode(node)` - Process single DOM node
+- `process(root?)` - Process entire document
+- `createContext(element?, options?)` - Create execution context
+- `isValidHyperscript(source)` - Validate syntax
+- `version` - Get version string
+- `createRuntime(options?)` - Create runtime instance
 
-// Shorthand functions
-window.evalHyperScript('toggle .active')
-await window.evalHyperScriptAsync('wait 1s then toggle .active')
-await window.evalHyperScriptSmart('toggle .active')
+### window.HyperFixiSemantic
 
-// Compile
-const result = window.hyperfixi.compile('toggle .active')
+Semantic parsing API (from `hyperfixi-semantic.browser.global.js`):
 
-// Low-level access
-const parser = new window.hyperfixi.Parser()
-const runtime = new window.hyperfixi.Runtime()
-```
+- `parse(source, language)` - Parse in any of 13 languages
+- `translate(source, fromLang, toLang)` - Translate between languages
+- `getAllTranslations(source, sourceLang)` - Get all translations
+- `createSemanticAnalyzer(options?)` - Create analyzer
+- `supportedLanguages` - Array of supported language codes
 
-### window.HyperFixiSemantic (Semantic Parser API)
+### window.HyperFixiI18n
 
-Available when `hyperfixi-semantic.browser.global.js` is loaded:
+Grammar transformation API (from `hyperfixi-i18n.min.js`):
 
-```typescript
-// Parse in any of 13 languages
-const node = window.HyperFixiSemantic.parse('toggle .active', 'en')
-const nodeJa = window.HyperFixiSemantic.parse('トグル .active', 'ja')
+- `translate(source, fromLang, toLang)` - Transform with grammar rules
+- `createTransformer(options?)` - Create transformer instance
+- `supportedLocales` - Array of supported locales
+- `getProfile(locale)` - Get language grammar profile
 
-// Translate between languages
-const korean = window.HyperFixiSemantic.translate('toggle .active', 'en', 'ko')
-
-// Get all translations
-const translations = window.HyperFixiSemantic.getAllTranslations('toggle .active', 'en')
-
-// Supported languages
-const languages = window.HyperFixiSemantic.getSupportedLanguages()
-// ['en', 'ja', 'ar', 'es', 'ko', 'tr', 'zh', 'pt', 'fr', 'de', 'id', 'qu', 'sw']
-```
-
-### window.HyperFixiI18n (Grammar Transformation API)
-
-Available when `hyperfixi-i18n.min.js` is loaded:
-
-```typescript
-// Transform between language word orders
-const statement = window.HyperFixiI18n.parseStatement('on click toggle .active')
-const japanese = window.HyperFixiI18n.translate(statement, 'en', 'ja')
-
-// Direct transformations
-const localized = window.HyperFixiI18n.toLocale('toggle .active', 'ja')
-const english = window.HyperFixiI18n.toEnglish('トグル .active', 'ja')
-
-// Supported locales
-const locales = window.HyperFixiI18n.getSupportedLocales()
-```
-
-## Type Guards
-
-Use type guards for safe access:
-
-```typescript
-import {
-  isHyperFixiCoreAvailable,
-  isHyperFixiSemanticAvailable,
-  isHyperFixiI18nAvailable,
-  getHyperFixiCore,
-  getHyperFixiSemantic,
-  getHyperFixiI18n
-} from '@hyperfixi/types-browser'
-
-// Check availability
-if (isHyperFixiCoreAvailable(window.hyperfixi)) {
-  window.hyperfixi.execute('toggle .active')
-}
-
-// Safe getter
-const hyperfixi = getHyperFixiCore()
-if (hyperfixi) {
-  await hyperfixi.execute('toggle .active')
-}
-
-const semantic = getHyperFixiSemantic()
-if (semantic) {
-  const node = semantic.parse('toggle .active', 'en')
-}
-```
-
-## Complete Example
+## Browser Bundle Loading
 
 ```html
-<!DOCTYPE html>
-<html>
-<head>
-  <script src="node_modules/@hyperfixi/core/dist/hyperfixi-browser.js"></script>
-  <script src="node_modules/@hyperfixi/semantic/dist/hyperfixi-semantic.browser.global.js"></script>
-  <script src="node_modules/@hyperfixi/i18n/dist/hyperfixi-i18n.min.js"></script>
-</head>
-<body>
-  <button id="btn" class="active">Click me</button>
+<!-- Load HyperFixi browser bundles -->
+<script src="https://cdn.jsdelivr.net/npm/@hyperfixi/core/dist/hyperfixi-browser.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@hyperfixi/semantic/dist/hyperfixi-semantic.browser.global.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@hyperfixi/i18n/dist/hyperfixi-i18n.min.js"></script>
 
-  <script type="module">
-    import { getHyperFixiCore, getHyperFixiSemantic } from '@hyperfixi/types-browser'
-
-    const hyperfixi = getHyperFixiCore()
-    const semantic = getHyperFixiSemantic()
-
-    if (!hyperfixi) throw new Error('HyperFixi not loaded')
-
-    // Execute hyperscript
-    await hyperfixi.execute('toggle .active', document.querySelector('#btn'))
-
-    // Parse in Japanese
-    if (semantic) {
-      const node = semantic.parse('トグル .active', 'ja')
-      console.log('Parsed Japanese:', node)
-    }
-  </script>
-</body>
-</html>
+<!-- Now use with full TypeScript support -->
+<script>
+  // TypeScript knows about these globals!
+  window.hyperfixi.execute('toggle .active')
+  window.HyperFixiSemantic.parse('トグル .active', 'ja')
+  window.HyperFixiI18n.translate('toggle .active', 'en', 'ja')
+</script>
 ```
-
-## Supported Languages
-
-### Semantic Parser (13 languages)
-- English (en)
-- Japanese (ja)
-- Arabic (ar)
-- Spanish (es)
-- Korean (ko)
-- Turkish (tr)
-- Chinese (zh)
-- Portuguese (pt)
-- French (fr)
-- German (de)
-- Indonesian (id)
-- Quechua (qu)
-- Swahili (sw)
 
 ## License
 

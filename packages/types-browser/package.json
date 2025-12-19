@@ -2,40 +2,24 @@
   "name": "@hyperfixi/types-browser",
   "version": "1.0.0",
   "description": "TypeScript type definitions for HyperFixi browser globals",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist"
-  ],
-  "keywords": [
-    "hyperfixi",
-    "types",
-    "browser",
-    "globals",
-    "typescript"
-  ],
-  "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "typescript": "^5.3.3"
-  },
-  "peerDependencies": {
-    "@hyperfixi/core": "workspace:*",
-    "@hyperfixi/semantic": "workspace:*",
-    "@hyperfixi/i18n": "workspace:*"
-  },
-  "peerDependenciesMeta": {
-    "@hyperfixi/core": {
-      "optional": true
-    },
-    "@hyperfixi/semantic": {
-      "optional": true
-    },
-    "@hyperfixi/i18n": {
-      "optional": true
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts"
     }
   },
-  "license": "MIT"
+  "files": ["dist/", "src/", "README.md"],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["hyperfixi", "types", "typescript", "browser", "globals"],
+  "author": "HyperFixi Contributors",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
 }
