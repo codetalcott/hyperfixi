@@ -15,10 +15,12 @@ import type {
   LanguagePattern,
 } from '../types';
 import { createCommandNode, createEventHandler, createCompoundNode } from '../types';
-import { tokenize, getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
+import { tokenize as tokenizeInternal, getSupportedLanguages as getTokenizerLanguages } from '../tokenizers';
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)
 import { getPatternsForLanguage } from '../registry';
 import { patternMatcher } from './pattern-matcher';
+import { render as renderExplicitFn } from '../explicit/renderer';
+import { parseExplicit as parseExplicitFn } from '../explicit/parser';
 
 // =============================================================================
 // Semantic Parser Implementation
@@ -30,7 +32,7 @@ export class SemanticParserImpl implements ISemanticParser {
    */
   parse(input: string, language: string): SemanticNode {
     // Tokenize the input
-    const tokens = tokenize(input, language);
+    const tokens = tokenizeInternal(input, language);
 
     // Get patterns for this language
     const patterns = getPatternsForLanguage(language);
@@ -111,7 +113,7 @@ export class SemanticParserImpl implements ISemanticParser {
    */
   private buildEventHandler(
     match: ReturnType<typeof patternMatcher.matchPattern>,
-    tokens: ReturnType<typeof tokenize>,
+    tokens: ReturnType<typeof tokenizeInternal>,
     language: string
   ): EventHandlerSemanticNode {
     if (!match) {
@@ -148,7 +150,7 @@ export class SemanticParserImpl implements ISemanticParser {
    * Returns a list of semantic nodes (possibly wrapped in CompoundSemanticNode).
    */
   private parseBody(
-    tokens: ReturnType<typeof tokenize>,
+    tokens: ReturnType<typeof tokenizeInternal>,
     commandPatterns: LanguagePattern[],
     language: string
   ): SemanticNode[] {
@@ -269,4 +271,107 @@ export function getCommandType(input: string, language: string): ActionType | nu
   } catch {
     return null;
   }
+}
+
+// =============================================================================
+// Additional Public API Functions
+// =============================================================================
+
+/**
+ * Tokenize input for a specific language.
+ */
+export function tokenize(input: string, language: string) {
+  return tokenizeInternal(input, language);
+}
+
+/**
+ * Get list of supported languages.
+ */
+export function getSupportedLanguages(): string[] {
+  return getTokenizerLanguages();
+}
+
+/**
+ * Translate hyperscript between languages.
+ */
+export function translate(input: string, sourceLang: string, targetLang: string): string {
+  const node = parse(input, sourceLang);
+  return render(node, targetLang);
+}
+
+/**
+ * Get translations for all supported languages.
+ */
+export function getAllTranslations(input: string, sourceLang: string): Record<string, string> {
+  const node = parse(input, sourceLang);
+  const result: Record<string, string> = {};
+  for (const lang of getSupportedLanguages()) {
+    try {
+      result[lang] = render(node, lang);
+    } catch {
+      // Skip languages that can't render this command
+    }
+  }
+  return result;
+}
+
+/**
+ * Create a semantic analyzer for parsing with confidence scores.
+ */
+export function createSemanticAnalyzer() {
+  return {
+    analyze(input: string, language: string) {
+      try {
+        const node = parse(input, language);
+        return { node, confidence: 1.0, success: true };
+      } catch (error) {
+        return { node: null, confidence: 0, success: false, error };
+      }
+    }
+  };
+}
+
+/**
+ * Render a SemanticNode to hyperscript in a specific language.
+ */
+export function render(node: SemanticNode, language: string): string {
+  return renderExplicitFn(node, language);
+}
+
+/**
+ * Render a SemanticNode in explicit syntax format.
+ */
+export function renderExplicit(node: SemanticNode): string {
+  return renderExplicitFn(node, 'explicit');
+}
+
+/**
+ * Parse explicit syntax format.
+ */
+export function parseExplicit(input: string): SemanticNode {
+  return parseExplicitFn(input);
+}
+
+/**
+ * Convert natural language to explicit syntax.
+ */
+export function toExplicit(input: string, language: string): string {
+  const node = parse(input, language);
+  return renderExplicit(node);
+}
+
+/**
+ * Convert explicit syntax to natural language.
+ */
+export function fromExplicit(input: string, targetLang: string): string {
+  const node = parseExplicit(input);
+  return render(node, targetLang);
+}
+
+/**
+ * Round-trip conversion for testing.
+ */
+export function roundTrip(input: string, language: string): string {
+  const explicit = toExplicit(input, language);
+  return fromExplicit(explicit, language);
 }
