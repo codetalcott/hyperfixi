@@ -209,14 +209,30 @@ export class SemanticIntegrationAdapter {
   private static readonly SKIP_SEMANTIC_COMMANDS = new Set([
     'swap',   // swap innerHTML of #target with content - keyword-based
     'morph',  // morph #target to content - similar to swap
+    'js',     // js ... end - body parsing required
+    'tell',   // tell <target> <commands> - body parsing required
   ]);
 
   /**
-   * Check if input starts with a command that should skip semantic parsing.
+   * Check if input contains a command that should skip semantic parsing.
+   * Checks both first word and presence of body-based commands anywhere in input.
    */
   private shouldSkipSemantic(input: string): boolean {
     const firstWord = input.trim().split(/\s+/)[0]?.toLowerCase();
-    return SemanticIntegrationAdapter.SKIP_SEMANTIC_COMMANDS.has(firstWord);
+    if (SemanticIntegrationAdapter.SKIP_SEMANTIC_COMMANDS.has(firstWord)) {
+      return true;
+    }
+    // Also check if input contains body-based commands anywhere (js ... end, tell ...)
+    const lowerInput = input.toLowerCase();
+    // Match 'js' followed by '(' or whitespace and any character - captures js(param), js code, etc.
+    if (/\bjs\b/.test(lowerInput)) {
+      return true; // Contains js command
+    }
+    // Match 'tell' command
+    if (/\btell\b/.test(lowerInput)) {
+      return true; // Contains tell command
+    }
+    return false;
   }
 
   /**

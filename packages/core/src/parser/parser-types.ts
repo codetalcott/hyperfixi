@@ -373,6 +373,20 @@ export interface ParserContext {
    * If no keyword resolver is configured, returns the original value.
    */
   resolveKeyword(value: string): string;
+
+  // ==========================================
+  // Raw Input Access (for preserving literal code)
+  // ==========================================
+
+  /**
+   * Get a slice of the original input string by character position.
+   * Useful for extracting raw code that shouldn't be tokenized (e.g., JavaScript in js...end blocks).
+   *
+   * @param start - Start character position (inclusive)
+   * @param end - End character position (exclusive), or undefined for rest of input
+   * @returns The raw input substring, or empty string if positions are invalid
+   */
+  getInputSlice(start: number, end?: number): string;
 }
 
 /**

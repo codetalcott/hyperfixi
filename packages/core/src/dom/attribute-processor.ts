@@ -316,18 +316,24 @@ export class AttributeProcessor {
 export const defaultAttributeProcessor = new AttributeProcessor();
 
 // Auto-initialize when DOM is ready
+console.log('[HyperFixi] attribute-processor.ts loaded, document:', typeof document);
 if (typeof document !== 'undefined') {
+  console.log('[HyperFixi] Setting up auto-init, readyState:', document.readyState);
   (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
   (window as any).__hyperfixi_debug.push('Module loaded, readyState: ' + document.readyState);
   if (document.readyState === 'loading') {
+    console.log('[HyperFixi] Adding DOMContentLoaded listener');
     (window as any).__hyperfixi_debug.push('Adding DOMContentLoaded listener');
     document.addEventListener('DOMContentLoaded', async () => {
+      console.log('[HyperFixi] DOMContentLoaded fired, calling init()');
       (window as any).__hyperfixi_debug.push('DOMContentLoaded fired');
       await defaultAttributeProcessor.init();
+      console.log('[HyperFixi] init() completed');
       (window as any).__hyperfixi_debug.push('init() completed');
     });
   } else {
     // DOM is already ready
+    console.log('[HyperFixi] DOM already ready, calling init() immediately');
     (window as any).__hyperfixi_debug.push('DOM already ready, calling init()');
     void defaultAttributeProcessor.init();
   }

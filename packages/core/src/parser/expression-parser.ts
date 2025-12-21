@@ -1485,7 +1485,7 @@ async function evaluateBinaryExpression(node: any, context: ExecutionContext): P
     // Convert hyperscript selector <tag/> to CSS selector (tag)
     let selector = node.left.selector;
     if (selector.startsWith('<') && selector.endsWith('/>')) {
-      selector = selector.slice(1, -2); // Remove '<' and '/>'
+      selector = selector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
     }
     const contextElement = await evaluateASTNode(node.right, context);
 
@@ -1892,7 +1892,8 @@ async function evaluateQueryReference(node: any, _context: ExecutionContext): Pr
   const selector = node.selector;
 
   // Remove the < and /> wrapper to get the actual selector
-  let cleanSelector = selector.slice(1, -2); // Remove '<' and '/>'
+  // Also trim to handle optional space before /> (e.g., <form /> vs <form/>)
+  let cleanSelector = selector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
 
   // Escape colons in class names (e.g., .foo:bar -> .foo\:bar)
   // BUT preserve CSS pseudo-classes like :hover, :not(), :first-child, etc.

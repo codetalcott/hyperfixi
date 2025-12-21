@@ -146,7 +146,7 @@ export function resolveElements(
       // Handle hyperscript queryReference syntax <tag/>
       let selector = trimmed;
       if (selector.startsWith('<') && selector.endsWith('/>')) {
-        selector = selector.slice(1, -2); // Remove '<' and '/>'
+        selector = selector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
       }
       const elements = doc.querySelectorAll(selector);
       return Array.from(elements).filter(isHTMLElement) as HTMLElement[];
@@ -356,7 +356,7 @@ export async function resolveTargetsFromArgs(
         // Handle hyperscript queryReference syntax <tag/>
         let selector = evaluated;
         if (selector.startsWith('<') && selector.endsWith('/>')) {
-          selector = selector.slice(1, -2); // Remove '<' and '/>'
+          selector = selector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
         }
         // Use element's ownerDocument for JSDOM compatibility
         const doc = (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);

@@ -17,20 +17,24 @@ import { isCommandBoundary } from '../helpers/parsing-helpers';
 // Phase 4: TokenType import removed - using predicate methods instead
 
 /**
- * Parse trigger command
+ * Parse trigger/send command
  *
- * Syntax: trigger <event> on <target>
+ * Syntax:
+ *   trigger <event> on <target>
+ *   send <event> to <target>
  *
  * This command fires an event on a target element. It collects all arguments
- * until a command boundary, then restructures them around the 'on' keyword.
+ * until a command boundary, then restructures them around the 'on' or 'to' keyword.
  *
  * Examples:
  *   - trigger click on <button/>
  *   - trigger customEvent on #myElement
+ *   - send hello to #target-form
+ *   - send customEvent to <form/>
  *
  * @param ctx - Parser context providing access to parser state and methods
- * @param identifierNode - The 'trigger' identifier node
- * @returns CommandNode representing the trigger command
+ * @param identifierNode - The 'trigger' or 'send' identifier node
+ * @returns CommandNode representing the trigger/send command
  *
  * Phase 9-3a: Extracted from Parser.parseTriggerCommand
  */
@@ -80,15 +84,18 @@ export function parseTriggerCommand(
     allArgs.push(ctx.parsePrimary());
   }
 
-  // Find the 'on' keyword
+  // Find the 'on' or 'to' keyword (trigger uses 'on', send uses 'to')
   let operationIndex = -1;
+  let operationKeyword = 'on';
   for (let i = 0; i < allArgs.length; i++) {
     const arg = allArgs[i];
+    const argValue = (arg as any).name || (arg as any).value;
     if (
       (arg.type === 'identifier' || arg.type === 'literal' || arg.type === 'keyword') &&
-      ((arg as any).name === 'on' || (arg as any).value === 'on')
+      (argValue === 'on' || argValue === 'to')
     ) {
       operationIndex = i;
+      operationKeyword = argValue;
       break;
     }
   }
@@ -96,15 +103,15 @@ export function parseTriggerCommand(
   const finalArgs: ASTNode[] = [];
 
   if (operationIndex === -1) {
-    // No "on" keyword found - use all args as-is
+    // No "on" or "to" keyword found - use all args as-is
     finalArgs.push(...allArgs);
   } else {
-    // Restructure: event + 'on' + target
+    // Restructure: event + keyword + target
     const eventArgs = allArgs.slice(0, operationIndex);
     const targetArgs = allArgs.slice(operationIndex + 1);
 
     finalArgs.push(...eventArgs);
-    finalArgs.push(ctx.createIdentifier('on'));
+    finalArgs.push(ctx.createIdentifier(operationKeyword));
     finalArgs.push(...targetArgs);
   }
 

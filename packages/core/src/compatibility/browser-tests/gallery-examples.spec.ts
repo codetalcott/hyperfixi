@@ -7,6 +7,13 @@ const EXAMPLES_TO_TEST = [
   '/examples/basics/03-show-hide.html',
   '/examples/basics/04-input-mirror.html',
   '/examples/basics/05-counter.html',
+  // Landing Page Examples (from hyperscript.org)
+  '/examples/landing-page/color-cycling.html',
+  '/examples/landing-page/send-events.html',
+  '/examples/landing-page/async-fetch.html',
+  '/examples/landing-page/js-interop.html',
+  '/examples/landing-page/tell-command.html',
+  '/examples/landing-page/clipboard-copy.html',
   // Intermediate
   '/examples/intermediate/01-form-validation.html',
   '/examples/intermediate/02-fetch-data.html',

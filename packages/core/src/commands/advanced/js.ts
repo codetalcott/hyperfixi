@@ -24,6 +24,7 @@ export interface JsCommandOutput {
   executed: boolean;
   codeLength: number;
   parameters?: string[];
+  preserveArrayResult: true; // Signal to runtime to not unwrap array results
 }
 
 /**
@@ -107,6 +108,7 @@ export class JsCommand implements DecoratedCommand {
         executed: false,
         codeLength: code.length,
         parameters,
+        preserveArrayResult: true,
       };
     }
 
@@ -118,14 +120,18 @@ export class JsCommand implements DecoratedCommand {
       const func = new Function(...Object.keys(executionContext), code);
       const result = await func(...Object.values(executionContext));
 
-      // Set the result in context
-      Object.assign(context, { it: result });
+      // Only set the result in context if there's an actual value
+      // This prevents a second js command from overwriting a previous result
+      if (result !== undefined) {
+        Object.assign(context, { it: result });
+      }
 
       return {
         result,
         executed: true,
         codeLength: code.length,
         parameters,
+        preserveArrayResult: true,
       };
     } catch (error) {
       throw new Error(
@@ -165,10 +171,18 @@ export class JsCommand implements DecoratedCommand {
       document: typeof document !== 'undefined' ? document : undefined,
       window: typeof window !== 'undefined' ? window : undefined,
 
-      // Parameter values from context
+      // Parameter values from context - check multiple sources
       ...parameters.reduce(
         (acc, param) => {
-          acc[param] = context.locals?.get(param);
+          // Try locals first, then variables, then direct context property
+          let value = context.locals?.get(param);
+          if (value === undefined) {
+            value = context.variables?.get(param);
+          }
+          if (value === undefined) {
+            value = (context as Record<string, unknown>)[param];
+          }
+          acc[param] = value;
           return acc;
         },
         {} as Record<string, any>

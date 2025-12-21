@@ -97,22 +97,30 @@ export class EventDispatchCommand implements DecoratedCommand {
       eventName = typeof eval1 === 'string' ? eval1 : String(eval1);
     }
 
-    // Find target keyword: 'on' for trigger, 'to' or 'on' for send
-    const targetKeywordIndex = raw.args.findIndex((a, i) => {
-      if (i === 0) return false;
-      const val = (a as any).name || (a as any).value;
-      return val === 'on' || val === 'to';
-    });
-
+    // Check for semantic parsing format first (modifiers.on or modifiers.to)
     let targets: EventTarget[];
-    if (targetKeywordIndex === -1 || targetKeywordIndex >= raw.args.length - 1) {
-      if (!context.me) throw new Error(`${cmdName}: no target specified and context.me is null`);
-      targets = [context.me as EventTarget];
+    const targetModifier = raw.modifiers?.on || raw.modifiers?.to;
+
+    if (targetModifier) {
+      // Semantic parsing format: target is in modifiers
+      targets = await this.resolveTargets([targetModifier as ASTNode], evaluator, context, cmdName);
     } else {
-      const afterTarget = raw.args.slice(targetKeywordIndex + 1);
-      const withIdx = afterTarget.findIndex(a => ((a as any).name || (a as any).value) === 'with');
-      const targetArgs = withIdx === -1 ? afterTarget : afterTarget.slice(0, withIdx);
-      targets = await this.resolveTargets(targetArgs, evaluator, context, cmdName);
+      // Traditional format: find target keyword in args
+      const targetKeywordIndex = raw.args.findIndex((a, i) => {
+        if (i === 0) return false;
+        const val = (a as any).name || (a as any).value;
+        return val === 'on' || val === 'to';
+      });
+
+      if (targetKeywordIndex === -1 || targetKeywordIndex >= raw.args.length - 1) {
+        if (!context.me) throw new Error(`${cmdName}: no target specified and context.me is null`);
+        targets = [context.me as EventTarget];
+      } else {
+        const afterTarget = raw.args.slice(targetKeywordIndex + 1);
+        const withIdx = afterTarget.findIndex(a => ((a as any).name || (a as any).value) === 'with');
+        const targetArgs = withIdx === -1 ? afterTarget : afterTarget.slice(0, withIdx);
+        targets = await this.resolveTargets(targetArgs, evaluator, context, cmdName);
+      }
     }
 
     const options = await this.parseEventOptions(raw.args, evaluator, context);

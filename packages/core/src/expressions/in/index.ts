@@ -292,8 +292,8 @@ export class InExpression implements TypedExpressionImplementation<HyperScriptVa
           return { success: true, value: element, type: 'element' };
         }
       } else if (containerStr.startsWith('<') && containerStr.endsWith('/>')) {
-        // Handle element selector like <div/>
-        const tagName = containerStr.slice(1, -2);
+        // Handle element selector like <div/> or <div />
+        const tagName = containerStr.slice(1, -2).trim();
         const element = document.querySelector(tagName);
         if (element instanceof HTMLElement) {
           return { success: true, value: element, type: 'element' };
@@ -392,8 +392,8 @@ export class InExpression implements TypedExpressionImplementation<HyperScriptVa
    * Convert hyperscript selector to CSS selector
    */
   private convertHyperscriptSelector(selector: string): string {
-    // Remove < and />
-    const cssSelector = selector.slice(1, -2);
+    // Remove < and /> and trim whitespace (handles <form /> vs <form/>)
+    const cssSelector = selector.slice(1, -2).trim();
 
     // Handle class selectors: p.foo -> p.foo
     // Handle ID selectors: div#myId -> div#myId
