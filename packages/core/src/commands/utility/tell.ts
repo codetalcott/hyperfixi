@@ -74,17 +74,25 @@ export class TellCommand implements DecoratedCommand {
       throw new Error('tell command found no target elements');
     }
 
+    // Get runtime execute function for AST command nodes (same pattern as RepeatCommand)
+    const runtimeExecute = context.locals.get('_runtimeExecute') as
+      | ((cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>)
+      | undefined;
+
     const commandResults: any[] = [];
 
     for (const targetElement of targetElements) {
+      // In hyperscript, within a tell block, `me` refers to the element being told
+      // This allows commands like `add .highlight` to operate on the target element
       const tellContext: TypedExecutionContext = {
         ...context,
-        you: targetElement,
+        me: targetElement,  // Replace me with target (per _hyperscript semantics)
+        you: targetElement, // Also set you for explicit reference
       };
 
       for (const cmd of commands) {
         try {
-          const result = await this.executeCommand(cmd, tellContext);
+          const result = await this.executeCommand(cmd, tellContext, runtimeExecute);
           commandResults.push(result);
           Object.assign(tellContext, { it: result });
         } catch (error) {
@@ -104,7 +112,16 @@ export class TellCommand implements DecoratedCommand {
     };
   }
 
-  private async executeCommand(cmd: any, context: TypedExecutionContext): Promise<any> {
+  private async executeCommand(
+    cmd: any,
+    context: TypedExecutionContext,
+    runtimeExecute?: (cmd: unknown, ctx: TypedExecutionContext) => Promise<unknown>
+  ): Promise<any> {
+    // Handle AST command nodes using runtime execute (same pattern as RepeatCommand)
+    if (cmd && typeof cmd === 'object' && cmd.type === 'command' && runtimeExecute) {
+      return await runtimeExecute(cmd, context);
+    }
+
     if (typeof cmd === 'function') {
       return await cmd(context);
     }

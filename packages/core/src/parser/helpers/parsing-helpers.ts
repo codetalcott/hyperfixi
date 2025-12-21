@@ -222,7 +222,8 @@ export function parseOneArgument(
   if (isCommandBoundary(ctx, additionalBoundaries)) {
     return undefined;
   }
-  return ctx.parsePrimary();
+  // Use parseExpression to handle binary expressions like 'last <li/> in #items'
+  return ctx.parseExpression();
 }
 
 /**

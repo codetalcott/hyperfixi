@@ -102,6 +102,62 @@ export class PseudoCommand {
     evaluator: ExpressionEvaluator,
     context: ExecutionContext
   ): Promise<PseudoCommandInput> {
+    // The parser creates a pseudo-command node with a single objectLiteral argument
+    // containing: methodName, methodArgs (arrayLiteral), preposition, target
+    if (raw.args.length === 1 && (raw.args[0] as any).type === 'objectLiteral') {
+      const objLiteral = raw.args[0] as any;
+      const properties = objLiteral.properties || [];
+
+      let methodName = '';
+      let methodArgs: unknown[] = [];
+      let preposition: PseudoCommandInput['preposition'];
+      let targetExpression: unknown;
+
+      for (const prop of properties) {
+        const keyName = prop.key?.name || prop.key?.value;
+        const valueNode = prop.value;
+
+        switch (keyName) {
+          case 'methodName':
+            methodName = valueNode?.value || String(await evaluator.evaluate(valueNode, context));
+            break;
+          case 'methodArgs':
+            // Handle both arrayLiteral format and literal with array value
+            if (valueNode?.type === 'arrayLiteral' && valueNode.elements) {
+              methodArgs = await Promise.all(
+                valueNode.elements.map((el: ASTNode) => evaluator.evaluate(el, context))
+              );
+            } else if (valueNode?.type === 'literal' && Array.isArray(valueNode.value)) {
+              // Parser stores AST nodes in literal.value array
+              methodArgs = await Promise.all(
+                valueNode.value.map((el: ASTNode) => evaluator.evaluate(el, context))
+              );
+            }
+            break;
+          case 'preposition':
+            const prepValue = valueNode?.value;
+            if (prepValue && prepValue !== 'null') {
+              preposition = prepValue as PseudoCommandInput['preposition'];
+            }
+            break;
+          case 'target':
+          case 'targetExpression':
+            targetExpression = await evaluator.evaluate(valueNode, context);
+            break;
+        }
+      }
+
+      if (!methodName) {
+        throw new Error('pseudo-command requires method name');
+      }
+      if (targetExpression === undefined || targetExpression === null) {
+        throw new Error('pseudo-command requires a target expression');
+      }
+
+      return { methodName, methodArgs, preposition, targetExpression };
+    }
+
+    // Legacy format: separate args
     if (raw.args.length < 2) {
       throw new Error('pseudo-command requires method name and target expression');
     }

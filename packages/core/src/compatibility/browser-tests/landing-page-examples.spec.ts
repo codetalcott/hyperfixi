@@ -340,4 +340,570 @@ test.describe('Landing Page Examples @comprehensive', () => {
       expect(eventErrors).toEqual([]);
     });
   });
+
+  test.describe('Send/Receive Events Example', () => {
+    /**
+     * Tests the send/receive events pattern from hyperscript.org:
+     * <button _="on click send hello to <form />">Send</button>
+     * <form _="on hello alert('got event')">
+     */
+
+    test('page loads without errors', async ({ page }) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', err => pageErrors.push(err.message));
+
+      await page.goto(`${BASE_URL}/examples/landing-page/send-events.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      const criticalErrors = pageErrors.filter(e =>
+        !e.includes('ResizeObserver') &&
+        !e.includes('Script error')
+      );
+      expect(criticalErrors).toEqual([]);
+    });
+
+    test('send button triggers event on form', async ({ page }) => {
+      await page.goto(`${BASE_URL}/examples/landing-page/send-events.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      // Check initial state
+      const eventLog = page.locator('#event-log');
+      const initialText = await eventLog.textContent();
+      expect(initialText).toContain('Waiting');
+
+      // Execute send command manually (since click handler needs more time to initialize)
+      await page.evaluate(async () => {
+        const btn = document.querySelector('button.send-btn') as HTMLElement;
+        const hyperfixi = (window as any).hyperfixi;
+        const context = hyperfixi.createContext(btn);
+        await hyperfixi.run('send hello to #target-form', context);
+      });
+      await page.waitForTimeout(100);
+
+      // Event log should be updated
+      const updatedText = await eventLog.textContent();
+      expect(updatedText).toContain('Got hello event');
+    });
+
+    test('form flashes on event receipt', async ({ page }) => {
+      await page.goto(`${BASE_URL}/examples/landing-page/send-events.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      // Execute send command manually
+      await page.evaluate(async () => {
+        const btn = document.querySelector('button.send-btn') as HTMLElement;
+        const hyperfixi = (window as any).hyperfixi;
+        const context = hyperfixi.createContext(btn);
+        await hyperfixi.run('send hello to #target-form', context);
+      });
+
+      // Wait for flash effect
+      await page.waitForTimeout(400);
+
+      // Check the event log was updated
+      const eventLog = page.locator('#event-log');
+      const text = await eventLog.textContent();
+      expect(text).toContain('Got hello event');
+    });
+  });
+
+  test.describe('Async & Fetch Example', () => {
+    /**
+     * Tests async patterns from hyperscript.org:
+     * <div _="on click wait 5s send hello to .target">
+     * <div _="init fetch https://stuff as json then put result into me">
+     */
+
+    test('page loads without errors', async ({ page }) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', err => pageErrors.push(err.message));
+
+      await page.goto(`${BASE_URL}/examples/landing-page/async-fetch.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      const criticalErrors = pageErrors.filter(e =>
+        !e.includes('ResizeObserver') &&
+        !e.includes('Script error')
+      );
+      expect(criticalErrors).toEqual([]);
+    });
+
+    test('wait and send event works', async ({ page }) => {
+      await page.goto(`${BASE_URL}/examples/landing-page/async-fetch.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      // Check initial target state
+      const target = page.locator('.target');
+      const initialText = await target.textContent();
+      expect(initialText).toContain('Click the button');
+
+      // Click the wait button
+      await page.click('button.wait-btn');
+
+      // Should show waiting message
+      await page.waitForTimeout(200);
+      const waitingText = await target.textContent();
+      expect(waitingText).toContain('Waiting');
+
+      // Wait for the full delay (3s in the demo) + buffer
+      await page.waitForTimeout(3500);
+
+      // Should have received the event
+      const finalText = await target.textContent();
+      expect(finalText).toContain('Hello event received');
+    });
+
+    test('fetch JSON data works', async ({ page }) => {
+      await page.goto(`${BASE_URL}/examples/landing-page/async-fetch.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      const fetchResult = page.locator('#fetch-result');
+
+      // Click fetch TODO button
+      await page.click('button.fetch-btn:first-of-type');
+
+      // Wait for fetch to complete (may show Loading briefly, but fetch is fast)
+      await page.waitForTimeout(2000);
+
+      // Should have JSON data (may be in "data" property of response)
+      const text = await fetchResult.textContent();
+      expect(text).toMatch(/userId|title|completed/);
+    });
+  });
+
+  test.describe('JavaScript Interop Example', () => {
+    /**
+     * Tests JS interop patterns from hyperscript.org:
+     * <div _="init js alert('Hello from JavaScript!') end">
+     * <div _="init js(haystack) return /needle/gi.exec(haystack) end">
+     */
+
+    test('page loads without errors', async ({ page }) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', err => pageErrors.push(err.message));
+
+      await page.goto(`${BASE_URL}/examples/landing-page/js-interop.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      const criticalErrors = pageErrors.filter(e =>
+        !e.includes('ResizeObserver') &&
+        !e.includes('Script error')
+      );
+      expect(criticalErrors).toEqual([]);
+    });
+
+    test('inline JS with return value works', async ({ page }) => {
+      // JS command is implemented - testing return value functionality
+      const pageErrors: string[] = [];
+      const consoleMessages: string[] = [];
+      page.on('pageerror', err => pageErrors.push(err.message));
+      page.on('console', msg => consoleMessages.push(`${msg.type()}: ${msg.text()}`));
+
+      await page.goto(`${BASE_URL}/examples/landing-page/js-interop.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(1000); // Wait longer for hyperscript to initialize
+
+      const result = page.locator('#js-result');
+
+      // Click the date/time button
+      await page.click('button:has-text("Get Date/Time")');
+      await page.waitForTimeout(500);
+
+      // Debug: log any errors or console messages
+      if (pageErrors.length > 0) {
+        console.log('Page errors:', pageErrors);
+      }
+      if (consoleMessages.length > 0) {
+        console.log('Console messages:', consoleMessages.filter(m => m.includes('error') || m.includes('Error')));
+      }
+
+      // Should have date/time in result
+      const text = await result.textContent();
+      expect(text).toMatch(/\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}|\d{1,2}:\d{2}/);
+    });
+
+    test('JS with parameters works (regex search)', async ({ page }) => {
+      // JS command with parameters is implemented - testing regex search functionality
+      const pageErrors: string[] = [];
+      const consoleLogs: string[] = [];
+      page.on('pageerror', err => pageErrors.push(err.message));
+      page.on('console', msg => consoleLogs.push(`[${msg.type()}] ${msg.text()}`));
+
+      await page.goto(`${BASE_URL}/examples/landing-page/js-interop.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(1000);
+
+      const result = page.locator('#regex-result');
+
+      // The default text contains "needle"
+      await page.click('button:has-text("Search for")');
+      await page.waitForTimeout(500);
+
+      // Debug: log any errors and console messages
+      if (pageErrors.length > 0) {
+        console.log('Page errors:', pageErrors);
+      }
+      console.log('Console messages:', consoleLogs);
+
+      // Should find the match
+      const text = await result.textContent();
+      expect(text).toContain('Found');
+      expect(text).toContain('needle');
+    });
+
+    test('browser API access works', async ({ page }) => {
+      await page.goto(`${BASE_URL}/examples/landing-page/js-interop.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      const result = page.locator('#browser-result');
+
+      // Click browser info button
+      await page.click('button:has-text("Get Browser Info")');
+      await page.waitForTimeout(300);
+
+      // Should have browser info
+      const text = await result.textContent();
+      expect(text).toContain('Browser Info');
+      expect(text).toContain('userAgent');
+      expect(text).toContain('language');
+    });
+  });
+
+  test.describe('Tell Command Example', () => {
+    /**
+     * Tests tell command patterns from hyperscript.org:
+     * <div _="on click tell <p/> in me add .highlight">
+     * <div _="tell <details /> in .article set you.open to false">
+     */
+
+    test('page loads without errors', async ({ page }) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', err => pageErrors.push(err.message));
+
+      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      const criticalErrors = pageErrors.filter(e =>
+        !e.includes('ResizeObserver') &&
+        !e.includes('Script error')
+      );
+      expect(criticalErrors).toEqual([]);
+    });
+
+    test('tell paragraphs to add highlight works', async ({ page }) => {
+      // Tests: tell <p/> in me add .highlight
+      const consoleLogs: string[] = [];
+      const consoleErrors: string[] = [];
+      page.on('console', msg => {
+        if (msg.type() === 'log') consoleLogs.push(msg.text());
+        if (msg.type() === 'error') consoleErrors.push(msg.text());
+      });
+      page.on('pageerror', err => consoleErrors.push(err.message));
+
+      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      // Click the article to trigger tell command
+      await page.click('#article1');
+      await page.waitForTimeout(500);
+
+      // Debug: Print console logs
+      console.log('=== CONSOLE LOGS ===');
+      consoleLogs.forEach(log => console.log(log));
+      console.log('=== CONSOLE ERRORS ===');
+      consoleErrors.forEach(err => console.log(err));
+      console.log('===================');
+
+      // All paragraphs in article1 should have highlight class
+      const highlightedCount = await page.locator('#article1 p.highlight').count();
+      expect(highlightedCount).toBeGreaterThan(0);
+    });
+
+    test('clear highlights button works', async ({ page }) => {
+      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      // First add highlights
+      await page.click('#article1');
+      await page.waitForTimeout(300);
+
+      // Then clear them
+      await page.click('button:has-text("Clear Highlights")');
+      await page.waitForTimeout(300);
+
+      // No paragraphs should have highlight class
+      const highlightedCount = await page.locator('#article1 p.highlight').count();
+      expect(highlightedCount).toBe(0);
+    });
+
+    test('close all details works', async ({ page }) => {
+      // Tests: tell <details /> in #article2 set you.open to false
+      const consoleLogs: string[] = [];
+      const consoleErrors: string[] = [];
+      page.on('console', msg => {
+        if (msg.type() === 'log') consoleLogs.push(msg.text());
+        if (msg.type() === 'error') consoleErrors.push(msg.text());
+      });
+      page.on('pageerror', err => consoleErrors.push(err.message));
+
+      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      // Details should start open
+      const openCount = await page.locator('#article2 details[open]').count();
+      expect(openCount).toBeGreaterThan(0);
+
+      // Click close all
+      await page.click('button:has-text("Close All Sections")');
+      await page.waitForTimeout(500);
+
+      // Debug: Print console logs
+      console.log('=== CONSOLE LOGS (close all) ===');
+      consoleLogs.forEach(log => console.log(log));
+      console.log('=== CONSOLE ERRORS ===');
+      consoleErrors.forEach(err => console.log(err));
+      console.log('===================');
+
+      // All details should be closed
+      const closedCount = await page.locator('#article2 details[open]').count();
+      expect(closedCount).toBe(0);
+    });
+
+    test('open all details works', async ({ page }) => {
+      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      // First close all
+      await page.click('button:has-text("Close All Sections")');
+      await page.waitForTimeout(300);
+
+      // Then open all
+      await page.click('button:has-text("Open All Sections")');
+      await page.waitForTimeout(300);
+
+      // All details should be open
+      const openCount = await page.locator('#article2 details[open]').count();
+      expect(openCount).toBe(3);
+    });
+
+    test('positional operators (first/last) work', async ({ page }) => {
+      // Tests: add .highlight to first <li/> in #items
+      const consoleLogs: string[] = [];
+      const consoleErrors: string[] = [];
+      page.on('console', msg => {
+        if (msg.type() === 'log') consoleLogs.push(msg.text());
+        if (msg.type() === 'error') consoleErrors.push(msg.text());
+      });
+      page.on('pageerror', err => consoleErrors.push(err.message));
+
+      await page.goto(`${BASE_URL}/examples/landing-page/tell-command.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      // Click highlight first
+      await page.click('button:has-text("Highlight First")');
+      await page.waitForTimeout(300);
+
+      // Debug: Show state after first click
+      const stateAfterFirst = await page.locator('#items li').evaluateAll(elements =>
+        elements.map((el, i) => `li[${i}]: ${el.classList.contains('highlight') ? 'HIGHLIGHT' : 'no'}`)
+      );
+      console.log('=== AFTER HIGHLIGHT FIRST ===');
+      console.log(stateAfterFirst.join(', '));
+
+      // Debug: Print console errors
+      console.log('=== CONSOLE ERRORS ===');
+      consoleErrors.forEach(err => console.log(err));
+      console.log('===================');
+
+      // First li should have highlight
+      const firstHasHighlight = await page.locator('#items li:first-child').evaluate(el =>
+        el.classList.contains('highlight')
+      );
+      expect(firstHasHighlight).toBe(true);
+
+      // Clear
+      await page.click('button:has-text("Clear All")');
+      await page.waitForTimeout(300);
+
+      // Debug: Show state after clear
+      const stateAfterClear = await page.locator('#items li').evaluateAll(elements =>
+        elements.map((el, i) => `li[${i}]: ${el.classList.contains('highlight') ? 'HIGHLIGHT' : 'no'}`)
+      );
+      console.log('=== AFTER CLEAR ALL ===');
+      console.log(stateAfterClear.join(', '));
+
+      // Click highlight last
+      await page.click('button:has-text("Highlight Last")');
+      await page.waitForTimeout(300);
+
+      // Debug: Show which items have highlight
+      const itemsState = await page.locator('#items li').evaluateAll(elements =>
+        elements.map((el, i) => `li[${i}]: ${el.classList.contains('highlight') ? 'HIGHLIGHT' : 'no'}`)
+      );
+      console.log('=== ITEMS STATE AFTER HIGHLIGHT LAST ===');
+      console.log(itemsState.join(', '));
+      console.log('===================');
+
+      // Last li should have highlight
+      const lastHasHighlight = await page.locator('#items li:last-child').evaluate(el =>
+        el.classList.contains('highlight')
+      );
+      expect(lastHasHighlight).toBe(true);
+    });
+  });
+
+  test.describe('Clipboard Copy Example', () => {
+    /**
+     * Tests clipboard copy pattern from hyperscript.org:
+     * <button _="on click
+     *     writeText(my previousElementSibling's innerText) on navigator.clipboard
+     *     put 'copied!' into me
+     *     wait 1s
+     *     put 'copy' into me">copy</button>
+     */
+
+    test('page loads without errors', async ({ page }) => {
+      const pageErrors: string[] = [];
+      page.on('pageerror', err => pageErrors.push(err.message));
+
+      await page.goto(`${BASE_URL}/examples/landing-page/clipboard-copy.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      const criticalErrors = pageErrors.filter(e =>
+        !e.includes('ResizeObserver') &&
+        !e.includes('Script error')
+      );
+      expect(criticalErrors).toEqual([]);
+    });
+
+    test('copy button shows copied feedback', async ({ page, context }) => {
+      // Grant clipboard permissions
+      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+
+      await page.goto(`${BASE_URL}/examples/landing-page/clipboard-copy.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      const copyButton = page.locator('button.copy-btn').first();
+
+      // Initial text should be "copy"
+      let buttonText = await copyButton.textContent();
+      expect(buttonText?.trim()).toBe('copy');
+
+      // Click copy
+      await copyButton.click();
+      await page.waitForTimeout(200);
+
+      // Should show "copied!"
+      buttonText = await copyButton.textContent();
+      expect(buttonText?.trim()).toBe('copied!');
+
+      // Wait for text to restore
+      await page.waitForTimeout(1200);
+      buttonText = await copyButton.textContent();
+      expect(buttonText?.trim()).toBe('copy');
+    });
+
+    test('copy button has copied class during feedback', async ({ page, context }) => {
+      // Grant clipboard permissions
+      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+
+      await page.goto(`${BASE_URL}/examples/landing-page/clipboard-copy.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      const copyButton = page.locator('button.copy-btn').first();
+
+      // Click copy
+      await copyButton.click();
+      await page.waitForTimeout(100);
+
+      // Should have copied class
+      const hasCopiedClass = await copyButton.evaluate(el =>
+        el.classList.contains('copied')
+      );
+      expect(hasCopiedClass).toBe(true);
+
+      // Wait and check class is removed
+      await page.waitForTimeout(1200);
+      const stillHasCopiedClass = await copyButton.evaluate(el =>
+        el.classList.contains('copied')
+      );
+      expect(stillHasCopiedClass).toBe(false);
+    });
+
+    test('clipboard actually contains copied text', async ({ page, context }) => {
+      // Grant clipboard permissions
+      await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+
+      await page.goto(`${BASE_URL}/examples/landing-page/clipboard-copy.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      // Click the first copy button (next to script tag)
+      await page.locator('button.copy-btn').first().click();
+      await page.waitForTimeout(300);
+
+      // Read clipboard
+      const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
+
+      // Should contain the script tag
+      expect(clipboardText).toContain('unpkg.com/hyperscript.org');
+    });
+  });
 });

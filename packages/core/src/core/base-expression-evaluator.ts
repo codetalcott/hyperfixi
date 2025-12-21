@@ -122,6 +122,9 @@ export class BaseExpressionEvaluator {
       case 'contextReference':
         return this.evaluateContextReference(node as any, context);
 
+      case 'queryReference':
+        return this.evaluateQueryReference(node as any, context);
+
       default:
         throw new Error(`Unsupported AST node type for evaluation: ${node.type}`);
     }
@@ -619,12 +622,15 @@ export class BaseExpressionEvaluator {
 
     // Evaluate the object first
     let objectValue = await this.evaluate(object, context);
-    objectValue = this.unwrapSelectorResult(objectValue);
 
     if (computed) {
+      // For computed access (arr[0], obj['key']), don't unwrap arrays
+      // This preserves regex match arrays, user arrays, etc.
       const propertyValue = await this.evaluate(property, context);
       return objectValue[propertyValue];
     } else {
+      // For dot access (obj.prop), unwrap selector results to single element
+      objectValue = this.unwrapSelectorResult(objectValue);
       const propertyName = property.name || property;
 
       if (typeof propertyName === 'string') {
@@ -645,6 +651,17 @@ export class BaseExpressionEvaluator {
             return objectValue.getAttribute(attrName);
           }
           return undefined;
+        }
+
+        // Handle _hyperscript shorthand for sibling access
+        // 'previous' -> previousElementSibling, 'next' -> nextElementSibling
+        if (objectValue && objectValue instanceof Element) {
+          if (propertyName === 'previous' || propertyName === 'prev') {
+            return objectValue.previousElementSibling;
+          }
+          if (propertyName === 'next') {
+            return objectValue.nextElementSibling;
+          }
         }
       }
 
@@ -670,9 +687,10 @@ export class BaseExpressionEvaluator {
       // Convert hyperscript selector <tag/> to CSS selector (tag)
       let selector = left.value;
       if (selector.startsWith('<') && selector.endsWith('/>')) {
-        selector = selector.slice(1, -2); // Remove '<' and '/>'
+        selector = selector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
       }
-      const contextElement = await this.evaluate(right, context);
+      // Unwrap array/NodeList from selector evaluation to single element
+      const contextElement = this.unwrapSelectorResult(await this.evaluate(right, context));
 
       if (!contextElement || typeof contextElement.querySelector !== 'function') {
         throw new Error(
@@ -689,9 +707,10 @@ export class BaseExpressionEvaluator {
       // Convert hyperscript selector <tag/> to CSS selector (tag)
       let selector = left.selector;
       if (selector.startsWith('<') && selector.endsWith('/>')) {
-        selector = selector.slice(1, -2); // Remove '<' and '/>'
+        selector = selector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
       }
-      const contextElement = await this.evaluate(right, context);
+      // Unwrap array/NodeList from selector evaluation to single element
+      const contextElement = this.unwrapSelectorResult(await this.evaluate(right, context));
 
       if (!contextElement || typeof contextElement.querySelector !== 'function') {
         throw new Error(
@@ -1251,7 +1270,7 @@ export class BaseExpressionEvaluator {
     let selector = node.value;
 
     if (selector.startsWith('<') && selector.endsWith('/>')) {
-      selector = selector.slice(1, -2); // Remove '<' and '/>'
+      selector = selector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
     }
     // Use element's ownerDocument for JSDOM compatibility, fall back to global document
     const doc = (context.me as any)?.ownerDocument ?? (typeof document !== 'undefined' ? document : null);
@@ -1372,7 +1391,7 @@ export class BaseExpressionEvaluator {
     let selector = node.selector;
 
     if (selector.startsWith('<') && selector.endsWith('/>')) {
-      selector = selector.slice(1, -2); // Remove '<' and '/>'
+      selector = selector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
     }
 
     if (node.selectorType === 'id') {
@@ -1390,6 +1409,30 @@ export class BaseExpressionEvaluator {
     return Array.from(elements).filter(
       (el): el is HTMLElement => el instanceof HTMLElement
     );
+  }
+
+  /**
+   * Evaluate query reference expressions (<selector/>)
+   * Returns NodeList for compatibility with hyperscript selector semantics
+   */
+  protected async evaluateQueryReference(
+    node: { selector: string },
+    _context: ExecutionContext
+  ): Promise<NodeList> {
+    let selector = node.selector;
+
+    // Remove the < and /> wrapper and trim whitespace (handles <form /> vs <form/>)
+    if (selector.startsWith('<') && selector.endsWith('/>')) {
+      selector = selector.slice(1, -2).trim();
+    }
+
+    // Query references return NodeList (not arrays) - this is the key difference
+    try {
+      return document.querySelectorAll(selector);
+    } catch {
+      // If CSS selector is invalid, return empty NodeList
+      return document.createDocumentFragment().childNodes;
+    }
   }
 
   /**

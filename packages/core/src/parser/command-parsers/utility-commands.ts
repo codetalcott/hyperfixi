@@ -58,12 +58,12 @@ export function parseCompoundCommand(
   identifierNode: IdentifierNode
 ): CommandNode | null {
   const commandName = identifierNode.name.toLowerCase();
-  console.log('[PARSER DEBUG] parseCompoundCommand called with:', commandName);
 
   switch (commandName) {
     case 'put':
       return domCommands.parsePutCommand(ctx, identifierNode);
     case 'trigger':
+    case 'send':
       return eventCommands.parseTriggerCommand(ctx, identifierNode);
     case 'remove':
       return domCommands.parseRemoveCommand(ctx, identifierNode);
@@ -77,6 +77,8 @@ export function parseCompoundCommand(
       return animationCommands.parseMeasureCommand(ctx, identifierNode);
     case 'js':
       return parseJsCommand(ctx, identifierNode);
+    case 'tell':
+      return parseTellCommand(ctx, identifierNode);
     case 'swap':
     case 'morph':
       return domCommands.parseSwapCommand(ctx, identifierNode);
@@ -177,9 +179,7 @@ export function parseMultiWordCommand(
   commandToken: Token,
   commandName: string
 ) {
-  console.log('[parseMultiWordCommand] called for:', commandName);
   const pattern = ctx.getMultiWordPattern(commandName);
-  console.log('[parseMultiWordCommand] pattern:', pattern);
   if (!pattern) return null;
 
   const args: ASTNode[] = [];
@@ -237,9 +237,7 @@ export function parseMultiWordCommand(
     builder.withModifiers(modifiers);
   }
 
-  const result = builder.build();
-  console.log('[parseMultiWordCommand] result:', JSON.stringify(result, null, 2));
-  return result;
+  return builder.build();
 }
 
 /**
@@ -286,16 +284,26 @@ export function parseJsCommand(
     ctx.consume(')', 'Expected ) after js parameters');
   }
 
-  // Collect tokens until 'end' keyword and reconstruct code
-  const codeTokens: string[] = [];
+  // Record the start position of JS code (current token's start)
+  const jsCodeStart = ctx.peek().start;
+
+  // Skip tokens until 'end' keyword to find the end position
   while (!ctx.check(KEYWORDS.END) && !ctx.isAtEnd()) {
-    const token = ctx.advance();
-    // Token values already include quotes for strings, so use directly
-    codeTokens.push(token.value);
+    ctx.advance();
   }
+
+  // Get the 'end' token's start position to know where JS code ends
+  const endToken = ctx.peek();
+  const jsCodeEnd = endToken.start;
+
   ctx.consume(KEYWORDS.END, 'Expected end after js code body');
 
-  const code = codeTokens.join(' ');
+  // Extract raw JavaScript code from original input (preserves regex, whitespace, etc.)
+  const rawSlice = ctx.getInputSlice(jsCodeStart, jsCodeEnd);
+  const code = rawSlice.trim();
+
+  // Debug logging for development
+  // console.log('[parseJsCommand] jsCodeStart:', jsCodeStart, 'jsCodeEnd:', jsCodeEnd, 'rawSlice:', JSON.stringify(rawSlice), 'code:', JSON.stringify(code));
 
   // Build args: first arg is code string, second is parameters array
   const codeNode: ASTNode = {
@@ -319,6 +327,91 @@ export function parseJsCommand(
 
   return CommandNodeBuilder.fromIdentifier(identifierNode)
     .withArgs(codeNode, paramsNode)
+    .endingAt(ctx.getPosition())
+    .build();
+}
+
+/**
+ * Parse tell command
+ *
+ * Syntax:
+ *   tell <target> <command> [<command> ...]
+ *
+ * The tell command executes one or more commands in the context of target elements.
+ * Within the command body, 'you' refers to the current target element.
+ *
+ * Examples:
+ *   - tell <p/> in me add .highlight
+ *   - tell <details /> in #article2 set you.open to false
+ *   - tell first <li/> in #list add .active
+ *
+ * @param ctx - Parser context providing access to parser state and methods
+ * @param identifierNode - The command identifier node
+ * @returns CommandNode representing the tell command
+ */
+export function parseTellCommand(
+  ctx: ParserContext,
+  identifierNode: IdentifierNode
+): CommandNode {
+  // Parse target expression (e.g., <p/> in me, <details /> in #article2)
+  const target = ctx.parseExpression();
+
+  if (!target) {
+    throw new Error('tell command requires a target expression');
+  }
+
+  // Parse the command(s) to execute on each target
+  const commands: ASTNode[] = [];
+
+  // Parse at least one command - the command keyword (e.g., "add") is expected
+  // Note: parseCommand() expects the command token to have been consumed already,
+  // so we must call advance() before calling parseCommand().
+  while (!ctx.isAtEnd()) {
+    // Check if current token is a command - if so, parse it
+    if (ctx.checkIsCommand()) {
+      try {
+        // IMPORTANT: parseCommand() uses previous() to get the command token,
+        // so we must advance first to consume the command token
+        ctx.advance();
+        const cmd = ctx.parseCommand();
+        if (cmd) {
+          commands.push(cmd);
+        } else {
+          break;
+        }
+      } catch {
+        break;
+      }
+
+      // Handle 'and' between commands (tell x add .a and add .b)
+      if (ctx.match(KEYWORDS.AND)) {
+        continue;
+      }
+
+      // Check for control flow boundaries after parsing a command
+      if (ctx.check(KEYWORDS.THEN) || ctx.check(KEYWORDS.ELSE) || ctx.check(KEYWORDS.END)) {
+        break;
+      }
+
+      // If next token is also a command, continue parsing
+      if (ctx.checkIsCommand()) {
+        continue;
+      }
+
+      // Otherwise, we're done with tell's commands
+      break;
+    } else {
+      // Not a command token - stop parsing
+      break;
+    }
+  }
+
+  if (commands.length === 0) {
+    throw new Error('tell command requires at least one command after the target');
+  }
+
+  return CommandNodeBuilder.fromIdentifier(identifierNode)
+    .withArgs(target, ...commands)
     .endingAt(ctx.getPosition())
     .build();
 }

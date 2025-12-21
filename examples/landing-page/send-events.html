@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landing Page Example: Send/Receive Events</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    h1 { color: #333; margin-bottom: 10px; }
+
+    .breadcrumb {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .breadcrumb a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .description {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .demo {
+      background: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 40px;
+      margin: 30px 0;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px;
+      transition: transform 0.1s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    .send-btn {
+      background: #667eea;
+      color: white;
+    }
+
+    form {
+      background: #e8f5e9;
+      padding: 30px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 2px dashed #4caf50;
+    }
+
+    #event-log {
+      background: #263238;
+      color: #80cbc4;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: monospace;
+      min-height: 100px;
+      margin-top: 20px;
+    }
+
+    .code {
+      background: #282c34;
+      color: #abb2bf;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      margin: 20px 0;
+      line-height: 1.6;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="../index.html">&larr; Back to Gallery</a> / <strong>Landing Page</strong> / Send Events
+    </div>
+
+    <h1>Events are First Class Citizens</h1>
+
+    <div class="description">
+      <strong>Example from hyperscript.org landing page</strong><br>
+      Easily send and receive events between elements. Chain events together, filter, queue, or debounce them.
+    </div>
+
+    <div class="demo">
+      <h3>Demo: Send Hello Event</h3>
+
+      <button class="send-btn"
+              _="on click send hello to #target-form">
+        Send "hello" to form
+      </button>
+
+      <form id="target-form" _="on hello
+                 put 'Got hello event at ' + new Date().toLocaleTimeString() into #event-log
+                 add .flash to me
+                 wait 300ms
+                 remove .flash from me">
+        <p><strong>Form Element</strong></p>
+        <p>This form listens for the "hello" custom event.</p>
+        <p>Click the button above to send an event to this form!</p>
+      </form>
+
+      <div id="event-log">Waiting for events...</div>
+    </div>
+
+    <h2>The Exact Code</h2>
+    <div class="code">&lt;button _="on click send hello to &lt;form /&gt;"&gt;Send&lt;/button&gt;
+
+&lt;form _="on hello alert('got event')"&gt;</div>
+
+    <h2>Extended Version</h2>
+    <div class="code">&lt;button _="on click send hello to &lt;form /&gt;"&gt;
+  Send "hello" to form
+&lt;/button&gt;
+
+&lt;form _="on hello
+           put 'Got hello event!' into #event-log
+           add .flash to me
+           wait 300ms
+           remove .flash from me"&gt;
+  ...
+&lt;/form&gt;</div>
+
+    <h2>Features Demonstrated</h2>
+    <ul>
+      <li><code>send [event] to [target]</code> - Send custom events to elements</li>
+      <li><code>on [event]</code> - Listen for custom events</li>
+      <li><code>&lt;form /&gt;</code> - CSS selector literal syntax</li>
+      <li><code>add/remove .class</code> - Toggle classes for visual feedback</li>
+      <li><code>wait [duration]</code> - Pause execution</li>
+    </ul>
+  </div>
+
+  <style>
+    form.flash {
+      background: #c8e6c9 !important;
+      transition: background 0.15s;
+    }
+  </style>
+
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../debug-panel.js"></script>
+  <script>
+    // Enable debug mode
+    if (window.hyperfixi && window.hyperfixi.debugControl) {
+      window.hyperfixi.debugControl.enable();
+    }
+    console.log('HyperFixi loaded:', !!window.hyperfixi);
+    console.log('_hyperscript loaded:', !!window._hyperscript);
+  </script>
+</body>
+</html>

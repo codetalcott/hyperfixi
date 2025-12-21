@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landing Page Example: JavaScript Interop</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    h1 { color: #333; margin-bottom: 10px; }
+
+    .breadcrumb {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .breadcrumb a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .description {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .demo {
+      background: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 40px;
+      margin: 30px 0;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px;
+      transition: transform 0.1s;
+      background: #9c27b0;
+      color: white;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    .result-box {
+      background: #f3e5f5;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 2px dashed #9c27b0;
+      min-height: 60px;
+      font-family: monospace;
+    }
+
+    input[type="text"] {
+      padding: 12px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      width: 300px;
+      margin: 10px;
+    }
+
+    .code {
+      background: #282c34;
+      color: #abb2bf;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      margin: 20px 0;
+      line-height: 1.6;
+      white-space: pre;
+    }
+
+    .draggable-demo {
+      width: 200px;
+      height: 100px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: move;
+      user-select: none;
+      margin: 20px auto;
+    }
+
+    .draggable-demo .titlebar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 30px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px 8px 0 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="../index.html">&larr; Back to Gallery</a> / <strong>Landing Page</strong> / JavaScript Interop
+    </div>
+
+    <h1>Enhance Existing Code</h1>
+
+    <div class="description">
+      <strong>Example from hyperscript.org landing page</strong><br>
+      Hyperscript works side by side with existing JavaScript. You choose what and when to enhance.
+      Use locality of behavior, external behaviors, or write web workers with ease.
+    </div>
+
+    <div class="demo">
+      <h3>Demo 1: Inline JavaScript</h3>
+
+      <button _="on click js alert('Hello from JavaScript!') end">
+        JS Alert
+      </button>
+
+      <button _="on click
+                   js
+                     const now = new Date();
+                     return now.toLocaleDateString() + ' ' + now.toLocaleTimeString();
+                   end
+                   put it into #js-result">
+        Get Date/Time via JS
+      </button>
+
+      <div id="js-result" class="result-box">Click a button to run JavaScript...</div>
+    </div>
+
+    <div class="demo">
+      <h3>Demo 2: JavaScript with Parameters</h3>
+
+      <input type="text" id="haystack" placeholder="Enter text to search..." value="Find the needle in this haystack">
+
+      <button _="on click
+                   set text to #haystack.value
+                   js(text)
+                     return /needle/gi.exec(text);
+                   end
+                   if it is not null
+                     put 'Found: ' + it[0] + ' at index ' + it.index into #regex-result
+                   else
+                     put 'No match found' into #regex-result
+                   end">
+        Search for "needle"
+      </button>
+
+      <div id="regex-result" class="result-box">Enter text and click to search...</div>
+    </div>
+
+    <div class="demo">
+      <h3>Demo 3: Access Browser APIs</h3>
+
+      <button _="on click
+                   js
+                     return {
+                       userAgent: navigator.userAgent.substring(0, 50) + '...',
+                       language: navigator.language,
+                       online: navigator.onLine,
+                       cookiesEnabled: navigator.cookieEnabled
+                     }
+                   end
+                   put 'Browser Info:\n' + JSON.stringify(it, null, 2) into #browser-result">
+        Get Browser Info
+      </button>
+
+      <div id="browser-result" class="result-box" style="white-space: pre;">Click to get browser information...</div>
+    </div>
+
+    <h2>The Exact Code</h2>
+    <div class="code">&lt;div _="init js alert('Hello from JavaScript!') end"&gt;&lt;/div&gt;
+
+&lt;div _="init js(haystack) return /needle/gi.exec(haystack) end"&gt;
+
+&lt;div _="install Draggable(dragHandle: .titlebar)"&gt;</div>
+
+    <h2>Extended Version</h2>
+    <div class="code">&lt;!-- Simple inline JS --&gt;
+&lt;button _="on click js alert('Hello!') end"&gt;
+  Alert
+&lt;/button&gt;
+
+&lt;!-- JS with return value --&gt;
+&lt;button _="on click
+             js return new Date().toISOString() end
+             put it into #result"&gt;
+  Get ISO Date
+&lt;/button&gt;
+
+&lt;!-- JS with parameters --&gt;
+&lt;button _="on click
+             set text to #input.value
+             js(text) return text.toUpperCase() end
+             put it into #result"&gt;
+  Uppercase
+&lt;/button&gt;</div>
+
+    <h2>Features Demonstrated</h2>
+    <ul>
+      <li><code>js ... end</code> - Inline JavaScript blocks</li>
+      <li><code>js(param) ... end</code> - JavaScript with parameters from hyperscript</li>
+      <li><code>return</code> - Return values from JS to hyperscript</li>
+      <li><code>it</code> - Implicit result from previous expression</li>
+      <li>Full access to browser APIs (navigator, document, etc.)</li>
+    </ul>
+  </div>
+
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../debug-panel.js"></script>
+</body>
+</html>

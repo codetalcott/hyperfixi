@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landing Page Example: Tell Command & Positional Operators</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    h1 { color: #333; margin-bottom: 10px; }
+
+    .breadcrumb {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .breadcrumb a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .description {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .demo {
+      background: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 40px;
+      margin: 30px 0;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px;
+      transition: transform 0.1s;
+      background: #4caf50;
+      color: white;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    .article {
+      background: #fafafa;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 1px solid #ddd;
+    }
+
+    .article p {
+      padding: 10px;
+      margin: 5px 0;
+      background: #fff;
+      border-radius: 4px;
+    }
+
+    .article p.highlight {
+      background: #fff9c4;
+      border-left: 4px solid #ffc107;
+    }
+
+    details {
+      background: #e8f5e9;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+
+    details summary {
+      cursor: pointer;
+      font-weight: bold;
+      color: #2e7d32;
+    }
+
+    details[open] summary {
+      margin-bottom: 10px;
+    }
+
+    .code {
+      background: #282c34;
+      color: #abb2bf;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      margin: 20px 0;
+      line-height: 1.6;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="../index.html">&larr; Back to Gallery</a> / <strong>Landing Page</strong> / Tell Command
+    </div>
+
+    <h1>Remember HyperCard?</h1>
+
+    <div class="description">
+      <strong>Example from hyperscript.org landing page</strong><br>
+      An xTalk syntax inspired by HyperTalk and AppleScript, natively inside your browser.
+      CSS selector literals and positional operators make it a breeze to access DOM elements.
+    </div>
+
+    <div class="demo">
+      <h3>Demo 1: Tell Paragraphs to Highlight</h3>
+
+      <div class="article" id="article1"
+           _="on click tell <p/> in me add .highlight">
+        <p>Click anywhere in this article box!</p>
+        <p>All paragraphs inside will be highlighted.</p>
+        <p>The "tell" command targets each paragraph.</p>
+        <p>CSS selector literals like &lt;p/&gt; make it easy.</p>
+      </div>
+
+      <button _="on click tell <p/> in #article1 remove .highlight">
+        Clear Highlights
+      </button>
+    </div>
+
+    <div class="demo">
+      <h3>Demo 2: Close All Details Elements</h3>
+
+      <div class="article" id="article2">
+        <details open>
+          <summary>Section 1: Introduction</summary>
+          <p>This is the introduction content. Click the button below to close all sections.</p>
+        </details>
+        <details open>
+          <summary>Section 2: Main Content</summary>
+          <p>This is the main content area. All details elements can be controlled at once.</p>
+        </details>
+        <details open>
+          <summary>Section 3: Conclusion</summary>
+          <p>This is the conclusion. The "tell" command sets properties on multiple elements.</p>
+        </details>
+      </div>
+
+      <button _="on click tell <details /> in #article2 set you.open to false">
+        Close All Sections
+      </button>
+
+      <button _="on click tell <details /> in #article2 set you.open to true">
+        Open All Sections
+      </button>
+    </div>
+
+    <div class="demo">
+      <h3>Demo 3: Positional Operators</h3>
+
+      <ul id="items">
+        <li>First item</li>
+        <li>Second item</li>
+        <li>Third item</li>
+        <li>Fourth item</li>
+        <li>Last item</li>
+      </ul>
+
+      <button _="on click add .highlight to first <li/> in #items">
+        Highlight First
+      </button>
+
+      <button _="on click add .highlight to last <li/> in #items">
+        Highlight Last
+      </button>
+
+      <button _="on click tell <li/> in #items remove .highlight">
+        Clear All
+      </button>
+    </div>
+
+    <h2>The Exact Code</h2>
+    <div class="code">&lt;div _="on click tell &lt;p/&gt; in me add .highlight"&gt;
+
+&lt;div _="tell &lt;details /&gt; in .article set you.open to false"&gt;</div>
+
+    <h2>Extended Version</h2>
+    <div class="code">&lt;!-- Highlight all paragraphs --&gt;
+&lt;div class="article"
+     _="on click tell &lt;p/&gt; in me add .highlight"&gt;
+  &lt;p&gt;Paragraph 1&lt;/p&gt;
+  &lt;p&gt;Paragraph 2&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;!-- Close all details elements --&gt;
+&lt;button _="on click
+           tell &lt;details /&gt; in .article
+           set you.open to false"&gt;
+  Close All
+&lt;/button&gt;
+
+&lt;!-- Positional operators --&gt;
+&lt;button _="on click add .highlight to first &lt;li/&gt; in #list"&gt;
+  Highlight First
+&lt;/button&gt;</div>
+
+    <h2>Features Demonstrated</h2>
+    <ul>
+      <li><code>tell [target] [command]</code> - Execute commands on multiple elements</li>
+      <li><code>&lt;p/&gt;</code> - CSS selector literal syntax</li>
+      <li><code>in [element]</code> - Scope selectors to container</li>
+      <li><code>you</code> - Reference to current element in tell block</li>
+      <li><code>first/last [selector]</code> - Positional operators</li>
+      <li><code>set [property] to [value]</code> - Property assignment</li>
+    </ul>
+  </div>
+
+  <style>
+    #items li {
+      padding: 10px;
+      margin: 5px 0;
+      background: #f5f5f5;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    #items li.highlight {
+      background: #fff9c4;
+      border-left: 4px solid #ffc107;
+    }
+  </style>
+
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../debug-panel.js"></script>
+</body>
+</html>

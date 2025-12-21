@@ -145,6 +145,7 @@ export const COMMANDS = new Set([
 export const COMPOUND_COMMANDS = new Set([
   'put',
   'trigger',
+  'send',       // send <event> to <target> (alias for trigger)
   'remove',
   'take',
   'toggle',
@@ -155,6 +156,7 @@ export const COMPOUND_COMMANDS = new Set([
   'halt',
   'measure',
   'js',
+  'tell',       // tell <target> <command> [<command> ...]
   // htmx-like commands with complex argument patterns
   'swap',       // swap [strategy] of <target> with <content> [using view transition]
   'morph',      // morph [over] <target> with <content>

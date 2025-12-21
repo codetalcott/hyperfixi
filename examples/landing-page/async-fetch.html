@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Landing Page Example: Async & Fetch</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    h1 { color: #333; margin-bottom: 10px; }
+
+    .breadcrumb {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .breadcrumb a {
+      color: #667eea;
+      text-decoration: none;
+    }
+
+    .description {
+      background: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .demo {
+      background: #fff;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 40px;
+      margin: 30px 0;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 10px;
+      transition: transform 0.1s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    .wait-btn {
+      background: #ff9800;
+      color: white;
+    }
+
+    .fetch-btn {
+      background: #2196f3;
+      color: white;
+    }
+
+    .target {
+      background: #fff3e0;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 2px dashed #ff9800;
+      min-height: 60px;
+    }
+
+    .fetch-result {
+      background: #e3f2fd;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border: 2px dashed #2196f3;
+      min-height: 100px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    .code {
+      background: #282c34;
+      color: #abb2bf;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      margin: 20px 0;
+      line-height: 1.6;
+      white-space: pre;
+    }
+
+    .countdown {
+      font-size: 48px;
+      font-weight: bold;
+      color: #ff9800;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="../index.html">&larr; Back to Gallery</a> / <strong>Landing Page</strong> / Async & Fetch
+    </div>
+
+    <h1>Be Async With No Extra Code</h1>
+
+    <div class="description">
+      <strong>Example from hyperscript.org landing page</strong><br>
+      Highly interactive user experiences without promises, async/await or callback hell.
+      Hyperscript transparently handles asynchronous behavior for you.
+    </div>
+
+    <div class="demo">
+      <h3>Demo 1: Wait and Send Event</h3>
+
+      <button class="wait-btn"
+              _="on click
+                   put 'Waiting 3 seconds...' into .target
+                   wait 3s
+                   send hello to .target">
+        Click to wait 3s then send event
+      </button>
+
+      <div class="target"
+           _="on hello put 'Hello event received! ' + new Date().toLocaleTimeString() into me">
+        Click the button to start the countdown...
+      </div>
+    </div>
+
+    <div class="demo">
+      <h3>Demo 2: Fetch JSON Data</h3>
+
+      <button class="fetch-btn"
+              _="on click
+                   put 'Loading...' into #fetch-result
+                   fetch https://jsonplaceholder.typicode.com/todos/1 as json
+                   put JSON.stringify(it, null, 2) into #fetch-result">
+        Fetch TODO from API
+      </button>
+
+      <button class="fetch-btn"
+              _="on click
+                   put 'Loading user...' into #fetch-result
+                   fetch https://jsonplaceholder.typicode.com/users/1 as json
+                   put 'Name: ' + it.name + '\nEmail: ' + it.email + '\nCompany: ' + it.company.name into #fetch-result">
+        Fetch User from API
+      </button>
+
+      <div id="fetch-result" class="fetch-result">Click a button to fetch data...</div>
+    </div>
+
+    <h2>The Exact Code</h2>
+    <div class="code">&lt;div _="on click wait 5s send hello to .target"&gt;
+
+&lt;div _="init fetch https://stuff as json then put result into me"&gt;
+  Using fetch() API...
+&lt;/div&gt;</div>
+
+    <h2>Extended Version</h2>
+    <div class="code">&lt;!-- Wait then send event --&gt;
+&lt;button _="on click
+             put 'Waiting...' into .target
+             wait 3s
+             send hello to .target"&gt;
+  Wait and Send
+&lt;/button&gt;
+
+&lt;!-- Fetch and display JSON --&gt;
+&lt;button _="on click
+             put 'Loading...' into #result
+             fetch https://api.example.com/data as json
+             put JSON.stringify(it, null, 2) into #result"&gt;
+  Fetch Data
+&lt;/button&gt;</div>
+
+    <h2>Features Demonstrated</h2>
+    <ul>
+      <li><code>wait [duration]</code> - Pause execution for specified time</li>
+      <li><code>fetch [url] as json</code> - Fetch and parse JSON data</li>
+      <li><code>it</code> - Implicit result variable from previous expression</li>
+      <li><code>send [event] to [target]</code> - Dispatch custom events</li>
+      <li>No promises, callbacks, or async/await needed!</li>
+    </ul>
+  </div>
+
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../debug-panel.js"></script>
+</body>
+</html>
