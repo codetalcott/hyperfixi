@@ -225,9 +225,11 @@ export class RuntimeBase {
     const commandName = name.toLowerCase();
 
     debug.command(`RUNTIME BASE: Processing command '${commandName}'`);
+    console.log('[RUNTIME DEBUG] executeCommand called with:', commandName);
 
     // 1. check registry
     if (this.registry.has(commandName)) {
+      console.log('[RUNTIME DEBUG] Found command:', commandName);
         const adapter = await this.registry.getAdapter(commandName);
         
         if (!adapter) {
@@ -802,9 +804,17 @@ export class RuntimeBase {
                         if ('result' in valObj && 'wasAsync' in valObj) {
                             val = valObj.result;
                         }
-                        // JsCommand returns { result, executed, codeLength, parameters }
+                        // JsCommand returns { result, executed, codeLength, parameters, preserveArrayResult }
                         else if ('result' in valObj && 'executed' in valObj) {
                             val = valObj.result;
+                            // JsCommand sets preserveArrayResult to skip array unwrapping
+                            // Only update context.it if there's an actual value (avoid overwriting with undefined)
+                            if (valObj.preserveArrayResult) {
+                                if (val !== undefined) {
+                                    Object.assign(eventContext, { it: val, result: val });
+                                }
+                                continue; // Skip the normal array unwrapping logic
+                            }
                         }
                         // RepeatCommand/IfCommand returns { type, lastResult } or { conditionResult, executedBranch }
                         else if ('lastResult' in valObj && 'type' in valObj) {
@@ -828,6 +838,11 @@ export class RuntimeBase {
                         // SetCommand returns { target, value, targetType }
                         else if ('value' in valObj && 'target' in valObj && 'targetType' in valObj) {
                             val = valObj.value;
+                        }
+                        // FetchCommand returns { status, statusText, headers, data, url, duration }
+                        // In _hyperscript, 'it' should be the actual data (not the wrapper)
+                        else if ('data' in valObj && 'status' in valObj && 'headers' in valObj) {
+                            val = valObj.data;
                         }
                     }
                     if (Array.isArray(val) && val.length > 0) val = val[0];
@@ -988,7 +1003,7 @@ export class RuntimeBase {
     // Handle hyperscript queryReference syntax <tag/>
     let cleanSelector = selector;
     if (cleanSelector.startsWith('<') && cleanSelector.endsWith('/>')) {
-      cleanSelector = cleanSelector.slice(1, -2); // Remove '<' and '/>'
+      cleanSelector = cleanSelector.slice(1, -2).trim(); // Remove '<' and '/>' and whitespace
     }
     return Array.from(doc.querySelectorAll(cleanSelector));
   }

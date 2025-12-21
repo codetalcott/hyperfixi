@@ -135,11 +135,10 @@ export class Parser {
       });
     }
 
-    // Store original input for semantic analysis (passed from parse function)
+    // Store original input for commands that need raw code (js...end, etc.)
+    // Also used for semantic analysis if adapter is present
     // Fallback to reconstructing from tokens if not provided
-    if (this.semanticAdapter) {
-      this.originalInput = originalInput || tokens.map(t => t.value).join(' ');
-    }
+    this.originalInput = originalInput || tokens.map((t) => t.value).join(' ');
   }
 
   /**
@@ -1158,7 +1157,9 @@ export class Parser {
         return this.createErrorNode();
       }
 
-      const value = raw.slice(1, -1); // Remove quotes
+      const rawValue = raw.slice(1, -1); // Remove quotes
+      // Process escape sequences (like \n, \t, etc.)
+      const value = this.processEscapeSequences(rawValue);
       return this.createLiteral(value, raw);
     }
 
@@ -1212,7 +1213,7 @@ export class Parser {
     if (this.matchQueryReference()) {
       const queryValue = this.previous().value;
       // Extract the selector from <.../>
-      const selector = queryValue.slice(1, -2); // Remove < and />
+      const selector = queryValue.slice(1, -2).trim(); // Remove < and /> and whitespace
       return this.createSelector(selector);
     }
 
@@ -1944,8 +1945,14 @@ export class Parser {
       if (this.checkIsCommand()) {
         // Check if this is actually a pseudo-command (command token used as function call)
         const nextIsOpenParen = this.tokens[this.current + 1]?.value === '(';
+        const commandName = this.peek().value.toLowerCase();
 
-        if (nextIsOpenParen) {
+        // Special handling for commands that use (param) syntax but aren't pseudo-commands
+        // js(param) ... end - parameter names, not function call
+        // tell <target> - not a function call
+        const isSpecialBodyCommand = commandName === 'js' || commandName === 'tell';
+
+        if (nextIsOpenParen && !isSpecialBodyCommand) {
           // This might be a pseudo-command like add(5, 10) on calc
           // Parse as expression to get the function call
           let expr;
@@ -2841,6 +2848,9 @@ export class Parser {
       'remove',
       'exit',
       'closest',
+      // Body-based commands that require traditional parsing:
+      'js',   // js ... end with body content
+      'tell', // tell <target> <commands> with body
       // ✅ 'call'/'get' now supported via ExpressionValue fallback to expression-parser
       // This enables semantic parsing for method calls like #dialog.showModal()
     ];
@@ -3258,6 +3268,38 @@ export class Parser {
 
   private createErrorNode(): IdentifierNode {
     return astHelpers.createErrorNode(this.getPosition());
+  }
+
+  /**
+   * Process escape sequences in a string (like \n, \t, etc.)
+   */
+  private processEscapeSequences(str: string): string {
+    return str.replace(/\\(.)/g, (_match, char) => {
+      switch (char) {
+        case 'n':
+          return '\n';
+        case 't':
+          return '\t';
+        case 'r':
+          return '\r';
+        case 'b':
+          return '\b';
+        case 'f':
+          return '\f';
+        case 'v':
+          return '\v';
+        case '0':
+          return '\0';
+        case '\\':
+          return '\\';
+        case '"':
+          return '"';
+        case "'":
+          return "'";
+        default:
+          return char; // Return the character as-is for unknown escapes
+      }
+    });
   }
 
   /**
@@ -3781,6 +3823,15 @@ export class Parser {
       isKeyword: this.isKeyword.bind(this),
       getMultiWordPattern: this.getMultiWordPattern.bind(this),
       resolveKeyword: this.resolveKeyword.bind(this),
+
+      // Raw Input Access (for preserving literal code like JS in js...end blocks)
+      getInputSlice: (start: number, end?: number): string => {
+        if (!this.originalInput) return '';
+        if (start < 0 || start >= this.originalInput.length) return '';
+        return end !== undefined
+          ? this.originalInput.slice(start, end)
+          : this.originalInput.slice(start);
+      },
     } as import('./parser-types').ParserContext;
 
     // Add 'current' as getter/setter that syncs with parser's position

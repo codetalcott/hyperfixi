@@ -102,7 +102,10 @@ export class FetchCommand implements DecoratedCommand {
       if (context.me) this.dispatchEvent(context.me, 'fetch:afterRequest', { result: data });
 
       const result = { status: response.status, statusText: response.statusText, headers: response.headers, data, url: response.url, duration: Date.now() - startTime };
-      Object.assign(context, { it: result });
+
+      // Set 'it' to the actual data (not the wrapper) for _hyperscript compatibility
+      // This allows `fetch url as json` followed by `it.property` to work correctly
+      Object.assign(context, { it: data });
 
       return result;
     } catch (error) {

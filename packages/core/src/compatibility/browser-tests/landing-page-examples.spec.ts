@@ -487,6 +487,33 @@ test.describe('Landing Page Examples @comprehensive', () => {
       const text = await fetchResult.textContent();
       expect(text).toMatch(/userId|title|completed/);
     });
+
+    test('fetch JSON with property access works', async ({ page }) => {
+      await page.goto(`${BASE_URL}/examples/landing-page/async-fetch.html`, {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000
+      });
+      await page.waitForTimeout(500);
+
+      const fetchResult = page.locator('#fetch-result');
+
+      // Click the second fetch button (Fetch User from API)
+      await page.click('button.fetch-btn:nth-of-type(2)');
+
+      // Wait for fetch to complete
+      await page.waitForTimeout(2000);
+
+      // Should have user data with property access (it.name, it.email, it.company.name)
+      const text = await fetchResult.textContent();
+      console.log('=== FETCH USER RESULT ===');
+      console.log(text);
+      console.log('=========================');
+
+      // The API returns: { name: "Leanne Graham", email: "Sincere@april.biz", company: { name: "Romaguera-Crona" } }
+      expect(text).toContain('Name:');
+      expect(text).not.toContain('undefined');
+      expect(text).toMatch(/Leanne|Graham/i);  // User's actual name from the API
+    });
   });
 
   test.describe('JavaScript Interop Example', () => {
