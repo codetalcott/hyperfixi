@@ -492,12 +492,10 @@ const goMapper: CommandMapper = {
 const transitionMapper: CommandMapper = {
   action: 'transition',
   toAST(node, _builder) {
-    const warnings: string[] = [];
-
-    const patient = convertRoleValue(node, 'patient', warnings);
-    const goal = convertRoleValue(node, 'goal', warnings);
-    const duration = convertRoleValue(node, 'duration', warnings);
-    const destination = convertRoleValue(node, 'destination', warnings);
+    const patient = convertRoleValue(node, 'patient');
+    const goal = convertRoleValue(node, 'goal');
+    const duration = convertRoleValue(node, 'duration');
+    const destination = convertRoleValue(node, 'destination');
 
     const args: ExpressionNode[] = patient ? [patient] : [];
     const modifiers: Record<string, ExpressionNode> = {};
@@ -506,10 +504,7 @@ const transitionMapper: CommandMapper = {
     if (duration) modifiers['over'] = duration;
     if (destination) modifiers['on'] = destination;
 
-    return {
-      ast: createCommandNode('transition', args, modifiers),
-      warnings,
-    };
+    return createCommandNode('transition', args, modifiers);
   },
 };
 

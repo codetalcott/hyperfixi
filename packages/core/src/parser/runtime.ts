@@ -336,11 +336,36 @@ async function evaluateMemberExpression(node: any, context: ExecutionContext): P
  */
 async function evaluateCallExpression(node: any, context: ExecutionContext): Promise<any> {
   const callee = await evaluateAST(node.callee, context);
-  const args = await Promise.all(node.arguments.map((arg: ASTNode) => evaluateAST(arg, context)));
 
-  // Handle special hyperscript functions
+  // Handle special hyperscript functions that need raw identifiers as selectors
   if (node.callee.type === 'identifier') {
     const funcName = node.callee.name;
+
+    // For closest/previous/next, identifier args should be treated as tag selectors
+    if (['closest', 'previous', 'next'].includes(funcName)) {
+      const args = await Promise.all(node.arguments.map((arg: ASTNode) => {
+        // If arg is an identifier, use the name as a tag selector
+        if (arg.type === 'identifier' && (arg as any).name) {
+          return (arg as any).name;
+        }
+        // If arg is a selector, use the value
+        if (arg.type === 'selector' && (arg as any).value) {
+          return (arg as any).value;
+        }
+        return evaluateAST(arg, context);
+      }));
+
+      switch (funcName) {
+        case 'closest':
+          return referencesExpressions.closest.evaluate(context, ...args);
+        case 'previous':
+          return referencesExpressions.previous.evaluate(context, ...args);
+        case 'next':
+          return referencesExpressions.next.evaluate(context, ...args);
+      }
+    }
+
+    const args = await Promise.all(node.arguments.map((arg: ASTNode) => evaluateAST(arg, context)));
 
     switch (funcName) {
       case 'closest':

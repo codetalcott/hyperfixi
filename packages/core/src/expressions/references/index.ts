@@ -179,7 +179,18 @@ export const closestExpression: ExpressionImplementation = {
   evaluatesTo: 'Element',
 
   async evaluate(context: ExecutionContext, ...args: unknown[]): Promise<unknown> {
-    const selector = args[0];
+    let selector = args[0];
+
+    // Handle identifier nodes (e.g., "closest nav" where nav is an identifier)
+    if (selector && typeof selector === 'object' && 'type' in (selector as any)) {
+      const node = selector as { type: string; name?: string; value?: string };
+      if (node.type === 'identifier' && node.name) {
+        selector = node.name;
+      } else if (node.type === 'literal' && typeof node.value === 'string') {
+        selector = node.value;
+      }
+    }
+
     if (typeof selector !== 'string') {
       throw new Error('closest requires a string selector');
     }
@@ -192,7 +203,17 @@ export const closestExpression: ExpressionImplementation = {
   },
 
   validate(args: unknown[]): string | null {
-    return validateSingleStringArg(args, 'closest', 'selector');
+    // Allow both strings and identifier nodes
+    if (args.length !== 1) {
+      return 'closest requires exactly 1 argument (selector)';
+    }
+    const arg = args[0];
+    if (typeof arg === 'string') return null;
+    if (arg && typeof arg === 'object' && 'type' in (arg as any)) {
+      const node = arg as { type: string };
+      if (node.type === 'identifier' || node.type === 'literal') return null;
+    }
+    return 'closest selector must be a string or identifier';
   },
 };
 

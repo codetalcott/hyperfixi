@@ -45,6 +45,7 @@ import { mathematicalExpressions } from '../expressions/mathematical/index';
 import { propertyExpressions } from '../expressions/property/index';
 import { positionalExpressions } from '../expressions/positional/index';
 import { logicalExpressions } from '../expressions/logical/index';
+import { referencesExpressions } from '../expressions/references/index';
 
 // Import legacy conversion system for Date conversion compatibility
 import { conversionExpressions as legacyConversionExpressions } from '../expressions/conversion/index';
@@ -1987,6 +1988,43 @@ async function evaluateBracketExpression(node: any, context: ExecutionContext): 
  * Evaluate call expressions (function calls)
  */
 async function evaluateCallExpression(node: any, context: ExecutionContext): Promise<any> {
+  // Handle special hyperscript navigation functions (closest, previous, next)
+  // These need identifier args to be treated as tag selectors, not variables
+  if (node.callee?.type === 'identifier') {
+    const funcName = node.callee.name;
+
+    if (['closest', 'previous', 'next'].includes(funcName)) {
+      const args = await Promise.all(node.arguments.map(async (arg: ASTNode) => {
+        // If arg is an identifier, use the name as a tag selector
+        if (arg.type === 'identifier' && (arg as any).name) {
+          return (arg as any).name;
+        }
+        // If arg is a selector, use the value
+        if (arg.type === 'selector' && (arg as any).value) {
+          return (arg as any).value;
+        }
+        // If arg is a queryReference like <form/>, extract the selector
+        if (arg.type === 'queryReference' && (arg as any).selector) {
+          let selector = (arg as any).selector;
+          if (selector.startsWith('<') && selector.endsWith('/>')) {
+            selector = selector.slice(1, -2).trim();
+          }
+          return selector;
+        }
+        return evaluateASTNode(arg, context);
+      }));
+
+      switch (funcName) {
+        case 'closest':
+          return referencesExpressions.closest.evaluate(context, ...args);
+        case 'previous':
+          return referencesExpressions.previous.evaluate(context, ...args);
+        case 'next':
+          return referencesExpressions.next.evaluate(context, ...args);
+      }
+    }
+  }
+
   // Evaluate the function (callee)
   const func = await evaluateASTNode(node.callee, context);
 

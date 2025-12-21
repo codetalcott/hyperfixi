@@ -1189,6 +1189,10 @@ export class BaseExpressionEvaluator {
           if (needsSelectorString && arg && arg.type === 'selector' && typeof arg.value === 'string') {
             return arg.value;
           }
+          // Handle identifier args for closest/previous/next (e.g., "closest nav" where nav is an identifier)
+          if (needsSelectorString && arg && arg.type === 'identifier' && typeof arg.name === 'string') {
+            return arg.name;
+          }
           if (needsCollection && arg && arg.type === 'selector' && typeof arg.value === 'string') {
             return this.evaluateSelector(arg, context);
           }

@@ -305,9 +305,9 @@ describe('Reference Expressions', () => {
 
       it('should validate selector argument', () => {
         expect(referenceExpressions.closest.validate!(['#test'])).toBeNull();
-        expect(referenceExpressions.closest.validate!([])).toContain('exactly one argument');
+        expect(referenceExpressions.closest.validate!([])).toContain('exactly 1 argument');
         expect(referenceExpressions.closest.validate!(['#test', 'extra'])).toContain(
-          'exactly one argument'
+          'exactly 1 argument'
         );
         expect(referenceExpressions.closest.validate!([123])).toContain('must be a string');
       });

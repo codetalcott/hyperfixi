@@ -374,8 +374,8 @@ describe('buildAST', () => {
 
     const result = buildAST(node);
 
-    expect(result.type).toBe('command');
-    expect((result as any).name).toBe('increment');
+    expect(result.ast.type).toBe('command');
+    expect((result.ast as any).name).toBe('increment');
   });
 });
 
