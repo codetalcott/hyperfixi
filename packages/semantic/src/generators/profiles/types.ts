@@ -85,6 +85,21 @@ export interface LanguageProfile {
   readonly references?: Record<string, string>;
   /** Possessive expression configuration */
   readonly possessive?: PossessiveConfig;
+  /** Event handler pattern configuration (for simple SVO languages) */
+  readonly eventHandler?: EventHandlerConfig;
+}
+
+/**
+ * Configuration for event handler pattern generation.
+ * Used by simple SVO languages that don't need hand-crafted patterns.
+ */
+export interface EventHandlerConfig {
+  /** Primary event keyword (e.g., 'on', 'bei', 'sur') */
+  readonly keyword: KeywordTranslation;
+  /** Source filter marker (e.g., 'from', 'von', 'de') */
+  readonly sourceMarker: RoleMarker;
+  /** Conditional keyword (e.g., 'when', 'wenn', 'quand') */
+  readonly conditionalKeyword?: KeywordTranslation;
 }
 
 /**

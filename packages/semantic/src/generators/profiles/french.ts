@@ -102,4 +102,9 @@ export const frenchProfile: LanguageProfile = {
     event: { primary: 'événement', normalized: 'event' },
     from: { primary: 'de', alternatives: ['depuis'], normalized: 'from' },
   },
+  eventHandler: {
+    keyword: { primary: 'sur', alternatives: ['lors'] },
+    sourceMarker: { primary: 'de', alternatives: ['depuis'], position: 'before' },
+    conditionalKeyword: { primary: 'quand', alternatives: ['lorsque'] },
+  },
 };

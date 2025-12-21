@@ -102,4 +102,9 @@ export const germanProfile: LanguageProfile = {
     event: { primary: 'Ereignis', alternatives: ['Event'], normalized: 'event' },
     from: { primary: 'von', alternatives: ['aus'], normalized: 'from' },
   },
+  eventHandler: {
+    keyword: { primary: 'bei', alternatives: ['auf'] },
+    sourceMarker: { primary: 'von', alternatives: ['aus'], position: 'before' },
+    conditionalKeyword: { primary: 'wenn', alternatives: ['falls'] },
+  },
 };

@@ -121,9 +121,9 @@ export {
 } from './patterns';
 
 // Direct exports for backwards compatibility (pulls in all patterns)
-export { togglePatterns } from './patterns/toggle';
-export { putPatterns } from './patterns/put';
-export { eventHandlerPatterns } from './patterns/event-handler';
+export { togglePatterns } from './patterns/toggle/index';
+export { putPatterns } from './patterns/put/index';
+export { eventHandlerPatterns } from './patterns/event-handler/index';
 
 // =============================================================================
 // Tokenizers

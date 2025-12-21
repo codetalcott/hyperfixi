@@ -102,4 +102,9 @@ export const indonesianProfile: LanguageProfile = {
     event: { primary: 'peristiwa', alternatives: ['event'], normalized: 'event' },
     from: { primary: 'dari', normalized: 'from' },
   },
+  eventHandler: {
+    keyword: { primary: 'pada', alternatives: ['ketika', 'saat'] },
+    sourceMarker: { primary: 'dari', position: 'before' },
+    conditionalKeyword: { primary: 'ketika', alternatives: ['saat', 'waktu'] },
+  },
 };

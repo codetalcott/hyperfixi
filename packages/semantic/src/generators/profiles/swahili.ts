@@ -102,4 +102,9 @@ export const swahiliProfile: LanguageProfile = {
     event: { primary: 'tukio', normalized: 'event' },
     from: { primary: 'kutoka', normalized: 'from' },
   },
+  eventHandler: {
+    keyword: { primary: 'wakati', alternatives: ['kwenye', 'kwa'] },
+    sourceMarker: { primary: 'kutoka', position: 'before' },
+    conditionalKeyword: { primary: 'unapo', alternatives: ['anapo', 'tunapo', 'mnapo', 'wanapo'] },
+  },
 };

@@ -12,9 +12,9 @@
 import type { LanguagePattern, ActionType } from '../types';
 // Import from subdirectories for tree-shaking
 // When only English is needed, only toggle/en.ts, put/en.ts, event-handler/en.ts are included
-import { getTogglePatternsForLanguage } from './toggle';
-import { getPutPatternsForLanguage } from './put';
-import { getEventHandlerPatternsForLanguage } from './event-handler';
+import { getTogglePatternsForLanguage } from './toggle/index';
+import { getPutPatternsForLanguage } from './put/index';
+import { getEventHandlerPatternsForLanguage } from './event-handler/index';
 import { eventNameTranslations, normalizeEventName } from './event-handler/shared';
 
 // Import schemas directly from command-schemas (not from barrel to avoid pulling all profiles)
