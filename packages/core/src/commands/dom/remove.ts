@@ -19,6 +19,7 @@ import { isHTMLElement } from '../../utils/element-check';
 import { parseAttributeName } from '../helpers/attribute-manipulation';
 import { removeElement } from '../helpers/dom-mutation';
 import { batchRemoveClasses, batchRemoveAttribute, batchRemoveStyles } from '../helpers/batch-dom-operations';
+import { resolveDynamicClasses } from '../helpers/class-manipulation';
 import { command, meta, createFactory } from '../decorators';
 import { DOMModificationBase } from './dom-modification-base';
 
@@ -117,11 +118,16 @@ export class RemoveCommand extends DOMModificationBase {
     return { type: 'classes', classes, targets };
   }
 
-  execute(input: RemoveCommandInput, _context: TypedExecutionContext): void {
+  execute(input: RemoveCommandInput, context: TypedExecutionContext): void {
     switch (input.type) {
-      case 'classes':
-        batchRemoveClasses(input.targets, input.classes);
+      case 'classes': {
+        // Resolve any dynamic class expressions (e.g., {cls} → actual class name)
+        const resolvedClasses = resolveDynamicClasses(input.classes, context);
+        if (resolvedClasses.length > 0) {
+          batchRemoveClasses(input.targets, resolvedClasses);
+        }
         break;
+      }
       case 'attribute':
         batchRemoveAttribute(input.targets, input.name);
         break;

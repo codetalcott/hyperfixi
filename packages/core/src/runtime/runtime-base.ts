@@ -779,7 +779,10 @@ export class RuntimeBase {
             it: domEvent,
             event: domEvent,
         };
-        eventContext.locals.set('target', domEvent.target);
+        // Only set 'target' if not already defined by the behavior's init block
+        if (!eventLocals.has('target')) {
+            eventContext.locals.set('target', domEvent.target);
+        }
 
         // Arg Destructuring (e.g. on pointerdown(x, y))
         if (args && args.length > 0) {

@@ -335,6 +335,9 @@ if (typeof document !== 'undefined') {
     // DOM is already ready
     console.log('[HyperFixi] DOM already ready, calling init() immediately');
     (window as any).__hyperfixi_debug.push('DOM already ready, calling init()');
-    void defaultAttributeProcessor.init();
+    defaultAttributeProcessor.init().then(() => {
+      console.log('[HyperFixi] init() completed');
+      (window as any).__hyperfixi_debug.push('init() completed');
+    });
   }
 }

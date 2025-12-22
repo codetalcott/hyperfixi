@@ -59,6 +59,31 @@
       background: #e0e0e0;
     }
 
+    /* Removable with close button */
+    .notification {
+      position: relative;
+      padding: 1rem;
+      padding-right: 2.5rem;
+      margin: 0.5rem 0;
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      border-radius: 4px;
+      cursor: default;
+    }
+    .notification .close-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      opacity: 0.5;
+    }
+    .notification .close-btn:hover {
+      opacity: 1;
+    }
+
     /* Toggleable */
     .toggle-button {
       padding: 0.75rem 1.5rem;
@@ -70,6 +95,10 @@
     }
     .toggle-button.active {
       background: #4a90d9;
+    }
+    .toggle-button.highlighted {
+      background: #e74c3c;
+      box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
     }
 
     .accordion-item {
@@ -160,8 +189,19 @@
     <div class="removable-item" _="install Removable(confirm: true)">
       Click to remove (with confirmation)
     </div>
-    <div class="removable-item" _="install Removable(effect: fade)">
+    <div class="removable-item" _="install Removable(effect: 'fade')">
       Click to fade out and remove
+    </div>
+
+    <h3 style="margin-top: 1.5rem;">With Trigger Button</h3>
+    <p>Only the close button removes the notification (not clicking the content).</p>
+    <div class="notification" _="install Removable(trigger: .close-btn, effect: 'fade')">
+      <button class="close-btn">&times;</button>
+      <strong>Success!</strong> Your changes have been saved. Click the X to dismiss.
+    </div>
+    <div class="notification" _="install Removable(trigger: .close-btn, confirm: true)">
+      <button class="close-btn">&times;</button>
+      <strong>Important!</strong> This requires confirmation to dismiss.
     </div>
   </div>
 
@@ -170,7 +210,10 @@
     <h2>Toggleable</h2>
     <p>Click to toggle states.</p>
     <button class="toggle-button" _="install Toggleable">
-      Toggle Active
+      Toggle Active (default .active class)
+    </button>
+    <button class="toggle-button" _="install Toggleable(cls: 'highlighted')" style="margin-left: 0.5rem;">
+      Toggle Highlighted (custom class)
     </button>
 
     <h3 style="margin-top: 1.5rem;">Accordion</h3>

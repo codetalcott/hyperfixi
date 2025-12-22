@@ -71,7 +71,7 @@ export class TransitionCommand implements DecoratedCommand {
 
     const firstArg = await evaluator.evaluate(raw.args[0], context);
 
-    if (isHTMLElement(firstArg) || (typeof firstArg === 'string' && /^[#.me|it|you]/.test(firstArg))) {
+    if (isHTMLElement(firstArg) || (typeof firstArg === 'string' && /^[#.]|^(?:me|it|you)$/.test(firstArg))) {
       target = firstArg as string | HTMLElement;
       property = String(await evaluator.evaluate(raw.args[1], context));
     } else {

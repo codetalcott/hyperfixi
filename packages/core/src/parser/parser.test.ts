@@ -421,16 +421,46 @@ describe('Hyperscript AST Parser', () => {
       });
     });
 
-    it('should parse event handlers with selectors', () => {
+    it('should parse event handlers with from selector', () => {
       expectAST('on click from .button hide me', {
         type: 'eventHandler',
         event: 'click',
-        // Note: selector property not yet extracted by parser (TODO: future enhancement)
+        target: '.button',
         commands: [
           {
             type: 'command',
             name: 'hide',
             args: [{ type: 'identifier', name: 'me' }],
+          },
+        ],
+      });
+    });
+
+    it('should parse event handlers with from ID selector', () => {
+      expectAST('on click from #close-button remove me', {
+        type: 'eventHandler',
+        event: 'click',
+        target: '#close-button',
+        commands: [
+          {
+            type: 'command',
+            name: 'remove',
+            args: [{ type: 'identifier', name: 'me' }],
+          },
+        ],
+      });
+    });
+
+    it('should parse event handlers with from identifier', () => {
+      expectAST('on click from myButton toggle .active', {
+        type: 'eventHandler',
+        event: 'click',
+        target: 'myButton',
+        commands: [
+          {
+            type: 'command',
+            name: 'toggle',
+            args: [{ type: 'selector' }],
           },
         ],
       });

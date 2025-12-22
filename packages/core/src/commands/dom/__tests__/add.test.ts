@@ -561,4 +561,82 @@ describe('AddCommand (Standalone V2)', () => {
       expect(context.me!.classList.contains('new-class')).toBe(true);
     });
   });
+
+  describe('dynamic classes', () => {
+    it('should resolve dynamic class from context locals', async () => {
+      // Setup: Element with no classes
+      const element = document.createElement('div');
+      const context = {
+        me: element,
+        locals: new Map<string, unknown>([['myClass', 'dynamic-active']]),
+        globals: new Map<string, unknown>(),
+      } as unknown as ExecutionContext & TypedExecutionContext;
+      const evaluator = createMockEvaluator();
+
+      // Parse input with dynamic class syntax
+      const input = await command.parseInput(
+        { args: [mockNode('.{myClass}')], modifiers: {} },
+        evaluator,
+        context
+      );
+
+      // Execute
+      await command.execute(input, context);
+
+      // Verify dynamic class was resolved and added
+      expect(element.classList.contains('dynamic-active')).toBe(true);
+    });
+
+    it('should resolve dynamic class from context globals', async () => {
+      // Setup: Element with no classes
+      const element = document.createElement('div');
+      const context = {
+        me: element,
+        locals: new Map<string, unknown>(),
+        globals: new Map<string, unknown>([['globalClass', 'global-style']]),
+      } as unknown as ExecutionContext & TypedExecutionContext;
+      const evaluator = createMockEvaluator();
+
+      // Parse input with dynamic class syntax
+      const input = await command.parseInput(
+        { args: [mockNode('.{globalClass}')], modifiers: {} },
+        evaluator,
+        context
+      );
+
+      // Execute
+      await command.execute(input, context);
+
+      // Verify dynamic class was resolved and added
+      expect(element.classList.contains('global-style')).toBe(true);
+    });
+
+    it('should not add class when dynamic variable is not found', async () => {
+      // Setup: Element with existing class
+      const element = document.createElement('div');
+      element.classList.add('existing');
+      const context = {
+        me: element,
+        locals: new Map<string, unknown>(),
+        globals: new Map<string, unknown>(),
+      } as unknown as ExecutionContext & TypedExecutionContext;
+      const evaluator = createMockEvaluator();
+
+      // Parse input with dynamic class syntax (variable not set)
+      const input = await command.parseInput(
+        { args: [mockNode('.{undefinedClass}')], modifiers: {} },
+        evaluator,
+        context
+      );
+
+      // Execute (should warn but not crash)
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      await command.execute(input, context);
+      consoleSpy.mockRestore();
+
+      // Verify only existing class remains
+      expect(element.classList.length).toBe(1);
+      expect(element.classList.contains('existing')).toBe(true);
+    });
+  });
 });

@@ -1877,11 +1877,13 @@ export class Parser {
       this.consume(']', "Expected ']' after event condition");
     }
 
-    // Optional: handle "from <target>"
+    // Optional: handle "from <target>" for event source delegation
+    // Supports: identifiers (me, window, myVar), CSS selectors (#id, .class), query refs (<div/>)
     let target: string | undefined;
     if (this.match('from')) {
       const targetToken = this.advance();
       target = targetToken.value;
+      debug.parse(`🔧 parseEventHandler: Parsed 'from' target: ${target} (kind: ${targetToken.kind})`);
     }
 
     // Optional: handle "of attribute" for mutation events

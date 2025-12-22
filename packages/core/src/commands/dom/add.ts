@@ -17,6 +17,7 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { parseAttributeWithValue } from '../helpers/attribute-manipulation';
 import { batchAddClasses, batchSetAttribute, batchSetStyles } from '../helpers/batch-dom-operations';
+import { resolveDynamicClasses } from '../helpers/class-manipulation';
 import { command, meta, createFactory } from '../decorators';
 import { DOMModificationBase } from './dom-modification-base';
 
@@ -113,11 +114,16 @@ export class AddCommand extends DOMModificationBase {
     return { type: 'classes', classes, targets };
   }
 
-  async execute(input: AddCommandInput, _context: TypedExecutionContext): Promise<void> {
+  async execute(input: AddCommandInput, context: TypedExecutionContext): Promise<void> {
     switch (input.type) {
-      case 'classes':
-        batchAddClasses(input.targets, input.classes);
+      case 'classes': {
+        // Resolve any dynamic class expressions (e.g., {cls} → actual class name)
+        const resolvedClasses = resolveDynamicClasses(input.classes, context);
+        if (resolvedClasses.length > 0) {
+          batchAddClasses(input.targets, resolvedClasses);
+        }
         break;
+      }
       case 'attribute':
         batchSetAttribute(input.targets, input.name, input.value);
         break;

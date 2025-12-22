@@ -15,7 +15,7 @@ import type { ASTNode, ExpressionNode } from '../../types/base-types';
 import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveTargetsFromArgs } from '../helpers/element-resolution';
-import { parseClasses } from '../helpers/class-manipulation';
+import { parseClasses, resolveDynamicClasses } from '../helpers/class-manipulation';
 import { parseAttribute } from '../helpers/attribute-manipulation';
 import { parseDuration } from '../helpers/duration-parsing';
 import { parseToggleableCSSProperty, toggleCSSProperty } from '../helpers/style-manipulation';
@@ -176,15 +176,21 @@ export class ToggleCommand implements DecoratedCommand {
 
   async execute(input: ToggleCommandInput, context: TypedExecutionContext): Promise<HTMLElement[]> {
     switch (input.type) {
-      case 'classes':
-        batchToggleClasses(input.targets, input.classes);
-        if ((input.duration || input.untilEvent) && input.classes.length) {
+      case 'classes': {
+        // Resolve any dynamic class expressions (e.g., {cls} → actual class name)
+        const resolvedClasses = resolveDynamicClasses(input.classes, context);
+        if (resolvedClasses.length === 0) {
+          return [...input.targets]; // No valid classes to toggle
+        }
+        batchToggleClasses(input.targets, resolvedClasses);
+        if ((input.duration || input.untilEvent) && resolvedClasses.length) {
           for (const el of input.targets) {
-            if (input.duration) setupDurationReversion(el, 'class', input.classes[0], input.duration);
-            if (input.untilEvent) setupEventReversion(el, 'class', input.classes[0], input.untilEvent);
+            if (input.duration) setupDurationReversion(el, 'class', resolvedClasses[0], input.duration);
+            if (input.untilEvent) setupEventReversion(el, 'class', resolvedClasses[0], input.untilEvent);
           }
         }
         return [...input.targets];
+      }
 
       case 'attribute':
         batchToggleAttribute(input.targets, input.name, input.value);

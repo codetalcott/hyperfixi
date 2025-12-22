@@ -30,11 +30,13 @@
  */
 export const toggleableSource = `
 behavior Toggleable(cls, target)
-  if cls is undefined
-    set cls to "active"
-  end
-  if target is undefined
-    set target to me
+  init
+    if cls is undefined
+      set cls to "active"
+    end
+    if target is undefined
+      set target to me
+    end
   end
   on click
     toggle .{cls} on target

@@ -1,19 +1,25 @@
 /**
  * Removable Behavior
  *
- * A simple behavior that removes an element when clicked.
+ * A behavior that removes an element when a trigger is clicked.
  * Supports optional confirmation and transition effects.
  *
  * @example
  * ```html
- * <!-- Basic usage -->
+ * <!-- Basic usage (click anywhere on element) -->
  * <div _="install Removable">Click to remove</div>
+ *
+ * <!-- With a specific trigger element -->
+ * <div _="install Removable(trigger: #close-btn)">
+ *   <button id="close-btn">×</button>
+ *   Content that will be removed
+ * </div>
  *
  * <!-- With confirmation -->
  * <div _="install Removable(confirm: true)">Click to remove (with confirm)</div>
  *
  * <!-- With fade effect -->
- * <div _="install Removable(effect: fade)">Click to fade out</div>
+ * <div _="install Removable(effect: 'fade')">Click to fade out</div>
  * ```
  *
  * @events
@@ -25,8 +31,13 @@
  * The hyperscript source code for the Removable behavior.
  */
 export const removableSource = `
-behavior Removable(confirm, effect)
-  on click
+behavior Removable(trigger, confirm, effect)
+  init
+    if trigger is undefined
+      set trigger to me
+    end
+  end
+  on click from trigger
     if confirm
       if not window.confirm("Are you sure?")
         halt
@@ -47,9 +58,16 @@ end
  */
 export const removableMetadata = {
   name: 'Removable',
-  version: '1.0.0',
+  version: '1.1.0',
   description: 'Makes elements removable on click',
   parameters: [
+    {
+      name: 'trigger',
+      type: 'selector',
+      optional: true,
+      default: 'me',
+      description: 'Element that triggers removal (e.g., a close button)',
+    },
     {
       name: 'confirm',
       type: 'boolean',

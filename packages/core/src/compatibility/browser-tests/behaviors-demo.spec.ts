@@ -124,7 +124,7 @@ test.describe('Behaviors Demo', () => {
 
     const accordionItem = page.locator('.accordion-item').first();
 
-    // Should not have 'active' class initially (Toggleable uses 'active' by default)
+    // Should not have 'active' class initially
     await expect(accordionItem).not.toHaveClass(/active/);
 
     // Click to expand

@@ -157,6 +157,29 @@ export let ready: Promise<void> | null = null;
 if (typeof window !== 'undefined' && (window as any).hyperfixi) {
   // Register all behaviors and track the promise
   ready = registerAll();
+
   // Expose on window so attribute processor can wait for it
+  // IMPORTANT: Only expose the registration promise, not the re-process chain
+  // to avoid circular dependency (scanAndProcessAll waits for this promise)
   (window as any).__hyperfixi_behaviors_ready = ready;
+
+  // After behaviors are registered, re-process the document
+  // This uses a SEPARATE promise chain to avoid circular wait
+  ready.then(() => {
+    const hyperfixi = (window as any).hyperfixi;
+    // Try attribute processor first (properly tracks processed elements)
+    // Clear the "__hyperfixi_behaviors_ready" before calling to avoid re-waiting
+    const savedPromise = (window as any).__hyperfixi_behaviors_ready;
+    delete (window as any).__hyperfixi_behaviors_ready;
+
+    if (hyperfixi.attributeProcessor?.scanAndProcessAll) {
+      hyperfixi.attributeProcessor.scanAndProcessAll().finally(() => {
+        // Restore for any future callers
+        (window as any).__hyperfixi_behaviors_ready = savedPromise;
+      });
+    } else if (hyperfixi.processNode) {
+      hyperfixi.processNode(document);
+      (window as any).__hyperfixi_behaviors_ready = savedPromise;
+    }
+  });
 }
