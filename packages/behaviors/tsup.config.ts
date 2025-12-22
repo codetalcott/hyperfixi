@@ -5,11 +5,14 @@ export default defineConfig([
   {
     entry: [
       'src/index.ts',
-      'src/draggable.ts',
-      'src/removable.ts',
-      'src/toggleable.ts',
-      'src/sortable.ts',
-      'src/resizable.ts',
+      'src/registry.ts',
+      'src/loaders.ts',
+      'src/schemas/index.ts',
+      'src/behaviors/draggable.ts',
+      'src/behaviors/removable.ts',
+      'src/behaviors/toggleable.ts',
+      'src/behaviors/sortable.ts',
+      'src/behaviors/resizable.ts',
     ],
     format: ['cjs', 'esm'],
     dts: true,
@@ -19,12 +22,22 @@ export default defineConfig([
   // Individual behavior browser bundles for CDN use
   {
     entry: {
-      'draggable.browser': 'src/draggable.ts',
-      'removable.browser': 'src/removable.ts',
-      'toggleable.browser': 'src/toggleable.ts',
-      'sortable.browser': 'src/sortable.ts',
-      'resizable.browser': 'src/resizable.ts',
+      'draggable.browser': 'src/behaviors/draggable.ts',
+      'removable.browser': 'src/behaviors/removable.ts',
+      'toggleable.browser': 'src/behaviors/toggleable.ts',
+      'sortable.browser': 'src/behaviors/sortable.ts',
+      'resizable.browser': 'src/behaviors/resizable.ts',
       'all.browser': 'src/index.ts',
+    },
+    format: ['iife'],
+    globalName: 'HyperFixiBehaviors',
+    sourcemap: true,
+    minify: true,
+  },
+  // Core tier bundle (Draggable + Toggleable)
+  {
+    entry: {
+      'core.browser': 'src/core-bundle.ts',
     },
     format: ['iife'],
     globalName: 'HyperFixiBehaviors',

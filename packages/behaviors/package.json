@@ -12,43 +12,61 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./registry": {
+      "types": "./dist/registry.d.ts",
+      "import": "./dist/registry.js",
+      "require": "./dist/registry.cjs"
+    },
+    "./loaders": {
+      "types": "./dist/loaders.d.ts",
+      "import": "./dist/loaders.js",
+      "require": "./dist/loaders.cjs"
+    },
+    "./schemas": {
+      "types": "./dist/schemas/index.d.ts",
+      "import": "./dist/schemas/index.js",
+      "require": "./dist/schemas/index.cjs"
+    },
     "./draggable": {
-      "types": "./dist/draggable.d.ts",
-      "import": "./dist/draggable.js",
-      "require": "./dist/draggable.cjs"
+      "types": "./dist/behaviors/draggable.d.ts",
+      "import": "./dist/behaviors/draggable.js",
+      "require": "./dist/behaviors/draggable.cjs"
     },
     "./removable": {
-      "types": "./dist/removable.d.ts",
-      "import": "./dist/removable.js",
-      "require": "./dist/removable.cjs"
+      "types": "./dist/behaviors/removable.d.ts",
+      "import": "./dist/behaviors/removable.js",
+      "require": "./dist/behaviors/removable.cjs"
     },
     "./toggleable": {
-      "types": "./dist/toggleable.d.ts",
-      "import": "./dist/toggleable.js",
-      "require": "./dist/toggleable.cjs"
+      "types": "./dist/behaviors/toggleable.d.ts",
+      "import": "./dist/behaviors/toggleable.js",
+      "require": "./dist/behaviors/toggleable.cjs"
     },
     "./sortable": {
-      "types": "./dist/sortable.d.ts",
-      "import": "./dist/sortable.js",
-      "require": "./dist/sortable.cjs"
+      "types": "./dist/behaviors/sortable.d.ts",
+      "import": "./dist/behaviors/sortable.js",
+      "require": "./dist/behaviors/sortable.cjs"
     },
     "./resizable": {
-      "types": "./dist/resizable.d.ts",
-      "import": "./dist/resizable.js",
-      "require": "./dist/resizable.cjs"
+      "types": "./dist/behaviors/resizable.d.ts",
+      "import": "./dist/behaviors/resizable.js",
+      "require": "./dist/behaviors/resizable.cjs"
     },
     "./draggable.browser.js": "./dist/draggable.browser.global.js",
     "./removable.browser.js": "./dist/removable.browser.global.js",
     "./toggleable.browser.js": "./dist/toggleable.browser.global.js",
     "./sortable.browser.js": "./dist/sortable.browser.global.js",
     "./resizable.browser.js": "./dist/resizable.browser.global.js",
-    "./all.browser.js": "./dist/all.browser.global.js"
+    "./all.browser.js": "./dist/all.browser.global.js",
+    "./core.browser.js": "./dist/core.browser.global.js"
   },
   "files": [
     "dist",
     "src"
   ],
   "scripts": {
+    "generate": "tsx scripts/generate.ts",
+    "prebuild": "npm run generate",
     "build": "tsup",
     "build:watch": "tsup --watch",
     "typecheck": "tsc --noEmit",

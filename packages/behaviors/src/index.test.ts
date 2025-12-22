@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  // Individual behavior exports
   draggableSource,
   draggableMetadata,
   removableSource,
@@ -10,9 +11,18 @@ import {
   sortableMetadata,
   resizableSource,
   resizableMetadata,
-  behaviors,
+  // Registry functions
   getAvailableBehaviors,
-  getAllBehaviorMetadata,
+  getBehaviorsByCategory,
+  getBehaviorsByTier,
+  getAllSchemas,
+  // Registration functions
+  registerDraggable,
+  registerRemovable,
+  registerToggleable,
+  registerSortable,
+  registerResizable,
+  registerAll,
 } from './index';
 
 describe('@hyperfixi/behaviors', () => {
@@ -33,17 +43,18 @@ describe('@hyperfixi/behaviors', () => {
       expect(resizableMetadata.name).toBe('Resizable');
     });
 
-    it('should export behaviors registry', () => {
-      expect(behaviors.Draggable).toBeDefined();
-      expect(behaviors.Removable).toBeDefined();
-      expect(behaviors.Toggleable).toBeDefined();
-      expect(behaviors.Sortable).toBeDefined();
-      expect(behaviors.Resizable).toBeDefined();
+    it('should export register functions', () => {
+      expect(registerDraggable).toBeDefined();
+      expect(registerRemovable).toBeDefined();
+      expect(registerToggleable).toBeDefined();
+      expect(registerSortable).toBeDefined();
+      expect(registerResizable).toBeDefined();
+      expect(registerAll).toBeDefined();
     });
   });
 
-  describe('getAvailableBehaviors', () => {
-    it('should return all behavior names', () => {
+  describe('registry', () => {
+    it('getAvailableBehaviors should return all behavior names', () => {
       const names = getAvailableBehaviors();
       expect(names).toContain('Draggable');
       expect(names).toContain('Removable');
@@ -52,18 +63,28 @@ describe('@hyperfixi/behaviors', () => {
       expect(names).toContain('Resizable');
       expect(names.length).toBe(5);
     });
-  });
 
-  describe('getAllBehaviorMetadata', () => {
-    it('should return metadata for all behaviors', () => {
-      const metadata = getAllBehaviorMetadata();
-      expect(metadata.length).toBe(5);
-      expect(metadata.map(m => m.name)).toEqual([
+    it('getBehaviorsByCategory should group by category', () => {
+      expect(getBehaviorsByCategory('ui')).toEqual(['Draggable', 'Sortable', 'Resizable']);
+      expect(getBehaviorsByCategory('data')).toEqual(['Removable']);
+      expect(getBehaviorsByCategory('form')).toEqual(['Toggleable']);
+    });
+
+    it('getBehaviorsByTier should group by tier', () => {
+      expect(getBehaviorsByTier('core')).toEqual(['Draggable', 'Toggleable']);
+      expect(getBehaviorsByTier('common')).toEqual(['Sortable', 'Removable']);
+      expect(getBehaviorsByTier('optional')).toEqual(['Resizable']);
+    });
+
+    it('getAllSchemas should return all schemas', () => {
+      const schemas = getAllSchemas();
+      expect(schemas.length).toBe(5);
+      expect(schemas.map((s) => s.name).sort()).toEqual([
         'Draggable',
         'Removable',
-        'Toggleable',
-        'Sortable',
         'Resizable',
+        'Sortable',
+        'Toggleable',
       ]);
     });
   });
@@ -75,15 +96,17 @@ describe('@hyperfixi/behaviors', () => {
       expect(draggableSource).toContain('trigger draggable:start');
     });
 
-    it('should document parameters', () => {
+    it('should have correct schema metadata', () => {
+      expect(draggableMetadata.category).toBe('ui');
+      expect(draggableMetadata.tier).toBe('core');
       expect(draggableMetadata.parameters).toBeDefined();
       expect(draggableMetadata.parameters?.length).toBeGreaterThan(0);
     });
 
     it('should document events', () => {
       expect(draggableMetadata.events).toBeDefined();
-      expect(draggableMetadata.events?.map(e => e.name)).toContain('draggable:start');
-      expect(draggableMetadata.events?.map(e => e.name)).toContain('draggable:end');
+      expect(draggableMetadata.events?.map((e) => e.name)).toContain('draggable:start');
+      expect(draggableMetadata.events?.map((e) => e.name)).toContain('draggable:end');
     });
   });
 
@@ -92,6 +115,11 @@ describe('@hyperfixi/behaviors', () => {
       expect(removableSource).toContain('behavior Removable');
       expect(removableSource).toContain('on click');
       expect(removableSource).toContain('remove me');
+    });
+
+    it('should have correct schema metadata', () => {
+      expect(removableMetadata.category).toBe('data');
+      expect(removableMetadata.tier).toBe('common');
     });
 
     it('should support confirmation parameter', () => {
@@ -105,6 +133,11 @@ describe('@hyperfixi/behaviors', () => {
       expect(toggleableSource).toContain('on click');
     });
 
+    it('should have correct schema metadata', () => {
+      expect(toggleableMetadata.category).toBe('form');
+      expect(toggleableMetadata.tier).toBe('core');
+    });
+
     it('should default to "active" class', () => {
       expect(toggleableSource).toContain('set cls to "active"');
     });
@@ -116,12 +149,22 @@ describe('@hyperfixi/behaviors', () => {
       expect(sortableSource).toContain('on pointerdown');
       expect(sortableSource).toContain('trigger sortable:');
     });
+
+    it('should have correct schema metadata', () => {
+      expect(sortableMetadata.category).toBe('ui');
+      expect(sortableMetadata.tier).toBe('common');
+    });
   });
 
   describe('Resizable behavior', () => {
     it('should have valid hyperscript source', () => {
       expect(resizableSource).toContain('behavior Resizable');
       expect(resizableSource).toContain('on pointerdown');
+    });
+
+    it('should have correct schema metadata', () => {
+      expect(resizableMetadata.category).toBe('ui');
+      expect(resizableMetadata.tier).toBe('optional');
     });
 
     it('should support min/max constraints', () => {

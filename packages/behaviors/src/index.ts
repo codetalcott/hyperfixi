@@ -17,6 +17,13 @@
  * await registerAll();
  * ```
  *
+ * @example Registry-based lazy loading
+ * ```javascript
+ * import { loadBehavior, getBehaviorsByCategory } from '@hyperfixi/behaviors';
+ * await loadBehavior('Draggable');
+ * const uiBehaviors = getBehaviorsByCategory('ui');
+ * ```
+ *
  * @example CDN usage
  * ```html
  * <script src="hyperfixi-browser.js"></script>
@@ -25,81 +32,132 @@
  * ```
  */
 
+// =============================================================================
 // Re-export individual behaviors
+// =============================================================================
+
 export {
   draggableSource,
   draggableMetadata,
   registerDraggable,
   default as Draggable,
-} from './draggable';
+} from './behaviors/draggable';
 
 export {
   removableSource,
   removableMetadata,
   registerRemovable,
   default as Removable,
-} from './removable';
+} from './behaviors/removable';
 
 export {
   toggleableSource,
   toggleableMetadata,
   registerToggleable,
   default as Toggleable,
-} from './toggleable';
+} from './behaviors/toggleable';
 
 export {
   sortableSource,
   sortableMetadata,
   registerSortable,
   default as Sortable,
-} from './sortable';
+} from './behaviors/sortable';
 
 export {
   resizableSource,
   resizableMetadata,
   registerResizable,
   default as Resizable,
-} from './resizable';
+} from './behaviors/resizable';
 
-// Behavior registry type
-export interface BehaviorModule {
-  source: string;
-  metadata: {
-    name: string;
-    version: string;
-    description: string;
-    parameters?: Array<{
-      name: string;
-      type: string;
-      optional?: boolean;
-      default?: string;
-      description: string;
-    }>;
-    events?: Array<{
-      name: string;
-      description: string;
-    }>;
-  };
-  register: (hyperfixi?: any) => Promise<void>;
-}
+// =============================================================================
+// Types
+// =============================================================================
 
-// Import all behaviors for registerAll
-import { registerDraggable } from './draggable';
-import { registerRemovable } from './removable';
-import { registerToggleable } from './toggleable';
-import { registerSortable } from './sortable';
-import { registerResizable } from './resizable';
+export type {
+  BehaviorSchema,
+  BehaviorCategory,
+  BehaviorTier,
+  ParameterSchema,
+  EventSchema,
+  BehaviorModule,
+  HyperFixiInstance,
+} from './schemas/types';
 
-/**
- * All available behaviors and their registration functions.
- */
-export const behaviors = {
-  Draggable: registerDraggable,
-  Removable: registerRemovable,
-  Toggleable: registerToggleable,
-  Sortable: registerSortable,
-  Resizable: registerResizable,
-} as const;
+// =============================================================================
+// Initialize registry with loaders (populates schemas and loaders)
+// =============================================================================
+
+import './loaders';
+
+// =============================================================================
+// Registry exports
+// =============================================================================
+
+export {
+  // Registration
+  registerBehavior,
+  registerSchema,
+  registerLoader,
+  // Query (sync)
+  getBehavior,
+  tryGetBehavior,
+  getSchema,
+  tryGetSchema,
+  isRegistered,
+  hasLoader,
+  getRegisteredBehaviors,
+  getAvailableBehaviors,
+  // Query by metadata
+  getBehaviorsByCategory,
+  getBehaviorsByTier,
+  getAllSchemas,
+  getAllSchemasRecord,
+  // Lazy loading (async)
+  loadBehavior,
+  preloadTier,
+  preloadCategory,
+  loadAll,
+  // Runtime registration
+  registerWithRuntime,
+  registerAllWithRuntime,
+} from './registry';
+
+// =============================================================================
+// Generated types and metadata
+// =============================================================================
+
+export type {
+  BehaviorName,
+  UIBehavior,
+  DataBehavior,
+  AnimationBehavior,
+  FormBehavior,
+  LayoutBehavior,
+  CoreBehavior,
+  CommonBehavior,
+  OptionalBehavior,
+} from './generated/types';
+
+export {
+  ALL_BEHAVIOR_NAMES,
+  BEHAVIORS_BY_CATEGORY,
+  BEHAVIORS_BY_TIER,
+  BEHAVIOR_CATEGORIES,
+  BEHAVIOR_TIERS,
+} from './generated/metadata';
+
+// =============================================================================
+// Convenience functions
+// =============================================================================
+
+import { registerDraggable } from './behaviors/draggable';
+import { registerRemovable } from './behaviors/removable';
+import { registerToggleable } from './behaviors/toggleable';
+import { registerSortable } from './behaviors/sortable';
+import { registerResizable } from './behaviors/resizable';
+import type { HyperFixiInstance } from './schemas/types';
 
 /**
  * Register all behaviors with HyperFixi.
@@ -113,39 +171,19 @@ export const behaviors = {
  * await registerAll();
  * ```
  */
-export async function registerAll(
-  hyperfixi?: { compile: (code: string) => any; execute: (ast: any, ctx: any) => Promise<any>; createContext: () => any }
-): Promise<void> {
-  const registrations = Object.values(behaviors).map(register => register(hyperfixi));
-  await Promise.all(registrations);
+export async function registerAll(hyperfixi?: HyperFixiInstance): Promise<void> {
+  await Promise.all([
+    registerDraggable(hyperfixi),
+    registerRemovable(hyperfixi),
+    registerToggleable(hyperfixi),
+    registerSortable(hyperfixi),
+    registerResizable(hyperfixi),
+  ]);
 }
 
-/**
- * Get a list of all available behavior names.
- */
-export function getAvailableBehaviors(): string[] {
-  return Object.keys(behaviors);
-}
-
-// Import metadata for getAllBehaviorMetadata
-import { draggableMetadata } from './draggable';
-import { removableMetadata } from './removable';
-import { toggleableMetadata } from './toggleable';
-import { sortableMetadata } from './sortable';
-import { resizableMetadata } from './resizable';
-
-/**
- * Get metadata for all behaviors.
- */
-export function getAllBehaviorMetadata(): Array<BehaviorModule['metadata']> {
-  return [
-    draggableMetadata,
-    removableMetadata,
-    toggleableMetadata,
-    sortableMetadata,
-    resizableMetadata,
-  ];
-}
+// =============================================================================
+// Auto-registration for browser
+// =============================================================================
 
 /**
  * Promise that resolves when all behaviors are registered.
@@ -155,26 +193,17 @@ export let ready: Promise<void> | null = null;
 
 // Auto-register all behaviors when loaded in browser with hyperfixi available
 if (typeof window !== 'undefined' && (window as any).hyperfixi) {
-  // Register all behaviors and track the promise
   ready = registerAll();
 
-  // Expose on window so attribute processor can wait for it
-  // IMPORTANT: Only expose the registration promise, not the re-process chain
-  // to avoid circular dependency (scanAndProcessAll waits for this promise)
   (window as any).__hyperfixi_behaviors_ready = ready;
 
-  // After behaviors are registered, re-process the document
-  // This uses a SEPARATE promise chain to avoid circular wait
   ready.then(() => {
     const hyperfixi = (window as any).hyperfixi;
-    // Try attribute processor first (properly tracks processed elements)
-    // Clear the "__hyperfixi_behaviors_ready" before calling to avoid re-waiting
     const savedPromise = (window as any).__hyperfixi_behaviors_ready;
     delete (window as any).__hyperfixi_behaviors_ready;
 
     if (hyperfixi.attributeProcessor?.scanAndProcessAll) {
       hyperfixi.attributeProcessor.scanAndProcessAll().finally(() => {
-        // Restore for any future callers
         (window as any).__hyperfixi_behaviors_ready = savedPromise;
       });
     } else if (hyperfixi.processNode) {
