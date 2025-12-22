@@ -10,7 +10,7 @@ test.describe('HyperFixi Command Integration Tests', () => {
 
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
-    await page.goto('http://localhost:3000/compatibility-test.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(2000);
   });
 

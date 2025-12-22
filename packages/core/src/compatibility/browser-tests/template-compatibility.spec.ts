@@ -17,7 +17,7 @@ test.describe('Template Compatibility Tests (Official _hyperscript Patterns)', (
       console.log(`Browser: ${msg.text()}`);
     });
 
-    await page.goto('http://localhost:3000/compatibility-test.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(2000);
   });
 

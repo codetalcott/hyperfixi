@@ -20,7 +20,7 @@ test.describe('HyperFixi Command Compatibility Tests @comprehensive', () => {
     page = await browser.newPage();
     // Try multiple paths to support different server setups
     const urls = [
-      'http://localhost:3000/compatibility-test.html',           // Server from packages/core
+      'http://localhost:3000/packages/core/compatibility-test.html',           // Server from packages/core
       'http://localhost:3000/packages/core/compatibility-test.html'  // Server from project root
     ];
     let loaded = false;

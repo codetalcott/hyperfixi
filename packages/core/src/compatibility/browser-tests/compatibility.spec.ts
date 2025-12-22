@@ -24,7 +24,7 @@ test.describe('HyperScript Compatibility Tests', () => {
     page.on('pageerror', error => console.error('Page error:', error));
 
     // Navigate to the compatibility test page
-    await page.goto('http://localhost:3000/compatibility-test.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
 
     // Wait for libraries to load
     await page.waitForLoadState('networkidle');

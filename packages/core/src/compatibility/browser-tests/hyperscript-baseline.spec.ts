@@ -17,7 +17,7 @@ test.describe('_hyperscript Official Tests - Baseline', () => {
 
   test.beforeAll(async ({ browser }) => {
     page = await browser.newPage();
-    await page.goto('http://localhost:3000/compatibility-test.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(2000);
   });
 

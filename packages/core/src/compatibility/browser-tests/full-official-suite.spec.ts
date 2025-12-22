@@ -298,7 +298,7 @@ test.describe('Complete Official _hyperscript Test Suite', () => {
     runner = new OfficialTestSuiteRunner();
 
     // Load the compatibility test HTML page that has both hyperscript libraries
-    await page.goto('http://localhost:3000/compatibility-test.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(2000);
 
     // Verify both HyperFixi and evalHyperScript are loaded

@@ -5,7 +5,7 @@
 import { test, expect } from '@playwright/test';
 
 test('analyze _hyperscript API behavior', async ({ page }) => {
-  await page.goto('http://localhost:3000/hyperscript-api-test.html');
+  await page.goto('http://localhost:3000/packages/core/hyperscript-api-test.html');
   await page.waitForTimeout(2000);
 
   // Capture results

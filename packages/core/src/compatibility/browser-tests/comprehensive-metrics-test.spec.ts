@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Comprehensive Compatibility Metrics', () => {
   test('all expression types', async ({ page }) => {
-    await page.goto('http://localhost:3000/test-global-functions.html');
+    await page.goto('http://localhost:3000/packages/core/test-global-functions.html');
     await page.waitForTimeout(1000);
 
     const results = await page.evaluate(async () => {
