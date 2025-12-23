@@ -14,6 +14,13 @@ import {
 } from '../types/context-types';
 import type { ValidationResult, ValidationError, EvaluationType } from '../types/base-types';
 import type { LLMDocumentation } from '../types/command-types';
+import {
+  findRelevantExamples,
+  trackExampleUsage,
+  buildFewShotContext,
+  isDatabaseAvailable,
+  type LLMExampleRecord,
+} from './llm-examples-query';
 
 // ============================================================================
 // LLM Generation Input/Output Schemas
@@ -289,7 +296,30 @@ export class TypedLLMGenerationContextImplementation extends ContextBase<
   private async generateEnhancedCode(input: LLMGenerationInput): Promise<string> {
     const { prompt, targetEnvironment, framework, outputFormat, availableVariables } = input;
 
-    // Build context-aware generation prompt
+    // First, try to find relevant examples from the patterns database
+    if (isDatabaseAvailable()) {
+      const examples = findRelevantExamples(prompt, 'en', 5);
+
+      if (examples.length > 0) {
+        // Track usage for quality metrics
+        trackExampleUsage(examples.map(e => e.id));
+
+        // Find the best matching example
+        const bestMatch = examples[0];
+
+        // If we have a high-quality match, use it (possibly adapted)
+        if (bestMatch.qualityScore >= 0.8) {
+          return this.adaptExampleToContext(bestMatch.completion, input);
+        }
+
+        // For lower quality matches, still prefer DB examples over hardcoded
+        if (bestMatch.qualityScore >= 0.6) {
+          return bestMatch.completion;
+        }
+      }
+    }
+
+    // Build context-aware generation prompt (fallback to hardcoded patterns)
     let enhancedPrompt = `Generate ${outputFormat} for: "${prompt}"`;
     enhancedPrompt += `\nTarget: ${targetEnvironment}`;
 
@@ -307,6 +337,24 @@ export class TypedLLMGenerationContextImplementation extends ContextBase<
 
     // Generate code based on environment and patterns
     return this.generateCodeForEnvironment(enhancedPrompt, input);
+  }
+
+  /**
+   * Adapt a database example to the current generation context.
+   * This can include variable substitution, framework-specific adjustments, etc.
+   */
+  private adaptExampleToContext(code: string, input: LLMGenerationInput): string {
+    // For now, return the code as-is
+    // Future: could do variable substitution, framework-specific adjustments, etc.
+    return code;
+  }
+
+  /**
+   * Get few-shot context for external LLM integration.
+   * Can be used to enhance prompts sent to external LLM APIs.
+   */
+  public getFewShotContext(prompt: string, language: string = 'en', numExamples: number = 3): string {
+    return buildFewShotContext(prompt, language, numExamples);
   }
 
   private generateCodeForEnvironment(prompt: string, input: LLMGenerationInput): string {

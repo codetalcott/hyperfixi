@@ -10,7 +10,8 @@
  * runtime issues.
  */
 
-import type { CommandSchema, ActionType } from './command-schemas';
+import type { CommandSchema } from './command-schemas';
+import type { ActionType } from '../types';
 
 /**
  * Result from validating a single command schema.
@@ -76,7 +77,7 @@ export function validateCommandSchema(schema: CommandSchema): SchemaValidation {
 
   // Check for schemas with no required roles (usually a mistake)
   const requiredRoles = schema.roles.filter(r => r.required);
-  if (requiredRoles.length === 0 && schema.action !== 'else' && schema.action !== 'end') {
+  if (requiredRoles.length === 0 && schema.action !== 'else') {
     warnings.push(`Command has no required roles. Is this intentional?`);
   }
 

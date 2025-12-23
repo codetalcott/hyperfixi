@@ -1,0 +1,62 @@
+{
+  "name": "@hyperfixi/patterns-reference",
+  "version": "0.1.0",
+  "description": "Queryable patterns database for hyperscript with multilingual translations and LLM support",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./api": {
+      "types": "./dist/api/index.d.ts",
+      "import": "./dist/api/index.mjs",
+      "require": "./dist/api/index.js"
+    },
+    "./sync": {
+      "types": "./dist/sync/index.d.ts",
+      "import": "./dist/sync/index.mjs",
+      "require": "./dist/sync/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "sync": "bun run scripts/sync.ts",
+    "validate": "bun run scripts/validate.ts",
+    "seed": "bun run scripts/seed.ts"
+  },
+  "keywords": [
+    "hyperscript",
+    "patterns",
+    "multilingual",
+    "i18n",
+    "reference",
+    "llm",
+    "database"
+  ],
+  "author": "Hyperfixi Team",
+  "license": "MIT",
+  "dependencies": {
+    "@hyperfixi/semantic": "*",
+    "better-sqlite3": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "sideEffects": false
+}
