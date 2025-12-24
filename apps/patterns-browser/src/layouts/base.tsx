@@ -43,17 +43,9 @@ export function BaseLayout({ title, children }: PropsWithChildren<BaseLayoutProp
           })();
         `}</script>
       </head>
-      <body
-        _="on load
-           install HistorySwap(target: '#main')
-         end"
-      >
+      <body>
         <header class="navbar">
-          <nav
-            _="on load
-               install Boosted(target: '#main', pushHistory: true, useViewTransition: true)
-             end"
-          >
+          <nav>
             <a href="/" class="brand">
               <strong>HyperFixi</strong> Patterns
             </a>

@@ -26,14 +26,14 @@ export function PatternList({ patterns, page = 1, hasMore = false }: PatternList
       halt the event
       set current to first .selected in me
       if current exists
-        set next to next <article.pattern-card/> from current
+        set next to next <a.pattern-card/> from current
         if next exists
           remove .selected from current
           add .selected to next
           call next.scrollIntoView({block: 'nearest', behavior: 'smooth'})
         end
       else
-        set first to first <article.pattern-card/> in me
+        set first to first <a.pattern-card/> in me
         if first exists
           add .selected to first
         end
@@ -43,14 +43,14 @@ export function PatternList({ patterns, page = 1, hasMore = false }: PatternList
       halt the event
       set current to first .selected in me
       if current exists
-        set prev to previous <article.pattern-card/> from current
+        set prev to previous <a.pattern-card/> from current
         if prev exists
           remove .selected from current
           add .selected to prev
           call prev.scrollIntoView({block: 'nearest', behavior: 'smooth'})
         end
       else
-        set last to last <article.pattern-card/> in me
+        set last to last <a.pattern-card/> in me
         if last exists
           add .selected to last
         end
@@ -59,7 +59,7 @@ export function PatternList({ patterns, page = 1, hasMore = false }: PatternList
     on keydown[key=='Enter']
       set current to first .selected in me
       if current exists
-        click on current
+        call current.click()
       end
     end
     on keydown[key=='Escape']

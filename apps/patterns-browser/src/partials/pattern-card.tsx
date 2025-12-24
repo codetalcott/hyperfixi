@@ -11,14 +11,7 @@ interface PatternCardProps {
 
 export function PatternCard({ pattern }: PatternCardProps) {
   return (
-    <article
-      class="pattern-card box"
-      _={`on click
-          fetch '/patterns/${pattern.id}' as html
-          morph #main with it using view transition
-          push url '/patterns/${pattern.id}'
-        end`}
-    >
+    <a href={`/patterns/${pattern.id}`} class="pattern-card box" style="text-decoration: none; color: inherit; display: block">
       <h3>{pattern.title}</h3>
       <div class="code">
         <HyperscriptCode code={pattern.rawCode} />
@@ -28,6 +21,6 @@ export function PatternCard({ pattern }: PatternCardProps) {
         {pattern.primaryCommand && <chip class="muted">{pattern.primaryCommand}</chip>}
         <chip class="muted">{pattern.difficulty}</chip>
       </div>
-    </article>
+    </a>
   );
 }
