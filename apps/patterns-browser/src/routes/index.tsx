@@ -19,12 +19,7 @@ export const indexRoutes = new Elysia().get('/', async () => {
       </div>
 
       <div class="pattern-grid">
-        <a
-          href="/patterns"
-          class="pattern-card"
-          style="text-decoration: none"
-          _="on click halt the event then fetch '/patterns' as html then morph #main with it using view transition then push url '/patterns' end"
-        >
+        <a href="/patterns" class="pattern-card" style="text-decoration: none">
           <h3>Patterns</h3>
           <p class="muted">
             Browse {stats.totalPatterns} code examples covering common UI interactions
@@ -37,12 +32,7 @@ export const indexRoutes = new Elysia().get('/', async () => {
           </div>
         </a>
 
-        <a
-          href="/translations"
-          class="pattern-card"
-          style="text-decoration: none"
-          _="on click halt the event then fetch '/translations' as html then morph #main with it using view transition then push url '/translations' end"
-        >
+        <a href="/translations" class="pattern-card" style="text-decoration: none">
           <h3>Translations</h3>
           <p class="muted">
             View patterns translated to 13 languages with different word orders
@@ -55,12 +45,7 @@ export const indexRoutes = new Elysia().get('/', async () => {
           </div>
         </a>
 
-        <a
-          href="/llm"
-          class="pattern-card"
-          style="text-decoration: none"
-          _="on click halt the event then fetch '/llm' as html then morph #main with it using view transition then push url '/llm' end"
-        >
+        <a href="/llm" class="pattern-card" style="text-decoration: none">
           <h3>LLM Examples</h3>
           <p class="muted">
             Prompt/completion pairs for few-shot learning with language models
@@ -71,12 +56,7 @@ export const indexRoutes = new Elysia().get('/', async () => {
           </div>
         </a>
 
-        <a
-          href="/stats"
-          class="pattern-card"
-          style="text-decoration: none"
-          _="on click halt the event then fetch '/stats' as html then morph #main with it using view transition then push url '/stats' end"
-        >
+        <a href="/stats" class="pattern-card" style="text-decoration: none">
           <h3>Statistics</h3>
           <p class="muted">
             Pattern counts, translation coverage, and language distribution

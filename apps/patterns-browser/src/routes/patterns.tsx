@@ -40,7 +40,7 @@ async function getCategoryStats() {
 
 export const patternsRoutes = new Elysia({ prefix: '/patterns' })
   // Full patterns page
-  .get('/', async ({ query }) => {
+  .get('/', async ({ query, headers }) => {
     const category = query.category as string | undefined;
     const role = query.role as string | undefined;
     const q = query.q as string | undefined;
@@ -61,8 +61,11 @@ export const patternsRoutes = new Elysia({ prefix: '/patterns' })
     const totalPatterns = (await getStats()).totalPatterns;
     const hasMore = patterns.length === PAGE_SIZE;
 
-    return (
-      <BaseLayout title="Patterns">
+    // Check if this is a partial request (for SPA navigation)
+    const isPartial = headers['hx-request'] === 'true';
+
+    const content = (
+      <>
         <h1>Hyperscript Patterns</h1>
         <p class="muted">
           {totalPatterns} patterns covering common UI interactions
@@ -80,8 +83,14 @@ export const patternsRoutes = new Elysia({ prefix: '/patterns' })
             <PatternList patterns={patterns} page={1} hasMore={hasMore} />
           </div>
         </div>
-      </BaseLayout>
+      </>
     );
+
+    if (isPartial) {
+      return content;
+    }
+
+    return <BaseLayout title="Patterns">{content}</BaseLayout>;
   })
 
   // Pattern list partial (for htmx/hyperfixi requests)

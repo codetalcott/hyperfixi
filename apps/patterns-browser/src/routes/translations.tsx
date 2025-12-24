@@ -9,12 +9,15 @@ import { AlignmentBadge } from '../components/alignment-indicator';
 
 export const translationsRoutes = new Elysia({ prefix: '/translations' })
   // Translations explorer page
-  .get('/', async () => {
+  .get('/', async ({ headers }) => {
     const patterns = await getPatterns({ limit: 20 });
     const languages = getLanguages();
 
-    return (
-      <BaseLayout title="Translations">
+    // Check if this is a partial request (for SPA navigation)
+    const isPartial = headers['hx-request'] === 'true';
+
+    const content = (
+      <>
         <h1>Translation Explorer</h1>
         <p class="muted">
           View hyperscript patterns translated to 13 languages with different word orders
@@ -56,8 +59,14 @@ export const translationsRoutes = new Elysia({ prefix: '/translations' })
             ))}
           </tbody>
         </table>
-      </BaseLayout>
+      </>
     );
+
+    if (isPartial) {
+      return content;
+    }
+
+    return <BaseLayout title="Translations">{content}</BaseLayout>;
   })
 
   // Single pattern translations
