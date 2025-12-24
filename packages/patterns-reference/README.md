@@ -12,16 +12,17 @@ npm install @hyperfixi/patterns-reference
 
 ### 1. Initialize the Database
 
-Before using the package, initialize the SQLite database with seed data:
+Before using the package, populate the SQLite database with patterns and translations:
 
 ```bash
-npm run db:init
+npm run populate
 ```
 
 This creates a database at `data/patterns.db` with:
-- 16 code examples from the hyperscript cookbook
-- English translations for all patterns
-- 11 LLM few-shot examples
+
+- 53 code examples covering all hyperscript commands
+- 689 translations (53 patterns × 13 languages)
+- 212 LLM few-shot examples for code generation
 
 ### 2. Use the API
 
@@ -130,8 +131,13 @@ The database path can be configured via:
 
 | Script | Description |
 |--------|-------------|
-| `npm run db:init` | Initialize database with seed data |
+| `npm run populate` | Full database setup (init + translations + LLM examples) |
+| `npm run db:init` | Initialize database with seed patterns |
 | `npm run db:init:force` | Reinitialize database (overwrites existing) |
+| `npm run sync:translations` | Generate translations for all 13 languages |
+| `npm run seed:llm` | Generate LLM few-shot examples |
+| `npm run validate` | Validate all patterns parse correctly |
+| `npm run validate:fix` | Validate and update verified_parses flag |
 | `npm run build` | Build the package |
 | `npm test` | Run tests in watch mode |
 | `npm run test:run` | Run tests once |
@@ -199,17 +205,59 @@ The database supports 13 languages with different word orders:
 | Arabic | ar | VSO |
 | German | de | V2 |
 
+## Integration with @hyperfixi/semantic
+
+The patterns-reference package integrates with @hyperfixi/semantic to provide runtime pattern matching from the database.
+
+### Semantic Bridge
+
+```typescript
+import { initializeSemanticIntegration } from '@hyperfixi/patterns-reference';
+
+// Initialize integration (registers database as pattern source)
+const result = await initializeSemanticIntegration();
+
+if (result.success) {
+  console.log(`Registered with: ${result.registeredWith}`);
+  // 'semantic' if @hyperfixi/semantic is available
+  // 'standalone' if running without semantic package
+}
+
+// Query patterns directly
+import { queryPatterns, getSupportedLanguages } from '@hyperfixi/patterns-reference';
+
+const jaPatterns = await queryPatterns('ja');
+const languages = await getSupportedLanguages();
+```
+
+### LLM Adapter (for @hyperfixi/core)
+
+The package provides a unified LLM adapter that replaces the deprecated `llm-examples-query.ts`:
+
+```typescript
+import { findRelevantExamples, buildFewShotContextSync } from '@hyperfixi/patterns-reference';
+
+// Find examples matching a prompt
+const examples = findRelevantExamples('toggle a class on click', 'en', 5);
+
+// Build formatted context for LLM prompting
+const context = buildFewShotContextSync('show a modal', 'en', 3);
+```
+
 ## Development
 
 ```bash
 # Install dependencies
 npm install
 
-# Initialize test database
-npm run db:init
+# Full database setup
+npm run populate
 
 # Run tests
 npm test
+
+# Validate translations
+npm run validate
 
 # Build
 npm run build
