@@ -90,12 +90,21 @@ interface SeedExample {
 }
 
 const SEED_EXAMPLES: SeedExample[] = [
-  // Core DOM manipulation
+  // ==========================================================================
+  // Class Manipulation
+  // ==========================================================================
   {
     id: 'toggle-class-basic',
     title: 'Toggle Class',
     raw_code: 'on click toggle .active',
     description: 'Toggle a CSS class on the current element when clicked',
+    feature: 'class-manipulation',
+  },
+  {
+    id: 'toggle-class-on-other',
+    title: 'Toggle Class On Other Element',
+    raw_code: 'on click toggle .open on #menu',
+    description: 'Toggle a CSS class on another element',
     feature: 'class-manipulation',
   },
   {
@@ -106,6 +115,13 @@ const SEED_EXAMPLES: SeedExample[] = [
     feature: 'class-manipulation',
   },
   {
+    id: 'add-class-to-other',
+    title: 'Add Class To Other',
+    raw_code: 'on click add .selected to #item',
+    description: 'Add a CSS class to another element',
+    feature: 'class-manipulation',
+  },
+  {
     id: 'remove-class-basic',
     title: 'Remove Class',
     raw_code: 'on click remove .highlight from me',
@@ -113,10 +129,35 @@ const SEED_EXAMPLES: SeedExample[] = [
     feature: 'class-manipulation',
   },
   {
+    id: 'remove-class-from-all',
+    title: 'Remove Class From All',
+    raw_code: 'on click remove .active from .items',
+    description: 'Remove a CSS class from all matching elements',
+    feature: 'class-manipulation',
+  },
+
+  // ==========================================================================
+  // DOM Manipulation
+  // ==========================================================================
+  {
     id: 'set-text-basic',
     title: 'Set Text Content',
     raw_code: 'on click set #output.innerText to "Hello World"',
     description: 'Set the text content of an element by ID',
+    feature: 'dom-manipulation',
+  },
+  {
+    id: 'set-attribute',
+    title: 'Set Attribute',
+    raw_code: 'on click set @disabled to true',
+    description: 'Set an attribute on the current element',
+    feature: 'dom-manipulation',
+  },
+  {
+    id: 'set-style',
+    title: 'Set Style',
+    raw_code: 'on click set my *background to "red"',
+    description: 'Set a CSS style property',
     feature: 'dom-manipulation',
   },
   {
@@ -126,13 +167,64 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Replace the content of the current element',
     feature: 'dom-manipulation',
   },
+  {
+    id: 'put-before',
+    title: 'Put Before',
+    raw_code: 'on click put "<p>New</p>" before me',
+    description: 'Insert content before the current element',
+    feature: 'dom-manipulation',
+  },
+  {
+    id: 'put-after',
+    title: 'Put After',
+    raw_code: 'on click put "<p>New</p>" after me',
+    description: 'Insert content after the current element',
+    feature: 'dom-manipulation',
+  },
+  {
+    id: 'append-content',
+    title: 'Append Content',
+    raw_code: 'on click append "<li>Item</li>" to #list',
+    description: 'Append content to an element',
+    feature: 'dom-manipulation',
+  },
+  {
+    id: 'remove-element',
+    title: 'Remove Element',
+    raw_code: 'on click remove me',
+    description: 'Remove the current element from the DOM',
+    feature: 'dom-manipulation',
+  },
+  {
+    id: 'make-element',
+    title: 'Make Element',
+    raw_code: 'on click make a <div.card/> then put it into #container',
+    description: 'Create a new element dynamically',
+    feature: 'dom-manipulation',
+  },
+  {
+    id: 'swap-content',
+    title: 'Swap Content',
+    raw_code: 'on click swap #a with #b',
+    description: 'Swap two elements in the DOM',
+    feature: 'dom-manipulation',
+  },
 
+  // ==========================================================================
   // Visibility
+  // ==========================================================================
   {
     id: 'show-element',
     title: 'Show Element',
     raw_code: 'on click show #modal',
     description: 'Show a hidden element',
+    feature: 'visibility',
+  },
+  {
+    id: 'show-with-transition',
+    title: 'Show With Transition',
+    raw_code: 'on click show #modal with *opacity',
+    description: 'Show element with opacity transition',
     feature: 'visibility',
   },
   {
@@ -143,6 +235,13 @@ const SEED_EXAMPLES: SeedExample[] = [
     feature: 'visibility',
   },
   {
+    id: 'hide-with-transition',
+    title: 'Hide With Transition',
+    raw_code: 'on click hide me with *opacity',
+    description: 'Hide element with opacity transition',
+    feature: 'visibility',
+  },
+  {
     id: 'toggle-visibility',
     title: 'Toggle Visibility',
     raw_code: 'on click toggle @hidden on #panel',
@@ -150,12 +249,21 @@ const SEED_EXAMPLES: SeedExample[] = [
     feature: 'visibility',
   },
 
-  // Timing
+  // ==========================================================================
+  // Timing & Animation
+  // ==========================================================================
   {
     id: 'wait-then',
     title: 'Wait Then Execute',
     raw_code: 'on click wait 2s then remove me',
     description: 'Wait for a duration before executing a command',
+    feature: 'timing',
+  },
+  {
+    id: 'wait-for-event',
+    title: 'Wait For Event',
+    raw_code: 'on click wait for transitionend',
+    description: 'Wait for a DOM event to fire',
     feature: 'timing',
   },
   {
@@ -165,13 +273,36 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Animate opacity then remove the element',
     feature: 'animation',
   },
+  {
+    id: 'transition-transform',
+    title: 'Transition Transform',
+    raw_code: 'on click transition transform to "scale(1.2)" over 300ms',
+    description: 'Animate transform property',
+    feature: 'animation',
+  },
+  {
+    id: 'settle-animations',
+    title: 'Settle Animations',
+    raw_code: 'on click add .animate then settle then remove .animate',
+    description: 'Wait for CSS animations to complete',
+    feature: 'animation',
+  },
 
+  // ==========================================================================
   // Events
+  // ==========================================================================
   {
     id: 'send-event',
     title: 'Send Custom Event',
     raw_code: 'on click send refresh to #widget',
     description: 'Dispatch a custom event to another element',
+    feature: 'events',
+  },
+  {
+    id: 'send-with-detail',
+    title: 'Send Event With Detail',
+    raw_code: 'on click send update(value: 42) to #target',
+    description: 'Send an event with data payload',
     feature: 'events',
   },
   {
@@ -181,8 +312,17 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Trigger a custom event when the element loads',
     feature: 'events',
   },
+  {
+    id: 'multiple-events',
+    title: 'Multiple Event Handlers',
+    raw_code: 'on click or keypress[key=="Enter"] toggle .active',
+    description: 'Handle multiple events with one handler',
+    feature: 'events',
+  },
 
-  // Async
+  // ==========================================================================
+  // Async Operations
+  // ==========================================================================
   {
     id: 'fetch-basic',
     title: 'Fetch Data',
@@ -190,13 +330,36 @@ const SEED_EXAMPLES: SeedExample[] = [
     description: 'Fetch data from an API and display it',
     feature: 'async',
   },
+  {
+    id: 'fetch-json',
+    title: 'Fetch JSON',
+    raw_code: 'on click fetch /api/user as json then set #name.innerText to it.name',
+    description: 'Fetch JSON data and use a property',
+    feature: 'async',
+  },
+  {
+    id: 'fetch-with-method',
+    title: 'Fetch With Method',
+    raw_code: 'on submit fetch /api/form with method:"POST" body:form',
+    description: 'Submit form data via POST',
+    feature: 'async',
+  },
 
+  // ==========================================================================
   // Counters
+  // ==========================================================================
   {
     id: 'increment-counter',
     title: 'Increment Counter',
     raw_code: 'on click increment #counter',
     description: 'Increment a numeric counter element',
+    feature: 'counters',
+  },
+  {
+    id: 'increment-by-amount',
+    title: 'Increment By Amount',
+    raw_code: 'on click increment #score by 10',
+    description: 'Increment counter by specific amount',
     feature: 'counters',
   },
   {
@@ -207,13 +370,151 @@ const SEED_EXAMPLES: SeedExample[] = [
     feature: 'counters',
   },
 
-  // Logging
+  // ==========================================================================
+  // Control Flow
+  // ==========================================================================
+  {
+    id: 'if-condition',
+    title: 'If Condition',
+    raw_code: 'on click if I match .active then remove .active else add .active',
+    description: 'Conditional execution based on state',
+    feature: 'control-flow',
+  },
+  {
+    id: 'repeat-times',
+    title: 'Repeat Times',
+    raw_code: 'on click repeat 3 times add "<p>Line</p>" to me',
+    description: 'Repeat an action multiple times',
+    feature: 'loops',
+  },
+  {
+    id: 'repeat-for-each',
+    title: 'Repeat For Each',
+    raw_code: 'on click repeat for item in .items add .processed to item',
+    description: 'Iterate over a collection',
+    feature: 'loops',
+  },
+  {
+    id: 'halt-propagation',
+    title: 'Halt Event',
+    raw_code: 'on click halt the event then toggle .active',
+    description: 'Stop event propagation',
+    feature: 'control-flow',
+  },
+
+  // ==========================================================================
+  // Navigation
+  // ==========================================================================
+  {
+    id: 'go-url',
+    title: 'Go To URL',
+    raw_code: 'on click go to url "/page"',
+    description: 'Navigate to a URL',
+    feature: 'navigation',
+  },
+  {
+    id: 'go-back',
+    title: 'Go Back',
+    raw_code: 'on click go back',
+    description: 'Navigate back in history',
+    feature: 'navigation',
+  },
+
+  // ==========================================================================
+  // Focus
+  // ==========================================================================
+  {
+    id: 'focus-element',
+    title: 'Focus Element',
+    raw_code: 'on click focus #input',
+    description: 'Focus an input element',
+    feature: 'focus',
+  },
+  {
+    id: 'blur-element',
+    title: 'Blur Element',
+    raw_code: 'on keydown[key=="Escape"] blur me',
+    description: 'Remove focus from element',
+    feature: 'focus',
+  },
+
+  // ==========================================================================
+  // Debugging
+  // ==========================================================================
   {
     id: 'log-value',
     title: 'Log Value',
     raw_code: 'on click log "Button clicked!"',
     description: 'Log a message to the console',
     feature: 'debugging',
+  },
+  {
+    id: 'log-element',
+    title: 'Log Element',
+    raw_code: 'on click log me',
+    description: 'Log the current element to console',
+    feature: 'debugging',
+  },
+
+  // ==========================================================================
+  // Variables & Data
+  // ==========================================================================
+  {
+    id: 'get-value',
+    title: 'Get Value',
+    raw_code: 'on click get #input.value then log it',
+    description: 'Get a value and use it',
+    feature: 'data',
+  },
+  {
+    id: 'default-value',
+    title: 'Default Value',
+    raw_code: 'on load default my @data-count to "0"',
+    description: 'Set default value if not present',
+    feature: 'data',
+  },
+
+  // ==========================================================================
+  // Behaviors
+  // ==========================================================================
+  {
+    id: 'install-behavior',
+    title: 'Install Behavior',
+    raw_code: 'install Draggable',
+    description: 'Install a reusable behavior',
+    feature: 'behaviors',
+  },
+  {
+    id: 'tell-command',
+    title: 'Tell Command',
+    raw_code: 'on click tell #modal to show',
+    description: 'Tell another element to execute a command',
+    feature: 'behaviors',
+  },
+
+  // ==========================================================================
+  // Advanced
+  // ==========================================================================
+  {
+    id: 'call-function',
+    title: 'Call Function',
+    raw_code: 'on click call myFunction()',
+    description: 'Call a JavaScript function',
+    feature: 'advanced',
+  },
+  {
+    id: 'async-block',
+    title: 'Async Block',
+    raw_code: 'on click async fetch /api/data then put it into me',
+    description: 'Execute commands asynchronously',
+    feature: 'advanced',
+  },
+  {
+    id: 'js-inline',
+    title: 'Inline JavaScript',
+    raw_code: 'on click js console.log("from js") end',
+    description: 'Execute inline JavaScript',
+    feature: 'advanced',
   },
 ];
 

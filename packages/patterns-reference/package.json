@@ -30,9 +30,10 @@
     "typecheck": "tsc --noEmit",
     "db:init": "tsx scripts/init-db.ts",
     "db:init:force": "tsx scripts/init-db.ts --force",
-    "sync": "bun run scripts/sync.ts",
-    "validate": "bun run scripts/validate.ts",
-    "seed": "bun run scripts/seed.ts"
+    "sync:translations": "tsx scripts/sync-translations.ts",
+    "seed:llm": "tsx scripts/seed-llm-examples.ts",
+    "populate": "npm run db:init:force && npm run sync:translations && npm run seed:llm",
+    "populate:dry-run": "npm run db:init:force && tsx scripts/sync-translations.ts --dry-run && tsx scripts/seed-llm-examples.ts --dry-run"
   },
   "keywords": [
     "hyperscript",
