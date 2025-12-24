@@ -377,10 +377,10 @@ export class MorphCommand implements DecoratedCommand {
   async execute(input: SwapCommandInput, _context: TypedExecutionContext): Promise<void> {
     const { targets, content, strategy, morphOptions, useViewTransition } = input;
 
-    for (const target of targets) {
-      if (useViewTransition) {
-        await executeSwapWithTransition(target, content, strategy, morphOptions);
-      } else {
+    if (useViewTransition) {
+      await executeSwapWithTransition(targets, content, strategy, { morphOptions, useViewTransition });
+    } else {
+      for (const target of targets) {
         executeSwap(target, content, strategy, morphOptions);
       }
     }

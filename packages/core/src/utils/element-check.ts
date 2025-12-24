@@ -112,3 +112,23 @@ export function isNodeList(value: unknown): value is NodeList {
     (Symbol.iterator in value || typeof (value as any).item === 'function')
   );
 }
+
+/**
+ * Cross-realm safe DocumentFragment check using duck-typing.
+ *
+ * Checks for:
+ * - nodeType === 11 (DocumentFragment node)
+ * - childNodes property
+ *
+ * @param value - Value to check
+ * @returns True if value is a DocumentFragment-like object
+ */
+export function isDocumentFragment(value: unknown): value is DocumentFragment {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    'nodeType' in value &&
+    (value as any).nodeType === 11 &&
+    'childNodes' in value
+  );
+}

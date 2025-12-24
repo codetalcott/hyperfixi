@@ -10,7 +10,7 @@ pnpm-debug.log*
 dist/
 build/
 *.tsbuildinfo
-lib/
+/lib/
 out/
 
 # Environment variables

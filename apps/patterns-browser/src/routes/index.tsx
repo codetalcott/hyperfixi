@@ -23,12 +23,7 @@ export const indexRoutes = new Elysia().get('/', async () => {
           href="/patterns"
           class="pattern-card"
           style="text-decoration: none"
-          _="on click
-             halt the event
-             fetch '/patterns' as html
-             morph #main with it using view transition
-             push url '/patterns'
-           end"
+          _="on click halt the event then fetch '/patterns' as html then morph #main with it using view transition then push url '/patterns' end"
         >
           <h3>Patterns</h3>
           <p class="muted">
@@ -46,12 +41,7 @@ export const indexRoutes = new Elysia().get('/', async () => {
           href="/translations"
           class="pattern-card"
           style="text-decoration: none"
-          _="on click
-             halt the event
-             fetch '/translations' as html
-             morph #main with it using view transition
-             push url '/translations'
-           end"
+          _="on click halt the event then fetch '/translations' as html then morph #main with it using view transition then push url '/translations' end"
         >
           <h3>Translations</h3>
           <p class="muted">
@@ -69,12 +59,7 @@ export const indexRoutes = new Elysia().get('/', async () => {
           href="/llm"
           class="pattern-card"
           style="text-decoration: none"
-          _="on click
-             halt the event
-             fetch '/llm' as html
-             morph #main with it using view transition
-             push url '/llm'
-           end"
+          _="on click halt the event then fetch '/llm' as html then morph #main with it using view transition then push url '/llm' end"
         >
           <h3>LLM Examples</h3>
           <p class="muted">
@@ -90,12 +75,7 @@ export const indexRoutes = new Elysia().get('/', async () => {
           href="/stats"
           class="pattern-card"
           style="text-decoration: none"
-          _="on click
-             halt the event
-             fetch '/stats' as html
-             morph #main with it using view transition
-             push url '/stats'
-           end"
+          _="on click halt the event then fetch '/stats' as html then morph #main with it using view transition then push url '/stats' end"
         >
           <h3>Statistics</h3>
           <p class="muted">
