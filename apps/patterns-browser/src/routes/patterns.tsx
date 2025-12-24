@@ -6,15 +6,18 @@ import { Elysia } from 'elysia';
 import { BaseLayout } from '../layouts/base';
 import { PatternList } from '../partials/pattern-list';
 import { CategoryFilter } from '../partials/category-filter';
+import { RoleFilter } from '../partials/role-filter';
 import { SearchInput } from '../partials/search-input';
 import { CodeBlock } from '../components/code-block';
 import {
   getPatterns,
   getPattern,
   getPatternsByFeature,
+  getPatternsByRole,
   search,
   getCategories,
   getStats,
+  getRoleStats,
   getPatternRoles,
   type Pattern,
   type PatternRole,
@@ -39,11 +42,14 @@ export const patternsRoutes = new Elysia({ prefix: '/patterns' })
   // Full patterns page
   .get('/', async ({ query }) => {
     const category = query.category as string | undefined;
+    const role = query.role as string | undefined;
     const q = query.q as string | undefined;
 
     let patterns: Pattern[];
     if (q) {
       patterns = await search(q, { limit: PAGE_SIZE });
+    } else if (role) {
+      patterns = await getPatternsByRole(role);
     } else if (category) {
       patterns = await getPatternsByFeature(category);
     } else {
@@ -51,6 +57,7 @@ export const patternsRoutes = new Elysia({ prefix: '/patterns' })
     }
 
     const categoryStats = await getCategoryStats();
+    const roleStats = await getRoleStats();
     const totalPatterns = (await getStats()).totalPatterns;
     const hasMore = patterns.length === PAGE_SIZE;
 
@@ -64,7 +71,10 @@ export const patternsRoutes = new Elysia({ prefix: '/patterns' })
         <SearchInput />
 
         <div class="sidebar-layout">
-          <CategoryFilter categories={categoryStats} activeCategory={category} />
+          <div class="filters-sidebar">
+            <CategoryFilter categories={categoryStats} activeCategory={category} />
+            <RoleFilter roleStats={roleStats} activeRole={role} />
+          </div>
 
           <div>
             <PatternList patterns={patterns} page={1} hasMore={hasMore} />
@@ -77,6 +87,7 @@ export const patternsRoutes = new Elysia({ prefix: '/patterns' })
   // Pattern list partial (for htmx/hyperfixi requests)
   .get('/list', async ({ query }) => {
     const category = query.category as string | undefined;
+    const role = query.role as string | undefined;
     const q = query.q as string | undefined;
     const page = parseInt((query.page as string) || '1', 10);
     const offset = (page - 1) * PAGE_SIZE;
@@ -84,6 +95,8 @@ export const patternsRoutes = new Elysia({ prefix: '/patterns' })
     let patterns: Pattern[];
     if (q) {
       patterns = await search(q, { limit: PAGE_SIZE, offset });
+    } else if (role) {
+      patterns = (await getPatternsByRole(role)).slice(offset, offset + PAGE_SIZE);
     } else if (category) {
       patterns = (await getPatternsByFeature(category)).slice(offset, offset + PAGE_SIZE);
     } else {

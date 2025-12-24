@@ -4,13 +4,36 @@
 
 import { Elysia } from 'elysia';
 import { BaseLayout } from '../layouts/base';
-import { getStats, getTranslationsStats, getLLMExamplesStats, getLanguages } from '../db';
+import { getStats, getTranslationsStats, getLLMExamplesStats, getLanguages, getRoleStats } from '../db';
+
+// Role display names for stats
+const ROLE_LABELS: Record<string, string> = {
+  action: 'Commands',
+  event: 'Events',
+  patient: 'Target (patient)',
+  destination: 'Destination',
+  source: 'Source',
+  condition: 'Conditions',
+  quantity: 'Quantities',
+  duration: 'Durations',
+  loopType: 'Loops',
+  responseType: 'Response Types',
+  method: 'Methods',
+  style: 'Styles',
+  manner: 'Manner',
+};
 
 export const statsRoutes = new Elysia({ prefix: '/stats' }).get('/', async () => {
   const patternStats = await getStats();
   const translationStats = await getTranslationsStats();
   const llmStats = await getLLMExamplesStats();
   const languages = getLanguages();
+  const roleStats = await getRoleStats();
+
+  // Calculate total roles (excluding 'action' since every pattern has one)
+  const totalRoles = Object.entries(roleStats)
+    .filter(([role]) => role !== 'action')
+    .reduce((sum, [, count]) => sum + count, 0);
 
   return (
     <BaseLayout title="Statistics">
@@ -52,6 +75,53 @@ export const statsRoutes = new Elysia({ prefix: '/stats' }).get('/', async () =>
               <tr>
                 <td>
                   <a href={`/patterns?category=${category}`}>{category}</a>
+                </td>
+                <td>{count}</td>
+                <td>{Math.round((count / patternStats.totalPatterns) * 100)}%</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+
+      <h2>Semantic Roles</h2>
+      <p class="muted">
+        {totalRoles} semantic roles extracted across {patternStats.totalPatterns} patterns.
+        Roles describe the grammatical function of each part of a hyperscript command.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Role</th>
+            <th>Description</th>
+            <th>Count</th>
+            <th>% of Patterns</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Object.entries(roleStats)
+            .filter(([role]) => role !== 'action') // Exclude action (every pattern has one)
+            .sort(([, a], [, b]) => b - a)
+            .map(([role, count]) => (
+              <tr>
+                <td>
+                  <a href={`/patterns?role=${role}`}>
+                    <span class={`role-dot role-${role}`} style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem;"></span>
+                    {ROLE_LABELS[role] || role}
+                  </a>
+                </td>
+                <td class="muted" style="font-size: 0.9rem;">
+                  {role === 'event' && 'Trigger events (click, keydown, submit)'}
+                  {role === 'patient' && 'What is being acted upon (.class, #id)'}
+                  {role === 'destination' && 'Where something goes (to, into)'}
+                  {role === 'source' && 'Where something comes from (from)'}
+                  {role === 'condition' && 'Conditional expressions (if, when)'}
+                  {role === 'quantity' && 'Amount or count (by 5, 3 times)'}
+                  {role === 'duration' && 'Time period (2s, 300ms)'}
+                  {role === 'loopType' && 'Repetition type (forever, until)'}
+                  {role === 'responseType' && 'Response format (as json, as html)'}
+                  {role === 'method' && 'HTTP method (GET, POST)'}
+                  {role === 'style' && 'Manner modifier (with fade)'}
+                  {role === 'manner' && 'How action is performed (before, after)'}
                 </td>
                 <td>{count}</td>
                 <td>{Math.round((count / patternStats.totalPatterns) * 100)}%</td>

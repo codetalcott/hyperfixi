@@ -455,6 +455,50 @@ pre.code-block {
   color: white;
 }
 
+/* Multiple sidebars container */
+.filters-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.filters-sidebar .sidebar {
+  position: static; /* Only the container is sticky */
+}
+
+.filters-sidebar {
+  position: sticky;
+  top: 1rem;
+}
+
+/* Role filter specific styles */
+.role-filter-sidebar .role-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.role-filter-sidebar a {
+  gap: 0.5rem;
+}
+
+/* Role dot colors matching role badges */
+.role-dot.role-event { background-color: var(--role-event); }
+.role-dot.role-patient { background-color: var(--role-patient); }
+.role-dot.role-destination { background-color: var(--role-destination); }
+.role-dot.role-source { background-color: var(--role-source); }
+.role-dot.role-condition { background-color: var(--role-condition); }
+.role-dot.role-quantity { background-color: var(--role-quantity); }
+.role-dot.role-duration { background-color: var(--role-duration); }
+.role-dot.role-responseType { background-color: var(--role-response); }
+.role-dot.role-method { background-color: var(--role-method); }
+.role-dot.role-style { background-color: var(--role-style); }
+.role-dot.role-loopType { background-color: var(--role-loop); }
+.role-dot.role-manner { background-color: var(--role-manner); }
+
 /* =============================================================================
    Search
    ============================================================================= */
