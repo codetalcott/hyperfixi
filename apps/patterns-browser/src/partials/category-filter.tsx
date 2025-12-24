@@ -9,21 +9,14 @@ interface CategoryFilterProps {
 
 export function CategoryFilter({ categories, activeCategory }: CategoryFilterProps) {
   return (
-    <nav class="sidebar">
+    <nav class="sidebar" id="category-filter">
       <h3>Categories</h3>
       <ul>
         <li>
           <a
             href="/patterns"
             class={!activeCategory ? 'active' : ''}
-            _={`on click
-                halt the event
-                fetch '/patterns/list' as html
-                morph #pattern-list with it using view transition
-                push url '/patterns'
-                remove .active from <a/> in closest <nav/>
-                add .active to me
-              end`}
+            _="on click halt the event then fetch '/patterns/list' as html then morph #pattern-list with it using view transition then push url '/patterns' then remove .active from <a/> in #category-filter then remove .active from <a/> in #role-filter then add .active to me end"
           >
             All patterns
           </a>
@@ -33,14 +26,7 @@ export function CategoryFilter({ categories, activeCategory }: CategoryFilterPro
             <a
               href={`/patterns?category=${cat.id}`}
               class={activeCategory === cat.id ? 'active' : ''}
-              _={`on click
-                  halt the event
-                  fetch '/patterns/list?category=${cat.id}' as html
-                  morph #pattern-list with it using view transition
-                  push url '/patterns?category=${cat.id}'
-                  remove .active from <a/> in closest <nav/>
-                  add .active to me
-                end`}
+              _={`on click halt the event then fetch '/patterns/list?category=${cat.id}' as html then morph #pattern-list with it using view transition then push url '/patterns?category=${cat.id}' then remove .active from <a/> in #category-filter then remove .active from <a/> in #role-filter then add .active to me end`}
             >
               {cat.id}
               <chip class="muted">{cat.count}</chip>

@@ -43,14 +43,7 @@ export const llmRoutes = new Elysia({ prefix: '/llm' })
             id="llm-search"
             placeholder="Enter a prompt to find relevant examples..."
             autocomplete="off"
-            _="on input debounced at 300ms
-               if my value.length > 2
-                 add .loading to closest .search-container
-                 fetch `/llm/search?q=${my value}` as html
-                 morph #llm-results with it
-                 remove .loading from closest .search-container
-               end
-             end"
+            _="on input debounced at 300ms if my value.length > 2 add .loading to closest .search-container then fetch `/llm/search?q=${my value}` as html then morph #llm-results with it then remove .loading from closest .search-container end end"
           />
           <span class="spinner">Loading...</span>
         </div>
