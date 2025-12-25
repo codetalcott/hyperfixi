@@ -40,12 +40,12 @@ function getTriggerEvent(code: string): string {
 /**
  * Render a context element for a referenced ID.
  */
-function ContextElement({ id }: { id: string }) {
+function ContextElement({ id, pattern }: { id: string; pattern: Pattern }) {
   // Common element types based on ID naming conventions
   if (id === 'code') {
     return (
       <code id="code" class="demo-code">
-        Sample text to copy
+        {pattern.rawCode}
       </code>
     );
   }
@@ -115,9 +115,24 @@ export function PatternDemo({ pattern }: PatternDemoProps) {
       </p>
 
       <div class="usage-example">
-        <pre class="code-block">{
-          escapeHtml(`<button _="${pattern.rawCode}">\n  Click me\n</button>`)
-        }</pre>
+        <div class="code-block-wrapper">
+          <pre class="code-block">{
+            escapeHtml(`<button _="${pattern.rawCode}">\n  Click me\n</button>`)
+          }</pre>
+          <button
+            class="copy-btn"
+            data-code={`<button _="${pattern.rawCode}">\n  Click me\n</button>`}
+            _="on click
+               call navigator.clipboard.writeText(my @data-code)
+               put 'Copied!' into me
+               add .copied to me
+               wait 2s
+               put 'Copy' into me
+               remove .copied from me"
+          >
+            Copy
+          </button>
+        </div>
       </div>
 
       <div class="demo-sandbox">
@@ -125,7 +140,7 @@ export function PatternDemo({ pattern }: PatternDemoProps) {
         {ids.length > 0 && (
           <div class="demo-context">
             {ids.map(id => (
-              <ContextElement id={id} />
+              <ContextElement id={id} pattern={pattern} />
             ))}
           </div>
         )}
