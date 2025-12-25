@@ -1239,6 +1239,117 @@ button.ok,
 }
 
 /* =============================================================================
+   Pattern Demo
+   ============================================================================= */
+
+.pattern-demo {
+  margin: 1.5rem 0;
+}
+
+.pattern-demo h2 {
+  margin-bottom: 0.75rem;
+}
+
+.demo-sandbox {
+  padding: 1.5rem;
+  background: var(--panel);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.demo-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed var(--border);
+}
+
+.demo-code {
+  padding: 0.5rem 1rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+}
+
+.demo-counter {
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  background: var(--background);
+  border-radius: 4px;
+}
+
+.demo-output {
+  padding: 0.75rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  min-width: 150px;
+}
+
+.demo-modal {
+  padding: 1rem;
+  background: var(--background);
+  border: 2px dashed var(--border);
+  border-radius: 4px;
+}
+
+.demo-menu {
+  padding: 0.5rem 1rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.demo-list {
+  padding: 0.5rem 1rem 0.5rem 2rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin: 0;
+}
+
+.demo-element {
+  padding: 0.5rem 1rem;
+  background: var(--background);
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+}
+
+.demo-trigger {
+  margin-top: 0.5rem;
+}
+
+.demo-button {
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.demo-input {
+  width: 100%;
+  max-width: 300px;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text);
+  font-size: 1rem;
+}
+
+/* Visual feedback for demo elements */
+.demo-sandbox .active {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.demo-sandbox .highlight {
+  background: var(--accent-bg) !important;
+}
+
+/* =============================================================================
    Responsive
    ============================================================================= */
 

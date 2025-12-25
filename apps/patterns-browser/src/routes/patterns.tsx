@@ -9,6 +9,7 @@ import { CategoryFilter } from '../partials/category-filter';
 import { RoleFilter } from '../partials/role-filter';
 import { SearchInput } from '../partials/search-input';
 import { CodeBlock } from '../components/code-block';
+import { PatternDemo } from '../components/pattern-demo';
 import {
   getPatterns,
   getPattern,
@@ -186,19 +187,7 @@ export const patternsRoutes = new Elysia({ prefix: '/patterns' })
           <RoleList roles={roles} showValues={true} groupByCommand={true} />
         </section>
 
-        <section class="pattern-usage">
-          <h2>Usage</h2>
-          <p>Add this pattern to any HTML element using the <code>_</code> attribute:</p>
-          <div class="usage-example">
-            <pre class="code-block">
-              <code>{`<button _="${pattern.rawCode}">`}</code>
-              {'\n'}
-              <code>{'  Click me'}</code>
-              {'\n'}
-              <code>{'</button>'}</code>
-            </pre>
-          </div>
-        </section>
+        <PatternDemo pattern={pattern} />
 
         <section>
           <h2>Translations</h2>
