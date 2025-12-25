@@ -5,6 +5,17 @@
 
 import type { Pattern } from '../db';
 
+/**
+ * Escape HTML special characters for display in code blocks.
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 interface PatternDemoProps {
   pattern: Pattern;
 }
@@ -104,13 +115,9 @@ export function PatternDemo({ pattern }: PatternDemoProps) {
       </p>
 
       <div class="usage-example">
-        <pre class="code-block">
-          <code>{`<button _="${pattern.rawCode}">`}</code>
-          {'\n'}
-          <code>{'  Click me'}</code>
-          {'\n'}
-          <code>{'</button>'}</code>
-        </pre>
+        <pre class="code-block">{
+          escapeHtml(`<button _="${pattern.rawCode}">\n  Click me\n</button>`)
+        }</pre>
       </div>
 
       <div class="demo-sandbox">
