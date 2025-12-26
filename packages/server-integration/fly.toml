@@ -1,0 +1,52 @@
+# HyperFixi API - Fly.io Configuration
+# Deploy with: fly deploy
+
+app = "hyperfixi-api"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+  LOG_LEVEL = "info"
+  CACHE_ENABLED = "true"
+  CACHE_MAX_SIZE = "1000"
+  CACHE_TTL = "300000"
+  RATE_LIMIT_WINDOW = "60000"
+  RATE_LIMIT_MAX = "100"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 250
+    soft_limit = 200
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  path = "/health"
+  protocol = "http"
+  timeout = "5s"
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+# Secrets to set via `fly secrets set`:
+# - DATABASE_URL: PostgreSQL connection string
+# - STRIPE_SECRET_KEY: Stripe API key
+# - STRIPE_WEBHOOK_SECRET: Stripe webhook signing secret
+# - API_KEY_SALT: Random 32-character string for hashing API keys
+# - STRIPE_PRO_PRICE_ID: Stripe price ID for Pro tier
+# - STRIPE_TEAM_PRICE_ID: Stripe price ID for Team tier
