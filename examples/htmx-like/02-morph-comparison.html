@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morph vs innerHTML: State Preservation Demo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    .demo-section {
+      background: white;
+      border-radius: 12px;
+      padding: 25px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .demo-section h2 {
+      margin-top: 0;
+      color: #333;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 10px;
+      margin-bottom: 20px;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .comparison-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .panel h3 {
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .morph-panel {
+      border-color: #28a745;
+      background: #f8fff8;
+    }
+
+    .morph-panel h3 { color: #28a745; }
+
+    .innerhtml-panel {
+      border-color: #dc3545;
+      background: #fff8f8;
+    }
+
+    .innerhtml-panel h3 { color: #dc3545; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: normal;
+    }
+
+    .badge.success {
+      background: #28a745;
+      color: white;
+    }
+
+    .badge.danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* Draggable Demo */
+    .drag-container {
+      position: relative;
+      height: 200px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      background: #fafafa;
+      margin-bottom: 15px;
+    }
+
+    .drag-box {
+      position: absolute;
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      cursor: move;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: box-shadow 0.2s;
+    }
+
+    .drag-box:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+
+    /* Timestamp indicator */
+    .timestamp {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+
+    .video-container .timestamp,
+    .form-container .timestamp {
+      position: static;
+      display: inline-block;
+      margin-top: 10px;
+      background: #333;
+    }
+
+    /* Video Demo */
+    .video-container video {
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .video-time {
+      font-family: monospace;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+
+    /* Form Demo */
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .form-container label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .form-container input,
+    .form-container select,
+    .form-container textarea {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .form-container textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    /* Buttons */
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .morph-panel button {
+      background: #28a745;
+    }
+
+    .morph-panel button:hover {
+      background: #1e7e34;
+    }
+
+    .innerhtml-panel button {
+      background: #dc3545;
+    }
+
+    .innerhtml-panel button:hover {
+      background: #c82333;
+    }
+
+    /* Status */
+    .status {
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin-top: 15px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status.danger {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    /* Flash animations */
+    @keyframes flash-green {
+      0%, 100% { background: #d4edda; }
+      50% { background: #a8e6a3; }
+    }
+
+    @keyframes flash-red {
+      0%, 100% { background: #f8d7da; }
+      50% { background: #f5a3a3; }
+    }
+
+    .flash { animation: flash-green 0.5s ease-in-out; }
+    .flash-danger { animation: flash-red 0.5s ease-in-out; }
+
+    /* Instructions */
+    .instructions {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      color: #1565c0;
+    }
+
+    .instructions strong {
+      color: #0d47a1;
+    }
+
+    /* Navigation */
+    .nav {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #eee;
+    }
+
+    .nav a {
+      color: #667eea;
+      text-decoration: none;
+      margin: 0 15px;
+    }
+
+    .nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Morph vs innerHTML: State Preservation</h1>
+  <p class="subtitle">
+    See how <code>morph</code> preserves DOM state while <code>swap innerHTML</code> destroys it
+  </p>
+
+  <!-- Demo 1: Draggable Position -->
+  <div class="demo-section">
+    <h2>Demo 1: Draggable Position Preservation</h2>
+    <div class="instructions">
+      <strong>Try it:</strong> Drag both boxes to new positions, then click the update buttons.
+      Watch how morph keeps the position while innerHTML resets it.
+    </div>
+
+    <div class="comparison-grid">
+      <!-- Morph Panel -->
+      <div class="panel morph-panel">
+        <h3>Morph <span class="badge success">preserves state</span></h3>
+        <div class="drag-container" id="morph-drag-container">
+          <div id="morph-box" class="drag-box"
+               style="left: 20px; top: 20px;"
+               _="install Draggable">
+            Drag me!
+          </div>
+          <div class="timestamp" id="morph-drag-timestamp">Not yet updated</div>
+        </div>
+        <button _="on click
+          set time to new Date().toLocaleTimeString()
+          set boxHtml to #morph-box.outerHTML
+          set html to boxHtml + '<div class=timestamp id=morph-drag-timestamp>Updated: ' + time + '</div>'
+          morph #morph-drag-container with html
+          add .flash to #morph-drag-status then wait 500ms then remove .flash">
+          Update with Morph
+        </button>
+        <div id="morph-drag-status" class="status success">Timestamp changes, but box position stays!</div>
+      </div>
+
+      <!-- innerHTML Panel -->
+      <div class="panel innerhtml-panel">
+        <h3>innerHTML <span class="badge danger">loses state</span></h3>
+        <div class="drag-container" id="innerHTML-drag-container">
+          <div id="innerHTML-box" class="drag-box"
+               style="left: 20px; top: 20px;"
+               _="install Draggable">
+            Drag me!
+          </div>
+          <div class="timestamp" id="innerHTML-drag-timestamp">Not yet updated</div>
+        </div>
+        <button _='on click
+          set time to new Date().toLocaleTimeString()
+          set html to "<div id=innerHTML-box class=drag-box style=&#39;left: 20px; top: 20px;&#39; _=&#39;install Draggable&#39;>Drag me!</div><div class=timestamp id=innerHTML-drag-timestamp>Updated: " + time + "</div>"
+          swap innerHTML of #innerHTML-drag-container with html
+          call hyperfixi.processNode(#innerHTML-drag-container)
+          add .flash-danger to #innerHTML-drag-status then wait 500ms then remove .flash-danger'>
+          Update with innerHTML
+        </button>
+        <div id="innerHTML-drag-status" class="status danger">Timestamp changes AND box resets to corner!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo 2: Video Playback -->
+  <div class="demo-section">
+    <h2>Demo 2: Video Playback State</h2>
+    <div class="instructions">
+      <strong>Try it:</strong> Play both videos and seek to around 5 seconds, then click update.
+      Morph keeps the video playing at the same position; innerHTML resets to the beginning.
+    </div>
+
+    <div class="comparison-grid">
+      <!-- Morph Video Panel -->
+      <div class="panel morph-panel">
+        <h3>Morph <span class="badge success">preserves state</span></h3>
+        <div class="video-container" id="morph-video-container">
+          <video id="morph-video" controls>
+            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+            Your browser does not support video.
+          </video>
+          <div class="timestamp" id="morph-video-timestamp">Not yet updated</div>
+        </div>
+        <div class="video-time">Current time: <span id="morph-video-time">0.00s</span></div>
+        <button _="on click
+          set video to #morph-video
+          set savedTime to video.currentTime
+          set time to new Date().toLocaleTimeString()
+          set videoHtml to video.outerHTML
+          set html to videoHtml + '<div class=timestamp id=morph-video-timestamp>Updated: ' + time + '</div>'
+          morph #morph-video-container with html
+          wait 100ms
+          set #morph-video-time.innerText to savedTime.toFixed(2) + 's (preserved!)'
+          add .flash to #morph-video-status then wait 500ms then remove .flash">
+          Update with Morph
+        </button>
+        <div id="morph-video-status" class="status success">Timestamp changes, but video keeps playing!</div>
+      </div>
+
+      <!-- innerHTML Video Panel -->
+      <div class="panel innerhtml-panel">
+        <h3>innerHTML <span class="badge danger">loses state</span></h3>
+        <div class="video-container" id="innerHTML-video-container">
+          <video id="innerHTML-video" controls>
+            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+            Your browser does not support video.
+          </video>
+          <div class="timestamp" id="innerHTML-video-timestamp">Not yet updated</div>
+        </div>
+        <div class="video-time">Current time: <span id="innerHTML-video-time">0.00s</span></div>
+        <button _='on click
+          set time to new Date().toLocaleTimeString()
+          set html to "<video id=innerHTML-video controls><source src=&#39;https://www.w3schools.com/html/mov_bbb.mp4&#39; type=&#39;video/mp4&#39;>Your browser does not support video.</video><div class=timestamp id=innerHTML-video-timestamp>Updated: " + time + "</div>"
+          swap innerHTML of #innerHTML-video-container with html
+          wait 100ms
+          set #innerHTML-video-time.innerText to "0.00s (reset!)"
+          add .flash-danger to #innerHTML-video-status then wait 500ms then remove .flash-danger'>
+          Update with innerHTML
+        </button>
+        <div id="innerHTML-video-status" class="status danger">Timestamp changes AND video resets to 0:00!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo 3: Form State -->
+  <div class="demo-section">
+    <h2>Demo 3: Form Input Values</h2>
+    <div class="instructions">
+      <strong>Try it:</strong> Change the values in both forms (edit text, select a color, add notes),
+      then click update. Morph keeps your changes; innerHTML resets to default values.
+    </div>
+
+    <div class="comparison-grid">
+      <!-- Morph Form Panel -->
+      <div class="panel morph-panel">
+        <h3>Morph <span class="badge success">preserves state</span></h3>
+        <div class="form-container" id="morph-form-container">
+          <label>
+            Name:
+            <input type="text" id="morph-name" value="John Doe">
+          </label>
+          <label>
+            Favorite Color:
+            <select id="morph-color">
+              <option value="red">Red</option>
+              <option value="blue" selected>Blue</option>
+              <option value="green">Green</option>
+            </select>
+          </label>
+          <label>
+            Notes:
+            <textarea id="morph-notes">Pre-filled notes - edit me!</textarea>
+          </label>
+          <div class="timestamp" id="morph-form-timestamp">Not yet updated</div>
+        </div>
+        <button _="on click
+          set time to new Date().toLocaleTimeString()
+          set nameLabel to the parentElement of #morph-name
+          set colorLabel to the parentElement of #morph-color
+          set notesLabel to the parentElement of #morph-notes
+          set html to nameLabel.outerHTML + colorLabel.outerHTML + notesLabel.outerHTML + '<div class=timestamp id=morph-form-timestamp>Updated: ' + time + '</div>'
+          morph #morph-form-container with html
+          add .flash to #morph-form-status then wait 500ms then remove .flash">
+          Update with Morph
+        </button>
+        <div id="morph-form-status" class="status success">Timestamp changes, but your edits stay!</div>
+      </div>
+
+      <!-- innerHTML Form Panel -->
+      <div class="panel innerhtml-panel">
+        <h3>innerHTML <span class="badge danger">loses state</span></h3>
+        <div class="form-container" id="innerHTML-form-container">
+          <label>
+            Name:
+            <input type="text" id="innerHTML-name" value="John Doe">
+          </label>
+          <label>
+            Favorite Color:
+            <select id="innerHTML-color">
+              <option value="red">Red</option>
+              <option value="blue" selected>Blue</option>
+              <option value="green">Green</option>
+            </select>
+          </label>
+          <label>
+            Notes:
+            <textarea id="innerHTML-notes">Pre-filled notes - edit me!</textarea>
+          </label>
+          <div class="timestamp" id="innerHTML-form-timestamp">Not yet updated</div>
+        </div>
+        <button _='on click
+          set time to new Date().toLocaleTimeString()
+          set html to "<label>Name:<input type=text id=innerHTML-name value=&#39;John Doe&#39;></label><label>Favorite Color:<select id=innerHTML-color><option value=red>Red</option><option value=blue selected>Blue</option><option value=green>Green</option></select></label><label>Notes:<textarea id=innerHTML-notes>Pre-filled notes - edit me!</textarea></label><div class=timestamp id=innerHTML-form-timestamp>Updated: " + time + "</div>"
+          swap innerHTML of #innerHTML-form-container with html
+          add .flash-danger to #innerHTML-form-status then wait 500ms then remove .flash-danger'>
+          Update with innerHTML
+        </button>
+        <div id="innerHTML-form-status" class="status danger">Timestamp changes AND your edits are gone!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav">
+    <a href="01-swap-morph.html">Swap Strategies Demo</a>
+    <a href="../index.html">Back to Examples</a>
+    <a href="../advanced/02-draggable.html">Full Draggable Demo</a>
+  </div>
+
+  <!-- Load HyperFixi -->
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../debug-panel.js"></script>
+
+  <!-- Define Draggable Behavior -->
+  <script type="text/hyperscript">
+behavior Draggable(dragHandle)
+  init
+    if no dragHandle set the dragHandle to me
+  end
+  on pointerdown(clientX, clientY) from dragHandle
+    halt the event
+    measure x
+    set startX to it
+    measure y
+    set startY to it
+    set xoff to clientX - startX
+    set yoff to clientY - startY
+    repeat until event pointerup from document
+      wait for pointermove(clientX, clientY) or
+               pointerup(clientX, clientY) from document
+      add { left: ${clientX - xoff}px; top: ${clientY - yoff}px; }
+    end
+  end
+end
+  </script>
+
+  <!-- Video time tracking and innerHTML handlers -->
+  <script>
+    // Update video time displays
+    function updateVideoTimes() {
+      const morphVideo = document.getElementById('morph-video');
+      const innerHTMLVideo = document.getElementById('innerHTML-video');
+
+      if (morphVideo) {
+        document.getElementById('morph-video-time').textContent =
+          morphVideo.currentTime.toFixed(2) + 's';
+      }
+      if (innerHTMLVideo) {
+        document.getElementById('innerHTML-video-time').textContent =
+          innerHTMLVideo.currentTime.toFixed(2) + 's';
+      }
+    }
+
+    // Update time display every 100ms
+    setInterval(updateVideoTimes, 100);
+
+    console.log('Morph Comparison Demo loaded');
+    console.log('HyperFixi:', typeof window.hyperfixi !== 'undefined' ? 'Ready' : 'Not loaded');
+  </script>
+</body>
+</html>

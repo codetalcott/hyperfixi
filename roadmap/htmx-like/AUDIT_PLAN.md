@@ -395,6 +395,149 @@ console.log('[PUSH-URL EXECUTE] About to pushState with url:', url);
 
 ---
 
+---
+
+## 9. Demo & Documentation Issues (Dec 2024)
+
+### Discovery: Inline Hyperscript Limitations for Complex HTML Strings
+
+While building the morph comparison demo (`examples/htmx-like/02-morph-comparison.html`), several DX issues were discovered when using inline hyperscript for innerHTML operations.
+
+#### Problems Found
+
+**1. Complex Quote Escaping in Hyperscript Strings**
+
+When constructing HTML strings inside hyperscript `_=` attributes, escaped quotes become problematic:
+
+```html
+<!-- This is error-prone and hard to maintain -->
+<button _="on click
+  set html to '<div id=innerHTML-box class=drag-box style=\"left: 20px; top: 20px;\" _=\"install Draggable\">Drag me!</div>'
+  swap innerHTML of #container with html">
+  Update
+</button>
+```
+
+Issues:
+- Escaped double quotes `\"` inside single-quoted hyperscript strings
+- Nested `_=` attributes require multiple levels of escaping
+- Multi-line HTML strings are unreadable in single-line `_=` attributes
+- Difficult to debug when parsing fails
+
+**2. New Elements Need Manual Re-processing**
+
+After `swap innerHTML`, new elements with `_="..."` attributes don't automatically get processed by hyperfixi. Behaviors like `install Draggable` won't work unless `hyperfixi.processNode()` is called:
+
+```javascript
+// Required after innerHTML swap to re-initialize behaviors
+container.innerHTML = newHtml;
+if (window.hyperfixi && window.hyperfixi.processNode) {
+  window.hyperfixi.processNode(container);
+}
+```
+
+#### Solution Applied in Demo
+
+Moved innerHTML button handlers from inline hyperscript to JavaScript:
+
+```html
+<!-- Before: Problematic inline hyperscript -->
+<button _="on click
+  set html to '<div _=\"install Draggable\"...'
+  swap innerHTML of #container with html">
+
+<!-- After: Clean JavaScript handler -->
+<button id="innerHTML-btn">Update with innerHTML</button>
+
+<script>
+document.getElementById('innerHTML-btn').addEventListener('click', function() {
+  container.innerHTML = `
+    <div id="box" class="drag-box"
+         style="left: 20px; top: 20px;"
+         _="install Draggable">
+      Drag me!
+    </div>
+  `;
+  // Re-process so Draggable behavior works
+  if (window.hyperfixi && window.hyperfixi.processNode) {
+    window.hyperfixi.processNode(container);
+  }
+});
+</script>
+```
+
+Benefits:
+- **Cleaner template literals** - No quote escaping issues
+- **Proper behavior re-initialization** - Calls `hyperfixi.processNode()` after swap
+- **Better maintainability** - Multi-line HTML is readable and editable
+
+#### Recommendations for Library Improvements
+
+**High Priority:**
+
+1. **Auto-process new elements** - Consider adding a MutationObserver to automatically process elements with `_=` attributes when they appear in the DOM. This is how htmx handles `hx-*` attributes on dynamically added elements.
+
+   ```typescript
+   // Potential implementation
+   const observer = new MutationObserver((mutations) => {
+     for (const mutation of mutations) {
+       for (const node of mutation.addedNodes) {
+         if (node instanceof Element) {
+           hyperfixi.processNode(node);
+         }
+       }
+     }
+   });
+   observer.observe(document.body, { childList: true, subtree: true });
+   ```
+
+2. **Document `processNode()` API** - Ensure `hyperfixi.processNode()` is documented and exported for cases where manual re-processing is needed.
+
+**Medium Priority:**
+
+3. **Multi-line hyperscript support** - Consider supporting `<script type="text/hyperscript">` blocks for complex logic that doesn't fit in attributes:
+
+   ```html
+   <button id="my-btn">Click</button>
+   <script type="text/hyperscript" for="#my-btn">
+     on click
+       set html to '<div _="install Draggable">...'
+       swap innerHTML of #container with html
+   </script>
+   ```
+
+4. **Template literal syntax** - Consider supporting backtick template literals in hyperscript for multi-line strings:
+
+   ```hyperscript
+   -- Hypothetical syntax
+   on click
+     set html to `
+       <div class="drag-box" _="install Draggable">
+         Drag me!
+       </div>
+     `
+     swap innerHTML of #container with html
+   ```
+
+**Lower Priority:**
+
+5. **Helper for dynamic HTML with behaviors** - Add a built-in helper that combines innerHTML swap with processNode:
+
+   ```hyperscript
+   -- Hypothetical command
+   swap innerHTML of #container with html then process #container
+   ```
+
+#### Affected Files
+
+| File | Issue |
+|------|-------|
+| `examples/htmx-like/02-morph-comparison.html` | Used JavaScript handlers as workaround |
+| `packages/core/src/runtime/` | Potential location for MutationObserver |
+| `packages/core/docs/API.md` | Should document `processNode()` |
+
+---
+
 ## Conclusion
 
 The htmx-like code additions are well-structured and functional, but there are opportunities to improve:
@@ -403,5 +546,6 @@ The htmx-like code additions are well-structured and functional, but there are o
 2. **Pattern inconsistency** - Builder Pattern is new and undocumented
 3. **Helper underutilization** - New code doesn't leverage existing helpers
 4. **Debug artifacts** - Console.log statements should be removed
+5. **Dynamic element processing** - Need auto-processing or documented manual API
 
 **Estimated refactoring effort**: 4-6 hours to address high-priority items
