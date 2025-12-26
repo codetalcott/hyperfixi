@@ -27,6 +27,7 @@ interface PatternTranslationRow {
   confidence: number;
   verified_parses: number;
   verified_executes: number;
+  role_alignment_score: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -253,6 +254,7 @@ function mapRowToTranslation(row: PatternTranslationRow): Translation {
     confidence: row.confidence,
     verifiedParses: row.verified_parses === 1,
     verifiedExecutes: row.verified_executes === 1,
+    roleAlignmentScore: row.role_alignment_score ?? null,
     createdAt: new Date(row.created_at),
     updatedAt: new Date(row.updated_at),
   };

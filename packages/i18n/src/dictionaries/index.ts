@@ -17,27 +17,10 @@
 
 import { Dictionary } from '../types';
 
-// Import derivation utilities
-import { deriveFromProfile, createEnglishDictionary } from './derive';
-
-// Import language profiles from semantic package
-// Using the languageProfiles object which is indexed by language code
-import { languageProfiles } from '@hyperfixi/semantic';
-
-// Extract individual profiles
-const englishProfile = languageProfiles['en'];
-const spanishProfile = languageProfiles['es'];
-const japaneseProfile = languageProfiles['ja'];
-const koreanProfile = languageProfiles['ko'];
-const chineseProfile = languageProfiles['zh'];
-const frenchProfile = languageProfiles['fr'];
-const germanProfile = languageProfiles['de'];
-const arabicProfile = languageProfiles['ar'];
-const turkishProfile = languageProfiles['tr'];
-const indonesianProfile = languageProfiles['id'];
-const portugueseProfile = languageProfiles['pt'];
-const quechuaProfile = languageProfiles['qu'];
-const swahiliProfile = languageProfiles['sw'];
+// NOTE: Derivation infrastructure is ready but not yet active.
+// The languageProfiles from @hyperfixi/semantic can be used with deriveFromProfile()
+// once we're ready to transition away from legacy dictionaries.
+// See ./derive.ts for the derivation utilities.
 
 // Import legacy dictionaries for overrides
 // These provide backward compatibility during the transition period
