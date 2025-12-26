@@ -21,6 +21,7 @@ export type {
   MarkingStrategy,
   RoleMarker,
   VerbConfig,
+  VerbForm,
   PossessiveConfig,
   KeywordTranslation,
   TokenizationConfig,

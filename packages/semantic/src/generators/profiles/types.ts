@@ -87,6 +87,17 @@ export interface LanguageProfile {
   readonly possessive?: PossessiveConfig;
   /** Event handler pattern configuration (for simple SVO languages) */
   readonly eventHandler?: EventHandlerConfig;
+  /**
+   * Default verb form for command keywords. Defaults to 'infinitive'.
+   *
+   * Based on software UI localization research:
+   * - 'infinitive': Spanish, French, German, Portuguese, Russian (industry standard)
+   * - 'imperative': Polish
+   * - 'base': English, Japanese, Korean (no distinction or same form)
+   *
+   * Individual keywords can override this via KeywordTranslation.form
+   */
+  readonly defaultVerbForm?: VerbForm;
 }
 
 /**
@@ -103,15 +114,36 @@ export interface EventHandlerConfig {
 }
 
 /**
+ * Verb form used for command keywords.
+ *
+ * Based on software localization research:
+ * - 'infinitive': Standard for most languages (Spanish, French, German, Russian)
+ *   Example: "Guardar", "Enregistrer", "Speichern"
+ * - 'imperative': Used by some languages (Polish)
+ *   Example: "Zapisz", "Otwórz"
+ * - 'base': For languages where forms are identical (English, Japanese, Korean)
+ *   or where the distinction doesn't apply
+ */
+export type VerbForm = 'infinitive' | 'imperative' | 'base';
+
+/**
  * Translation of a command keyword.
  */
 export interface KeywordTranslation {
-  /** Primary translation */
+  /** Primary translation (used for output/rendering) */
   readonly primary: string;
-  /** Alternative forms (conjugations, synonyms) */
+  /** Alternative forms for parsing (conjugations, synonyms, informal variants) */
   readonly alternatives?: string[];
-  /** Normalized form for matching */
+  /** Normalized English form for internal matching */
   readonly normalized?: string;
+  /**
+   * The grammatical form of 'primary'. Defaults to 'infinitive'.
+   * This documents the form used and enables future form-switching features.
+   * - 'infinitive': Dictionary form (alternar, basculer) - industry standard
+   * - 'imperative': Command form (alterna, bascule) - for Polish, etc.
+   * - 'base': Same form for both (toggle, トグル) - English, Japanese, Korean
+   */
+  readonly form?: VerbForm;
 }
 
 /**

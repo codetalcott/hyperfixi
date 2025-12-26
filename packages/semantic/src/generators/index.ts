@@ -12,6 +12,7 @@ export {
   type MarkingStrategy,
   type RoleMarker,
   type VerbConfig,
+  type VerbForm,
   type KeywordTranslation,
   type TokenizationConfig,
   englishProfile,

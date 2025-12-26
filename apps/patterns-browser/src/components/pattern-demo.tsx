@@ -138,7 +138,7 @@ export function PatternDemo({ pattern }: PatternDemoProps) {
             class="copy-btn"
             data-code={`<button _="${pattern.rawCode}">\n  ${buttonLabel}\n</button>`}
             _="on click
-               call navigator.clipboard.writeText(my @data-code)
+               writeText(my @data-code) on navigator.clipboard
                put 'Copied!' into me
                add .copied to me
                wait 2s

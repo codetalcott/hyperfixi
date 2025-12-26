@@ -15,6 +15,9 @@ export const spanishProfile: LanguageProfile = {
   wordOrder: 'SVO',
   markingStrategy: 'preposition',
   usesSpaces: true,
+  // Infinitive is standard for Spanish software UI (Guardar, Cancelar, Abrir)
+  // This matches macOS, Windows, and web app conventions
+  defaultVerbForm: 'infinitive',
   verb: {
     position: 'start',
     subjectDrop: true,

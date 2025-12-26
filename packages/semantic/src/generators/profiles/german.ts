@@ -15,6 +15,9 @@ export const germanProfile: LanguageProfile = {
   wordOrder: 'SVO',
   markingStrategy: 'preposition',
   usesSpaces: true,
+  // Infinitive is standard for German software UI (Speichern, Öffnen, Schließen)
+  // Also used in written instructions ("Bitte nicht stören")
+  defaultVerbForm: 'infinitive',
   verb: {
     position: 'start',
     subjectDrop: false,

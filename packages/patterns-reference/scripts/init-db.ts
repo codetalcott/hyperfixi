@@ -508,7 +508,7 @@ const SEED_EXAMPLES: SeedExample[] = [
     id: 'install-behavior',
     title: 'Install Behavior',
     raw_code: 'install Draggable',
-    description: 'Install a reusable behavior',
+    description: 'Install a reusable behavior on an element. Replace "Draggable" with any defined behavior name (e.g., Sortable, Closeable).',
     feature: 'behaviors',
   },
   {

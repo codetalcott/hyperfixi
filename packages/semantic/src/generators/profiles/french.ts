@@ -15,6 +15,8 @@ export const frenchProfile: LanguageProfile = {
   wordOrder: 'SVO',
   markingStrategy: 'preposition',
   usesSpaces: true,
+  // Infinitive is standard for French software UI (Enregistrer, Ouvrir, Fermer)
+  defaultVerbForm: 'infinitive',
   verb: {
     position: 'start',
     subjectDrop: false,

@@ -15,6 +15,9 @@ export const japaneseProfile: LanguageProfile = {
   wordOrder: 'SOV',
   markingStrategy: 'particle',
   usesSpaces: false,
+  // Japanese uses verb stem/masu-stem form, no clear infinitive/imperative distinction
+  // for UI commands. Uses katakana loanwords (トグル) or native stems (切り替え)
+  defaultVerbForm: 'base',
   verb: {
     position: 'end',
     suffixes: ['る', 'て', 'た', 'ます', 'ない'],

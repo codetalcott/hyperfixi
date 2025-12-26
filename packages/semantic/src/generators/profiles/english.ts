@@ -14,6 +14,8 @@ export const englishProfile: LanguageProfile = {
   wordOrder: 'SVO',
   markingStrategy: 'preposition',
   usesSpaces: true,
+  // English infinitive and imperative are identical ("toggle", "save", "open")
+  defaultVerbForm: 'base',
   verb: {
     position: 'start',
     subjectDrop: false,

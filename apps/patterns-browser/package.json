@@ -14,7 +14,8 @@
     "@elysiajs/html": "^1.1.0",
     "@elysiajs/static": "^1.1.0",
     "@kitajs/html": "^4.2.0",
-    "@hyperfixi/patterns-reference": "workspace:*"
+    "@hyperfixi/patterns-reference": "workspace:*",
+    "@hyperfixi/semantic": "workspace:*"
   },
   "devDependencies": {
     "bun-types": "latest",

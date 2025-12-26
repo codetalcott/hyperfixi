@@ -214,7 +214,7 @@ export function CodeBlock({ code, showCopy = true }: { code: string; showCopy?: 
           class="copy-btn"
           data-code={code}
           _="on click
-             call navigator.clipboard.writeText(my @data-code)
+             writeText(my @data-code) on navigator.clipboard
              put 'Copied!' into me
              add .copied to me
              wait 2s
