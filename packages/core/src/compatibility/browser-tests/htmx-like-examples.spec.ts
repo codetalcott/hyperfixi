@@ -49,8 +49,8 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       const initialText = await page.textContent('#morph-target h3');
       expect(initialText).toContain('Original Content');
 
-      // Click swap button
-      await page.click('button:has-text("Swap Content (Morph)")');
+      // Click swap button (first "Swap innerHTML" button in #morph-target area)
+      await page.click('#morph-target ~ div button:has-text("Swap innerHTML")');
       await page.waitForTimeout(300);
 
       // Content should be updated
@@ -99,8 +99,8 @@ test.describe('htmx-like Examples Live Tests @comprehensive', () => {
       // Verify text was typed
       expect(await innerHTMLInput.inputValue()).toBe('will be lost');
 
-      // Click innerHTML swap button
-      await page.click('button:has-text("Swap innerHTML")');
+      // Click innerHTML swap button (in the #compare-innerhtml section specifically)
+      await page.click('#compare-innerhtml button:has-text("Swap innerHTML")');
       await page.waitForTimeout(300);
 
       // Input value should be empty (innerHTML destroys state)
