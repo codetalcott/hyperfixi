@@ -5,6 +5,7 @@ Complete API documentation for HyperFixi.
 ## Table of Contents
 
 - [Main API](#main-api)
+- [HTML Integration](#html-integration)
 - [Types](#types)
 - [Context Management](#context-management)
 - [Runtime Configuration](#runtime-configuration)
@@ -465,6 +466,73 @@ element.addEventListener('click', async () => {
 // After: HyperFixi
 const context = hyperscript.createContext(element);
 await hyperscript.run('add ".active" then hide me then wait 1s then show me', context);
+```
+
+---
+
+## HTML Integration
+
+### Inline Attributes
+
+The standard way to add hyperscript to elements:
+
+```html
+<button _="on click add .active to me">Click me</button>
+```
+
+### Script Blocks
+
+For behavior definitions that should be available globally:
+
+```html
+<script type="text/hyperscript">
+behavior Draggable
+  on pointerdown
+    -- drag logic
+  end
+end
+</script>
+```
+
+### Script Blocks with `for` Attribute
+
+Bind hyperscript to specific elements using the `for` attribute. This is useful for:
+
+- Multi-line handlers that are hard to read in `_=` attributes
+- Avoiding quote escaping when HTML strings contain `_=` attributes
+- Separating behavior from markup
+
+```html
+<button id="my-btn">Click me</button>
+<script type="text/hyperscript" for="#my-btn">
+  on click
+    set html to `<div class="box" _="install Draggable">Drag me</div>`
+    swap innerHTML of #container with html
+    call hyperfixi.processNode(#container)
+</script>
+```
+
+**Selector behavior:**
+
+- Accepts any valid CSS selector
+- Executes once for each matched element
+- Sets `me` to the target element
+- Warns if no elements match (doesn't error)
+
+```html
+<!-- Bind to multiple elements -->
+<script type="text/hyperscript" for=".toggle-btn">
+  on click toggle .active on me
+</script>
+```
+
+### `processNode(element)`
+
+Re-process an element (and descendants) after dynamic HTML insertion:
+
+```javascript
+container.innerHTML = '<div _="on click log \'hello\'">New</div>';
+hyperfixi.processNode(container);
 ```
 
 ---

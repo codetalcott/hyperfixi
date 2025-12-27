@@ -348,12 +348,7 @@
           </div>
           <div class="timestamp" id="innerHTML-drag-timestamp">Not yet updated</div>
         </div>
-        <button _='on click
-          set time to new Date().toLocaleTimeString()
-          set html to "<div id=innerHTML-box class=drag-box style=&#39;left: 20px; top: 20px;&#39; _=&#39;install Draggable&#39;>Drag me!</div><div class=timestamp id=innerHTML-drag-timestamp>Updated: " + time + "</div>"
-          swap innerHTML of #innerHTML-drag-container with html
-          call hyperfixi.processNode(#innerHTML-drag-container)
-          add .flash-danger to #innerHTML-drag-status then wait 500ms then remove .flash-danger'>
+        <button id="innerHTML-drag-btn">
           Update with innerHTML
         </button>
         <div id="innerHTML-drag-status" class="status danger">Timestamp changes AND box resets to corner!</div>
@@ -407,13 +402,7 @@
           <div class="timestamp" id="innerHTML-video-timestamp">Not yet updated</div>
         </div>
         <div class="video-time">Current time: <span id="innerHTML-video-time">0.00s</span></div>
-        <button _='on click
-          set time to new Date().toLocaleTimeString()
-          set html to "<video id=innerHTML-video controls><source src=&#39;https://www.w3schools.com/html/mov_bbb.mp4&#39; type=&#39;video/mp4&#39;>Your browser does not support video.</video><div class=timestamp id=innerHTML-video-timestamp>Updated: " + time + "</div>"
-          swap innerHTML of #innerHTML-video-container with html
-          wait 100ms
-          set #innerHTML-video-time.innerText to "0.00s (reset!)"
-          add .flash-danger to #innerHTML-video-status then wait 500ms then remove .flash-danger'>
+        <button id="innerHTML-video-btn">
           Update with innerHTML
         </button>
         <div id="innerHTML-video-status" class="status danger">Timestamp changes AND video resets to 0:00!</div>
@@ -487,11 +476,7 @@
           </label>
           <div class="timestamp" id="innerHTML-form-timestamp">Not yet updated</div>
         </div>
-        <button _='on click
-          set time to new Date().toLocaleTimeString()
-          set html to "<label>Name:<input type=text id=innerHTML-name value=&#39;John Doe&#39;></label><label>Favorite Color:<select id=innerHTML-color><option value=red>Red</option><option value=blue selected>Blue</option><option value=green>Green</option></select></label><label>Notes:<textarea id=innerHTML-notes>Pre-filled notes - edit me!</textarea></label><div class=timestamp id=innerHTML-form-timestamp>Updated: " + time + "</div>"
-          swap innerHTML of #innerHTML-form-container with html
-          add .flash-danger to #innerHTML-form-status then wait 500ms then remove .flash-danger'>
+        <button id="innerHTML-form-btn">
           Update with innerHTML
         </button>
         <div id="innerHTML-form-status" class="status danger">Timestamp changes AND your edits are gone!</div>
@@ -533,7 +518,68 @@ behavior Draggable(dragHandle)
 end
   </script>
 
-  <!-- Video time tracking and innerHTML handlers -->
+  <!-- innerHTML button handlers using 'for' attribute for clean multi-line code -->
+  <!-- This avoids the terrible &#39; escaping required in inline _= attributes -->
+
+  <script type="text/hyperscript" for="#innerHTML-drag-btn">
+    on click
+      set time to new Date().toLocaleTimeString()
+      set html to `
+        <div id="innerHTML-box" class="drag-box"
+             style="left: 20px; top: 20px;"
+             _="install Draggable">
+          Drag me!
+        </div>
+        <div class="timestamp" id="innerHTML-drag-timestamp">Updated: ${time}</div>
+      `
+      swap innerHTML of #innerHTML-drag-container with html
+      call hyperfixi.processNode(#innerHTML-drag-container)
+      add .flash-danger to #innerHTML-drag-status then wait 500ms then remove .flash-danger
+  </script>
+
+  <script type="text/hyperscript" for="#innerHTML-video-btn">
+    on click
+      set time to new Date().toLocaleTimeString()
+      set html to `
+        <video id="innerHTML-video" controls>
+          <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+          Your browser does not support video.
+        </video>
+        <div class="timestamp" id="innerHTML-video-timestamp">Updated: ${time}</div>
+      `
+      swap innerHTML of #innerHTML-video-container with html
+      wait 100ms
+      set #innerHTML-video-time.innerText to "0.00s (reset!)"
+      add .flash-danger to #innerHTML-video-status then wait 500ms then remove .flash-danger
+  </script>
+
+  <script type="text/hyperscript" for="#innerHTML-form-btn">
+    on click
+      set time to new Date().toLocaleTimeString()
+      set html to `
+        <label>
+          Name:
+          <input type="text" id="innerHTML-name" value="John Doe">
+        </label>
+        <label>
+          Favorite Color:
+          <select id="innerHTML-color">
+            <option value="red">Red</option>
+            <option value="blue" selected>Blue</option>
+            <option value="green">Green</option>
+          </select>
+        </label>
+        <label>
+          Notes:
+          <textarea id="innerHTML-notes">Pre-filled notes - edit me!</textarea>
+        </label>
+        <div class="timestamp" id="innerHTML-form-timestamp">Updated: ${time}</div>
+      `
+      swap innerHTML of #innerHTML-form-container with html
+      add .flash-danger to #innerHTML-form-status then wait 500ms then remove .flash-danger
+  </script>
+
+  <!-- Video time tracking -->
   <script>
     // Update video time displays
     function updateVideoTimes() {

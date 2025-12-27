@@ -110,8 +110,75 @@ export class AttributeProcessor {
 
   /**
    * Process a <script type="text/hyperscript"> tag
+   * Supports optional 'for' attribute to bind to specific elements
    */
   private async processHyperscriptTag(script: HTMLScriptElement): Promise<void> {
+    const forSelector = script.getAttribute('for');
+
+    if (forSelector) {
+      await this.processHyperscriptTagForElements(script, forSelector);
+    } else {
+      await this.processHyperscriptTagGlobal(script);
+    }
+  }
+
+  /**
+   * Process a script tag with 'for' attribute - binds to specific elements
+   * Example: <script type="text/hyperscript" for="#my-btn">on click toggle .active</script>
+   */
+  private async processHyperscriptTagForElements(
+    script: HTMLScriptElement,
+    selector: string
+  ): Promise<void> {
+    debug.parse(`SCRIPT: Processing hyperscript script tag with for="${selector}"`);
+
+    const hyperscriptCode = script.textContent || script.innerHTML;
+    if (!hyperscriptCode || !hyperscriptCode.trim()) {
+      debug.parse('SCRIPT: No hyperscript code found in script tag');
+      return;
+    }
+
+    // Resolve target elements
+    const targets = document.querySelectorAll(selector);
+
+    if (targets.length === 0) {
+      console.warn(
+        `[HyperFixi] Script with for="${selector}" found no matching elements`
+      );
+      return;
+    }
+
+    try {
+      debug.parse(`SCRIPT: Compiling for="${selector}" code:`, hyperscriptCode.substring(0, 50) + '...');
+
+      // Compile once, execute for each target
+      const compilationResult = hyperscript.compile(hyperscriptCode);
+
+      if (!compilationResult.success) {
+        const dbg = (window as any).__hyperfixi_debug = (window as any).__hyperfixi_debug || [];
+        dbg.push(`Script for="${selector}" COMPILE FAILED: ` + JSON.stringify(compilationResult.errors));
+        console.error(`[HyperFixi] Script for="${selector}" compilation failed:`, compilationResult.errors);
+        return;
+      }
+
+      // Execute for each matched element
+      for (const target of targets) {
+        if (target instanceof HTMLElement) {
+          const context = createContext(target); // 'me' = target element
+          await hyperscript.execute(compilationResult.ast!, context);
+        }
+      }
+
+      debug.parse(`SCRIPT: Executed for="${selector}" on ${targets.length} element(s)`);
+    } catch (error) {
+      console.error(`[HyperFixi] Error processing script for="${selector}":`, error);
+    }
+  }
+
+  /**
+   * Process a global script tag (no 'for' attribute) - for behavior definitions
+   */
+  private async processHyperscriptTagGlobal(script: HTMLScriptElement): Promise<void> {
     debug.parse('SCRIPT: Processing hyperscript script tag');
 
     const hyperscriptCode = script.textContent || script.innerHTML;
@@ -276,6 +343,22 @@ export class AttributeProcessor {
         mutation.addedNodes.forEach(node => {
           if (node.nodeType === Node.ELEMENT_NODE) {
             const element = node as HTMLElement;
+
+            // Process hyperscript script tags (including those with 'for' attribute)
+            if (
+              element.tagName === 'SCRIPT' &&
+              element.getAttribute('type') === 'text/hyperscript'
+            ) {
+              void this.processHyperscriptTag(element as HTMLScriptElement);
+            }
+
+            // Process descendant script tags
+            const scriptTags = element.querySelectorAll?.('script[type="text/hyperscript"]');
+            scriptTags?.forEach(script => {
+              if (script instanceof HTMLScriptElement) {
+                void this.processHyperscriptTag(script);
+              }
+            });
 
             // Process the element itself if it has hyperscript attribute
             if (element.getAttribute && element.getAttribute(this.options.attributeName)) {

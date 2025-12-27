@@ -452,4 +452,133 @@ describe('AttributeProcessor System Events', () => {
       await eventPromise;
     });
   });
+
+  describe('Script tag with "for" attribute', () => {
+    it('should bind script to a single element using ID selector', async () => {
+      testContainer.innerHTML = `
+        <button id="my-btn">Click me</button>
+        <script type="text/hyperscript" for="#my-btn">
+          on click add .clicked to me
+        </script>
+      `;
+
+      await processor.scanAndProcessAll();
+
+      const btn = document.getElementById('my-btn')!;
+      btn.click();
+
+      // Wait for async event processing
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      expect(btn.classList.contains('clicked')).toBe(true);
+    });
+
+    it('should bind script to multiple elements using class selector', async () => {
+      testContainer.innerHTML = `
+        <button class="toggle-btn">A</button>
+        <button class="toggle-btn">B</button>
+        <button class="toggle-btn">C</button>
+        <script type="text/hyperscript" for=".toggle-btn">
+          on click add .active to me
+        </script>
+      `;
+
+      await processor.scanAndProcessAll();
+
+      const buttons = document.querySelectorAll('.toggle-btn');
+
+      // Click each button
+      (buttons[0] as HTMLElement).click();
+      (buttons[2] as HTMLElement).click();
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      expect((buttons[0] as HTMLElement).classList.contains('active')).toBe(true);
+      expect((buttons[1] as HTMLElement).classList.contains('active')).toBe(false);
+      expect((buttons[2] as HTMLElement).classList.contains('active')).toBe(true);
+    });
+
+    it('should warn when selector matches no elements', async () => {
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      testContainer.innerHTML = `
+        <script type="text/hyperscript" for="#nonexistent">
+          on click log 'hello'
+        </script>
+      `;
+
+      await processor.scanAndProcessAll();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('found no matching elements')
+      );
+
+      warnSpy.mockRestore();
+    });
+
+    it('should set "me" context to the target element', async () => {
+      testContainer.innerHTML = `
+        <div id="test-elem" class="original">Test</div>
+        <script type="text/hyperscript" for="#test-elem">
+          on click add .clicked-via-me to me
+        </script>
+      `;
+
+      await processor.scanAndProcessAll();
+
+      const elem = document.getElementById('test-elem')!;
+      elem.click();
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      // 'me' should refer to #test-elem, not some other element
+      expect(elem.classList.contains('clicked-via-me')).toBe(true);
+    });
+
+    it('should handle complex child selectors', async () => {
+      testContainer.innerHTML = `
+        <div class="card" id="card1">
+          <button class="action">Action 1</button>
+        </div>
+        <div class="card" id="card2">
+          <button class="action">Action 2</button>
+        </div>
+        <script type="text/hyperscript" for=".card > .action">
+          on click add .actioned to me
+        </script>
+      `;
+
+      await processor.scanAndProcessAll();
+
+      const buttons = document.querySelectorAll('.action');
+      (buttons[0] as HTMLElement).click();
+
+      await new Promise(resolve => setTimeout(resolve, 10));
+
+      expect((buttons[0] as HTMLElement).classList.contains('actioned')).toBe(true);
+      expect((buttons[1] as HTMLElement).classList.contains('actioned')).toBe(false);
+    });
+
+    it('should support multi-line script content with toggle', async () => {
+      testContainer.innerHTML = `
+        <button id="toggle-btn">Toggle</button>
+        <script type="text/hyperscript" for="#toggle-btn">
+          on click
+            toggle .on on me
+        </script>
+      `;
+
+      await processor.scanAndProcessAll();
+
+      const btn = document.getElementById('toggle-btn')!;
+
+      btn.click();
+      await new Promise(resolve => setTimeout(resolve, 10));
+      expect(btn.classList.contains('on')).toBe(true);
+
+      btn.click();
+      await new Promise(resolve => setTimeout(resolve, 10));
+      expect(btn.classList.contains('on')).toBe(false);
+    });
+  });
 });

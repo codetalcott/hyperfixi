@@ -495,7 +495,9 @@ Benefits:
 
 **Medium Priority:**
 
-3. **Multi-line hyperscript support** - Consider supporting `<script type="text/hyperscript">` blocks for complex logic that doesn't fit in attributes:
+3. **Multi-line hyperscript support** - ✅ **IMPLEMENTED** (Dec 2025)
+
+   The `for` attribute now allows binding `<script type="text/hyperscript">` blocks to specific elements:
 
    ```html
    <button id="my-btn">Click</button>
