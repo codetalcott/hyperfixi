@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>htmx-like: Partial Template Validation</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; max-width: 900px; margin: 0 auto; }
+    .demo-box { border: 1px solid #ccc; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .demo-box h3 { margin-top: 0; }
+    button { padding: 8px 16px; margin: 5px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; }
+    button:hover { background: #f0f0f0; }
+    .info { background: #f0f9ff; padding: 15px; border-radius: 4px; margin: 10px 0; border-left: 4px solid #0891b2; }
+    .warning { background: #fef3c7; border-left-color: #f59e0b; }
+    .error { background: #fee2e2; border-left-color: #dc2626; }
+    #swap-target { min-height: 100px; background: #f9fafb; padding: 15px; border-radius: 4px; }
+    #validation-log {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 13px;
+      max-height: 300px;
+      overflow-y: auto;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+    .log-critical { color: #f87171; }
+    .log-structural { color: #fb923c; }
+    .log-warning { color: #facc15; }
+    .log-info { color: #60a5fa; }
+    .log-success { color: #4ade80; }
+    .config-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+    .config-option { padding: 10px; background: #f5f5f5; border-radius: 4px; }
+    .config-option label { display: block; margin-bottom: 5px; font-weight: 500; }
+    select, input[type="text"] { width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+    .button-group { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+    .button-group button { flex: 1; min-width: 150px; }
+    code { background: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+  <h1>Partial Template Validation</h1>
+
+  <div class="info">
+    <strong>Purpose:</strong> Demonstrates development-time validation that catches common errors when
+    partial templates accidentally contain layout elements (<code>&lt;html&gt;</code>, <code>&lt;body&gt;</code>)
+    or duplicate semantic landmarks (<code>&lt;header&gt;</code>, <code>&lt;footer&gt;</code>).
+    <br><br>
+    <strong>Open your browser's DevTools console</strong> to see styled warnings when swapping problematic content.
+  </div>
+
+  <h2>Configuration</h2>
+  <div class="demo-box">
+    <div class="config-panel">
+      <div class="config-option">
+        <label>Strictness Level</label>
+        <select id="strictness-select">
+          <option value="relaxed">Relaxed (critical only)</option>
+          <option value="standard" selected>Standard (critical + structural)</option>
+          <option value="strict">Strict (all warnings)</option>
+        </select>
+      </div>
+      <div class="config-option">
+        <label>Show Warnings</label>
+        <select id="warnings-select">
+          <option value="true" selected>Enabled</option>
+          <option value="false">Disabled</option>
+        </select>
+      </div>
+      <div class="config-option">
+        <label>Additional Critical Elements</label>
+        <input type="text" id="critical-elements" placeholder="e.g., app-shell, app-layout">
+      </div>
+    </div>
+    <button onclick="applyConfig()" style="margin-top: 15px;">Apply Configuration</button>
+  </div>
+
+  <h2>Swap Target</h2>
+  <div class="demo-box">
+    <div id="swap-target">
+      <p>This is the swap target. Content will be swapped here.</p>
+      <p>Current time: <span id="current-time"></span></p>
+    </div>
+  </div>
+
+  <h2>Test Scenarios</h2>
+
+  <div class="demo-box">
+    <h3>Critical Issues (Always Detected)</h3>
+    <p class="info error">These represent serious errors where a server returns a full page instead of a partial.</p>
+    <div class="button-group">
+      <button onclick="swapWithHtml()">
+        Swap with &lt;html&gt; (Full Page)
+      </button>
+      <button onclick="swapWithBody()">
+        Swap with &lt;body&gt;
+      </button>
+      <button onclick="swapWithHead()">
+        Swap with &lt;head&gt;
+      </button>
+      <button onclick="swapWithDoctype()">
+        Swap with DOCTYPE
+      </button>
+    </div>
+  </div>
+
+  <div class="demo-box">
+    <h3>Structural Issues (Standard/Strict Mode)</h3>
+    <p class="info warning">These may cause duplicate semantic landmarks, affecting accessibility.</p>
+    <div class="button-group">
+      <button onclick="swapWithHeader()">
+        Swap with &lt;header&gt;
+      </button>
+      <button onclick="swapWithFooter()">
+        Swap with &lt;footer&gt;
+      </button>
+      <button onclick="swapWithMain()">
+        Swap with &lt;main&gt;
+      </button>
+      <button onclick="swapWithNav()">
+        Swap with &lt;nav&gt;
+      </button>
+    </div>
+  </div>
+
+  <div class="demo-box">
+    <h3>Valid Partial Content</h3>
+    <p class="info">These are valid partial templates that should pass validation.</p>
+    <div class="button-group">
+      <button onclick="swapValidContent()">
+        Swap Valid Content
+      </button>
+      <button onclick="swapArticle()">
+        Swap &lt;article&gt;
+      </button>
+      <button onclick="swapForm()">
+        Swap &lt;form&gt;
+      </button>
+    </div>
+  </div>
+
+  <h2>Validation Log</h2>
+  <div id="validation-log">Waiting for swap operations...</div>
+  <button onclick="clearLog()" style="margin-top: 10px;">Clear Log</button>
+
+  <h2>Manual Validation API</h2>
+  <div class="demo-box">
+    <p>You can also validate HTML content manually without swapping:</p>
+    <textarea id="manual-html" rows="4" style="width: 100%; font-family: monospace; padding: 10px;" placeholder="Enter HTML to validate, e.g.: <html><body>content</body></html>"></textarea>
+    <button onclick="validateManual()" style="margin-top: 10px;">Validate HTML</button>
+  </div>
+
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script>
+    // Get validation functions from hyperfixi
+    const {
+      validatePartialContent,
+      configurePartialValidation,
+      getPartialValidationConfig,
+      resetPartialValidationConfig,
+      emitPartialValidationWarnings,
+      formatResultSummary
+    } = window.hyperfixi ? window.hyperfixi : {};
+
+    // Check if validation is available
+    if (!validatePartialContent) {
+      document.getElementById('validation-log').innerHTML =
+        '<span class="log-critical">ERROR: Partial validation not available. Make sure hyperfixi-browser.js is loaded.</span>';
+    }
+
+    // Initialize with validation enabled
+    if (configurePartialValidation) {
+      configurePartialValidation({ enabled: true, showWarnings: true });
+    }
+
+    // Update time display
+    function updateTime() {
+      const timeEl = document.getElementById('current-time');
+      if (timeEl) timeEl.textContent = new Date().toLocaleTimeString();
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // Logging utility
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('validation-log');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = `log-${type}`;
+      logEl.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById('validation-log').innerHTML = 'Log cleared.\n';
+    }
+
+    // Apply configuration
+    function applyConfig() {
+      const strictness = document.getElementById('strictness-select').value;
+      const showWarnings = document.getElementById('warnings-select').value === 'true';
+      const criticalElements = document.getElementById('critical-elements').value
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s);
+
+      configurePartialValidation({
+        enabled: true,
+        strictness,
+        showWarnings,
+        additionalCriticalElements: criticalElements.length > 0 ? criticalElements : undefined,
+      });
+
+      log(`Configuration updated: strictness=${strictness}, showWarnings=${showWarnings}`, 'info');
+      if (criticalElements.length > 0) {
+        log(`  Additional critical elements: ${criticalElements.join(', ')}`, 'info');
+      }
+    }
+
+    // Swap and validate helper
+    function swapAndValidate(html, description) {
+      log(`\n--- ${description} ---`, 'info');
+      log(`Content: ${html.substring(0, 100)}${html.length > 100 ? '...' : ''}`, 'info');
+
+      // Validate first
+      const result = validatePartialContent(html, '#swap-target');
+
+      if (result.totalIssues > 0) {
+        log(`Validation: ${formatResultSummary(result)}`, result.valid ? 'warning' : 'critical');
+
+        result.issues.forEach(issue => {
+          const icon = issue.severity === 'critical' ? '!!' : issue.severity === 'structural' ? '!' : '*';
+          log(`  ${icon} <${issue.element}>: ${issue.message}`, issue.severity);
+        });
+
+        // Also emit to console for styled output
+        emitPartialValidationWarnings(result);
+      } else {
+        log('Validation: No issues found', 'success');
+      }
+
+      // Always proceed with swap (non-blocking)
+      const target = document.getElementById('swap-target');
+      target.innerHTML = html;
+      log('Swap completed (validation is non-blocking)', 'info');
+    }
+
+    // Test scenarios
+    function swapWithHtml() {
+      swapAndValidate(
+        '<!DOCTYPE html><html><head><title>Full Page</title></head><body><div>This is a full page!</div></body></html>',
+        'Full page with <html> and <body>'
+      );
+    }
+
+    function swapWithBody() {
+      swapAndValidate(
+        '<body><div class="content"><h2>Body Content</h2><p>This partial contains a body element.</p></div></body>',
+        'Partial with <body> element'
+      );
+    }
+
+    function swapWithHead() {
+      swapAndValidate(
+        '<head><title>Title</title><link rel="stylesheet" href="style.css"></head><div>Content</div>',
+        'Partial with <head> element'
+      );
+    }
+
+    function swapWithDoctype() {
+      swapAndValidate(
+        '<!DOCTYPE html><div class="content"><h2>DOCTYPE Present</h2><p>This partial has a DOCTYPE declaration.</p></div>',
+        'Partial with DOCTYPE'
+      );
+    }
+
+    function swapWithHeader() {
+      swapAndValidate(
+        '<header><nav><a href="/">Home</a> | <a href="/about">About</a></nav></header><div class="content"><p>Main content here.</p></div>',
+        'Partial with <header> element'
+      );
+    }
+
+    function swapWithFooter() {
+      swapAndValidate(
+        '<div class="content"><p>Content above footer.</p></div><footer><p>&copy; 2024 Company</p></footer>',
+        'Partial with <footer> element'
+      );
+    }
+
+    function swapWithMain() {
+      swapAndValidate(
+        '<main><article><h2>Article Title</h2><p>Article content.</p></article></main>',
+        'Partial with <main> element'
+      );
+    }
+
+    function swapWithNav() {
+      swapAndValidate(
+        '<nav><ul><li><a href="/">Home</a></li><li><a href="/products">Products</a></li></ul></nav>',
+        'Partial with <nav> element'
+      );
+    }
+
+    function swapValidContent() {
+      swapAndValidate(
+        `<div class="card"><h2>Valid Partial Content</h2><p>Updated at ${new Date().toLocaleTimeString()}</p><button onclick="alert('Clicked!')">Click Me</button></div>`,
+        'Valid partial (div with content)'
+      );
+    }
+
+    function swapArticle() {
+      swapAndValidate(
+        '<article><h2>Article Title</h2><p>This is a valid article element in a partial.</p><time datetime="2024-01-15">January 15, 2024</time></article>',
+        'Valid partial (article element)'
+      );
+    }
+
+    function swapForm() {
+      swapAndValidate(
+        '<form><label>Name: <input type="text" name="name"></label><label>Email: <input type="email" name="email"></label><button type="submit">Submit</button></form>',
+        'Valid partial (form element)'
+      );
+    }
+
+    function validateManual() {
+      const html = document.getElementById('manual-html').value;
+      if (!html.trim()) {
+        log('Please enter HTML to validate', 'warning');
+        return;
+      }
+      swapAndValidate(html, 'Manual validation');
+    }
+
+    // Initial log message
+    log('Partial validation demo loaded', 'success');
+    log('Open DevTools console to see styled warnings', 'info');
+    log(`Current config: ${JSON.stringify(getPartialValidationConfig())}`, 'info');
+  </script>
+</body>
+</html>

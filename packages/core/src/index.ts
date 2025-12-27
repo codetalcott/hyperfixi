@@ -95,5 +95,29 @@ export type { ValidationResult, EvaluationType } from './types/base-types';
 
 export type { LLMDocumentation } from './types/command-types';
 
+// Partial template validation (development-time)
+export {
+  validatePartialContent,
+  configurePartialValidation,
+  getPartialValidationConfig,
+  resetPartialValidationConfig,
+} from './validation/partial-validator';
+export {
+  emitPartialValidationWarnings,
+  formatIssueAsString,
+  formatIssuesAsStrings,
+  formatResultSummary,
+} from './validation/partial-warning-formatter';
+export type {
+  PartialValidationSeverity,
+  LayoutElementCategory,
+  PartialValidationIssue,
+  PartialValidationResult,
+  PartialValidationConfig,
+  GlobalPartialValidationConfig,
+  TargetValidationOverride,
+  ValidatedPartialContent,
+} from './validation/partial-validation-types';
+
 // Note: Default export removed in favor of named exports for better tree-shaking
 // Use: import { hyperscript } from '@hyperfixi/core' instead of import hyperfixi from '@hyperfixi/core'

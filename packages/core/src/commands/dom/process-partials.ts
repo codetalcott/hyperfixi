@@ -17,6 +17,15 @@ import { withViewTransition, isViewTransitionsSupported } from '../../lib/view-t
 import { isHTMLElement } from '../../utils/element-check';
 import type { SwapStrategy } from './swap';
 import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
+import {
+  validatePartialContent,
+  getPartialValidationConfig,
+} from '../../validation/partial-validator';
+import {
+  emitPartialValidationWarnings,
+  formatIssuesAsStrings,
+} from '../../validation/partial-warning-formatter';
+import type { PartialValidationResult } from '../../validation/partial-validation-types';
 
 // ============================================================================
 // Types
@@ -38,6 +47,10 @@ export interface ProcessPartialsResult {
   count: number;
   targets: string[];
   errors: string[];
+  /** Validation warnings (non-blocking) */
+  validationWarnings: string[];
+  /** Detailed validation results per target */
+  validationDetails?: Record<string, PartialValidationResult>;
 }
 
 // ============================================================================
@@ -141,13 +154,33 @@ export function processPartials(
   morphOptions?: MorphOptions
 ): ProcessPartialsResult {
   const partials = extractPartials(html);
+  const config = getPartialValidationConfig();
   const result: ProcessPartialsResult = {
     count: 0,
     targets: [],
     errors: [],
+    validationWarnings: [],
+    validationDetails: {},
   };
 
   for (const partial of partials) {
+    // Validate partial content before swapping
+    if (config.enabled) {
+      const validation = validatePartialContent(partial.content, partial.target);
+
+      if (validation.totalIssues > 0) {
+        // Emit console warnings in dev mode
+        if (config.showWarnings) {
+          emitPartialValidationWarnings(validation);
+        }
+
+        // Add to warnings array for programmatic access
+        result.validationWarnings.push(...formatIssuesAsStrings(validation));
+        result.validationDetails![partial.target] = validation;
+      }
+    }
+
+    // Always proceed with swap (non-blocking)
     const swapResult = executePartialSwap(partial, morphOptions);
 
     if (swapResult.success) {

@@ -45,6 +45,10 @@ export const ErrorCodes = {
     ELSE_FAILED: 'ELSE_VALIDATION_FAILED',
     REPEAT_FAILED: 'REPEAT_VALIDATION_FAILED',
     GENERIC: 'VALIDATION_ERROR',
+    // Partial template validation
+    PARTIAL_LAYOUT_ELEMENT: 'PARTIAL_LAYOUT_ELEMENT',
+    PARTIAL_DUPLICATE_SEMANTIC: 'PARTIAL_DUPLICATE_SEMANTIC',
+    PARTIAL_METADATA_ELEMENT: 'PARTIAL_METADATA_ELEMENT',
   },
 
   // Operation failures (sub-operation level)
@@ -165,6 +169,9 @@ export const ErrorMessages = {
   [ErrorCodes.VALIDATION.ELSE_FAILED]: 'Else directive validation failed',
   [ErrorCodes.VALIDATION.REPEAT_FAILED]: 'Repeat directive validation failed',
   [ErrorCodes.VALIDATION.GENERIC]: 'Validation error',
+  [ErrorCodes.VALIDATION.PARTIAL_LAYOUT_ELEMENT]: 'Partial contains layout element: {0}',
+  [ErrorCodes.VALIDATION.PARTIAL_DUPLICATE_SEMANTIC]: 'Partial may create duplicate semantic landmark: {0}',
+  [ErrorCodes.VALIDATION.PARTIAL_METADATA_ELEMENT]: 'Partial contains metadata element: {0}',
 
   // Operation errors
   [ErrorCodes.OPERATION.CLASS_ADD_FAILED]: 'Failed to add class to element',
@@ -294,6 +301,18 @@ export const ErrorSuggestions = {
     'Check argument types and syntax',
     'Ensure arguments match expected types',
     'Verify required arguments are provided',
+  ],
+
+  // Partial validation suggestions
+  PARTIAL_LAYOUT: [
+    'Remove layout elements (html, body, head) from partial response',
+    'Return only content fragments, not full page HTML',
+    'Check server endpoint is returning partial content',
+  ],
+  PARTIAL_SEMANTIC: [
+    'Check if page already has this semantic landmark',
+    'Consider if landmark is needed in partial or should be static',
+    'Review partial content for duplicate header/footer/main/nav/aside',
   ],
 } as const;
 

@@ -19,6 +19,11 @@
 import { morphAdapter, type MorphOptions } from './morph-adapter';
 import { withViewTransition, isViewTransitionsSupported } from './view-transitions';
 import { isHTMLElement, isDocumentFragment } from '../utils/element-check';
+import {
+  validatePartialContent,
+  getPartialValidationConfig,
+} from '../validation/partial-validator';
+import { emitPartialValidationWarnings } from '../validation/partial-warning-formatter';
 
 // ============================================================================
 // Types
@@ -47,6 +52,10 @@ export interface SwapExecutionOptions {
   morphOptions?: MorphOptions;
   /** Use View Transitions API for smooth animations */
   useViewTransition?: boolean;
+  /** Validate content for layout elements before swapping (opt-in) */
+  validateContent?: boolean;
+  /** Target selector for validation context (used in warning messages) */
+  targetSelector?: string;
 }
 
 // ============================================================================
@@ -232,7 +241,21 @@ export async function executeSwapWithTransition(
   strategy: SwapStrategy,
   options: SwapExecutionOptions = {}
 ): Promise<void> {
-  const { morphOptions, useViewTransition = false } = options;
+  const { morphOptions, useViewTransition = false, validateContent = false, targetSelector } = options;
+
+  // Validate content if enabled and content is a string
+  if (validateContent && typeof content === 'string') {
+    const config = getPartialValidationConfig();
+    if (config.enabled) {
+      // Derive target selector from first target if not provided
+      const selector = targetSelector || deriveTargetSelector(targets[0]);
+      const validation = validatePartialContent(content, selector);
+
+      if (validation.totalIssues > 0 && config.showWarnings) {
+        emitPartialValidationWarnings(validation);
+      }
+    }
+  }
 
   const performSwap = () => {
     for (const target of targets) {
@@ -246,6 +269,19 @@ export async function executeSwapWithTransition(
   } else {
     performSwap();
   }
+}
+
+/**
+ * Derive a target selector string from an element for validation context
+ */
+function deriveTargetSelector(element?: HTMLElement): string {
+  if (!element) return '';
+  if (element.id) return `#${element.id}`;
+  if (element.className) {
+    const firstClass = element.className.split(' ')[0];
+    if (firstClass) return `.${firstClass}`;
+  }
+  return element.tagName.toLowerCase();
 }
 
 /**
