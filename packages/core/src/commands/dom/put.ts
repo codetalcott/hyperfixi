@@ -18,10 +18,13 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import {
   isPropertyOfExpressionNode,
+  isPropertyAccessNode,
   isPropertyTargetString,
   resolvePropertyTargetFromNode,
+  resolvePropertyTargetFromAccessNode,
   resolvePropertyTargetFromString,
   type PropertyOfExpressionNode,
+  type PropertyAccessNode,
 } from '../helpers/property-target';
 import { command, meta, createFactory, type DecoratedCommand , type CommandMetadata } from '../decorators';
 
@@ -105,6 +108,18 @@ export class PutCommand implements DecoratedCommand {
       if (isPropertyOfExpressionNode(targetArg)) {
         const target = await resolvePropertyTargetFromNode(
           targetArg as PropertyOfExpressionNode,
+          evaluator,
+          context
+        );
+        if (target) {
+          return { value, targets: [target.element], position: 'replace', memberPath: target.property };
+        }
+      }
+
+      // Semantic parser path: propertyAccess AST node ("#element's X")
+      if (isPropertyAccessNode(targetArg)) {
+        const target = await resolvePropertyTargetFromAccessNode(
+          targetArg as PropertyAccessNode,
           evaluator,
           context
         );

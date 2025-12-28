@@ -8,10 +8,13 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   PropertyTarget,
   PropertyOfExpressionNode,
+  PropertyAccessNode,
   isPropertyOfExpressionNode,
+  isPropertyAccessNode,
   isPropertyTargetString,
   resolvePropertyTargetFromString,
   resolvePropertyTargetFromNode,
+  resolvePropertyTargetFromAccessNode,
   togglePropertyTarget,
 } from '../property-target';
 
@@ -68,6 +71,30 @@ describe('PropertyTarget Detection', () => {
 
     it('should return false if property is missing', () => {
       expect(isPropertyOfExpressionNode({ type: 'propertyOfExpression', target: {} })).toBe(false);
+    });
+  });
+
+  describe('isPropertyAccessNode', () => {
+    it('should return true for valid propertyAccess nodes', () => {
+      const node: PropertyAccessNode = {
+        type: 'propertyAccess',
+        object: { type: 'idSelector', value: '#target' } as any,
+        property: 'innerHTML',
+      };
+      expect(isPropertyAccessNode(node)).toBe(true);
+    });
+
+    it('should return false for non-propertyAccess nodes', () => {
+      expect(isPropertyAccessNode({ type: 'identifier', name: 'foo' })).toBe(false);
+      expect(isPropertyAccessNode({ type: 'propertyOfExpression', property: { name: 'x' } })).toBe(false);
+      expect(isPropertyAccessNode(null)).toBe(false);
+      expect(isPropertyAccessNode(undefined)).toBe(false);
+      expect(isPropertyAccessNode('string')).toBe(false);
+    });
+
+    it('should return false if property is not a string', () => {
+      expect(isPropertyAccessNode({ type: 'propertyAccess', object: {}, property: 123 })).toBe(false);
+      expect(isPropertyAccessNode({ type: 'propertyAccess', object: {} })).toBe(false);
     });
   });
 
@@ -197,6 +224,69 @@ describe('PropertyTarget Resolution', () => {
       const context = createMockContext();
 
       const result = await resolvePropertyTargetFromNode(node, evaluator as any, context);
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('resolvePropertyTargetFromAccessNode', () => {
+    it('should resolve propertyAccess nodes from semantic parser', async () => {
+      const node: PropertyAccessNode = {
+        type: 'propertyAccess',
+        object: { type: 'idSelector', value: '#test-target' } as any,
+        property: 'innerHTML',
+      };
+
+      const evaluator = createMockEvaluator();
+      const context = createMockContext();
+
+      const result = await resolvePropertyTargetFromAccessNode(node, evaluator as any, context);
+
+      expect(result).not.toBeNull();
+      expect(result!.element).toBe(testElement);
+      expect(result!.property).toBe('innerHTML');
+    });
+
+    it('should handle array results (take first element)', async () => {
+      const node: PropertyAccessNode = {
+        type: 'propertyAccess',
+        object: { type: 'selector', value: 'div' } as any,
+        property: 'textContent',
+      };
+
+      const evaluator = { evaluate: async () => [testElement] };
+      const context = createMockContext();
+
+      const result = await resolvePropertyTargetFromAccessNode(node, evaluator as any, context);
+
+      expect(result).not.toBeNull();
+      expect(result!.element).toBe(testElement);
+    });
+
+    it('should return null for non-element targets', async () => {
+      const node: PropertyAccessNode = {
+        type: 'propertyAccess',
+        object: { type: 'literal', value: 'not an element' } as any,
+        property: 'innerHTML',
+      };
+
+      const evaluator = createMockEvaluator();
+      const context = createMockContext();
+
+      const result = await resolvePropertyTargetFromAccessNode(node, evaluator as any, context);
+      expect(result).toBeNull();
+    });
+
+    it('should return null if property is empty', async () => {
+      const node: PropertyAccessNode = {
+        type: 'propertyAccess',
+        object: { type: 'idSelector', value: '#test-target' } as any,
+        property: '',
+      };
+
+      const evaluator = createMockEvaluator();
+      const context = createMockContext();
+
+      const result = await resolvePropertyTargetFromAccessNode(node, evaluator as any, context);
       expect(result).toBeNull();
     });
   });

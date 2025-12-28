@@ -28,10 +28,13 @@ import { isCSSPropertySyntax, setStyleValue } from '../helpers/style-manipulatio
 import { isAttributeSyntax } from '../helpers/attribute-manipulation';
 import {
   isPropertyOfExpressionNode,
+  isPropertyAccessNode,
   isPropertyTargetString,
   resolvePropertyTargetFromNode,
+  resolvePropertyTargetFromAccessNode,
   resolvePropertyTargetFromString,
   type PropertyOfExpressionNode,
+  type PropertyAccessNode,
 } from '../helpers/property-target';
 import { command, meta, createFactory, type DecoratedCommand, type CommandMetadata } from '../decorators';
 
@@ -77,6 +80,19 @@ export class SetCommand implements DecoratedCommand {
     if (isPropertyOfExpressionNode(firstArg)) {
       const target = await resolvePropertyTargetFromNode(
         firstArg as PropertyOfExpressionNode,
+        evaluator,
+        context
+      );
+      if (target) {
+        const value = await this.extractValue(raw, evaluator, context);
+        return { type: 'property', element: target.element, property: target.property, value };
+      }
+    }
+
+    // Semantic parser path: propertyAccess AST node ("#element's X")
+    if (isPropertyAccessNode(firstArg)) {
+      const target = await resolvePropertyTargetFromAccessNode(
+        firstArg as PropertyAccessNode,
         evaluator,
         context
       );

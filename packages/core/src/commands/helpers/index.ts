@@ -37,14 +37,17 @@ export {
 // PropertyTarget helpers - shared 'x of y' pattern primitive
 export {
   isPropertyOfExpressionNode,
+  isPropertyAccessNode,
   isPropertyTargetString,
   resolvePropertyTargetFromNode,
+  resolvePropertyTargetFromAccessNode,
   resolvePropertyTargetFromString,
   togglePropertyTarget,
 } from './property-target';
 export type {
   PropertyTarget,
   PropertyOfExpressionNode,
+  PropertyAccessNode,
 } from './property-target';
 
 // Element resolution helpers

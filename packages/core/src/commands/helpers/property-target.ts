@@ -1,6 +1,10 @@
 /**
  * PropertyTarget - Shared primitive for 'x of y' patterns
  * Used by: set, put, toggle commands
+ *
+ * Handles multiple AST node types:
+ * - propertyOfExpression: "the X of Y" (core parser)
+ * - propertyAccess: "#element's X" (semantic parser)
  */
 
 import type { ASTNode, ExecutionContext } from '../../types/base-types';
@@ -21,6 +25,12 @@ export interface PropertyOfExpressionNode {
   target: ASTNode;
 }
 
+export interface PropertyAccessNode {
+  type: 'propertyAccess';
+  object: ASTNode;
+  property: string;
+}
+
 // Pattern for "the X of Y" strings
 const PATTERN = /^the\s+(.+?)\s+of\s+(.+)$/i;
 
@@ -32,11 +42,18 @@ const BOOL_PROPS = new Set([
   'formNoValidate', 'formnovalidate', 'draggable', 'spellcheck', 'contentEditable',
 ]);
 
-/** Check if node is a propertyOfExpression AST node */
+/** Check if node is a propertyOfExpression AST node (core parser: "the X of Y") */
 export function isPropertyOfExpressionNode(node: unknown): node is PropertyOfExpressionNode {
   if (!node || typeof node !== 'object') return false;
   const n = node as Record<string, unknown>;
   return n.type === 'propertyOfExpression' && typeof n.property === 'object' && n.property !== null;
+}
+
+/** Check if node is a propertyAccess AST node (semantic parser: "#element's X") */
+export function isPropertyAccessNode(node: unknown): node is PropertyAccessNode {
+  if (!node || typeof node !== 'object') return false;
+  const n = node as Record<string, unknown>;
+  return n.type === 'propertyAccess' && typeof n.property === 'string';
 }
 
 /** Check if value is a "the X of Y" string */
@@ -44,7 +61,7 @@ export function isPropertyTargetString(value: unknown): value is string {
   return typeof value === 'string' && PATTERN.test(value);
 }
 
-/** Resolve PropertyTarget from AST node */
+/** Resolve PropertyTarget from propertyOfExpression AST node (core parser) */
 export async function resolvePropertyTargetFromNode(
   node: PropertyOfExpressionNode,
   evaluator: ExpressionEvaluator,
@@ -54,6 +71,22 @@ export async function resolvePropertyTargetFromNode(
   if (!property) return null;
 
   let element = await evaluator.evaluate(node.target, context);
+  if (Array.isArray(element)) element = element[0];
+  if (!isHTMLElement(element)) return null;
+
+  return { element: element as HTMLElement, property };
+}
+
+/** Resolve PropertyTarget from propertyAccess AST node (semantic parser) */
+export async function resolvePropertyTargetFromAccessNode(
+  node: PropertyAccessNode,
+  evaluator: ExpressionEvaluator,
+  context: ExecutionContext
+): Promise<PropertyTarget | null> {
+  const property = node.property;
+  if (!property) return null;
+
+  let element = await evaluator.evaluate(node.object, context);
   if (Array.isArray(element)) element = element[0];
   if (!isHTMLElement(element)) return null;
 
