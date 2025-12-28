@@ -8,23 +8,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   PropertyTarget,
   PropertyOfExpressionNode,
-  PROPERTY_OF_PATTERN,
   isPropertyOfExpressionNode,
-  isPossessiveExpressionNode,
   isPropertyTargetString,
-  parsePropertyTargetString,
   resolvePropertyTargetFromString,
   resolvePropertyTargetFromNode,
-  resolvePropertyTargetFromPossessive,
-  readPropertyTarget,
-  writePropertyTarget,
   togglePropertyTarget,
-  isBooleanProperty,
 } from '../property-target';
-
-// ============================================================================
-// Test Utilities
-// ============================================================================
 
 import type { ExecutionContext } from '../../../types/base-types';
 
@@ -43,27 +32,20 @@ function createMockEvaluator() {
   return {
     evaluate: async (node: unknown, _context: unknown) => {
       const n = node as Record<string, unknown>;
-      // Handle ID selector nodes
       if (n.type === 'idSelector' || n.type === 'selector') {
         const selector = (n.value || n.selector) as string;
         return document.querySelector(selector);
       }
-      // Handle identifier nodes (me, it, you)
       if (n.type === 'identifier') {
         const name = n.name as string;
         if (name === 'me') return (_context as { me?: unknown }).me;
         if (name === 'it') return (_context as { it?: unknown }).it;
         if (name === 'you') return (_context as { you?: unknown }).you;
       }
-      // Return node value directly for testing
       return n.value;
     },
   };
 }
-
-// ============================================================================
-// Detection Function Tests
-// ============================================================================
 
 describe('PropertyTarget Detection', () => {
   describe('isPropertyOfExpressionNode', () => {
@@ -89,36 +71,17 @@ describe('PropertyTarget Detection', () => {
     });
   });
 
-  describe('isPossessiveExpressionNode', () => {
-    it('should return true for possessiveExpression nodes', () => {
-      expect(isPossessiveExpressionNode({ type: 'possessiveExpression' })).toBe(true);
-    });
-
-    it('should return true for non-computed memberExpression nodes', () => {
-      expect(isPossessiveExpressionNode({ type: 'memberExpression', computed: false })).toBe(true);
-    });
-
-    it('should return false for computed memberExpression nodes', () => {
-      expect(isPossessiveExpressionNode({ type: 'memberExpression', computed: true })).toBe(false);
-    });
-
-    it('should return false for other node types', () => {
-      expect(isPossessiveExpressionNode({ type: 'identifier' })).toBe(false);
-      expect(isPossessiveExpressionNode(null)).toBe(false);
-    });
-  });
-
   describe('isPropertyTargetString', () => {
     it('should return true for "the X of Y" strings', () => {
       expect(isPropertyTargetString('the innerHTML of #target')).toBe(true);
       expect(isPropertyTargetString('the value of me')).toBe(true);
       expect(isPropertyTargetString('the textContent of it')).toBe(true);
-      expect(isPropertyTargetString('THE innerHTML OF #target')).toBe(true); // case insensitive
+      expect(isPropertyTargetString('THE innerHTML OF #target')).toBe(true);
     });
 
     it('should return false for non-matching strings', () => {
       expect(isPropertyTargetString('innerHTML')).toBe(false);
-      expect(isPropertyTargetString('the innerHTML')).toBe(false); // missing "of Y"
+      expect(isPropertyTargetString('the innerHTML')).toBe(false);
       expect(isPropertyTargetString('set x to y')).toBe(false);
       expect(isPropertyTargetString('')).toBe(false);
     });
@@ -130,43 +93,7 @@ describe('PropertyTarget Detection', () => {
       expect(isPropertyTargetString({})).toBe(false);
     });
   });
-
-  describe('parsePropertyTargetString', () => {
-    it('should parse valid "the X of Y" strings', () => {
-      expect(parsePropertyTargetString('the innerHTML of #target')).toEqual({
-        property: 'innerHTML',
-        targetExpr: '#target',
-      });
-
-      expect(parsePropertyTargetString('the value of me')).toEqual({
-        property: 'value',
-        targetExpr: 'me',
-      });
-
-      expect(parsePropertyTargetString('the textContent of .my-class')).toEqual({
-        property: 'textContent',
-        targetExpr: '.my-class',
-      });
-    });
-
-    it('should handle case insensitivity', () => {
-      expect(parsePropertyTargetString('THE innerHTML OF #target')).toEqual({
-        property: 'innerHTML',
-        targetExpr: '#target',
-      });
-    });
-
-    it('should return null for invalid strings', () => {
-      expect(parsePropertyTargetString('innerHTML of #target')).toBe(null); // missing "the"
-      expect(parsePropertyTargetString('the innerHTML')).toBe(null); // missing "of Y"
-      expect(parsePropertyTargetString('foo bar')).toBe(null);
-    });
-  });
 });
-
-// ============================================================================
-// Resolution Function Tests
-// ============================================================================
 
 describe('PropertyTarget Resolution', () => {
   let testElement: HTMLElement;
@@ -250,10 +177,7 @@ describe('PropertyTarget Resolution', () => {
         target: { type: 'selector', value: 'div' } as any,
       };
 
-      // Mock evaluator returns array
-      const evaluator = {
-        evaluate: async () => [testElement],
-      };
+      const evaluator = { evaluate: async () => [testElement] };
       const context = createMockContext();
 
       const result = await resolvePropertyTargetFromNode(node, evaluator as any, context);
@@ -278,18 +202,13 @@ describe('PropertyTarget Resolution', () => {
   });
 });
 
-// ============================================================================
-// PropertyTarget Operations Tests
-// ============================================================================
-
-describe('PropertyTarget Operations', () => {
+describe('togglePropertyTarget', () => {
   let testElement: HTMLElement;
   let target: PropertyTarget;
 
   beforeEach(() => {
     testElement = document.createElement('div');
     testElement.id = 'test-el';
-    testElement.textContent = 'initial';
     document.body.appendChild(testElement);
   });
 
@@ -299,152 +218,83 @@ describe('PropertyTarget Operations', () => {
     }
   });
 
-  describe('readPropertyTarget', () => {
-    it('should read textContent', () => {
-      target = { element: testElement, property: 'textContent' };
-      expect(readPropertyTarget(target)).toBe('initial');
-    });
+  it('should toggle hidden property (boolean)', () => {
+    target = { element: testElement, property: 'hidden' };
 
-    it('should read innerHTML', () => {
-      testElement.innerHTML = '<span>test</span>';
-      target = { element: testElement, property: 'innerHTML' };
-      expect(readPropertyTarget(target)).toBe('<span>test</span>');
-    });
+    expect(testElement.hidden).toBe(false);
 
-    it('should read id', () => {
-      target = { element: testElement, property: 'id' };
-      expect(readPropertyTarget(target)).toBe('test-el');
-    });
+    const result1 = togglePropertyTarget(target);
+    expect(result1).toBe(true);
+    expect(testElement.hidden).toBe(true);
+
+    const result2 = togglePropertyTarget(target);
+    expect(result2).toBe(false);
+    expect(testElement.hidden).toBe(false);
   });
 
-  describe('writePropertyTarget', () => {
-    it('should write textContent', () => {
-      target = { element: testElement, property: 'textContent' };
-      writePropertyTarget(target, 'new content');
-      expect(testElement.textContent).toBe('new content');
-    });
+  it('should toggle disabled on button', () => {
+    const button = document.createElement('button');
+    document.body.appendChild(button);
 
-    it('should write innerHTML', () => {
-      target = { element: testElement, property: 'innerHTML' };
-      writePropertyTarget(target, '<strong>bold</strong>');
-      expect(testElement.innerHTML).toBe('<strong>bold</strong>');
-    });
+    target = { element: button, property: 'disabled' };
 
-    it('should write id', () => {
-      target = { element: testElement, property: 'id' };
-      writePropertyTarget(target, 'new-id');
-      expect(testElement.id).toBe('new-id');
-    });
+    expect(button.disabled).toBe(false);
+
+    togglePropertyTarget(target);
+    expect(button.disabled).toBe(true);
+
+    togglePropertyTarget(target);
+    expect(button.disabled).toBe(false);
+
+    document.body.removeChild(button);
   });
 
-  describe('togglePropertyTarget', () => {
-    it('should toggle hidden property', () => {
-      target = { element: testElement, property: 'hidden' };
+  it('should toggle checked on checkbox', () => {
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    document.body.appendChild(checkbox);
 
-      expect(testElement.hidden).toBe(false);
+    target = { element: checkbox, property: 'checked' };
 
-      const result1 = togglePropertyTarget(target);
-      expect(result1).toBe(true);
-      expect(testElement.hidden).toBe(true);
+    expect(checkbox.checked).toBe(false);
 
-      const result2 = togglePropertyTarget(target);
-      expect(result2).toBe(false);
-      expect(testElement.hidden).toBe(false);
-    });
+    togglePropertyTarget(target);
+    expect(checkbox.checked).toBe(true);
 
-    it('should toggle disabled on button', () => {
-      const button = document.createElement('button');
-      document.body.appendChild(button);
+    togglePropertyTarget(target);
+    expect(checkbox.checked).toBe(false);
 
-      target = { element: button, property: 'disabled' };
-
-      expect(button.disabled).toBe(false);
-
-      togglePropertyTarget(target);
-      expect(button.disabled).toBe(true);
-
-      togglePropertyTarget(target);
-      expect(button.disabled).toBe(false);
-
-      document.body.removeChild(button);
-    });
-
-    it('should toggle checked on checkbox', () => {
-      const checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      document.body.appendChild(checkbox);
-
-      target = { element: checkbox, property: 'checked' };
-
-      expect(checkbox.checked).toBe(false);
-
-      togglePropertyTarget(target);
-      expect(checkbox.checked).toBe(true);
-
-      togglePropertyTarget(target);
-      expect(checkbox.checked).toBe(false);
-
-      document.body.removeChild(checkbox);
-    });
-  });
-});
-
-// ============================================================================
-// isBooleanProperty Tests
-// ============================================================================
-
-describe('isBooleanProperty', () => {
-  it('should return true for known boolean properties', () => {
-    expect(isBooleanProperty('disabled')).toBe(true);
-    expect(isBooleanProperty('checked')).toBe(true);
-    expect(isBooleanProperty('hidden')).toBe(true);
-    expect(isBooleanProperty('readOnly')).toBe(true);
-    expect(isBooleanProperty('required')).toBe(true);
-    expect(isBooleanProperty('multiple')).toBe(true);
-    expect(isBooleanProperty('selected')).toBe(true);
-    expect(isBooleanProperty('autofocus')).toBe(true);
-    expect(isBooleanProperty('open')).toBe(true);
+    document.body.removeChild(checkbox);
   });
 
-  it('should handle case variations', () => {
-    expect(isBooleanProperty('DISABLED')).toBe(true);
-    expect(isBooleanProperty('Checked')).toBe(true);
-    expect(isBooleanProperty('HIDDEN')).toBe(true);
+  it('should toggle numeric property (1 ↔ 0)', () => {
+    // tabIndex is a numeric property
+    testElement.tabIndex = 5;
+    target = { element: testElement, property: 'tabIndex' };
+
+    // Non-zero → 0
+    const result1 = togglePropertyTarget(target);
+    expect(result1).toBe(0);
+    expect(testElement.tabIndex).toBe(0);
+
+    // 0 → 1
+    const result2 = togglePropertyTarget(target);
+    expect(result2).toBe(1);
+    expect(testElement.tabIndex).toBe(1);
   });
 
-  it('should return false for non-boolean properties', () => {
-    expect(isBooleanProperty('textContent')).toBe(false);
-    expect(isBooleanProperty('innerHTML')).toBe(false);
-    expect(isBooleanProperty('value')).toBe(false);
-    expect(isBooleanProperty('id')).toBe(false);
-    expect(isBooleanProperty('className')).toBe(false);
-    expect(isBooleanProperty('style')).toBe(false);
-  });
-});
+  it('should toggle string property (value ↔ empty, with restore)', () => {
+    testElement.title = 'Hello World';
+    target = { element: testElement, property: 'title' };
 
-// ============================================================================
-// Regex Pattern Tests
-// ============================================================================
+    // First toggle: save and clear
+    const result1 = togglePropertyTarget(target);
+    expect(result1).toBe('');
+    expect(testElement.title).toBe('');
 
-describe('PROPERTY_OF_PATTERN', () => {
-  it('should match valid patterns', () => {
-    expect(PROPERTY_OF_PATTERN.test('the innerHTML of #target')).toBe(true);
-    expect(PROPERTY_OF_PATTERN.test('the value of me')).toBe(true);
-    expect(PROPERTY_OF_PATTERN.test('THE textContent OF it')).toBe(true);
-    expect(PROPERTY_OF_PATTERN.test('the title of .my-class')).toBe(true);
-  });
-
-  it('should not match invalid patterns', () => {
-    expect(PROPERTY_OF_PATTERN.test('innerHTML of #target')).toBe(false); // missing "the"
-    expect(PROPERTY_OF_PATTERN.test('the innerHTML')).toBe(false); // missing "of Y"
-    expect(PROPERTY_OF_PATTERN.test('innerHTML')).toBe(false);
-    expect(PROPERTY_OF_PATTERN.test('')).toBe(false);
-  });
-
-  it('should capture property and target correctly', () => {
-    const match = 'the innerHTML of #my-element'.match(PROPERTY_OF_PATTERN);
-    expect(match).not.toBeNull();
-    expect(match![1]).toBe('innerHTML');
-    expect(match![2]).toBe('#my-element');
+    // Second toggle: restore
+    const result2 = togglePropertyTarget(target);
+    expect(result2).toBe('Hello World');
+    expect(testElement.title).toBe('Hello World');
   });
 });

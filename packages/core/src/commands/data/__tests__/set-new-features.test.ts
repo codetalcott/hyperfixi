@@ -317,20 +317,25 @@ describe('SetCommand - "the X of Y" Syntax', () => {
       }
     });
 
-    it('should throw error for invalid "the X of Y" syntax', async () => {
+    it('should treat incomplete "the X" pattern as variable name', async () => {
       const context = createMockContext();
       const evaluator = createMockEvaluator();
 
-      await expect(
-        command.parseInput(
-          {
-            args: [{ type: 'literal', value: 'the property' }], // Missing "of Y"
-            modifiers: { to: { type: 'expression', value: 'value' } },
-          },
-          evaluator,
-          context
-        )
-      ).rejects.toThrow('Invalid "the X of Y" syntax');
+      // "the property" (without "of Y") is treated as a variable name, not an error
+      const input = await command.parseInput(
+        {
+          args: [{ type: 'literal', value: 'the property' }], // Missing "of Y"
+          modifiers: { to: { type: 'expression', value: 'value' } },
+        },
+        evaluator,
+        context
+      );
+
+      expect(input.type).toBe('variable');
+      if (input.type === 'variable') {
+        expect(input.name).toBe('the property');
+        expect(input.value).toBe('value');
+      }
     });
   });
 
