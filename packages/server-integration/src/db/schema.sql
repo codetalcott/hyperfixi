@@ -1,15 +1,47 @@
 -- HyperFixi API Database Schema
--- PostgreSQL 15+
+-- PostgreSQL 14+
+--
+-- This schema supports the HyperFixi compilation service with:
+-- - API key authentication with tiered access (free/pro/team)
+-- - Usage tracking and monthly aggregates for billing
+-- - Rate limiting event logging
+-- - Stripe webhook idempotency
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- API Keys table
-CREATE TABLE api_keys (
+-- ============================================
+-- Migrations Tracking Table (run first)
+-- ============================================
+CREATE TABLE IF NOT EXISTS migrations (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- ============================================
+-- Users Table (must exist before api_keys)
+-- ============================================
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email VARCHAR(255) NOT NULL UNIQUE,
+  stripe_customer_id VARCHAR(255) UNIQUE,
+  name VARCHAR(255),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS users_email_idx ON users(email);
+CREATE INDEX IF NOT EXISTS users_stripe_customer_id_idx ON users(stripe_customer_id);
+
+-- ============================================
+-- API Keys Table
+-- ============================================
+CREATE TABLE IF NOT EXISTS api_keys (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   key_hash VARCHAR(64) NOT NULL UNIQUE,
   key_prefix VARCHAR(12) NOT NULL,  -- for display: "hfx_abc1..."
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   stripe_customer_id VARCHAR(255),
   tier VARCHAR(20) NOT NULL DEFAULT 'free' CHECK (tier IN ('free', 'pro', 'team')),
   monthly_limit INT NOT NULL DEFAULT 1000,
@@ -75,20 +107,9 @@ CREATE TABLE rate_limit_events (
 CREATE INDEX rate_limit_events_api_key_id_idx ON rate_limit_events(api_key_id);
 CREATE INDEX rate_limit_events_created_at_idx ON rate_limit_events(created_at);
 
--- Users table (optional - for dashboard/team features)
-CREATE TABLE users (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  email VARCHAR(255) NOT NULL UNIQUE,
-  stripe_customer_id VARCHAR(255) UNIQUE,
-  name VARCHAR(255),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX users_email_idx ON users(email);
-CREATE INDEX users_stripe_customer_id_idx ON users(stripe_customer_id);
-
--- Stripe webhook events (for idempotency)
+-- ============================================
+-- Stripe Webhook Events (for idempotency)
+-- ============================================
 CREATE TABLE stripe_events (
   id VARCHAR(255) PRIMARY KEY,  -- Stripe event ID
   type VARCHAR(100) NOT NULL,
@@ -128,8 +149,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ============================================
+-- Views
+-- ============================================
+
 -- View for API key summary with usage
-CREATE VIEW api_key_summary AS
+CREATE OR REPLACE VIEW api_key_summary AS
 SELECT
   ak.id,
   ak.key_prefix,
@@ -146,3 +171,9 @@ FROM api_keys ak
 LEFT JOIN usage_monthly um ON ak.id = um.api_key_id
   AND um.month = DATE_TRUNC('month', CURRENT_DATE)::DATE
 WHERE ak.deleted_at IS NULL;
+
+-- ============================================
+-- Record this migration
+-- ============================================
+INSERT INTO migrations (name) VALUES ('001_initial_schema')
+ON CONFLICT (name) DO NOTHING;
