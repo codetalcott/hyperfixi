@@ -464,6 +464,41 @@ describe('readPropertyTarget', () => {
 
     expect(readPropertyTarget(target)).toBe(true);
   });
+
+  it('should read CSS computed style with *property syntax', () => {
+    // Set inline style first
+    testElement.style.opacity = '0.5';
+    const target: PropertyTarget = { element: testElement, property: '*opacity' };
+
+    const result = readPropertyTarget(target);
+    expect(result).toBe('0.5');
+  });
+
+  it('should read CSS computed display style', () => {
+    testElement.style.display = 'flex';
+    const target: PropertyTarget = { element: testElement, property: '*display' };
+
+    const result = readPropertyTarget(target);
+    expect(result).toBe('flex');
+  });
+
+  it('should read CSS computed color style', () => {
+    testElement.style.color = 'red';
+    const target: PropertyTarget = { element: testElement, property: '*color' };
+
+    const result = readPropertyTarget(target);
+    // Note: computed style may normalize to rgb format
+    expect(result).toBeTruthy();
+  });
+
+  it('should read CSS hyphenated property with *property syntax', () => {
+    testElement.style.backgroundColor = 'blue';
+    const target: PropertyTarget = { element: testElement, property: '*background-color' };
+
+    const result = readPropertyTarget(target);
+    // Computed style normalizes to rgb format
+    expect(result).toBeTruthy();
+  });
 });
 
 describe('writePropertyTarget', () => {
@@ -533,6 +568,39 @@ describe('writePropertyTarget', () => {
 
     writePropertyTarget(target, false);
     expect(testElement.hidden).toBe(false);
+  });
+
+  it('should write CSS inline style with *property syntax', () => {
+    const target: PropertyTarget = { element: testElement, property: '*opacity' };
+
+    writePropertyTarget(target, '0.5');
+
+    expect(testElement.style.opacity).toBe('0.5');
+  });
+
+  it('should write CSS display style with *property syntax', () => {
+    const target: PropertyTarget = { element: testElement, property: '*display' };
+
+    writePropertyTarget(target, 'flex');
+
+    expect(testElement.style.display).toBe('flex');
+  });
+
+  it('should write CSS hyphenated property with *property syntax', () => {
+    const target: PropertyTarget = { element: testElement, property: '*background-color' };
+
+    writePropertyTarget(target, 'red');
+
+    expect(testElement.style.backgroundColor).toBe('red');
+  });
+
+  it('should write and read CSS style round-trip', () => {
+    const target: PropertyTarget = { element: testElement, property: '*opacity' };
+
+    writePropertyTarget(target, '0.7');
+    const result = readPropertyTarget(target);
+
+    expect(result).toBe('0.7');
   });
 });
 

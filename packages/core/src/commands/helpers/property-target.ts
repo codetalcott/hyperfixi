@@ -12,6 +12,7 @@ import type { ExpressionEvaluator } from '../../core/expression-evaluator';
 import { isHTMLElement } from '../../utils/element-check';
 import { resolveElement } from './element-resolution';
 import { getElementProperty, setElementProperty } from './element-property-access';
+import { getComputedStyleValue, setStyleValue } from './style-manipulation';
 
 // Types
 export interface PropertyTarget {
@@ -154,14 +155,45 @@ export async function resolveAnyPropertyTarget(
   return null;
 }
 
-/** Read the value from a PropertyTarget */
+/**
+ * Read the value from a PropertyTarget
+ *
+ * Handles special prefixes:
+ * - *property: reads computed CSS style (e.g., *opacity → getComputedStyle)
+ * - @attribute: handled by getElementProperty
+ * - Regular properties: handled by getElementProperty
+ */
 export function readPropertyTarget(target: PropertyTarget): unknown {
-  return getElementProperty(target.element, target.property);
+  const { element, property } = target;
+
+  // CSS computed style (*opacity → getComputedStyle)
+  if (property.startsWith('*')) {
+    const styleProp = property.substring(1);
+    return getComputedStyleValue(element, styleProp);
+  }
+
+  return getElementProperty(element, property);
 }
 
-/** Write a value to a PropertyTarget */
+/**
+ * Write a value to a PropertyTarget
+ *
+ * Handles special prefixes:
+ * - *property: sets inline CSS style (e.g., *opacity → style.setProperty)
+ * - @attribute: handled by setElementProperty
+ * - Regular properties: handled by setElementProperty
+ */
 export function writePropertyTarget(target: PropertyTarget, value: unknown): void {
-  setElementProperty(target.element, target.property, value);
+  const { element, property } = target;
+
+  // CSS style property (*opacity → inline style)
+  if (property.startsWith('*')) {
+    const styleProp = property.substring(1);
+    setStyleValue(element, styleProp, String(value));
+    return;
+  }
+
+  setElementProperty(element, property, value);
 }
 
 /** Toggle a property target (boolean: true↔false, numeric: n↔0, string: s↔'') */
