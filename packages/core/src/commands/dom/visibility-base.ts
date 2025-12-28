@@ -73,6 +73,7 @@ export abstract class VisibilityCommandBase implements DecoratedCommand {
     } else if (element.style.display === 'none') {
       element.style.display = defaultDisplay;
     }
+    element.classList.add('show');
   }
 
   /**
@@ -86,5 +87,6 @@ export abstract class VisibilityCommandBase implements DecoratedCommand {
     }
 
     element.style.display = 'none';
+    element.classList.remove('show');
   }
 }
