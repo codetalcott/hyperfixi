@@ -357,22 +357,53 @@ export class MemoryComponentRegistry implements ComponentRegistry {
   }
 
   async list(filter?: ComponentFilter): Promise<ComponentDefinition[]> {
-    // Same filtering logic as FileComponentRegistry
     let components = Array.from(this.components.values());
 
     if (!filter) {
       return components;
     }
 
-    // Apply same filters as FileComponentRegistry
+    // Apply filters (matching FileComponentRegistry)
     if (filter.category) {
       components = components.filter(c => c.category === filter.category);
     }
 
     if (filter.tags && filter.tags.length > 0) {
-      components = components.filter(c => 
+      components = components.filter(c =>
         c.tags && filter.tags!.some(tag => c.tags!.includes(tag))
       );
+    }
+
+    if (filter.author) {
+      components = components.filter(c =>
+        c.metadata?.author?.toLowerCase().includes(filter.author!.toLowerCase())
+      );
+    }
+
+    if (filter.version) {
+      components = components.filter(c => c.version === filter.version);
+    }
+
+    if (filter.keywords && filter.keywords.length > 0) {
+      components = components.filter(c =>
+        c.metadata?.keywords &&
+        filter.keywords!.some(keyword =>
+          c.metadata!.keywords!.some(k =>
+            k.toLowerCase().includes(keyword.toLowerCase())
+          )
+        )
+      );
+    }
+
+    if (filter.complexity) {
+      components = components.filter(c => {
+        const complexity = c.validation?.complexity;
+        if (complexity === undefined) return false;
+
+        const { min, max } = filter.complexity!;
+        return (min === undefined || complexity >= min) &&
+               (max === undefined || complexity <= max);
+      });
     }
 
     return components;
@@ -380,10 +411,23 @@ export class MemoryComponentRegistry implements ComponentRegistry {
 
   async search(query: string): Promise<ComponentDefinition[]> {
     const lowerQuery = query.toLowerCase();
-    
+
     return Array.from(this.components.values()).filter(component => {
+      // Search in name, description, tags, and keywords
       if (component.name.toLowerCase().includes(lowerQuery)) return true;
       if (component.description?.toLowerCase().includes(lowerQuery)) return true;
+      if (component.tags?.some(tag => tag.toLowerCase().includes(lowerQuery))) return true;
+      if (component.metadata?.keywords?.some(keyword =>
+        keyword.toLowerCase().includes(lowerQuery)
+      )) return true;
+
+      // Search in hyperscript content
+      const scripts = Array.isArray(component.hyperscript)
+        ? component.hyperscript
+        : [component.hyperscript];
+
+      if (scripts.some(script => script.toLowerCase().includes(lowerQuery))) return true;
+
       return false;
     });
   }
@@ -394,11 +438,34 @@ export class MemoryComponentRegistry implements ComponentRegistry {
 }
 
 /**
+ * Registry creation options
+ */
+export interface RegistryOptions {
+  /** Path for file-based registry */
+  path?: string;
+  /** Database path for SQLite registry */
+  dbPath?: string;
+}
+
+/**
  * Create a registry instance
  */
-export function createRegistry(type: 'file' | 'memory' = 'file', path?: string): ComponentRegistry {
+export function createRegistry(
+  type: 'file' | 'memory' | 'sqlite' = 'file',
+  options?: string | RegistryOptions
+): ComponentRegistry {
+  // Handle legacy string path argument
+  const opts: RegistryOptions = typeof options === 'string' ? { path: options } : (options || {});
+
   if (type === 'memory') {
     return new MemoryComponentRegistry();
   }
-  return new FileComponentRegistry(path);
+
+  if (type === 'sqlite') {
+    // Lazy import to avoid loading SQLite when not needed
+    const { SqliteComponentRegistry } = require('./database/sqlite-registry');
+    return new SqliteComponentRegistry({ dbPath: opts.dbPath });
+  }
+
+  return new FileComponentRegistry(opts.path);
 }

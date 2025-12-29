@@ -6,7 +6,8 @@ Universal component definition schema and validation for HyperFixi server-side h
 
 - **JSON Schema Validation** - Comprehensive schema definitions for components and collections
 - **TypeScript Support** - Complete type definitions with strict typing
-- **Component Registry** - File-based and in-memory component registries 
+- **Component Registry** - File-based, in-memory, and **SQLite-backed** registries
+- **SQLite Full-Text Search** - FTS5-powered search across component names, descriptions, and content
 - **Utility Functions** - Helper functions for creating, merging, and analyzing components
 - **Template Variables** - Support for `{{variable}}` substitution in hyperscript
 - **Dependency Management** - Component dependency resolution and circular dependency detection
@@ -83,7 +84,7 @@ const ajaxForm = createTemplatedComponent(
 import { createRegistry } from '@hyperfixi/component-schema';
 
 // Create a file-based registry
-const registry = createRegistry('file', './components');
+const registry = createRegistry('file', { path: './components' });
 await registry.initialize();
 
 // Register components
@@ -95,10 +96,48 @@ const components = await registry.search('toggle');
 const specificComponent = await registry.get('toggle-button');
 
 // Filter components by category
-const formComponents = await registry.list({ 
+const formComponents = await registry.list({
   category: 'form',
   complexity: { max: 5 }
 });
+```
+
+### SQLite Registry (Recommended for Production)
+
+```typescript
+import { createRegistry, SqliteComponentRegistry } from '@hyperfixi/component-schema';
+
+// Using the factory function
+const registry = createRegistry('sqlite', { dbPath: './components.db' });
+await registry.initialize();
+
+// Or directly instantiate
+const sqliteRegistry = new SqliteComponentRegistry({ dbPath: './my-components.db' });
+await sqliteRegistry.initialize();
+
+// All standard registry operations work
+await sqliteRegistry.register(toggleButton);
+const results = await sqliteRegistry.search('toggle'); // Uses FTS5 full-text search
+
+// SQLite-specific features
+const count = await sqliteRegistry.count();
+await sqliteRegistry.clear(); // Clear all components
+
+// Import/export collections
+await sqliteRegistry.importCollection(myCollection);
+const exported = await sqliteRegistry.exportCollection(['comp-a', 'comp-b'], {
+  name: 'My Export'
+});
+```
+
+#### Database Initialization
+
+```bash
+# Create database with schema
+npm run db:init
+
+# Force recreate (drops existing data)
+npm run db:init:force
 ```
 
 ## Component Definition Schema
@@ -497,7 +536,7 @@ if (component) {
 ## Testing
 
 ```bash
-# Run tests
+# Run tests (84 tests across 4 test files)
 npm test
 
 # Run tests with coverage

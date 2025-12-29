@@ -1,6 +1,6 @@
 {
   "name": "@hyperfixi/component-schema",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Universal component definition schema and validation for HyperFixi server-side hyperscript compilation",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -21,7 +21,9 @@
     "lint:fix": "eslint src --ext .ts,.js --fix",
     "validate-schemas": "node scripts/validate-schemas.js",
     "generate-examples": "node scripts/generate-examples.js",
-    "prepublishOnly": "npm run build && npm run validate-schemas"
+    "prepublishOnly": "npm run build && npm run validate-schemas",
+    "db:init": "node scripts/init-db.js",
+    "db:init:force": "node scripts/init-db.js --force"
   },
   "keywords": [
     "hyperscript",
@@ -42,6 +44,7 @@
   "dependencies": {
     "ajv": "^8.12.0",
     "ajv-formats": "^2.1.1",
+    "better-sqlite3": "^9.0.0",
     "esbuild": "0.25.11",
     "happy-dom": "20.0.6",
     "vite": "^7.1.12",
@@ -52,6 +55,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-typescript": "^11.1.5",
+    "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^20.10.0",
     "@vitest/coverage-v8": "^4.0.0",
     "eslint": "^8.54.0",
@@ -66,9 +70,9 @@
   },
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./schemas": {
       "import": "./schemas/index.json",

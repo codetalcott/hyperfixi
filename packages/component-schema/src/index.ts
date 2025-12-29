@@ -14,8 +14,25 @@ export * from './registry';
 // Export utility functions
 export * from './utils';
 
+// Export database functionality
+export { SqliteComponentRegistry } from './database/sqlite-registry';
+export {
+  getDatabase,
+  closeDatabase,
+  resetConnection,
+  isConnected,
+  getCurrentDbPath,
+  getDefaultDbPath,
+} from './database/connection';
+export {
+  initializeSchema,
+  isSchemaInitialized,
+  dropSchema,
+  SCHEMA,
+} from './database/schema';
+
 // Version information
-export const VERSION = '0.1.0';
+export const VERSION = '0.2.0';
 
 // Re-export commonly used functions for convenience
 export {
@@ -29,6 +46,7 @@ export {
   FileComponentRegistry,
   MemoryComponentRegistry,
 } from './registry';
+export type { RegistryOptions } from './registry';
 
 export {
   createComponent,
