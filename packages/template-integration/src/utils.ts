@@ -10,13 +10,23 @@ import {
  */
 
 /**
+ * Escape special regex characters in a string
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Extract all template variables from a template string
  */
 export function extractTemplateVariables(
   template: string,
   delimiters: { start: string; end: string } = { start: '{{', end: '}}' }
 ): string[] {
-  const pattern = new RegExp(`\\${delimiters.start}([^}]+)\\${delimiters.end}`, 'g');
+  const escapedStart = escapeRegex(delimiters.start);
+  const escapedEnd = escapeRegex(delimiters.end);
+  // Use a more flexible pattern that captures content between delimiters
+  const pattern = new RegExp(`${escapedStart}\\s*([^${escapeRegex(delimiters.end[0])}]+?)\\s*${escapedEnd}`, 'g');
   const variables = new Set<string>();
 
   let match;
@@ -52,26 +62,40 @@ export function validateTemplate(template: string): CompilationWarning[] {
   let match;
 
   while ((match = tagPattern.exec(template)) !== null) {
-    const [, isClosing, tagName] = match;
-    
+    const [fullMatch, isClosing, tagName] = match;
+
     if (isClosing) {
-      if (tagStack.length === 0 || tagStack[tagStack.length - 1] !== tagName) {
+      // Look for matching opening tag in the stack
+      const matchIndex = tagStack.lastIndexOf(tagName);
+
+      if (matchIndex === -1) {
+        // No matching opening tag found
         warnings.push({
           type: 'invalid-hyperscript',
           message: `Unexpected closing tag: </${tagName}>`,
         });
       } else {
-        tagStack.pop();
+        // Found matching tag - any tags after it are unclosed
+        const unclosedTags = tagStack.splice(matchIndex);
+        // Remove the matched tag itself
+        unclosedTags.shift();
+        // Report remaining tags as unclosed
+        for (const unclosedTag of unclosedTags) {
+          warnings.push({
+            type: 'invalid-hyperscript',
+            message: `Unclosed tag: <${unclosedTag}>`,
+          });
+        }
       }
     } else {
       // Skip self-closing tags
-      if (!isSelfClosingTag(tagName) && !match[0].endsWith('/>')) {
+      if (!isSelfClosingTag(tagName) && !fullMatch.endsWith('/>')) {
         tagStack.push(tagName);
       }
     }
   }
 
-  // Check for unclosed tags
+  // Check for unclosed tags at the end
   for (const tag of tagStack) {
     warnings.push({
       type: 'invalid-hyperscript',

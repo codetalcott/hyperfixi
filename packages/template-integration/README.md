@@ -505,37 +505,33 @@ const dashboardTemplate = `
 
 ## Integration with Build Tools
 
-### Webpack Plugin
+> **Note:** Webpack and Vite plugins are planned for a future release. For now, use the programmatic API directly.
+
+### Programmatic Build Integration
 
 ```javascript
-const HyperFixiTemplatePlugin = require('@hyperfixi/template-integration/webpack');
+import { HyperFixiTemplateEngine } from '@hyperfixi/template-integration';
+import fs from 'fs';
+import path from 'path';
 
-module.exports = {
-  plugins: [
-    new HyperFixiTemplatePlugin({
-      templatesDir: './src/templates',
-      componentsDir: './src/components',
-      outputDir: './dist/templates',
-      minify: true
-    })
-  ]
-};
-```
+// Build script example
+async function buildTemplates(inputDir, outputDir) {
+  const engine = new HyperFixiTemplateEngine({ minify: true });
 
-### Vite Plugin
+  const files = fs.readdirSync(inputDir).filter(f => f.endsWith('.html'));
 
-```javascript
-import { hyperFixiTemplate } from '@hyperfixi/template-integration/vite';
+  for (const file of files) {
+    const template = fs.readFileSync(path.join(inputDir, file), 'utf-8');
+    const compiled = await engine.compile(template);
 
-export default {
-  plugins: [
-    hyperFixiTemplate({
-      include: ['**/*.hft'], // HyperFixi Template files
-      components: './src/components',
-      minify: process.env.NODE_ENV === 'production'
-    })
-  ]
-};
+    fs.writeFileSync(
+      path.join(outputDir, file),
+      compiled.html
+    );
+  }
+}
+
+buildTemplates('./src/templates', './dist/templates');
 ```
 
 ## Contributing

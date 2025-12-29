@@ -27,6 +27,7 @@ export class HyperFixiTemplateEngine implements TemplateEngine {
   private registry: ComponentRegistry;
   private cache: Map<string, CacheEntry> = new Map();
   private options: TemplateOptions;
+  private registeredComponentCount: number = 0;
 
   constructor(options: TemplateOptions = {}) {
     this.options = {
@@ -106,6 +107,7 @@ export class HyperFixiTemplateEngine implements TemplateEngine {
   async registerComponent(component: ComponentDefinition): Promise<void> {
     await this.registry.register(component);
     await this.compiler.registerComponent(component);
+    this.registeredComponentCount++;
   }
 
   /**
@@ -196,7 +198,7 @@ export class HyperFixiTemplateEngine implements TemplateEngine {
       cacheHits,
       cacheMisses,
       totalCompilations: cacheHits + cacheMisses,
-      componentsRegistered: 0, // Would need to track this in registry
+      componentsRegistered: this.registeredComponentCount,
     };
   }
 

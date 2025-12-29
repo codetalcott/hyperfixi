@@ -161,12 +161,18 @@ export class TemplateCompiler {
    * Compile single template node
    */
   private async compileNode(
-    node: TemplateNode, 
+    node: TemplateNode,
     context: CompilationContext
   ): Promise<string> {
     switch (node.type) {
-      case 'text':
-        return this.escapeHtml(node.content || '');
+      case 'text': {
+        const content = node.content || '';
+        // Extract template variables from text content
+        const variables = extractTemplateVariables(content);
+        variables.forEach(variable => context.variables.add(variable));
+        // Don't escape - preserve template variable syntax for later substitution
+        return content;
+      }
 
       case 'element':
         return await this.compileElement(node, context);
@@ -209,6 +215,12 @@ export class TemplateCompiler {
         // Skip directive attributes (they've been processed)
         if (this.isDirectiveAttribute(name)) {
           continue;
+        }
+
+        // Extract template variables from attribute values
+        if (value) {
+          const variables = extractTemplateVariables(value);
+          variables.forEach(variable => context.variables.add(variable));
         }
 
         html += ` ${name}`;
@@ -471,34 +483,120 @@ export class TemplateCompiler {
    * Register built-in directive handlers
    */
   private registerBuiltinDirectives(): void {
-    // If directive
     // Helper function for expression evaluation
-    const evaluateExpression = (expr: string, context: TemplateContext): boolean => {
-      // Basic expression evaluation (would be more sophisticated in practice)
+    const evaluateExpression = (expr: string, context: TemplateContext): any => {
+      // Basic expression evaluation
       if (context.variables && expr in context.variables) {
-        return Boolean(context.variables[expr]);
+        return context.variables[expr];
       }
-      return false;
+      // Handle nested properties like 'user.items'
+      if (context.variables && expr.includes('.')) {
+        const parts = expr.split('.');
+        let value: any = context.variables;
+        for (const part of parts) {
+          if (value && typeof value === 'object' && part in value) {
+            value = value[part];
+          } else {
+            return undefined;
+          }
+        }
+        return value;
+      }
+      return undefined;
     };
 
+    // If directive - conditional rendering
     this.addDirective('if', {
       async process(directive, context) {
-        // Simple conditional logic
         const condition = evaluateExpression(directive.expression, context);
         if (condition) {
           return directive.children || [];
         }
         return [];
+      },
+      validate(directive) {
+        if (!directive.expression || directive.expression.trim() === '') {
+          return ['If directive requires an expression'];
+        }
+        return [];
+      }
+    });
+
+    // For directive - loop rendering
+    this.addDirective('for', {
+      async process(directive, context) {
+        // Parse expression like "item in items" or "item of items"
+        const match = directive.expression.match(/^\s*(\w+)\s+(?:in|of)\s+(.+)\s*$/);
+        if (!match) {
+          return [];
+        }
+
+        const [, itemName, collectionExpr] = match;
+        const collection = evaluateExpression(collectionExpr.trim(), context);
+
+        if (!Array.isArray(collection)) {
+          return [];
+        }
+
+        const result: TemplateNode[] = [];
+        for (let index = 0; index < collection.length; index++) {
+          const item = collection[index];
+          // Clone children for each iteration with item context
+          // In a full implementation, we'd substitute the item variable
+          const children = directive.children || [];
+          for (const child of children) {
+            // Create a copy of the child with variable substitution context
+            result.push({
+              ...child,
+              // Store loop context for later variable substitution
+              attributes: {
+                ...child.attributes,
+                'data-loop-item': itemName,
+                'data-loop-index': String(index),
+              }
+            });
+          }
+        }
+
+        return result;
+      },
+      validate(directive) {
+        if (!directive.expression || directive.expression.trim() === '') {
+          return ['For directive requires an expression'];
+        }
+        const match = directive.expression.match(/^\s*(\w+)\s+(?:in|of)\s+(.+)\s*$/);
+        if (!match) {
+          return ['For directive expression must be in format "item in collection" or "item of collection"'];
+        }
+        return [];
+      }
+    });
+
+    // Show directive - visibility toggle
+    this.addDirective('show', {
+      async process(directive, context) {
+        const condition = evaluateExpression(directive.expression, context);
+        if (condition) {
+          return directive.children || [];
+        }
+        // Return children with hidden style
+        return (directive.children || []).map(child => ({
+          ...child,
+          attributes: {
+            ...child.attributes,
+            style: 'display: none;'
+          }
+        }));
       }
     });
 
     // Component directive
-    const registry = this.registry; // Capture registry in closure
+    const registry = this.registry;
     this.addDirective('component', {
       async process(directive, context) {
         const componentId = directive.expression;
         const component = await registry.get(componentId);
-        
+
         if (!component) {
           return [];
         }
@@ -508,6 +606,12 @@ export class TemplateCompiler {
           component,
           children: directive.children || [],
         }];
+      },
+      validate(directive) {
+        if (!directive.expression || directive.expression.trim() === '') {
+          return ['Component directive requires a component ID'];
+        }
+        return [];
       }
     });
   }
@@ -557,10 +661,10 @@ export class TemplateCompiler {
 
   private minifyHtml(html: string): string {
     return html
-      .replace(/\\s+/g, ' ')              // Collapse whitespace
-      .replace(/> </g, '><')             // Remove space between tags
-      .replace(/^\\s+|\\s+$/g, '')       // Trim
-      .replace(/<!--[\\s\\S]*?-->/g, ''); // Remove comments
+      .replace(/\s+/g, ' ')              // Collapse whitespace
+      .replace(/>\s+</g, '><')           // Remove space between tags
+      .replace(/^\s+|\s+$/g, '')         // Trim
+      .replace(/<!--[\s\S]*?-->/g, '');  // Remove comments
   }
 }
 

@@ -65,7 +65,7 @@ export class TemplateParser {
   /**
    * Parse HTML element with attributes and children
    */
-  private parseElement(): TemplateNode {
+  private parseElement(): TemplateNode | null {
     const location = { line: this.currentLine, column: this.currentColumn };
 
     if (!this.consume('<')) {
@@ -77,16 +77,17 @@ export class TemplateParser {
       return this.parseComment();
     }
 
-    // Handle self-closing tags and closing tags
+    // Handle closing tags - return null to signal parent to stop parsing children
     if (this.peek() === '/') {
-      // This is a closing tag, skip it gracefully
+      // This is a closing tag, skip it gracefully and return null
+      // Don't throw - just consume and let parent handle it
       while (!this.isAtEnd() && this.peek() !== '>') {
         this.advance();
       }
       if (!this.isAtEnd()) {
         this.advance(); // consume '>'
       }
-      throw this.error('Unexpected closing tag');
+      return null; // Signal that we hit a closing tag
     }
 
     const tagName = this.parseTagName();
@@ -95,7 +96,7 @@ export class TemplateParser {
     }
 
     const attributes = this.parseAttributes();
-    const isSelfClosing = this.matches('/>');
+    const isSelfClosing = this.consume('/>') || this.isSelfClosingTag(tagName);
 
     if (!isSelfClosing && !this.consume('>')) {
       throw this.error('Expected closing >');
@@ -114,7 +115,7 @@ export class TemplateParser {
     let children: TemplateNode[] = [];
 
     // Parse children if not self-closing
-    if (!isSelfClosing && !this.isSelfClosingTag(tagName)) {
+    if (!isSelfClosing) {
       children = this.parseChildren(tagName);
     }
 
@@ -483,12 +484,13 @@ export class TemplateParser {
   }
 
   private error(message: string): TemplateError {
-    const error = new Error(message) as TemplateError;
-    error.type = 'parse';
-    error.location = {
-      line: this.currentLine,
-      column: this.currentColumn,
-    };
-    return error;
+    return new TemplateError(
+      message,
+      'parse',
+      {
+        line: this.currentLine,
+        column: this.currentColumn,
+      }
+    );
   }
 }
