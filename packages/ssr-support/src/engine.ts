@@ -1,4 +1,5 @@
 import { promises as fs } from 'fs';
+import { createHash } from 'crypto';
 import { ComponentDefinition } from '@hyperfixi/component-schema';
 import { HyperFixiTemplateEngine, TemplateContext } from '@hyperfixi/template-integration';
 import {
@@ -10,7 +11,7 @@ import {
   HydrationData,
   SEOData,
   SSRCache,
-  SSRError,
+  SSRRenderError,
 } from './types';
 import { CriticalCSSExtractor } from './critical-css';
 import { SEOGenerator } from './seo';
@@ -130,10 +131,10 @@ export class HyperFixiSSREngine implements SSREngine {
       return result;
 
     } catch (error) {
-      const ssrError = new Error(`SSR rendering failed: ${error instanceof Error ? error.message : String(error)}`) as SSRError;
-      ssrError.type = 'render';
-      ssrError.context = { template: template.substring(0, 100), context };
-      throw ssrError;
+      throw new SSRRenderError(
+        `SSR rendering failed: ${error instanceof Error ? error.message : String(error)}`,
+        { template: template.substring(0, 100), context }
+      );
     }
   }
 
@@ -246,8 +247,7 @@ export class HyperFixiSSREngine implements SSREngine {
    * Private helper methods
    */
   private generateCacheKey(template: string, context: SSRContext, options: SSROptions): string {
-    const crypto = require('crypto');
-    const hash = crypto.createHash('sha256');
+    const hash = createHash('sha256');
     
     hash.update(template);
     hash.update(JSON.stringify(context.variables ?? {}));

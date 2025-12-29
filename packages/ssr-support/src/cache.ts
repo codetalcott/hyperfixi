@@ -1,26 +1,44 @@
-import { SSRCache, SSRResult } from './types';
+import { SSRCache, SSRResult, SSRCacheError } from './types';
+
+interface MemoryCacheOptions {
+  /** Maximum number of entries in the cache (default: 1000) */
+  maxSize?: number;
+  /** Default TTL in seconds (default: 3600) */
+  defaultTTL?: number;
+}
+
+interface CacheEntry {
+  result: SSRResult;
+  expires: number;
+  tags: string[];
+  lastAccessed: number;
+}
 
 /**
- * In-memory cache implementation for SSR results
+ * In-memory LRU cache implementation for SSR results
  */
 export class MemorySSRCache implements SSRCache {
-  private cache: Map<string, {
-    result: SSRResult;
-    expires: number;
-    tags: string[];
-  }> = new Map();
-  
+  private cache: Map<string, CacheEntry> = new Map();
+  private readonly maxSize: number;
+  private readonly defaultTTL: number;
+
   private statsData = {
     hits: 0,
     misses: 0,
+    evictions: 0,
   };
+
+  constructor(options: MemoryCacheOptions = {}) {
+    this.maxSize = options.maxSize ?? 1000;
+    this.defaultTTL = options.defaultTTL ?? 3600;
+  }
 
   /**
    * Get cached result
    */
   async get(key: string): Promise<SSRResult | null> {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       this.statsData.misses++;
       return null;
@@ -33,26 +51,62 @@ export class MemorySSRCache implements SSRCache {
       return null;
     }
 
+    // Update last accessed time for LRU
+    entry.lastAccessed = Date.now();
     this.statsData.hits++;
     return entry.result;
   }
 
   /**
-   * Set cache entry
+   * Set cache entry with LRU eviction
    */
-  async set(key: string, result: SSRResult, ttl: number = 3600): Promise<void> {
-    const expires = Date.now() + (ttl * 1000);
+  async set(key: string, result: SSRResult, ttl?: number): Promise<void> {
+    const actualTTL = ttl ?? this.defaultTTL;
+    const expires = Date.now() + (actualTTL * 1000);
     const tags = result.cache?.tags ?? [];
-    
+    const now = Date.now();
+
+    // If key already exists, update it
+    if (this.cache.has(key)) {
+      this.cache.set(key, { result, expires, tags, lastAccessed: now });
+      return;
+    }
+
+    // Evict LRU entries if at capacity
+    while (this.cache.size >= this.maxSize) {
+      this.evictLRU();
+    }
+
     this.cache.set(key, {
       result,
       expires,
       tags,
+      lastAccessed: now,
     });
 
-    // Clean up expired entries periodically
-    if (Math.random() < 0.01) { // 1% chance
+    // Clean up expired entries periodically (5% chance)
+    if (Math.random() < 0.05) {
       this.cleanupExpired();
+    }
+  }
+
+  /**
+   * Evict the least recently used entry
+   */
+  private evictLRU(): void {
+    let oldestKey: string | null = null;
+    let oldestTime = Infinity;
+
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.lastAccessed < oldestTime) {
+        oldestTime = entry.lastAccessed;
+        oldestKey = key;
+      }
+    }
+
+    if (oldestKey) {
+      this.cache.delete(oldestKey);
+      this.statsData.evictions++;
     }
   }
 

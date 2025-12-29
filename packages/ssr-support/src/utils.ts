@@ -1,3 +1,4 @@
+import { createHash as cryptoCreateHash } from 'crypto';
 import { SSRContext, HydrationData, SEOData } from './types';
 
 /**
@@ -290,8 +291,7 @@ export function generateCacheKey(
   context: SSRContext,
   options: any = {}
 ): string {
-  const crypto = require('crypto');
-  const hash = crypto.createHash('sha256');
+  const hash = cryptoCreateHash('sha256');
 
   // Include template content
   hash.update(template);

@@ -334,3 +334,74 @@ export interface SSRError extends Error {
   /** Additional context */
   context?: Record<string, any>;
 }
+
+/**
+ * Base SSR error class with proper type discrimination
+ */
+export class SSRErrorBase extends Error implements SSRError {
+  public readonly type: 'render' | 'hydration' | 'cache' | 'seo';
+  public readonly statusCode?: number;
+  public readonly context?: Record<string, any>;
+
+  constructor(
+    message: string,
+    type: 'render' | 'hydration' | 'cache' | 'seo',
+    statusCode?: number,
+    context?: Record<string, any>
+  ) {
+    super(message);
+    this.name = 'SSRError';
+    this.type = type;
+    if (statusCode !== undefined) {
+      this.statusCode = statusCode;
+    }
+    if (context !== undefined) {
+      this.context = context;
+    }
+
+    // Maintains proper stack trace for where error was thrown
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+  }
+}
+
+/**
+ * Error during template rendering
+ */
+export class SSRRenderError extends SSRErrorBase {
+  constructor(message: string, context?: Record<string, any>) {
+    super(message, 'render', 500, context);
+    this.name = 'SSRRenderError';
+  }
+}
+
+/**
+ * Error during client hydration script generation
+ */
+export class SSRHydrationError extends SSRErrorBase {
+  constructor(message: string, context?: Record<string, any>) {
+    super(message, 'hydration', 500, context);
+    this.name = 'SSRHydrationError';
+  }
+}
+
+/**
+ * Error during cache operations
+ */
+export class SSRCacheError extends SSRErrorBase {
+  constructor(message: string, context?: Record<string, any>) {
+    super(message, 'cache', 503, context);
+    this.name = 'SSRCacheError';
+  }
+}
+
+/**
+ * Error during SEO tag generation
+ */
+export class SSRSeoError extends SSRErrorBase {
+  constructor(message: string, context?: Record<string, any>) {
+    super(message, 'seo', 500, context);
+    this.name = 'SSRSeoError';
+  }
+}
