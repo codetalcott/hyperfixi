@@ -274,12 +274,37 @@ program
   .option('-w, --watch', 'Watch mode', false)
   .option('-c, --coverage', 'Generate coverage report', false)
   .option('--browser <browser>', 'Browser for testing', 'chromium')
+  .option('--pattern <pattern>', 'Test file pattern', '**/*.test.{js,ts,html}')
   .action(async (options: any) => {
     const spinner = ora('Running tests...').start();
-    
+
     try {
-      // Would integrate with @hyperfixi/testing-framework
-      spinner.succeed('All tests passed!');
+      // Try to use vitest if available
+      const { spawn } = await import('child_process');
+
+      const args = ['vitest', 'run'];
+      if (options.watch) args[1] = 'watch';
+      if (options.coverage) args.push('--coverage');
+
+      spinner.text = 'Running vitest...';
+
+      const proc = spawn('npx', args, {
+        stdio: 'inherit',
+        shell: true,
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        proc.on('close', (code) => {
+          if (code === 0) {
+            spinner.succeed('All tests passed!');
+            resolve();
+          } else {
+            spinner.fail(`Tests failed with code ${code}`);
+            reject(new Error(`Tests failed with code ${code}`));
+          }
+        });
+        proc.on('error', reject);
+      });
     } catch (error) {
       spinner.fail('Tests failed');
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));
@@ -297,10 +322,22 @@ program
   .option('--no-open', 'Don\'t open browser')
   .action(async (options: any) => {
     const spinner = ora('Starting visual builder...').start();
-    
+
     try {
-      // Would start the visual builder server
-      spinner.succeed(`Visual builder started at http://localhost:${options.port}`);
+      const { VisualBuilderServer } = await import('./builder');
+
+      const port = parseInt(options.port, 10);
+      const builder = new VisualBuilderServer({
+        port,
+        livereload: true,
+        open: options.open !== false,
+      });
+
+      await builder.start();
+      spinner.succeed(`Visual builder started at http://localhost:${port}`);
+
+      // Keep process running
+      console.log(chalk.gray('\nPress Ctrl+C to stop'));
     } catch (error) {
       spinner.fail('Failed to start visual builder');
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));
@@ -316,12 +353,55 @@ program
   .description('Migrate from one version to another')
   .option('--dry-run', 'Show what would be changed', false)
   .option('--backup', 'Create backup before migration', true)
+  .option('--verbose', 'Show detailed output', false)
   .action(async (from: string, to: string, options: any) => {
     const spinner = ora(`Migrating from ${from} to ${to}...`).start();
-    
+
     try {
-      // Migration logic would go here
-      spinner.succeed('Migration completed successfully!');
+      const { HyperFixiMigrator } = await import('./migrator');
+
+      const migrator = new HyperFixiMigrator({
+        dryRun: options.dryRun,
+        backup: options.backup,
+        verbose: options.verbose,
+      });
+
+      if (options.dryRun) {
+        spinner.text = 'Running dry-run migration...';
+      }
+
+      const result = await migrator.migrate(from, to);
+
+      if (result.success) {
+        spinner.succeed(
+          `Migration completed! ${result.filesChanged}/${result.filesProcessed} files changed (${result.totalChanges} changes)`
+        );
+
+        if (result.backupPath) {
+          console.log(chalk.gray(`  Backup created at: ${result.backupPath}`));
+        }
+
+        if (result.warnings.length > 0) {
+          console.log(chalk.yellow('\nWarnings:'));
+          result.warnings.forEach(w => console.log(chalk.yellow(`  - ${w}`)));
+        }
+
+        if (options.verbose && result.results.length > 0) {
+          console.log(chalk.gray('\nChanged files:'));
+          for (const fileResult of result.results) {
+            if (fileResult.changes.length > 0) {
+              console.log(chalk.blue(`  ${fileResult.file}`));
+              for (const change of fileResult.changes) {
+                console.log(chalk.gray(`    Line ${change.line}: ${change.rule}`));
+              }
+            }
+          }
+        }
+      } else {
+        spinner.fail('Migration failed');
+        result.errors.forEach(e => console.error(chalk.red(`  - ${e}`)));
+        process.exit(1);
+      }
     } catch (error) {
       spinner.fail('Migration failed');
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));

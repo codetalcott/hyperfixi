@@ -432,7 +432,7 @@ export async function createProject(options: ScaffoldOptions): Promise<void> {
     content = content.replace(/\{\{name\}\}/g, name);
     content = content.replace(/\{\{description\}\}/g, description || `A ${name} project`);
     content = content.replace(/\{\{author\}\}/g, author || '');
-    content = content.replace(/\{\{license\}\}/g, license);
+    content = content.replace(/\{\{license\}\}/g, license || 'MIT');
 
     // Write file
     await fs.ensureDir(path.dirname(filePath));

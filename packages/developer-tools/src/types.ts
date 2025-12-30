@@ -551,5 +551,5 @@ export interface DebugVariable {
   name: string;
   value: any;
   type: string;
-  scope: 'local' | 'global' | 'closure';
+  scope: 'local' | 'global' | 'closure' | 'this' | 'arguments';
 }

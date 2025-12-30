@@ -3,7 +3,7 @@
  * Live development server with hot reload for HyperFixi projects
  */
 
-import * as express from 'express';
+import express from 'express';
 import * as path from 'path';
 import * as fs from 'fs-extra';
 import { createServer } from 'http';

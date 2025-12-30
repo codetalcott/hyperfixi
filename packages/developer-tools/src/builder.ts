@@ -5,7 +5,7 @@
 
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import * as express from 'express';
+import express from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer } from 'http';
 import * as chokidar from 'chokidar';
@@ -1231,39 +1231,157 @@ export async function buildProject(config: {
   minify: boolean;
   sourcemap: boolean;
   analyze: boolean;
+  projectPath?: string;
 }): Promise<{
-  files: Array<{ path: string; size: number }>;
+  files: Array<{ path: string; size: number; gzippedSize?: number }>;
   warnings: string[];
-  metadata: { timestamp: number };
+  metadata: { timestamp: number; totalSize: number; gzippedSize: number };
 }> {
-  // This would implement the actual build process
-  // For now, return a mock result
-  
+  const esbuild = await import('esbuild');
+  const { gzipSync } = await import('zlib');
+  const { glob } = await import('glob');
+
+  const projectPath = config.projectPath || process.cwd();
+  const warnings: string[] = [];
+  const files: Array<{ path: string; size: number; gzippedSize?: number }> = [];
+
+  // Ensure output directory exists
   await fs.ensureDir(config.output);
-  
-  const indexContent = `<!DOCTYPE html>
-<html>
-<head>
-    <title>Built Project</title>
-    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
-</head>
-<body>
-    <h1>Built with HyperFixi</h1>
-</body>
-</html>`;
-  
-  const indexPath = path.join(config.output, 'index.html');
-  await fs.writeFile(indexPath, indexContent);
-  
-  const stats = await fs.stat(indexPath);
-  
+
+  // Discover entry points
+  const htmlFiles = await glob('**/*.html', {
+    cwd: projectPath,
+    ignore: ['node_modules/**', 'dist/**', config.output.replace(projectPath, '') + '/**']
+  });
+  const jsEntries = await glob('**/*.{js,ts}', {
+    cwd: projectPath,
+    ignore: ['node_modules/**', 'dist/**', config.output.replace(projectPath, '') + '/**', '**/*.test.{js,ts}', '**/*.spec.{js,ts}']
+  });
+
+  // Find main entry point
+  const mainEntry = jsEntries.find(f =>
+    f === 'index.ts' || f === 'index.js' ||
+    f === 'main.ts' || f === 'main.js' ||
+    f === 'src/index.ts' || f === 'src/index.js' ||
+    f === 'src/main.ts' || f === 'src/main.js'
+  );
+
+  // Bundle JavaScript/TypeScript files
+  if (mainEntry) {
+    try {
+      const result = await esbuild.build({
+        entryPoints: [path.join(projectPath, mainEntry)],
+        bundle: true,
+        outdir: config.output,
+        minify: config.minify,
+        sourcemap: config.sourcemap,
+        target: 'es2020',
+        format: 'esm',
+        metafile: config.analyze,
+        external: ['@hyperfixi/*'],
+        write: true,
+      });
+
+      // Collect bundled files
+      if (result.metafile) {
+        for (const [outputPath, output] of Object.entries(result.metafile.outputs)) {
+          const relativePath = path.relative(config.output, outputPath);
+          const content = await fs.readFile(outputPath);
+          const gzipped = gzipSync(content);
+
+          files.push({
+            path: relativePath,
+            size: output.bytes,
+            gzippedSize: gzipped.length,
+          });
+        }
+      }
+
+      // Handle warnings
+      for (const warning of result.warnings) {
+        warnings.push(`esbuild: ${warning.text}`);
+      }
+    } catch (error) {
+      warnings.push(`Build failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  // Process HTML files
+  for (const htmlFile of htmlFiles) {
+    const srcPath = path.join(projectPath, htmlFile);
+    const destPath = path.join(config.output, htmlFile);
+
+    let content = await fs.readFile(srcPath, 'utf-8');
+
+    // Extract and process inline hyperscript
+    const hyperscriptMatches = content.match(/_="([^"]+)"/g) || [];
+    if (hyperscriptMatches.length > 0) {
+      // Optionally minify hyperscript (basic - remove extra whitespace)
+      if (config.minify) {
+        content = content.replace(/_="([^"]+)"/g, (match, script) => {
+          const minified = script.replace(/\s+/g, ' ').trim();
+          return `_="${minified}"`;
+        });
+      }
+    }
+
+    // Update script references for bundled output
+    if (mainEntry) {
+      const bundleName = path.basename(mainEntry).replace(/\.(ts|js)$/, '.js');
+      // Add bundle script if not already present
+      if (!content.includes(bundleName)) {
+        content = content.replace('</body>', `  <script type="module" src="./${bundleName}"></script>\n</body>`);
+      }
+    }
+
+    await fs.ensureDir(path.dirname(destPath));
+    await fs.writeFile(destPath, content);
+
+    const stats = await fs.stat(destPath);
+    const gzipped = gzipSync(content);
+
+    files.push({
+      path: htmlFile,
+      size: stats.size,
+      gzippedSize: gzipped.length,
+    });
+  }
+
+  // Copy static assets (images, fonts, etc.)
+  const staticFiles = await glob('**/*.{css,png,jpg,jpeg,gif,svg,woff,woff2,ttf,eot,ico}', {
+    cwd: projectPath,
+    ignore: ['node_modules/**', 'dist/**', config.output.replace(projectPath, '') + '/**'],
+  });
+
+  for (const staticFile of staticFiles) {
+    const srcPath = path.join(projectPath, staticFile);
+    const destPath = path.join(config.output, staticFile);
+
+    await fs.ensureDir(path.dirname(destPath));
+    await fs.copy(srcPath, destPath);
+
+    const stats = await fs.stat(destPath);
+    const content = await fs.readFile(destPath);
+    const gzipped = gzipSync(content);
+
+    files.push({
+      path: staticFile,
+      size: stats.size,
+      gzippedSize: gzipped.length,
+    });
+  }
+
+  // Calculate totals
+  const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+  const gzippedSize = files.reduce((sum, f) => sum + (f.gzippedSize || 0), 0);
+
   return {
-    files: [
-      { path: 'index.html', size: stats.size },
-    ],
-    warnings: [],
+    files,
+    warnings,
     metadata: {
       timestamp: Date.now(),
+      totalSize,
+      gzippedSize,
     },
   };
 }
