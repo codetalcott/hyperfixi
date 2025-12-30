@@ -1,19 +1,11 @@
 /**
- * @hyperfixi/expression-parser
+ * Expression Parser
  *
- * Shared expression parser for hyperscript.
- * Used by both @hyperfixi/semantic (AST building) and @hyperfixi/core (runtime).
+ * Internal expression parser for the semantic AST builder.
+ * Parses raw expression strings into AST nodes when semantic values
+ * cannot be directly converted.
  *
- * @example
- * ```typescript
- * import { parseExpression } from '@hyperfixi/expression-parser';
- *
- * const result = parseExpression('#button.active');
- * if (result.success) {
- *   console.log(result.node);
- *   // { type: 'selector', value: '#button.active', selectorType: 'complex' }
- * }
- * ```
+ * @internal
  */
 
 // Types

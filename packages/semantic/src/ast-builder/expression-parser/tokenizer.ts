@@ -77,17 +77,6 @@ const CONTEXT_VARS = new Set([
 
 const LOGICAL_OPERATORS = new Set(['and', 'or', 'not', 'no']);
 
-const COMPARISON_OPERATORS = new Set([
-  'is', 'is not', 'are', 'are not',
-  'equals', 'does not equal',
-  'matches', 'does not match',
-  'contains', 'does not contain',
-  'includes', 'in', 'of',
-  'exists', 'does not exist',
-  'is empty', 'is not empty',
-  'starts with', 'ends with',
-]);
-
 const BOOLEAN_LITERALS = new Set(['true', 'false', 'null', 'undefined']);
 
 const TIME_UNITS = new Set(['ms', 's', 'seconds', 'second', 'milliseconds', 'millisecond', 'minutes', 'minute', 'hours', 'hour']);
@@ -212,8 +201,6 @@ export function tokenize(input: string): Token[] {
     if (pos >= input.length) break;
 
     const start = pos;
-    const startLine = line;
-    const startColumn = column;
     const char = peek();
 
     // Possessive 's (check before string literals)

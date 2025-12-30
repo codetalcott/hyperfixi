@@ -16,10 +16,10 @@
  */
 export interface ExpressionNode {
   readonly type: string;
-  readonly start?: number;
-  readonly end?: number;
-  readonly line?: number;
-  readonly column?: number;
+  readonly start?: number | undefined;
+  readonly end?: number | undefined;
+  readonly line?: number | undefined;
+  readonly column?: number | undefined;
 }
 
 // =============================================================================
@@ -29,8 +29,8 @@ export interface ExpressionNode {
 export interface LiteralNode extends ExpressionNode {
   readonly type: 'literal';
   readonly value: string | number | boolean | null | undefined;
-  readonly raw?: string;
-  readonly dataType?: 'string' | 'number' | 'boolean' | 'null' | 'undefined' | 'duration';
+  readonly raw?: string | undefined;
+  readonly dataType?: 'string' | 'number' | 'boolean' | 'null' | 'undefined' | 'duration' | undefined;
 }
 
 export interface TemplateLiteralNode extends ExpressionNode {
@@ -149,7 +149,7 @@ export interface TimeExpressionNode extends ExpressionNode {
   readonly type: 'timeExpression';
   readonly value: number;
   readonly unit: 'ms' | 's' | 'seconds' | 'milliseconds' | 'minutes' | 'hours';
-  readonly raw?: string;
+  readonly raw?: string | undefined;
 }
 
 export interface ErrorNode extends ExpressionNode {

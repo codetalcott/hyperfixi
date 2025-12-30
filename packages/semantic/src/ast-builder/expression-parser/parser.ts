@@ -21,7 +21,6 @@ import type {
   ArrayLiteralNode,
   ObjectLiteralNode,
   TimeExpressionNode,
-  ErrorNode,
   ExpressionParseResult,
   ContextType,
   SelectorKind,
@@ -88,17 +87,6 @@ export class ExpressionParser {
   private match(...types: TokenType[]): boolean {
     for (const type of types) {
       if (this.check(type)) {
-        this.advance();
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private matchValue(...values: string[]): boolean {
-    const current = this.peek().value.toLowerCase();
-    for (const value of values) {
-      if (current === value.toLowerCase()) {
         this.advance();
         return true;
       }

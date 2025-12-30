@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseExpression } from './parser';
+import { parseExpression } from '../src/ast-builder/expression-parser';
 
 describe('ExpressionParser', () => {
   describe('Literals', () => {

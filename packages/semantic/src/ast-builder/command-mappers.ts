@@ -9,7 +9,7 @@ import type { CommandSemanticNode, ActionType, SemanticValue } from '../types';
 import type { SemanticRole } from '@hyperfixi/i18n/src/grammar/types';
 import { convertValue } from './value-converters';
 import type { ASTBuilder, CommandNode } from './index';
-import type { ExpressionNode } from '@hyperfixi/expression-parser';
+import type { ExpressionNode } from './expression-parser';
 
 // =============================================================================
 // Command Mapper Interface

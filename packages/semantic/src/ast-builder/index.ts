@@ -24,7 +24,7 @@ import type { SemanticRole } from '@hyperfixi/i18n/src/grammar/types';
 
 import { convertValue } from './value-converters';
 import { getCommandMapper, type CommandMapperResult } from './command-mappers';
-import type { ExpressionNode } from '@hyperfixi/expression-parser';
+import type { ExpressionNode } from './expression-parser';
 
 // =============================================================================
 // AST Types (compatible with @hyperfixi/core)

@@ -24,7 +24,7 @@ import {
   type IdentifierNode,
   type ContextType,
   type SelectorKind,
-} from '@hyperfixi/expression-parser';
+} from './expression-parser';
 
 // =============================================================================
 // Value Converters

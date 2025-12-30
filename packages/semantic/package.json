@@ -117,8 +117,7 @@
   "author": "Hyperfixi Team",
   "license": "MIT",
   "dependencies": {
-    "@hyperfixi/i18n": "*",
-    "@hyperfixi/expression-parser": "*"
+    "@hyperfixi/i18n": "*"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
