@@ -33,26 +33,32 @@ vi.mock('open', () => ({
   default: vi.fn(),
 }));
 
-// Mock http
+// Mock http - need both default and named export for ESM compatibility
+const mockHttpServer = {
+  listen: vi.fn((port, host, cb) => cb?.()),
+  close: vi.fn((cb) => cb?.()),
+  on: vi.fn(),
+};
 vi.mock('http', () => ({
-  createServer: vi.fn(() => ({
-    listen: vi.fn((port, host, cb) => cb?.()),
-    close: vi.fn((cb) => cb?.()),
-    on: vi.fn(),
-  })),
+  default: {
+    createServer: vi.fn(() => mockHttpServer),
+  },
+  createServer: vi.fn(() => mockHttpServer),
 }));
 
-// Mock ws
-vi.mock('ws', () => ({
-  WebSocketServer: vi.fn(() => ({
-    on: vi.fn(),
-    clients: new Set(),
-    close: vi.fn(),
-  })),
-  WebSocket: {
-    OPEN: 1,
-  },
-}));
+// Mock ws - use a class factory for proper constructor behavior
+vi.mock('ws', () => {
+  return {
+    WebSocketServer: class {
+      on = vi.fn();
+      clients = new Set();
+      close = vi.fn();
+    },
+    WebSocket: {
+      OPEN: 1,
+    },
+  };
+});
 
 // Mock chokidar
 vi.mock('chokidar', () => ({

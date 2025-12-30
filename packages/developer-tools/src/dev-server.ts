@@ -662,6 +662,66 @@ export class DevServer {
       });
     });
   }
+
+  /**
+   * Get the server address URL
+   */
+  getAddress(): string {
+    const protocol = this.config.https?.enabled ? 'https' : 'http';
+    return `${protocol}://${this.config.host}:${this.config.port}`;
+  }
+
+  /**
+   * Get the current configuration
+   */
+  getConfig(): DevServerConfig {
+    return { ...this.config };
+  }
+
+  /**
+   * Check if server is running
+   */
+  isRunning(): boolean {
+    return this.server?.listening ?? false;
+  }
+
+  /**
+   * Notify clients about file changes
+   */
+  notifyFileChange(filePath: string): void {
+    const message = JSON.stringify({
+      type: 'file-changed',
+      path: filePath,
+      timestamp: Date.now(),
+    });
+
+    for (const client of this.clients) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+      }
+    }
+  }
+
+  /**
+   * Broadcast a message to all WebSocket clients
+   */
+  broadcast(message: any): void {
+    const messageStr = typeof message === 'string' ? message : JSON.stringify(message);
+
+    for (const client of this.clients) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(messageStr);
+      }
+    }
+  }
+
+  /**
+   * Restart the server
+   */
+  async restart(): Promise<void> {
+    await this.stop();
+    await this.start();
+  }
 }
 
 /**

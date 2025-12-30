@@ -1201,6 +1201,104 @@ export function createComponent(id, props = {}) {
       });
     });
   }
+
+  /**
+   * Add a component to the library
+   */
+  addComponent(component: Partial<ComponentDefinition>): void {
+    const fullComponent: ComponentDefinition = {
+      id: component.id || '',
+      name: component.name || '',
+      description: component.description || '',
+      category: component.category || 'content',
+      icon: component.icon || '📦',
+      template: component.template || '',
+      hyperscript: component.hyperscript,
+      styles: component.styles,
+      properties: component.properties || [],
+      events: component.events || [],
+      slots: component.slots || [],
+      examples: component.examples || [],
+    };
+    this.components.push(fullComponent);
+    this.broadcastUpdate('component-added', fullComponent);
+  }
+
+  /**
+   * Remove a component from the library
+   */
+  removeComponent(id: string): boolean {
+    const index = this.components.findIndex(c => c.id === id);
+    if (index === -1) {
+      return false;
+    }
+    const component = this.components[index];
+    this.components.splice(index, 1);
+    this.broadcastUpdate('component-deleted', component);
+    return true;
+  }
+
+  /**
+   * Update a component in the library
+   */
+  updateComponent(id: string, updates: Partial<ComponentDefinition>): ComponentDefinition | undefined {
+    const index = this.components.findIndex(c => c.id === id);
+    if (index === -1) {
+      return undefined;
+    }
+    const component = { ...this.components[index], ...updates };
+    this.components[index] = component;
+    this.broadcastUpdate('component-updated', component);
+    return component;
+  }
+
+  /**
+   * Get a component by ID
+   */
+  getComponent(id: string): ComponentDefinition | undefined {
+    return this.components.find(c => c.id === id);
+  }
+
+  /**
+   * Get all components
+   */
+  getComponents(): ComponentDefinition[] {
+    return [...this.components];
+  }
+
+  /**
+   * Add a category to the library
+   */
+  addCategory(category: ComponentCategory): void {
+    this.config.components.categories.push(category);
+    this.broadcastUpdate('category-added', category);
+  }
+
+  /**
+   * Get all categories
+   */
+  getCategories(): ComponentCategory[] {
+    return [...this.config.components.categories];
+  }
+
+  /**
+   * Broadcast a message to all connected WebSocket clients
+   */
+  broadcast(message: any): void {
+    this.broadcastUpdate(message.type || 'broadcast', message);
+  }
+
+  /**
+   * Export the component library
+   */
+  exportLibrary(): ComponentLibrary {
+    return {
+      name: this.config.components.name,
+      version: this.config.components.version,
+      components: [...this.components],
+      categories: [...this.config.components.categories],
+    };
+  }
 }
 
 /**

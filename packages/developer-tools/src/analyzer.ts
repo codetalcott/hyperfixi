@@ -35,35 +35,35 @@ const HYPERSCRIPT_PATTERNS = {
  */
 const ISSUE_PATTERNS = [
   {
-    pattern: /on\s+[\w\s]+\s+from\s+nowhere/,
+    pattern: /on\s+[\w\s]+\s+from\s+nowhere/g,
     type: 'warning' as const,
     code: 'W001',
     message: 'Event listener without proper target',
     suggestion: 'Specify an event target or use "from me"',
   },
   {
-    pattern: /put\s+.*\s+into\s+nowhere/,
+    pattern: /put\s+.*\s+into\s+nowhere/g,
     type: 'error' as const,
-    code: 'E001', 
+    code: 'E001',
     message: 'Put command without target',
     suggestion: 'Specify a target element for the put command',
   },
   {
-    pattern: /\bthen\s+\bthen\b/,
+    pattern: /\bthen\s+\bthen\b/g,
     type: 'warning' as const,
     code: 'W002',
     message: 'Duplicate "then" keyword',
     suggestion: 'Remove duplicate "then" keyword',
   },
   {
-    pattern: /\bme\b.*\bme\b/,
+    pattern: /\bme\b.*\bme\b/g,
     type: 'info' as const,
     code: 'I001',
     message: 'Multiple references to "me" in single expression',
     suggestion: 'Consider breaking into multiple statements for clarity',
   },
   {
-    pattern: /<[^>]*[^/]>/,
+    pattern: /<[^>]*[^/]>/g,
     type: 'info' as const,
     code: 'I002',
     message: 'CSS selector may be ambiguous',

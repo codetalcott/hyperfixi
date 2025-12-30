@@ -309,6 +309,79 @@ export interface GeneratedFile {
 }
 
 /**
+ * Schema-based code generation input
+ */
+export interface CodeGenerationSchema {
+  type: 'component' | 'page' | 'form' | 'list';
+  name: string;
+  schema: ComponentSchema | PageSchema | FormSchema | ListSchema;
+}
+
+/**
+ * Component schema for code generation
+ */
+export interface ComponentSchema {
+  template: string;
+  events?: string[];
+  commands?: string[];
+  styles?: string;
+}
+
+/**
+ * Page schema for code generation
+ */
+export interface PageSchema {
+  title: string;
+  components?: string[];
+  layout?: string;
+}
+
+/**
+ * Form schema for code generation
+ */
+export interface FormSchema {
+  fields: FormFieldSchema[];
+  submitAction: string;
+  validation?: boolean;
+}
+
+/**
+ * Form field schema
+ */
+export interface FormFieldSchema {
+  name: string;
+  type: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox';
+  required?: boolean;
+  label?: string;
+  placeholder?: string;
+  options?: string[];
+}
+
+/**
+ * List schema for code generation
+ */
+export interface ListSchema {
+  itemTemplate: string;
+  actions?: string[];
+  sortable?: boolean;
+  filterable?: boolean;
+}
+
+/**
+ * Schema-based generated code result (different structure for convenience)
+ */
+export interface SchemaGeneratedCode {
+  files: {
+    html: string;
+    js?: string;
+    css?: string;
+  };
+  dependencies: string[];
+  warnings: string[];
+  metadata: GenerationMetadata;
+}
+
+/**
  * Generation metadata
  */
 export interface GenerationMetadata {
@@ -372,7 +445,7 @@ export interface ScaffoldOptions {
   description?: string;
   author?: string;
   license?: string;
-  features: string[];
+  features?: string[];
   typescript: boolean;
   testing: boolean;
   linting: boolean;

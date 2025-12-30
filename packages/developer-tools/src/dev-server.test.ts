@@ -22,27 +22,40 @@ vi.mock('open', () => ({
   default: vi.fn(),
 }));
 
-// Mock http
+// Mock http - need both default and named export for ESM compatibility
+const mockHttpServer = {
+  listen: vi.fn((port, host, cb) => {
+    mockHttpServer.listening = true;
+    cb?.();
+  }),
+  close: vi.fn((cb) => {
+    mockHttpServer.listening = false;
+    cb?.();
+  }),
+  on: vi.fn(),
+  address: vi.fn(() => ({ port: 3000 })),
+  listening: false,
+};
 vi.mock('http', () => ({
-  createServer: vi.fn(() => ({
-    listen: vi.fn((port, host, cb) => cb?.()),
-    close: vi.fn((cb) => cb?.()),
-    on: vi.fn(),
-    address: vi.fn(() => ({ port: 3000 })),
-  })),
+  default: {
+    createServer: vi.fn(() => mockHttpServer),
+  },
+  createServer: vi.fn(() => mockHttpServer),
 }));
 
-// Mock ws
-vi.mock('ws', () => ({
-  WebSocketServer: vi.fn(() => ({
-    on: vi.fn(),
-    clients: new Set(),
-    close: vi.fn(),
-  })),
-  WebSocket: {
-    OPEN: 1,
-  },
-}));
+// Mock ws - use a class factory for proper constructor behavior
+vi.mock('ws', () => {
+  return {
+    WebSocketServer: class {
+      on = vi.fn();
+      clients = new Set();
+      close = vi.fn();
+    },
+    WebSocket: {
+      OPEN: 1,
+    },
+  };
+});
 
 // Mock chokidar
 vi.mock('chokidar', () => ({
@@ -50,6 +63,16 @@ vi.mock('chokidar', () => ({
     on: vi.fn().mockReturnThis(),
     close: vi.fn(),
   })),
+}));
+
+// Mock http-proxy-middleware
+vi.mock('http-proxy-middleware', () => ({
+  createProxyMiddleware: vi.fn(() => (req: any, res: any, next: any) => next()),
+}));
+
+// Mock compression
+vi.mock('compression', () => ({
+  default: vi.fn(() => (req: any, res: any, next: any) => next()),
 }));
 
 describe('DevServer', () => {

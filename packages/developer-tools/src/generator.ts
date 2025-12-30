@@ -12,6 +12,12 @@ import type {
   ProjectConfig,
   GeneratedCode,
   GeneratorConfig,
+  CodeGenerationSchema,
+  SchemaGeneratedCode,
+  ComponentSchema,
+  PageSchema,
+  FormSchema,
+  ListSchema,
 } from './types';
 
 /**
@@ -399,13 +405,228 @@ app.listen(port, () => {
     dependencies: ['@hyperfixi/analytics'],
     devDependencies: ['@hyperfixi/developer-tools'],
   },
+
+  'full-stack': {
+    name: 'full-stack',
+    description: 'Full-stack HyperFixi project with server',
+    category: 'advanced',
+    files: [
+      {
+        path: 'index.html',
+        content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{name}}</title>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
+</head>
+<body>
+    <h1>{{name}} - Full Stack</h1>
+    <div id="app" _="on load fetch /api/data then put it into me"></div>
+</body>
+</html>`,
+      },
+      {
+        path: 'server.js',
+        content: `const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.static('public'));
+app.use(express.json());
+
+app.get('/api/data', (req, res) => {
+  res.json({ message: 'Hello from the server!' });
+});
+
+app.listen(port, () => {
+  console.log(\`Server running at http://localhost:\${port}\`);
+});`,
+      },
+      {
+        path: 'package.json',
+        content: `{
+  "name": "{{name}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "author": "{{author}}",
+  "license": "{{license}}",
+  "dependencies": {
+    "express": "^4.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}`,
+      },
+    ],
+    dependencies: ['express'],
+    devDependencies: ['nodemon'],
+  },
+
+  api: {
+    name: 'api',
+    description: 'API-only HyperFixi project',
+    category: 'advanced',
+    files: [
+      {
+        path: 'index.js',
+        content: `const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.use(express.json());
+
+// CORS middleware
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
+// API routes
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.get('/api/items', (req, res) => {
+  res.json([
+    { id: 1, name: 'Item 1' },
+    { id: 2, name: 'Item 2' },
+  ]);
+});
+
+app.listen(port, () => {
+  console.log(\`API server running at http://localhost:\${port}\`);
+});`,
+      },
+      {
+        path: 'package.json',
+        content: `{
+  "name": "{{name}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "author": "{{author}}",
+  "license": "{{license}}",
+  "dependencies": {
+    "express": "^4.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  }
+}`,
+      },
+    ],
+    dependencies: ['express'],
+    devDependencies: ['nodemon'],
+  },
+
+  static: {
+    name: 'static',
+    description: 'Static site with HyperFixi',
+    category: 'basic',
+    files: [
+      {
+        path: 'index.html',
+        content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{name}}</title>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/about.html">About</a>
+        </nav>
+    </header>
+    <main>
+        <h1>Welcome to {{name}}</h1>
+        <p>A static site powered by HyperFixi.</p>
+    </main>
+    <footer>
+        <p>&copy; 2024 {{name}}</p>
+    </footer>
+</body>
+</html>`,
+      },
+      {
+        path: 'about.html',
+        content: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - {{name}}</title>
+    <script src="https://unpkg.com/@hyperfixi/core@latest/dist/hyperfixi.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/about.html">About</a>
+        </nav>
+    </header>
+    <main>
+        <h1>About {{name}}</h1>
+        <p>This is the about page.</p>
+    </main>
+    <footer>
+        <p>&copy; 2024 {{name}}</p>
+    </footer>
+</body>
+</html>`,
+      },
+      {
+        path: 'styles.css',
+        content: `* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, sans-serif; line-height: 1.6; }
+header { background: #333; color: white; padding: 1rem; }
+nav a { color: white; margin-right: 1rem; text-decoration: none; }
+main { padding: 2rem; max-width: 800px; margin: 0 auto; }
+footer { text-align: center; padding: 1rem; background: #f5f5f5; }`,
+      },
+      {
+        path: 'package.json',
+        content: `{
+  "name": "{{name}}",
+  "version": "1.0.0",
+  "description": "{{description}}",
+  "scripts": {
+    "dev": "npx http-server . -p 3000",
+    "build": "echo 'Static site - no build needed'"
+  },
+  "author": "{{author}}",
+  "license": "{{license}}"
+}`,
+      },
+    ],
+    dependencies: [],
+    devDependencies: [],
+  },
 };
 
 /**
  * Create a new project
  */
 export async function createProject(options: ScaffoldOptions): Promise<void> {
-  const { name, template, description, author, license, features, typescript, testing, linting, git, install } = options;
+  const { name, template, description, author, license, features = [], typescript, testing, linting, git, install } = options;
   
   const projectPath = path.resolve(name);
   
@@ -558,48 +779,110 @@ dist/
 }
 
 /**
+ * Convert string to kebab-case
+ */
+function toKebabCase(str: string): string {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
+    .toLowerCase();
+}
+
+/**
  * Create a new component
  */
 export async function createComponent(options: {
   name: string;
+  path?: string;
   description?: string;
   category?: string;
   typescript?: boolean;
+  hyperscript?: boolean;
+  events?: string[];
+  template?: boolean;
+  styles?: boolean;
 }): Promise<void> {
-  const { name, description, category = 'custom', typescript = false } = options;
-  
-  const componentDir = path.join('src/components', name);
+  const {
+    name,
+    path: outputPath,
+    description,
+    category = 'custom',
+    typescript = false,
+    hyperscript = false,
+    events = [],
+    template = false,
+    styles = false,
+  } = options;
+
+  const kebabName = toKebabCase(name);
+  const componentDir = outputPath || path.join('src/components', kebabName);
   await fs.ensureDir(componentDir);
 
   // Create component files
   const extension = typescript ? 'ts' : 'js';
-  
+
+  // Generate hyperscript for events
+  const eventHandlers = events.length > 0
+    ? events.map(e => `on ${e} log '${e} triggered'`).join('\n    ')
+    : `on click log 'Clicked ${name}'`;
+
+  // If template option is true, create an HTML file
+  if (template) {
+    const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${name} Component</title>
+    ${styles ? `<link rel="stylesheet" href="${kebabName}.css">` : ''}
+</head>
+<body>
+    <div class="${kebabName}"${hyperscript ? ` _="${eventHandlers}"` : ''}>
+        <h3>${name}</h3>
+        <p>${description || `This is the ${name} component.`}</p>
+    </div>
+</body>
+</html>`;
+    await fs.writeFile(path.join(componentDir, `${kebabName}.html`), htmlContent);
+  }
+
+  // If styles option is true, create a CSS file
+  if (styles) {
+    const cssContent = `.${kebabName} {
+    padding: 1rem;
+    background: #f5f5f5;
+    border-radius: 4px;
+    margin: 1rem 0;
+}`;
+    await fs.writeFile(path.join(componentDir, `${kebabName}.css`), cssContent);
+  }
+
   // Component definition
   const componentContent = `${typescript ? 'interface ' + name + 'Props {\n  // Define props here\n}\n\n' : ''}export const ${name} = {
   name: '${name}',
   description: '${description || `${name} component`}',
   category: '${category}',
-  
+
   template: \`
-    <div class="${name.toLowerCase()}">
+    <div class="${kebabName}"${hyperscript ? ` _="${eventHandlers}"` : ''}>
       <h3>${name}</h3>
       <p>This is the ${name} component.</p>
     </div>
   \`,
-  
+
   hyperscript: \`
-    on click log 'Clicked ${name}'
+    ${eventHandlers}
   \`,
-  
+
   styles: \`
-    .${name.toLowerCase()} {
+    .${kebabName} {
       padding: 1rem;
       background: #f5f5f5;
       border-radius: 4px;
       margin: 1rem 0;
     }
   \`,
-  
+
   properties: [
     {
       name: 'title',
@@ -608,12 +891,15 @@ export async function createComponent(options: {
       default: '${name}',
     },
   ],
-  
+
   events: [
-    {
+    ${events.map(e => `{
+      name: '${e}',
+      description: 'Fired on ${e} event',
+    }`).join(',\n    ') || `{
       name: 'click',
       description: 'Fired when component is clicked',
-    },
+    }`}
   ],
 };`;
 
@@ -685,11 +971,22 @@ The component includes default styles that can be customized:
  */
 export async function createTemplate(options: {
   name: string;
+  path?: string;
   description?: string;
+  variables?: string[];
+  slots?: string[];
+  typescript?: boolean;
 }): Promise<void> {
-  const { name, description } = options;
-  
-  const templateDir = path.join('templates', name);
+  const {
+    name,
+    path: outputPath,
+    description,
+    variables = [],
+    slots = [],
+    typescript = false,
+  } = options;
+
+  const templateDir = outputPath || path.join('templates', name);
   await fs.ensureDir(templateDir);
 
   // Create template configuration
@@ -697,6 +994,8 @@ export async function createTemplate(options: {
     name,
     description: description || `${name} template`,
     category: 'custom',
+    variables,
+    slots,
     files: [],
     dependencies: [],
     devDependencies: ['@hyperfixi/developer-tools'],
@@ -707,7 +1006,13 @@ export async function createTemplate(options: {
     JSON.stringify(templateConfig, null, 2)
   );
 
-  // Create example files
+  // Generate variable placeholders
+  const variablePlaceholders = variables.map(v => `  {{${v}}}`).join('\n');
+
+  // Generate slot elements
+  const slotElements = slots.map(s => `  <slot name="${s}"></slot>`).join('\n');
+
+  // Create HTML template file
   await fs.writeFile(
     path.join(templateDir, 'index.html'),
     `<!DOCTYPE html>
@@ -720,9 +1025,30 @@ export async function createTemplate(options: {
 <body>
     <h1>{{name}} Template</h1>
     <p>Customize this template for your needs.</p>
+${variablePlaceholders}
+${slotElements}
 </body>
 </html>`
   );
+
+  // If typescript option is true, create a TypeScript file
+  if (typescript) {
+    const tsContent = `// ${name} Template TypeScript Definition
+
+export interface ${name}Props {
+${variables.map(v => `  ${v}: string;`).join('\n') || '  // Add props here'}
+}
+
+export function render(props: ${name}Props): string {
+  return \`
+    <div class="${name.toLowerCase()}">
+      ${variables.map(v => `<p>\${props.${v}}</p>`).join('\n      ')}
+    </div>
+  \`;
+}
+`;
+    await fs.writeFile(path.join(templateDir, `${name.toLowerCase()}.ts`), tsContent);
+  }
 
   await fs.writeFile(
     path.join(templateDir, 'README.md'),
@@ -794,11 +1120,27 @@ async function installDependencies(projectPath: string): Promise<void> {
 }
 
 /**
- * Generate code from templates
+ * Generate code from templates (string-based API)
  */
 export async function generateCode(
   template: string,
   data: Record<string, any>,
+  config?: GeneratorConfig
+): Promise<GeneratedCode>;
+
+/**
+ * Generate code from schema (schema-based API)
+ */
+export async function generateCode(
+  schema: CodeGenerationSchema
+): Promise<SchemaGeneratedCode>;
+
+/**
+ * Generate code from templates or schema
+ */
+export async function generateCode(
+  templateOrSchema: string | CodeGenerationSchema,
+  data?: Record<string, any>,
   config: GeneratorConfig = {
     target: 'javascript',
     format: 'module',
@@ -813,12 +1155,18 @@ export async function generateCode(
       moduleResolution: 'bundler',
     },
   }
-): Promise<GeneratedCode> {
-  // Template processing logic would go here
+): Promise<GeneratedCode | SchemaGeneratedCode> {
+  // Schema-based generation
+  if (typeof templateOrSchema === 'object' && 'type' in templateOrSchema) {
+    return generateFromSchema(templateOrSchema);
+  }
+
+  // String-based template generation
+  const template = templateOrSchema;
   const files = [
     {
       path: 'generated.js',
-      content: template.replace(/\{\{(\w+)\}\}/g, (match, key) => data[key] || match),
+      content: template.replace(/\{\{(\w+)\}\}/g, (match, key) => data?.[key] || match),
       type: 'javascript' as const,
       size: 0,
     },
@@ -837,4 +1185,176 @@ export async function generateCode(
       options: config,
     },
   };
+}
+
+/**
+ * Generate code from a schema definition
+ */
+async function generateFromSchema(schema: CodeGenerationSchema): Promise<SchemaGeneratedCode> {
+  const { type, name, schema: schemaData } = schema;
+
+  let html = '';
+  let js: string | undefined;
+  let css: string | undefined;
+  const dependencies: string[] = [];
+  const warnings: string[] = [];
+
+  switch (type) {
+    case 'component':
+      ({ html, js, css } = generateComponent(name, schemaData as ComponentSchema));
+      break;
+    case 'page':
+      ({ html, js, css } = generatePage(name, schemaData as PageSchema));
+      break;
+    case 'form':
+      ({ html, js, css } = generateForm(name, schemaData as FormSchema));
+      break;
+    case 'list':
+      ({ html, js, css } = generateList(name, schemaData as ListSchema));
+      break;
+    default:
+      throw new Error(`Unknown generation type: ${type}`);
+  }
+
+  return {
+    files: { html, js, css },
+    dependencies,
+    warnings,
+    metadata: {
+      generator: '@hyperfixi/developer-tools',
+      version: '0.1.0',
+      timestamp: Date.now(),
+      source: 'schema',
+      target: 'html',
+      options: {},
+    },
+  };
+}
+
+/**
+ * Generate component HTML from schema
+ */
+function generateComponent(name: string, schema: ComponentSchema): { html: string; js?: string; css?: string } {
+  const { template, events = [], commands = [] } = schema;
+
+  // Build hyperscript if there are events or commands
+  let hyperscript = '';
+  if (events.length > 0 || commands.length > 0) {
+    const eventHandlers = events.map(event => {
+      const command = commands[0] || 'log';
+      return `on ${event} ${command} .active`;
+    });
+    hyperscript = ` _="${eventHandlers.join(' then ')}"`;
+  }
+
+  // Wrap template with hyperscript attribute if needed
+  let html = template;
+  if (hyperscript && template.startsWith('<')) {
+    const tagEnd = template.indexOf('>');
+    html = template.slice(0, tagEnd) + hyperscript + template.slice(tagEnd);
+  }
+
+  return {
+    html: `<!-- Component: ${name} -->\n${html}`,
+    js: undefined,
+    css: schema.styles,
+  };
+}
+
+/**
+ * Generate page HTML from schema
+ */
+function generatePage(name: string, schema: PageSchema): { html: string; js?: string; css?: string } {
+  const { title, components = [], layout = 'default' } = schema;
+
+  const componentIncludes = components.map(c => `  <!-- Include: ${c} -->`).join('\n');
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <script src="https://unpkg.com/hyperfixi/dist/hyperfixi-browser.js"></script>
+</head>
+<body class="layout-${layout}">
+${componentIncludes}
+  <main id="${name}">
+    <!-- Page content -->
+  </main>
+</body>
+</html>`;
+
+  return { html, js: undefined, css: undefined };
+}
+
+/**
+ * Generate form HTML from schema
+ */
+function generateForm(name: string, schema: FormSchema): { html: string; js?: string; css?: string } {
+  const { fields, submitAction, validation = true } = schema;
+
+  const fieldHtml = fields.map(field => {
+    const label = field.label || field.name.charAt(0).toUpperCase() + field.name.slice(1);
+    const required = field.required ? ' required' : '';
+    const placeholder = field.placeholder ? ` placeholder="${field.placeholder}"` : '';
+
+    if (field.type === 'textarea') {
+      return `  <div class="form-field">
+    <label for="${field.name}">${label}</label>
+    <textarea id="${field.name}" name="${field.name}"${required}${placeholder}></textarea>
+  </div>`;
+    }
+
+    if (field.type === 'select' && field.options) {
+      const options = field.options.map(opt => `      <option value="${opt}">${opt}</option>`).join('\n');
+      return `  <div class="form-field">
+    <label for="${field.name}">${label}</label>
+    <select id="${field.name}" name="${field.name}"${required}>
+${options}
+    </select>
+  </div>`;
+    }
+
+    return `  <div class="form-field">
+    <label for="${field.name}">${label}</label>
+    <input type="${field.type}" id="${field.name}" name="${field.name}"${required}${placeholder}>
+  </div>`;
+  }).join('\n');
+
+  const validationAttr = validation ? ` _="on submit halt the event then send ${submitAction} to me"` : '';
+
+  const html = `<form id="${name}" class="form"${validationAttr}>
+${fieldHtml}
+  <button type="submit">Submit</button>
+</form>`;
+
+  return { html, js: undefined, css: undefined };
+}
+
+/**
+ * Generate list HTML from schema
+ */
+function generateList(name: string, schema: ListSchema): { html: string; js?: string; css?: string } {
+  const { itemTemplate, actions = [], sortable = false, filterable = false } = schema;
+
+  const actionButtons = actions.map(action =>
+    `    <button _="on click send ${action} to closest <li/>">${action}</button>`
+  ).join('\n');
+
+  const listAttrs: string[] = [];
+  if (sortable) listAttrs.push('data-sortable="true"');
+  if (filterable) listAttrs.push('data-filterable="true"');
+  const attrsStr = listAttrs.length > 0 ? ' ' + listAttrs.join(' ') : '';
+
+  const html = `<div id="${name}" class="list-container">
+  <ul class="list"${attrsStr}>
+    <li class="list-item">
+      ${itemTemplate}
+${actionButtons ? `      <div class="list-actions">\n${actionButtons}\n      </div>` : ''}
+    </li>
+  </ul>
+</div>`;
+
+  return { html, js: undefined, css: undefined };
 }
