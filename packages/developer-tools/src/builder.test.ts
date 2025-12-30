@@ -46,14 +46,23 @@ vi.mock('http', () => ({
   createServer: vi.fn(() => mockHttpServer),
 }));
 
-// Mock ws - use a class factory for proper constructor behavior
+// Mock ws - use a class with static tracking for spy behavior
 vi.mock('ws', () => {
+  // Create a mock class that tracks instantiation
+  class MockWebSocketServer {
+    static instances: any[] = [];
+    static mockClear() {
+      MockWebSocketServer.instances = [];
+    }
+    on = vi.fn();
+    clients = new Set();
+    close = vi.fn();
+    constructor() {
+      MockWebSocketServer.instances.push(this);
+    }
+  }
   return {
-    WebSocketServer: class {
-      on = vi.fn();
-      clients = new Set();
-      close = vi.fn();
-    },
+    WebSocketServer: MockWebSocketServer,
     WebSocket: {
       OPEN: 1,
     },
@@ -456,6 +465,10 @@ describe('Builder', () => {
     });
 
     it('should set up WebSocket server', async () => {
+      const ws = await import('ws');
+      const MockWSS = ws.WebSocketServer as any;
+      MockWSS.instances = []; // Reset instances
+
       const server = new VisualBuilderServer({
         open: false,
         livereload: true,
@@ -463,7 +476,7 @@ describe('Builder', () => {
 
       await server.start();
 
-      expect(WebSocketServer).toHaveBeenCalled();
+      expect(MockWSS.instances.length).toBeGreaterThan(0);
     });
   });
 

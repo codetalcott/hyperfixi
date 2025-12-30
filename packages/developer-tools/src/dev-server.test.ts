@@ -43,14 +43,23 @@ vi.mock('http', () => ({
   createServer: vi.fn(() => mockHttpServer),
 }));
 
-// Mock ws - use a class factory for proper constructor behavior
+// Mock ws - use a class with static tracking for spy behavior
 vi.mock('ws', () => {
+  // Create a mock class that tracks instantiation
+  class MockWebSocketServer {
+    static instances: any[] = [];
+    static mockClear() {
+      MockWebSocketServer.instances = [];
+    }
+    on = vi.fn();
+    clients = new Set();
+    close = vi.fn();
+    constructor() {
+      MockWebSocketServer.instances.push(this);
+    }
+  }
   return {
-    WebSocketServer: class {
-      on = vi.fn();
-      clients = new Set();
-      close = vi.fn();
-    },
+    WebSocketServer: MockWebSocketServer,
     WebSocket: {
       OPEN: 1,
     },
@@ -84,6 +93,8 @@ describe('DevServer', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock server state
+    mockHttpServer.listening = false;
     mockFs.pathExists.mockResolvedValue(true);
     mockFs.readFile.mockResolvedValue('<html></html>');
     mockFs.stat.mockResolvedValue({ size: 100, isDirectory: () => false });
@@ -294,7 +305,9 @@ describe('DevServer', () => {
 
   describe('WebSocket Server', () => {
     it('should create WebSocket server for livereload', async () => {
-      const { WebSocketServer } = await import('ws');
+      const ws = await import('ws');
+      const MockWSS = ws.WebSocketServer as any;
+      MockWSS.instances = []; // Reset instances
 
       const server = new DevServer({
         livereload: true,
@@ -303,7 +316,7 @@ describe('DevServer', () => {
 
       await server.start();
 
-      expect(WebSocketServer).toHaveBeenCalled();
+      expect(MockWSS.instances.length).toBeGreaterThan(0);
     });
 
     it('should handle client connections', async () => {

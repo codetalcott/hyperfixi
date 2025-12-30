@@ -228,6 +228,7 @@ export interface ScriptAnalysis {
   selectors: string[];
   commands: string[];
   variables: string[];
+  references: string[];
   issues: AnalysisIssue[];
 }
 

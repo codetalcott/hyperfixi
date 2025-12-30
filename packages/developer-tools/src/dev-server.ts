@@ -83,24 +83,34 @@ export class DevServer {
       });
     }
 
-    // Compression
+    // Compression (optional dependency)
     if (this.config.compression) {
-      const compression = require('compression');
-      this.app.use(compression());
+      try {
+        const compression = require('compression');
+        this.app.use(compression());
+      } catch {
+        // compression module not available, skip
+      }
     }
 
     // JSON parsing
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
 
-    // Proxy middleware
-    for (const [path, target] of Object.entries(this.config.proxy)) {
-      const { createProxyMiddleware } = require('http-proxy-middleware');
-      this.app.use(path, createProxyMiddleware({
-        target,
-        changeOrigin: true,
-        logLevel: 'warn',
-      }));
+    // Proxy middleware (optional dependency)
+    if (Object.keys(this.config.proxy).length > 0) {
+      try {
+        const { createProxyMiddleware } = require('http-proxy-middleware');
+        for (const [proxyPath, target] of Object.entries(this.config.proxy)) {
+          this.app.use(proxyPath, createProxyMiddleware({
+            target,
+            changeOrigin: true,
+            logLevel: 'warn',
+          }));
+        }
+      } catch {
+        // http-proxy-middleware not available, skip proxy setup
+      }
     }
 
     // Static file serving
@@ -667,7 +677,7 @@ export class DevServer {
    * Get the server address URL
    */
   getAddress(): string {
-    const protocol = this.config.https?.enabled ? 'https' : 'http';
+    const protocol = this.config.https ? 'https' : 'http';
     return `${protocol}://${this.config.host}:${this.config.port}`;
   }
 

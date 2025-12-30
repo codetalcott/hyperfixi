@@ -1168,6 +1168,11 @@ export function createComponent(id, props = {}) {
         const url = `http://${this.config.host}:${this.config.port}`;
         console.log(`🔧 Visual Builder started at ${url}`);
 
+        // Setup file watcher for live reload
+        if (this.config.livereload) {
+          this.setupFileWatcher(['.']);
+        }
+
         if (this.config.open) {
           open(url).catch(() => {
             // Ignore open errors

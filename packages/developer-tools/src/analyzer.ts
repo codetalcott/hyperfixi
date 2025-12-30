@@ -18,7 +18,7 @@ import type {
  * HyperScript patterns and features
  */
 const HYPERSCRIPT_PATTERNS = {
-  events: /on\s+([\w\s]+)/g,
+  events: /on\s+(\w+)/g,
   commands: /\b(add|remove|toggle|put|take|make|wait|send|trigger|call|get|set|log|halt|prevent|stop)\b/g,
   selectors: /<[^>]+>|#[\w-]+|\.[\w-]+|\[[\w-]+(=.*?)?\]|closest\s+[^,\s]+|first\s+[^,\s]+|last\s+[^,\s]+/g,
   references: /\b(me|my|you|your|it|its|the|this|that|target|event|detail)\b/g,
@@ -262,6 +262,7 @@ function analyzeScript(
   const selectors: string[] = [];
   const commands: string[] = [];
   const variables: string[] = [];
+  const references: string[] = [];
   const issues: AnalysisIssue[] = [];
   
   // Analyze patterns
@@ -283,6 +284,9 @@ function analyzeScript(
           break;
         case 'variables':
           variables.push(...matches.map(m => m[0]).filter(Boolean));
+          break;
+        case 'references':
+          references.push(...matches.map(m => m[0]).filter(Boolean));
           break;
       }
     }
@@ -320,6 +324,7 @@ function analyzeScript(
     selectors,
     commands,
     variables,
+    references,
     issues,
   };
 }
