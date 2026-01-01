@@ -321,6 +321,7 @@ const result = hyperfixi.compile(code, { disableSemanticParsing: true });
 | `browser-east-asian.east-asian.global.js` | `HyperFixiSemanticEastAsian` | 24 KB | ja, zh, ko |
 | `browser-es-en.es-en.global.js` | `HyperFixiSemanticEsEn` | 25 KB | en, es |
 | `browser-en.en.global.js` | `HyperFixiSemanticEn` | 20 KB | en only |
+| `browser-es.es.global.js` | `HyperFixiSemanticEs` | 16 KB | es only |
 
 Choose the smallest bundle that covers your target languages. See `packages/semantic/README.md` for details.
 

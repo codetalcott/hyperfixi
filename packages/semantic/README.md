@@ -21,6 +21,7 @@ Choose the right bundle for your use case. All bundles are minified IIFE for dir
 
 | Bundle | Import Path | Size (gzip) | Languages |
 |--------|-------------|-------------|-----------|
+| Spanish only | `@hyperfixi/semantic/browser/es` | 16 KB | es |
 | English only | `@hyperfixi/semantic/browser/en` | 20 KB | en |
 | Spanish + English | `@hyperfixi/semantic/browser/es-en` | 25 KB | en, es |
 | East Asian | `@hyperfixi/semantic/browser/east-asian` | 24 KB | ja, zh, ko |
@@ -31,7 +32,14 @@ Choose the right bundle for your use case. All bundles are minified IIFE for dir
 ### Browser Usage
 
 ```html
-<!-- English only (smallest) -->
+<!-- Spanish only (smallest for Spanish devs) -->
+<script src="node_modules/@hyperfixi/semantic/dist/browser-es.es.global.js"></script>
+<script>
+  const { parse, tokenize } = HyperFixiSemanticEs;
+  parse('alternar .activo', 'es');
+</script>
+
+<!-- English only (smallest for English devs) -->
 <script src="node_modules/@hyperfixi/semantic/dist/browser-en.en.global.js"></script>
 <script>
   const { parse, canParse } = HyperFixiSemanticEn;
