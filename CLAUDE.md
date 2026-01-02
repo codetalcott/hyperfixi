@@ -311,6 +311,49 @@ const result = hyperfixi.compile(code, { disableSemanticParsing: true });
 | `packages/core/dist/hyperfixi-multilingual.js` | `window.hyperfixi` | 250 KB | Multilingual (no parser) |
 | `packages/i18n/dist/hyperfixi-i18n.min.js` | `window.HyperFixiI18n` | 68 KB | Grammar transformation |
 
+### Lite Bundles (Size-Optimized)
+
+For projects prioritizing bundle size over features:
+
+| Bundle | Size (gzip) | Commands | Features |
+|--------|-------------|----------|----------|
+| `hyperfixi-lite.js` | 1.9 KB | 8 | Regex parser, basic commands |
+| `hyperfixi-lite-plus.js` | 2.6 KB | 14 | Regex parser, more commands, i18n aliases |
+| `hyperfixi-hybrid-complete.js` | 6.7 KB | 21+blocks | Full AST parser, expressions, event modifiers |
+
+**Hybrid Complete** (~85% hyperscript coverage) is recommended - it supports:
+
+- Full expression parser with operator precedence
+- Block commands: `repeat N times`, `for each`, `if/else/else if`, `unless`, `fetch`, `while`, `async`
+- Event modifiers: `.once`, `.prevent`, `.stop`, `.debounce(N)`, `.throttle(N)`
+- Positional expressions: `first`, `last`, `next`, `previous`, `closest`, `parent`
+- Function calls and method chaining: `str.toUpperCase()`, `arr.join('-')`
+- HTML selectors: `<button.class#id/>`
+- i18n keyword aliases
+
+```html
+<!-- Example: Hybrid Complete with expressions and blocks -->
+<button _="on click
+  set :total to #price's textContent then
+  set :tax to :total * 0.1 then
+  put :total + :tax into #grand-total">
+  Calculate Total
+</button>
+
+<button _="on click.debounce(300)
+  if me has .loading
+    return
+  end then
+  add .loading then
+  fetch /api/data as json then
+  for each item in result
+    append item.name to #results
+  end then
+  remove .loading">
+  Load Data
+</button>
+```
+
 ### Semantic Bundles (Regional Options)
 
 | Bundle | Global | Size (gzip) | Languages |

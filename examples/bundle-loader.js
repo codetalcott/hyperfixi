@@ -25,8 +25,9 @@
   // Bundle configurations
   const BUNDLES = {
     'browser': 'hyperfixi-browser.js',
-    'hybrid': 'hyperfixi-hybrid.js',
+    'hybrid-complete': 'hyperfixi-hybrid-complete.js',
     'lite': 'hyperfixi-lite.js',
+    'lite-plus': 'hyperfixi-lite-plus.js',
     'standard': 'hyperfixi-browser-standard.js',
     'minimal': 'hyperfixi-browser-minimal.js',
     'multilingual': 'hyperfixi-multilingual.js',

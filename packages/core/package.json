@@ -38,6 +38,15 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/hyperfixi-browser-standard.js"
     },
+    "./browser/lite": {
+      "default": "./dist/hyperfixi-lite.js"
+    },
+    "./browser/lite-plus": {
+      "default": "./dist/hyperfixi-lite-plus.js"
+    },
+    "./browser/hybrid-complete": {
+      "default": "./dist/hyperfixi-hybrid-complete.js"
+    },
     "./commands": {
       "types": "./dist/commands/index.d.ts",
       "import": "./dist/commands/index.mjs",
@@ -75,7 +84,7 @@
     "build:browser:llm": "rollup -c rollup.browser.llm.config.mjs",
     "build:browser:lite": "rollup -c rollup.browser-lite.config.mjs",
     "build:browser:lite-plus": "rollup -c rollup.browser-lite-plus.config.mjs",
-    "build:browser:hybrid": "rollup -c rollup.browser-hybrid.config.mjs",
+    "build:browser:hybrid-complete": "rollup -c rollup.browser-hybrid-complete.config.mjs",
     "build:browser:minimal": "rollup -c rollup.browser-minimal.config.mjs",
     "build:browser:standard": "rollup -c rollup.browser-standard.config.mjs",
     "build:browser:classic": "rollup -c rollup.browser-classic.config.mjs",

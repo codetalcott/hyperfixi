@@ -29,12 +29,12 @@
       features: ['43 commands', 'semantic parser', 'i18n', 'debug tools'],
       color: '#667eea'
     },
-    'hybrid': {
-      name: 'Hybrid Bundle',
-      file: 'hyperfixi-hybrid.js',
-      size: '21 KB',
-      description: 'Mid-size with minimal recursive descent parser',
-      features: ['18 commands', 'minimal parser', 'control flow'],
+    'hybrid-complete': {
+      name: 'Hybrid Complete',
+      file: 'hyperfixi-hybrid-complete.js',
+      size: '6.7 KB',
+      description: 'Full AST parser with blocks, expressions, event modifiers',
+      features: ['21 commands', 'full parser', 'blocks', 'i18n aliases'],
       color: '#10b981'
     },
     'lite': {
