@@ -320,6 +320,7 @@ For projects prioritizing bundle size over features:
 | `hyperfixi-lite.js` | 1.9 KB | 8 | Regex parser, basic commands |
 | `hyperfixi-lite-plus.js` | 2.6 KB | 14 | Regex parser, more commands, i18n aliases |
 | `hyperfixi-hybrid-complete.js` | 6.7 KB | 21+blocks | Full AST parser, expressions, event modifiers |
+| `hyperfixi-hybrid-hx.js` | 9.7 KB | 21+blocks | hybrid-complete + htmx attribute support |
 
 **Hybrid Complete** (~85% hyperscript coverage) is recommended - it supports:
 
@@ -353,6 +354,45 @@ For projects prioritizing bundle size over features:
   Load Data
 </button>
 ```
+
+**Hybrid-HX** adds htmx attribute compatibility for declarative AJAX:
+
+```html
+<!-- htmx-style attributes (hybrid-hx bundle) -->
+<button hx-get="/api/users" hx-target="#users-list" hx-swap="innerHTML">
+  Load Users
+</button>
+
+<!-- hx-on:* for inline hyperscript -->
+<button hx-on:click="toggle .active on me">Toggle</button>
+```
+
+### Modular Bundles (Parser Adapter Architecture)
+
+For projects requiring build-time parser selection or independent parser testing:
+
+| Bundle | Size (gzip) | Parser | Commands |
+|--------|-------------|--------|----------|
+| `hyperfixi-modular-standard.js` | 7.5 KB | StandardParser | 22 |
+
+The modular architecture uses the `ParserAdapter` interface, enabling:
+- Build-time parser tier selection (standard vs full)
+- Independent parser testing and validation
+- Future parser tier additions (e.g., lite parser)
+
+```typescript
+// Parser adapter interface
+import { createParser, ParserAdapter } from '@hyperfixi/core/parser/adapters';
+
+const parser: ParserAdapter = createParser('standard');
+const result = parser.parse('on click toggle .active');
+console.log(result.success, parser.capabilities);
+```
+
+Key files:
+- `packages/core/src/parser/adapters/parser-adapter.ts` - Interface definitions
+- `packages/core/src/parser/adapters/parser-standard.ts` - Standard parser (~1,000 lines)
+- `packages/core/src/parser/adapters/parser-full.ts` - Full parser wrapper
 
 ### Semantic Bundles (Regional Options)
 
