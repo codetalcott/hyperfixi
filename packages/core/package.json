@@ -60,6 +60,24 @@
       "import": "./dist/expressions/index.mjs",
       "require": "./dist/expressions/index.js"
     },
+    "./parser/full": {
+      "types": "./dist/parser/full-parser.d.ts",
+      "import": "./dist/parser/full-parser.mjs",
+      "require": "./dist/parser/full-parser.js"
+    },
+    "./parser/hybrid": {
+      "types": "./dist/parser/hybrid-parser.d.ts",
+      "import": "./dist/parser/hybrid-parser.mjs",
+      "require": "./dist/parser/hybrid-parser.js"
+    },
+    "./parser/regex": {
+      "types": "./dist/parser/regex-parser.d.ts",
+      "import": "./dist/parser/regex-parser.mjs",
+      "require": "./dist/parser/regex-parser.js"
+    },
+    "./browser/modular": {
+      "default": "./dist/hyperfixi-modular.js"
+    },
     "./behaviors": {
       "types": "./dist/behaviors/index.d.ts",
       "import": "./dist/behaviors/index.mjs",
@@ -101,6 +119,8 @@
     "build:browser:esm:standard": "rollup -c rollup.browser-standard-esm.config.mjs",
     "build:browser:esm:all": "npm run build:browser:esm && npm run build:browser:esm:minimal && npm run build:browser:esm:standard",
     "build:browser:modular": "rollup -c rollup.browser-modular.config.mjs",
+    "generate:bundle": "tsx scripts/generate-inline-bundle.ts",
+    "generate:bundle:textshelf": "tsx scripts/generate-inline-bundle.ts --config bundle-configs/textshelf.config.json",
     "dev": "rollup -c -w",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -1,0 +1,7 @@
+{
+  "name": "Forms",
+  "commands": ["toggle", "add", "remove", "show", "hide", "set", "get", "focus", "blur", "send"],
+  "output": "src/compatibility/browser-bundle-forms-generated.ts",
+  "htmxIntegration": true,
+  "globalName": "hyperfixi"
+}

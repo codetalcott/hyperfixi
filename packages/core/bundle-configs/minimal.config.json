@@ -1,0 +1,7 @@
+{
+  "name": "Minimal",
+  "commands": ["toggle", "add", "remove"],
+  "output": "src/compatibility/browser-bundle-minimal-generated.ts",
+  "htmxIntegration": false,
+  "globalName": "hyperfixi"
+}

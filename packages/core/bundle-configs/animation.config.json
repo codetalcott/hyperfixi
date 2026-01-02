@@ -1,0 +1,7 @@
+{
+  "name": "Animation",
+  "commands": ["toggle", "add", "remove", "show", "hide", "transition", "wait", "take"],
+  "output": "src/compatibility/browser-bundle-animation-generated.ts",
+  "htmxIntegration": false,
+  "globalName": "hyperfixi"
+}
