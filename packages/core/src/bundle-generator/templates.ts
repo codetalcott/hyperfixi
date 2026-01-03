@@ -338,6 +338,16 @@ const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
       const value = cmd.args[0] ? await evaluate(cmd.args[0], ctx) : ctx.it;
       throw { type: 'return', value };
     }`,
+
+  'break': `
+    case 'break': {
+      throw { type: 'break' };
+    }`,
+
+  'continue': `
+    case 'continue': {
+      throw { type: 'continue' };
+    }`,
 };
 
 /**
@@ -363,7 +373,13 @@ const BLOCK_IMPLEMENTATIONS_TS: Record<string, string> = {
       for (let i = 0; i < n && i < MAX_LOOP_ITERATIONS; i++) {
         ctx.locals.set('__loop_index__', i);
         ctx.locals.set('__loop_count__', i + 1);
-        await executeSequenceWithBlocks(block.body, ctx);
+        try {
+          await executeSequenceWithBlocks(block.body, ctx);
+        } catch (e: any) {
+          if (e?.type === 'break') break;
+          if (e?.type === 'continue') continue;
+          throw e;
+        }
       }
       return null;
     }`,
@@ -378,7 +394,13 @@ const BLOCK_IMPLEMENTATIONS_TS: Record<string, string> = {
         ctx.locals.set(varName, arr[i]);
         ctx.locals.set('__loop_index__', i);
         ctx.locals.set('__loop_count__', i + 1);
-        await executeSequenceWithBlocks(block.body, ctx);
+        try {
+          await executeSequenceWithBlocks(block.body, ctx);
+        } catch (e: any) {
+          if (e?.type === 'break') break;
+          if (e?.type === 'continue') continue;
+          throw e;
+        }
       }
       return null;
     }`,
@@ -388,7 +410,13 @@ const BLOCK_IMPLEMENTATIONS_TS: Record<string, string> = {
       let iterations = 0;
       while (await evaluate(block.condition!, ctx) && iterations < MAX_LOOP_ITERATIONS) {
         ctx.locals.set('__loop_index__', iterations);
-        await executeSequenceWithBlocks(block.body, ctx);
+        try {
+          await executeSequenceWithBlocks(block.body, ctx);
+        } catch (e: any) {
+          if (e?.type === 'break') break;
+          if (e?.type === 'continue') { iterations++; continue; }
+          throw e;
+        }
         iterations++;
       }
       return null;

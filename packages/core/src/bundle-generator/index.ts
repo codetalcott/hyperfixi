@@ -3,6 +3,11 @@
  *
  * Public API for generating minimal HyperFixi bundles.
  *
+ * NOTE: Generated bundles require HybridParser for runtime AST interpretation.
+ * The parser is imported from '../parser/hybrid' by default. This is intentional -
+ * bundles interpret hyperscript at runtime and need the parser to convert
+ * `_="..."` attributes to AST.
+ *
  * @example
  * ```typescript
  * import { generateBundle, generateBundleCode, getAvailableCommands } from '@hyperfixi/core/bundle-generator';
@@ -32,7 +37,13 @@
  */
 
 // Types
-export type { BundleConfig, GeneratorOptions, GeneratedBundle } from './types';
+export type {
+  BundleConfig,
+  GeneratorOptions,
+  GeneratedBundle,
+  ValidationOptions,
+  ValidationError,
+} from './types';
 
 // Generator functions
 export { generateBundle, generateBundleCode } from './generator';
@@ -49,3 +60,16 @@ export {
   getBlockImplementations,
   type CodeFormat,
 } from './templates';
+
+// Template capabilities (what's available in lite vs full runtime)
+export {
+  AVAILABLE_COMMANDS,
+  AVAILABLE_BLOCKS,
+  FULL_RUNTIME_ONLY_COMMANDS,
+  isAvailableCommand,
+  isAvailableBlock,
+  requiresFullRuntime,
+  type AvailableCommand,
+  type AvailableBlock,
+  type FullRuntimeOnlyCommand,
+} from './template-capabilities';

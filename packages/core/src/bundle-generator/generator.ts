@@ -5,7 +5,7 @@
  * Used by both CLI and Vite plugin.
  */
 
-import type { BundleConfig, GeneratorOptions, GeneratedBundle } from './types';
+import type { BundleConfig, GeneratorOptions, GeneratedBundle, ValidationError } from './types';
 import {
   COMMAND_IMPLEMENTATIONS,
   BLOCK_IMPLEMENTATIONS,
@@ -34,6 +34,7 @@ export function generateBundleCode(config: GeneratorOptions): string {
     autoInit = true,
     esModule = true,
     format = 'ts',
+    maxLoopIterations = 1000,
   } = config;
 
   const needsStyleHelpers = commands.some(cmd => STYLE_COMMANDS.includes(cmd));
@@ -84,7 +85,7 @@ interface Context {
 }
 
 const globalVars = new Map<string, any>();
-${hasBlocks ? 'const MAX_LOOP_ITERATIONS = 1000;' : ''}
+${hasBlocks ? `const MAX_LOOP_ITERATIONS = ${maxLoopIterations};` : ''}
 
 async function evaluate(node: ASTNode, ctx: Context): Promise<any> {
   switch (node.type) {
@@ -449,25 +450,46 @@ export { api, processElements };
 /**
  * Generate a bundle with metadata and warnings
  *
- * @param config Bundle configuration
+ * @param config Bundle configuration (can include GeneratorOptions for validation)
  * @returns Generated bundle with metadata
+ * @throws Error if strict validation is enabled and unknown commands/blocks are found
  */
-export function generateBundle(config: BundleConfig): GeneratedBundle {
+export function generateBundle(config: BundleConfig & Partial<GeneratorOptions>): GeneratedBundle {
   const warnings: string[] = [];
+  const errors: ValidationError[] = [];
+  const strict = (config as GeneratorOptions).validation?.strict ?? false;
 
   // Check for unknown commands
   const unknownCommands = config.commands.filter(cmd => !COMMAND_IMPLEMENTATIONS[cmd]);
-  if (unknownCommands.length > 0) {
-    warnings.push(`Unknown commands will not be included: ${unknownCommands.join(', ')}`);
+  for (const cmd of unknownCommands) {
+    const error: ValidationError = {
+      type: 'unknown-command',
+      message: `Unknown command '${cmd}' will not be included`,
+      name: cmd,
+    };
+    errors.push(error);
+    warnings.push(error.message);
   }
 
   // Check for unknown blocks
   const unknownBlocks = (config.blocks || []).filter(block => !BLOCK_IMPLEMENTATIONS[block]);
-  if (unknownBlocks.length > 0) {
-    warnings.push(`Unknown blocks will not be included: ${unknownBlocks.join(', ')}`);
+  for (const block of unknownBlocks) {
+    const error: ValidationError = {
+      type: 'unknown-block',
+      message: `Unknown block '${block}' will not be included`,
+      name: block,
+    };
+    errors.push(error);
+    warnings.push(error.message);
   }
 
-  const code = generateBundleCode(config);
+  // In strict mode, throw an error if any validation errors exist
+  if (strict && errors.length > 0) {
+    const errorMessages = errors.map(e => e.message).join('; ');
+    throw new Error(`Bundle generation failed (strict mode): ${errorMessages}`);
+  }
+
+  const code = generateBundleCode(config as GeneratorOptions);
 
   return {
     code,
@@ -475,5 +497,6 @@ export function generateBundle(config: BundleConfig): GeneratedBundle {
     blocks: (config.blocks || []).filter(block => BLOCK_IMPLEMENTATIONS[block]),
     positional: config.positionalExpressions || false,
     warnings,
+    errors,
   };
 }

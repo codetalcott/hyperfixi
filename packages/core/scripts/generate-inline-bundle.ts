@@ -25,10 +25,10 @@ import * as path from 'path';
 
 // Import from the reusable bundle-generator module
 import {
-  generateBundleCode,
+  generateBundle,
   getAvailableCommands,
   getAvailableBlocks,
-  type BundleConfig,
+  type GeneratorOptions,
 } from '../src/bundle-generator';
 
 // =============================================================================
@@ -74,14 +74,16 @@ Usage:
   npx tsx scripts/generate-inline-bundle.ts --commands <cmd1,cmd2,...> --output <file.ts>
 
 Options:
-  --config <file>     JSON config file
-  --commands <list>   Comma-separated list of commands
-  --blocks <list>     Comma-separated list of blocks (if, repeat, for, while, fetch)
-  --output <file>     Output file path (relative paths supported)
-  --name <name>       Bundle name (default: "Custom")
-  --htmx              Enable HTMX integration
-  --global <name>     Global variable name (default: "hyperfixi")
-  --positional        Include positional expressions (first, last, next, closest, parent)
+  --config <file>       JSON config file
+  --commands <list>     Comma-separated list of commands
+  --blocks <list>       Comma-separated list of blocks (if, repeat, for, while, fetch)
+  --output <file>       Output file path (relative paths supported)
+  --name <name>         Bundle name (default: "Custom")
+  --htmx                Enable HTMX integration
+  --global <name>       Global variable name (default: "hyperfixi")
+  --positional          Include positional expressions (first, last, next, closest, parent)
+  --strict              Fail on unknown commands or blocks (validation mode)
+  --max-iterations <n>  Maximum loop iterations for blocks (default: 1000)
 
 Available commands:
   ${getAvailableCommands().join(', ')}
@@ -102,7 +104,7 @@ Examples:
     process.exit(0);
   }
 
-  let config: BundleConfig & { output: string };
+  let config: GeneratorOptions & { output: string };
 
   const configIndex = args.indexOf('--config');
   if (configIndex !== -1) {
@@ -115,6 +117,7 @@ Examples:
     const outputIndex = args.indexOf('--output');
     const nameIndex = args.indexOf('--name');
     const globalIndex = args.indexOf('--global');
+    const maxIterationsIndex = args.indexOf('--max-iterations');
 
     if (commandsIndex === -1 || outputIndex === -1) {
       console.error('Error: Either --config or both --commands and --output are required');
@@ -129,30 +132,54 @@ Examples:
       htmxIntegration: args.includes('--htmx'),
       globalName: globalIndex !== -1 ? args[globalIndex + 1] : 'hyperfixi',
       positionalExpressions: args.includes('--positional'),
+      maxLoopIterations: maxIterationsIndex !== -1 ? parseInt(args[maxIterationsIndex + 1], 10) : undefined,
     };
+  }
+
+  // Add CLI-level strict mode (can also be in config file)
+  const strict = args.includes('--strict');
+  if (strict) {
+    config.validation = { ...config.validation, strict: true };
   }
 
   // Compute import path based on output location
   const parserImportPath = computeImportPath(config.output);
 
-  // Generate bundle using the module
-  const bundle = generateBundleCode({
-    ...config,
-    parserImportPath,
-  });
+  // Generate bundle using the module (with validation)
+  try {
+    const result = generateBundle({
+      ...config,
+      parserImportPath,
+    });
 
-  const outputPath = path.resolve(process.cwd(), config.output);
+    // Show warnings (even when not in strict mode)
+    if (result.warnings.length > 0) {
+      console.warn('Warnings:');
+      for (const warning of result.warnings) {
+        console.warn(`  - ${warning}`);
+      }
+    }
 
-  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-  fs.writeFileSync(outputPath, bundle);
+    const outputPath = path.resolve(process.cwd(), config.output);
 
-  console.log(`Generated: ${outputPath}`);
-  console.log(`Commands: ${config.commands.join(', ')}`);
-  if (config.blocks && config.blocks.length > 0) {
-    console.log(`Blocks: ${config.blocks.join(', ')}`);
-  }
-  if (config.positionalExpressions) {
-    console.log(`Positional expressions: enabled`);
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    fs.writeFileSync(outputPath, result.code);
+
+    console.log(`Generated: ${outputPath}`);
+    console.log(`Commands: ${result.commands.join(', ')}`);
+    if (result.blocks.length > 0) {
+      console.log(`Blocks: ${result.blocks.join(', ')}`);
+    }
+    if (result.positional) {
+      console.log(`Positional expressions: enabled`);
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(`Error: ${error.message}`);
+    } else {
+      console.error('An unknown error occurred');
+    }
+    process.exit(1);
   }
 }
 

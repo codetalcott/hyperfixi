@@ -5,6 +5,28 @@
  */
 
 /**
+ * Validation options for bundle generation
+ */
+export interface ValidationOptions {
+  /** Throw on unknown commands/blocks instead of warning (default: false) */
+  strict?: boolean;
+}
+
+/**
+ * Validation error details
+ */
+export interface ValidationError {
+  /** Type of validation error */
+  type: 'unknown-command' | 'unknown-block';
+
+  /** Human-readable error message */
+  message: string;
+
+  /** The problematic command or block name */
+  name: string;
+}
+
+/**
  * Configuration for generating a custom bundle
  */
 export interface BundleConfig {
@@ -45,6 +67,12 @@ export interface GeneratorOptions extends BundleConfig {
 
   /** Output format: 'ts' for TypeScript, 'js' for JavaScript (default: 'ts') */
   format?: 'ts' | 'js';
+
+  /** Validation options */
+  validation?: ValidationOptions;
+
+  /** Maximum loop iterations for blocks (default: 1000) */
+  maxLoopIterations?: number;
 }
 
 /**
@@ -65,4 +93,7 @@ export interface GeneratedBundle {
 
   /** Warnings generated during bundle creation */
   warnings: string[];
+
+  /** Validation errors (in strict mode, these would have thrown) */
+  errors: ValidationError[];
 }

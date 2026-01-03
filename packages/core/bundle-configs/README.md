@@ -97,22 +97,55 @@ npx rollup -c rollup.browser-custom.config.mjs
 - `focus` - Focus elements
 - `blur` - Blur elements
 
+### Control Flow Commands
+- `break` - Exit from a loop
+- `continue` - Skip to next loop iteration
+
+## Commands NOT Available in Lite Bundles
+
+The following commands require the full runtime and are not available in generated lite bundles:
+
+- **Advanced execution**: `async`, `js`
+- **DOM operations (complex)**: `make`, `swap`, `morph`, `process-partials`
+- **Data binding**: `bind`, `persist`, `default`
+- **Utility (complex)**: `beep`, `tell`, `copy`, `pick`
+- **Navigation (complex)**: `push-url`, `replace-url`
+- **Control flow (advanced)**: `halt`, `exit`, `throw`, `unless`
+- **Animation (advanced)**: `settle`, `measure`
+- **Behaviors**: `install`
+
+If you need these commands, use the full `hyperfixi-browser.js` bundle instead.
+
 ## CLI Options
 
 ```bash
 npx tsx scripts/generate-inline-bundle.ts [options]
 
 Options:
-  --config <file>     JSON config file
-  --commands <list>   Comma-separated list of commands
-  --blocks <list>     Comma-separated list of blocks (if, repeat, for, while, fetch)
-  --output <file>     Output file path (any directory, paths auto-computed)
-  --name <name>       Bundle name (default: "Custom")
-  --htmx              Enable HTMX integration
-  --positional        Enable positional expressions (first, last, next, etc.)
-  --global <name>     Global variable name (default: "hyperfixi")
-  --help              Show help
+  --config <file>       JSON config file
+  --commands <list>     Comma-separated list of commands
+  --blocks <list>       Comma-separated list of blocks (if, repeat, for, while, fetch)
+  --output <file>       Output file path (any directory, paths auto-computed)
+  --name <name>         Bundle name (default: "Custom")
+  --htmx                Enable HTMX integration
+  --positional          Enable positional expressions (first, last, next, etc.)
+  --global <name>       Global variable name (default: "hyperfixi")
+  --strict              Fail on unknown commands or blocks (validation mode)
+  --max-iterations <n>  Maximum loop iterations for blocks (default: 1000)
+  --help                Show help
 ```
+
+### Strict Validation Mode
+
+Use `--strict` to catch typos and invalid command names early:
+
+```bash
+# This will fail if 'toogle' (typo) is not a valid command
+npm run generate:bundle -- --commands toggle,toogle --output dist/my-bundle.ts --strict
+# Error: Bundle generation failed (strict mode): Unknown command 'toogle' will not be included
+```
+
+Without `--strict`, unknown commands are silently skipped with a warning.
 
 ## Block Commands
 
@@ -204,3 +237,16 @@ The generator creates inline TypeScript that:
 4. **Auto-initializes** - Processes `[_]` attributes on DOM ready
 
 This approach achieves 4-6 KB gzipped bundles compared to 39 KB for the tree-shakable architecture, because everything is inlined with no class/decorator overhead.
+
+## Architecture Note: Parser Dependency
+
+Generated bundles always include the HybridParser (~500 lines). This is intentional:
+
+- Bundles interpret hyperscript at runtime
+- Parser is needed to convert `_="..."` attributes to AST
+- Expression evaluation requires AST structure
+
+For even smaller bundles, consider:
+
+- Pre-built lite bundles (hybrid-complete at 6.7KB gzip)
+- Vite plugin with automatic command detection (`@hyperfixi/vite-plugin`)
