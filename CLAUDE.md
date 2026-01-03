@@ -38,6 +38,12 @@ packages/
 │   │   └── explicit/         # Language-agnostic intermediate representation
 │   └── dist/                 # Built bundles (hyperfixi-semantic.browser.global.js)
 │
+├── vite-plugin/    # Zero-config Vite plugin for automatic bundle generation
+│   └── src/
+│       ├── scanner.ts        # Hyperscript detection in HTML/Vue/Svelte/JSX
+│       ├── aggregator.ts     # Usage collection across files
+│       └── generator.ts      # Minimal bundle generation
+│
 └── [other packages: smart-bundling, developer-tools, testing-framework, etc.]
 
 examples/
@@ -300,6 +306,36 @@ const result = hyperfixi.compile(code, { disableSemanticParsing: true });
 | `packages/semantic/src/parser/semantic-parser.ts` | Semantic parser |
 | `packages/semantic/src/tokenizers/` | 13 language tokenizers |
 | `roadmap/plan.md` | Development context and status |
+
+## Vite Plugin (Recommended)
+
+For Vite projects, use `@hyperfixi/vite-plugin` for automatic minimal bundles:
+
+```javascript
+// vite.config.js
+import { hyperfixi } from '@hyperfixi/vite-plugin';
+
+export default {
+  plugins: [hyperfixi()]
+};
+```
+
+```javascript
+// app.js - just import, plugin handles the rest
+import 'hyperfixi';
+```
+
+The plugin automatically scans your files for `_="..."` attributes and generates a bundle with only the commands you use. Options:
+
+```javascript
+hyperfixi({
+  extraCommands: ['fetch'],  // Always include these commands
+  extraBlocks: ['if'],       // Always include these blocks
+  positional: true,          // Include positional expressions
+  htmx: true,                // Enable htmx integration
+  debug: true,               // Verbose logging
+})
+```
 
 ## Browser Bundles
 
