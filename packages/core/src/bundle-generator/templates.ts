@@ -3,13 +3,38 @@
  *
  * Code templates for individual commands and blocks.
  * These are used by the generator to build minimal bundles.
+ *
+ * Supports 'ts' (TypeScript) and 'js' (JavaScript) output formats.
  */
+
+export type CodeFormat = 'ts' | 'js';
+
+/**
+ * Strip TypeScript type annotations for JavaScript output.
+ */
+function stripTypes(code: string, format: CodeFormat): string {
+  if (format === 'ts') return code;
+
+  return code
+    // Remove " as Type" casts
+    .replace(/\s+as\s+\w+(?:\[\])?/g, '')
+    // Remove ": Type" in catch clauses like "catch (error: any)"
+    .replace(/\((\w+):\s*\w+\)/g, '($1)')
+    // Remove ": Type" in arrow function params like "(a: any) =>"
+    .replace(/\((\w+):\s*any\)/g, '($1)')
+    // Remove "<void>" generic from Promise<void>[]
+    .replace(/Promise<void>\[\]/g, 'Promise[]')
+    // Clean up Promise<void> standalone
+    .replace(/Promise<void>/g, 'Promise')
+    // Remove TransitionEvent type
+    .replace(/:\s*TransitionEvent/g, '');
+}
 
 /**
  * Command implementations as switch case code snippets.
  * Each command is a complete case block for the executeCommand switch.
  */
-export const COMMAND_IMPLEMENTATIONS: Record<string, string> = {
+const COMMAND_IMPLEMENTATIONS_TS: Record<string, string> = {
   toggle: `
     case 'toggle': {
       const className = getClassName(cmd.args[0]) || String(await evaluate(cmd.args[0], ctx));
@@ -319,7 +344,7 @@ export const COMMAND_IMPLEMENTATIONS: Record<string, string> = {
  * Block implementations as switch case code snippets.
  * Each block is a complete case block for the executeBlock switch.
  */
-export const BLOCK_IMPLEMENTATIONS: Record<string, string> = {
+const BLOCK_IMPLEMENTATIONS_TS: Record<string, string> = {
   if: `
     case 'if': {
       const condition = await evaluate(block.condition!, ctx);
@@ -412,15 +437,43 @@ export const STYLE_COMMANDS = ['set', 'put', 'increment', 'decrement'];
 export const ELEMENT_ARRAY_COMMANDS = ['put', 'increment', 'decrement'];
 
 /**
+ * Get command implementations for the specified format.
+ * @param format 'ts' for TypeScript, 'js' for JavaScript
+ */
+export function getCommandImplementations(format: CodeFormat = 'ts'): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [name, code] of Object.entries(COMMAND_IMPLEMENTATIONS_TS)) {
+    result[name] = stripTypes(code, format);
+  }
+  return result;
+}
+
+/**
+ * Get block implementations for the specified format.
+ * @param format 'ts' for TypeScript, 'js' for JavaScript
+ */
+export function getBlockImplementations(format: CodeFormat = 'ts'): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [name, code] of Object.entries(BLOCK_IMPLEMENTATIONS_TS)) {
+    result[name] = stripTypes(code, format);
+  }
+  return result;
+}
+
+/**
  * Get list of all available commands
  */
 export function getAvailableCommands(): string[] {
-  return Object.keys(COMMAND_IMPLEMENTATIONS);
+  return Object.keys(COMMAND_IMPLEMENTATIONS_TS);
 }
 
 /**
  * Get list of all available blocks
  */
 export function getAvailableBlocks(): string[] {
-  return Object.keys(BLOCK_IMPLEMENTATIONS);
+  return Object.keys(BLOCK_IMPLEMENTATIONS_TS);
 }
+
+// Re-export for backwards compatibility (TypeScript format)
+export const COMMAND_IMPLEMENTATIONS = COMMAND_IMPLEMENTATIONS_TS;
+export const BLOCK_IMPLEMENTATIONS = BLOCK_IMPLEMENTATIONS_TS;

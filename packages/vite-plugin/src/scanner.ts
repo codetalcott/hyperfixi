@@ -100,7 +100,9 @@ export class Scanner {
 
     // Detect blocks
     if (/\bif\b/.test(script)) usage.blocks.add('if');
-    if (/\brepeat\s+\d+\s+times?\b/i.test(script)) usage.blocks.add('repeat');
+    if (/\bunless\b/.test(script)) usage.blocks.add('if'); // unless uses same block as if
+    // repeat pattern: handles literals, :localVars, $globalVars, and identifiers
+    if (/\brepeat\s+(\d+|:\w+|\$\w+|[\w.]+)\s+times?\b/i.test(script)) usage.blocks.add('repeat');
     if (/\bfor\s+(each|every)\b/i.test(script)) usage.blocks.add('for');
     if (/\bwhile\b/.test(script)) usage.blocks.add('while');
     if (/\bfetch\b/.test(script)) usage.blocks.add('fetch');

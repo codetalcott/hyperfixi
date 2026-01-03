@@ -13,10 +13,10 @@ Zero-config Vite plugin that automatically generates minimal HyperFixi bundles b
 ## Installation
 
 ```bash
-npm install @hyperfixi/vite-plugin
+npm install @hyperfixi/vite-plugin @hyperfixi/core
 ```
 
-## Usage
+## Quick Start
 
 ```javascript
 // vite.config.js
@@ -27,17 +27,22 @@ export default {
 };
 ```
 
-Then import hyperfixi anywhere in your code:
-
 ```javascript
-import 'hyperfixi';
+// main.js
+import 'hyperfixi';  // Auto-generated minimal bundle
 ```
 
-That's it! The plugin automatically:
-1. Scans your source files for hyperscript usage
-2. Detects which commands, blocks, and expressions you use
-3. Generates a minimal bundle with only those features
-4. Re-generates on file changes during development
+```html
+<!-- Just write hyperscript - plugin detects what you use -->
+<button _="on click toggle .active">Toggle</button>
+```
+
+## How It Works
+
+1. **Scans** your HTML/Vue/Svelte/JSX files for `_="..."` attributes
+2. **Detects** which commands, blocks, and expressions you use
+3. **Generates** a minimal bundle with only the features you need
+4. **Regenerates** on HMR when you add new hyperscript
 
 ## Options
 
@@ -45,59 +50,72 @@ That's it! The plugin automatically:
 hyperfixi({
   // Extra commands to always include (for dynamic hyperscript)
   extraCommands: ['fetch', 'put'],
-
-  // Extra blocks to always include
-  extraBlocks: ['if', 'repeat'],
+  extraBlocks: ['for'],
 
   // Always include positional expressions
   positional: true,
 
-  // Enable htmx integration
+  // Enable htmx attribute compatibility
   htmx: true,
 
-  // File patterns to scan (defaults to common web files)
-  include: /\.(html|vue|svelte|jsx|tsx)$/,
+  // Debug logging
+  debug: true,
 
-  // File patterns to exclude (defaults to node_modules)
+  // File patterns
+  include: /\.(html|vue|svelte|jsx|tsx)$/,
   exclude: /node_modules/,
 
-  // Development fallback strategy
-  // 'hybrid-complete': Use pre-built bundle for faster dev (default)
-  // 'full': Use full bundle
-  // 'auto': Generate minimal bundle even in dev
-  devFallback: 'auto',
+  // Custom bundle name (shown in generated code comments)
+  bundleName: 'MyApp',
 
-  // Enable debug logging
-  debug: true,
+  // Global variable name (default: 'hyperfixi')
+  globalName: 'hyperfixi',
 })
 ```
 
-## How It Works
+## Detected Features
 
-### Detection
+### Commands (21)
 
-The plugin scans files for hyperscript attributes:
+toggle, add, remove, removeClass, show, hide, set, get, put, append, take,
+increment, decrement, log, send, trigger, wait, transition, go, call, focus, blur, return
 
-```html
-<button _="on click toggle .active">Toggle</button>
-<form _="on submit fetch /api then put result into #output">Submit</form>
+### Blocks (5)
+
+if, repeat, for, while, fetch
+
+### Positional Expressions (6)
+
+first, last, next, previous, closest, parent
+
+## Virtual Module
+
+The plugin creates a virtual module that you can import:
+
+```javascript
+// All of these work:
+import 'hyperfixi';
+import 'virtual:hyperfixi';
+import '@hyperfixi/core';  // Redirects to virtual module
 ```
 
-From this, it detects:
-- Commands: `toggle`, `fetch`, `put`
-- Blocks: none
-- Positional: none
+## HMR Support
 
-### Bundle Generation
+When you add new hyperscript to your HTML files, the plugin:
+1. Re-scans the changed file
+2. Updates the aggregated usage
+3. Triggers a page reload if new commands are detected
 
-Based on detected usage, it generates a minimal bundle:
+## Bundle Size Comparison
 
-```
-Detected: toggle, fetch, put
-Bundle size: ~5 KB gzipped (vs 39 KB full bundle)
-```
+| Usage | Generated Size (gzip) | vs Full Bundle |
+|-------|----------------------|----------------|
+| 3 commands | ~5 KB | 90% smaller |
+| 6 commands | ~6.5 KB | 85% smaller |
+| 9 commands + blocks | ~8 KB | 80% smaller |
+| All features | ~40 KB | same |
 
-### Edge Cases
+## Edge Cases
 
 For dynamically generated hyperscript that can't be detected:
 
@@ -122,6 +140,57 @@ hyperfixi({
 - `.jsx`, `.tsx`
 - `.astro`
 - `.php`, `.erb`, `.ejs`, `.hbs`
+
+## Monorepo Development
+
+When developing in the hyperfixi monorepo:
+
+```javascript
+// vite.config.js
+import { hyperfixi } from '../../packages/vite-plugin/src/index.ts';
+import path from 'path';
+
+export default {
+  plugins: [hyperfixi({ debug: true })],
+  resolve: {
+    alias: {
+      '@hyperfixi/core/parser/hybrid': path.resolve(__dirname, '../../packages/core/src/parser/hybrid')
+    }
+  }
+};
+```
+
+## Example
+
+See the [vite-plugin-test](../../examples/vite-plugin-test/) example for a working demo:
+
+```bash
+cd examples/vite-plugin-test
+npm install
+npm run dev
+```
+
+## API Reference
+
+### Plugin Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `debug` | `boolean` | `false` | Enable debug logging |
+| `include` | `RegExp \| string[]` | See below | File patterns to scan |
+| `exclude` | `RegExp \| string[]` | `/node_modules/` | File patterns to exclude |
+| `extraCommands` | `string[]` | `[]` | Commands to always include |
+| `extraBlocks` | `string[]` | `[]` | Blocks to always include |
+| `positional` | `boolean` | `false` | Always include positional expressions |
+| `htmx` | `boolean` | `false` | Enable htmx integration |
+| `bundleName` | `string` | `'ViteAutoGenerated'` | Bundle name in comments |
+| `globalName` | `string` | `'hyperfixi'` | Window global name |
+
+### Default Include Pattern
+
+```regex
+/\.(html?|vue|svelte|jsx?|tsx?|astro|php|erb|ejs|hbs|handlebars)$/
+```
 
 ## License
 

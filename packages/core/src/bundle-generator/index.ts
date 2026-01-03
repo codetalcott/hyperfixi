@@ -45,4 +45,7 @@ export {
   ELEMENT_ARRAY_COMMANDS,
   getAvailableCommands,
   getAvailableBlocks,
+  getCommandImplementations,
+  getBlockImplementations,
+  type CodeFormat,
 } from './templates';

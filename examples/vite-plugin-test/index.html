@@ -16,6 +16,14 @@
     button { margin: 5px; padding: 10px 20px; cursor: pointer; }
     #output { margin: 20px 0; padding: 20px; background: #f5f5f5; border-radius: 8px; }
     .counter { font-size: 2em; font-weight: bold; }
+    .pulse { animation: pulse 0.2s ease-in-out; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+    .highlight { background: #ffd700; }
+    .expanded { border: 2px solid #667eea; padding: 20px; }
+    .highlighted { background: #e0e7ff; }
+    .card { padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; }
+    .tabs button { margin-right: 5px; }
+    .wrapper { padding: 10px; border: 1px dashed #999; }
   </style>
 </head>
 <body>
@@ -51,8 +59,69 @@
   <button _="on click wait 500ms then add .active to me">Wait then activate</button>
 
   <hr>
+  <h2>Block Detection Tests</h2>
+
+  <h3>8. If Block</h3>
+  <button _="on click if me has .active then remove .active else add .active">
+    Conditional Toggle
+  </button>
+
+  <h3>9. Repeat Block</h3>
+  <button _="on click repeat 3 times add .pulse to me wait 200ms remove .pulse wait 200ms end">
+    Pulse 3x
+  </button>
+
+  <h3>10. For Each Block</h3>
+  <ul id="items"></ul>
+  <button _="on click for each item in ['a','b','c'] put '<li>' + item + '</li>' into #items end">
+    Add Items
+  </button>
+
+  <h3>11. Fetch Block</h3>
+  <div id="data">Fetch result will appear here</div>
+  <button _="on click fetch /api/test as json then put 'Fetched!' into #data">
+    Fetch Data
+  </button>
+
+  <h3>12. While Block</h3>
+  <span id="countdown">5</span>
+  <button _="on click set :i to 5 then while :i > 0 put :i into #countdown wait 500ms set :i to :i - 1 end then put 'Done!' into #countdown">
+    Countdown
+  </button>
+
+  <hr>
+  <h2>Positional Expression Tests</h2>
+
+  <h3>13. First/Last</h3>
+  <ul id="positional-list">
+    <li _="on click add .highlight to first <li/> in #positional-list">Click to highlight first</li>
+    <li>Middle Item</li>
+    <li _="on click add .highlight to last <li/> in #positional-list">Click to highlight last</li>
+  </ul>
+
+  <h3>14. Next/Previous Sibling</h3>
+  <div class="tabs">
+    <button _="on click add .active to me remove .active from previous <button/>">Tab 1</button>
+    <button _="on click add .active to me remove .active from next <button/>">Tab 2</button>
+    <button>Tab 3</button>
+  </div>
+
+  <h3>15. Closest</h3>
+  <div class="card">
+    <p>Card content</p>
+    <button _="on click toggle .expanded on closest .card">Expand Card</button>
+  </div>
+
+  <h3>16. Parent</h3>
+  <div class="wrapper">
+    <button _="on click add .highlighted to parent">Highlight Parent</button>
+  </div>
+
+  <hr>
   <h2>Expected Detection</h2>
-  <p>The plugin should detect these commands: <code>toggle, show, hide, put, decrement, increment</code></p>
+  <p><strong>Commands:</strong> <code>toggle, show, hide, put, decrement, increment, log, wait, add, remove, set</code></p>
+  <p><strong>Blocks:</strong> <code>if, repeat, for, fetch, while</code></p>
+  <p><strong>Positional:</strong> <code>true</code> (first, last, next, previous, closest, parent)</p>
   <p>Check the console for debug output from the plugin.</p>
 
   <script type="module" src="/main.js"></script>

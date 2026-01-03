@@ -11,6 +11,9 @@ import {
   BLOCK_IMPLEMENTATIONS,
   STYLE_COMMANDS,
   ELEMENT_ARRAY_COMMANDS,
+  getCommandImplementations,
+  getBlockImplementations,
+  type CodeFormat,
 } from './templates';
 
 /**
@@ -30,6 +33,7 @@ export function generateBundleCode(config: GeneratorOptions): string {
     parserImportPath = '../parser/hybrid',
     autoInit = true,
     esModule = true,
+    format = 'ts',
   } = config;
 
   const needsStyleHelpers = commands.some(cmd => STYLE_COMMANDS.includes(cmd));
@@ -37,14 +41,18 @@ export function generateBundleCode(config: GeneratorOptions): string {
   const hasBlocks = blocks.length > 0;
   const hasReturn = commands.includes('return');
 
+  // Get format-specific implementations
+  const commandImpls = getCommandImplementations(format);
+  const blockImpls = getBlockImplementations(format);
+
   const commandCases = commands
-    .filter(cmd => COMMAND_IMPLEMENTATIONS[cmd])
-    .map(cmd => COMMAND_IMPLEMENTATIONS[cmd])
+    .filter(cmd => commandImpls[cmd])
+    .map(cmd => commandImpls[cmd])
     .join('\n');
 
   const blockCases = blocks
-    .filter(block => BLOCK_IMPLEMENTATIONS[block])
-    .map(block => BLOCK_IMPLEMENTATIONS[block])
+    .filter(block => blockImpls[block])
+    .map(block => blockImpls[block])
     .join('\n');
 
   return `/**

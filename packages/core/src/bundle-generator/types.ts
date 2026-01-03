@@ -42,6 +42,9 @@ export interface GeneratorOptions extends BundleConfig {
 
   /** Whether to export as ES module */
   esModule?: boolean;
+
+  /** Output format: 'ts' for TypeScript, 'js' for JavaScript (default: 'ts') */
+  format?: 'ts' | 'js';
 }
 
 /**
