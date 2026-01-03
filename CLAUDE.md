@@ -367,6 +367,22 @@ For projects prioritizing bundle size over features:
 <button hx-on:click="toggle .active on me">Toggle</button>
 ```
 
+### Custom Bundle Generator
+
+Generate minimal bundles with only the commands you need:
+
+```bash
+cd packages/core
+
+# Generate from config file
+npm run generate:bundle -- --config bundle-configs/textshelf.config.json
+
+# Generate from command line with blocks and positional expressions
+npm run generate:bundle -- --commands toggle,add,set --blocks if,repeat --positional --output src/my-bundle.ts
+```
+
+See [bundle-configs/README.md](packages/core/bundle-configs/README.md) for full documentation.
+
 ### Semantic Bundles (Regional Options)
 
 | Bundle | Global | Size (gzip) | Languages |
