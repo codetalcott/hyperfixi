@@ -44,10 +44,49 @@ import 'hyperfixi';  // Auto-generated minimal bundle
 3. **Generates** a minimal bundle with only the features you need
 4. **Regenerates** on HMR when you add new hyperscript
 
+## Compile Mode (Minimal Bundle Size)
+
+When bundle size is the priority, use **compile mode** to pre-compile hyperscript to JavaScript at build time:
+
+```javascript
+hyperfixi({
+  mode: 'compile'  // ~500 bytes gzip vs ~8KB for interpret mode
+})
+```
+
+**Trade-offs:**
+
+| Feature              | Interpret (default) | Compile             |
+| -------------------- | ------------------- | ------------------- |
+| Bundle size          | ~8 KB gzip          | ~500 bytes gzip     |
+| Dynamic `execute()`  | ✓                   | ✗                   |
+| Block commands       | ✓                   | ✗                   |
+| Build complexity     | Lower               | Higher              |
+
+**When to use compile mode:**
+
+- Landing pages with simple interactions (toggles, shows, hides)
+- Performance-critical apps where every KB matters
+- Static sites where hyperscript is just for UI polish
+
+**When NOT to use compile mode:**
+
+- Apps using `if`, `repeat`, `fetch`, or `for each` blocks
+- Dynamic hyperscript generation at runtime via `execute()`
+- Apps that need the full hyperscript power
+
+**Supported commands in compile mode:**
+toggle, add, remove, show, hide, focus, blur, set, get, put, increment, decrement, log, send, trigger, wait
+
+**Positional expressions:** next, previous, parent, first, last, closest
+
 ## Options
 
 ```javascript
 hyperfixi({
+  // Bundle mode: 'interpret' (default) or 'compile'
+  mode: 'interpret',
+
   // Extra commands to always include (for dynamic hyperscript)
   extraCommands: ['fetch', 'put'],
   extraBlocks: ['for'],
