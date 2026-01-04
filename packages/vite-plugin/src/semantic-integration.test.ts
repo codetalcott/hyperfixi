@@ -60,13 +60,13 @@ describe('selectOptimalBundle', () => {
 
 describe('getSemanticBundleImport', () => {
   it('returns correct import paths', () => {
-    expect(getSemanticBundleImport('en')).toBe('@hyperfixi/semantic/browser-en');
-    expect(getSemanticBundleImport('es')).toBe('@hyperfixi/semantic/browser-es');
-    expect(getSemanticBundleImport('tr')).toBe('@hyperfixi/semantic/browser-tr');
-    expect(getSemanticBundleImport('es-en')).toBe('@hyperfixi/semantic/browser-es-en');
-    expect(getSemanticBundleImport('western')).toBe('@hyperfixi/semantic/browser-western');
-    expect(getSemanticBundleImport('east-asian')).toBe('@hyperfixi/semantic/browser-east-asian');
-    expect(getSemanticBundleImport('priority')).toBe('@hyperfixi/semantic/browser-priority');
+    expect(getSemanticBundleImport('en')).toBe('@hyperfixi/semantic/browser/en');
+    expect(getSemanticBundleImport('es')).toBe('@hyperfixi/semantic/browser/es');
+    expect(getSemanticBundleImport('tr')).toBe('@hyperfixi/semantic/browser/tr');
+    expect(getSemanticBundleImport('es-en')).toBe('@hyperfixi/semantic/browser/es-en');
+    expect(getSemanticBundleImport('western')).toBe('@hyperfixi/semantic/browser/western');
+    expect(getSemanticBundleImport('east-asian')).toBe('@hyperfixi/semantic/browser/east-asian');
+    expect(getSemanticBundleImport('priority')).toBe('@hyperfixi/semantic/browser/priority');
     expect(getSemanticBundleImport('all')).toBe('@hyperfixi/semantic');
   });
 });

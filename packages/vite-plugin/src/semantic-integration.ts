@@ -203,19 +203,19 @@ export function getSemanticBundleSize(bundleType: SemanticBundleType): { raw: st
 export function getSemanticBundleImport(bundleType: SemanticBundleType): string {
   switch (bundleType) {
     case 'en':
-      return '@hyperfixi/semantic/browser-en';
+      return '@hyperfixi/semantic/browser/en';
     case 'es':
-      return '@hyperfixi/semantic/browser-es';
+      return '@hyperfixi/semantic/browser/es';
     case 'tr':
-      return '@hyperfixi/semantic/browser-tr';
+      return '@hyperfixi/semantic/browser/tr';
     case 'es-en':
-      return '@hyperfixi/semantic/browser-es-en';
+      return '@hyperfixi/semantic/browser/es-en';
     case 'western':
-      return '@hyperfixi/semantic/browser-western';
+      return '@hyperfixi/semantic/browser/western';
     case 'east-asian':
-      return '@hyperfixi/semantic/browser-east-asian';
+      return '@hyperfixi/semantic/browser/east-asian';
     case 'priority':
-      return '@hyperfixi/semantic/browser-priority';
+      return '@hyperfixi/semantic/browser/priority';
     case 'all':
     default:
       return '@hyperfixi/semantic';
