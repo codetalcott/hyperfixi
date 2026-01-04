@@ -28,7 +28,7 @@ import { addCommandAliases, addEventAliases } from '../parser/hybrid/aliases';
 // RUNTIME (stays inline - specific to this bundle)
 // =============================================================================
 
-interface Context {
+export interface Context {
   me: Element;
   event?: Event;
   it?: any;

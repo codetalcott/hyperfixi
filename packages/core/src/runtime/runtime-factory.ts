@@ -330,5 +330,5 @@ export function createRuntime(options: RuntimeOptions): HyperFixiRuntime {
   };
 }
 
-// Re-export types for convenience
-export type { BaseExpressionEvaluator, ParserInterface, RuntimeOptions, HyperFixiRuntime };
+// Re-export types for convenience (RuntimeOptions and HyperFixiRuntime already exported above)
+export type { BaseExpressionEvaluator, ParserInterface };
