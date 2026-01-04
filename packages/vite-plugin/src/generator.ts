@@ -7,8 +7,8 @@
 
 import type { AggregatedUsage, HyperfixiPluginOptions } from './types';
 import {
-  getCommandImplementations,
-  getBlockImplementations,
+  COMMAND_IMPLEMENTATIONS as COMMAND_IMPL_TS,
+  BLOCK_IMPLEMENTATIONS as BLOCK_IMPL_TS,
   STYLE_COMMANDS,
   ELEMENT_ARRAY_COMMANDS,
 } from '@hyperfixi/core/bundle-generator';
@@ -32,9 +32,36 @@ interface GeneratorOptions {
   esModule?: boolean;
 }
 
+/**
+ * Strip TypeScript type annotations for JavaScript output.
+ */
+function stripTypes(code: string): string {
+  return code
+    // Remove " as Type" casts
+    .replace(/\s+as\s+\w+(?:\[\])?/g, '')
+    // Remove ": Type" in catch clauses like "catch (error: any)"
+    .replace(/\((\w+):\s*\w+\)/g, '($1)')
+    // Remove ": Type" in arrow function params like "(a: any) =>"
+    .replace(/\((\w+):\s*any\)/g, '($1)')
+    // Remove "<void>" generic from Promise<void>[]
+    .replace(/Promise<void>\[\]/g, 'Promise[]')
+    // Clean up Promise<void> standalone
+    .replace(/Promise<void>/g, 'Promise')
+    // Remove TransitionEvent type
+    .replace(/:\s*TransitionEvent/g, '');
+}
+
 // Get JavaScript-formatted implementations (type annotations stripped)
-const COMMAND_IMPLEMENTATIONS = getCommandImplementations('js');
-const BLOCK_IMPLEMENTATIONS = getBlockImplementations('js');
+const COMMAND_IMPLEMENTATIONS: Record<string, string> = {};
+const BLOCK_IMPLEMENTATIONS: Record<string, string> = {};
+
+for (const [name, code] of Object.entries(COMMAND_IMPL_TS)) {
+  COMMAND_IMPLEMENTATIONS[name] = stripTypes(code);
+}
+
+for (const [name, code] of Object.entries(BLOCK_IMPL_TS)) {
+  BLOCK_IMPLEMENTATIONS[name] = stripTypes(code);
+}
 
 /**
  * Generate bundle code from configuration

@@ -9,6 +9,23 @@
  */
 export interface HyperfixiPluginOptions {
   /**
+   * Bundle generation mode:
+   * - 'interpret': Generate minimal bundle with parser (default, ~8KB gzip)
+   * - 'compile': Pre-compile hyperscript to JS at build time (~500 bytes gzip)
+   *
+   * Compile mode limitations:
+   * - No dynamic hyperscript (runtime execute() won't work)
+   * - No block commands (if, for, repeat, while, fetch)
+   * - HTML must be transformed to use data-h attributes
+   *
+   * Use compile mode when:
+   * - Bundle size is critical (<1KB target)
+   * - All hyperscript is static (no dynamic generation)
+   * - Only simple commands are used (toggle, add, remove, set, etc.)
+   */
+  mode?: 'interpret' | 'compile';
+
+  /**
    * File patterns to scan for hyperscript usage.
    * Defaults to common web file extensions.
    */
@@ -97,4 +114,32 @@ export interface AggregatedUsage {
 
   /** Map of file paths to their usage */
   fileUsage: Map<string, FileUsage>;
+}
+
+/**
+ * Information about a script that needs compilation
+ */
+export interface ScriptLocation {
+  /** File path where the script was found */
+  file: string;
+
+  /** The hyperscript code */
+  script: string;
+
+  /** Line number in the file (for source maps) */
+  line?: number;
+
+  /** Column number in the file */
+  column?: number;
+}
+
+/**
+ * Aggregated scripts for compilation mode
+ */
+export interface AggregatedScripts {
+  /** All unique scripts found across all files */
+  scripts: Map<string, ScriptLocation[]>;
+
+  /** Map of file paths to scripts in that file */
+  fileScripts: Map<string, string[]>;
 }

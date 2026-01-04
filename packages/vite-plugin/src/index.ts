@@ -29,6 +29,15 @@
  *   debug: true,                      // Enable verbose logging
  * })
  * ```
+ *
+ * @example
+ * ```javascript
+ * // Compile mode for smallest bundles (~500 bytes)
+ * hyperfixi({
+ *   mode: 'compile',  // Pre-compile hyperscript to JS
+ *   debug: true,
+ * })
+ * ```
  */
 
 import type { Plugin, ViteDevServer, HmrContext } from 'vite';
@@ -36,9 +45,13 @@ import type { HyperfixiPluginOptions, AggregatedUsage } from './types';
 import { Scanner } from './scanner';
 import { Aggregator } from './aggregator';
 import { Generator } from './generator';
+import { compile, resetCompiler, type CompiledHandler } from './compiler';
+import { generateCompiledBundle } from './compiled-generator';
+import { transformHTML, extractScripts } from './html-transformer';
 
 // Re-export types
 export type { HyperfixiPluginOptions, FileUsage, AggregatedUsage } from './types';
+export type { CompiledHandler } from './compiler';
 
 // Virtual module ID
 const VIRTUAL_MODULE_ID = 'virtual:hyperfixi';
@@ -54,6 +67,7 @@ const IMPORT_ALIASES = ['hyperfixi', '@hyperfixi/core', 'virtual:hyperfixi'];
  * @returns Vite plugin
  */
 export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
+  const mode = options.mode ?? 'interpret';
   const scanner = new Scanner(options);
   const aggregator = new Aggregator();
   const generator = new Generator(options);
@@ -62,6 +76,13 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
   let cachedBundle: string | null = null;
   let lastUsageHash = '';
   let isDev = false;
+
+  // Compile mode state
+  const compiledHandlers: CompiledHandler[] = [];
+  const handlerMap = new Map<string, string>(); // script -> handlerId
+  const fallbackScripts = new Set<string>(); // Scripts that couldn't be compiled
+  let needsLocals = false;
+  let needsGlobals = false;
 
   /**
    * Compute a hash of the current usage for cache invalidation
@@ -90,9 +111,53 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
   }
 
   /**
-   * Generate the bundle code
+   * Compile a hyperscript snippet and add to handlers
    */
-  function generateBundle(): string {
+  function compileScript(script: string): string | null {
+    // Check if already compiled
+    if (handlerMap.has(script)) {
+      return handlerMap.get(script)!;
+    }
+
+    // Check if known fallback
+    if (fallbackScripts.has(script)) {
+      return null;
+    }
+
+    // Try to compile
+    const handler = compile(script);
+
+    if (handler) {
+      compiledHandlers.push(handler);
+      handlerMap.set(script, handler.id);
+
+      if (handler.needsEvaluator) {
+        // Check if needs locals/globals based on code
+        if (handler.code.includes('L.')) needsLocals = true;
+        if (handler.code.includes('G.')) needsGlobals = true;
+      }
+
+      if (options.debug) {
+        console.log(`[hyperfixi] Compiled: "${script}" -> ${handler.id}`);
+      }
+
+      return handler.id;
+    }
+
+    // Couldn't compile - mark as fallback
+    fallbackScripts.add(script);
+
+    if (options.debug) {
+      console.log(`[hyperfixi] Fallback (not compilable): "${script}"`);
+    }
+
+    return null;
+  }
+
+  /**
+   * Generate the bundle code (interpret mode)
+   */
+  function generateInterpretBundle(): string {
     const usage = aggregator.getUsage();
     const usageHash = computeUsageHash(usage);
 
@@ -116,6 +181,45 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
     }
 
     return cachedBundle;
+  }
+
+  /**
+   * Generate the bundle code (compile mode)
+   */
+  function generateCompiledBundleCode(): string {
+    // Check if we have fallbacks that need the interpreter
+    if (fallbackScripts.size > 0) {
+      if (options.debug) {
+        console.log(`[hyperfixi] ${fallbackScripts.size} scripts need interpreter fallback`);
+      }
+      // Fall back to interpret mode for this build
+      return generateInterpretBundle();
+    }
+
+    const bundle = generateCompiledBundle({
+      handlers: compiledHandlers,
+      needsLocals,
+      needsGlobals,
+      globalName: options.globalName,
+      htmx: options.htmx,
+      debug: options.debug,
+    });
+
+    if (options.debug) {
+      console.log(`[hyperfixi] Compiled bundle: ${compiledHandlers.length} handlers`);
+    }
+
+    return bundle;
+  }
+
+  /**
+   * Generate the bundle code (dispatches to correct mode)
+   */
+  function generateBundle(): string {
+    if (mode === 'compile') {
+      return generateCompiledBundleCode();
+    }
+    return generateInterpretBundle();
   }
 
   return {
@@ -182,6 +286,29 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
         return null;
       }
 
+      // In compile mode, we compile scripts and transform HTML
+      if (mode === 'compile' && !isDev) {
+        // Extract and compile all scripts from this file
+        const scripts = extractScripts(code);
+
+        for (const script of scripts) {
+          compileScript(script);
+        }
+
+        // Transform HTML to use data-h attributes
+        const result = transformHTML(code, handlerMap, fallbackScripts);
+
+        if (result.modified) {
+          if (options.debug) {
+            console.log(`[hyperfixi] Transformed: ${id.split('/').pop()}`);
+          }
+          return { code: result.code, map: null };
+        }
+
+        return null;
+      }
+
+      // Interpret mode: just scan for usage
       const usage = scanner.scan(code, id);
       const changed = aggregator.add(id, usage);
 
@@ -196,7 +323,7 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
         });
       }
 
-      return null; // Don't modify source files
+      return null; // Don't modify source files in interpret mode
     },
 
     /**
@@ -240,6 +367,20 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
      */
     async buildStart() {
       if (!isDev) {
+        // Reset compile mode state
+        if (mode === 'compile') {
+          resetCompiler();
+          compiledHandlers.length = 0;
+          handlerMap.clear();
+          fallbackScripts.clear();
+          needsLocals = false;
+          needsGlobals = false;
+
+          if (options.debug) {
+            console.log('[hyperfixi] Compile mode: ready for build');
+          }
+        }
+
         // Production build: scan entire project
         const cwd = process.cwd();
 
