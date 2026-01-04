@@ -20,6 +20,7 @@
  */
 
 import { Parser } from './parser';
+import { tokenize } from './tokenizer';
 import type { ParserInterface } from './parser-interface';
 import type { ASTNode, CommandNode } from '../types/base-types';
 
@@ -59,23 +60,20 @@ class FullParserImpl implements ParserInterface {
     'render',
   ] as const;
 
-  private parser: Parser | null = null;
-
-  private getParser(): Parser {
-    if (!this.parser) {
-      this.parser = new Parser();
-    }
-    return this.parser;
-  }
-
   parse(code: string): CommandNode | ASTNode {
-    const parser = this.getParser();
-    return parser.parseCommand(code);
+    const tokens = tokenize(code);
+    const parser = new Parser(tokens, undefined, code);
+    const result = parser.parse();
+
+    if (result.error) {
+      throw new Error(result.error.message);
+    }
+
+    return result.ast as CommandNode | ASTNode;
   }
 
   parseCommands(code: string): (CommandNode | ASTNode)[] {
-    const parser = this.getParser();
-    const result = parser.parse(code);
+    const result = this.parse(code);
     if (Array.isArray(result)) {
       return result;
     }

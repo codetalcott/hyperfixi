@@ -166,13 +166,17 @@ describe('Scanner', () => {
     });
 
     it('does not false positive on similar words', () => {
+      // 'firstly' does NOT match 'first' at word boundary - the 'l' after 'first' is not a boundary
       const usage = scanner.scan('<button _="on click put \'firstly\' into #output">', 'test.html');
-      // 'firstly' contains 'first' but isn't a word boundary match - actually this WILL match
-      // due to /\b(first|...|parent)\b/ matching "first" in "firstly" at word boundary
-      // Let's test with truly embedded text
+      expect(usage.positional).toBe(false);
+
+      // 'unfirst' also shouldn't match 'first' at word boundary
       const usage2 = scanner.scan('<button _="on click put \'unfirst\' into #output">', 'test.html');
-      // 'unfirst' shouldn't match 'first' at word boundary
       expect(usage2.positional).toBe(false);
+
+      // But 'first item' SHOULD match at word boundary
+      const usage3 = scanner.scan('<button _="on click get first .item">', 'test.html');
+      expect(usage3.positional).toBe(true);
     });
   });
 

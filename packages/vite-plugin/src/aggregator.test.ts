@@ -224,7 +224,7 @@ describe('Aggregator', () => {
   describe('loadFromScan()', () => {
     it('loads scanned files', () => {
       const scanned = new Map([
-        ['a.html', { commands: new Set(['toggle']), blocks: new Set(), positional: false }],
+        ['a.html', { commands: new Set(['toggle']), blocks: new Set<string>(), positional: false }],
         ['b.html', { commands: new Set(['show']), blocks: new Set(['if']), positional: true }],
       ]);
 
