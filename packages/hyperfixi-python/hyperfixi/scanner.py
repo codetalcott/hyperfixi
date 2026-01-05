@@ -32,6 +32,7 @@ class FileUsage:
     commands: set[str] = field(default_factory=set)
     blocks: set[str] = field(default_factory=set)
     positional: bool = False
+    detected_languages: set[str] = field(default_factory=set)
 
     def __bool__(self) -> bool:
         """Return True if any usage was detected."""
@@ -43,6 +44,7 @@ class FileUsage:
         self.blocks.update(other.blocks)
         if other.positional:
             self.positional = True
+        self.detected_languages.update(other.detected_languages)
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
@@ -50,6 +52,7 @@ class FileUsage:
             "commands": sorted(self.commands),
             "blocks": sorted(self.blocks),
             "positional": self.positional,
+            "detected_languages": sorted(self.detected_languages),
         }
 
 
@@ -61,6 +64,7 @@ class AggregatedUsage:
     blocks: set[str] = field(default_factory=set)
     positional: bool = False
     file_usage: dict[str, FileUsage] = field(default_factory=dict)
+    detected_languages: set[str] = field(default_factory=set)
 
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
@@ -69,6 +73,7 @@ class AggregatedUsage:
             "blocks": sorted(self.blocks),
             "positional": self.positional,
             "file_count": len(self.file_usage),
+            "detected_languages": sorted(self.detected_languages),
         }
 
 
@@ -158,6 +163,211 @@ VALID_COMMANDS = {
 # Valid blocks for validation
 VALID_BLOCKS = {"if", "repeat", "for", "while", "fetch", "async"}
 
+# Supported languages for multilingual detection
+SUPPORTED_LANGUAGES = [
+    "en", "es", "pt", "fr", "de",  # Western (Latin script)
+    "ja", "zh", "ko",              # East Asian
+    "ar",                          # RTL
+    "tr",                          # Agglutinative Latin
+    "id", "sw", "qu",              # Other
+]
+
+# Language keyword sets for detection
+# Non-English keywords that indicate a specific language is being used
+LANGUAGE_KEYWORDS: dict[str, set[str]] = {
+    # Japanese (hiragana, katakana, kanji) - unique script
+    "ja": {
+        "トグル", "切り替え", "追加", "削除", "表示", "隠す", "非表示",
+        "設定", "セット", "増加", "減少", "ログ", "出力",
+        "クリック", "入力", "変更", "フォーカス",
+        "もし", "繰り返し", "待つ", "待機",
+        "私", "それ", "結果",
+        "最初", "最後", "次", "前",
+    },
+    # Korean (Hangul) - unique script
+    "ko": {
+        "토글", "전환", "추가", "제거", "삭제", "표시", "숨기다",
+        "설정", "증가", "감소", "로그",
+        "클릭", "입력", "변경", "포커스",
+        "만약", "반복", "대기",
+        "나", "내", "그것", "결과",
+        "첫번째", "마지막", "다음", "이전",
+    },
+    # Chinese (CJK characters)
+    "zh": {
+        "切换", "添加", "移除", "删除", "显示", "隐藏",
+        "设置", "设定", "增加", "减少", "日志", "记录",
+        "点击", "输入", "改变", "聚焦",
+        "如果", "重复", "等待",
+        "我", "它", "结果",
+        "第一", "最后", "下一个", "上一个",
+    },
+    # Arabic (Arabic script) - RTL
+    "ar": {
+        "بدّل", "بدل", "أضف", "اضف", "أزل", "ازل", "احذف",
+        "أظهر", "اظهر", "أخفِ", "اخف",
+        "ضع", "اضع", "زِد", "أنقص",
+        "عند", "نقر", "إدخال", "تغيير",
+        "إذا", "كرر", "انتظر",
+        "أنا", "هو", "النتيجة",
+    },
+    # Spanish (Latin script with accents)
+    "es": {
+        "alternar", "añadir", "agregar", "quitar", "eliminar",
+        "mostrar", "ocultar", "esconder",
+        "establecer", "fijar", "incrementar", "decrementar",
+        "clic", "entrada", "cambio",
+        "sino", "repetir", "esperar", "mientras",
+        "yo", "ello", "resultado",
+        "primero", "último", "siguiente", "anterior",
+    },
+    # Portuguese (Latin script with accents)
+    "pt": {
+        "adicionar", "remover", "esconder",
+        "definir", "clique", "mudança",
+        "senão", "aguardar", "enquanto",
+        "eu", "isso",
+        "próximo",
+    },
+    # French (Latin script with accents)
+    "fr": {
+        "basculer", "ajouter", "supprimer", "retirer",
+        "afficher", "montrer", "cacher", "masquer",
+        "définir", "incrémenter", "décrémenter",
+        "cliquer", "saisie", "changement",
+        "sinon", "répéter", "attendre", "pendant",
+        "moi", "cela", "résultat",
+        "premier", "dernier", "suivant", "précédent",
+    },
+    # German (Latin script with umlauts)
+    "de": {
+        "umschalten", "hinzufügen", "entfernen", "löschen",
+        "anzeigen", "zeigen", "verbergen", "verstecken",
+        "setzen", "festlegen", "erhöhen", "verringern",
+        "klick", "eingabe", "änderung",
+        "wenn", "sonst", "wiederholen", "warten", "während",
+        "ich", "ergebnis",
+        "erste", "letzte", "nächste", "vorherige",
+    },
+    # Turkish (Latin script with special chars)
+    "tr": {
+        "değiştir", "değistir", "ekle", "kaldır", "kaldir", "sil",
+        "göster", "gizle", "sakla",
+        "ayarla", "belirle", "arttır", "azalt",
+        "tıklama", "tiklama", "giriş", "giris", "değişim", "degisim",
+        "eğer", "eger", "yoksa", "tekrarla", "bekle", "süresince",
+        "ben", "sonuç", "sonuc",
+        "ilk", "son", "sonraki", "önceki", "onceki",
+    },
+    # Indonesian (Latin script)
+    "id": {
+        "alih", "beralih", "tambah", "hapus", "buang",
+        "tampilkan", "sembunyikan",
+        "atur", "tetapkan", "tambahkan", "kurangi",
+        "klik", "masukan", "perubahan",
+        "jika", "kalau", "ulangi", "tunggu", "selama",
+        "saya", "itu", "hasil",
+        "pertama", "terakhir", "berikutnya", "sebelumnya",
+    },
+    # Swahili (Latin script)
+    "sw": {
+        "badilisha", "ongeza", "ondoa", "futa",
+        "onyesha", "ficha",
+        "weka", "sanidi", "ongezea", "punguza",
+        "bofya", "ingizo", "badiliko",
+        "ikiwa", "kama", "rudia", "subiri", "wakati",
+        "mimi", "hiyo", "matokeo",
+        "kwanza", "mwisho", "inayofuata", "iliyotangulia",
+    },
+    # Quechua (Latin script)
+    "qu": {
+        "tikray", "yapay", "qichuy", "pichay",
+        "rikuchiy", "pakay",
+        "churay", "pisiyachiy",
+        "ñit'iy", "yaykuchiy",
+        "sichus", "mana", "kutipay", "suyay", "chaykama",
+        "ñuqa", "chay", "lluqsisqa",
+        "ñawpaq", "qhipa", "hamuq", "ñawpaqnin",
+    },
+}
+
+# Regional bundle mappings
+REGIONS = {
+    "western": ["en", "es", "pt", "fr", "de"],
+    "east-asian": ["ja", "zh", "ko"],
+    "priority": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"],
+    "all": SUPPORTED_LANGUAGES,
+}
+
+
+def detect_languages(script: str) -> set[str]:
+    """
+    Detect non-English languages in a hyperscript string.
+
+    Uses keyword detection to identify which languages are being used.
+    English is never detected (it's the default).
+
+    Args:
+        script: The hyperscript code to analyze
+
+    Returns:
+        Set of detected language codes (e.g., {"ja", "es"})
+    """
+    detected: set[str] = set()
+    script_lower = script.lower()
+
+    for lang, keywords in LANGUAGE_KEYWORDS.items():
+        # Non-Latin scripts (CJK, Arabic) - simple includes check
+        if lang in ("ja", "ko", "zh", "ar"):
+            for keyword in keywords:
+                if keyword in script:
+                    detected.add(lang)
+                    break
+        else:
+            # Latin-script languages - check for word boundaries
+            for keyword in keywords:
+                if len(keyword) <= 2:
+                    continue  # Skip very short keywords (too many false positives)
+                pattern = re.compile(rf"\b{re.escape(keyword.lower())}\b")
+                if pattern.search(script_lower):
+                    detected.add(lang)
+                    break
+
+    return detected
+
+
+def get_optimal_region(languages: set[str]) -> str | None:
+    """
+    Get the optimal regional bundle for detected languages.
+
+    Returns the smallest bundle that covers all detected languages.
+
+    Args:
+        languages: Set of detected language codes
+
+    Returns:
+        Region name or None if no languages detected
+    """
+    if not languages:
+        return None
+
+    lang_list = list(languages)
+
+    # Check if all fit in western bundle
+    if all(lang in REGIONS["western"] for lang in lang_list):
+        return "western"
+
+    # Check if all fit in east-asian bundle
+    if all(lang in REGIONS["east-asian"] for lang in lang_list):
+        return "east-asian"
+
+    # Check if all fit in priority bundle
+    if all(lang in REGIONS["priority"] for lang in lang_list):
+        return "priority"
+
+    # Need full bundle
+    return "all"
+
 
 class Scanner:
     """
@@ -243,13 +453,13 @@ class Scanner:
 
     def analyze_script(self, script: str) -> FileUsage:
         """
-        Analyze a hyperscript snippet for commands, blocks, and expressions.
+        Analyze a hyperscript snippet for commands, blocks, expressions, and languages.
 
         Args:
             script: The hyperscript code to analyze
 
         Returns:
-            FileUsage with detected commands, blocks, and positional flag
+            FileUsage with detected commands, blocks, positional flag, and languages
         """
         usage = FileUsage()
 
@@ -269,6 +479,9 @@ class Scanner:
         # Detect positional expressions
         if POSITIONAL_PATTERN.search(script):
             usage.positional = True
+
+        # Detect non-English languages
+        usage.detected_languages = detect_languages(script)
 
         return usage
 

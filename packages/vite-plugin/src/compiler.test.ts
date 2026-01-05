@@ -4,8 +4,14 @@
  * Tests for the build-time hyperscript compiler.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { compile, resetCompiler } from './compiler';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import {
+  compile,
+  resetCompiler,
+  setMultilingualAliases,
+  clearMultilingualAliases,
+  getMultilingualAliases,
+} from './compiler';
 
 describe('Compiler', () => {
   beforeEach(() => {
@@ -272,6 +278,116 @@ describe('Compiler', () => {
 
       expect(handler).not.toBeNull();
       expect(handler!.code).toContain("classList.toggle('my-class-name')");
+    });
+  });
+
+  describe('multilingual support', () => {
+    afterEach(() => {
+      clearMultilingualAliases();
+    });
+
+    it('compiles Japanese toggle with preprocessing', () => {
+      setMultilingualAliases({
+        トグル: 'toggle',
+        切り替え: 'toggle',
+      });
+
+      const handler = compile('on click トグル .active');
+
+      expect(handler).not.toBeNull();
+      expect(handler!.code).toContain("classList.toggle('active')");
+    });
+
+    it('compiles Korean toggle with preprocessing', () => {
+      setMultilingualAliases({
+        토글: 'toggle',
+        추가: 'add',
+      });
+
+      const handler = compile('on click 토글 .active');
+
+      expect(handler).not.toBeNull();
+      expect(handler!.code).toContain("classList.toggle('active')");
+    });
+
+    it('compiles Spanish toggle with preprocessing', () => {
+      setMultilingualAliases({
+        alternar: 'toggle',
+        agregar: 'add',
+      });
+
+      const handler = compile('on click alternar .active');
+
+      expect(handler).not.toBeNull();
+      expect(handler!.code).toContain("classList.toggle('active')");
+    });
+
+    it('compiles multiple multilingual commands', () => {
+      setMultilingualAliases({
+        追加: 'add',
+        隠す: 'hide',
+      });
+
+      const handler = compile('on click 追加 .loading then 隠す');
+
+      expect(handler).not.toBeNull();
+      expect(handler!.code).toContain("classList.add('loading')");
+      expect(handler!.code).toContain("style.display = 'none'");
+    });
+
+    it('preserves original multilingual script', () => {
+      setMultilingualAliases({
+        トグル: 'toggle',
+      });
+
+      const script = 'on click トグル .active';
+      const handler = compile(script);
+
+      // Original should contain the multilingual keyword
+      expect(handler!.original).toBe(script);
+    });
+
+    it('returns aliases via getMultilingualAliases', () => {
+      setMultilingualAliases({
+        トグル: 'toggle',
+        追加: 'add',
+      });
+
+      const aliases = getMultilingualAliases();
+
+      expect(aliases['トグル']).toBe('toggle');
+      expect(aliases['追加']).toBe('add');
+    });
+
+    it('clears aliases via clearMultilingualAliases', () => {
+      setMultilingualAliases({
+        トグル: 'toggle',
+      });
+
+      // Should compile with aliases
+      expect(compile('on click トグル .active')).not.toBeNull();
+
+      clearMultilingualAliases();
+
+      // Should fail without aliases (non-ASCII not recognized by tokenizer)
+      expect(compile('on click トグル .active')).toBeNull();
+    });
+
+    it('handles mixed English and multilingual', () => {
+      setMultilingualAliases({
+        トグル: 'toggle',
+      });
+
+      // English should still work
+      const english = compile('on click toggle .active');
+      expect(english).not.toBeNull();
+
+      // Japanese should also work
+      const japanese = compile('on click トグル .active');
+      expect(japanese).not.toBeNull();
+
+      // Both should produce same code
+      expect(english!.code).toBe(japanese!.code);
     });
   });
 });

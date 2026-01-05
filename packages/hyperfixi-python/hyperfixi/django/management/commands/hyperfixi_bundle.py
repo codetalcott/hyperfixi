@@ -17,7 +17,13 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.template import engines
 
-from hyperfixi.scanner import Scanner, VALID_COMMANDS, VALID_BLOCKS
+from hyperfixi.scanner import (
+    Scanner,
+    VALID_COMMANDS,
+    VALID_BLOCKS,
+    SUPPORTED_LANGUAGES,
+    get_optimal_region,
+)
 from hyperfixi.aggregator import Aggregator
 
 if TYPE_CHECKING:
@@ -68,6 +74,34 @@ class Command(BaseCommand):
             "--positional",
             action="store_true",
             help="Always include positional expressions",
+        )
+        parser.add_argument(
+            "--semantic",
+            type=str,
+            choices=["false", "true", "en", "auto"],
+            default="false",
+            help="Enable semantic parser (false, true, en, or auto)",
+        )
+        parser.add_argument(
+            "--languages",
+            type=str,
+            help="Comma-separated list of languages to support (e.g., en,es,ja)",
+        )
+        parser.add_argument(
+            "--region",
+            type=str,
+            choices=["western", "east-asian", "priority", "all"],
+            help="Force a specific regional bundle",
+        )
+        parser.add_argument(
+            "--grammar",
+            action="store_true",
+            help="Enable grammar transformation for non-SVO languages",
+        )
+        parser.add_argument(
+            "--extra-languages",
+            type=str,
+            help="Comma-separated list of languages to always include",
         )
         parser.add_argument(
             "--verbose",
@@ -166,6 +200,71 @@ class Command(BaseCommand):
         valid_commands = sorted(all_commands & VALID_COMMANDS)
         valid_blocks = sorted(all_blocks & VALID_BLOCKS)
 
+        # Process multilingual options
+        semantic = options["semantic"]
+        grammar = options["grammar"] or hyperfixi_settings.get("GRAMMAR", False)
+
+        # Get languages from CLI, settings, or auto-detect
+        all_languages: set[str] = set()
+
+        if options["languages"]:
+            all_languages.update(
+                lang.strip().lower() for lang in options["languages"].split(",")
+            )
+        if hyperfixi_settings.get("LANGUAGES"):
+            all_languages.update(
+                lang.lower() for lang in hyperfixi_settings["LANGUAGES"]
+            )
+        if options["extra_languages"]:
+            all_languages.update(
+                lang.strip().lower() for lang in options["extra_languages"].split(",")
+            )
+        if hyperfixi_settings.get("EXTRA_LANGUAGES"):
+            all_languages.update(
+                lang.lower() for lang in hyperfixi_settings["EXTRA_LANGUAGES"]
+            )
+
+        # Apply settings semantic option
+        if hyperfixi_settings.get("SEMANTIC"):
+            settings_semantic = hyperfixi_settings["SEMANTIC"]
+            if settings_semantic is True or settings_semantic == "true":
+                semantic = "true"
+            elif settings_semantic == "en":
+                semantic = "en"
+            elif settings_semantic == "auto":
+                semantic = "auto"
+
+        # Auto-detect languages if semantic is 'auto' or 'true'
+        detected_languages = usage.detected_languages
+        if semantic in ("auto", "true"):
+            all_languages.update(detected_languages)
+            if verbose and detected_languages:
+                self.stdout.write(
+                    f"Detected languages: {sorted(detected_languages)}\n"
+                )
+
+        # Determine region (explicit or optimal)
+        region = options["region"] or hyperfixi_settings.get("REGION")
+        if not region and all_languages:
+            region = get_optimal_region(all_languages)
+            if verbose and region:
+                self.stdout.write(f"Selected optimal region: {region}\n")
+
+        # Validate languages
+        valid_languages = sorted(
+            lang for lang in all_languages if lang in SUPPORTED_LANGUAGES
+        )
+        unknown_languages = all_languages - set(SUPPORTED_LANGUAGES)
+        if unknown_languages and verbose:
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Unknown languages (will be skipped): {sorted(unknown_languages)}\n"
+                )
+            )
+
+        # Determine if semantic should be enabled
+        semantic_enabled = semantic in ("true", "en", "auto") or bool(valid_languages)
+
         # Generate output
         output_format = options["format"]
 
@@ -176,10 +275,22 @@ class Command(BaseCommand):
                 positional,
                 htmx,
                 len(usage.file_usage),
+                semantic_enabled,
+                valid_languages,
+                region,
+                grammar,
             )
         elif output_format == "js-config":
             output = self._format_js_config(
-                options["name"], valid_commands, valid_blocks, positional, htmx
+                options["name"],
+                valid_commands,
+                valid_blocks,
+                positional,
+                htmx,
+                semantic_enabled,
+                valid_languages,
+                region,
+                grammar,
             )
         else:  # json
             output = self._format_json(
@@ -189,6 +300,10 @@ class Command(BaseCommand):
                 positional,
                 htmx,
                 list(usage.file_usage.keys()),
+                semantic_enabled,
+                valid_languages,
+                region,
+                grammar,
             )
 
         # Write output
@@ -201,11 +316,22 @@ class Command(BaseCommand):
             self.stdout.write(output)
 
         # Summary
+        summary_parts = [
+            f"\nDetected: {len(valid_commands)} commands, {len(valid_blocks)} blocks",
+            f"positional={positional}",
+        ]
+        if semantic_enabled:
+            summary_parts.append(f"semantic=true")
+            if valid_languages:
+                summary_parts.append(f"languages={valid_languages}")
+            if region:
+                summary_parts.append(f"region={region}")
+            if grammar:
+                summary_parts.append("grammar=true")
+        summary_parts.append(f"across {len(usage.file_usage)} files")
+
         self.stdout.write(
-            self.style.SUCCESS(
-                f"\nDetected: {len(valid_commands)} commands, {len(valid_blocks)} blocks, "
-                f"positional={positional} across {len(usage.file_usage)} files\n"
-            )
+            self.style.SUCCESS(", ".join(summary_parts) + "\n")
         )
 
     def _get_template_dirs(self, paths: list[str]) -> list[Path]:
@@ -239,6 +365,10 @@ class Command(BaseCommand):
         positional: bool,
         htmx: bool,
         file_count: int,
+        semantic: bool = False,
+        languages: list[str] | None = None,
+        region: str | None = None,
+        grammar: bool = False,
     ) -> str:
         """Format as human-readable summary."""
         lines = [
@@ -249,10 +379,22 @@ class Command(BaseCommand):
             f"Blocks ({len(blocks)}): {', '.join(blocks) if blocks else 'none'}",
             f"Positional: {positional}",
             f"HTMX: {htmx}",
+        ]
+
+        if semantic:
+            lines.append(f"Semantic: {semantic}")
+            if languages:
+                lines.append(f"Languages: {', '.join(languages)}")
+            if region:
+                lines.append(f"Region: {region}")
+            if grammar:
+                lines.append(f"Grammar: {grammar}")
+
+        lines.extend([
             f"Files scanned: {file_count}",
             "",
             "Recommended bundle command:",
-        ]
+        ])
 
         # Build command
         cmd_parts = ["  npm run generate:bundle --"]
@@ -264,6 +406,14 @@ class Command(BaseCommand):
             cmd_parts.append("--positional")
         if htmx:
             cmd_parts.append("--htmx")
+        if semantic:
+            cmd_parts.append("--semantic")
+        if languages:
+            cmd_parts.append(f"--languages {','.join(languages)}")
+        if region:
+            cmd_parts.append(f"--region {region}")
+        if grammar:
+            cmd_parts.append("--grammar")
 
         lines.append(" ".join(cmd_parts))
         lines.append("")
@@ -277,6 +427,10 @@ class Command(BaseCommand):
         blocks: list[str],
         positional: bool,
         htmx: bool,
+        semantic: bool = False,
+        languages: list[str] | None = None,
+        region: str | None = None,
+        grammar: bool = False,
     ) -> str:
         """Format as JavaScript config object."""
         config_parts = [
@@ -289,6 +443,14 @@ class Command(BaseCommand):
             config_parts.append("  positionalExpressions: true,")
         if htmx:
             config_parts.append("  htmxIntegration: true,")
+        if semantic:
+            config_parts.append("  semantic: true,")
+        if languages:
+            config_parts.append(f"  languages: {json.dumps(languages)},")
+        if region:
+            config_parts.append(f'  region: "{region}",')
+        if grammar:
+            config_parts.append("  grammar: true,")
         config_parts.append('  globalName: "hyperfixi"')
 
         return (
@@ -306,6 +468,10 @@ class Command(BaseCommand):
         positional: bool,
         htmx: bool,
         files: list[str],
+        semantic: bool = False,
+        languages: list[str] | None = None,
+        region: str | None = None,
+        grammar: bool = False,
     ) -> str:
         """Format as JSON config file."""
         config: dict = {
@@ -320,6 +486,14 @@ class Command(BaseCommand):
             config["positionalExpressions"] = True
         if htmx:
             config["htmxIntegration"] = True
+        if semantic:
+            config["semantic"] = True
+        if languages:
+            config["languages"] = languages
+        if region:
+            config["region"] = region
+        if grammar:
+            config["grammar"] = True
 
         # Include file list for reference (as metadata)
         config["_meta"] = {

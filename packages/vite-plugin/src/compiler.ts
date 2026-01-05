@@ -95,6 +95,75 @@ export function hasSemanticParser(): boolean {
 const SEMANTIC_CONFIDENCE_THRESHOLD = 0.7;
 
 // =============================================================================
+// MULTILINGUAL PREPROCESSING
+// =============================================================================
+
+/**
+ * Multilingual command aliases for preprocessing.
+ * Maps non-ASCII keywords to English equivalents.
+ */
+let multilingualAliases: Record<string, string> = {};
+let multilingualRegex: RegExp | null = null;
+
+/**
+ * Configure multilingual aliases for preprocessing.
+ * This allows compilation of non-ASCII keywords by translating them to English
+ * before parsing with HybridParser.
+ *
+ * @example
+ * ```typescript
+ * setMultilingualAliases({
+ *   'トグル': 'toggle',
+ *   '切り替え': 'toggle',
+ *   '追加': 'add',
+ *   'alternar': 'toggle',
+ *   '토글': 'toggle',
+ * });
+ * ```
+ */
+export function setMultilingualAliases(aliases: Record<string, string>): void {
+  multilingualAliases = { ...aliases };
+
+  if (Object.keys(aliases).length > 0) {
+    // Build regex pattern to match multilingual keywords
+    const escapedKeys = Object.keys(aliases)
+      .map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      .join('|');
+    multilingualRegex = new RegExp(`(^|\\s)(${escapedKeys})(?=\\s|\\.|$)`, 'g');
+  } else {
+    multilingualRegex = null;
+  }
+}
+
+/**
+ * Clear multilingual aliases (for testing).
+ */
+export function clearMultilingualAliases(): void {
+  multilingualAliases = {};
+  multilingualRegex = null;
+}
+
+/**
+ * Get currently configured multilingual aliases.
+ */
+export function getMultilingualAliases(): Record<string, string> {
+  return { ...multilingualAliases };
+}
+
+/**
+ * Preprocess code to replace non-ASCII keywords with English equivalents.
+ * This is needed because HybridParser's tokenizer only accepts ASCII identifiers.
+ */
+function preprocessMultilingual(code: string): string {
+  if (!multilingualRegex) return code;
+
+  return code.replace(multilingualRegex, (match, prefix, keyword) => {
+    const english = multilingualAliases[keyword];
+    return english ? prefix + english : match;
+  });
+}
+
+// =============================================================================
 // SANITIZATION UTILITIES
 // =============================================================================
 
@@ -285,8 +354,10 @@ export function compile(script: string, options: CompileOptions = {}): CompiledH
       }
       return null;
     } else {
-      // English - use HybridParser directly
-      const parser = new HybridParser(script);
+      // English or no semantic parser - use HybridParser with preprocessing
+      // Preprocessing translates non-ASCII keywords to English before parsing
+      const preprocessedScript = preprocessMultilingual(script);
+      const parser = new HybridParser(preprocessedScript);
       ast = parser.parse();
     }
 
@@ -329,8 +400,8 @@ function compileAST(ast: ASTNode, original: string): CompiledHandler | null {
 
   const { code, needsEvaluator, needsLocals, needsGlobals } = compileBody(body);
 
-  if (code === null) {
-    // Body couldn't be compiled
+  if (code === null || code === '') {
+    // Body couldn't be compiled or is empty
     return null;
   }
 

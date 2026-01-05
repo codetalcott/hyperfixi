@@ -94,7 +94,7 @@ class Aggregator:
         Returns cached result if available.
 
         Returns:
-            AggregatedUsage with combined commands, blocks, and positional flag
+            AggregatedUsage with combined commands, blocks, positional flag, and languages
         """
         if self._cached_usage is not None:
             return self._cached_usage
@@ -102,18 +102,21 @@ class Aggregator:
         commands: set[str] = set()
         blocks: set[str] = set()
         positional = False
+        detected_languages: set[str] = set()
 
         for usage in self._file_usage.values():
             commands.update(usage.commands)
             blocks.update(usage.blocks)
             if usage.positional:
                 positional = True
+            detected_languages.update(usage.detected_languages)
 
         self._cached_usage = AggregatedUsage(
             commands=commands,
             blocks=blocks,
             positional=positional,
             file_usage=dict(self._file_usage),
+            detected_languages=detected_languages,
         )
 
         return self._cached_usage
@@ -145,7 +148,7 @@ class Aggregator:
         Get summary for logging.
 
         Returns:
-            Dict with commands, blocks, positional, and file_count
+            Dict with commands, blocks, positional, file_count, and detected_languages
         """
         usage = self.get_usage()
         return {
@@ -153,6 +156,7 @@ class Aggregator:
             "blocks": sorted(usage.blocks),
             "positional": usage.positional,
             "file_count": len(self._file_usage),
+            "detected_languages": sorted(usage.detected_languages),
         }
 
     def clear(self) -> None:

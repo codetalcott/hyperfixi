@@ -14,6 +14,9 @@ from hyperfixi.scanner import (
     COMMAND_PATTERN,
     BLOCK_PATTERNS,
     POSITIONAL_PATTERN,
+    detect_languages,
+    get_optimal_region,
+    SUPPORTED_LANGUAGES,
 )
 
 
@@ -640,3 +643,143 @@ class TestDebugOutput:
         captured = capsys.readouterr()
         assert "[hyperfixi]" in captured.out
         assert "Error" in captured.out
+
+
+class TestLanguageDetection:
+    """Tests for multilingual language detection."""
+
+    def test_detect_japanese(self):
+        """Detect Japanese keywords."""
+        detected = detect_languages("on click トグル .active")
+        assert "ja" in detected
+
+    def test_detect_korean(self):
+        """Detect Korean keywords."""
+        detected = detect_languages("on click 토글 .active")
+        assert "ko" in detected
+
+    def test_detect_chinese(self):
+        """Detect Chinese keywords."""
+        detected = detect_languages("on click 切换 .active")
+        assert "zh" in detected
+
+    def test_detect_arabic(self):
+        """Detect Arabic keywords."""
+        detected = detect_languages("عند النقر بدّل .active")
+        assert "ar" in detected
+
+    def test_detect_spanish(self):
+        """Detect Spanish keywords."""
+        detected = detect_languages("on click alternar .active")
+        assert "es" in detected
+
+    def test_detect_german(self):
+        """Detect German keywords."""
+        detected = detect_languages("on click umschalten .active")
+        assert "de" in detected
+
+    def test_detect_french(self):
+        """Detect French keywords."""
+        detected = detect_languages("on click basculer .active")
+        assert "fr" in detected
+
+    def test_detect_turkish(self):
+        """Detect Turkish keywords."""
+        detected = detect_languages("on click değiştir .active")
+        assert "tr" in detected
+
+    def test_detect_multiple_languages(self):
+        """Detect multiple languages in same script."""
+        detected = detect_languages("トグル .active then alternar .open")
+        assert "ja" in detected
+        assert "es" in detected
+
+    def test_no_detection_for_english(self):
+        """English should not be detected (it's the default)."""
+        detected = detect_languages("on click toggle .active")
+        assert "en" not in detected
+        assert len(detected) == 0
+
+    def test_empty_script(self):
+        """Empty script should return empty set."""
+        detected = detect_languages("")
+        assert len(detected) == 0
+
+    def test_word_boundary_matching(self):
+        """Short keywords like 'si' should not match inside words."""
+        # 'si' is Spanish for 'if', but shouldn't match in 'invisible'
+        detected = detect_languages("on click toggle .invisible")
+        assert "es" not in detected
+
+
+class TestOptimalRegion:
+    """Tests for optimal region selection."""
+
+    def test_western_languages(self):
+        """Western languages should select western region."""
+        assert get_optimal_region({"es"}) == "western"
+        assert get_optimal_region({"fr", "de"}) == "western"
+
+    def test_east_asian_languages(self):
+        """East Asian languages should select east-asian region."""
+        assert get_optimal_region({"ja"}) == "east-asian"
+        assert get_optimal_region({"ko", "zh"}) == "east-asian"
+
+    def test_mixed_western_east_asian(self):
+        """Mixed regions should select priority or all."""
+        # Japanese + Spanish = priority covers both
+        region = get_optimal_region({"ja", "es"})
+        assert region in ("priority", "all")
+
+    def test_priority_languages(self):
+        """Priority region languages should select priority."""
+        assert get_optimal_region({"ar", "tr"}) == "priority"
+
+    def test_all_languages(self):
+        """Languages outside priority should select all."""
+        assert get_optimal_region({"sw", "qu"}) == "all"
+
+    def test_empty_languages(self):
+        """Empty set should return None."""
+        assert get_optimal_region(set()) is None
+
+
+class TestScannerLanguageDetection:
+    """Tests for language detection in Scanner."""
+
+    def test_analyze_script_detects_languages(self):
+        """analyze_script should populate detected_languages."""
+        scanner = Scanner()
+        usage = scanner.analyze_script("on click トグル .active")
+        assert "ja" in usage.detected_languages
+
+    def test_merge_aggregates_languages(self):
+        """Merge should combine detected_languages."""
+        usage1 = FileUsage(detected_languages={"ja"})
+        usage2 = FileUsage(detected_languages={"es"})
+        usage1.merge(usage2)
+        assert usage1.detected_languages == {"ja", "es"}
+
+    def test_to_dict_includes_languages(self):
+        """to_dict should include detected_languages."""
+        usage = FileUsage(
+            commands={"toggle"},
+            detected_languages={"ja", "es"},
+        )
+        result = usage.to_dict()
+        assert "detected_languages" in result
+        assert result["detected_languages"] == ["es", "ja"]  # sorted
+
+
+class TestAggregatedUsageLanguages:
+    """Tests for language detection in AggregatedUsage."""
+
+    def test_to_dict_includes_languages(self):
+        """to_dict should include detected_languages."""
+        usage = AggregatedUsage(
+            commands={"toggle"},
+            detected_languages={"ja", "ko"},
+        )
+        result = usage.to_dict()
+        assert "detected_languages" in result
+        assert result["detected_languages"] == ["ja", "ko"]

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grammar Transformation Test</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      padding: 8px 16px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    .active {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .target {
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px dashed #999;
+    }
+    h2 { margin-top: 0; }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Grammar Transformation E2E Test</h1>
+  <p>This page tests grammar transformation for SOV/VSO languages.</p>
+
+  <!-- Japanese SOV Test -->
+  <div class="test-section">
+    <h2>Japanese (SOV → SVO)</h2>
+    <p>Japanese uses Subject-Object-Verb order. Grammar transformation converts to SVO for execution.</p>
+
+    <div class="target" id="ja-target">Japanese Target</div>
+
+    <!-- Japanese word order: target's class を toggle -->
+    <!-- Standard hyperscript: toggle .active on #ja-target -->
+    <button id="ja-toggle" _="on click toggle .active on #ja-target">
+      トグル (toggle)
+    </button>
+
+    <pre>Code: on click toggle .active on #ja-target
+Expected behavior: Toggle .active class on target element</pre>
+  </div>
+
+  <!-- Korean SOV Test -->
+  <div class="test-section">
+    <h2>Korean (SOV → SVO)</h2>
+    <p>Korean also uses Subject-Object-Verb order.</p>
+
+    <div class="target" id="ko-target">Korean Target</div>
+
+    <button id="ko-toggle" _="on click toggle .active on #ko-target">
+      토글 (toggle)
+    </button>
+
+    <pre>Code: on click toggle .active on #ko-target
+Expected behavior: Toggle .active class on target element</pre>
+  </div>
+
+  <!-- Mixed Language Test -->
+  <div class="test-section">
+    <h2>Mixed Languages</h2>
+    <p>All buttons should toggle their respective targets.</p>
+
+    <div id="mixed-targets">
+      <div class="target" id="en-mixed">English Target</div>
+      <div class="target" id="ja-mixed">日本語 Target</div>
+      <div class="target" id="ko-mixed">한국어 Target</div>
+      <div class="target" id="es-mixed">Spanish Target</div>
+    </div>
+
+    <button id="en-btn" _="on click toggle .active on #en-mixed">EN: Toggle</button>
+    <button id="ja-btn" _="on click トグル .active on #ja-mixed">JA: トグル</button>
+    <button id="ko-btn" _="on click 토글 .active on #ko-mixed">KO: 토글</button>
+    <button id="es-btn" _="on click alternar .active on #es-mixed">ES: Alternar</button>
+  </div>
+
+  <!-- Test Results -->
+  <div class="test-section">
+    <h2>Test Results</h2>
+    <button onclick="runTests()">Run All Tests</button>
+    <pre id="results">Click "Run All Tests" to execute tests...</pre>
+  </div>
+
+  <script type="module" src="/main.js"></script>
+  <script>
+    async function runTests() {
+      const results = [];
+
+      // Wait for hyperfixi to initialize
+      await new Promise(r => setTimeout(r, 500));
+
+      // Test 1: Japanese toggle
+      const jaTarget = document.getElementById('ja-target');
+      const jaBtn = document.getElementById('ja-toggle');
+      const jaHadActive = jaTarget.classList.contains('active');
+      jaBtn.click();
+      await new Promise(r => setTimeout(r, 100));
+      const jaHasActive = jaTarget.classList.contains('active');
+      results.push(`Japanese toggle: ${jaHadActive !== jaHasActive ? 'PASS' : 'FAIL'}`);
+
+      // Test 2: Korean toggle
+      const koTarget = document.getElementById('ko-target');
+      const koBtn = document.getElementById('ko-toggle');
+      const koHadActive = koTarget.classList.contains('active');
+      koBtn.click();
+      await new Promise(r => setTimeout(r, 100));
+      const koHasActive = koTarget.classList.contains('active');
+      results.push(`Korean toggle: ${koHadActive !== koHasActive ? 'PASS' : 'FAIL'}`);
+
+      // Test 3: Mixed language buttons
+      const mixedTests = [
+        { id: 'en-btn', targetId: 'en-mixed', label: 'English' },
+        { id: 'ja-btn', targetId: 'ja-mixed', label: 'Japanese (トグル)' },
+        { id: 'ko-btn', targetId: 'ko-mixed', label: 'Korean (토글)' },
+        { id: 'es-btn', targetId: 'es-mixed', label: 'Spanish (alternar)' },
+      ];
+
+      for (const test of mixedTests) {
+        const target = document.getElementById(test.targetId);
+        const btn = document.getElementById(test.id);
+        const hadActive = target.classList.contains('active');
+        btn.click();
+        await new Promise(r => setTimeout(r, 100));
+        const hasActive = target.classList.contains('active');
+        results.push(`${test.label}: ${hadActive !== hasActive ? 'PASS' : 'FAIL'}`);
+      }
+
+      document.getElementById('results').textContent = results.join('\n');
+    }
+  </script>
+</body>
+</html>
