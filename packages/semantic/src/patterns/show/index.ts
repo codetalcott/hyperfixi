@@ -12,6 +12,8 @@ import { getShowPatternsKo } from './ko';
 import { getShowPatternsAr } from './ar';
 import { getShowPatternsTr } from './tr';
 import { getShowPatternsZh } from './zh';
+import { getShowPatternsDe } from './de';
+import { getShowPatternsFr } from './fr';
 
 /**
  * Get show patterns for a specific language.
@@ -28,6 +30,10 @@ export function getShowPatternsForLanguage(language: string): LanguagePattern[] 
       return getShowPatternsTr();
     case 'zh':
       return getShowPatternsZh();
+    case 'de':
+      return getShowPatternsDe();
+    case 'fr':
+      return getShowPatternsFr();
     default:
       return [];
   }
@@ -39,3 +45,5 @@ export { getShowPatternsKo } from './ko';
 export { getShowPatternsAr } from './ar';
 export { getShowPatternsTr } from './tr';
 export { getShowPatternsZh } from './zh';
+export { getShowPatternsDe } from './de';
+export { getShowPatternsFr } from './fr';

@@ -12,6 +12,7 @@ import { getHidePatternsKo } from './ko';
 import { getHidePatternsAr } from './ar';
 import { getHidePatternsTr } from './tr';
 import { getHidePatternsZh } from './zh';
+import { getHidePatternsDe } from './de';
 
 /**
  * Get hide patterns for a specific language.
@@ -28,6 +29,8 @@ export function getHidePatternsForLanguage(language: string): LanguagePattern[] 
       return getHidePatternsTr();
     case 'zh':
       return getHidePatternsZh();
+    case 'de':
+      return getHidePatternsDe();
     default:
       return [];
   }
@@ -39,3 +42,4 @@ export { getHidePatternsKo } from './ko';
 export { getHidePatternsAr } from './ar';
 export { getHidePatternsTr } from './tr';
 export { getHidePatternsZh } from './zh';
+export { getHidePatternsDe } from './de';

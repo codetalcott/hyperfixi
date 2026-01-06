@@ -238,10 +238,15 @@ export const setSchema: CommandSchema = {
       expectedTypes: ['literal', 'expression', 'reference'],
       svoPosition: 2,
       sovPosition: 2,
-      // Override patient marker for English (add 'to' before value)
-      // Other languages use their default markers
+      // Override patient marker for SVO languages with their native prepositions
+      // SOV languages (Korean, Japanese, Turkish) use their default object markers
       markerOverride: {
-        en: 'to',  // "set :x to 5"
+        en: 'to',    // "set :x to 5"
+        es: 'a',     // "establecer x a 10"
+        pt: 'para',  // "definir x para 10"
+        fr: 'à',     // "définir x à 10"
+        de: 'auf',   // "setze x auf 10"
+        id: 'ke',    // "atur x ke 10"
       },
     },
   ],
@@ -583,6 +588,11 @@ export const getCommandSchema: CommandSchema = {
       expectedTypes: ['selector', 'reference', 'expression'],
       svoPosition: 1,
       sovPosition: 2,
+      // No marker before source for simple GET pattern: "get #element" not "get from #element"
+      markerOverride: {
+        en: '', es: '', pt: '', fr: '', de: '',
+        ja: '', zh: '', ko: '', ar: '', tr: '', id: '',
+      },
     },
     {
       role: 'destination',

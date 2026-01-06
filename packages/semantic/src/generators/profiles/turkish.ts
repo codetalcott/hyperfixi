@@ -60,7 +60,7 @@ export const turkishProfile: LanguageProfile = {
     swap: { primary: 'değiştir', alternatives: ['takas'], normalized: 'swap' },
     morph: { primary: 'dönüştür', alternatives: ['şekil değiştir'], normalized: 'morph' },
     // Variable operations
-    set: { primary: 'ayarla', normalized: 'set' },
+    set: { primary: 'ayarla', alternatives: ['yap', 'belirle'], normalized: 'set' },
     get: { primary: 'al', normalized: 'get' },
     increment: { primary: 'artır', normalized: 'increment' },
     decrement: { primary: 'azalt', normalized: 'decrement' },

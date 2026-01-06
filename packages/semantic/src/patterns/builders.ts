@@ -17,6 +17,9 @@ import { getRemovePatternsForLanguage } from './remove/index';
 import { getShowPatternsForLanguage } from './show/index';
 import { getHidePatternsForLanguage } from './hide/index';
 import { getSetPatternsForLanguage } from './set/index';
+import { getGetPatternsForLanguage } from './get/index';
+import { getIncrementPatternsForLanguage } from './increment/index';
+import { getDecrementPatternsForLanguage } from './decrement/index';
 
 // Import English-only patterns
 import { getEnglishOnlyPatterns } from './languages/en';
@@ -95,12 +98,15 @@ export function buildPatternsForLanguage(language: string): LanguagePattern[] {
   patterns.push(...getPutPatternsForLanguage(language));
   patterns.push(...getEventHandlerPatternsForLanguage(language));
 
-  // 2. New multilingual command patterns (ja, ko, ar, tr, zh)
+  // 2. New multilingual command patterns (ja, ko, ar, tr, zh, de, etc.)
   patterns.push(...getAddPatternsForLanguage(language));
   patterns.push(...getRemovePatternsForLanguage(language));
   patterns.push(...getShowPatternsForLanguage(language));
   patterns.push(...getHidePatternsForLanguage(language));
   patterns.push(...getSetPatternsForLanguage(language));
+  patterns.push(...getGetPatternsForLanguage(language));
+  patterns.push(...getIncrementPatternsForLanguage(language));
+  patterns.push(...getDecrementPatternsForLanguage(language));
 
   // 3. English-only hand-crafted patterns
   if (language === 'en') {

@@ -14,6 +14,11 @@ import { getSetPatternsKo } from './ko';
 import { getSetPatternsAr } from './ar';
 import { getSetPatternsTr } from './tr';
 import { getSetPatternsZh } from './zh';
+import { getSetPatternsEs } from './es';
+import { getSetPatternsPt } from './pt';
+import { getSetPatternsFr } from './fr';
+import { getSetPatternsDe } from './de';
+import { getSetPatternsId } from './id';
 
 /**
  * Get set patterns for a specific language.
@@ -30,6 +35,16 @@ export function getSetPatternsForLanguage(language: string): LanguagePattern[] {
       return getSetPatternsTr();
     case 'zh':
       return getSetPatternsZh();
+    case 'es':
+      return getSetPatternsEs();
+    case 'pt':
+      return getSetPatternsPt();
+    case 'fr':
+      return getSetPatternsFr();
+    case 'de':
+      return getSetPatternsDe();
+    case 'id':
+      return getSetPatternsId();
     default:
       return [];
   }
@@ -41,3 +56,8 @@ export { getSetPatternsKo } from './ko';
 export { getSetPatternsAr } from './ar';
 export { getSetPatternsTr } from './tr';
 export { getSetPatternsZh } from './zh';
+export { getSetPatternsEs } from './es';
+export { getSetPatternsPt } from './pt';
+export { getSetPatternsFr } from './fr';
+export { getSetPatternsDe } from './de';
+export { getSetPatternsId } from './id';

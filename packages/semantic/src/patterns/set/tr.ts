@@ -13,6 +13,25 @@ import type { LanguagePattern } from '../../types';
 export function getSetPatternsTr(): LanguagePattern[] {
   return [
     {
+      id: 'set-tr-yap',
+      language: 'tr',
+      command: 'set',
+      priority: 105, // Higher priority - natural Turkish form "make x 10"
+      template: {
+        format: '{destination} yi {patient} yap',
+        tokens: [
+          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          { type: 'literal', value: 'yi', alternatives: ['yı', 'yu', 'yü', 'i', 'ı', 'u', 'ü'] },
+          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+          { type: 'literal', value: 'yap', alternatives: ['yapmak'] },
+        ],
+      },
+      extraction: {
+        destination: { position: 0 },
+        patient: { position: 2 },
+      },
+    },
+    {
       id: 'set-tr-full',
       language: 'tr',
       command: 'set',
