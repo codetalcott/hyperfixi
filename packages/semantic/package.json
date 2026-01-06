@@ -100,6 +100,39 @@
       "types": "./dist/explicit/index.d.ts",
       "import": "./dist/explicit/index.mjs",
       "require": "./dist/explicit/index.js"
+    },
+    "./browser/ja": {
+      "default": "./dist/browser-ja.ja.global.js"
+    },
+    "./browser/ar": {
+      "default": "./dist/browser-ar.ar.global.js"
+    },
+    "./browser/ko": {
+      "default": "./dist/browser-ko.ko.global.js"
+    },
+    "./browser/zh": {
+      "default": "./dist/browser-zh.zh.global.js"
+    },
+    "./browser/pt": {
+      "default": "./dist/browser-pt.pt.global.js"
+    },
+    "./browser/fr": {
+      "default": "./dist/browser-fr.fr.global.js"
+    },
+    "./browser/de": {
+      "default": "./dist/browser-de.de.global.js"
+    },
+    "./browser/id": {
+      "default": "./dist/browser-id.id.global.js"
+    },
+    "./browser/qu": {
+      "default": "./dist/browser-qu.qu.global.js"
+    },
+    "./browser/sw": {
+      "default": "./dist/browser-sw.sw.global.js"
+    },
+    "./browser/core": {
+      "default": "./dist/browser-core.core.global.js"
     }
   },
   "scripts": {
