@@ -36,11 +36,27 @@ describe('selectOptimalBundle', () => {
     expect(selectOptimalBundle(new Set(['en', 'es', 'fr', 'de', 'pt']))).toBe('western');
   });
 
-  it('returns east-asian for East Asian languages', () => {
-    expect(selectOptimalBundle(new Set(['ja']))).toBe('east-asian');
-    expect(selectOptimalBundle(new Set(['zh']))).toBe('east-asian');
-    expect(selectOptimalBundle(new Set(['ko']))).toBe('east-asian');
+  it('returns single-language bundle for individual East Asian languages', () => {
+    // Single languages now have individual bundles (smaller than regional)
+    expect(selectOptimalBundle(new Set(['ja']))).toBe('ja');
+    expect(selectOptimalBundle(new Set(['zh']))).toBe('zh');
+    expect(selectOptimalBundle(new Set(['ko']))).toBe('ko');
+  });
+
+  it('returns east-asian for multiple East Asian languages', () => {
+    expect(selectOptimalBundle(new Set(['ja', 'zh']))).toBe('east-asian');
+    expect(selectOptimalBundle(new Set(['ja', 'ko']))).toBe('east-asian');
     expect(selectOptimalBundle(new Set(['ja', 'zh', 'ko']))).toBe('east-asian');
+  });
+
+  it('returns single-language bundle for other individual languages', () => {
+    expect(selectOptimalBundle(new Set(['pt']))).toBe('pt');
+    expect(selectOptimalBundle(new Set(['fr']))).toBe('fr');
+    expect(selectOptimalBundle(new Set(['de']))).toBe('de');
+    expect(selectOptimalBundle(new Set(['ar']))).toBe('ar');
+    expect(selectOptimalBundle(new Set(['id']))).toBe('id');
+    expect(selectOptimalBundle(new Set(['qu']))).toBe('qu');
+    expect(selectOptimalBundle(new Set(['sw']))).toBe('sw');
   });
 
   it('returns priority for priority languages', () => {

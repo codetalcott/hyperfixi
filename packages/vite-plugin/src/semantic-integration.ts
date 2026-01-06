@@ -184,11 +184,24 @@ function preprocessMultilingual(code) {
 
 /**
  * Semantic bundle types available.
+ * Single-language bundles are available for all 13 supported languages.
  */
 export type SemanticBundleType =
+  // Single-language bundles (all 13 languages)
   | 'en'
   | 'es'
+  | 'ja'
+  | 'ar'
+  | 'ko'
+  | 'zh'
   | 'tr'
+  | 'pt'
+  | 'fr'
+  | 'de'
+  | 'id'
+  | 'qu'
+  | 'sw'
+  // Regional bundles
   | 'es-en'
   | 'western'
   | 'east-asian'
@@ -307,6 +320,13 @@ function selectBundleType(
 }
 
 /**
+ * All languages that have single-language bundles available.
+ */
+const SINGLE_LANGUAGE_BUNDLES: readonly SupportedLanguage[] = [
+  'en', 'es', 'ja', 'ar', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw',
+] as const;
+
+/**
  * Select the smallest bundle that covers all specified languages.
  */
 export function selectOptimalBundle(languages: Set<SupportedLanguage>): SemanticBundleType {
@@ -316,13 +336,12 @@ export function selectOptimalBundle(languages: Set<SupportedLanguage>): Semantic
 
   const langArray = [...languages];
 
-  // Check single-language bundles
+  // Check single-language bundles (all 13 languages have individual bundles)
   if (langArray.length === 1) {
     const lang = langArray[0];
-    if (lang === 'en') return 'en';
-    if (lang === 'es') return 'es';
-    if (lang === 'tr') return 'tr';
-    // Other single languages need regional bundles
+    if (SINGLE_LANGUAGE_BUNDLES.includes(lang)) {
+      return lang as SemanticBundleType;
+    }
   }
 
   // Check if en + es covers it (common bilingual case)
@@ -350,18 +369,31 @@ export function selectOptimalBundle(languages: Set<SupportedLanguage>): Semantic
 }
 
 /**
- * Estimated bundle sizes (gzip) for each semantic bundle type.
+ * Estimated bundle sizes for each semantic bundle type.
  * Used for debug logging to help users understand size impact.
+ * Sizes measured from minified bundles (January 2025).
  */
 export const SEMANTIC_BUNDLE_SIZES: Record<SemanticBundleType, { raw: string; gzip: string }> = {
-  en: { raw: '80 KB', gzip: '~20 KB' },
-  es: { raw: '63 KB', gzip: '~16 KB' },
-  tr: { raw: '65 KB', gzip: '~17 KB' },
-  'es-en': { raw: '101 KB', gzip: '~25 KB' },
-  western: { raw: '124 KB', gzip: '~30 KB' },
-  'east-asian': { raw: '97 KB', gzip: '~24 KB' },
-  priority: { raw: '226 KB', gzip: '~48 KB' },
-  all: { raw: '315 KB', gzip: '~61 KB' },
+  // Single-language bundles (all 13 languages)
+  en: { raw: '82 KB', gzip: '~20 KB' },
+  es: { raw: '64 KB', gzip: '~16 KB' },
+  ja: { raw: '67 KB', gzip: '~17 KB' },
+  ar: { raw: '66 KB', gzip: '~17 KB' },
+  ko: { raw: '69 KB', gzip: '~18 KB' },
+  zh: { raw: '58 KB', gzip: '~15 KB' },
+  tr: { raw: '73 KB', gzip: '~18 KB' },
+  pt: { raw: '56 KB', gzip: '~14 KB' },
+  fr: { raw: '57 KB', gzip: '~14 KB' },
+  de: { raw: '57 KB', gzip: '~14 KB' },
+  id: { raw: '57 KB', gzip: '~14 KB' },
+  qu: { raw: '56 KB', gzip: '~14 KB' },
+  sw: { raw: '56 KB', gzip: '~14 KB' },
+  // Regional bundles
+  'es-en': { raw: '99 KB', gzip: '~25 KB' },
+  western: { raw: '127 KB', gzip: '~30 KB' },
+  'east-asian': { raw: '99 KB', gzip: '~24 KB' },
+  priority: { raw: '231 KB', gzip: '~48 KB' },
+  all: { raw: '324 KB', gzip: '~61 KB' },
 };
 
 /**
