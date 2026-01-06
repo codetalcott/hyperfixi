@@ -7,6 +7,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default {
   plugins: [
     hyperfixi({
+      // Mode: 'interpret' (default) or 'compile' (smallest bundles)
+      // mode: 'compile',  // Uncomment for ~1KB bundles (no runtime parser)
+
       // Auto-detect languages from source files
       semantic: 'auto',
 

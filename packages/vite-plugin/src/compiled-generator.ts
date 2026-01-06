@@ -107,7 +107,7 @@ ${localsCode}${globalsCode}
 const H={${handlerEntries.join(',')}};
 
 function r(el,ev,fn${hasModifiers(handlers) ? ',m' : ''}){
-  let h=fn;
+  let h=e=>fn(el,e,e.target);
 ${generateModifierWrappers(handlers)}
   el.addEventListener(ev,h${hasOnce(handlers) ? ',{once:m?.o}' : ''});
 }

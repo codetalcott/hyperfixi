@@ -45,20 +45,6 @@ export function getTogglePatternsForLanguage(language: string): LanguagePattern[
 }
 
 /**
- * All toggle patterns across all languages.
- * @deprecated Use per-language imports for tree-shaking.
- */
-export const togglePatterns: LanguagePattern[] = [
-  ...getTogglePatternsEn(),
-  ...getTogglePatternsJa(),
-  ...getTogglePatternsAr(),
-  ...getTogglePatternsEs(),
-  ...getTogglePatternsKo(),
-  ...getTogglePatternsZh(),
-  ...getTogglePatternsTr(),
-];
-
-/**
  * Languages that have hand-crafted toggle patterns.
  */
 export const togglePatternLanguages = ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr'];

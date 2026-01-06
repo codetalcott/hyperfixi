@@ -120,11 +120,6 @@ export {
   normalizeEventName,
 } from './patterns';
 
-// Direct exports for backwards compatibility (pulls in all patterns)
-export { togglePatterns } from './patterns/toggle/index';
-export { putPatterns } from './patterns/put/index';
-export { eventHandlerPatterns } from './patterns/event-handler/index';
-
 // =============================================================================
 // Tokenizers
 // =============================================================================
@@ -387,3 +382,22 @@ export {
   type CommandMapperResult,
   type BuildASTResult,
 } from './ast-builder';
+
+// =============================================================================
+// Language Loader (Lazy Loading)
+// =============================================================================
+
+export {
+  // Core functions
+  loadLanguage,
+  loadLanguages,
+  // Helpers
+  canLoadLanguage,
+  getLoadedLanguages,
+  getUnloadedLanguages,
+  SUPPORTED_LANGUAGES as LAZY_LOAD_LANGUAGES,
+  // Types
+  type LoadLanguageOptions,
+  type LoadLanguageResult,
+  type LanguageModule,
+} from './language-loader';

@@ -169,6 +169,26 @@ export default defineConfig([
       options.treeShaking = true;
     },
   },
+  // Lazy loading browser bundle (IIFE) - No languages pre-registered
+  // Output: hyperfixi-semantic.browser-lazy.lazy.global.js
+  // Languages are loaded on-demand via loadLanguage()
+  {
+    entry: ['src/browser-lazy.ts'],
+    outDir: 'dist',
+    format: ['iife'],
+    globalName: 'HyperFixiSemanticLazy',
+    minify: true,
+    sourcemap: false,
+    platform: 'browser',
+    noExternal: ['@hyperfixi/i18n'],
+    outExtension() {
+      return { js: '.lazy.global.js' };
+    },
+    esbuildOptions(options) {
+      options.target = 'es2020';
+      options.treeShaking = true;
+    },
+  },
   // Individual language modules (ESM) for npm tree-shaking
   // These allow: import '@hyperfixi/semantic/languages/en'
   {

@@ -37,6 +37,9 @@
     "./browser/priority": {
       "default": "./dist/browser-priority.priority.global.js"
     },
+    "./browser/lazy": {
+      "default": "./dist/browser-lazy.lazy.global.js"
+    },
     "./languages": {
       "types": "./dist/languages/index.d.ts",
       "import": "./dist/languages/index.mjs"

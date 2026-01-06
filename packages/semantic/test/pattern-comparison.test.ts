@@ -18,9 +18,37 @@ import {
   koreanProfile,
   turkishProfile,
 } from '../src/generators';
-import { togglePatterns } from '../src/patterns/toggle';
-import { putPatterns } from '../src/patterns/put';
+// Import per-language functions instead of deprecated barrel arrays
+import { getTogglePatternsEn } from '../src/patterns/toggle/en';
+import { getTogglePatternsJa } from '../src/patterns/toggle/ja';
+import { getTogglePatternsAr } from '../src/patterns/toggle/ar';
+import { getTogglePatternsEs } from '../src/patterns/toggle/es';
+import { getTogglePatternsKo } from '../src/patterns/toggle/ko';
+import { getTogglePatternsZh } from '../src/patterns/toggle/zh';
+import { getTogglePatternsTr } from '../src/patterns/toggle/tr';
+import { getPutPatternsEn } from '../src/patterns/put/en';
+import { getPutPatternsJa } from '../src/patterns/put/ja';
+import { getPutPatternsAr } from '../src/patterns/put/ar';
+import { getPutPatternsEs } from '../src/patterns/put/es';
 import type { LanguagePattern, PatternToken } from '../src/types';
+
+// Build pattern arrays for testing (replaces deprecated barrel exports)
+const togglePatterns: LanguagePattern[] = [
+  ...getTogglePatternsEn(),
+  ...getTogglePatternsJa(),
+  ...getTogglePatternsAr(),
+  ...getTogglePatternsEs(),
+  ...getTogglePatternsKo(),
+  ...getTogglePatternsZh(),
+  ...getTogglePatternsTr(),
+];
+
+const putPatterns: LanguagePattern[] = [
+  ...getPutPatternsEn(),
+  ...getPutPatternsJa(),
+  ...getPutPatternsAr(),
+  ...getPutPatternsEs(),
+];
 
 // =============================================================================
 // Helper Functions

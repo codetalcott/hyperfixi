@@ -34,14 +34,3 @@ export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
     default: return [];
   }
 }
-
-/**
- * All put patterns across all languages.
- * @deprecated Use per-language imports for tree-shaking.
- */
-export const putPatterns: LanguagePattern[] = [
-  ...getPutPatternsEn(),
-  ...getPutPatternsJa(),
-  ...getPutPatternsAr(),
-  ...getPutPatternsEs(),
-];

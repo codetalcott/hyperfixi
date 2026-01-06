@@ -27,7 +27,42 @@ Choose the right bundle for your use case. All bundles are minified IIFE for dir
 | East Asian | `@hyperfixi/semantic/browser/east-asian` | 24 KB | ja, zh, ko |
 | Western | `@hyperfixi/semantic/browser/western` | 30 KB | en, es, pt, fr, de |
 | Priority | `@hyperfixi/semantic/browser/priority` | 48 KB | 11 priority languages |
+| Lazy | `@hyperfixi/semantic/browser/lazy` | ~15 KB | On-demand loading |
 | Full | `@hyperfixi/semantic/browser` | 61 KB | All 13 languages |
+
+### Lazy Loading (Smallest Initial Bundle)
+
+For applications that need minimal initial bundle size:
+
+```html
+<script src="node_modules/@hyperfixi/semantic/dist/browser-lazy.lazy.global.js"></script>
+<script>
+  const { loadLanguage, parse } = HyperFixiSemanticLazy;
+
+  // Load languages on demand
+  await loadLanguage('en');
+  await loadLanguage('ja');
+
+  // Now parsing works for loaded languages
+  parse('toggle .active', 'en');
+  parse('トグル .active', 'ja');
+</script>
+```
+
+### Custom Bundle Generation
+
+Generate bundles with only the languages you need:
+
+```bash
+# Preview size estimate
+node scripts/generate-bundle.mjs --estimate ja ko zh
+
+# Generate with auto-config
+node scripts/generate-bundle.mjs --auto es pt fr
+
+# Use predefined groups
+node scripts/generate-bundle.mjs --group western
+```
 
 ### Browser Usage
 

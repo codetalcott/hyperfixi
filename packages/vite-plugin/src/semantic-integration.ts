@@ -106,6 +106,25 @@ const MULTILINGUAL_COMMAND_ALIASES: Partial<Record<SupportedLanguage, Record<str
 };
 
 /**
+ * Get multilingual command aliases for detected languages.
+ * Used by compile mode to configure the compiler with the right aliases.
+ */
+export function getMultilingualCommandAliases(
+  languages: Set<SupportedLanguage>
+): Record<string, string> {
+  const aliases: Record<string, string> = {};
+
+  for (const lang of languages) {
+    const langAliases = MULTILINGUAL_COMMAND_ALIASES[lang];
+    if (langAliases) {
+      Object.assign(aliases, langAliases);
+    }
+  }
+
+  return aliases;
+}
+
+/**
  * Generate code to add multilingual command aliases to HybridParser.
  */
 function generateMultilingualAliases(languages: Set<SupportedLanguage>): string {

@@ -83,23 +83,3 @@ export function getEventHandlerPatternsForLanguage(language: string): LanguagePa
     default: return [];
   }
 }
-
-/**
- * All event handler patterns across all languages.
- * @deprecated Use per-language imports for tree-shaking.
- */
-export const eventHandlerPatterns: LanguagePattern[] = [
-  ...getEventHandlerPatternsEn(),
-  ...getEventHandlerPatternsJa(),
-  ...getEventHandlerPatternsKo(),
-  ...getEventHandlerPatternsAr(),
-  ...getEventHandlerPatternsTr(),
-  ...getEventHandlerPatternsEs(),
-  ...getEventHandlerPatternsPt(),
-  ...getEventHandlerPatternsZh(),
-  ...getEventHandlerPatternsQu(),
-  ...getEventHandlerPatternsDe(),
-  ...getEventHandlerPatternsFr(),
-  ...getEventHandlerPatternsId(),
-  ...getEventHandlerPatternsSw(),
-];

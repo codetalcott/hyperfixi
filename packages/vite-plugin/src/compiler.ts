@@ -779,6 +779,17 @@ function compileDecrement(args: ASTNode[]): NodeCompilation | null {
     }
   }
 
+  // Element textContent
+  const compiled = compileExpression(target);
+  if (compiled) {
+    return {
+      code: `${compiled}.textContent = (parseFloat(${compiled}.textContent) || 0) - ${amount}`,
+      needsEvaluator: false,
+      needsLocals: false,
+      needsGlobals: false,
+    };
+  }
+
   return null;
 }
 

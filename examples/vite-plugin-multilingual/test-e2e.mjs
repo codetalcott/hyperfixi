@@ -1,14 +1,43 @@
 import { chromium } from 'playwright';
 
+// Support both dev (5173) and preview (4173) ports
+const DEV_URL = 'http://localhost:5173/';
+const PREVIEW_URL = 'http://localhost:4173/';
+
+async function findServer() {
+  const { exec } = await import('child_process');
+  const { promisify } = await import('util');
+  const execAsync = promisify(exec);
+
+  try {
+    await execAsync('curl -s http://localhost:4173/ > /dev/null');
+    return PREVIEW_URL;
+  } catch {
+    try {
+      await execAsync('curl -s http://localhost:5173/ > /dev/null');
+      return DEV_URL;
+    } catch {
+      return null;
+    }
+  }
+}
+
 async function test() {
+  const serverUrl = await findServer();
+  if (!serverUrl) {
+    console.log('No server running. Start with: npm run dev OR npm run preview');
+    process.exit(1);
+  }
+  console.log('Testing:', serverUrl);
+
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
-  
+
   // Collect console logs
   const logs = [];
   page.on('console', msg => logs.push(msg.text()));
-  
-  await page.goto('http://localhost:5173/');
+
+  await page.goto(serverUrl);
   await page.waitForLoadState('networkidle');
   
   console.log('=== Console logs ===');

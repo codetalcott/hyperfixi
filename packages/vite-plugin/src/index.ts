@@ -45,9 +45,11 @@ import type { HyperfixiPluginOptions, AggregatedUsage } from './types';
 import { Scanner } from './scanner';
 import { Aggregator } from './aggregator';
 import { Generator } from './generator';
-import { compile, resetCompiler, type CompiledHandler } from './compiler';
+import { compile, resetCompiler, setMultilingualAliases, type CompiledHandler } from './compiler';
 import { generateCompiledBundle } from './compiled-generator';
 import { transformHTML, extractScripts } from './html-transformer';
+import { getMultilingualCommandAliases } from './semantic-integration';
+import type { SupportedLanguage } from './language-keywords';
 
 // Re-export types
 export type { HyperfixiPluginOptions, FileUsage, AggregatedUsage } from './types';
@@ -394,6 +396,24 @@ export function hyperfixi(options: HyperfixiPluginOptions = {}): Plugin {
 
         const scannedFiles = await scanner.scanProject(cwd);
         aggregator.loadFromScan(scannedFiles);
+
+        // Configure multilingual aliases for compile mode
+        if (mode === 'compile') {
+          const usage = aggregator.getUsage();
+          if (usage.detectedLanguages.size > 0) {
+            const aliases = getMultilingualCommandAliases(
+              usage.detectedLanguages as Set<SupportedLanguage>
+            );
+            if (Object.keys(aliases).length > 0) {
+              setMultilingualAliases(aliases);
+              if (options.debug) {
+                console.log(
+                  `[hyperfixi] Compile mode: configured ${Object.keys(aliases).length} multilingual aliases`
+                );
+              }
+            }
+          }
+        }
 
         if (options.debug) {
           const summary = aggregator.getSummary();

@@ -10,6 +10,8 @@
  *
  * Or run via the test script:
  * - npm run test:e2e --prefix packages/vite-plugin
+ *
+ * Tests will automatically skip if no server is running.
  */
 
 import { describe, test, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
@@ -37,19 +39,16 @@ async function findServer(): Promise<string | null> {
   }
 }
 
-describe.skip('Semantic Integration E2E', () => {
+// Check for server availability before running tests
+const serverAvailable = await findServer();
+
+describe.skipIf(!serverAvailable)('Semantic Integration E2E', () => {
   let browser: Browser;
   let page: Page;
   let serverUrl: string;
 
   beforeAll(async () => {
-    const url = await findServer();
-    if (!url) {
-      throw new Error(
-        'No server available. Run `npm run dev` or `npm run preview` in examples/vite-plugin-multilingual first.'
-      );
-    }
-    serverUrl = url;
+    serverUrl = serverAvailable!;
     browser = await chromium.launch({ headless: true });
   });
 
