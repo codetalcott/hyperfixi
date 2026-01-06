@@ -26,6 +26,8 @@ import './de';
 import './id';
 import './qu';
 import './sw';
+import './it';
+import './vi';
 
 // Re-export everything for convenience
 export * from './en';
@@ -41,3 +43,5 @@ export * from './de';
 export * from './id';
 export * from './qu';
 export * from './sw';
+export * from './it';
+export * from './vi';

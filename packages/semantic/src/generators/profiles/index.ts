@@ -32,3 +32,5 @@ export { germanProfile } from './german';
 export { indonesianProfile } from './indonesian';
 export { quechuaProfile } from './quechua';
 export { swahiliProfile } from './swahili';
+export { italianProfile } from './italian';
+export { vietnameseProfile } from './vietnamese';

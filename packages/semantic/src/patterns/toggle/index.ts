@@ -15,6 +15,8 @@ export { getTogglePatternsEs } from './es';
 export { getTogglePatternsKo } from './ko';
 export { getTogglePatternsZh } from './zh';
 export { getTogglePatternsTr } from './tr';
+export { getTogglePatternsIt } from './it';
+export { getTogglePatternsVi } from './vi';
 
 // Import all for backwards compatibility (defeats tree-shaking)
 import { getTogglePatternsEn } from './en';
@@ -24,6 +26,8 @@ import { getTogglePatternsEs } from './es';
 import { getTogglePatternsKo } from './ko';
 import { getTogglePatternsZh } from './zh';
 import { getTogglePatternsTr } from './tr';
+import { getTogglePatternsIt } from './it';
+import { getTogglePatternsVi } from './vi';
 
 /**
  * Get toggle patterns for a specific language.
@@ -40,6 +44,8 @@ export function getTogglePatternsForLanguage(language: string): LanguagePattern[
     case 'ko': return getTogglePatternsKo();
     case 'zh': return getTogglePatternsZh();
     case 'tr': return getTogglePatternsTr();
+    case 'it': return getTogglePatternsIt();
+    case 'vi': return getTogglePatternsVi();
     default: return [];
   }
 }
@@ -47,4 +53,4 @@ export function getTogglePatternsForLanguage(language: string): LanguagePattern[
 /**
  * Languages that have hand-crafted toggle patterns.
  */
-export const togglePatternLanguages = ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr'];
+export const togglePatternLanguages = ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr', 'it', 'vi'];

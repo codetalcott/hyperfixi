@@ -14,6 +14,8 @@ import { germanProfile } from '../../generators/profiles/german';
 import { frenchProfile } from '../../generators/profiles/french';
 import { indonesianProfile } from '../../generators/profiles/indonesian';
 import { swahiliProfile } from '../../generators/profiles/swahili';
+import { italianProfile } from '../../generators/profiles/italian';
+import { vietnameseProfile } from '../../generators/profiles/vietnamese';
 
 // Re-export shared utilities
 export { eventNameTranslations, normalizeEventName } from './shared';
@@ -44,6 +46,14 @@ export function getEventHandlerPatternsId(): LanguagePattern[] {
 
 export function getEventHandlerPatternsSw(): LanguagePattern[] {
   return generateEventHandlerPatterns(swahiliProfile);
+}
+
+export function getEventHandlerPatternsIt(): LanguagePattern[] {
+  return generateEventHandlerPatterns(italianProfile);
+}
+
+export function getEventHandlerPatternsVi(): LanguagePattern[] {
+  return generateEventHandlerPatterns(vietnameseProfile);
 }
 
 // Import hand-crafted patterns for backwards compatibility
@@ -80,6 +90,8 @@ export function getEventHandlerPatternsForLanguage(language: string): LanguagePa
     case 'fr': return getEventHandlerPatternsFr();
     case 'id': return getEventHandlerPatternsId();
     case 'sw': return getEventHandlerPatternsSw();
+    case 'it': return getEventHandlerPatternsIt();
+    case 'vi': return getEventHandlerPatternsVi();
     default: return [];
   }
 }

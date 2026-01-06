@@ -37,6 +37,8 @@ import { id as idLegacy } from './id';
 import { qu as quLegacy } from './qu';
 import { sw as swLegacy } from './sw';
 import { pt as ptLegacy } from './pt';
+import { it as itLegacy } from './it';
+import { vi as viLegacy } from './vi';
 
 // =============================================================================
 // Derived Dictionaries with Legacy Overrides
@@ -111,6 +113,16 @@ export const qu: Dictionary = quLegacy;
  */
 export const sw: Dictionary = swLegacy;
 
+/**
+ * Italian dictionary - legacy overrides for compatibility.
+ */
+export const it: Dictionary = itLegacy;
+
+/**
+ * Vietnamese dictionary - legacy overrides for compatibility.
+ */
+export const vi: Dictionary = viLegacy;
+
 // =============================================================================
 // Dictionary Registry
 // =============================================================================
@@ -132,6 +144,8 @@ export const dictionaries: Record<string, Dictionary> = {
   qu,
   sw,
   pt,
+  it,
+  vi,
 };
 
 // =============================================================================

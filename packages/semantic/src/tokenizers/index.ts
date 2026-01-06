@@ -80,6 +80,8 @@ export { germanTokenizer } from './german';
 export { indonesianTokenizer } from './indonesian';
 export { quechuaTokenizer } from './quechua';
 export { swahiliTokenizer } from './swahili';
+export { italianTokenizer } from './italian';
+export { vietnameseTokenizer } from './vietnamese';
 
 export {
   BaseTokenizer,

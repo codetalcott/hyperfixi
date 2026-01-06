@@ -13,6 +13,8 @@ import { getHidePatternsAr } from './ar';
 import { getHidePatternsTr } from './tr';
 import { getHidePatternsZh } from './zh';
 import { getHidePatternsDe } from './de';
+import { getHidePatternsIt } from './it';
+import { getHidePatternsVi } from './vi';
 
 /**
  * Get hide patterns for a specific language.
@@ -31,6 +33,10 @@ export function getHidePatternsForLanguage(language: string): LanguagePattern[] 
       return getHidePatternsZh();
     case 'de':
       return getHidePatternsDe();
+    case 'it':
+      return getHidePatternsIt();
+    case 'vi':
+      return getHidePatternsVi();
     default:
       return [];
   }
@@ -43,3 +49,5 @@ export { getHidePatternsAr } from './ar';
 export { getHidePatternsTr } from './tr';
 export { getHidePatternsZh } from './zh';
 export { getHidePatternsDe } from './de';
+export { getHidePatternsIt } from './it';
+export { getHidePatternsVi } from './vi';

@@ -16,6 +16,8 @@ export { getPutPatternsZh } from './zh';
 export { getPutPatternsKo } from './ko';
 export { getPutPatternsTr } from './tr';
 export { getPutPatternsId } from './id';
+export { getPutPatternsIt } from './it';
+export { getPutPatternsVi } from './vi';
 
 // Import all for backwards compatibility (defeats tree-shaking)
 import { getPutPatternsEn } from './en';
@@ -26,6 +28,8 @@ import { getPutPatternsZh } from './zh';
 import { getPutPatternsKo } from './ko';
 import { getPutPatternsTr } from './tr';
 import { getPutPatternsId } from './id';
+import { getPutPatternsIt } from './it';
+import { getPutPatternsVi } from './vi';
 
 /**
  * Get put patterns for a specific language.
@@ -43,6 +47,8 @@ export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
     case 'ko': return getPutPatternsKo();
     case 'tr': return getPutPatternsTr();
     case 'id': return getPutPatternsId();
+    case 'it': return getPutPatternsIt();
+    case 'vi': return getPutPatternsVi();
     default: return [];
   }
 }

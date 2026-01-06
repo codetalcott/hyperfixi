@@ -9,6 +9,8 @@ import type { LanguagePattern } from '../../types';
 import { getDecrementPatternsDe } from './de';
 import { getDecrementPatternsTr } from './tr';
 import { getDecrementPatternsZh } from './zh';
+import { getDecrementPatternsIt } from './it';
+import { getDecrementPatternsVi } from './vi';
 
 /**
  * Get decrement patterns for a specific language.
@@ -21,6 +23,10 @@ export function getDecrementPatternsForLanguage(language: string): LanguagePatte
       return getDecrementPatternsTr();
     case 'zh':
       return getDecrementPatternsZh();
+    case 'it':
+      return getDecrementPatternsIt();
+    case 'vi':
+      return getDecrementPatternsVi();
     default:
       return [];
   }
@@ -30,3 +36,5 @@ export function getDecrementPatternsForLanguage(language: string): LanguagePatte
 export { getDecrementPatternsDe } from './de';
 export { getDecrementPatternsTr } from './tr';
 export { getDecrementPatternsZh } from './zh';
+export { getDecrementPatternsIt } from './it';
+export { getDecrementPatternsVi } from './vi';

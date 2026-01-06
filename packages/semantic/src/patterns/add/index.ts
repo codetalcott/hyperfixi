@@ -12,6 +12,8 @@ import { getAddPatternsKo } from './ko';
 import { getAddPatternsAr } from './ar';
 import { getAddPatternsTr } from './tr';
 import { getAddPatternsZh } from './zh';
+import { getAddPatternsIt } from './it';
+import { getAddPatternsVi } from './vi';
 
 /**
  * Get add patterns for a specific language.
@@ -28,6 +30,10 @@ export function getAddPatternsForLanguage(language: string): LanguagePattern[] {
       return getAddPatternsTr();
     case 'zh':
       return getAddPatternsZh();
+    case 'it':
+      return getAddPatternsIt();
+    case 'vi':
+      return getAddPatternsVi();
     default:
       return [];
   }
@@ -39,3 +45,5 @@ export { getAddPatternsKo } from './ko';
 export { getAddPatternsAr } from './ar';
 export { getAddPatternsTr } from './tr';
 export { getAddPatternsZh } from './zh';
+export { getAddPatternsIt } from './it';
+export { getAddPatternsVi } from './vi';
