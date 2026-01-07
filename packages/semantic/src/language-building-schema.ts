@@ -1441,6 +1441,41 @@ export const SUPPORTED_LANGUAGES: LanguageChecklist[] = [
     missingFromTokenizer: [],
     potentialConflicts: [],
   },
+  {
+    code: 'ms',
+    name: 'Malay',
+    wordOrder: 'SVO',
+    direction: 'ltr',
+    files: {
+      languageProfile: true,
+      tokenizer: true,
+      tokenizerRegistered: true,
+      morphologicalNormalizer: false,
+      eventHandlerPatterns: true,
+      tests: true,
+      morphologyTests: false,
+    },
+    morphology: {
+      needed: false,
+      reason: 'Malay is largely isolating with limited affixation',
+      inflectionTypes: [],
+      integratedWithTokenizer: false,
+      confidenceThreshold: 1.0,
+    },
+    profileKeywords: [
+      'togol', 'tambah', 'buang', 'letak', 'tetap',
+      'tunjuk', 'sembunyi', 'tambah nilai', 'kurang nilai',
+    ],
+    tokenizerKeywords: [
+      'togol', 'tukar',
+      'tambah', 'buang', 'alih',
+      'letak', 'tetap',
+      'tunjuk', 'sembunyi',
+      'tambah nilai', 'kurang nilai',
+    ],
+    missingFromTokenizer: [],
+    potentialConflicts: [],
+  },
 ];
 
 /**

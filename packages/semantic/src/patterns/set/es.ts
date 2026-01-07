@@ -32,6 +32,25 @@ export function getSetPatternsEs(): LanguagePattern[] {
       },
     },
     {
+      id: 'set-es-prep-first',
+      language: 'es',
+      command: 'set',
+      priority: 95,
+      template: {
+        format: 'establecer en {destination} {patient}',
+        tokens: [
+          { type: 'literal', value: 'establecer', alternatives: ['fijar', 'definir', 'poner', 'set'] },
+          { type: 'literal', value: 'en', alternatives: ['a'] },
+          { type: 'role', role: 'destination', expectedTypes: ['property-path', 'selector', 'reference', 'expression'] },
+          { type: 'role', role: 'patient', expectedTypes: ['literal', 'expression', 'reference'] },
+        ],
+      },
+      extraction: {
+        destination: { position: 2 },
+        patient: { position: 3 },
+      },
+    },
+    {
       id: 'set-es-equals',
       language: 'es',
       command: 'set',

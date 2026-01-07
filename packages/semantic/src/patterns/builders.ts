@@ -121,7 +121,7 @@ export function buildPatternsForLanguage(language: string): LanguagePattern[] {
 }
 
 // Languages with hand-crafted patterns
-const handcraftedLanguages = ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw', 'it', 'vi', 'pl', 'ru', 'uk', 'hi'];
+const handcraftedLanguages = ['en', 'ja', 'ar', 'es', 'ko', 'zh', 'tr', 'pt', 'fr', 'de', 'id', 'qu', 'sw', 'it', 'vi', 'pl', 'ru', 'uk', 'hi', 'bn', 'th', 'ms'];
 
 /**
  * Build patterns for all languages.
