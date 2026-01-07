@@ -783,3 +783,99 @@ class TestAggregatedUsageLanguages:
         result = usage.to_dict()
         assert "detected_languages" in result
         assert result["detected_languages"] == ["ja", "ko"]
+
+
+class TestNewLanguageDetection:
+    """Tests for newly added languages (8 additional languages)."""
+
+    def test_detect_italian(self):
+        """Detect Italian keywords."""
+        detected = detect_languages("on click commutare .active")
+        assert "it" in detected
+
+    def test_detect_vietnamese(self):
+        """Detect Vietnamese keywords."""
+        detected = detect_languages("on click chuyển đổi .active")
+        assert "vi" in detected
+
+    def test_detect_polish(self):
+        """Detect Polish keywords."""
+        detected = detect_languages("on click przełącz .active")
+        assert "pl" in detected
+
+    def test_detect_russian(self):
+        """Detect Russian keywords (Cyrillic script)."""
+        detected = detect_languages("on click переключить .active")
+        assert "ru" in detected
+
+    def test_detect_ukrainian(self):
+        """Detect Ukrainian keywords (Cyrillic script)."""
+        detected = detect_languages("on click перемкнути .active")
+        assert "uk" in detected
+
+    def test_detect_hindi(self):
+        """Detect Hindi keywords (Devanagari script)."""
+        detected = detect_languages("on click टॉगल .active")
+        assert "hi" in detected
+
+    def test_detect_bengali(self):
+        """Detect Bengali keywords (Bengali script)."""
+        detected = detect_languages("on click টগল .active")
+        assert "bn" in detected
+
+    def test_detect_thai(self):
+        """Detect Thai keywords (Thai script)."""
+        detected = detect_languages("on click สลับ .active")
+        assert "th" in detected
+
+    def test_detect_tagalog(self):
+        """Detect Tagalog keywords."""
+        detected = detect_languages("on click palitan .active")
+        assert "tl" in detected
+
+
+class TestNewRegionalBundles:
+    """Tests for new regional bundle selections."""
+
+    def test_southeast_asian_region(self):
+        """Southeast Asian languages should select southeast-asian region."""
+        assert get_optimal_region({"id"}) == "southeast-asian"
+        assert get_optimal_region({"vi", "th"}) == "southeast-asian"
+
+    def test_south_asian_region(self):
+        """South Asian languages should select south-asian region."""
+        assert get_optimal_region({"hi"}) == "south-asian"
+        assert get_optimal_region({"hi", "bn"}) == "south-asian"
+
+    def test_slavic_region(self):
+        """Slavic languages should select slavic region."""
+        assert get_optimal_region({"ru"}) == "slavic"
+        assert get_optimal_region({"ru", "uk", "pl"}) == "slavic"
+
+    def test_italian_in_western(self):
+        """Italian should be in western region."""
+        assert get_optimal_region({"it"}) == "western"
+        assert get_optimal_region({"it", "es", "fr"}) == "western"
+
+    def test_vietnamese_in_priority(self):
+        """Vietnamese should be in priority region."""
+        assert get_optimal_region({"vi", "en"}) in ("southeast-asian", "priority", "all")
+
+    def test_new_languages_need_all_bundle(self):
+        """Mixing new non-priority languages should need all bundle."""
+        # Tagalog + Hindi spans regions not in priority
+        assert get_optimal_region({"tl", "hi"}) == "all"
+
+
+class TestSupportedLanguagesList:
+    """Tests for the SUPPORTED_LANGUAGES list."""
+
+    def test_has_22_languages(self):
+        """Should have exactly 22 supported languages."""
+        assert len(SUPPORTED_LANGUAGES) == 22
+
+    def test_includes_new_languages(self):
+        """Should include all newly added languages."""
+        new_languages = ["it", "vi", "pl", "ru", "uk", "hi", "bn", "th", "tl"]
+        for lang in new_languages:
+            assert lang in SUPPORTED_LANGUAGES, f"{lang} not in SUPPORTED_LANGUAGES"

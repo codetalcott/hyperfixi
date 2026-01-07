@@ -1,517 +1,199 @@
-# MCP Tools for Hyperfixi: LLM Coding Agent Support
+# MCP Tools & Agent Skills for Hyperfixi
 
 ## Overview
 
-Model Context Protocol (MCP) tools would enable LLM coding agents to interact with Hyperfixi's hyperscript development environment through a standardized interface. This would allow Claude, GitHub Copilot, and other AI assistants to understand, generate, and validate hyperscript code effectively.
+HyperFixi provides two complementary approaches for LLM coding agent support:
 
-## Proposed MCP Server Architecture
+1. **Agent Skills** - Static instruction files (SKILL.md) that teach agents how to write hyperscript
+2. **MCP Server** - Dynamic tools for code analysis, pattern lookup, and validation
 
-### 1. **Hyperscript Analysis Server**
+## Current Implementation Status
 
-Provides code analysis and understanding capabilities:
+### Agent Skills ✅ COMPLETED
 
-```typescript
-// mcp-server-hyperscript-analysis/src/index.ts
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { HyperscriptParser, HyperscriptAnalyzer } from '@hyperfixi/core';
+Location: `skills/hyperscript/`
 
-const server = new Server({
-  name: 'hyperscript-analysis',
-  version: '1.0.0',
-}, {
-  capabilities: {
-    tools: {},
-    resources: {}
-  }
-});
+Agent Skills follow the open standard adopted by VS Code, Cursor, GitHub Copilot, and OpenAI Codex.
 
-// Tool: Analyze hyperscript code
-server.setRequestHandler('tools/call', async (request) => {
-  if (request.params.name === 'analyze_hyperscript') {
-    const { code, options } = request.params.arguments;
-    
-    try {
-      // Parse the hyperscript
-      const ast = await HyperscriptParser.parse(code);
-      
-      // Analyze for issues
-      const analysis = await HyperscriptAnalyzer.analyze(ast, {
-        checkSyntax: true,
-        checkSemantics: true,
-        suggestOptimizations: true,
-        ...options
-      });
-      
-      return {
-        content: [{
-          type: 'text',
-          text: JSON.stringify({
-            valid: analysis.errors.length === 0,
-            errors: analysis.errors,
-            warnings: analysis.warnings,
-            suggestions: analysis.suggestions,
-            complexity: analysis.complexity,
-            selectors: analysis.selectors,
-            events: analysis.events
-          }, null, 2)
-        }]
-      };
-    } catch (error) {
-      return {
-        content: [{
-          type: 'text',
-          text: `Error analyzing hyperscript: ${error.message}`
-        }]
-      };
-    }
-  }
-});
+**Files:**
+- `SKILL.md` - Main skill definition with quick reference
+- `references/commands.md` - Complete command reference (21 commands)
+- `references/expressions.md` - Expression syntax guide
+- `references/multilingual.md` - 22 language examples with keywords
 
-// Resource: Hyperscript documentation
-server.setRequestHandler('resources/read', async (request) => {
-  if (request.params.uri === 'hyperscript://docs') {
-    return {
-      contents: [{
-        uri: 'hyperscript://docs',
-        mimeType: 'text/markdown',
-        text: await loadHyperscriptDocs()
-      }]
-    };
-  }
-});
+**Key Features:**
+- Works immediately with any agent that supports Agent Skills
+- No server infrastructure required
+- Covers all 21 commands, 6 blocks, and 22 languages
+- Includes common patterns and troubleshooting
 
-// Tool: Convert natural language to hyperscript
-server.setRequestHandler('tools/call', async (request) => {
-  if (request.params.name === 'nl_to_hyperscript') {
-    const { description, context } = request.params.arguments;
-    
-    // Use AST patterns to generate hyperscript
-    const hyperscript = await generateHyperscript(description, context);
-    
-    return {
-      content: [{
-        type: 'text',
-        text: hyperscript
-      }]
-    };
-  }
-});
-```
+### MCP Server ✅ COMPLETED
 
-### 2. **Hyperscript Generation Server**
+Location: `packages/mcp-server/`
 
-Helps LLMs generate valid hyperscript code:
+Consolidated MCP server with 15 tools and 5 resources.
 
-```typescript
-// mcp-server-hyperscript-generation/src/index.ts
-const generationServer = new Server({
-  name: 'hyperscript-generation',
-  version: '1.0.0'
-});
+**Tools (15 total):**
 
-// Tool: Generate hyperscript from requirements
-generationServer.tool('generate_behavior', {
-  description: 'Generate hyperscript behavior from requirements',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      element: { type: 'string', description: 'Target element selector' },
-      trigger: { type: 'string', description: 'Event trigger (click, hover, etc)' },
-      action: { type: 'string', description: 'What should happen' },
-      conditions: { type: 'array', items: { type: 'string' } },
-      locale: { type: 'string', description: 'Language to generate in' }
-    }
-  }
-}, async ({ element, trigger, action, conditions, locale }) => {
-  const generator = new HyperscriptGenerator(locale);
-  
-  const behavior = generator.build({
-    selector: element,
-    event: trigger,
-    actions: parseAction(action),
-    conditions: conditions?.map(c => parseCondition(c))
-  });
-  
-  return {
-    hyperscript: behavior,
-    explanation: generator.explain(behavior),
-    alternatives: generator.suggestAlternatives(behavior)
-  };
-});
+| Category | Tool | Description |
+|----------|------|-------------|
+| Analysis | `analyze_complexity` | Cyclomatic, cognitive, Halstead metrics |
+| Analysis | `analyze_metrics` | Pattern detection, code smells, quality |
+| Analysis | `explain_code` | Natural language explanations |
+| Analysis | `recognize_intent` | Purpose classification |
+| Patterns | `get_examples` | Few-shot examples for tasks |
+| Patterns | `search_patterns` | Find patterns by description |
+| Patterns | `translate_hyperscript` | Translate between 22 languages |
+| Patterns | `get_pattern_stats` | Database statistics |
+| Validation | `validate_hyperscript` | Syntax validation with errors |
+| Validation | `suggest_command` | Suggest command for task |
+| Validation | `get_bundle_config` | Vite plugin configuration |
+| LSP Bridge | `get_diagnostics` | LSP-compatible diagnostics |
+| LSP Bridge | `get_completions` | Context-aware completions |
+| LSP Bridge | `get_hover_info` | Hover documentation |
+| LSP Bridge | `get_document_symbols` | Document outline symbols |
 
-// Tool: Optimize existing hyperscript
-generationServer.tool('optimize_hyperscript', {
-  description: 'Optimize hyperscript for performance and readability',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      code: { type: 'string' },
-      optimizationGoals: {
-        type: 'array',
-        items: {
-          type: 'string',
-          enum: ['performance', 'readability', 'size', 'maintainability']
-        }
-      }
-    }
-  }
-}, async ({ code, optimizationGoals }) => {
-  const optimizer = new HyperscriptOptimizer();
-  const optimized = await optimizer.optimize(code, optimizationGoals);
-  
-  return {
-    original: code,
-    optimized: optimized.code,
-    improvements: optimized.improvements,
-    metrics: optimized.metrics
-  };
-});
-```
+**Resources (5):**
+- `hyperfixi://docs/commands` - Command reference
+- `hyperfixi://docs/expressions` - Expression guide
+- `hyperfixi://docs/events` - Event handling
+- `hyperfixi://patterns` - Common patterns
+- `hyperfixi://languages` - 22 supported languages
 
-### 3. **Hyperscript Testing Server**
+### Python Scanner ✅ UPDATED
 
-Enables LLMs to write and validate tests:
+Location: `packages/hyperfixi-python/hyperfixi/scanner.py`
 
-```typescript
-// mcp-server-hyperscript-testing/src/index.ts
-const testingServer = new Server({
-  name: 'hyperscript-testing',
-  version: '1.0.0'
-});
+Updated to support 22 languages with:
+- Language keyword detection for all 22 languages
+- Regional bundle recommendations (western, east-asian, southeast-asian, south-asian, slavic)
+- Support for Cyrillic, Devanagari, Bengali, Thai scripts
 
-// Tool: Generate tests for hyperscript
-testingServer.tool('generate_tests', {
-  description: 'Generate comprehensive tests for hyperscript behaviors',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      hyperscript: { type: 'string' },
-      testFramework: { 
-        type: 'string',
-        enum: ['vitest', 'jest', 'playwright']
-      },
-      coverage: {
-        type: 'array',
-        items: {
-          type: 'string',
-          enum: ['happy-path', 'edge-cases', 'error-handling', 'performance']
-        }
-      }
-    }
-  }
-}, async ({ hyperscript, testFramework, coverage }) => {
-  const testGenerator = new HyperscriptTestGenerator(testFramework);
-  
-  // Parse hyperscript to understand behaviors
-  const ast = await HyperscriptParser.parse(hyperscript);
-  const behaviors = extractBehaviors(ast);
-  
-  // Generate tests
-  const tests = await testGenerator.generateTests(behaviors, coverage);
-  
-  return {
-    tests: tests.code,
-    setup: tests.setup,
-    mocks: tests.mocks,
-    coverage: tests.coverageReport
-  };
-});
+## Installation
 
-// Tool: Validate hyperscript behavior
-testingServer.tool('validate_behavior', {
-  description: 'Validate hyperscript behavior against specifications',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      hyperscript: { type: 'string' },
-      specifications: {
-        type: 'array',
-        items: {
-          type: 'object',
-          properties: {
-            when: { type: 'string' },
-            then: { type: 'string' },
-            expect: { type: 'string' }
-          }
-        }
-      }
-    }
-  }
-}, async ({ hyperscript, specifications }) => {
-  const validator = new BehaviorValidator();
-  const results = await validator.validate(hyperscript, specifications);
-  
-  return {
-    valid: results.allPassed,
-    results: results.tests,
-    suggestions: results.suggestions
-  };
-});
-```
+### Claude Desktop
 
-### 4. **Hyperscript Migration Server**
-
-Helps migrate from other frameworks to hyperscript:
-
-```typescript
-// mcp-server-hyperscript-migration/src/index.ts
-const migrationServer = new Server({
-  name: 'hyperscript-migration',
-  version: '1.0.0'
-});
-
-// Tool: Convert jQuery to hyperscript
-migrationServer.tool('jquery_to_hyperscript', {
-  description: 'Convert jQuery code to hyperscript',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      jqueryCode: { type: 'string' },
-      preserveComments: { type: 'boolean' }
-    }
-  }
-}, async ({ jqueryCode, preserveComments }) => {
-  const converter = new JQueryToHyperscriptConverter();
-  const result = await converter.convert(jqueryCode, { preserveComments });
-  
-  return {
-    hyperscript: result.code,
-    warnings: result.warnings,
-    unconvertedPatterns: result.unconverted,
-    documentation: result.migrationGuide
-  };
-});
-
-// Tool: Convert React event handlers to hyperscript
-migrationServer.tool('react_to_hyperscript', {
-  description: 'Convert React component event handlers to hyperscript',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      reactComponent: { type: 'string' },
-      targetElements: { type: 'array', items: { type: 'string' } }
-    }
-  }
-}, async ({ reactComponent, targetElements }) => {
-  const converter = new ReactToHyperscriptConverter();
-  const behaviors = await converter.extractBehaviors(reactComponent);
-  
-  return {
-    behaviors: behaviors.map(b => ({
-      element: b.element,
-      hyperscript: b.hyperscript,
-      originalHandler: b.originalCode
-    })),
-    setupCode: behaviors.setupCode,
-    notes: behaviors.conversionNotes
-  };
-});
-```
-
-### 5. **Hyperscript LSP Bridge Server**
-
-Connects LLMs to the Hyperfixi LSP:
-
-```typescript
-// mcp-server-hyperscript-lsp/src/index.ts
-const lspBridgeServer = new Server({
-  name: 'hyperscript-lsp-bridge',
-  version: '1.0.0'
-});
-
-// Tool: Get completions at position
-lspBridgeServer.tool('get_completions', {
-  description: 'Get hyperscript completions at a specific position',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      document: { type: 'string' },
-      position: {
-        type: 'object',
-        properties: {
-          line: { type: 'number' },
-          character: { type: 'number' }
-        }
-      },
-      locale: { type: 'string' }
-    }
-  }
-}, async ({ document, position, locale }) => {
-  const lsp = new HyperscriptLSP(locale);
-  const completions = await lsp.getCompletions(document, position);
-  
-  return {
-    completions: completions.items.map(item => ({
-      label: item.label,
-      detail: item.detail,
-      documentation: item.documentation,
-      insertText: item.insertText
-    }))
-  };
-});
-
-// Resource: Live diagnostics
-lspBridgeServer.resource('diagnostics', {
-  description: 'Live hyperscript diagnostics',
-  mimeType: 'application/json'
-}, async (uri) => {
-  const documentUri = uri.replace('hyperscript://diagnostics/', '');
-  const diagnostics = await lsp.getDiagnostics(documentUri);
-  
-  return JSON.stringify({
-    errors: diagnostics.filter(d => d.severity === 1),
-    warnings: diagnostics.filter(d => d.severity === 2),
-    hints: diagnostics.filter(d => d.severity === 3)
-  });
-});
-```
-
-## Integration with LLM Workflows
-
-### 1. **Claude Desktop Integration**
+Add to config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
-    "hyperscript-analysis": {
+    "hyperfixi": {
       "command": "node",
-      "args": ["./mcp-server-hyperscript-analysis/dist/index.js"]
-    },
-    "hyperscript-generation": {
-      "command": "node",
-      "args": ["./mcp-server-hyperscript-generation/dist/index.js"]
-    },
-    "hyperscript-testing": {
-      "command": "node",
-      "args": ["./mcp-server-hyperscript-testing/dist/index.js"]
+      "args": ["/path/to/hyperfixi/packages/mcp-server/dist/index.js"]
     }
   }
 }
 ```
 
-### 2. **VS Code Extension Integration**
+### Build the Server
 
-```typescript
-// Extension that bridges MCP servers to VS Code
-export function activate(context: vscode.ExtensionContext) {
-  const mcpClient = new MCPClient();
-  
-  // Connect to hyperscript servers
-  mcpClient.connect('hyperscript-analysis');
-  mcpClient.connect('hyperscript-generation');
-  
-  // Register commands that use MCP tools
-  vscode.commands.registerCommand('hyperfixi.generateBehavior', async () => {
-    const requirements = await vscode.window.showInputBox({
-      prompt: 'Describe the behavior you want'
-    });
-    
-    const result = await mcpClient.callTool('generate_behavior', {
-      description: requirements
-    });
-    
-    // Insert generated hyperscript
-    insertCode(result.hyperscript);
-  });
-}
+```bash
+cd packages/mcp-server
+npm install
+npm run build
 ```
 
-## Benefits for LLM Coding Agents
+### Agent Skills
 
-### 1. **Structured Code Understanding**
-- LLMs can analyze hyperscript ASTs to understand code structure
-- Semantic analysis helps identify issues and suggest improvements
-- Pattern recognition for common hyperscript idioms
+Agent Skills are automatically available in supporting editors when the `skills/` directory is present in your workspace.
 
-### 2. **Validated Code Generation**
-- Generated code is guaranteed to be syntactically valid
-- Semantic validation ensures behaviors make sense
-- Optimization suggestions improve code quality
+## Architecture Decision: Skills + MCP
 
-### 3. **Multi-Language Support**
-- Generate hyperscript in any supported language
-- Translate between languages automatically
-- Maintain consistency across international teams
+We chose to implement both approaches because they serve different purposes:
 
-### 4. **Testing and Validation**
-- Automatically generate comprehensive test suites
-- Validate behaviors against specifications
-- Ensure code works as intended
+| Aspect | Agent Skills | MCP Server |
+|--------|-------------|------------|
+| **What** | Instructions/procedures | Dynamic tool definitions |
+| **How** | SKILL.md files (static) | JSON-RPC server (dynamic) |
+| **Adoption** | VS Code, Cursor, GitHub, Codex | Claude Desktop, custom clients |
+| **Best for** | Teaching agents HOW to use tools | Providing WHAT tools are available |
 
-### 5. **Migration Assistance**
-- Convert existing JavaScript/jQuery to hyperscript
-- Migrate React event handlers
-- Preserve functionality during transitions
+**Key insight**: Skills teach agents the syntax and patterns, while MCP provides real-time validation and assistance.
 
-## Implementation Roadmap
+## Usage Examples
 
-### Phase 1: Core MCP Servers (Week 1-2)
-- [ ] Implement analysis server with basic tools
-- [ ] Create generation server with simple patterns
-- [ ] Set up testing infrastructure
+### Using Agent Skills
 
-### Phase 2: Advanced Features (Week 3-4)
-- [ ] Add i18n support to all servers
-- [ ] Implement migration tools
-- [ ] Create LSP bridge
+Ask any compatible agent:
+> "Generate hyperscript that toggles a dropdown menu on click"
 
-### Phase 3: Integration (Week 5-6)
-- [ ] Claude Desktop configuration
-- [ ] VS Code extension
-- [ ] Documentation and examples
+The agent uses `skills/hyperscript/SKILL.md` to understand:
+- Command syntax: `toggle .class on #element`
+- Event handling: `on click ...`
+- Common patterns from examples
 
-### Phase 4: Ecosystem (Week 7-8)
-- [ ] Community server templates
-- [ ] Third-party tool integration
-- [ ] Performance optimization
+### Using MCP Tools
 
-## Example Usage Scenarios
+Ask Claude with MCP server connected:
+> "Validate this hyperscript and suggest improvements"
 
-### Scenario 1: Generate Interactive Form
-```
-User: "Generate hyperscript for a form that validates email on blur and shows errors"
+Claude uses MCP tools:
+1. `validate_hyperscript` - Check syntax
+2. `analyze_metrics` - Find code smells
+3. `suggest_command` - Recommend alternatives
 
-LLM uses MCP tools:
-1. generate_behavior({ element: 'input[type="email"]', trigger: 'blur', action: 'validate email' })
-2. analyze_hyperscript({ code: generatedCode })
-3. generate_tests({ hyperscript: generatedCode, coverage: ['happy-path', 'error-handling'] })
+### Multi-Language Development
 
-Result: Complete, tested hyperscript behavior
-```
+> "Translate this English hyperscript to Japanese"
 
-### Scenario 2: Optimize Existing Code
-```
-User: "Optimize this hyperscript for performance"
+Uses:
+1. `translate_hyperscript({ code, from: 'en', to: 'ja' })`
+2. Returns: `クリック で .active を トグル`
 
-LLM uses MCP tools:
-1. analyze_hyperscript({ code: userCode })
-2. optimize_hyperscript({ code: userCode, goals: ['performance'] })
-3. validate_behavior({ hyperscript: optimized, specifications: originalBehavior })
+## Removed Components
 
-Result: Optimized code with same functionality
-```
+### mcp-server-hyperscript (REMOVED)
 
-### Scenario 3: Multi-Language Development
-```
-User: "Convert this Spanish hyperscript to Korean"
+The original `mcp-server-hyperscript/` directory has been removed. Use `packages/mcp-server/` instead.
 
-LLM uses MCP tools:
-1. analyze_hyperscript({ code: spanishCode, locale: 'es' })
-2. generate_behavior({ ...parsed, locale: 'ko' })
-3. get_completions({ document: koreanCode, locale: 'ko' })
+## Future Enhancements
 
-Result: Properly translated hyperscript
-```
+### Potential Additions
+
+1. **Migration Tools** (low priority)
+   - `jquery_to_hyperscript` - Convert jQuery
+   - `react_to_hyperscript` - Convert React handlers
+
+2. **Testing Tools** (medium priority)
+   - `generate_tests` - Generate test suites
+   - `validate_behavior` - Behavior validation
+
+3. **Skillport Integration** (optional)
+   - Bridge Agent Skills to MCP-only clients
+   - `skillport add hyperfixi/hyperscript skills`
+
+### Completed Phase 1 Checklist
+
+- [x] Create Agent Skill (`skills/hyperscript/SKILL.md`)
+- [x] Create command reference (`skills/hyperscript/references/commands.md`)
+- [x] Create expression guide (`skills/hyperscript/references/expressions.md`)
+- [x] Create multilingual examples (`skills/hyperscript/references/multilingual.md`)
+- [x] Create consolidated MCP server (`packages/mcp-server/`)
+- [x] Implement analysis tools (from ast-toolkit)
+- [x] Implement pattern tools (from patterns-reference)
+- [x] Implement validation tools
+- [x] Implement LSP bridge tools
+- [x] Update Python scanner for 22 languages
+- [x] Deprecate old mcp-server-hyperscript
+
+### Completed Phase 2 Checklist
+
+- [x] LSP Bridge Tools (`get_diagnostics`, `get_completions`, `get_hover_info`, `get_document_symbols`)
+- [x] Deprecation notice on old package
+- [x] Update this roadmap
 
 ## Security Considerations
 
-1. **Sandboxed Execution**: All code analysis runs in isolated environments
-2. **Permission Model**: Explicit user consent for file system access
-3. **Rate Limiting**: Prevent abuse of generation tools
-4. **Input Validation**: Strict validation of all MCP inputs
-5. **Audit Logging**: Track all tool usage for security review
+1. **Sandboxed Execution**: Code analysis runs in isolated environments
+2. **Input Validation**: Strict validation of all MCP inputs
+3. **No File System Access**: MCP server doesn't access files directly
+4. **Rate Limiting**: Consider for public deployments
 
-## Conclusion
+## Related Documentation
 
-MCP tools for Hyperfixi would significantly enhance LLM coding agents' ability to work with hyperscript. By providing structured interfaces for analysis, generation, testing, and migration, these tools enable AI assistants to be genuinely helpful in hyperscript development workflows. The standardized MCP protocol ensures these capabilities work across different AI platforms, making Hyperfixi more accessible to developers using AI-assisted coding tools.
+- [CLAUDE.md](../CLAUDE.md) - Main project documentation
+- [Agent Skills Specification](https://agentskills.io/specification)
+- [MCP Protocol](https://modelcontextprotocol.io/)
+- [ast-toolkit README](../packages/ast-toolkit/README.md)
+- [patterns-reference README](../packages/patterns-reference/README.md)

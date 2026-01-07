@@ -163,13 +163,16 @@ VALID_COMMANDS = {
 # Valid blocks for validation
 VALID_BLOCKS = {"if", "repeat", "for", "while", "fetch", "async"}
 
-# Supported languages for multilingual detection
+# Supported languages for multilingual detection (synced with vite-plugin)
 SUPPORTED_LANGUAGES = [
-    "en", "es", "pt", "fr", "de",  # Western (Latin script)
-    "ja", "zh", "ko",              # East Asian
-    "ar",                          # RTL
-    "tr",                          # Agglutinative Latin
-    "id", "sw", "qu",              # Other
+    "en", "es", "pt", "fr", "de", "it", "vi",  # Western (Latin script)
+    "pl", "ru", "uk",                          # Slavic (Latin/Cyrillic)
+    "ja", "zh", "ko",                          # East Asian
+    "ar",                                       # RTL (Arabic script)
+    "hi", "bn",                                 # South Asian (Indic scripts)
+    "th",                                       # Southeast Asian (Thai script)
+    "tr",                                       # Agglutinative Latin
+    "id", "sw", "qu", "tl",                    # Other
 ]
 
 # Language keyword sets for detection
@@ -289,13 +292,98 @@ LANGUAGE_KEYWORDS: dict[str, set[str]] = {
         "ñuqa", "chay", "lluqsisqa",
         "ñawpaq", "qhipa", "hamuq", "ñawpaqnin",
     },
+    # Italian (Latin script)
+    "it": {
+        "commutare", "alternare", "aggiungere", "rimuovere", "eliminare",
+        "mostrare", "nascondere", "impostare", "incrementare", "decrementare",
+        "clic", "ingresso", "cambiamento",
+        "altrimenti", "ripetere", "aspettare", "attendere", "mentre",
+        "risultato",
+        "primo", "ultimo", "successivo", "precedente",
+    },
+    # Vietnamese (Latin script with diacritics)
+    "vi": {
+        "chuyển đổi", "bật tắt", "thêm", "xóa", "gỡ bỏ",
+        "hiển thị", "ẩn", "gán", "thiết lập", "tăng", "giảm",
+        "kích hoạt", "gửi",
+        "nếu", "không thì", "lặp lại", "chờ", "đợi", "trong khi",
+        "kết quả",
+        "đầu tiên", "cuối cùng", "tiếp theo", "trước",
+    },
+    # Polish (Latin script)
+    "pl": {
+        "przełącz", "przelacz", "dodaj", "usuń", "usun",
+        "pokaż", "pokaz", "ukryj", "ustaw", "zwiększ", "zwieksz", "zmniejsz",
+        "kliknięcie", "klikniecie", "wywołaj", "wywolaj", "wyślij", "wyslij",
+        "jeśli", "jesli", "jeżeli", "jezeli", "inaczej", "powtórz", "powtorz",
+        "czekaj", "poczekaj", "dopóki", "dopoki",
+        "wynik",
+        "pierwszy", "ostatni", "następny", "nastepny", "poprzedni",
+    },
+    # Russian (Cyrillic script)
+    "ru": {
+        "переключить", "добавить", "удалить", "убрать",
+        "показать", "скрыть", "установить", "увеличить", "уменьшить",
+        "вызвать", "отправить",
+        "если", "иначе", "повторить", "ждать", "пока",
+        "результат",
+        "первый", "последний", "следующий", "предыдущий",
+    },
+    # Ukrainian (Cyrillic script)
+    "uk": {
+        "перемкнути", "додати", "видалити", "прибрати",
+        "показати", "сховати", "приховати", "встановити", "збільшити", "зменшити",
+        "викликати", "надіслати",
+        "якщо", "інакше", "повторити", "чекати", "поки",
+        "результат",
+        "перший", "останній", "наступний", "попередній",
+    },
+    # Hindi (Devanagari script)
+    "hi": {
+        "टॉगल", "बदलें", "जोड़ें", "हटाएं", "मिटाएं",
+        "दिखाएं", "छिपाएं", "सेट", "बढ़ाएं", "घटाएं",
+        "ट्रिगर", "भेजें",
+        "अगर", "यदि", "वरना", "दोहराएं", "प्रतीक्षा", "जब तक",
+        "परिणाम",
+        "पहला", "आखिरी", "अगला", "पिछला",
+    },
+    # Bengali (Bengali script)
+    "bn": {
+        "টগল", "পরিবর্তন", "যোগ", "সরান", "মুছুন",
+        "দেখান", "লুকান", "সেট", "বৃদ্ধি", "হ্রাস",
+        "ট্রিগার", "পাঠান",
+        "যদি", "নতুবা", "পুনরাবৃত্তি", "অপেক্ষা", "যতক্ষণ",
+        "ফলাফল",
+        "প্রথম", "শেষ", "পরবর্তী", "আগের",
+    },
+    # Thai (Thai script)
+    "th": {
+        "สลับ", "เพิ่ม", "ลบ", "ลบออก",
+        "แสดง", "ซ่อน", "ตั้ง", "กำหนด", "เพิ่มค่า", "ลดค่า",
+        "ทริกเกอร์", "ส่ง",
+        "ถ้า", "หาก", "ไม่งั้น", "ทำซ้ำ", "รอ", "ในขณะที่",
+        "ผลลัพธ์",
+        "แรก", "สุดท้าย", "ถัดไป", "ก่อนหน้า",
+    },
+    # Tagalog (Latin script)
+    "tl": {
+        "palitan", "itoggle", "idagdag", "magdagdag", "alisin", "tanggalin",
+        "ipakita", "magpakita", "itago", "magtago",
+        "itakda", "magtakda", "dagdagan", "taasan", "bawasan", "ibaba",
+        "magpatugtog", "ipadala", "magpadala",
+        "kung", "kapag", "kung_hindi", "kundi", "ulitin", "paulit-ulit",
+        "maghintay", "hintay", "habang",
+    },
 }
 
 # Regional bundle mappings
 REGIONS = {
-    "western": ["en", "es", "pt", "fr", "de"],
+    "western": ["en", "es", "pt", "fr", "de", "it"],
     "east-asian": ["ja", "zh", "ko"],
-    "priority": ["en", "es", "pt", "fr", "de", "ja", "zh", "ko", "ar", "tr", "id"],
+    "southeast-asian": ["id", "vi", "th", "tl"],
+    "south-asian": ["hi", "bn"],
+    "slavic": ["pl", "ru", "uk"],
+    "priority": ["en", "es", "pt", "fr", "de", "it", "ja", "zh", "ko", "ar", "tr", "id", "vi"],
     "all": SUPPORTED_LANGUAGES,
 }
 
@@ -316,9 +404,14 @@ def detect_languages(script: str) -> set[str]:
     detected: set[str] = set()
     script_lower = script.lower()
 
+    # Non-Latin scripts don't need word boundary matching
+    # Includes: CJK (ja, ko, zh), Arabic (ar), Cyrillic (ru, uk),
+    # Indic (hi, bn), Thai (th)
+    non_latin_langs = {"ja", "ko", "zh", "ar", "ru", "uk", "hi", "bn", "th"}
+
     for lang, keywords in LANGUAGE_KEYWORDS.items():
-        # Non-Latin scripts (CJK, Arabic) - simple includes check
-        if lang in ("ja", "ko", "zh", "ar"):
+        if lang in non_latin_langs:
+            # Non-Latin scripts - simple includes check
             for keyword in keywords:
                 if keyword in script:
                     detected.add(lang)
@@ -353,15 +446,24 @@ def get_optimal_region(languages: set[str]) -> str | None:
 
     lang_list = list(languages)
 
-    # Check if all fit in western bundle
-    if all(lang in REGIONS["western"] for lang in lang_list):
-        return "western"
-
-    # Check if all fit in east-asian bundle
+    # Check smallest bundles first, ordered by typical bundle size
+    # Single-region bundles (smallest)
     if all(lang in REGIONS["east-asian"] for lang in lang_list):
         return "east-asian"
 
-    # Check if all fit in priority bundle
+    if all(lang in REGIONS["south-asian"] for lang in lang_list):
+        return "south-asian"
+
+    if all(lang in REGIONS["slavic"] for lang in lang_list):
+        return "slavic"
+
+    if all(lang in REGIONS["southeast-asian"] for lang in lang_list):
+        return "southeast-asian"
+
+    if all(lang in REGIONS["western"] for lang in lang_list):
+        return "western"
+
+    # Priority bundle (medium)
     if all(lang in REGIONS["priority"] for lang in lang_list):
         return "priority"
 
