@@ -1,8 +1,11 @@
 /**
  * Sync Translations Script
  *
- * Generates translations for all patterns in all 13 supported languages
+ * Generates translations for all patterns in all supported languages
  * using the @hyperfixi/semantic language profiles.
+ *
+ * Languages are automatically derived from @hyperfixi/semantic, so adding
+ * new languages to the semantic package will automatically include them here.
  *
  * Usage: npx tsx scripts/sync-translations.ts [--db-path <path>] [--dry-run]
  *
@@ -14,6 +17,11 @@
 import Database from 'better-sqlite3';
 import { existsSync } from 'fs';
 import { resolve } from 'path';
+import {
+  languageProfiles,
+  getGeneratorLanguages,
+  type LanguageProfile,
+} from '@hyperfixi/semantic';
 
 // =============================================================================
 // Configuration
@@ -27,351 +35,43 @@ const dryRun = args.includes('--dry-run');
 const dbPathIndex = args.indexOf('--db-path');
 const dbPath = dbPathIndex >= 0 && args[dbPathIndex + 1] ? args[dbPathIndex + 1] : DEFAULT_DB_PATH;
 
-// Supported languages with their word orders
-const LANGUAGES: Record<string, { name: string; wordOrder: string }> = {
-  en: { name: 'English', wordOrder: 'SVO' },
-  es: { name: 'Spanish', wordOrder: 'SVO' },
-  fr: { name: 'French', wordOrder: 'SVO' },
-  pt: { name: 'Portuguese', wordOrder: 'SVO' },
-  id: { name: 'Indonesian', wordOrder: 'SVO' },
-  sw: { name: 'Swahili', wordOrder: 'SVO' },
-  zh: { name: 'Chinese', wordOrder: 'SVO' },
-  de: { name: 'German', wordOrder: 'V2' },
-  ja: { name: 'Japanese', wordOrder: 'SOV' },
-  ko: { name: 'Korean', wordOrder: 'SOV' },
-  tr: { name: 'Turkish', wordOrder: 'SOV' },
-  qu: { name: 'Quechua', wordOrder: 'SOV' },
-  ar: { name: 'Arabic', wordOrder: 'VSO' },
-};
+// =============================================================================
+// Derive language data from @hyperfixi/semantic profiles
+// =============================================================================
 
-// Keyword translations for each language
-const KEYWORD_TRANSLATIONS: Record<string, Record<string, string>> = {
-  en: {
-    on: 'on',
-    toggle: 'toggle',
-    add: 'add',
-    remove: 'remove',
-    show: 'show',
-    hide: 'hide',
-    set: 'set',
-    put: 'put',
-    wait: 'wait',
-    send: 'send',
-    trigger: 'trigger',
-    fetch: 'fetch',
-    increment: 'increment',
-    decrement: 'decrement',
-    log: 'log',
-    transition: 'transition',
-    then: 'then',
-    to: 'to',
-    from: 'from',
-    into: 'into',
-    click: 'click',
-    load: 'load',
-    me: 'me',
-  },
-  es: {
-    on: 'al',
-    toggle: 'alternar',
-    add: 'agregar',
-    remove: 'quitar',
-    show: 'mostrar',
-    hide: 'ocultar',
-    set: 'establecer',
-    put: 'poner',
-    wait: 'esperar',
-    send: 'enviar',
-    trigger: 'disparar',
-    fetch: 'obtener',
-    increment: 'incrementar',
-    decrement: 'decrementar',
-    log: 'registrar',
-    transition: 'transición',
-    then: 'luego',
-    to: 'a',
-    from: 'de',
-    into: 'en',
-    click: 'clic',
-    load: 'carga',
-    me: 'yo',
-  },
-  fr: {
-    on: 'au',
-    toggle: 'basculer',
-    add: 'ajouter',
-    remove: 'supprimer',
-    show: 'afficher',
-    hide: 'cacher',
-    set: 'définir',
-    put: 'mettre',
-    wait: 'attendre',
-    send: 'envoyer',
-    trigger: 'déclencher',
-    fetch: 'récupérer',
-    increment: 'incrémenter',
-    decrement: 'décrémenter',
-    log: 'enregistrer',
-    transition: 'transition',
-    then: 'puis',
-    to: 'à',
-    from: 'de',
-    into: 'dans',
-    click: 'clic',
-    load: 'chargement',
-    me: 'moi',
-  },
-  pt: {
-    on: 'ao',
-    toggle: 'alternar',
-    add: 'adicionar',
-    remove: 'remover',
-    show: 'mostrar',
-    hide: 'esconder',
-    set: 'definir',
-    put: 'colocar',
-    wait: 'esperar',
-    send: 'enviar',
-    trigger: 'disparar',
-    fetch: 'buscar',
-    increment: 'incrementar',
-    decrement: 'decrementar',
-    log: 'registrar',
-    transition: 'transição',
-    then: 'então',
-    to: 'para',
-    from: 'de',
-    into: 'em',
-    click: 'clique',
-    load: 'carregar',
-    me: 'eu',
-  },
-  de: {
-    on: 'bei',
-    toggle: 'umschalten',
-    add: 'hinzufügen',
-    remove: 'entfernen',
-    show: 'anzeigen',
-    hide: 'verbergen',
-    set: 'setzen',
-    put: 'legen',
-    wait: 'warten',
-    send: 'senden',
-    trigger: 'auslösen',
-    fetch: 'abrufen',
-    increment: 'erhöhen',
-    decrement: 'verringern',
-    log: 'protokollieren',
-    transition: 'übergang',
-    then: 'dann',
-    to: 'zu',
-    from: 'von',
-    into: 'in',
-    click: 'klick',
-    load: 'laden',
-    me: 'mich',
-  },
-  ja: {
-    on: 'で',
-    toggle: '切り替え',
-    add: '追加',
-    remove: '削除',
-    show: '表示',
-    hide: '非表示',
-    set: '設定',
-    put: '入れる',
-    wait: '待つ',
-    send: '送信',
-    trigger: 'トリガー',
-    fetch: '取得',
-    increment: '増加',
-    decrement: '減少',
-    log: 'ログ',
-    transition: 'トランジション',
-    then: 'そして',
-    to: 'に',
-    from: 'から',
-    into: 'に',
-    click: 'クリック',
-    load: 'ロード',
-    me: '自分',
-  },
-  ko: {
-    on: '때',
-    toggle: '토글',
-    add: '추가',
-    remove: '제거',
-    show: '표시',
-    hide: '숨기기',
-    set: '설정',
-    put: '넣기',
-    wait: '대기',
-    send: '보내기',
-    trigger: '트리거',
-    fetch: '가져오기',
-    increment: '증가',
-    decrement: '감소',
-    log: '로그',
-    transition: '전환',
-    then: '그리고',
-    to: '에',
-    from: '에서',
-    into: '에',
-    click: '클릭',
-    load: '로드',
-    me: '나',
-  },
-  zh: {
-    on: '当',
-    toggle: '切换',
-    add: '添加',
-    remove: '移除',
-    show: '显示',
-    hide: '隐藏',
-    set: '设置',
-    put: '放入',
-    wait: '等待',
-    send: '发送',
-    trigger: '触发',
-    fetch: '获取',
-    increment: '增加',
-    decrement: '减少',
-    log: '记录',
-    transition: '过渡',
-    then: '然后',
-    to: '到',
-    from: '从',
-    into: '到',
-    click: '点击',
-    load: '加载',
-    me: '我',
-  },
-  ar: {
-    on: 'عند',
-    toggle: 'تبديل',
-    add: 'أضف',
-    remove: 'أزل',
-    show: 'أظهر',
-    hide: 'أخفِ',
-    set: 'عيّن',
-    put: 'ضع',
-    wait: 'انتظر',
-    send: 'أرسل',
-    trigger: 'أطلق',
-    fetch: 'اجلب',
-    increment: 'زِد',
-    decrement: 'أنقص',
-    log: 'سجّل',
-    transition: 'انتقال',
-    then: 'ثم',
-    to: 'إلى',
-    from: 'من',
-    into: 'في',
-    click: 'النقر',
-    load: 'التحميل',
-    me: 'أنا',
-  },
-  tr: {
-    on: 'de',
-    toggle: 'değiştir',
-    add: 'ekle',
-    remove: 'kaldır',
-    show: 'göster',
-    hide: 'gizle',
-    set: 'ayarla',
-    put: 'koy',
-    wait: 'bekle',
-    send: 'gönder',
-    trigger: 'tetikle',
-    fetch: 'getir',
-    increment: 'artır',
-    decrement: 'azalt',
-    log: 'kaydet',
-    transition: 'geçiş',
-    then: 'sonra',
-    to: 'e',
-    from: 'dan',
-    into: 'e',
-    click: 'tıklama',
-    load: 'yükleme',
-    me: 'ben',
-  },
-  id: {
-    on: 'saat',
-    toggle: 'alihkan',
-    add: 'tambah',
-    remove: 'hapus',
-    show: 'tampilkan',
-    hide: 'sembunyikan',
-    set: 'atur',
-    put: 'taruh',
-    wait: 'tunggu',
-    send: 'kirim',
-    trigger: 'picu',
-    fetch: 'ambil',
-    increment: 'tambah',
-    decrement: 'kurangi',
-    log: 'catat',
-    transition: 'transisi',
-    then: 'lalu',
-    to: 'ke',
-    from: 'dari',
-    into: 'ke',
-    click: 'klik',
-    load: 'muat',
-    me: 'saya',
-  },
-  sw: {
-    on: 'wakati',
-    toggle: 'badilisha',
-    add: 'ongeza',
-    remove: 'ondoa',
-    show: 'onyesha',
-    hide: 'ficha',
-    set: 'weka',
-    put: 'weka',
-    wait: 'subiri',
-    send: 'tuma',
-    trigger: 'anzisha',
-    fetch: 'leta',
-    increment: 'ongeza',
-    decrement: 'punguza',
-    log: 'rekodi',
-    transition: 'mpito',
-    then: 'kisha',
-    to: 'kwa',
-    from: 'kutoka',
-    into: 'ndani',
-    click: 'kubofya',
-    load: 'pakia',
-    me: 'mimi',
-  },
-  qu: {
-    on: 'kaptinpi',
-    toggle: 'tikray',
-    add: 'yapay',
-    remove: 'hurquy',
-    show: 'rikuchiy',
-    hide: 'pakay',
-    set: 'churay',
-    put: 'churay',
-    wait: 'suyay',
-    send: 'kachay',
-    trigger: 'qallariy',
-    fetch: 'apamuya',
-    increment: 'yapay',
-    decrement: 'pisiyachiy',
-    log: 'qillqay',
-    transition: 'tikray',
-    then: 'chaymanta',
-    to: 'man',
-    from: 'manta',
-    into: 'man',
-    click: 'nitiy',
-    load: 'chaqnay',
-    me: 'nuqa',
-  },
-};
+// Build LANGUAGES from semantic profiles
+const LANGUAGES: Record<string, { name: string; wordOrder: string }> = Object.fromEntries(
+  Object.entries(languageProfiles).map(([code, profile]: [string, LanguageProfile]) => [
+    code,
+    { name: profile.name, wordOrder: profile.wordOrder },
+  ])
+);
+
+// Build KEYWORD_TRANSLATIONS from semantic profiles
+// Extract primary keyword for each command/keyword in the profile
+const KEYWORD_TRANSLATIONS: Record<string, Record<string, string>> = Object.fromEntries(
+  Object.entries(languageProfiles).map(([code, profile]: [string, LanguageProfile]) => {
+    const keywords: Record<string, string> = {};
+
+    // Extract keywords from profile.keywords
+    for (const [key, value] of Object.entries(profile.keywords)) {
+      keywords[key] = value.primary;
+    }
+
+    // Also extract reference translations (me, it, you, etc.)
+    if (profile.references) {
+      for (const [key, value] of Object.entries(profile.references)) {
+        if (typeof value === 'string') {
+          keywords[key] = value;
+        }
+      }
+    }
+
+    return [code, keywords];
+  })
+);
+
+console.log(`Loaded ${getGeneratorLanguages().length} languages from @hyperfixi/semantic`);
 
 // =============================================================================
 // Translation Logic

@@ -40,7 +40,7 @@ export { russianProfile } from './russian';
 export { spanishProfile } from './spanish';
 export { swahiliProfile } from './swahili';
 export { thaiProfile } from './thai';
+export { tagalogProfile } from './tl';
 export { turkishProfile } from './turkish';
 export { ukrainianProfile } from './ukrainian';
 export { vietnameseProfile } from './vietnamese';
-export { tagalogProfile } from './tl';

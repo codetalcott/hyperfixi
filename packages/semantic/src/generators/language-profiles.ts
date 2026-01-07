@@ -49,10 +49,10 @@ export { russianProfile } from './profiles/russian';
 export { spanishProfile } from './profiles/spanish';
 export { swahiliProfile } from './profiles/swahili';
 export { thaiProfile } from './profiles/thai';
+export { tagalogProfile } from './profiles/tl';
 export { turkishProfile } from './profiles/turkish';
 export { ukrainianProfile } from './profiles/ukrainian';
 export { vietnameseProfile } from './profiles/vietnamese';
-export { tagalogProfile } from './profiles/tl';
 
 // Import for creating the combined object
 import { arabicProfile } from './profiles/arabic';
@@ -74,10 +74,10 @@ import { russianProfile } from './profiles/russian';
 import { spanishProfile } from './profiles/spanish';
 import { swahiliProfile } from './profiles/swahili';
 import { thaiProfile } from './profiles/thai';
+import { tagalogProfile } from './profiles/tl';
 import { turkishProfile } from './profiles/turkish';
 import { ukrainianProfile } from './profiles/ukrainian';
 import { vietnameseProfile } from './profiles/vietnamese';
-import { tagalogProfile } from './profiles/tl';
 import type { LanguageProfile } from './profiles/types';
 
 // =============================================================================
@@ -108,10 +108,10 @@ export const languageProfiles: Record<string, LanguageProfile> = {
   es: spanishProfile,
   sw: swahiliProfile,
   th: thaiProfile,
+  tl: tagalogProfile,
   tr: turkishProfile,
   uk: ukrainianProfile,
   vi: vietnameseProfile,
-  tl: tagalogProfile,
 };
 
 /**

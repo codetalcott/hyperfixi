@@ -20,11 +20,11 @@ import { getShowPatternsMs } from './ms';
 import { getShowPatternsPl } from './pl';
 import { getShowPatternsRu } from './ru';
 import { getShowPatternsTh } from './th';
+import { getShowPatternsTl } from './tl';
 import { getShowPatternsTr } from './tr';
 import { getShowPatternsUk } from './uk';
 import { getShowPatternsVi } from './vi';
 import { getShowPatternsZh } from './zh';
-import { getShowPatternsTl } from './tl';
 
 /**
  * Get show patterns for a specific language.
@@ -55,6 +55,8 @@ export function getShowPatternsForLanguage(language: string): LanguagePattern[] 
       return getShowPatternsRu();
     case 'th':
       return getShowPatternsTh();
+    case 'tl':
+      return getShowPatternsTl();
     case 'tr':
       return getShowPatternsTr();
     case 'uk':
@@ -63,8 +65,6 @@ export function getShowPatternsForLanguage(language: string): LanguagePattern[] 
       return getShowPatternsVi();
     case 'zh':
       return getShowPatternsZh();
-    case 'tl':
-      return getShowPatternsTl();
     default:
       return [];
   }
@@ -83,13 +83,13 @@ export { getShowPatternsMs } from './ms';
 export { getShowPatternsPl } from './pl';
 export { getShowPatternsRu } from './ru';
 export { getShowPatternsTh } from './th';
+export { getShowPatternsTl } from './tl';
 export { getShowPatternsTr } from './tr';
 export { getShowPatternsUk } from './uk';
 export { getShowPatternsVi } from './vi';
 export { getShowPatternsZh } from './zh';
-export { getShowPatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted show patterns.
  */
-export const showPatternLanguages = ['ar', 'bn', 'de', 'fr', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh', 'tl'];
+export const showPatternLanguages = ['ar', 'bn', 'de', 'fr', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];

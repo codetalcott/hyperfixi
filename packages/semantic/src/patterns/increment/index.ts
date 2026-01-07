@@ -16,11 +16,11 @@ import { getIncrementPatternsMs } from './ms';
 import { getIncrementPatternsPl } from './pl';
 import { getIncrementPatternsRu } from './ru';
 import { getIncrementPatternsTh } from './th';
+import { getIncrementPatternsTl } from './tl';
 import { getIncrementPatternsTr } from './tr';
 import { getIncrementPatternsUk } from './uk';
 import { getIncrementPatternsVi } from './vi';
 import { getIncrementPatternsZh } from './zh';
-import { getIncrementPatternsTl } from './tl';
 
 /**
  * Get increment patterns for a specific language.
@@ -43,6 +43,8 @@ export function getIncrementPatternsForLanguage(language: string): LanguagePatte
       return getIncrementPatternsRu();
     case 'th':
       return getIncrementPatternsTh();
+    case 'tl':
+      return getIncrementPatternsTl();
     case 'tr':
       return getIncrementPatternsTr();
     case 'uk':
@@ -51,8 +53,6 @@ export function getIncrementPatternsForLanguage(language: string): LanguagePatte
       return getIncrementPatternsVi();
     case 'zh':
       return getIncrementPatternsZh();
-    case 'tl':
-      return getIncrementPatternsTl();
     default:
       return [];
   }
@@ -67,13 +67,13 @@ export { getIncrementPatternsMs } from './ms';
 export { getIncrementPatternsPl } from './pl';
 export { getIncrementPatternsRu } from './ru';
 export { getIncrementPatternsTh } from './th';
+export { getIncrementPatternsTl } from './tl';
 export { getIncrementPatternsTr } from './tr';
 export { getIncrementPatternsUk } from './uk';
 export { getIncrementPatternsVi } from './vi';
 export { getIncrementPatternsZh } from './zh';
-export { getIncrementPatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted increment patterns.
  */
-export const incrementPatternLanguages = ['bn', 'de', 'hi', 'it', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh', 'tl'];
+export const incrementPatternLanguages = ['bn', 'de', 'hi', 'it', 'ms', 'pl', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];

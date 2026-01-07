@@ -16,11 +16,11 @@ import { getDecrementPatternsMs } from './ms';
 import { getDecrementPatternsPl } from './pl';
 import { getDecrementPatternsRu } from './ru';
 import { getDecrementPatternsTh } from './th';
+import { getDecrementPatternsTl } from './tl';
 import { getDecrementPatternsTr } from './tr';
 import { getDecrementPatternsUk } from './uk';
 import { getDecrementPatternsVi } from './vi';
 import { getDecrementPatternsZh } from './zh';
-import { getDecrementPatternsTl } from './tl';
 
 /**
  * Get decrement patterns for a specific language.
@@ -43,6 +43,8 @@ export function getDecrementPatternsForLanguage(language: string): LanguagePatte
       return getDecrementPatternsRu();
     case 'th':
       return getDecrementPatternsTh();
+    case 'tl':
+      return getDecrementPatternsTl();
     case 'tr':
       return getDecrementPatternsTr();
     case 'uk':
@@ -51,8 +53,6 @@ export function getDecrementPatternsForLanguage(language: string): LanguagePatte
       return getDecrementPatternsVi();
     case 'zh':
       return getDecrementPatternsZh();
-    case 'tl':
-      return getDecrementPatternsTl();
     default:
       return [];
   }
@@ -67,13 +67,13 @@ export { getDecrementPatternsMs } from './ms';
 export { getDecrementPatternsPl } from './pl';
 export { getDecrementPatternsRu } from './ru';
 export { getDecrementPatternsTh } from './th';
+export { getDecrementPatternsTl } from './tl';
 export { getDecrementPatternsTr } from './tr';
 export { getDecrementPatternsUk } from './uk';
 export { getDecrementPatternsVi } from './vi';
 export { getDecrementPatternsZh } from './zh';
-export { getDecrementPatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted decrement patterns.
  */
-export const decrementPatternLanguages = ['bn', 'de', 'hi', 'it', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh', 'tl'];
+export const decrementPatternLanguages = ['bn', 'de', 'hi', 'it', 'ms', 'pl', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];

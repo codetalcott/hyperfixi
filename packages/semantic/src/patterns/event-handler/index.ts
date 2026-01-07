@@ -22,11 +22,11 @@ import { getEventHandlerPatternsPt } from './pt';
 import { getEventHandlerPatternsQu } from './qu';
 import { getEventHandlerPatternsRu } from './ru';
 import { getEventHandlerPatternsTh } from './th';
+import { getEventHandlerPatternsTl } from './tl';
 import { getEventHandlerPatternsTr } from './tr';
 import { getEventHandlerPatternsUk } from './uk';
 import { getEventHandlerPatternsVi } from './vi';
 import { getEventHandlerPatternsZh } from './zh';
-import { getEventHandlerPatternsTl } from './tl';
 
 /**
  * Get event-handler patterns for a specific language.
@@ -61,6 +61,8 @@ export function getEventHandlerPatternsForLanguage(language: string): LanguagePa
       return getEventHandlerPatternsRu();
     case 'th':
       return getEventHandlerPatternsTh();
+    case 'tl':
+      return getEventHandlerPatternsTl();
     case 'tr':
       return getEventHandlerPatternsTr();
     case 'uk':
@@ -69,8 +71,6 @@ export function getEventHandlerPatternsForLanguage(language: string): LanguagePa
       return getEventHandlerPatternsVi();
     case 'zh':
       return getEventHandlerPatternsZh();
-    case 'tl':
-      return getEventHandlerPatternsTl();
     default:
       return [];
   }
@@ -91,13 +91,13 @@ export { getEventHandlerPatternsPt } from './pt';
 export { getEventHandlerPatternsQu } from './qu';
 export { getEventHandlerPatternsRu } from './ru';
 export { getEventHandlerPatternsTh } from './th';
+export { getEventHandlerPatternsTl } from './tl';
 export { getEventHandlerPatternsTr } from './tr';
 export { getEventHandlerPatternsUk } from './uk';
 export { getEventHandlerPatternsVi } from './vi';
 export { getEventHandlerPatternsZh } from './zh';
-export { getEventHandlerPatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted event-handler patterns.
  */
-export const eventHandlerPatternLanguages = ['ar', 'bn', 'en', 'es', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'qu', 'ru', 'th', 'tr', 'uk', 'vi', 'zh', 'tl'];
+export const eventhandlerPatternLanguages = ['ar', 'bn', 'en', 'es', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'qu', 'ru', 'th', 'tl', 'tr', 'uk', 'vi', 'zh'];

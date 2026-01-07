@@ -52,6 +52,7 @@ const LANGUAGE_NAMES: Record<string, string> = {
   bn: 'bengali',
   th: 'thai',
   ms: 'malay',
+  tl: 'tagalog',
 };
 
 // =============================================================================

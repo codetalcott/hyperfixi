@@ -1,7 +1,7 @@
 /**
  * All Languages Module
  *
- * Imports and registers all 22 supported languages.
+ * Imports and registers all 23 supported languages.
  * Use this for the full bundle with all language support.
  *
  * @example
@@ -33,11 +33,11 @@ import './qu';
 import './ru';
 import './sw';
 import './th';
+import './tl';
 import './tr';
 import './uk';
 import './vi';
 import './zh';
-import './tl';
 
 // Re-export everything for convenience
 export * from './ar';
@@ -58,8 +58,8 @@ export * from './qu';
 export * from './ru';
 export * from './sw';
 export * from './th';
+export * from './tl';
 export * from './tr';
 export * from './uk';
 export * from './vi';
 export * from './zh';
-export * from './tl';
