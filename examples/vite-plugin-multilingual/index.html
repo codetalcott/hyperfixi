@@ -37,6 +37,9 @@
     .language-section.japanese { border-left-color: #e53e3e; }
     .language-section.spanish { border-left-color: #dd6b20; }
     .language-section.korean { border-left-color: #38a169; }
+    .language-section.russian { border-left-color: #3182ce; }
+    .language-section.hindi { border-left-color: #d69e2e; }
+    .language-section.thai { border-left-color: #319795; }
     .language-section.mixed { border-left-color: #805ad5; }
     code {
       background: #e2e8f0;
@@ -62,7 +65,7 @@
 </head>
 <body>
   <h1>Vite Plugin Multilingual Test</h1>
-  <p>Testing automatic language detection and optimal semantic bundle selection.</p>
+  <p>Testing automatic language detection and optimal semantic bundle selection across <strong>21 supported languages</strong>.</p>
 
   <div class="info">
     <strong>How it works:</strong> The vite-plugin scans your HTML for hyperscript keywords
@@ -76,8 +79,11 @@
       <li>Japanese keywords: <code>トグル</code>, <code>追加</code>, <code>削除</code></li>
       <li>Spanish keywords: <code>alternar</code>, <code>agregar</code>, <code>mostrar</code></li>
       <li>Korean keywords: <code>토글</code>, <code>추가</code></li>
+      <li>Russian keywords: <code>переключить</code>, <code>добавить</code></li>
+      <li>Hindi keywords: <code>टॉगल</code>, <code>जोड़ें</code></li>
+      <li>Thai keywords: <code>สลับ</code>, <code>เพิ่ม</code></li>
     </ul>
-    <p><strong>Expected bundle:</strong> <code>priority</code> (covers ja, es, ko + en)</p>
+    <p><strong>Expected bundle:</strong> <code>all</code> (covers all 21 languages)</p>
   </div>
 
   <hr>
@@ -143,16 +149,61 @@
     <div id="ko-target" style="padding: 10px; border: 1px solid #ccc;">대상 요소</div>
   </div>
 
+  <!-- Russian Examples (NEW) -->
+  <div class="language-section russian">
+    <h2>Russian (Русский)</h2>
+    <p>Using Russian keywords (Cyrillic script) - newly added!</p>
+
+    <h3>переключить (Toggle)</h3>
+    <button _="on click переключить .active on me">Переключить активный</button>
+
+    <h3>добавить/удалить (Add/Remove)</h3>
+    <button _="on click добавить .active to #ru-target">Добавить .active</button>
+    <button _="on click удалить .active from #ru-target">Удалить .active</button>
+    <div id="ru-target" style="padding: 10px; border: 1px solid #ccc;">Целевой элемент</div>
+  </div>
+
+  <!-- Hindi Examples (NEW) -->
+  <div class="language-section hindi">
+    <h2>Hindi (हिन्दी)</h2>
+    <p>Using Hindi keywords (Devanagari script) - newly added!</p>
+
+    <h3>टॉगल (Toggle)</h3>
+    <button _="on click टॉगल .active on me">सक्रिय टॉगल</button>
+
+    <h3>जोड़ें/हटाएं (Add/Remove)</h3>
+    <button _="on click जोड़ें .active to #hi-target">जोड़ें .active</button>
+    <button _="on click हटाएं .active from #hi-target">हटाएं .active</button>
+    <div id="hi-target" style="padding: 10px; border: 1px solid #ccc;">लक्ष्य तत्व</div>
+  </div>
+
+  <!-- Thai Examples (NEW) -->
+  <div class="language-section thai">
+    <h2>Thai (ไทย)</h2>
+    <p>Using Thai keywords (Thai script) - newly added!</p>
+
+    <h3>สลับ (Toggle)</h3>
+    <button _="on click สลับ .active on me">สลับสถานะ</button>
+
+    <h3>เพิ่ม/ลบ (Add/Remove)</h3>
+    <button _="on click เพิ่ม .active to #th-target">เพิ่ม .active</button>
+    <button _="on click ลบ .active from #th-target">ลบ .active</button>
+    <div id="th-target" style="padding: 10px; border: 1px solid #ccc;">องค์ประกอบเป้าหมาย</div>
+  </div>
+
   <!-- Mixed Language Examples -->
   <div class="language-section mixed">
     <h2>Mixed Languages</h2>
-    <p>Multiple languages can coexist in the same page.</p>
+    <p>Multiple languages can coexist in the same page - now supporting 21 languages!</p>
 
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
       <button _="on click toggle .active on me">EN: Toggle</button>
       <button _="on click トグル .active on me">JA: トグル</button>
       <button _="on click alternar .active on me">ES: Alternar</button>
       <button _="on click 토글 .active on me">KO: 토글</button>
+      <button _="on click переключить .active on me">RU: Переключить</button>
+      <button _="on click टॉगल .active on me">HI: टॉगल</button>
+      <button _="on click สลับ .active on me">TH: สลับ</button>
     </div>
   </div>
 
@@ -177,14 +228,50 @@ hyperfixi({ semantic: 'auto', debug: true })
 hyperfixi({ semantic: 'en', debug: true })
 
 // Test 3: Explicit languages
-hyperfixi({ languages: ['en', 'ja'], debug: true })
+hyperfixi({ languages: ['en', 'ja', 'ru'], debug: true })
 
-// Test 4: Force regional bundle
-hyperfixi({ region: 'western', debug: true })
+// Test 4: Regional bundles
+hyperfixi({ region: 'western', debug: true })     // en, es, pt, fr, de, it
+hyperfixi({ region: 'east-asian', debug: true })  // ja, zh, ko
+hyperfixi({ region: 'slavic', debug: true })      // pl, ru, uk
+hyperfixi({ region: 'south-asian', debug: true }) // hi, bn
+hyperfixi({ region: 'priority', debug: true })    // 13 most common languages
 
-// Test 5: Full multilingual with grammar
+// Test 5: Full multilingual with grammar transformation
 hyperfixi({ semantic: true, grammar: true, debug: true })
   </pre>
+
+  <h2>Supported Languages (21)</h2>
+  <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+    <tr style="background: #667eea; color: white;">
+      <th style="padding: 10px; text-align: left;">Region</th>
+      <th style="padding: 10px; text-align: left;">Languages</th>
+    </tr>
+    <tr style="background: #f8f9fa;">
+      <td style="padding: 10px;">Western (Latin)</td>
+      <td style="padding: 10px;">en, es, pt, fr, de, it, vi</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px;">Slavic</td>
+      <td style="padding: 10px;">pl (Latin), ru, uk (Cyrillic)</td>
+    </tr>
+    <tr style="background: #f8f9fa;">
+      <td style="padding: 10px;">East Asian</td>
+      <td style="padding: 10px;">ja, zh, ko</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px;">South Asian</td>
+      <td style="padding: 10px;">hi (Devanagari), bn (Bengali)</td>
+    </tr>
+    <tr style="background: #f8f9fa;">
+      <td style="padding: 10px;">Southeast Asian</td>
+      <td style="padding: 10px;">th (Thai), id (Latin)</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px;">Other</td>
+      <td style="padding: 10px;">ar (Arabic), tr (Turkish), sw (Swahili), qu (Quechua)</td>
+    </tr>
+  </table>
 
   <script type="module" src="/main.js"></script>
 </body>

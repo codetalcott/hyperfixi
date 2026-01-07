@@ -22,6 +22,7 @@ import { getRemovePatternsTr } from './tr';
 import { getRemovePatternsUk } from './uk';
 import { getRemovePatternsVi } from './vi';
 import { getRemovePatternsZh } from './zh';
+import { getRemovePatternsTl } from './tl';
 
 /**
  * Get remove patterns for a specific language.
@@ -56,6 +57,8 @@ export function getRemovePatternsForLanguage(language: string): LanguagePattern[
       return getRemovePatternsVi();
     case 'zh':
       return getRemovePatternsZh();
+    case 'tl':
+      return getRemovePatternsTl();
     default:
       return [];
   }
@@ -76,8 +79,9 @@ export { getRemovePatternsTr } from './tr';
 export { getRemovePatternsUk } from './uk';
 export { getRemovePatternsVi } from './vi';
 export { getRemovePatternsZh } from './zh';
+export { getRemovePatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted remove patterns.
  */
-export const removePatternLanguages = ['ar', 'bn', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh'];
+export const removePatternLanguages = ['ar', 'bn', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh', 'tl'];

@@ -105,12 +105,14 @@ export interface HyperfixiPluginOptions {
 
   /**
    * Regional bundle shorthand (alternative to explicit languages).
-   * - 'western': en, es, pt, fr, de
+   * - 'western': en, es, pt, fr, de, it
    * - 'east-asian': ja, zh, ko
-   * - 'priority': 11 most common languages
-   * - 'all': All 13 supported languages
+   * - 'slavic': pl, ru, uk
+   * - 'south-asian': hi, bn
+   * - 'priority': 13 most common languages
+   * - 'all': All 21 supported languages
    */
-  region?: 'western' | 'east-asian' | 'priority' | 'all';
+  region?: 'western' | 'east-asian' | 'slavic' | 'south-asian' | 'priority' | 'all';
 
   /**
    * Enable grammar transformation for native word order.
@@ -124,6 +126,53 @@ export interface HyperfixiPluginOptions {
    * Useful for dynamic content not detectable at build time.
    */
   extraLanguages?: string[];
+
+  /**
+   * Custom language keyword definitions.
+   * Use this to add new languages or extend/override existing keyword detection.
+   *
+   * @example
+   * ```typescript
+   * hyperfixi({
+   *   customKeywords: {
+   *     // Add a new language
+   *     'my-lang': {
+   *       keywords: new Set(['mytoggle', 'myadd', 'myremove']),
+   *       isNonLatin: false,
+   *     },
+   *     // Extend an existing language with additional keywords
+   *     'es': {
+   *       keywords: new Set(['conmutar', 'intercambiar']),  // Additional Spanish keywords
+   *       extend: true,  // Merge with existing keywords
+   *     },
+   *   },
+   * })
+   * ```
+   */
+  customKeywords?: Record<string, CustomLanguageKeywords>;
+}
+
+/**
+ * Custom language keyword configuration.
+ */
+export interface CustomLanguageKeywords {
+  /**
+   * Set of keywords for this language.
+   */
+  keywords: Set<string>;
+
+  /**
+   * Whether this language uses non-Latin script.
+   * Non-Latin scripts use simple substring matching (no word boundaries).
+   * Latin scripts use word boundary matching to avoid false positives.
+   */
+  isNonLatin?: boolean;
+
+  /**
+   * If true, merge these keywords with existing ones for this language.
+   * If false (default), replace existing keywords entirely.
+   */
+  extend?: boolean;
 }
 
 /**

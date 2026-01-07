@@ -21,6 +21,7 @@ import { getGetPatternsRu } from './ru';
 import { getGetPatternsTh } from './th';
 import { getGetPatternsUk } from './uk';
 import { getGetPatternsVi } from './vi';
+import { getGetPatternsTl } from './tl';
 
 /**
  * Get get patterns for a specific language.
@@ -53,6 +54,8 @@ export function getGetPatternsForLanguage(language: string): LanguagePattern[] {
       return getGetPatternsUk();
     case 'vi':
       return getGetPatternsVi();
+    case 'tl':
+      return getGetPatternsTl();
     default:
       return [];
   }
@@ -72,8 +75,9 @@ export { getGetPatternsRu } from './ru';
 export { getGetPatternsTh } from './th';
 export { getGetPatternsUk } from './uk';
 export { getGetPatternsVi } from './vi';
+export { getGetPatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted get patterns.
  */
-export const getPatternLanguages = ['ar', 'bn', 'de', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'uk', 'vi'];
+export const getPatternLanguages = ['ar', 'bn', 'de', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'uk', 'vi', 'tl'];

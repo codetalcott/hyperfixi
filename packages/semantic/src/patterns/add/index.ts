@@ -22,6 +22,7 @@ import { getAddPatternsTr } from './tr';
 import { getAddPatternsUk } from './uk';
 import { getAddPatternsVi } from './vi';
 import { getAddPatternsZh } from './zh';
+import { getAddPatternsTl } from './tl';
 
 /**
  * Get add patterns for a specific language.
@@ -56,6 +57,8 @@ export function getAddPatternsForLanguage(language: string): LanguagePattern[] {
       return getAddPatternsVi();
     case 'zh':
       return getAddPatternsZh();
+    case 'tl':
+      return getAddPatternsTl();
     default:
       return [];
   }
@@ -76,8 +79,9 @@ export { getAddPatternsTr } from './tr';
 export { getAddPatternsUk } from './uk';
 export { getAddPatternsVi } from './vi';
 export { getAddPatternsZh } from './zh';
+export { getAddPatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted add patterns.
  */
-export const addPatternLanguages = ['ar', 'bn', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh'];
+export const addPatternLanguages = ['ar', 'bn', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh', 'tl'];

@@ -25,6 +25,7 @@ import { getPutPatternsTr } from './tr';
 import { getPutPatternsUk } from './uk';
 import { getPutPatternsVi } from './vi';
 import { getPutPatternsZh } from './zh';
+import { getPutPatternsTl } from './tl';
 
 /**
  * Get put patterns for a specific language.
@@ -65,6 +66,8 @@ export function getPutPatternsForLanguage(language: string): LanguagePattern[] {
       return getPutPatternsVi();
     case 'zh':
       return getPutPatternsZh();
+    case 'tl':
+      return getPutPatternsTl();
     default:
       return [];
   }
@@ -88,8 +91,9 @@ export { getPutPatternsTr } from './tr';
 export { getPutPatternsUk } from './uk';
 export { getPutPatternsVi } from './vi';
 export { getPutPatternsZh } from './zh';
+export { getPutPatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted put patterns.
  */
-export const putPatternLanguages = ['ar', 'bn', 'en', 'es', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh'];
+export const putPatternLanguages = ['ar', 'bn', 'en', 'es', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh', 'tl'];

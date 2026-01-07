@@ -27,6 +27,7 @@ import { getSetPatternsTr } from './tr';
 import { getSetPatternsUk } from './uk';
 import { getSetPatternsVi } from './vi';
 import { getSetPatternsZh } from './zh';
+import { getSetPatternsTl } from './tl';
 
 /**
  * Get set patterns for a specific language.
@@ -71,6 +72,8 @@ export function getSetPatternsForLanguage(language: string): LanguagePattern[] {
       return getSetPatternsVi();
     case 'zh':
       return getSetPatternsZh();
+    case 'tl':
+      return getSetPatternsTl();
     default:
       return [];
   }
@@ -96,8 +99,9 @@ export { getSetPatternsTr } from './tr';
 export { getSetPatternsUk } from './uk';
 export { getSetPatternsVi } from './vi';
 export { getSetPatternsZh } from './zh';
+export { getSetPatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted set patterns.
  */
-export const setPatternLanguages = ['ar', 'bn', 'de', 'es', 'fr', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'ru', 'th', 'tr', 'uk', 'vi', 'zh'];
+export const setPatternLanguages = ['ar', 'bn', 'de', 'es', 'fr', 'hi', 'id', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'ru', 'th', 'tr', 'uk', 'vi', 'zh', 'tl'];

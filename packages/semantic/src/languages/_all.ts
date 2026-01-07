@@ -37,6 +37,7 @@ import './tr';
 import './uk';
 import './vi';
 import './zh';
+import './tl';
 
 // Re-export everything for convenience
 export * from './ar';
@@ -61,3 +62,4 @@ export * from './tr';
 export * from './uk';
 export * from './vi';
 export * from './zh';
+export * from './tl';

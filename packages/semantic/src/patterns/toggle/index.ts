@@ -24,6 +24,7 @@ import { getTogglePatternsTr } from './tr';
 import { getTogglePatternsUk } from './uk';
 import { getTogglePatternsVi } from './vi';
 import { getTogglePatternsZh } from './zh';
+import { getTogglePatternsTl } from './tl';
 
 /**
  * Get toggle patterns for a specific language.
@@ -62,6 +63,8 @@ export function getTogglePatternsForLanguage(language: string): LanguagePattern[
       return getTogglePatternsVi();
     case 'zh':
       return getTogglePatternsZh();
+    case 'tl':
+      return getTogglePatternsTl();
     default:
       return [];
   }
@@ -84,8 +87,9 @@ export { getTogglePatternsTr } from './tr';
 export { getTogglePatternsUk } from './uk';
 export { getTogglePatternsVi } from './vi';
 export { getTogglePatternsZh } from './zh';
+export { getTogglePatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted toggle patterns.
  */
-export const togglePatternLanguages = ['ar', 'bn', 'en', 'es', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh'];
+export const togglePatternLanguages = ['ar', 'bn', 'en', 'es', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'ru', 'th', 'tr', 'uk', 'vi', 'zh', 'tl'];

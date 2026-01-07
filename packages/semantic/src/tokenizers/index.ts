@@ -91,6 +91,8 @@ export { thaiTokenizer } from './thai';
 
 export { malayTokenizer } from './ms';
 
+export { tagalogTokenizer } from './tl';
+
 export {
   BaseTokenizer,
   TokenStreamImpl,

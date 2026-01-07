@@ -43,3 +43,4 @@ export { thaiProfile } from './thai';
 export { turkishProfile } from './turkish';
 export { ukrainianProfile } from './ukrainian';
 export { vietnameseProfile } from './vietnamese';
+export { tagalogProfile } from './tl';

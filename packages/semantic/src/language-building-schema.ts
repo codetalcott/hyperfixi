@@ -1476,6 +1476,41 @@ export const SUPPORTED_LANGUAGES: LanguageChecklist[] = [
     missingFromTokenizer: [],
     potentialConflicts: [],
   },
+  {
+    code: 'tl',
+    name: 'Tagalog',
+    wordOrder: 'VSO',
+    direction: 'ltr',
+    files: {
+      languageProfile: true,
+      tokenizer: true,
+      tokenizerRegistered: true,
+      morphologicalNormalizer: false,
+      eventHandlerPatterns: true,
+      tests: true,
+      morphologyTests: false,
+    },
+    morphology: {
+      needed: true,
+      reason: 'Tagalog has verb focus/voice system and affix-based morphology',
+      inflectionTypes: ['focus marking', 'aspect affixes'],
+      integratedWithTokenizer: false,
+      confidenceThreshold: 0.8,
+    },
+    profileKeywords: [
+      'palitan', 'idagdag', 'alisin', 'ilagay', 'itakda',
+      'ipakita', 'itago', 'dagdagan', 'bawasan',
+    ],
+    tokenizerKeywords: [
+      'palitan', 'itoggle',
+      'idagdag', 'magdagdag', 'alisin', 'tanggalin',
+      'ilagay', 'maglagay', 'itakda', 'magtakda',
+      'ipakita', 'magpakita', 'itago', 'magtago',
+      'dagdagan', 'taasan', 'bawasan', 'ibaba',
+    ],
+    missingFromTokenizer: [],
+    potentialConflicts: [],
+  },
 ];
 
 /**

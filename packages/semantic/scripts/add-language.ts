@@ -111,6 +111,7 @@ Options:
 
 const SEMANTIC_SRC = path.resolve(__dirname, '../src');
 const I18N_SRC = path.resolve(__dirname, '../../i18n/src');
+const VITE_PLUGIN_SRC = path.resolve(__dirname, '../../vite-plugin/src');
 
 // =============================================================================
 // Utility Functions
@@ -753,14 +754,249 @@ function updatePatternIndex(code: string, _name: string, command: string): void 
   }
 
   // 4. Add to languages array
+  // Use camelCase for hyphenated commands (e.g., event-handler -> eventHandler)
+  const cmdCamel = command.split('-').map((part, i) =>
+    i === 0 ? part : part.charAt(0).toUpperCase() + part.slice(1)
+  ).join('');
   const langArrayMatch = content.match(/const \w+PatternLanguages = \[([^\]]+)\];/);
   if (langArrayMatch) {
     const newArray = langArrayMatch[1].trim() + `, '${code}'`;
-    content = content.replace(langArrayMatch[0], `const ${command}PatternLanguages = [${newArray}];`);
+    content = content.replace(langArrayMatch[0], `const ${cmdCamel}PatternLanguages = [${newArray}];`);
   }
 
   fs.writeFileSync(filePath, content);
   console.log(`  Updated: ${filePath}`);
+}
+
+// =============================================================================
+// Vite Plugin Updates
+// =============================================================================
+
+/**
+ * Determine if a language uses non-Latin script based on its properties.
+ */
+function isNonLatinScript(config: LanguageConfig): boolean {
+  // Non-Latin scripts: CJK, Arabic, Cyrillic, Indic, Thai, etc.
+  // We check based on direction (RTL is non-Latin) or known script families
+  if (config.direction === 'rtl') return true;
+
+  // Languages that typically use non-Latin scripts
+  const nonLatinCodes = ['ja', 'zh', 'ko', 'ar', 'he', 'ru', 'uk', 'bg', 'hi', 'bn', 'th', 'ta', 'te', 'ml', 'ka', 'hy', 'am', 'my'];
+  return nonLatinCodes.includes(config.code);
+}
+
+/**
+ * Generate a keyword set stub for the vite-plugin.
+ */
+function generateVitePluginKeywordSet(config: LanguageConfig): string {
+  const { code, name } = config;
+  const upperCode = code.toUpperCase();
+  const scriptType = isNonLatinScript(config) ? 'non-Latin script' : 'Latin script';
+
+  return `
+/**
+ * ${name} keywords (${scriptType}).
+ * TODO: Fill in keywords after completing the semantic profile.
+ * Run 'npm run sync-keywords' to auto-populate from profile.
+ */
+export const ${upperCode}_KEYWORDS = new Set([
+  // Commands - copy from profile after filling in TODO values
+  // 'toggle_keyword', 'add_keyword', 'remove_keyword',
+  // 'show_keyword', 'hide_keyword', 'set_keyword',
+]);
+`;
+}
+
+/**
+ * Update vite-plugin's language-keywords.ts to add the new language.
+ */
+function updateVitePluginKeywords(config: LanguageConfig): void {
+  const keywordsFilePath = path.join(VITE_PLUGIN_SRC, 'language-keywords.ts');
+  if (!fs.existsSync(keywordsFilePath)) {
+    console.log(`  Skipped (not found): ${keywordsFilePath}`);
+    return;
+  }
+
+  let content = fs.readFileSync(keywordsFilePath, 'utf-8');
+  const { code, name } = config;
+  const upperCode = code.toUpperCase();
+  const isNonLatin = isNonLatinScript(config);
+
+  // 1. Add to SUPPORTED_LANGUAGES array
+  // Find the last entry in the array and add after it
+  const supportedMatch = content.match(/export const SUPPORTED_LANGUAGES = \[[\s\S]*?\] as const;/);
+  if (supportedMatch) {
+    const arrayContent = supportedMatch[0];
+    // Find the last language code before '] as const'
+    const lastCodeMatch = arrayContent.match(/'(\w+)',?\s*\/\/[^\n]*\n\s*\] as const;/);
+    if (lastCodeMatch) {
+      const newEntry = `'${code}',  // ${name} (auto-added)\n] as const;`;
+      content = content.replace(
+        lastCodeMatch[0],
+        `'${lastCodeMatch[1]}',${lastCodeMatch[0].includes('//') ? lastCodeMatch[0].match(/\/\/[^\n]*/)?.[0] || '' : ''}\n  ${newEntry}`
+      );
+    }
+  }
+
+  // 2. Add keyword set before LANGUAGE_KEYWORDS mapping
+  const keywordSet = generateVitePluginKeywordSet(config);
+  const langKeywordsMatch = content.match(/\/\*\*\n \* Map of language code to keyword set\./);
+  if (langKeywordsMatch) {
+    content = content.replace(langKeywordsMatch[0], keywordSet + '\n' + langKeywordsMatch[0]);
+  }
+
+  // 3. Add to LANGUAGE_KEYWORDS mapping
+  const mappingMatch = content.match(/export const LANGUAGE_KEYWORDS: Record<SupportedLanguage, Set<string>> = \{[\s\S]*?\};/);
+  if (mappingMatch) {
+    const mappingContent = mappingMatch[0];
+    // Find the last entry before '};'
+    const lastEntryMatch = mappingContent.match(/(\w+): (\w+_KEYWORDS),\n\};/);
+    if (lastEntryMatch) {
+      content = content.replace(
+        lastEntryMatch[0],
+        `${lastEntryMatch[1]}: ${lastEntryMatch[2]},\n  ${code}: ${upperCode}_KEYWORDS,\n};`
+      );
+    }
+  }
+
+  // 4. Add to nonLatinLangs if applicable
+  if (isNonLatin) {
+    const nonLatinMatch = content.match(/const nonLatinLangs: SupportedLanguage\[\] = \[([^\]]+)\];/);
+    if (nonLatinMatch) {
+      const currentLangs = nonLatinMatch[1];
+      if (!currentLangs.includes(`'${code}'`)) {
+        content = content.replace(
+          nonLatinMatch[0],
+          `const nonLatinLangs: SupportedLanguage[] = [${currentLangs}, '${code}'];`
+        );
+      }
+    }
+  }
+
+  fs.writeFileSync(keywordsFilePath, content);
+  console.log(`  Updated: ${keywordsFilePath}`);
+}
+
+/**
+ * Update vite-plugin's types.ts to add new region if needed.
+ */
+function updateVitePluginTypes(config: LanguageConfig): void {
+  // For now, just log that manual region updates may be needed
+  // Regions are semantic groupings that require human judgment
+  if (config.wordOrder === 'SOV' || config.wordOrder === 'VSO' || config.direction === 'rtl') {
+    console.log(`  Note: Consider adding '${config.code}' to an appropriate region in vite-plugin/src/types.ts`);
+  }
+}
+
+// =============================================================================
+// Pattern Builders Update
+// =============================================================================
+
+/**
+ * Update builders.ts to add the new language to handcraftedLanguages array.
+ */
+function updatePatternBuilders(code: string): void {
+  const filePath = path.join(SEMANTIC_SRC, 'patterns/builders.ts');
+  if (!fs.existsSync(filePath)) {
+    console.log(`  Skipped (not found): ${filePath}`);
+    return;
+  }
+
+  let content = fs.readFileSync(filePath, 'utf-8');
+
+  // Find the handcraftedLanguages array and add the new language
+  const arrayMatch = content.match(/const handcraftedLanguages = \[([^\]]+)\];/);
+  if (arrayMatch) {
+    const currentArray = arrayMatch[1].trim();
+    // Check if already present
+    if (currentArray.includes(`'${code}'`)) {
+      console.log(`  Skipped (already present): ${filePath}`);
+      return;
+    }
+    content = content.replace(
+      arrayMatch[0],
+      `const handcraftedLanguages = [${currentArray}, '${code}'];`
+    );
+    fs.writeFileSync(filePath, content);
+    console.log(`  Updated: ${filePath}`);
+  } else {
+    console.log(`  Warning: Could not find handcraftedLanguages array in ${filePath}`);
+  }
+}
+
+// =============================================================================
+// Language Building Schema Update
+// =============================================================================
+
+/**
+ * Generate a SUPPORTED_LANGUAGES entry for the new language.
+ */
+function generateLanguageSchemaEntry(config: LanguageConfig): string {
+  const { code, name, wordOrder, direction } = config;
+
+  return `  {
+    code: '${code}',
+    name: '${name}',
+    wordOrder: '${wordOrder}',
+    direction: '${direction}',
+    files: {
+      languageProfile: true,
+      tokenizer: true,
+      tokenizerRegistered: true,
+      morphologicalNormalizer: false,
+      eventHandlerPatterns: true,
+      tests: true,
+      morphologyTests: false,
+    },
+    morphology: {
+      needed: false,
+      reason: 'TODO: Determine if morphological normalization is needed',
+      inflectionTypes: [],
+      integratedWithTokenizer: false,
+      confidenceThreshold: 1.0,
+    },
+    profileKeywords: [
+      // TODO: Fill in after completing profile
+    ],
+    tokenizerKeywords: [
+      // TODO: Fill in after completing tokenizer
+    ],
+    missingFromTokenizer: [],
+    potentialConflicts: [],
+  }`;
+}
+
+/**
+ * Update language-building-schema.ts to add the new language.
+ */
+function updateLanguageBuildingSchema(config: LanguageConfig): void {
+  const filePath = path.join(SEMANTIC_SRC, 'language-building-schema.ts');
+  if (!fs.existsSync(filePath)) {
+    console.log(`  Skipped (not found): ${filePath}`);
+    return;
+  }
+
+  let content = fs.readFileSync(filePath, 'utf-8');
+
+  // Check if already present
+  if (content.includes(`code: '${config.code}'`)) {
+    console.log(`  Skipped (already present): ${filePath}`);
+    return;
+  }
+
+  // Find the end of SUPPORTED_LANGUAGES array (before SUPPORTED_COMMANDS)
+  const arrayEndMatch = content.match(/(\s+potentialConflicts: \[\],\n\s+\},)\n\];\n\n\/\*\*\n \* Documents the current state of command support\./);
+  if (arrayEndMatch) {
+    const entry = generateLanguageSchemaEntry(config);
+    content = content.replace(
+      arrayEndMatch[0],
+      `${arrayEndMatch[1]},\n${entry},\n];\n\n/**\n * Documents the current state of command support.`
+    );
+    fs.writeFileSync(filePath, content);
+    console.log(`  Updated: ${filePath}`);
+  } else {
+    console.log(`  Warning: Could not find SUPPORTED_LANGUAGES array end in ${filePath}`);
+  }
 }
 
 function updateI18nDictionariesIndex(code: string, name: string): void {
@@ -872,6 +1108,17 @@ function main() {
 
   updateI18nDictionariesIndex(config.code, config.name);
 
+  // Update pattern builders (handcraftedLanguages array)
+  updatePatternBuilders(config.code);
+
+  // Update language-building-schema.ts (SUPPORTED_LANGUAGES array)
+  updateLanguageBuildingSchema(config);
+
+  // Update vite-plugin
+  console.log('\nUpdating vite-plugin...');
+  updateVitePluginKeywords(config);
+  updateVitePluginTypes(config);
+
   // Summary
   console.log(`
 ================================================================================
@@ -888,11 +1135,18 @@ Next steps:
 
 3. Add patterns in patterns/*/${config.code}.ts files
 
-4. Run TypeScript check:
-   npm run typecheck --prefix packages/semantic
+4. Sync keywords to vite-plugin (after filling in profile):
+   npm run sync-keywords --prefix packages/vite-plugin
 
-5. Run tests:
+5. Run TypeScript checks:
+   npm run typecheck --prefix packages/semantic
+   npm run typecheck --prefix packages/vite-plugin
+
+6. Run tests:
    npm test --prefix packages/semantic -- --run
+
+Note: The vite-plugin has been scaffolded with a stub keyword set.
+      Run sync-keywords after completing the profile translations.
 `);
 }
 

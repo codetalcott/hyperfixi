@@ -52,11 +52,25 @@ import { getMultilingualCommandAliases } from './semantic-integration';
 import type { SupportedLanguage } from './language-keywords';
 
 // Re-export types
-export type { HyperfixiPluginOptions, FileUsage, AggregatedUsage } from './types';
+export type { HyperfixiPluginOptions, FileUsage, AggregatedUsage, CustomLanguageKeywords } from './types';
 export type { CompiledHandler, CompileOptions } from './compiler';
 
 // Re-export semantic parser integration functions for multilingual compile mode
 export { setSemanticParser, clearSemanticParser, hasSemanticParser } from './compiler';
+
+// Re-export language keyword utilities for customization
+export {
+  SUPPORTED_LANGUAGES,
+  REGIONS,
+  registerCustomKeywords,
+  getKeywordsForLanguage,
+  isNonLatinLanguage,
+  getAllLanguageCodes,
+  clearCustomKeywords,
+  detectLanguages,
+  getOptimalRegion,
+} from './language-keywords';
+export type { SupportedLanguage } from './language-keywords';
 
 // Virtual module ID
 const VIRTUAL_MODULE_ID = 'virtual:hyperfixi';

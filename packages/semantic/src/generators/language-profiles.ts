@@ -52,6 +52,7 @@ export { thaiProfile } from './profiles/thai';
 export { turkishProfile } from './profiles/turkish';
 export { ukrainianProfile } from './profiles/ukrainian';
 export { vietnameseProfile } from './profiles/vietnamese';
+export { tagalogProfile } from './profiles/tl';
 
 // Import for creating the combined object
 import { arabicProfile } from './profiles/arabic';
@@ -76,6 +77,7 @@ import { thaiProfile } from './profiles/thai';
 import { turkishProfile } from './profiles/turkish';
 import { ukrainianProfile } from './profiles/ukrainian';
 import { vietnameseProfile } from './profiles/vietnamese';
+import { tagalogProfile } from './profiles/tl';
 import type { LanguageProfile } from './profiles/types';
 
 // =============================================================================
@@ -109,6 +111,7 @@ export const languageProfiles: Record<string, LanguageProfile> = {
   tr: turkishProfile,
   uk: ukrainianProfile,
   vi: vietnameseProfile,
+  tl: tagalogProfile,
 };
 
 /**

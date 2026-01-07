@@ -26,6 +26,7 @@ import { getEventHandlerPatternsTr } from './tr';
 import { getEventHandlerPatternsUk } from './uk';
 import { getEventHandlerPatternsVi } from './vi';
 import { getEventHandlerPatternsZh } from './zh';
+import { getEventHandlerPatternsTl } from './tl';
 
 /**
  * Get event-handler patterns for a specific language.
@@ -68,6 +69,8 @@ export function getEventHandlerPatternsForLanguage(language: string): LanguagePa
       return getEventHandlerPatternsVi();
     case 'zh':
       return getEventHandlerPatternsZh();
+    case 'tl':
+      return getEventHandlerPatternsTl();
     default:
       return [];
   }
@@ -92,8 +95,9 @@ export { getEventHandlerPatternsTr } from './tr';
 export { getEventHandlerPatternsUk } from './uk';
 export { getEventHandlerPatternsVi } from './vi';
 export { getEventHandlerPatternsZh } from './zh';
+export { getEventHandlerPatternsTl } from './tl';
 
 /**
  * Languages that have hand-crafted event-handler patterns.
  */
-export const eventhandlerPatternLanguages = ['ar', 'bn', 'en', 'es', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'qu', 'ru', 'th', 'tr', 'uk', 'vi', 'zh'];
+export const eventHandlerPatternLanguages = ['ar', 'bn', 'en', 'es', 'hi', 'it', 'ja', 'ko', 'ms', 'pl', 'pt', 'qu', 'ru', 'th', 'tr', 'uk', 'vi', 'zh', 'tl'];
