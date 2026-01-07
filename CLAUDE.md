@@ -215,7 +215,16 @@ cd packages/core && npx playwright test --grep "Grammar Transformation"
 
 ### Adding Semantic Language Support
 
-Use the CLI tool to scaffold a new language (generates all files + updates indexes):
+Use the CLI tool to scaffold a new language. It automatically generates all files and updates:
+
+- `src/languages/_all.ts` - language registration
+- `src/tokenizers/index.ts` - tokenizer export
+- `src/generators/profiles/index.ts` - profile export
+- `src/generators/language-profiles.ts` - profile mapping
+- `src/patterns/*/index.ts` - pattern indexes
+- `src/patterns/builders.ts` - handcraftedLanguages array
+- `src/language-building-schema.ts` - SUPPORTED_LANGUAGES array
+- `packages/vite-plugin/src/language-keywords.ts` - keyword detection
 
 ```bash
 cd packages/semantic
@@ -223,11 +232,45 @@ npm run add-language -- --code=xx --name=LanguageName --native=NativeName \
   --wordOrder=SVO --direction=ltr --marking=preposition --usesSpaces=true
 ```
 
-Then fill in:
+Then follow the post-scaffold steps:
 
-1. Keyword translations in `src/generators/profiles/{code}.ts`
-2. Character classification in `src/tokenizers/{code}.ts` (for non-Latin scripts)
-3. Run tests: `npm test --prefix packages/semantic`
+1. **Fill in keyword translations** in `src/generators/profiles/{code}.ts`
+2. **Add character classification** in `src/tokenizers/{code}.ts` (for non-Latin scripts)
+3. **Sync keywords to vite-plugin** (after filling in profile):
+
+   ```bash
+   npm run sync-keywords --prefix packages/vite-plugin
+   # Options: --dry-run (preview), --language=xx (single language)
+   ```
+
+4. **Run TypeScript checks**:
+
+   ```bash
+   npm run typecheck --prefix packages/semantic
+   npm run typecheck --prefix packages/vite-plugin
+   ```
+
+5. **Run tests**: `npm test --prefix packages/semantic`
+
+### Custom Language Keywords (Vite Plugin)
+
+The vite-plugin exports utilities for customizing language detection:
+
+```javascript
+import {
+  registerCustomKeywords,  // Add custom keywords for a language
+  getKeywordsForLanguage,  // Get keyword set for a language
+  isNonLatinLanguage,      // Check if language uses non-Latin script
+  getAllLanguageCodes,     // Get all supported language codes
+  clearCustomKeywords,     // Clear custom keywords
+} from '@hyperfixi/vite-plugin';
+
+// Register custom keywords for detection
+registerCustomKeywords('my-lang', {
+  keywords: ['myToggle', 'myAdd', 'myRemove'],
+  isNonLatin: false,
+});
+```
 
 ## Debugging Tools
 
