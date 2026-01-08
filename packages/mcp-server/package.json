@@ -46,6 +46,7 @@
   "devDependencies": {
     "@hyperfixi/ast-toolkit": "file:../ast-toolkit",
     "@hyperfixi/patterns-reference": "file:../patterns-reference",
+    "@hyperfixi/semantic": "file:../semantic",
     "@types/node": "^20.0.0",
     "tsup": "^8.0.0",
     "tsx": "^4.0.0",
