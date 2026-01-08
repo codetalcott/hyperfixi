@@ -801,6 +801,8 @@ function parseMultilingual(
               error: '@hyperfixi/semantic package not available',
               suggestion: 'Install with: npm install @hyperfixi/semantic',
               fallback: 'Using regex-based validation only',
+              language,
+              confidence: 0,
             },
             null,
             2
@@ -888,6 +890,9 @@ function translateToEnglish(
             {
               error: '@hyperfixi/semantic package not available',
               suggestion: 'Install with: npm install @hyperfixi/semantic',
+              original: code,
+              sourceLanguage,
+              explicit: null,
             },
             null,
             2

@@ -343,7 +343,7 @@ const BUILTIN_EXAMPLES = [
 function handleWithBuiltinExamples(
   name: string,
   args: Record<string, unknown>
-): { content: Array<{ type: string; text: string }> } {
+): { content: Array<{ type: string; text: string }>; isError?: boolean } {
   switch (name) {
     case 'get_examples': {
       const prompt = (args.prompt as string).toLowerCase();
@@ -451,9 +451,34 @@ function handleWithBuiltinExamples(
       };
     }
 
+    case 'translate_hyperscript': {
+      const code = args.code as string;
+      const fromLanguage = args.fromLanguage as string;
+      const toLanguage = args.toLanguage as string;
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                error: 'Translation requires @hyperfixi/semantic package',
+                original: code,
+                fromLanguage,
+                toLanguage,
+              },
+              null,
+              2
+            ),
+          },
+        ],
+        isError: true,
+      };
+    }
+
     default:
       return {
-        content: [{ type: 'text', text: `Tool ${name} requires @hyperfixi/patterns-reference` }],
+        content: [{ type: 'text', text: `Unknown pattern tool: ${name}` }],
+        isError: true,
       };
   }
 }
