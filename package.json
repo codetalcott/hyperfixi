@@ -37,7 +37,8 @@
     "patterns:validate": "npm run patterns:generate && npm run patterns:test",
     "patterns:extract": "node scripts/analysis/extract-official-patterns.mjs",
     "patterns:coverage": "node scripts/analysis/verify-patterns-coverage.mjs",
-    "patterns:full": "npm run build:browser --prefix packages/core && npm run patterns:validate"
+    "patterns:full": "npm run build:browser --prefix packages/core && npm run patterns:validate",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.21.0",
@@ -45,6 +46,7 @@
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.4",
+    "husky": "^9.1.7",
     "lerna": "^9.0.3",
     "prettier": "^3.7.4",
     "typescript": "^5.9.3"
