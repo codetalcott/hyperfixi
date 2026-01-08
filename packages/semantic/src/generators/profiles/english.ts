@@ -76,6 +76,8 @@ export const englishProfile: LanguageProfile = {
     fetch: { primary: 'fetch' },
     settle: { primary: 'settle' },
     if: { primary: 'if' },
+    when: { primary: 'TODO', normalized: 'when' },
+    where: { primary: 'TODO', normalized: 'where' },
     else: { primary: 'else' },
     repeat: { primary: 'repeat' },
     for: { primary: 'for' },

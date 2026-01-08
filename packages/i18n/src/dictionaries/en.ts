@@ -140,6 +140,8 @@ export const en: Dictionary = {
   },
 
   logical: {
+    when: 'TODO',
+    where: 'TODO',
     and: 'and',
     or: 'or',
     not: 'not',

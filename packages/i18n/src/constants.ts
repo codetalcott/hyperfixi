@@ -152,9 +152,35 @@ export const ENGLISH_EXPRESSION_KEYWORDS: Set<string> = new Set([
 
 /**
  * Conditional keywords across languages (for statement type identification).
+ * Includes 'when'/'where' conditional modifiers and their translations.
  */
 export const CONDITIONAL_KEYWORDS: Set<string> = new Set([
-  'if', 'unless', 'もし', '如果', 'إذا', 'si', 'wenn', 'eğer',
+  // English
+  'if', 'unless', 'when', 'where',
+  // Japanese
+  'もし', '時に', 'ときに', 'どこで',
+  // Chinese
+  '如果', '当',
+  // Arabic
+  'إذا', 'عندما', 'حيث',
+  // Spanish
+  'si', 'cuando', 'donde',
+  // German
+  'wenn', 'wann', 'wo',
+  // French
+  'quand', 'lorsque', 'où',
+  // Portuguese
+  'quando', 'onde',
+  // Turkish
+  'eğer', 'zaman', 'nerede',
+  // Indonesian
+  'ketika', 'saat', 'dimana',
+  // Korean
+  '때', '어디서',
+  // Quechua
+  'maypi',
+  // Swahili
+  'wakati', 'wapi',
 ]);
 
 /**

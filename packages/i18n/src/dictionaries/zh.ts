@@ -136,6 +136,8 @@ export const zh: Dictionary = {
   },
   
   logical: {
+    when: 'TODO',
+    where: 'TODO',
     and: '和',
     or: '或',
     not: '非',

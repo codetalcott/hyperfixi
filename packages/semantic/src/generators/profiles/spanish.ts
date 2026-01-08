@@ -86,6 +86,8 @@ export const spanishProfile: LanguageProfile = {
     settle: { primary: 'estabilizar', normalized: 'settle' },
     // Control flow
     if: { primary: 'si', normalized: 'if' },
+    when: { primary: 'TODO', normalized: 'when' },
+    where: { primary: 'TODO', normalized: 'where' },
     else: { primary: 'sino', alternatives: ['de lo contrario'], normalized: 'else' },
     repeat: { primary: 'repetir', normalized: 'repeat' },
     for: { primary: 'para', normalized: 'for' },

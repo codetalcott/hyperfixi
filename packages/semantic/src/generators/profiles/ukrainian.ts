@@ -86,6 +86,8 @@ export const ukrainianProfile: LanguageProfile = {
     settle: { primary: 'стабілізувати', normalized: 'settle', form: 'infinitive' },
     // Control flow
     if: { primary: 'якщо', normalized: 'if' },
+    when: { primary: 'TODO', normalized: 'when' },
+    where: { primary: 'TODO', normalized: 'where' },
     else: { primary: 'інакше', normalized: 'else' },
     repeat: { primary: 'повторити', alternatives: ['повтори'], normalized: 'repeat', form: 'infinitive' },
     for: { primary: 'для', alternatives: ['кожний'], normalized: 'for' },

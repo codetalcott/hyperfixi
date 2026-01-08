@@ -419,9 +419,9 @@ export class SemanticIntegrationAdapter {
           modifiers['with'] = exprNode;
           break;
 
-        // Condition role
+        // Condition role - maps to 'when' modifier (matches core implementation)
         case 'condition':
-          modifiers['if'] = exprNode;
+          modifiers['when'] = exprNode;
           break;
 
         // Unknown roles become modifiers with role name as key

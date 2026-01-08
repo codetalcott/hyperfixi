@@ -70,6 +70,8 @@ export const quechuaProfile: LanguageProfile = {
     fetch: { primary: 'apamuy', alternatives: ['taripakaramuy'], normalized: 'fetch' },
     settle: { primary: 'tiyakuy', normalized: 'settle' },
     if: { primary: 'sichus', normalized: 'if' },
+    when: { primary: 'TODO', normalized: 'when' },
+    where: { primary: 'TODO', normalized: 'where' },
     else: { primary: 'manachus', alternatives: ['hukniraq'], normalized: 'else' },
     repeat: { primary: 'kutipay', alternatives: ['muyu'], normalized: 'repeat' },
     for: { primary: 'sapankaq', normalized: 'for' },

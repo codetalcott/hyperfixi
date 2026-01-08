@@ -83,6 +83,8 @@ export const koreanProfile: LanguageProfile = {
     settle: { primary: '안정', normalized: 'settle' },
     // Control flow
     if: { primary: '만약', normalized: 'if' },
+    when: { primary: 'TODO', normalized: 'when' },
+    where: { primary: 'TODO', normalized: 'where' },
     else: { primary: '아니면', normalized: 'else' },
     repeat: { primary: '반복', normalized: 'repeat' },
     for: { primary: '동안', normalized: 'for' },

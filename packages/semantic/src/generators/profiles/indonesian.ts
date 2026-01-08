@@ -74,6 +74,8 @@ export const indonesianProfile: LanguageProfile = {
     fetch: { primary: 'ambil', alternatives: ['muat'], normalized: 'fetch' },
     settle: { primary: 'stabilkan', normalized: 'settle' },
     if: { primary: 'jika', alternatives: ['kalau', 'bila'], normalized: 'if' },
+    when: { primary: 'TODO', normalized: 'when' },
+    where: { primary: 'TODO', normalized: 'where' },
     else: { primary: 'selainnya', normalized: 'else' },
     repeat: { primary: 'ulangi', normalized: 'repeat' },
     for: { primary: 'untuk', normalized: 'for' },

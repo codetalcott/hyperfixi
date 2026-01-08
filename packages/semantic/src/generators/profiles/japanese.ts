@@ -85,6 +85,8 @@ export const japaneseProfile: LanguageProfile = {
     settle: { primary: '安定', alternatives: ['落ち着く'], normalized: 'settle' },
     // Control flow
     if: { primary: 'もし', alternatives: ['条件'], normalized: 'if' },
+    when: { primary: 'TODO', normalized: 'when' },
+    where: { primary: 'TODO', normalized: 'where' },
     else: { primary: 'そうでなければ', alternatives: ['それ以外'], normalized: 'else' },
     repeat: { primary: '繰り返し', alternatives: ['繰り返す', 'リピート'], normalized: 'repeat' },
     for: { primary: 'ために', alternatives: ['各'], normalized: 'for' },

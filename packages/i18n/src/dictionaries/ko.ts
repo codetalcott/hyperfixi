@@ -136,6 +136,8 @@ export const ko: Dictionary = {
   },
   
   logical: {
+    when: 'TODO',
+    where: 'TODO',
     and: '그리고',
     or: '또는',
     not: '아니',

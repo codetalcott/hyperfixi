@@ -143,6 +143,7 @@
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
     "add-language": "npx tsx scripts/add-language.ts",
+    "update-keywords": "npx tsx scripts/update-keywords.ts",
     "generate:indexes": "npx tsx scripts/generate-indexes.ts",
     "prebuild": "npm run generate:indexes"
   },

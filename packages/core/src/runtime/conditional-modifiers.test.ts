@@ -9,10 +9,9 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { CommandAdapterV2 } from './command-adapter';
+import { CommandAdapterV2, type CommandWithParseInput } from './command-adapter';
 import type { ExecutionContext, TypedExecutionContext } from '../types/core';
-import type { ASTNode, ExpressionNode } from '../types/base-types';
-import type { CommandImplementation, CommandMetadata } from '../commands/decorators';
+import type { ASTNode } from '../types/base-types';
 
 // ========== Test Utilities ==========
 
@@ -43,19 +42,18 @@ function createMockContext(me: HTMLElement): ExecutionContext & TypedExecutionCo
 }
 
 // Mock command that tracks execution
-class MockCommand implements CommandImplementation<{ executed: boolean }, void, TypedExecutionContext> {
+class MockCommand implements CommandWithParseInput {
   name = 'mockCommand';
-  metadata: CommandMetadata = {
+  metadata = {
     description: 'Mock command for testing',
     syntax: 'mock',
-    examples: [],
-    sideEffects: [],
+    examples: [] as string[],
   };
 
   executionCount = 0;
 
   async parseInput(
-    raw: { args: ASTNode[]; modifiers: Record<string, ExpressionNode> },
+    _raw: { args: ASTNode[]; modifiers: Record<string, any> },
     _evaluator: unknown,
     _context: ExecutionContext
   ): Promise<{ executed: boolean }> {
@@ -64,10 +62,6 @@ class MockCommand implements CommandImplementation<{ executed: boolean }, void, 
 
   async execute(_input: { executed: boolean }, _context: TypedExecutionContext): Promise<void> {
     this.executionCount++;
-  }
-
-  validate(input: unknown): input is { executed: boolean } {
-    return typeof input === 'object' && input !== null && 'executed' in input;
   }
 }
 
@@ -104,7 +98,7 @@ describe('when/where conditional modifiers', () => {
       await adapter.execute(context, {
         args: [],
         modifiers: {
-          when: { type: 'literal', value: true } as ExpressionNode,
+          when: { type: 'expression', value: true } as unknown as ASTNode,
         },
       });
 
@@ -128,7 +122,7 @@ describe('when/where conditional modifiers', () => {
       const result = await adapter.execute(context, {
         args: [],
         modifiers: {
-          when: { type: 'literal', value: false } as ExpressionNode,
+          when: { type: 'expression', value: false } as unknown as ASTNode,
         },
       });
 
@@ -150,11 +144,11 @@ describe('when/where conditional modifiers', () => {
       const adapter = new CommandAdapterV2(mockCommand, mockEvaluator as any);
 
       const conditionExpr = {
-        type: 'binaryExpression',
+        type: 'expression',
         operator: 'is not',
         left: { type: 'identifier', name: 'result' },
         right: { type: 'literal', value: 'empty' },
-      } as ExpressionNode;
+      } as unknown as ASTNode;
 
       await adapter.execute(context, {
         args: [],
@@ -183,7 +177,7 @@ describe('when/where conditional modifiers', () => {
       await adapter.execute(context, {
         args: [],
         modifiers: {
-          where: { type: 'literal', value: true } as ExpressionNode,
+          where: { type: 'expression', value: true } as unknown as ASTNode,
         },
       });
 
@@ -205,7 +199,7 @@ describe('when/where conditional modifiers', () => {
       const result = await adapter.execute(context, {
         args: [],
         modifiers: {
-          where: { type: 'literal', value: false } as ExpressionNode,
+          where: { type: 'expression', value: false } as unknown as ASTNode,
         },
       });
 
@@ -225,24 +219,26 @@ describe('when/where conditional modifiers', () => {
         evaluate: vi.fn().mockResolvedValue(true),
       };
 
-      const adapter1 = new CommandAdapterV2(new MockCommand(), mockEvaluator as any);
-      const adapter2 = new CommandAdapterV2(new MockCommand(), mockEvaluator as any);
+      const mockCommand1 = new MockCommand();
+      const mockCommand2 = new MockCommand();
+      const adapter1 = new CommandAdapterV2(mockCommand1, mockEvaluator as any);
+      const adapter2 = new CommandAdapterV2(mockCommand2, mockEvaluator as any);
 
       // Execute with 'when'
       await adapter1.execute(context, {
         args: [],
-        modifiers: { when: { type: 'literal', value: true } as ExpressionNode },
+        modifiers: { when: { type: 'expression', value: true } as unknown as ASTNode },
       });
 
       // Execute with 'where'
       await adapter2.execute(context, {
         args: [],
-        modifiers: { where: { type: 'literal', value: true } as ExpressionNode },
+        modifiers: { where: { type: 'expression', value: true } as unknown as ASTNode },
       });
 
       // Both should have executed
-      expect((adapter1 as any).impl.executionCount).toBe(1);
-      expect((adapter2 as any).impl.executionCount).toBe(1);
+      expect(mockCommand1.executionCount).toBe(1);
+      expect(mockCommand2.executionCount).toBe(1);
     });
   });
 
@@ -283,7 +279,7 @@ describe('when/where conditional modifiers', () => {
 
       await adapter.execute(context, {
         args: [],
-        modifiers: { when: { type: 'literal', value: 0 } as ExpressionNode },
+        modifiers: { when: { type: 'expression', value: 0 } as unknown as ASTNode },
       });
 
       expect(mockCommand.executionCount).toBe(0);
@@ -303,7 +299,7 @@ describe('when/where conditional modifiers', () => {
 
       await adapter.execute(context, {
         args: [],
-        modifiers: { when: { type: 'literal', value: '' } as ExpressionNode },
+        modifiers: { when: { type: 'expression', value: '' } as unknown as ASTNode },
       });
 
       expect(mockCommand.executionCount).toBe(0);
@@ -323,7 +319,7 @@ describe('when/where conditional modifiers', () => {
 
       await adapter.execute(context, {
         args: [],
-        modifiers: { when: { type: 'literal', value: null } as ExpressionNode },
+        modifiers: { when: { type: 'expression', value: null } as unknown as ASTNode },
       });
 
       expect(mockCommand.executionCount).toBe(0);
@@ -343,7 +339,7 @@ describe('when/where conditional modifiers', () => {
 
       await adapter.execute(context, {
         args: [],
-        modifiers: { when: { type: 'literal', value: 'non-empty' } as ExpressionNode },
+        modifiers: { when: { type: 'expression', value: 'non-empty' } as unknown as ASTNode },
       });
 
       expect(mockCommand.executionCount).toBe(1);

@@ -136,6 +136,8 @@ export const id: Dictionary = {
   },
   
   logical: {
+    when: 'TODO',
+    where: 'TODO',
     and: 'dan',
     or: 'atau',
     not: 'bukan',

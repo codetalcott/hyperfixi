@@ -142,6 +142,8 @@ export const pl: Dictionary = {
   },
 
   logical: {
+    when: 'TODO',
+    where: 'TODO',
     and: 'i',
     or: 'lub',
     not: 'nie',

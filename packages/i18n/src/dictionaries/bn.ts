@@ -91,6 +91,8 @@ export const bengaliDictionary: Dictionary = {
   },
   logical: {
     if: 'যদি',
+    when: 'TODO',
+    where: 'TODO',
     else: 'নতুবা',
     not: 'না',
     and: 'এবং',

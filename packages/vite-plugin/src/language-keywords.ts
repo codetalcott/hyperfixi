@@ -44,17 +44,47 @@ export const REGIONS = {
  * Unique script makes detection straightforward.
  */
 export const JAPANESE_KEYWORDS = new Set([
-  // Commands
-  'トグル', '切り替え', '追加', '削除', '表示', '隠す', '非表示',
-  '設定', 'セット', '増加', '減少', 'ログ', '出力',
-  // Events
-  'クリック', '入力', '変更', 'フォーカス',
-  // Control flow
-  'もし', '繰り返し', '待つ', '待機',
-  // References
-  '私', 'それ', '結果',
-  // Positional
-  '最初', '最後', '次', '前',
+  '切り替え',
+  '切り替える',
+  'トグル',
+  'トグルする',
+  '追加',
+  '追加する',
+  '加える',
+  '削除',
+  '削除する',
+  '取り除く',
+  '表示',
+  '表示する',
+  '見せる',
+  '隠す',
+  '非表示',
+  '非表示にする',
+  '設定',
+  '設定する',
+  'セット',
+  '増加',
+  '増やす',
+  'インクリメント',
+  '減少',
+  '減らす',
+  'デクリメント',
+  '引き金',
+  '発火',
+  'トリガー',
+  '送る',
+  '送信',
+  'もし',
+  '条件',
+  'そうでなければ',
+  'それ以外',
+  '繰り返し',
+  '繰り返す',
+  'リピート',
+  '待つ',
+  '待機',
+  'の間',
+  '間'
 ]);
 
 /**
@@ -62,17 +92,26 @@ export const JAPANESE_KEYWORDS = new Set([
  * Unique script makes detection straightforward.
  */
 export const KOREAN_KEYWORDS = new Set([
-  // Commands
-  '토글', '전환', '추가', '제거', '삭제', '표시', '숨기다',
-  '설정', '증가', '감소', '로그',
-  // Events
-  '클릭', '입력', '변경', '포커스',
-  // Control flow
-  '만약', '반복', '대기',
-  // References
-  '나', '내', '그것', '결과',
-  // Positional
-  '첫번째', '마지막', '다음', '이전',
+  '토글',
+  '전환',
+  '추가',
+  '제거',
+  '삭제',
+  '보이다',
+  '표시',
+  '보이기',
+  '숨기다',
+  '숨기기',
+  '설정',
+  '증가',
+  '감소',
+  '트리거',
+  '보내다',
+  '만약',
+  '아니면',
+  '반복',
+  '대기',
+  '동안'
 ]);
 
 /**
@@ -80,17 +119,26 @@ export const KOREAN_KEYWORDS = new Set([
  * Note: Some overlap with Japanese kanji, but context usually distinguishes.
  */
 export const CHINESE_KEYWORDS = new Set([
-  // Commands
-  '切换', '添加', '移除', '删除', '显示', '隐藏',
-  '设置', '设定', '增加', '减少', '日志', '记录',
-  // Events
-  '点击', '输入', '改变', '聚焦',
-  // Control flow
-  '如果', '重复', '等待',
-  // References
-  '我', '它', '结果',
-  // Positional
-  '第一', '最后', '下一个', '上一个',
+  '切换',
+  '添加',
+  '加',
+  '移除',
+  '删除',
+  '去掉',
+  '显示',
+  '展示',
+  '隐藏',
+  '设置',
+  '设定',
+  '增加',
+  '减少',
+  '触发',
+  '发送',
+  '如果',
+  '否则',
+  '重复',
+  '等待',
+  '当'
 ]);
 
 /**
@@ -98,16 +146,38 @@ export const CHINESE_KEYWORDS = new Set([
  * RTL script makes detection straightforward.
  */
 export const ARABIC_KEYWORDS = new Set([
-  // Commands
-  'بدّل', 'بدل', 'أضف', 'اضف', 'أزل', 'ازل', 'احذف',
-  'أظهر', 'اظهر', 'أخفِ', 'اخف',
-  'ضع', 'اضع', 'زِد', 'أنقص',
-  // Events
-  'عند', 'نقر', 'إدخال', 'تغيير',
-  // Control flow
-  'إذا', 'كرر', 'انتظر',
-  // References
-  'أنا', 'هو', 'النتيجة',
+  'بدل',
+  'بدّل',
+  'غيّر',
+  'غير',
+  'أضف',
+  'اضف',
+  'زِد',
+  'احذف',
+  'أزل',
+  'امسح',
+  'اظهر',
+  'أظهر',
+  'اعرض',
+  'اخف',
+  'أخفِ',
+  'اخفي',
+  'اضبط',
+  'عيّن',
+  'حدد',
+  'ارفع',
+  'أنقص',
+  'قلل',
+  'تشغيل',
+  'أطلق',
+  'فعّل',
+  'أرسل',
+  'إذا',
+  'وإلا',
+  'خلاف ذلك',
+  'كرر',
+  'انتظر',
+  'بينما'
 ]);
 
 /**
@@ -115,18 +185,35 @@ export const ARABIC_KEYWORDS = new Set([
  * Distinguished by specific Spanish words.
  */
 export const SPANISH_KEYWORDS = new Set([
-  // Commands
-  'alternar', 'añadir', 'agregar', 'quitar', 'eliminar',
-  'mostrar', 'ocultar', 'esconder',
-  'establecer', 'fijar', 'incrementar', 'decrementar',
-  // Events
-  'clic', 'entrada', 'cambio',
-  // Control flow
-  'si', 'sino', 'repetir', 'esperar', 'mientras',
-  // References
-  'yo', 'ello', 'resultado',
-  // Positional
-  'primero', 'último', 'siguiente', 'anterior',
+  'alternar',
+  'cambiar',
+  'conmutar',
+  'agregar',
+  'añadir',
+  'quitar',
+  'eliminar',
+  'remover',
+  'sacar',
+  'mostrar',
+  'enseñar',
+  'ocultar',
+  'esconder',
+  'establecer',
+  'fijar',
+  'definir',
+  'incrementar',
+  'aumentar',
+  'decrementar',
+  'disminuir',
+  'disparar',
+  'activar',
+  'enviar',
+  'si',
+  'sino',
+  'de lo contrario',
+  'repetir',
+  'esperar',
+  'mientras'
 ]);
 
 /**
@@ -134,17 +221,32 @@ export const SPANISH_KEYWORDS = new Set([
  * Distinguished by specific Portuguese words.
  */
 export const PORTUGUESE_KEYWORDS = new Set([
-  // Commands
-  'alternar', 'adicionar', 'remover', 'mostrar', 'esconder', 'ocultar',
-  'definir', 'incrementar', 'decrementar',
-  // Events
-  'clique', 'entrada', 'mudança',
-  // Control flow
-  'se', 'senão', 'repetir', 'aguardar', 'enquanto',
-  // References
-  'eu', 'isso', 'resultado',
-  // Positional
-  'primeiro', 'último', 'próximo', 'anterior',
+  'alternar',
+  'trocar',
+  'adicionar',
+  'acrescentar',
+  'remover',
+  'eliminar',
+  'apagar',
+  'mostrar',
+  'exibir',
+  'ocultar',
+  'esconder',
+  'definir',
+  'configurar',
+  'incrementar',
+  'aumentar',
+  'decrementar',
+  'diminuir',
+  'disparar',
+  'ativar',
+  'enviar',
+  'se',
+  'senão',
+  'repetir',
+  'esperar',
+  'aguardar',
+  'enquanto'
 ]);
 
 /**
@@ -152,18 +254,30 @@ export const PORTUGUESE_KEYWORDS = new Set([
  * Distinguished by specific French words.
  */
 export const FRENCH_KEYWORDS = new Set([
-  // Commands
-  'basculer', 'ajouter', 'supprimer', 'retirer',
-  'afficher', 'montrer', 'cacher', 'masquer',
-  'définir', 'incrémenter', 'décrémenter',
-  // Events
-  'cliquer', 'saisie', 'changement',
-  // Control flow
-  'si', 'sinon', 'répéter', 'attendre', 'pendant',
-  // References
-  'moi', 'cela', 'résultat',
-  // Positional
-  'premier', 'dernier', 'suivant', 'précédent',
+  'basculer',
+  'permuter',
+  'alterner',
+  'ajouter',
+  'supprimer',
+  'enlever',
+  'retirer',
+  'montrer',
+  'afficher',
+  'cacher',
+  'masquer',
+  'définir',
+  'établir',
+  'incrémenter',
+  'augmenter',
+  'décrémenter',
+  'diminuer',
+  'déclencher',
+  'envoyer',
+  'si',
+  'sinon',
+  'répéter',
+  'attendre',
+  'pendant'
 ]);
 
 /**
@@ -171,18 +285,31 @@ export const FRENCH_KEYWORDS = new Set([
  * Distinguished by specific German words.
  */
 export const GERMAN_KEYWORDS = new Set([
-  // Commands
-  'umschalten', 'hinzufügen', 'entfernen', 'löschen',
-  'anzeigen', 'zeigen', 'verbergen', 'verstecken',
-  'setzen', 'festlegen', 'erhöhen', 'verringern',
-  // Events
-  'klick', 'eingabe', 'änderung',
-  // Control flow
-  'wenn', 'sonst', 'wiederholen', 'warten', 'während',
-  // References
-  'ich', 'es', 'ergebnis',
-  // Positional
-  'erste', 'letzte', 'nächste', 'vorherige',
+  'umschalten',
+  'wechseln',
+  'hinzufügen',
+  'entfernen',
+  'löschen',
+  'zeigen',
+  'anzeigen',
+  'verbergen',
+  'verstecken',
+  'festlegen',
+  'definieren',
+  'erhöhen',
+  'verringern',
+  'vermindern',
+  'auslösen',
+  'senden',
+  'schicken',
+  'wenn',
+  'falls',
+  'sonst',
+  'ansonsten',
+  'wiederholen',
+  'warten',
+  'solange',
+  'während'
 ]);
 
 /**
@@ -190,18 +317,25 @@ export const GERMAN_KEYWORDS = new Set([
  * Distinguished by Turkish-specific characters and words.
  */
 export const TURKISH_KEYWORDS = new Set([
-  // Commands
-  'değiştir', 'değistir', 'ekle', 'kaldır', 'kaldir', 'sil',
-  'göster', 'gizle', 'sakla',
-  'ayarla', 'belirle', 'arttır', 'azalt',
-  // Events
-  'tıklama', 'tiklama', 'giriş', 'giris', 'değişim', 'degisim',
-  // Control flow
-  'eğer', 'eger', 'yoksa', 'tekrarla', 'bekle', 'süresince',
-  // References
-  'ben', 'o', 'sonuç', 'sonuc',
-  // Positional
-  'ilk', 'son', 'sonraki', 'önceki', 'onceki',
+  'değiştir',
+  'aç/kapat',
+  'ekle',
+  'kaldır',
+  'sil',
+  'göster',
+  'gizle',
+  'ayarla',
+  'yap',
+  'belirle',
+  'artır',
+  'azalt',
+  'tetikle',
+  'gönder',
+  'eğer',
+  'yoksa',
+  'tekrarla',
+  'bekle',
+  'iken'
 ]);
 
 /**
@@ -209,18 +343,35 @@ export const TURKISH_KEYWORDS = new Set([
  * Distinguished by specific Indonesian words.
  */
 export const INDONESIAN_KEYWORDS = new Set([
-  // Commands
-  'alih', 'beralih', 'tambah', 'hapus', 'buang',
-  'tampilkan', 'sembunyikan',
-  'atur', 'tetapkan', 'tambahkan', 'kurangi',
-  // Events
-  'klik', 'masukan', 'perubahan',
-  // Control flow
-  'jika', 'kalau', 'ulangi', 'tunggu', 'selama',
-  // References
-  'saya', 'itu', 'hasil',
-  // Positional
-  'pertama', 'terakhir', 'berikutnya', 'sebelumnya',
+  'alihkan',
+  'ganti',
+  'tukar',
+  'tambah',
+  'tambahkan',
+  'hapus',
+  'buang',
+  'hilangkan',
+  'tampilkan',
+  'perlihatkan',
+  'sembunyikan',
+  'tutup',
+  'atur',
+  'tetapkan',
+  'tingkatkan',
+  'naikkan',
+  'turunkan',
+  'kurangi',
+  'picu',
+  'jalankan',
+  'kirim',
+  'kirimkan',
+  'jika',
+  'kalau',
+  'bila',
+  'selainnya',
+  'ulangi',
+  'tunggu',
+  'selama'
 ]);
 
 /**
@@ -228,18 +379,30 @@ export const INDONESIAN_KEYWORDS = new Set([
  * Distinguished by specific Swahili words.
  */
 export const SWAHILI_KEYWORDS = new Set([
-  // Commands
-  'badilisha', 'ongeza', 'ondoa', 'futa',
-  'onyesha', 'ficha',
-  'weka', 'sanidi', 'ongezea', 'punguza',
-  // Events
-  'bofya', 'ingizo', 'badiliko',
-  // Control flow
-  'ikiwa', 'kama', 'rudia', 'subiri', 'wakati',
-  // References
-  'mimi', 'hiyo', 'matokeo',
-  // Positional
-  'kwanza', 'mwisho', 'inayofuata', 'iliyotangulia',
+  'badilisha',
+  'geuza',
+  'ongeza',
+  'weka',
+  'ondoa',
+  'futa',
+  'toa',
+  'onyesha',
+  'ficha',
+  'mficho',
+  'seti',
+  'punguza',
+  'chochea',
+  'anzisha',
+  'tuma',
+  'peleka',
+  'kama',
+  'ikiwa',
+  'vinginevyo',
+  'sivyo',
+  'rudia',
+  'subiri',
+  'ngoja',
+  'wakati'
 ]);
 
 /**
@@ -247,18 +410,32 @@ export const SWAHILI_KEYWORDS = new Set([
  * Distinguished by specific Quechua words.
  */
 export const QUECHUA_KEYWORDS = new Set([
-  // Commands
-  'tikray', 'yapay', 'qichuy', 'pichay',
-  'rikuchiy', 'pakay',
-  'churay', 'yapay', 'pisiyachiy',
-  // Events
-  'ñit\'iy', 'yaykuchiy', 'tikray',
-  // Control flow
-  'sichus', 'mana', 'kutipay', 'suyay', 'chaykama',
-  // References
-  'ñuqa', 'chay', 'lluqsisqa',
-  // Positional
-  'ñawpaq', 'qhipa', 'hamuq', 'ñawpaqnin',
+  't',
+  'tikray',
+  'kutichiy',
+  'yapay',
+  'yapaykuy',
+  'qichuy',
+  'hurquy',
+  'anchuchiy',
+  'rikuchiy',
+  'qawachiy',
+  'pakay',
+  'pakakuy',
+  'churay',
+  'kamaykuy',
+  'yapachiy',
+  'pisiyachiy',
+  'qallarichiy',
+  'kachay',
+  'apachiy',
+  'sichus',
+  'manachus',
+  'hukniraq',
+  'kutipay',
+  'muyu',
+  'suyay',
+  'kaykamaqa'
 ]);
 
 /**
@@ -266,17 +443,32 @@ export const QUECHUA_KEYWORDS = new Set([
  * Distinguished by specific Italian words.
  */
 export const ITALIAN_KEYWORDS = new Set([
-  // Commands
-  'commutare', 'alternare', 'aggiungere', 'rimuovere', 'eliminare',
-  'mostrare', 'nascondere', 'impostare', 'incrementare', 'decrementare',
-  // Events
-  'clic', 'ingresso', 'cambiamento',
-  // Control flow
-  'altrimenti', 'ripetere', 'aspettare', 'attendere', 'mentre',
-  // References
-  'risultato',
-  // Positional
-  'primo', 'ultimo', 'successivo', 'precedente',
+  'commutare',
+  'alternare',
+  'cambiare',
+  'aggiungere',
+  'aggiungi',
+  'rimuovere',
+  'eliminare',
+  'togliere',
+  'mostrare',
+  'visualizzare',
+  'nascondere',
+  'impostare',
+  'definire',
+  'incrementare',
+  'aumentare',
+  'decrementare',
+  'diminuire',
+  'scatenare',
+  'attivare',
+  'inviare',
+  'se',
+  'altrimenti',
+  'ripetere',
+  'aspettare',
+  'attendere',
+  'mentre'
 ]);
 
 /**
@@ -284,17 +476,36 @@ export const ITALIAN_KEYWORDS = new Set([
  * Distinguished by Vietnamese-specific diacritics and words.
  */
 export const VIETNAMESE_KEYWORDS = new Set([
-  // Commands
-  'chuyển đổi', 'bật tắt', 'thêm', 'xóa', 'gỡ bỏ',
-  'hiển thị', 'ẩn', 'gán', 'thiết lập', 'tăng', 'giảm',
-  // Events
-  'kích hoạt', 'gửi',
-  // Control flow
-  'nếu', 'không thì', 'lặp lại', 'chờ', 'đợi', 'trong khi',
-  // References
-  'kết quả',
-  // Positional
-  'đầu tiên', 'cuối cùng', 'tiếp theo', 'trước',
+  'chuyển đổi',
+  'bật tắt',
+  'chuyển',
+  'thêm',
+  'bổ sung',
+  'xóa',
+  'gỡ bỏ',
+  'loại bỏ',
+  'bỏ',
+  'hiển thị',
+  'hiện',
+  'ẩn',
+  'che',
+  'giấu',
+  'gán',
+  'thiết lập',
+  'đặt',
+  'tăng',
+  'tăng lên',
+  'giảm',
+  'giảm đi',
+  'kích hoạt',
+  'gửi',
+  'nếu',
+  'không thì',
+  'nếu không',
+  'lặp lại',
+  'chờ',
+  'đợi',
+  'trong khi'
 ]);
 
 /**
@@ -302,18 +513,44 @@ export const VIETNAMESE_KEYWORDS = new Set([
  * Distinguished by Polish-specific characters and words.
  */
 export const POLISH_KEYWORDS = new Set([
-  // Commands (imperative form)
-  'przełącz', 'przelacz', 'dodaj', 'usuń', 'usun',
-  'pokaż', 'pokaz', 'ukryj', 'ustaw', 'zwiększ', 'zwieksz', 'zmniejsz',
-  // Events
-  'kliknięcie', 'klikniecie', 'wywołaj', 'wywolaj', 'wyślij', 'wyslij',
-  // Control flow
-  'jeśli', 'jesli', 'jeżeli', 'jezeli', 'inaczej', 'powtórz', 'powtorz',
-  'czekaj', 'poczekaj', 'dopóki', 'dopoki',
-  // References
-  'wynik',
-  // Positional
-  'pierwszy', 'ostatni', 'następny', 'nastepny', 'poprzedni',
+  'przełącz',
+  'przelacz',
+  'dodaj',
+  'usuń',
+  'usun',
+  'wyczyść',
+  'wyczysc',
+  'pokaż',
+  'pokaz',
+  'wyświetl',
+  'wyswietl',
+  'ukryj',
+  'schowaj',
+  'ustaw',
+  'określ',
+  'okresl',
+  'zwiększ',
+  'zwieksz',
+  'zmniejsz',
+  'wywołaj',
+  'wywolaj',
+  'wyzwól',
+  'wyzwol',
+  'wyślij',
+  'wyslij',
+  'jeśli',
+  'jesli',
+  'jeżeli',
+  'jezeli',
+  'inaczej',
+  'wpp',
+  'powtórz',
+  'powtorz',
+  'czekaj',
+  'poczekaj',
+  'dopóki',
+  'dopoki',
+  'podczas'
 ]);
 
 /**
@@ -321,17 +558,40 @@ export const POLISH_KEYWORDS = new Set([
  * Unique script makes detection straightforward.
  */
 export const RUSSIAN_KEYWORDS = new Set([
-  // Commands
-  'переключить', 'добавить', 'удалить', 'убрать',
-  'показать', 'скрыть', 'установить', 'увеличить', 'уменьшить',
-  // Events
-  'вызвать', 'отправить',
-  // Control flow
-  'если', 'иначе', 'повторить', 'ждать', 'пока',
-  // References
-  'результат',
-  // Positional
-  'первый', 'последний', 'следующий', 'предыдущий',
+  'переключить',
+  'переключи',
+  'добавить',
+  'добавь',
+  'удалить',
+  'удали',
+  'убрать',
+  'убери',
+  'показать',
+  'покажи',
+  'скрыть',
+  'скрой',
+  'спрятать',
+  'спрячь',
+  'установить',
+  'установи',
+  'задать',
+  'задай',
+  'увеличить',
+  'увеличь',
+  'уменьшить',
+  'уменьши',
+  'вызвать',
+  'вызови',
+  'отправить',
+  'отправь',
+  'если',
+  'иначе',
+  'повторить',
+  'повтори',
+  'ждать',
+  'жди',
+  'подожди',
+  'пока'
 ]);
 
 /**
@@ -339,17 +599,40 @@ export const RUSSIAN_KEYWORDS = new Set([
  * Unique script makes detection straightforward.
  */
 export const UKRAINIAN_KEYWORDS = new Set([
-  // Commands
-  'перемкнути', 'додати', 'видалити', 'прибрати',
-  'показати', 'сховати', 'приховати', 'встановити', 'збільшити', 'зменшити',
-  // Events
-  'викликати', 'надіслати',
-  // Control flow
-  'якщо', 'інакше', 'повторити', 'чекати', 'поки',
-  // References
-  'результат',
-  // Positional
-  'перший', 'останній', 'наступний', 'попередній',
+  'перемкнути',
+  'перемкни',
+  'додати',
+  'додай',
+  'видалити',
+  'видали',
+  'прибрати',
+  'прибери',
+  'показати',
+  'покажи',
+  'сховати',
+  'сховай',
+  'приховати',
+  'приховай',
+  'встановити',
+  'встанови',
+  'задати',
+  'задай',
+  'збільшити',
+  'збільш',
+  'зменшити',
+  'зменш',
+  'викликати',
+  'виклич',
+  'надіслати',
+  'надішли',
+  'якщо',
+  'інакше',
+  'повторити',
+  'повтори',
+  'чекати',
+  'чекай',
+  'зачекай',
+  'поки'
 ]);
 
 /**
@@ -357,17 +640,36 @@ export const UKRAINIAN_KEYWORDS = new Set([
  * Unique script makes detection straightforward.
  */
 export const HINDI_KEYWORDS = new Set([
-  // Commands
-  'टॉगल', 'बदलें', 'जोड़ें', 'हटाएं', 'मिटाएं',
-  'दिखाएं', 'छिपाएं', 'सेट', 'बढ़ाएं', 'घटाएं',
-  // Events
-  'ट्रिगर', 'भेजें',
-  // Control flow
-  'अगर', 'यदि', 'वरना', 'दोहराएं', 'प्रतीक्षा', 'जब तक',
-  // References
-  'परिणाम',
-  // Positional
-  'पहला', 'आखिरी', 'अगला', 'पिछला',
+  'टॉगल',
+  'बदलें',
+  'बदल',
+  'जोड़ें',
+  'जोड़',
+  'हटाएं',
+  'हटा',
+  'मिटाएं',
+  'दिखाएं',
+  'दिखा',
+  'छिपाएं',
+  'छिपा',
+  'सेट',
+  'निर्धारित',
+  'बढ़ाएं',
+  'बढ़ा',
+  'घटाएं',
+  'घटा',
+  'ट्रिगर',
+  'भेजें',
+  'भेज',
+  'अगर',
+  'यदि',
+  'वरना',
+  'नहीं तो',
+  'दोहराएं',
+  'दोहरा',
+  'प्रतीक्षा',
+  'रुकें',
+  'जब तक'
 ]);
 
 /**
@@ -375,17 +677,34 @@ export const HINDI_KEYWORDS = new Set([
  * Unique script makes detection straightforward.
  */
 export const BENGALI_KEYWORDS = new Set([
-  // Commands
-  'টগল', 'পরিবর্তন', 'যোগ', 'সরান', 'মুছুন',
-  'দেখান', 'লুকান', 'সেট', 'বৃদ্ধি', 'হ্রাস',
-  // Events
-  'ট্রিগার', 'পাঠান',
-  // Control flow
-  'যদি', 'নতুবা', 'পুনরাবৃত্তি', 'অপেক্ষা', 'যতক্ষণ',
-  // References
-  'ফলাফল',
-  // Positional
-  'প্রথম', 'শেষ', 'পরবর্তী', 'আগের',
+  'টগল',
+  'পরিবর্তন',
+  'যোগ',
+  'যোগ করুন',
+  'সরান',
+  'সরিয়ে ফেলুন',
+  'মুছুন',
+  'দেখান',
+  'দেখাও',
+  'লুকান',
+  'লুকাও',
+  'সেট',
+  'নির্ধারণ',
+  'বৃদ্ধি',
+  'বাড়ান',
+  'হ্রাস',
+  'কমান',
+  'ট্রিগার',
+  'পাঠান',
+  'পাঠাও',
+  'যদি',
+  'নতুবা',
+  'না হলে',
+  'পুনরাবৃত্তি',
+  'বার বার',
+  'অপেক্ষা',
+  'থামুন',
+  'যতক্ষণ'
 ]);
 
 /**
@@ -393,17 +712,25 @@ export const BENGALI_KEYWORDS = new Set([
  * Unique script makes detection straightforward.
  */
 export const THAI_KEYWORDS = new Set([
-  // Commands
-  'สลับ', 'เพิ่ม', 'ลบ', 'ลบออก',
-  'แสดง', 'ซ่อน', 'ตั้ง', 'กำหนด', 'เพิ่มค่า', 'ลดค่า',
-  // Events
-  'ทริกเกอร์', 'ส่ง',
-  // Control flow
-  'ถ้า', 'หาก', 'ไม่งั้น', 'ทำซ้ำ', 'รอ', 'ในขณะที่',
-  // References
-  'ผลลัพธ์',
-  // Positional
-  'แรก', 'สุดท้าย', 'ถัดไป', 'ก่อนหน้า',
+  'สลับ',
+  'เพิ่ม',
+  'ลบ',
+  'ลบออก',
+  'แสดง',
+  'ซ่อน',
+  'ตั้ง',
+  'กำหนด',
+  'เพิ่มค่า',
+  'ลดค่า',
+  'ทริกเกอร์',
+  'ส่ง',
+  'ถ้า',
+  'หาก',
+  'ไม่งั้น',
+  'ไม่เช่นนั้น',
+  'ทำซ้ำ',
+  'รอ',
+  'ในขณะที่'
 ]);
 
 

@@ -392,6 +392,8 @@ export const ${varName}Profile: LanguageProfile = {
     settle: { primary: 'TODO', normalized: 'settle' },
     // Control flow
     if: { primary: 'TODO', normalized: 'if' },
+    when: { primary: 'TODO', normalized: 'when' },
+    where: { primary: 'TODO', normalized: 'where' },
     else: { primary: 'TODO', normalized: 'else' },
     repeat: { primary: 'TODO', normalized: 'repeat' },
     for: { primary: 'TODO', normalized: 'for' },
@@ -566,6 +568,8 @@ export const ${varName}: Dictionary = {
   },
   logical: {
     if: 'TODO',
+    when: 'TODO',
+    where: 'TODO',
     else: 'TODO',
     not: 'TODO',
     and: 'TODO',

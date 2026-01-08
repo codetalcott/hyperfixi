@@ -91,6 +91,8 @@ export const tagalogDictionary: Dictionary = {
   },
   logical: {
     if: 'TODO',
+    when: 'TODO',
+    where: 'TODO',
     else: 'TODO',
     not: 'TODO',
     and: 'TODO',

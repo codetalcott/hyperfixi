@@ -136,6 +136,8 @@ export const ar: Dictionary = {
   },
   
   logical: {
+    when: 'TODO',
+    where: 'TODO',
     and: 'و',
     or: 'أو',
     not: 'ليس',
