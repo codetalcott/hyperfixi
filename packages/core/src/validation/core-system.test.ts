@@ -330,7 +330,8 @@ describe('Core System Validation', () => {
 
     it('should handle document object access', async () => {
       const result = await evalHyperScript('document.body.tagName');
-      expect(result).toBe('BODY');
+      // jsdom returns lowercase 'body', real browsers return 'BODY'
+      expect((result as string).toUpperCase()).toBe('BODY');
     });
 
     it('should handle localStorage integration', async () => {

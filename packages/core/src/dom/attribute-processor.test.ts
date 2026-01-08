@@ -5,13 +5,17 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import '../test-setup.js';
-import { AttributeProcessor } from './attribute-processor';
+import { AttributeProcessor, defaultAttributeProcessor } from './attribute-processor';
 
 describe('AttributeProcessor System Events', () => {
   let processor: AttributeProcessor;
   let testContainer: HTMLDivElement;
 
   beforeEach(() => {
+    // IMPORTANT: Destroy the default processor that auto-initializes on module import
+    // to prevent double-processing of hyperscript (which causes handlers to register twice)
+    defaultAttributeProcessor.destroy();
+
     // Create test container
     testContainer = document.createElement('div');
     testContainer.id = 'test-container';
