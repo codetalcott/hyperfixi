@@ -49,6 +49,7 @@ export const KEYWORDS = {
   // Events
   ON: 'on',
   WHEN: 'when',
+  WHERE: 'where',
   EVERY: 'every',
   EVENT: 'event',
 

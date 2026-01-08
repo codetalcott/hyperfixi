@@ -160,6 +160,17 @@ export class CommandAdapterV2 implements RuntimeCommand {
         const rawInput = args[0] as any;
 
         if (rawInput && typeof rawInput === 'object' && ('args' in rawInput || 'modifiers' in rawInput)) {
+          // Check when/where conditional modifiers before execution
+          // Both 'when' and 'where' are treated as identical conditional guards
+          const whenCondition = rawInput.modifiers?.when || rawInput.modifiers?.where;
+          if (whenCondition) {
+            const conditionResult = await this.expressionEvaluator.evaluate(whenCondition, context);
+            if (!conditionResult) {
+              debug.command(`CommandAdapterV2: '${this.name}' skipped - when/where condition evaluated to false`);
+              return undefined;
+            }
+          }
+
           // Raw AST input - pass to parseInput()
           parsedInput = await this.impl.parseInput(
             {

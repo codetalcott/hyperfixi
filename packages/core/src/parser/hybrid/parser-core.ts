@@ -338,19 +338,39 @@ export class HybridParser {
   private parseShow(): CommandNode {
     this.expect('show');
     let target: ASTNode | undefined;
-    if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) {
+    const modifiers: Record<string, ASTNode> = {};
+
+    // Parse target (stop at when/where/then/and/end/else)
+    if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else', 'when', 'where')) {
       target = this.parseExpression();
     }
-    return { type: 'command', name: 'show', args: [], target };
+
+    // Parse optional when/where condition
+    if (!this.isAtEnd() && this.match('when', 'where')) {
+      const keyword = this.advance().value;
+      modifiers[keyword] = this.parseExpression();
+    }
+
+    return { type: 'command', name: 'show', args: [], target, modifiers };
   }
 
   private parseHide(): CommandNode {
     this.expect('hide');
     let target: ASTNode | undefined;
-    if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else')) {
+    const modifiers: Record<string, ASTNode> = {};
+
+    // Parse target (stop at when/where/then/and/end/else)
+    if (!this.isAtEnd() && !this.match('then', 'and', 'end', 'else', 'when', 'where')) {
       target = this.parseExpression();
     }
-    return { type: 'command', name: 'hide', args: [], target };
+
+    // Parse optional when/where condition
+    if (!this.isAtEnd() && this.match('when', 'where')) {
+      const keyword = this.advance().value;
+      modifiers[keyword] = this.parseExpression();
+    }
+
+    return { type: 'command', name: 'hide', args: [], target, modifiers };
   }
 
   private parseTake(): CommandNode {
