@@ -54,6 +54,19 @@ export class NumberFormatter {
       if (mergedOptions.style === 'percent' && !result.includes('%')) {
         return this.fallbackFormat(value, mergedOptions);
       }
+      // Validate result - if input has decimals but output lost them (broken Intl like jsdom)
+      // Check by seeing if the result represents a rounded integer when it shouldn't
+      const hasFractionalPart = value % 1 !== 0;
+      if (hasFractionalPart && mergedOptions.style !== 'percent') {
+        // Extract numeric value from result (remove thousand separators, keep decimal)
+        // If the result only contains digits and thousand separators (no decimal), it's broken
+        const digitsOnly = result.replace(/[^\d.-]/g, '');
+        const parsedValue = parseFloat(digitsOnly);
+        // If parsed value is an integer but input had decimals, Intl rounded incorrectly
+        if (!isNaN(parsedValue) && parsedValue % 1 === 0) {
+          return this.fallbackFormat(value, mergedOptions);
+        }
+      }
       return result;
     } catch (error) {
       // Fallback for unsupported locales
@@ -79,7 +92,7 @@ export class NumberFormatter {
   }
 
   private fallbackFormat(value: number, options: NumberFormatOptions): string {
-    const { style, currency } = options;
+    const { style, currency, useGrouping = true } = options;
     // Default fraction digits based on style
     const defaultMin = style === 'currency' ? 2 : 0;
     const defaultMax = style === 'currency' ? 2 : 3;
@@ -91,6 +104,13 @@ export class NumberFormatter {
     // Remove trailing zeros after decimal point if not required
     if (minimumFractionDigits === 0 && formatted.includes('.')) {
       formatted = formatted.replace(/\.?0+$/, '');
+    }
+
+    // Add thousand separators if grouping is enabled
+    if (useGrouping !== false) {
+      const parts = formatted.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      formatted = parts.join('.');
     }
 
     if (style === 'currency' && currency) {

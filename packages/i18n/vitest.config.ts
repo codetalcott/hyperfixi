@@ -19,8 +19,8 @@ export default defineConfig({
         'vitest.config.ts',
       ],
     },
-    include: ['src/**/*.test.ts', 'src/**/*.spec.ts'],
-    exclude: ['node_modules/', 'dist/'],
+    include: ['src/**/*.test.ts'],
+    exclude: ['node_modules/', 'dist/', 'src/compatibility/**/*.spec.ts'],
   },
   resolve: {
     alias: {

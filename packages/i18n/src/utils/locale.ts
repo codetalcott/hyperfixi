@@ -55,6 +55,9 @@ export function detectLocale(text: string, supportedLocales: string[]): string {
     for (const category of DICTIONARY_CATEGORIES) {
       const translations = dictionary[category];
       for (const keyword of Object.values(translations)) {
+        // Skip empty or single-character keywords (too ambiguous for detection)
+        if (!keyword || keyword.length < 2) continue;
+
         // Use word boundary matching for accuracy
         const regex = new RegExp(`\\b${escapeRegex(keyword)}\\b`, 'gi');
         const matches = text.match(regex);

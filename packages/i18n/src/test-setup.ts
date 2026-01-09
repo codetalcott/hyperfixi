@@ -70,32 +70,106 @@ Object.defineProperty(globalThis, 'performance', {
 });
 
 // Mock Intl APIs for consistent testing
-const mockNumberFormat = {
-  format: (value: number) => value.toLocaleString('en-US'),
-};
+// These need to work as constructors (called with `new`)
+class MockNumberFormat {
+  private locale: string;
+  private options: Intl.NumberFormatOptions;
 
-const mockDateFormat = {
-  format: (date: Date) => date.toLocaleDateString('en-US'),
-};
+  constructor(locale?: string, options?: Intl.NumberFormatOptions) {
+    this.locale = locale || 'en-US';
+    this.options = options || {};
+  }
 
-const mockRelativeTimeFormat = {
-  format: (value: number, unit: string) => `${value} ${unit}${Math.abs(value) !== 1 ? 's' : ''} ago`,
-};
+  format(value: number): string {
+    const { style, currency, minimumFractionDigits, maximumFractionDigits } = this.options;
 
-const mockListFormat = {
-  format: (items: string[]) => {
+    if (style === 'currency' && currency) {
+      const symbols: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' };
+      const symbol = symbols[currency] || currency;
+      return `${symbol}${value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+    }
+
+    if (style === 'percent') {
+      return `${(value * 100).toFixed(0)}%`;
+    }
+
+    // Default decimal formatting with proper grouping
+    const minFrac = minimumFractionDigits ?? 0;
+    const maxFrac = maximumFractionDigits ?? 3;
+    let formatted = value.toFixed(Math.max(minFrac, Math.min(maxFrac, 2)));
+    // Remove trailing zeros if not required
+    if (minFrac === 0 && formatted.includes('.')) {
+      formatted = formatted.replace(/\.?0+$/, '');
+    }
+    // Add thousand separators
+    const parts = formatted.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  }
+}
+
+class MockDateTimeFormat {
+  private locale: string;
+  private options: Intl.DateTimeFormatOptions;
+
+  constructor(locale?: string, options?: Intl.DateTimeFormatOptions) {
+    this.locale = locale || 'en-US';
+    this.options = options || {};
+  }
+
+  format(date: Date | number): string {
+    const d = new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+
+    if (this.options.timeStyle && this.options.dateStyle) {
+      return `${month}/${day}/${year}, ${hours}:${minutes}`;
+    }
+    if (this.options.timeStyle) {
+      return `${hours}:${minutes}`;
+    }
+    return `${month}/${day}/${year}`;
+  }
+}
+
+class MockRelativeTimeFormat {
+  private locale: string;
+  private options: Intl.RelativeTimeFormatOptions;
+
+  constructor(locale?: string, options?: Intl.RelativeTimeFormatOptions) {
+    this.locale = locale || 'en-US';
+    this.options = options || {};
+  }
+
+  format(value: number, unit: Intl.RelativeTimeFormatUnit): string {
+    const absValue = Math.abs(value);
+    const unitStr = absValue === 1 ? unit : `${unit}s`;
+    if (value < 0) {
+      return `${absValue} ${unitStr} ago`;
+    }
+    return `in ${absValue} ${unitStr}`;
+  }
+}
+
+class MockListFormat {
+  constructor(_locale?: string, _options?: { style?: string; type?: string }) {}
+
+  format(items: string[]): string {
     if (items.length <= 1) return items[0] || '';
     if (items.length === 2) return `${items[0]} and ${items[1]}`;
     return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`;
-  },
-};
+  }
+}
 
 Object.defineProperty(globalThis, 'Intl', {
   value: {
-    NumberFormat: vi.fn(() => mockNumberFormat),
-    DateTimeFormat: vi.fn(() => mockDateFormat),
-    RelativeTimeFormat: vi.fn(() => mockRelativeTimeFormat),
-    ListFormat: vi.fn(() => mockListFormat),
+    NumberFormat: MockNumberFormat,
+    DateTimeFormat: MockDateTimeFormat,
+    RelativeTimeFormat: MockRelativeTimeFormat,
+    ListFormat: MockListFormat,
   },
   writable: true,
 });
