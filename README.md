@@ -24,7 +24,7 @@ The result is more complex than original hyperscript. To keep bundle size reason
 | ------- | ----- | ------ |
 | [@hyperfixi/core](./packages/core) | 3316 passing | Stable |
 | [@hyperfixi/semantic](./packages/semantic) | 1984 passing | Stable |
-| [@hyperfixi/i18n](./packages/i18n) | 299 passing, 10 failing | Mostly stable |
+| [@hyperfixi/i18n](./packages/i18n) | 309 passing | Stable |
 | [@hyperfixi/vite-plugin](./packages/vite-plugin) | 163 passing | Stable |
 
 ### Language Support
@@ -142,7 +142,6 @@ Then fill in keyword translations in `src/generators/profiles/{code}.ts`.
 ## Known Limitations
 
 - TypeScript: 3 minor type errors in test files
-- i18n: 10 failing tests (language detection edge cases)
 - Official hyperscript compatibility: ~85% (complex behaviors may differ)
 
 ## Contributing
