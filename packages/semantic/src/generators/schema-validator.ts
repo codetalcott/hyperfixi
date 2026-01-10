@@ -18,8 +18,9 @@ import type { ActionType } from '../types';
  */
 export interface SchemaValidation {
   action: ActionType;
-  warnings: string[];
-  errors: string[];
+  notes: string[];      // Informational notes (known patterns, not issues)
+  warnings: string[];   // Potential issues to review
+  errors: string[];     // Definite problems that should be fixed
 }
 
 /**
@@ -28,24 +29,43 @@ export interface SchemaValidation {
  * @param schema - The command schema to validate
  * @returns Validation result with warnings and errors
  */
+// Commands where multi-type patient roles are intentional (not ambiguous)
+const MULTI_TYPE_PATIENT_COMMANDS = new Set([
+  'put', 'append', 'prepend', 'log', 'throw', 'make', 'measure', 'return',
+  'swap', 'morph',  // DOM manipulation commands that accept various content types
+]);
+
+// Commands that intentionally have no required roles
+const NO_REQUIRED_ROLES_COMMANDS = new Set([
+  'compound', 'else', 'halt', 'continue', 'async', 'init',
+  'settle', 'focus', 'blur', 'return', 'js', 'measure',  // Commands with optional-only roles
+]);
+
 export function validateCommandSchema(schema: CommandSchema): SchemaValidation {
+  const notes: string[] = [];
   const warnings: string[] = [];
   const errors: string[] = [];
 
   // Check for ambiguous type combinations in roles
   for (const role of schema.roles) {
-    // Warn if a role accepts both 'literal' and 'selector'
-    // This can cause ambiguous type inference for values with special characters
+    // Check if a role accepts both 'literal' and 'selector'
     if (role.expectedTypes.includes('literal') && role.expectedTypes.includes('selector')) {
-      warnings.push(
-        `Role '${role.role}' accepts both 'literal' and 'selector'. ` +
-        `This may cause ambiguous type inference for values starting with special characters (* . # etc.). ` +
-        `Consider being more specific about which type is expected.`
-      );
+      if (role.role === 'patient' && MULTI_TYPE_PATIENT_COMMANDS.has(schema.action)) {
+        // Known pattern - add as note, not warning
+        notes.push(
+          `Role '${role.role}' accepts multiple types (expected for ${schema.action} command).`
+        );
+      } else {
+        warnings.push(
+          `Role '${role.role}' accepts both 'literal' and 'selector'. ` +
+          `This may cause ambiguous type inference for values starting with special characters (* . # etc.). ` +
+          `Consider being more specific about which type is expected.`
+        );
+      }
     }
 
     // Warn if a role has too many expected types (> 3)
-    if (role.expectedTypes.length > 3) {
+    if (role.expectedTypes.length > 3 && !MULTI_TYPE_PATIENT_COMMANDS.has(schema.action)) {
       warnings.push(
         `Role '${role.role}' accepts ${role.expectedTypes.length} different types. ` +
         `This may make type inference unreliable. Consider narrowing the accepted types.`
@@ -75,13 +95,18 @@ export function validateCommandSchema(schema: CommandSchema): SchemaValidation {
       break;
   }
 
-  // Check for schemas with no required roles (usually a mistake)
+  // Check for schemas with no required roles
   const requiredRoles = schema.roles.filter(r => r.required);
-  if (requiredRoles.length === 0 && schema.action !== 'else') {
-    warnings.push(`Command has no required roles. Is this intentional?`);
+  if (requiredRoles.length === 0) {
+    if (NO_REQUIRED_ROLES_COMMANDS.has(schema.action)) {
+      // Known pattern - add as note
+      notes.push(`Command has no required roles (expected for ${schema.action}).`);
+    } else {
+      warnings.push(`Command has no required roles. Is this intentional?`);
+    }
   }
 
-  return { action: schema.action, warnings, errors };
+  return { action: schema.action, notes, warnings, errors };
 }
 
 /**
@@ -179,15 +204,20 @@ function validateLoopSchema(
  * @returns Map of action names to validation results (only includes schemas with issues)
  */
 export function validateAllSchemas(
-  schemas: Record<string, CommandSchema>
+  schemas: Record<string, CommandSchema>,
+  options: { includeNotes?: boolean } = {}
 ): Map<string, SchemaValidation> {
   const results = new Map<string, SchemaValidation>();
+  const { includeNotes = false } = options;
 
   for (const [action, schema] of Object.entries(schemas)) {
     const validation = validateCommandSchema(schema);
 
-    // Only include in results if there are warnings or errors
-    if (validation.warnings.length > 0 || validation.errors.length > 0) {
+    // Include in results if there are warnings/errors (or notes if requested)
+    const hasIssues = validation.warnings.length > 0 || validation.errors.length > 0;
+    const hasNotes = includeNotes && validation.notes.length > 0;
+
+    if (hasIssues || hasNotes) {
       results.set(action, validation);
     }
   }
@@ -199,10 +229,15 @@ export function validateAllSchemas(
  * Format validation results for console output.
  *
  * @param validations - Map of validation results
+ * @param options - Formatting options
  * @returns Formatted string for console output
  */
-export function formatValidationResults(validations: Map<string, SchemaValidation>): string {
+export function formatValidationResults(
+  validations: Map<string, SchemaValidation>,
+  options: { showNotes?: boolean } = {}
+): string {
   const lines: string[] = [];
+  const { showNotes = false } = options;
 
   for (const [action, result] of validations) {
     if (result.errors.length > 0) {
@@ -216,6 +251,13 @@ export function formatValidationResults(validations: Map<string, SchemaValidatio
       lines.push(`  ⚠️  ${action}:`);
       for (const warning of result.warnings) {
         lines.push(`     ${warning}`);
+      }
+    }
+
+    if (showNotes && result.notes.length > 0) {
+      lines.push(`  ℹ️  ${action}:`);
+      for (const note of result.notes) {
+        lines.push(`     ${note}`);
       }
     }
   }
