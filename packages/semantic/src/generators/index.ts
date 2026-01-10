@@ -94,3 +94,23 @@ export {
   getGeneratorSummary,
   validateLanguageKeywords,
 } from './pattern-generator';
+
+// Schema validation (for build-time validation and tooling)
+export {
+  type SchemaValidationItem,
+  type SchemaValidationSeverity,
+  type SchemaValidation,
+  type SchemaValidationResult,
+  SchemaErrorCodes,
+  validateCommandSchema,
+  validateAllSchemas,
+  formatValidationResults,
+  getValidationStats,
+} from './schema-validator';
+
+export {
+  type SchemaErrorCode,
+  SchemaErrorMessages,
+  SchemaErrorSuggestions,
+  createSchemaValidationItem,
+} from './schema-error-codes';

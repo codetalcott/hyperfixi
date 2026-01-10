@@ -12,39 +12,101 @@
 
 import type { CommandSchema } from './command-schemas';
 import type { ActionType } from '../types';
+import {
+  type SchemaValidationItem,
+  type SchemaValidationSeverity,
+  SchemaErrorCodes,
+  createSchemaValidationItem,
+} from './schema-error-codes';
+
+// Re-export for convenience
+export type { SchemaValidationItem, SchemaValidationSeverity };
+export { SchemaErrorCodes };
 
 /**
  * Result from validating a single command schema.
+ *
+ * The `items` array contains all validation results with machine-readable codes.
+ * For backward compatibility, `notes`, `warnings`, and `errors` getters are provided.
  */
 export interface SchemaValidation {
   action: ActionType;
-  notes: string[];      // Informational notes (known patterns, not issues)
-  warnings: string[];   // Potential issues to review
-  errors: string[];     // Definite problems that should be fixed
+  /** All validation items with structured codes and severity */
+  items: SchemaValidationItem[];
 }
+
+/**
+ * Extended validation result with backward-compatible getters.
+ */
+export interface SchemaValidationResult extends SchemaValidation {
+  /** @deprecated Use items.filter(i => i.severity === 'note') */
+  readonly notes: string[];
+  /** @deprecated Use items.filter(i => i.severity === 'warning') */
+  readonly warnings: string[];
+  /** @deprecated Use items.filter(i => i.severity === 'error') */
+  readonly errors: string[];
+}
+
+/**
+ * Create a SchemaValidationResult with backward-compatible getters.
+ */
+function createValidationResult(
+  action: ActionType,
+  items: SchemaValidationItem[]
+): SchemaValidationResult {
+  return {
+    action,
+    items,
+    get notes() {
+      return items.filter((i) => i.severity === 'note').map((i) => i.message);
+    },
+    get warnings() {
+      return items.filter((i) => i.severity === 'warning').map((i) => i.message);
+    },
+    get errors() {
+      return items.filter((i) => i.severity === 'error').map((i) => i.message);
+    },
+  };
+}
+
+// Commands where multi-type patient roles are intentional (not ambiguous)
+const MULTI_TYPE_PATIENT_COMMANDS = new Set([
+  'put',
+  'append',
+  'prepend',
+  'log',
+  'throw',
+  'make',
+  'measure',
+  'return',
+  'swap',
+  'morph', // DOM manipulation commands that accept various content types
+]);
+
+// Commands that intentionally have no required roles
+const NO_REQUIRED_ROLES_COMMANDS = new Set([
+  'compound',
+  'else',
+  'halt',
+  'continue',
+  'async',
+  'init',
+  'settle',
+  'focus',
+  'blur',
+  'return',
+  'js',
+  'measure', // Commands with optional-only roles
+]);
 
 /**
  * Validate a single command schema for potential issues.
  *
  * @param schema - The command schema to validate
- * @returns Validation result with warnings and errors
+ * @returns Validation result with structured items and backward-compatible getters
  */
-// Commands where multi-type patient roles are intentional (not ambiguous)
-const MULTI_TYPE_PATIENT_COMMANDS = new Set([
-  'put', 'append', 'prepend', 'log', 'throw', 'make', 'measure', 'return',
-  'swap', 'morph',  // DOM manipulation commands that accept various content types
-]);
-
-// Commands that intentionally have no required roles
-const NO_REQUIRED_ROLES_COMMANDS = new Set([
-  'compound', 'else', 'halt', 'continue', 'async', 'init',
-  'settle', 'focus', 'blur', 'return', 'js', 'measure',  // Commands with optional-only roles
-]);
-
-export function validateCommandSchema(schema: CommandSchema): SchemaValidation {
-  const notes: string[] = [];
-  const warnings: string[] = [];
-  const errors: string[] = [];
+export function validateCommandSchema(schema: CommandSchema): SchemaValidationResult {
+  const items: SchemaValidationItem[] = [];
 
   // Check for ambiguous type combinations in roles
   for (const role of schema.roles) {
@@ -52,23 +114,35 @@ export function validateCommandSchema(schema: CommandSchema): SchemaValidation {
     if (role.expectedTypes.includes('literal') && role.expectedTypes.includes('selector')) {
       if (role.role === 'patient' && MULTI_TYPE_PATIENT_COMMANDS.has(schema.action)) {
         // Known pattern - add as note, not warning
-        notes.push(
-          `Role '${role.role}' accepts multiple types (expected for ${schema.action} command).`
+        items.push(
+          createSchemaValidationItem(
+            SchemaErrorCodes.MULTI_TYPE_PATIENT_EXPECTED,
+            'note',
+            { role: role.role, command: schema.action },
+            role.role
+          )
         );
       } else {
-        warnings.push(
-          `Role '${role.role}' accepts both 'literal' and 'selector'. ` +
-          `This may cause ambiguous type inference for values starting with special characters (* . # etc.). ` +
-          `Consider being more specific about which type is expected.`
+        items.push(
+          createSchemaValidationItem(
+            SchemaErrorCodes.AMBIGUOUS_TYPE_LITERAL_SELECTOR,
+            'warning',
+            { role: role.role },
+            role.role
+          )
         );
       }
     }
 
     // Warn if a role has too many expected types (> 3)
     if (role.expectedTypes.length > 3 && !MULTI_TYPE_PATIENT_COMMANDS.has(schema.action)) {
-      warnings.push(
-        `Role '${role.role}' accepts ${role.expectedTypes.length} different types. ` +
-        `This may make type inference unreliable. Consider narrowing the accepted types.`
+      items.push(
+        createSchemaValidationItem(
+          SchemaErrorCodes.TOO_MANY_EXPECTED_TYPES,
+          'warning',
+          { role: role.role, count: role.expectedTypes.length },
+          role.role
+        )
       );
     }
   }
@@ -76,63 +150,66 @@ export function validateCommandSchema(schema: CommandSchema): SchemaValidation {
   // Command-specific validation rules
   switch (schema.action) {
     case 'transition':
-      validateTransitionSchema(schema, warnings, errors);
+      validateTransitionSchema(schema, items);
       break;
 
     case 'on':
-      validateEventHandlerSchema(schema, warnings, errors);
+      validateEventHandlerSchema(schema, items);
       break;
 
     case 'if':
     case 'unless':
-      validateConditionalSchema(schema, warnings, errors);
+      validateConditionalSchema(schema, items);
       break;
 
     case 'repeat':
     case 'for':
     case 'while':
-      validateLoopSchema(schema, warnings, errors);
+      validateLoopSchema(schema, items);
       break;
   }
 
   // Check for schemas with no required roles
-  const requiredRoles = schema.roles.filter(r => r.required);
+  const requiredRoles = schema.roles.filter((r) => r.required);
   if (requiredRoles.length === 0) {
     if (NO_REQUIRED_ROLES_COMMANDS.has(schema.action)) {
       // Known pattern - add as note
-      notes.push(`Command has no required roles (expected for ${schema.action}).`);
+      items.push(
+        createSchemaValidationItem(SchemaErrorCodes.NO_REQUIRED_ROLES_EXPECTED, 'note', {
+          command: schema.action,
+        })
+      );
     } else {
-      warnings.push(`Command has no required roles. Is this intentional?`);
+      items.push(createSchemaValidationItem(SchemaErrorCodes.NO_REQUIRED_ROLES, 'warning', {}));
     }
   }
 
-  return { action: schema.action, notes, warnings, errors };
+  return createValidationResult(schema.action, items);
 }
 
 /**
  * Validate the transition command schema.
  */
-function validateTransitionSchema(
-  schema: CommandSchema,
-  warnings: string[],
-  errors: string[]
-): void {
-  const patientRole = schema.roles.find(r => r.role === 'patient');
-  const goalRole = schema.roles.find(r => r.role === 'goal');
+function validateTransitionSchema(schema: CommandSchema, items: SchemaValidationItem[]): void {
+  const patientRole = schema.roles.find((r) => r.role === 'patient');
+  const goalRole = schema.roles.find((r) => r.role === 'goal');
 
   // Check that patient (property name) only accepts literals
   if (patientRole && patientRole.expectedTypes.includes('selector')) {
-    warnings.push(
-      `Transition command 'patient' role (CSS property name) should only accept 'literal', not 'selector'. ` +
-      `CSS property names like 'background-color' are strings, not CSS selectors.`
+    items.push(
+      createSchemaValidationItem(
+        SchemaErrorCodes.TRANSITION_PATIENT_ACCEPTS_SELECTOR,
+        'warning',
+        {},
+        'patient'
+      )
     );
   }
 
   // Check that transition has a goal role for the target value
   if (patientRole && !goalRole) {
-    errors.push(
-      `Transition command requires a 'goal' role for the target value (to <value>). ` +
-      `Without it, there's no way to specify what value to transition to.`
+    items.push(
+      createSchemaValidationItem(SchemaErrorCodes.TRANSITION_MISSING_GOAL, 'error', {})
     );
   }
 }
@@ -140,59 +217,67 @@ function validateTransitionSchema(
 /**
  * Validate event handler schemas (on command).
  */
-function validateEventHandlerSchema(
-  schema: CommandSchema,
-  warnings: string[],
-  _errors: string[]
-): void {
-  const eventRole = schema.roles.find(r => r.role === 'event');
+function validateEventHandlerSchema(schema: CommandSchema, items: SchemaValidationItem[]): void {
+  const eventRole = schema.roles.find((r) => r.role === 'event');
 
   if (!eventRole) {
-    warnings.push(`Event handler command should have an 'event' role to specify which event to listen for.`);
+    items.push(
+      createSchemaValidationItem(SchemaErrorCodes.EVENT_HANDLER_MISSING_EVENT, 'warning', {})
+    );
   }
 
   if (eventRole && !eventRole.required) {
-    warnings.push(`Event role should be required - every event handler needs an event to listen for.`);
+    items.push(
+      createSchemaValidationItem(
+        SchemaErrorCodes.EVENT_HANDLER_EVENT_NOT_REQUIRED,
+        'warning',
+        {}
+      )
+    );
   }
 }
 
 /**
  * Validate conditional schemas (if/unless).
  */
-function validateConditionalSchema(
-  schema: CommandSchema,
-  warnings: string[],
-  _errors: string[]
-): void {
-  const conditionRole = schema.roles.find(r => r.role === 'condition');
+function validateConditionalSchema(schema: CommandSchema, items: SchemaValidationItem[]): void {
+  const conditionRole = schema.roles.find((r) => r.role === 'condition');
 
   if (!conditionRole) {
-    warnings.push(`Conditional command should have a 'condition' role for the boolean expression.`);
+    items.push(
+      createSchemaValidationItem(SchemaErrorCodes.CONDITIONAL_MISSING_CONDITION, 'warning', {})
+    );
   }
 
   if (conditionRole && !conditionRole.required) {
-    warnings.push(`Condition role should be required - conditionals need a condition to evaluate.`);
+    items.push(
+      createSchemaValidationItem(
+        SchemaErrorCodes.CONDITIONAL_CONDITION_NOT_REQUIRED,
+        'warning',
+        {}
+      )
+    );
   }
 }
 
 /**
  * Validate loop schemas (repeat, for, while).
  */
-function validateLoopSchema(
-  schema: CommandSchema,
-  warnings: string[],
-  _errors: string[]
-): void {
+function validateLoopSchema(schema: CommandSchema, items: SchemaValidationItem[]): void {
   // Different loop types have different requirements
   if (schema.action === 'for') {
-    const sourceRole = schema.roles.find(r => r.role === 'source');
+    const sourceRole = schema.roles.find((r) => r.role === 'source');
     if (!sourceRole) {
-      warnings.push(`For-loop should have a 'source' role for the collection to iterate over.`);
+      items.push(
+        createSchemaValidationItem(SchemaErrorCodes.FOR_LOOP_MISSING_SOURCE, 'warning', {})
+      );
     }
   } else if (schema.action === 'while') {
-    const conditionRole = schema.roles.find(r => r.role === 'condition');
+    const conditionRole = schema.roles.find((r) => r.role === 'condition');
     if (!conditionRole) {
-      warnings.push(`While-loop should have a 'condition' role for the loop condition.`);
+      items.push(
+        createSchemaValidationItem(SchemaErrorCodes.WHILE_LOOP_MISSING_CONDITION, 'warning', {})
+      );
     }
   }
 }
@@ -201,23 +286,26 @@ function validateLoopSchema(
  * Validate all command schemas in the registry.
  *
  * @param schemas - Map of action names to command schemas
+ * @param options - Validation options
  * @returns Map of action names to validation results (only includes schemas with issues)
  */
 export function validateAllSchemas(
   schemas: Record<string, CommandSchema>,
   options: { includeNotes?: boolean } = {}
-): Map<string, SchemaValidation> {
-  const results = new Map<string, SchemaValidation>();
+): Map<string, SchemaValidationResult> {
+  const results = new Map<string, SchemaValidationResult>();
   const { includeNotes = false } = options;
 
   for (const [action, schema] of Object.entries(schemas)) {
     const validation = validateCommandSchema(schema);
 
     // Include in results if there are warnings/errors (or notes if requested)
-    const hasIssues = validation.warnings.length > 0 || validation.errors.length > 0;
-    const hasNotes = includeNotes && validation.notes.length > 0;
+    const hasWarningsOrErrors = validation.items.some(
+      (i) => i.severity === 'warning' || i.severity === 'error'
+    );
+    const hasNotes = includeNotes && validation.items.some((i) => i.severity === 'note');
 
-    if (hasIssues || hasNotes) {
+    if (hasWarningsOrErrors || hasNotes) {
       results.set(action, validation);
     }
   }
@@ -233,34 +321,83 @@ export function validateAllSchemas(
  * @returns Formatted string for console output
  */
 export function formatValidationResults(
-  validations: Map<string, SchemaValidation>,
-  options: { showNotes?: boolean } = {}
+  validations: Map<string, SchemaValidationResult>,
+  options: { showNotes?: boolean; showCodes?: boolean } = {}
 ): string {
   const lines: string[] = [];
-  const { showNotes = false } = options;
+  const { showNotes = false, showCodes = true } = options;
 
   for (const [action, result] of validations) {
-    if (result.errors.length > 0) {
+    const errors = result.items.filter((i) => i.severity === 'error');
+    const warnings = result.items.filter((i) => i.severity === 'warning');
+    const notes = result.items.filter((i) => i.severity === 'note');
+
+    if (errors.length > 0) {
       lines.push(`  ❌ ${action}:`);
-      for (const error of result.errors) {
-        lines.push(`     ERROR: ${error}`);
+      for (const item of errors) {
+        const codeStr = showCodes ? ` [${item.code}]` : '';
+        lines.push(`     ERROR${codeStr}: ${item.message}`);
+        if (item.suggestion) {
+          lines.push(`     💡 Suggestion: ${item.suggestion}`);
+        }
       }
     }
 
-    if (result.warnings.length > 0) {
+    if (warnings.length > 0) {
       lines.push(`  ⚠️  ${action}:`);
-      for (const warning of result.warnings) {
-        lines.push(`     ${warning}`);
+      for (const item of warnings) {
+        const codeStr = showCodes ? ` [${item.code}]` : '';
+        lines.push(`     ${codeStr ? `${item.code}: ` : ''}${item.message}`);
+        if (item.suggestion) {
+          lines.push(`     💡 ${item.suggestion}`);
+        }
       }
     }
 
-    if (showNotes && result.notes.length > 0) {
+    if (showNotes && notes.length > 0) {
       lines.push(`  ℹ️  ${action}:`);
-      for (const note of result.notes) {
-        lines.push(`     ${note}`);
+      for (const item of notes) {
+        const codeStr = showCodes ? ` [${item.code}]` : '';
+        lines.push(`     ${codeStr ? `${item.code}: ` : ''}${item.message}`);
       }
     }
   }
 
   return lines.join('\n');
+}
+
+/**
+ * Get validation statistics.
+ */
+export function getValidationStats(
+  validations: Map<string, SchemaValidationResult>
+): {
+  totalCommands: number;
+  errors: number;
+  warnings: number;
+  notes: number;
+  byCode: Record<string, number>;
+} {
+  let errors = 0;
+  let warnings = 0;
+  let notes = 0;
+  const byCode: Record<string, number> = {};
+
+  for (const result of validations.values()) {
+    for (const item of result.items) {
+      if (item.severity === 'error') errors++;
+      else if (item.severity === 'warning') warnings++;
+      else if (item.severity === 'note') notes++;
+
+      byCode[item.code] = (byCode[item.code] || 0) + 1;
+    }
+  }
+
+  return {
+    totalCommands: validations.size,
+    errors,
+    warnings,
+    notes,
+    byCode,
+  };
 }
