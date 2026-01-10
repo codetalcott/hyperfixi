@@ -89,15 +89,7 @@ interface CodeExample {
   feature: string;
 }
 
-// Singleton transformer instance
-let grammarTransformer: GrammarTransformer | null = null;
-
-function getGrammarTransformer(): GrammarTransformer {
-  if (!grammarTransformer) {
-    grammarTransformer = new GrammarTransformer();
-  }
-  return grammarTransformer;
-}
+// GrammarTransformer is created per-language (constructor requires targetLocale)
 
 /**
  * Fallback keyword substitution for languages without grammar transformation.
@@ -141,8 +133,9 @@ function translateHyperscript(code: string, language: string): string {
   const grammarProfile = getGrammarProfile(language);
   if (grammarProfile) {
     try {
-      const transformer = getGrammarTransformer();
-      const result = transformer.transform(code, 'en', language);
+      // Create transformer with correct API: sourceLocale='en', targetLocale=language
+      const transformer = new GrammarTransformer('en', language);
+      const result = transformer.transform(code);  // Only pass code
       if (verbose) {
         console.log(`  [grammar] ${language}: "${code}" -> "${result}"`);
       }
@@ -150,7 +143,7 @@ function translateHyperscript(code: string, language: string): string {
     } catch (error) {
       // Fall back to keyword substitution if transformation fails
       if (verbose) {
-        console.log(`  [fallback] ${language}: grammar transform failed, using keywords`);
+        console.log(`  [fallback] ${language}: grammar transform failed (${error}), using keywords`);
       }
       return keywordSubstitute(code, language);
     }
