@@ -13,7 +13,7 @@ import type {
   SemanticRole,
   GrammarRule,
 } from './types';
-import { reorderRoles, insertMarkers } from './types';
+import { reorderRoles, insertMarkers, joinTokens } from './types';
 import { getProfile, profiles } from './profiles';
 import { hasDirectMapping, getDirectMapping } from './direct-mappings';
 import { dictionaries } from '../dictionaries';
@@ -920,11 +920,12 @@ export class GrammarTransformer {
         this.targetProfile.markers,
         this.targetProfile.adpositionType
       );
-      return result.join(' ');
+      // Use joinTokens for proper suffix/prefix attachment (Turkish -i, Quechua -ta, etc.)
+      return joinTokens(result);
     }
 
-    // 7. Join without markers
-    return reordered.map(e => e.translated || e.value).join(' ');
+    // 7. Join without markers (still use joinTokens for consistency)
+    return joinTokens(reordered.map(e => e.translated || e.value));
   }
 
   /**

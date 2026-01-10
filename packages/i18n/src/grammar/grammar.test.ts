@@ -699,11 +699,37 @@ describe('Word Order Integration Tests', () => {
       expect(result).toContain('를'); // Object marker
     });
 
+    it('should preserve Japanese particle spacing (regression)', () => {
+      const transformer = new GrammarTransformer('en', 'ja');
+      const result = transformer.transform('on click toggle .active');
+      // Japanese particles (を, で, に) should have spaces around them
+      // They do NOT use hyphen notation like Turkish suffixes
+      expect(result).toContain('.active を'); // Space before particle
+    });
+
     it('should attach Turkish suffixes correctly', () => {
       const transformer = new GrammarTransformer('en', 'tr');
       const result = transformer.transform('on click toggle .active');
-      // Turkish uses case suffixes
+      // Turkish uses case suffixes - should be attached without spaces
       expect(result).toContain('.active');
+      // Verify suffixes are attached (no space before suffix)
+      expect(result).not.toMatch(/\s-[iae]/); // No space before -i, -a, -e suffixes
+    });
+
+    it('should attach Turkish accusative suffix -i to patient', () => {
+      const transformer = new GrammarTransformer('en', 'tr');
+      const result = transformer.transform('on click toggle .active');
+      // Should be ".activei" not ".active -i"
+      expect(result).toMatch(/\.active[iıuü]/); // Vowel harmony variants
+      expect(result).not.toContain('.active -i');
+      expect(result).not.toContain('.active -ı');
+    });
+
+    it('should attach Turkish locative suffix -de to event', () => {
+      const transformer = new GrammarTransformer('en', 'tr');
+      const result = transformer.transform('on click toggle .active');
+      // Event "tıklama" should have locative attached: "tıklamade" or "tıklamada"
+      expect(result).toMatch(/tıklama[dD][aAeE]/);
     });
   });
 

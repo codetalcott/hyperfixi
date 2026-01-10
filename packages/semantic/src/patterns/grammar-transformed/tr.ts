@@ -2,12 +2,15 @@
  * Turkish Grammar-Transformed Patterns
  *
  * These patterns match the hybrid output from GrammarTransformer where
- * event and command are combined in SOV order:
+ * event and command are combined in SOV order with attached suffixes:
  *   English: "on click toggle .active"
- *   Grammar output: ".active -i tıklama -de değiştir"
+ *   Grammar output: ".activei tıklamade değiştir"
  *
- * Format: {patient} {event-noun} {action}
- * Note: Turkish uses agglutinative suffixes (-i accusative, -de locative)
+ * Format: {patient}i tıklamade {action}
+ * Note: Turkish uses agglutinative suffixes attached directly:
+ *   - -i/-ı/-u/-ü: accusative (patient)
+ *   - -de/-da: locative (event)
+ *   - -e/-a: dative (destination)
  *
  * Tree-shakeable: Only included when Turkish is imported.
  */
@@ -28,10 +31,11 @@ export function getGrammarTransformedPatternsTr(): LanguagePattern[] {
       command: 'on',
       priority: 75,
       template: {
-        format: '{patient} tıklama değiştir',
+        // Matches: ".activei tıklamade değiştir"
+        format: '{patient} tıklamade değiştir',
         tokens: [
-          { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'tıklama', alternatives: ['tıklayınca', 'tıkla'] },
+          { type: 'role', role: 'patient' },  // Captures ".activei" (with suffix)
+          { type: 'literal', value: 'tıklamade', alternatives: ['tıklamada'] },
           { type: 'literal', value: 'değiştir', alternatives: ['değiştirmek', 'aç/kapat'] },
         ],
       },
@@ -51,10 +55,10 @@ export function getGrammarTransformedPatternsTr(): LanguagePattern[] {
       command: 'on',
       priority: 75,
       template: {
-        format: '{patient} tıklama ekle',
+        format: '{patient} tıklamade ekle',
         tokens: [
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'tıklama', alternatives: ['tıklayınca', 'tıkla'] },
+          { type: 'literal', value: 'tıklamade', alternatives: ['tıklamada'] },
           { type: 'literal', value: 'ekle', alternatives: ['eklemek', 'koy'] },
         ],
       },
@@ -74,10 +78,10 @@ export function getGrammarTransformedPatternsTr(): LanguagePattern[] {
       command: 'on',
       priority: 75,
       template: {
-        format: '{patient} tıklama kaldır',
+        format: '{patient} tıklamade kaldır',
         tokens: [
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'tıklama', alternatives: ['tıklayınca', 'tıkla'] },
+          { type: 'literal', value: 'tıklamade', alternatives: ['tıklamada'] },
           { type: 'literal', value: 'kaldır', alternatives: ['kaldırmak', 'sil', 'çıkar'] },
         ],
       },
@@ -97,10 +101,10 @@ export function getGrammarTransformedPatternsTr(): LanguagePattern[] {
       command: 'on',
       priority: 75,
       template: {
-        format: '{patient} tıklama artır',
+        format: '{patient} tıklamade artır',
         tokens: [
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'tıklama', alternatives: ['tıklayınca', 'tıkla'] },
+          { type: 'literal', value: 'tıklamade', alternatives: ['tıklamada'] },
           { type: 'literal', value: 'artır', alternatives: ['artırmak', 'arttır'] },
         ],
       },
@@ -120,10 +124,10 @@ export function getGrammarTransformedPatternsTr(): LanguagePattern[] {
       command: 'on',
       priority: 75,
       template: {
-        format: '{patient} tıklama göster',
+        format: '{patient} tıklamade göster',
         tokens: [
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'tıklama', alternatives: ['tıklayınca', 'tıkla'] },
+          { type: 'literal', value: 'tıklamade', alternatives: ['tıklamada'] },
           { type: 'literal', value: 'göster', alternatives: ['göstermek', 'görüntüle'] },
         ],
       },
@@ -143,10 +147,10 @@ export function getGrammarTransformedPatternsTr(): LanguagePattern[] {
       command: 'on',
       priority: 75,
       template: {
-        format: '{patient} tıklama gizle',
+        format: '{patient} tıklamade gizle',
         tokens: [
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'tıklama', alternatives: ['tıklayınca', 'tıkla'] },
+          { type: 'literal', value: 'tıklamade', alternatives: ['tıklamada'] },
           { type: 'literal', value: 'gizle', alternatives: ['gizlemek', 'sakla'] },
         ],
       },
@@ -166,10 +170,10 @@ export function getGrammarTransformedPatternsTr(): LanguagePattern[] {
       command: 'on',
       priority: 75,
       template: {
-        format: '{patient} tıklama ayarla',
+        format: '{patient} tıklamade ayarla',
         tokens: [
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'tıklama', alternatives: ['tıklayınca', 'tıkla'] },
+          { type: 'literal', value: 'tıklamade', alternatives: ['tıklamada'] },
           { type: 'literal', value: 'ayarla', alternatives: ['ayarlamak', 'belirle'] },
         ],
       },
@@ -189,10 +193,10 @@ export function getGrammarTransformedPatternsTr(): LanguagePattern[] {
       command: 'on',
       priority: 75,
       template: {
-        format: '{patient} tıklama azalt',
+        format: '{patient} tıklamade azalt',
         tokens: [
           { type: 'role', role: 'patient' },
-          { type: 'literal', value: 'tıklama', alternatives: ['tıklayınca', 'tıkla'] },
+          { type: 'literal', value: 'tıklamade', alternatives: ['tıklamada'] },
           { type: 'literal', value: 'azalt', alternatives: ['azaltmak', 'düşür'] },
         ],
       },
