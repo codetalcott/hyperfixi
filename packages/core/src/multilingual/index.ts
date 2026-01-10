@@ -13,7 +13,6 @@
 import type { SemanticNode, ASTNode } from '@hyperfixi/semantic';
 import {
   SemanticGrammarBridge,
-  semanticNodeToParsedStatement,
   getDefaultBridge,
   translate,
   type BridgeConfig,
@@ -24,7 +23,6 @@ import {
 // Re-export bridge components
 export {
   SemanticGrammarBridge,
-  semanticNodeToParsedStatement,
   getDefaultBridge,
   translate,
   type BridgeConfig,

@@ -224,7 +224,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@hyperfixi/i18n": "file:../i18n",
     "@hyperfixi/semantic": "file:../semantic",
     "esbuild": "0.25.11",
     "jsdom": "^26.1.0",

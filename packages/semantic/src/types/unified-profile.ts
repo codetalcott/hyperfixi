@@ -16,7 +16,7 @@ import type {
   AdpositionType,
   MorphologyType,
   GrammaticalMarker,
-} from '@hyperfixi/i18n/src/grammar/types';
+} from './grammar-types';
 
 // =============================================================================
 // Unified Profile Types

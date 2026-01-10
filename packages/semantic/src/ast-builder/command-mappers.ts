@@ -5,8 +5,7 @@
  * its semantic roles to the appropriate AST structure.
  */
 
-import type { CommandSemanticNode, ActionType, SemanticValue } from '../types';
-import type { SemanticRole } from '@hyperfixi/i18n/src/grammar/types';
+import type { CommandSemanticNode, ActionType, SemanticValue, SemanticRole } from '../types';
 import { convertValue } from './value-converters';
 import type { ASTBuilder, CommandNode } from './index';
 import type { ExpressionNode } from './expression-parser';

@@ -9,8 +9,7 @@ export default defineConfig([
     splitting: false,
     sourcemap: true,
     clean: true,
-    external: ['@hyperfixi/i18n'],
-  },
+      },
   // Browser bundle (IIFE) - Full 13-language bundle
   // Output: hyperfixi-semantic.browser.global.js
   {
@@ -21,8 +20,7 @@ export default defineConfig([
     minify: true,
     sourcemap: true,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.global.js' };
     },
     esbuildOptions(options) {
@@ -41,8 +39,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.en.global.js' };
     },
     esbuildOptions(options) {
@@ -60,8 +57,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.es-en.global.js' };
     },
     esbuildOptions(options) {
@@ -80,8 +76,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.es.global.js' };
     },
     esbuildOptions(options) {
@@ -100,8 +95,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.tr.global.js' };
     },
     esbuildOptions(options) {
@@ -120,8 +114,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.western.global.js' };
     },
     esbuildOptions(options) {
@@ -140,8 +133,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.east-asian.global.js' };
     },
     esbuildOptions(options) {
@@ -160,8 +152,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.priority.global.js' };
     },
     esbuildOptions(options) {
@@ -180,8 +171,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.lazy.global.js' };
     },
     esbuildOptions(options) {
@@ -201,8 +191,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.core.global.js' };
     },
     esbuildOptions(options) {
@@ -221,8 +210,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.ja.global.js' };
     },
     esbuildOptions(options) {
@@ -241,8 +229,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.ar.global.js' };
     },
     esbuildOptions(options) {
@@ -261,8 +248,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.ko.global.js' };
     },
     esbuildOptions(options) {
@@ -281,8 +267,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.zh.global.js' };
     },
     esbuildOptions(options) {
@@ -301,8 +286,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.pt.global.js' };
     },
     esbuildOptions(options) {
@@ -321,8 +305,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.fr.global.js' };
     },
     esbuildOptions(options) {
@@ -341,8 +324,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.de.global.js' };
     },
     esbuildOptions(options) {
@@ -361,8 +343,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.id.global.js' };
     },
     esbuildOptions(options) {
@@ -381,8 +362,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.qu.global.js' };
     },
     esbuildOptions(options) {
@@ -401,8 +381,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.sw.global.js' };
     },
     esbuildOptions(options) {
@@ -421,8 +400,7 @@ export default defineConfig([
     minify: true,
     sourcemap: false,
     platform: 'browser',
-    noExternal: ['@hyperfixi/i18n'],
-    outExtension() {
+        outExtension() {
       return { js: '.en-tr.global.js' };
     },
     esbuildOptions(options) {
@@ -452,6 +430,5 @@ export default defineConfig([
     dts: true,
     splitting: false,
     sourcemap: true,
-    external: ['@hyperfixi/i18n'],
-  },
+      },
 ]);

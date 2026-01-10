@@ -6,7 +6,7 @@
  * the MEANING of hyperscript commands independent of surface syntax.
  */
 
-// Re-export the SemanticRole type from i18n for consistency
+// Re-export the SemanticRole type from local grammar-types for consistency
 export type {
   SemanticRole,
   WordOrder,
@@ -14,9 +14,9 @@ export type {
   MorphologyType,
   GrammaticalMarker,
   LanguageProfile,
-} from '@hyperfixi/i18n/src/grammar/types';
+} from './types/grammar-types';
 
-import type { SemanticRole } from '@hyperfixi/i18n/src/grammar/types';
+import type { SemanticRole } from './types/grammar-types';
 
 // =============================================================================
 // Action Types

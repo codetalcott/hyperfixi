@@ -13,87 +13,9 @@
 
 import type {
   SemanticNode,
-  SemanticValue,
   SemanticAnalyzer,
-  SemanticAnalysisResult,
   ASTNode,
 } from '@hyperfixi/semantic';
-
-import type {
-  ParsedStatement,
-  ParsedElement,
-  SemanticRole,
-} from '@hyperfixi/i18n/src/grammar/types';
-
-// =============================================================================
-// Semantic to Grammar Conversion
-// =============================================================================
-
-/**
- * Convert a SemanticValue to its string representation.
- */
-function semanticValueToString(value: SemanticValue): string {
-  switch (value.type) {
-    case 'literal':
-      if (typeof value.value === 'string') {
-        if (value.value.startsWith('"') || value.value.startsWith("'")) {
-          return value.value;
-        }
-        return value.value.includes(' ') ? `"${value.value}"` : String(value.value);
-      }
-      return String(value.value);
-
-    case 'selector':
-      return value.value;
-
-    case 'reference':
-      return value.value;
-
-    case 'property-path':
-      const obj = semanticValueToString(value.object);
-      return `${obj}'s ${value.property}`;
-
-    case 'expression':
-      return value.raw;
-
-    default:
-      return '';
-  }
-}
-
-/**
- * Convert a SemanticNode to a ParsedStatement for grammar transformation.
- */
-export function semanticNodeToParsedStatement(node: SemanticNode): ParsedStatement {
-  const roles = new Map<SemanticRole, ParsedElement>();
-
-  roles.set('action', {
-    role: 'action',
-    value: node.action,
-    translated: undefined,
-    isSelector: false,
-    isLiteral: false,
-  });
-
-  // Use forEach to avoid downlevelIteration requirement
-  node.roles.forEach((value, role) => {
-    const stringValue = semanticValueToString(value);
-    roles.set(role, {
-      role,
-      value: stringValue,
-      translated: undefined,
-      isSelector: value.type === 'selector',
-      isLiteral: value.type === 'literal' && typeof value.value === 'string',
-    });
-  });
-
-  return {
-    type: node.kind === 'event-handler' ? 'event-handler' :
-          node.kind === 'conditional' ? 'conditional' : 'command',
-    roles,
-    original: node.metadata?.sourceText ?? '',
-  };
-}
 
 // =============================================================================
 // Bridge Implementation

@@ -3,10 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  SemanticGrammarBridge,
-  semanticNodeToParsedStatement,
-} from './bridge';
+import { SemanticGrammarBridge } from './bridge';
 
 describe('SemanticGrammarBridge', () => {
   let bridge: SemanticGrammarBridge;
@@ -106,78 +103,6 @@ describe('SemanticGrammarBridge', () => {
         expect(typeof result.output).toBe('string');
       }
     });
-  });
-});
-
-describe('semanticNodeToParsedStatement', () => {
-  it('should convert a semantic node to parsed statement', () => {
-    // Type the roles map with the correct key type
-    type SemanticRole = 'patient' | 'agent' | 'instrument' | 'destination' | 'source' | 'theme' | 'trigger' | 'condition' | 'duration' | 'value' | 'attribute';
-    type SemanticValue = { type: 'selector'; value: string; selectorKind: string };
-
-    const roles = new Map<SemanticRole, SemanticValue>();
-    roles.set('patient', { type: 'selector', value: '.active', selectorKind: 'class' });
-
-    const mockNode = {
-      kind: 'command' as const,
-      action: 'toggle' as const,
-      roles,
-      metadata: { sourceText: 'toggle .active' },
-    };
-
-    const statement = semanticNodeToParsedStatement(mockNode as unknown as Parameters<typeof semanticNodeToParsedStatement>[0]);
-
-    expect(statement.type).toBe('command');
-    expect(statement.roles.has('action')).toBe(true);
-    expect(statement.roles.has('patient')).toBe(true);
-    expect(statement.roles.get('action')?.value).toBe('toggle');
-    expect(statement.roles.get('patient')?.value).toBe('.active');
-    expect(statement.roles.get('patient')?.isSelector).toBe(true);
-  });
-
-  it('should handle references', () => {
-    type SemanticRole = 'patient';
-    type SemanticValue = { type: 'reference'; value: string };
-
-    const roles = new Map<SemanticRole, SemanticValue>();
-    roles.set('patient', { type: 'reference', value: 'me' });
-
-    const mockNode = {
-      kind: 'command' as const,
-      action: 'increment' as const,
-      roles,
-      metadata: {},
-    };
-
-    const statement = semanticNodeToParsedStatement(mockNode as unknown as Parameters<typeof semanticNodeToParsedStatement>[0]);
-    expect(statement.roles.get('patient')?.value).toBe('me');
-    expect(statement.roles.get('patient')?.isSelector).toBe(false);
-  });
-
-  it('should handle property paths', () => {
-    type SemanticRole = 'patient';
-    type SemanticValue = {
-      type: 'property-path';
-      object: { type: 'selector'; value: string; selectorKind: string };
-      property: string;
-    };
-
-    const roles = new Map<SemanticRole, SemanticValue>();
-    roles.set('patient', {
-      type: 'property-path',
-      object: { type: 'selector', value: '#element', selectorKind: 'id' },
-      property: 'value',
-    });
-
-    const mockNode = {
-      kind: 'command' as const,
-      action: 'set' as const,
-      roles,
-      metadata: {},
-    };
-
-    const statement = semanticNodeToParsedStatement(mockNode as unknown as Parameters<typeof semanticNodeToParsedStatement>[0]);
-    expect(statement.roles.get('patient')?.value).toBe("#element's value");
   });
 });
 

@@ -18,9 +18,8 @@ import type {
   ConditionalSemanticNode,
   CompoundSemanticNode,
   LoopSemanticNode,
+  SemanticRole,
 } from '../types';
-
-import type { SemanticRole } from '@hyperfixi/i18n/src/grammar/types';
 
 import { convertValue } from './value-converters';
 import { getCommandMapper, type CommandMapperResult } from './command-mappers';

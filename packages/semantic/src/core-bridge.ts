@@ -6,8 +6,7 @@
  * fallback between semantic and traditional parsing.
  */
 
-import type { SemanticNode, SemanticValue, ActionType, PatternMatchResult } from './types';
-import type { SemanticRole } from '@hyperfixi/i18n/src/grammar/types';
+import type { SemanticNode, SemanticValue, ActionType, PatternMatchResult, SemanticRole } from './types';
 import { PatternMatcher } from './parser/pattern-matcher';
 import { getTokenizer } from './tokenizers';
 // Import from registry for tree-shaking (registry uses directly-registered patterns first)

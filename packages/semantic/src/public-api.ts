@@ -245,7 +245,7 @@ export type {
 } from './types';
 
 // =============================================================================
-// Semantic Role Type (from i18n)
+// Semantic Role Type
 // =============================================================================
 
-export type { SemanticRole } from '@hyperfixi/i18n/src/grammar/types';
+export type { SemanticRole } from './types';
