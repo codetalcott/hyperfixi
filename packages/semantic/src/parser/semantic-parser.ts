@@ -126,13 +126,41 @@ export class SemanticParserImpl implements ISemanticParser {
       throw new Error('Event handler pattern matched but no event captured');
     }
 
-    // Get command patterns for this language
-    const commandPatterns = getPatternsForLanguage(language)
-      .filter(p => p.command !== 'on')
-      .sort((a, b) => b.priority - a.priority);
+    let body: SemanticNode[];
 
-    // Parse the body with support for 'then' chains
-    const body = this.parseBody(tokens, commandPatterns, language);
+    // Check if pattern captured an action (grammar-transformed patterns)
+    // These patterns combine event + action in a single match
+    const actionValue = match.captured.get('action');
+    if (actionValue && actionValue.type === 'literal') {
+      // Create a command node directly from captured roles
+      const actionName = actionValue.value as string;
+      const roles: Record<string, SemanticValue> = {};
+
+      // Copy relevant roles (excluding event and action which are structural)
+      for (const [role, value] of match.captured) {
+        if (role !== 'event' && role !== 'action') {
+          roles[role] = value;
+        }
+      }
+
+      const commandNode = createCommandNode(
+        actionName as ActionType,
+        roles,
+        {
+          sourceLanguage: language,
+          patternId: match.pattern.id,
+        }
+      );
+
+      body = [commandNode];
+    } else {
+      // Traditional parsing: parse remaining tokens as body commands
+      const commandPatterns = getPatternsForLanguage(language)
+        .filter(p => p.command !== 'on')
+        .sort((a, b) => b.priority - a.priority);
+
+      body = this.parseBody(tokens, commandPatterns, language);
+    }
 
     return createEventHandler(
       eventValue,

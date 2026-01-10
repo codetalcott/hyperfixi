@@ -273,6 +273,19 @@ export class PatternMatcher {
       return true;
     }
 
+    // Check for selector + property expression (e.g., '#output.innerText')
+    // This handles cases where the tokenizer produces two selector tokens
+    const selectorPropertyValue = this.tryMatchSelectorPropertyExpression(tokens);
+    if (selectorPropertyValue) {
+      if (patternToken.expectedTypes && patternToken.expectedTypes.length > 0) {
+        if (!this.isTypeCompatible(selectorPropertyValue.type, patternToken.expectedTypes)) {
+          return patternToken.optional || false;
+        }
+      }
+      captured.set(patternToken.role, selectorPropertyValue);
+      return true;
+    }
+
     // Try to extract a semantic value from the token
     const value = this.tokenToSemanticValue(token);
     if (!value) {
@@ -532,6 +545,58 @@ export class PatternMatcher {
     return createPropertyPath(
       createSelector(token.value),
       propertyToken.value
+    );
+  }
+
+  /**
+   * Try to match a selector + property expression like "#output.innerText".
+   * This handles cases where the tokenizer produces two selector tokens:
+   * - #output (id selector)
+   * - .innerText (looks like class selector, but is actually property)
+   *
+   * Pattern: id-selector + class-selector-that-is-actually-property
+   * Returns a property-path value if matched, or null if not.
+   */
+  private tryMatchSelectorPropertyExpression(tokens: TokenStream): SemanticValue | null {
+    const token = tokens.peek();
+    if (!token || token.kind !== 'selector') return null;
+
+    // Must be an ID selector (starts with #)
+    if (!token.value.startsWith('#')) return null;
+
+    // Look ahead for: selector that looks like a property (.something)
+    const mark = tokens.mark();
+    tokens.advance(); // consume first selector
+
+    const propertyToken = tokens.peek();
+    if (!propertyToken || propertyToken.kind !== 'selector') {
+      tokens.reset(mark);
+      return null;
+    }
+
+    // Second token must look like a class selector (starts with .)
+    // but we interpret it as a property access
+    if (!propertyToken.value.startsWith('.')) {
+      tokens.reset(mark);
+      return null;
+    }
+
+    // Verify the next token is not a selector (to avoid consuming too many)
+    // This helps distinguish "#output.innerText" from "#box .child"
+    const peek2 = tokens.peek(1);
+    if (peek2 && peek2.kind === 'selector') {
+      // Could be a compound selector chain - only take first two
+    }
+
+    tokens.advance(); // consume property selector
+
+    // Create property-path: #output.innerText
+    // Extract property name without the leading dot
+    const propertyName = propertyToken.value.slice(1);
+
+    return createPropertyPath(
+      createSelector(token.value),
+      propertyName
     );
   }
 

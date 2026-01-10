@@ -217,5 +217,139 @@ export function getGrammarTransformedPatternsJa(): LanguagePattern[] {
         action: { default: { type: 'literal', value: 'decrement' } },
       },
     },
+
+    // ==========================================================================
+    // DESTINATION PATTERNS (higher priority)
+    // ==========================================================================
+
+    // Click + Set with destination: "{destination} を クリック で 設定 {patient} に"
+    {
+      id: 'grammar-ja-click-set-destination',
+      language: 'ja',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{destination} を クリック で 設定 {patient} に',
+        tokens: [
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'を' },
+          { type: 'literal', value: 'クリック' },
+          { type: 'literal', value: 'で' },
+          { type: 'literal', value: '設定', alternatives: ['設定する'] },
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'に' },
+        ],
+      },
+      extraction: {
+        destination: { position: 0 },
+        patient: { marker: 'に' },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'set' } },
+      },
+    },
+
+    // Click + Put with destination: "{patient} を クリック で 置く {destination} に"
+    {
+      id: 'grammar-ja-click-put-destination',
+      language: 'ja',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{patient} を クリック で 置く {destination} に',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'を' },
+          { type: 'literal', value: 'クリック' },
+          { type: 'literal', value: 'で' },
+          { type: 'literal', value: '置く', alternatives: ['入れる'] },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'に' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { marker: 'に' },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'put' } },
+      },
+    },
+
+    // Click + Add with destination: "{patient} を クリック で 追加 {destination} に"
+    {
+      id: 'grammar-ja-click-add-destination',
+      language: 'ja',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{patient} を クリック で 追加 {destination} に',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'を' },
+          { type: 'literal', value: 'クリック' },
+          { type: 'literal', value: 'で' },
+          { type: 'literal', value: '追加', alternatives: ['末尾追加'] },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: 'に' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { marker: 'に' },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'add' } },
+      },
+    },
+
+    // Click + Show with style: "{patient} を クリック で 表示 {style} で"
+    {
+      id: 'grammar-ja-click-show-style',
+      language: 'ja',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{patient} を クリック で 表示 {style} で',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'を' },
+          { type: 'literal', value: 'クリック' },
+          { type: 'literal', value: 'で' },
+          { type: 'literal', value: '表示', alternatives: ['見せる'] },
+          { type: 'role', role: 'style' },
+          { type: 'literal', value: 'で' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        style: { position: 5 },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'show' } },
+      },
+    },
+
+    // Click + Hide with style: "{patient} を クリック で 隠す {style} で"
+    {
+      id: 'grammar-ja-click-hide-style',
+      language: 'ja',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{patient} を クリック で 隠す {style} で',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: 'を' },
+          { type: 'literal', value: 'クリック' },
+          { type: 'literal', value: 'で' },
+          { type: 'literal', value: '隠す', alternatives: ['非表示'] },
+          { type: 'role', role: 'style' },
+          { type: 'literal', value: 'で' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        style: { position: 5 },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'hide' } },
+      },
+    },
   ];
 }

@@ -209,5 +209,159 @@ export function getGrammarTransformedPatternsKo(): LanguagePattern[] {
         action: { default: { type: 'literal', value: 'decrement' } },
       },
     },
+
+    // ==========================================================================
+    // DESTINATION PATTERNS (higher priority)
+    // ==========================================================================
+
+    // Click + Set with destination: "{destination} 를 클릭 설정 {patient} 에"
+    {
+      id: 'grammar-ko-click-set-destination',
+      language: 'ko',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{destination} 를 클릭 설정 {patient} 에',
+        tokens: [
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: '를', alternatives: ['을'] },
+          { type: 'literal', value: '클릭' },
+          { type: 'literal', value: '설정', alternatives: ['설정하다'] },
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: '에' },
+        ],
+      },
+      extraction: {
+        destination: { position: 0 },
+        patient: { marker: '에' },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'set' } },
+      },
+    },
+
+    // Click + Put with destination: "{patient} 를 클릭 넣다 {destination} 에"
+    {
+      id: 'grammar-ko-click-put-destination',
+      language: 'ko',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{patient} 를 클릭 넣다 {destination} 에',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: '를', alternatives: ['을'] },
+          { type: 'literal', value: '클릭' },
+          { type: 'literal', value: '넣다', alternatives: ['넣기'] },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: '에' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { marker: '에' },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'put' } },
+      },
+    },
+
+    // Click + Add with destination: "{patient} 를 클릭 추가 {destination} 에"
+    {
+      id: 'grammar-ko-click-add-destination',
+      language: 'ko',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{patient} 를 클릭 추가 {destination} 에',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: '를', alternatives: ['을'] },
+          { type: 'literal', value: '클릭' },
+          { type: 'literal', value: '추가', alternatives: ['추가하다'] },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: '에' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { marker: '에' },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'add' } },
+      },
+    },
+
+    // Click + Remove from destination: "{patient} 를 클릭 제거 {destination} 에서"
+    {
+      id: 'grammar-ko-click-remove-destination',
+      language: 'ko',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{patient} 를 클릭 제거 {destination} 에서',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: '를', alternatives: ['을'] },
+          { type: 'literal', value: '클릭' },
+          { type: 'literal', value: '제거', alternatives: ['제거하다'] },
+          { type: 'role', role: 'destination' },
+          { type: 'literal', value: '에서' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        destination: { marker: '에서' },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'remove' } },
+      },
+    },
+
+    // Click + Show with style: "{patient} 를 클릭 보이다 {style} 로"
+    {
+      id: 'grammar-ko-click-show-style',
+      language: 'ko',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{patient} 를 클릭 보이다 {style} 로',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: '를', alternatives: ['을'] },
+          { type: 'literal', value: '클릭' },
+          { type: 'literal', value: '보이다', alternatives: ['보이기'] },
+          { type: 'role', role: 'style' },
+          { type: 'literal', value: '로' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        style: { marker: '로' },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'show' } },
+      },
+    },
+
+    // Click + Hide with style: "{patient} 를 클릭 숨기다 {style} 로"
+    {
+      id: 'grammar-ko-click-hide-style',
+      language: 'ko',
+      command: 'on',
+      priority: 80,
+      template: {
+        format: '{patient} 를 클릭 숨기다 {style} 로',
+        tokens: [
+          { type: 'role', role: 'patient' },
+          { type: 'literal', value: '를', alternatives: ['을'] },
+          { type: 'literal', value: '클릭' },
+          { type: 'literal', value: '숨기다', alternatives: ['숨기기'] },
+          { type: 'role', role: 'style' },
+          { type: 'literal', value: '로' },
+        ],
+      },
+      extraction: {
+        patient: { position: 0 },
+        style: { marker: '로' },
+        event: { default: { type: 'literal', value: 'click' } },
+        action: { default: { type: 'literal', value: 'hide' } },
+      },
+    },
   ];
 }
