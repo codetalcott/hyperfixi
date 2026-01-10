@@ -5,15 +5,22 @@ import { describe, it, expect } from 'vitest';
 import { handleValidationTool, validationTools } from '../tools/validation.js';
 
 describe('validationTools', () => {
-  it('exports 6 tools', () => {
-    // 3 original + 2 Phase 5 semantic tools + 1 Phase 6 explain_in_language
-    expect(validationTools).toHaveLength(6);
+  it('exports 7 tools', () => {
+    // 3 original + 1 validate_schema + 2 Phase 5 semantic tools + 1 Phase 6 explain_in_language
+    expect(validationTools).toHaveLength(7);
   });
 
   it('has validate_hyperscript tool', () => {
     const tool = validationTools.find((t) => t.name === 'validate_hyperscript');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema.required).toContain('code');
+  });
+
+  it('has validate_schema tool', () => {
+    const tool = validationTools.find((t) => t.name === 'validate_schema');
+    expect(tool).toBeDefined();
+    // validate_schema has no required fields (action is optional)
+    expect(tool?.inputSchema.required).toBeUndefined();
   });
 
   it('has suggest_command tool', () => {

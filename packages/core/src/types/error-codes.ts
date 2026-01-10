@@ -5,6 +5,7 @@
  */
 
 import type { ValidationError } from './unified-types';
+import type { ExecutionError, ExecutionErrorContext } from './result';
 
 /**
  * Standard error codes used across commands
@@ -390,4 +391,113 @@ export function getSuggestions(errorCode: string): readonly string[] {
     return ErrorSuggestions.VALIDATION_FAILED;
   }
   return ErrorSuggestions.EXECUTION_FAILED;
+}
+
+/**
+ * Wrap an existing error with additional context for error chain preservation.
+ * Creates a new ExecutionError that links to the original error as its cause.
+ *
+ * @param code - Error code from ErrorCodes registry
+ * @param message - Human-readable error message
+ * @param cause - The original error that caused this failure
+ * @param context - Additional context for debugging
+ * @returns A structured ExecutionError with error chain
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await fetchData();
+ * } catch (e) {
+ *   throw wrapError(
+ *     ErrorCodes.EXECUTION.FETCH_FAILED,
+ *     'Failed to fetch user data',
+ *     e,
+ *     { command: 'fetch', element: '#user-data' }
+ *   );
+ * }
+ * ```
+ */
+export function wrapError(
+  code: string,
+  message: string,
+  cause: Error | ExecutionError,
+  context?: ExecutionErrorContext
+): ExecutionError {
+  return {
+    code,
+    message,
+    cause,
+    ...(context && { context }),
+  };
+}
+
+/**
+ * Check if an error is an ExecutionError (has code and message).
+ */
+export function isExecutionError(error: unknown): error is ExecutionError {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    'message' in error &&
+    typeof (error as ExecutionError).code === 'string' &&
+    typeof (error as ExecutionError).message === 'string'
+  );
+}
+
+/**
+ * Get the cause from an error (handles ES2022 Error.cause).
+ */
+function getErrorCause(error: ExecutionError | Error): unknown {
+  if (isExecutionError(error)) {
+    return error.cause;
+  }
+  // Handle ES2022 Error.cause property (may not exist on older targets)
+  return (error as Error & { cause?: unknown }).cause;
+}
+
+/**
+ * Get the full error chain as an array for debugging.
+ * Traverses the cause chain and returns all errors in order.
+ *
+ * @param error - The top-level error
+ * @param maxDepth - Maximum chain depth to traverse (default: 10)
+ * @returns Array of errors from newest to oldest
+ */
+export function getErrorChain(
+  error: ExecutionError | Error,
+  maxDepth: number = 10
+): Array<ExecutionError | Error> {
+  const chain: Array<ExecutionError | Error> = [error];
+  let current: unknown = getErrorCause(error);
+  let depth = 0;
+
+  while (current && depth < maxDepth) {
+    if (current instanceof Error || isExecutionError(current)) {
+      chain.push(current);
+      current = getErrorCause(current);
+    } else {
+      break;
+    }
+    depth++;
+  }
+
+  return chain;
+}
+
+/**
+ * Format an error chain for logging/display.
+ *
+ * @param error - The top-level error
+ * @returns Formatted string showing the error chain
+ */
+export function formatErrorChain(error: ExecutionError | Error): string {
+  const chain = getErrorChain(error);
+  return chain
+    .map((e, i) => {
+      const prefix = i === 0 ? 'Error' : `Caused by`;
+      const code = isExecutionError(e) ? ` [${e.code}]` : '';
+      return `${prefix}${code}: ${e.message}`;
+    })
+    .join('\n  ');
 }

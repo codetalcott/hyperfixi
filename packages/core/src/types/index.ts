@@ -169,6 +169,7 @@ export type {
   ExecutionResult,
   OperationResult,
   ExecutionError,
+  ExecutionErrorContext,
 } from './result';
 
 export {
@@ -193,6 +194,22 @@ export {
   fromThrowable,
   fromAsyncThrowable,
 } from './result';
+
+// ============================================================================
+// Error Codes and Error Chain Utilities
+// ============================================================================
+
+export {
+  ErrorCodes,
+  ErrorMessages,
+  ErrorSuggestions,
+  createError,
+  getSuggestions,
+  wrapError,
+  isExecutionError,
+  getErrorChain,
+  formatErrorChain,
+} from './error-codes';
 
 // ============================================================================
 // Command Metadata System (napi-rs inspired patterns)

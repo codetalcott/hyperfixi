@@ -93,12 +93,31 @@ export type OperationResult<T> = Result<T, ExecutionError>;
 
 /**
  * Structured error for operation failures.
+ * Supports error chaining for debugging complex failures.
  */
 export interface ExecutionError {
   readonly code: string;
   readonly message: string;
-  readonly cause?: unknown;
-  readonly context?: Record<string, unknown>;
+  /** Original error that caused this failure (for error chain preservation) */
+  readonly cause?: ExecutionError | Error;
+  readonly context?: ExecutionErrorContext;
+}
+
+/**
+ * Context information for execution errors.
+ * Provides additional details for debugging.
+ */
+export interface ExecutionErrorContext {
+  /** The command being executed when error occurred */
+  command?: string;
+  /** Input that triggered the error */
+  input?: unknown;
+  /** Element selector or reference */
+  element?: string;
+  /** Execution phase where error occurred */
+  phase?: 'parse' | 'validate' | 'execute';
+  /** Additional context properties */
+  [key: string]: unknown;
 }
 
 // ============================================================================

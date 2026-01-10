@@ -59,6 +59,29 @@ export const validationTools: Tool[] = [
     },
   },
   {
+    name: 'validate_schema',
+    description: 'Validate command schemas for design issues. Returns structured validation items with machine-readable codes, severity levels (error/warning/note), and suggested fixes. Useful for catching schema issues before they cause runtime problems.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          description: 'Specific command action to validate (e.g., "toggle", "put"). If omitted, validates all schemas.',
+        },
+        includeNotes: {
+          type: 'boolean',
+          description: 'Include informational notes (severity="note") in addition to warnings and errors. Default: false',
+          default: false,
+        },
+        showCodes: {
+          type: 'boolean',
+          description: 'Include machine-readable error codes in the output. Default: true',
+          default: true,
+        },
+      },
+    },
+  },
+  {
     name: 'suggest_command',
     description: 'Suggest the best hyperscript command for a task. Returns suggestions in specified language.',
     inputSchema: {
@@ -189,6 +212,13 @@ export async function handleValidationTool(
         const code = args.code as string;
         const language = (args.language as string) || 'en';
         return validateHyperscript(code, language);
+      }
+
+      case 'validate_schema': {
+        const action = args.action as string | undefined;
+        const includeNotes = (args.includeNotes as boolean) || false;
+        const showCodes = args.showCodes !== false; // default true
+        return validateSchema(action, includeNotes, showCodes);
       }
 
       case 'suggest_command': {
@@ -781,6 +811,186 @@ export default {
       },
     ],
   };
+}
+
+// =============================================================================
+// Schema Validation (Phase 1 Error Codes)
+// =============================================================================
+
+/**
+ * Validate command schemas for design issues.
+ * Exposes schema validation with machine-readable error codes for LLMs.
+ */
+function validateSchema(
+  action: string | undefined,
+  includeNotes: boolean,
+  showCodes: boolean
+): { content: Array<{ type: string; text: string }>; isError?: boolean } {
+  if (!semanticPackage) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              error: '@hyperfixi/semantic package not available',
+              suggestion: 'Install with: npm install @hyperfixi/semantic',
+            },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  try {
+    // Try to get schema validation functions from semantic package
+    const validateCommandSchema = semanticPackage.validateCommandSchema;
+    const validateAllSchemas = semanticPackage.validateAllSchemas;
+    const commandSchemas = semanticPackage.commandSchemas;
+    const getSchema = semanticPackage.getSchema;
+    const formatValidationResults = semanticPackage.formatValidationResults;
+    const getValidationStats = semanticPackage.getValidationStats;
+
+    if (!validateCommandSchema || !commandSchemas) {
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                error: 'Schema validation not available in this version of @hyperfixi/semantic',
+                suggestion: 'Update to latest version: npm update @hyperfixi/semantic',
+              },
+              null,
+              2
+            ),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    // Validate specific action or all schemas
+    if (action) {
+      const schema = getSchema?.(action);
+      if (!schema) {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  error: `Unknown command: ${action}`,
+                  suggestion: `Available commands: ${Object.keys(commandSchemas).slice(0, 10).join(', ')}...`,
+                  availableCount: Object.keys(commandSchemas).length,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: true,
+        };
+      }
+
+      const result = validateCommandSchema(schema);
+      const response = {
+        action,
+        valid: result.errors.length === 0,
+        items: result.items.map((item: any) => ({
+          ...(showCodes && { code: item.code }),
+          severity: item.severity,
+          message: item.message,
+          ...(item.role && { role: item.role }),
+          ...(item.suggestion && { suggestion: item.suggestion }),
+        })).filter((item: any) =>
+          includeNotes || item.severity !== 'note'
+        ),
+        summary: {
+          errors: result.errors.length,
+          warnings: result.warnings.length,
+          notes: result.notes.length,
+        },
+      };
+
+      return {
+        content: [{ type: 'text', text: JSON.stringify(response, null, 2) }],
+        isError: result.errors.length > 0,
+      };
+    }
+
+    // Validate all schemas
+    const validations = validateAllSchemas(commandSchemas, { includeNotes });
+    const stats = getValidationStats?.(validations) || {
+      totalCommands: validations.size,
+      errors: 0,
+      warnings: 0,
+      notes: 0,
+      byCode: {},
+    };
+
+    // Format the results
+    const formattedText = formatValidationResults?.(validations, { showNotes: includeNotes, showCodes }) || '';
+
+    // Build structured response
+    const validationResults: Record<string, any> = {};
+    for (const [actionName, result] of validations) {
+      validationResults[actionName] = {
+        items: result.items.map((item: any) => ({
+          ...(showCodes && { code: item.code }),
+          severity: item.severity,
+          message: item.message,
+          ...(item.role && { role: item.role }),
+          ...(item.suggestion && { suggestion: item.suggestion }),
+        })).filter((item: any) =>
+          includeNotes || item.severity !== 'note'
+        ),
+        hasErrors: result.errors.length > 0,
+        hasWarnings: result.warnings.length > 0,
+      };
+    }
+
+    const response = {
+      valid: stats.errors === 0,
+      totalSchemasValidated: Object.keys(commandSchemas).length,
+      schemasWithIssues: validations.size,
+      summary: {
+        errors: stats.errors,
+        warnings: stats.warnings,
+        notes: stats.notes,
+      },
+      ...(showCodes && stats.byCode && Object.keys(stats.byCode).length > 0 && {
+        byCode: stats.byCode,
+      }),
+      validations: validationResults,
+      formatted: formattedText,
+    };
+
+    return {
+      content: [{ type: 'text', text: JSON.stringify(response, null, 2) }],
+      isError: stats.errors > 0,
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              error: error instanceof Error ? error.message : String(error),
+              suggestion: 'Check that @hyperfixi/semantic is properly installed',
+            },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
 }
 
 // =============================================================================
