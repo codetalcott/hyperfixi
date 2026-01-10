@@ -53,7 +53,8 @@ describe('Language Profiles', () => {
     expect(locales).toContain('id');
     expect(locales).toContain('qu');
     expect(locales).toContain('sw');
-    expect(locales.length).toBe(13);
+    expect(locales).toContain('bn');
+    expect(locales.length).toBe(14);
   });
 
   it('should return undefined for unknown locales', () => {

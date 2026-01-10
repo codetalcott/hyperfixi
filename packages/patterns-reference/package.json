@@ -35,7 +35,9 @@
     "populate": "npm run db:init:force && npm run sync:translations && npm run seed:llm",
     "populate:dry-run": "npm run db:init:force && tsx scripts/sync-translations.ts --dry-run && tsx scripts/seed-llm-examples.ts --dry-run",
     "validate": "tsx scripts/validate-all.ts",
-    "validate:fix": "tsx scripts/validate-all.ts --fix"
+    "validate:fix": "tsx scripts/validate-all.ts --fix",
+    "verify": "tsx scripts/verify-translations.ts",
+    "verify:verbose": "tsx scripts/verify-translations.ts --verbose"
   },
   "keywords": [
     "hyperscript",

@@ -481,6 +481,52 @@ export const swahiliProfile: LanguageProfile = {
 };
 
 // =============================================================================
+// Bengali (SOV, Postpositions - similar to Japanese/Korean)
+// =============================================================================
+
+export const bengaliProfile: LanguageProfile = {
+  code: 'bn',
+  name: 'বাংলা',
+
+  wordOrder: 'SOV',
+  adpositionType: 'postposition',
+  morphology: 'agglutinative',
+  direction: 'ltr',
+
+  // Bengali: Object comes before verb, postpositions follow nouns
+  // "on click increment #count" → "#count কে ক্লিক এ বৃদ্ধি"
+  canonicalOrder: ['patient', 'event', 'action'],
+
+  markers: [
+    // Postpositions
+    { form: 'কে', role: 'patient', position: 'postposition', required: true },
+    { form: 'তে', role: 'destination', position: 'postposition', required: true },
+    { form: 'এ', role: 'event', position: 'postposition', required: true },
+    { form: 'থেকে', role: 'source', position: 'postposition', required: true },
+    { form: 'দিয়ে', role: 'style', position: 'postposition', required: false },
+    { form: 'জন্য', role: 'duration', position: 'postposition', required: false },
+  ],
+
+  rules: [
+    {
+      name: 'event-handler',
+      description: 'Transform event handlers to Bengali SOV order',
+      priority: 100,
+      match: {
+        commands: ['on'],
+        requiredRoles: ['event', 'action'],
+        optionalRoles: ['patient'],
+      },
+      transform: {
+        // #count কে ক্লিক এ বৃদ্ধি
+        roleOrder: ['patient', 'event', 'action'],
+        insertMarkers: true,
+      },
+    },
+  ],
+};
+
+// =============================================================================
 // Profile Registry
 // =============================================================================
 
@@ -498,6 +544,7 @@ export const profiles: Record<string, LanguageProfile> = {
   id: indonesianProfile,
   qu: quechuaProfile,
   sw: swahiliProfile,
+  bn: bengaliProfile,
 };
 
 export function getProfile(locale: string): LanguageProfile | undefined {
