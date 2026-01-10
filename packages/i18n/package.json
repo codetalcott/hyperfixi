@@ -1,7 +1,7 @@
 {
   "name": "@hyperfixi/i18n",
   "version": "0.1.0",
-  "description": "Internationalization support for Hyperscript",
+  "description": "Grammar transformation and keyword translation for hyperscript",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

@@ -1,7 +1,7 @@
 {
   "name": "@hyperfixi/core",
   "version": "1.0.0",
-  "description": "Pure hyperscript expression evaluation engine with TypeScript support",
+  "description": "Multilingual, tree-shakeable hyperscript",
   "type": "module",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
