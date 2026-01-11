@@ -42,6 +42,16 @@ export {
 } from './errors';
 export type { ErrorCode } from './errors';
 
+// Integration bridges
+export {
+  ParserBridge,
+  createParserBridge,
+  tokenize,
+  type ExtendedParseContext,
+  type ParserBridgeConfig,
+  type PluginRegistration,
+} from './integration';
+
 // Default export is the optimized registry
 export default optimizedRegistry;
 
