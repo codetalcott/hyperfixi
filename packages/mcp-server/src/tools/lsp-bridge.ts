@@ -32,6 +32,10 @@ try {
   // semantic not available - will use English-only fallback
 }
 
+// Import error fixes registry
+import { getFixesForDiagnostic } from './error-fixes.js';
+import type { CodeFix } from '@hyperfixi/core';
+
 // =============================================================================
 // Cached Semantic Analyzer (Phase 6 - Performance)
 // =============================================================================
@@ -300,6 +304,18 @@ async function getDiagnostics(
     diagnostics.push(...runSimpleDiagnostics(code, language));
   }
 
+  // Build code actions for each diagnostic that has fixes
+  const codeActions: Array<{ diagnosticIndex: number; fixes: CodeFix[] }> = [];
+  for (let i = 0; i < diagnostics.length; i++) {
+    const diagnostic = diagnostics[i];
+    if (diagnostic.code) {
+      const fixes = getFixesForDiagnostic(diagnostic.code);
+      if (fixes.length > 0) {
+        codeActions.push({ diagnosticIndex: i, fixes });
+      }
+    }
+  }
+
   return {
     content: [
       {
@@ -312,6 +328,8 @@ async function getDiagnostics(
             hasErrors: diagnostics.some((d) => d.severity === 1),
             hasWarnings: diagnostics.some((d) => d.severity === 2),
             semanticConfidence: semanticConfidence > 0 ? semanticConfidence : undefined,
+            // Phase 6: Include code actions for IDE/LLM automation
+            codeActions: codeActions.length > 0 ? codeActions : undefined,
           },
           null,
           2

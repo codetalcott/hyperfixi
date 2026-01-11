@@ -212,6 +212,21 @@ export {
 } from './error-codes';
 
 // ============================================================================
+// CodeFix Types (LSP-compatible auto-fix suggestions)
+// ============================================================================
+
+export type {
+  CodeActionKind,
+  TextRange,
+  TextEdit,
+  FixCommand,
+  CodeFix,
+  FixableError,
+  DiagnosticWithFixes,
+  DiagnosticResponseWithFixes,
+} from './code-fix';
+
+// ============================================================================
 // Command Metadata System (napi-rs inspired patterns)
 // ============================================================================
 

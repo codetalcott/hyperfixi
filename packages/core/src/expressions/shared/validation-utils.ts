@@ -46,13 +46,15 @@ export function invalidResult(
  * @param type - Error type
  * @param message - Error message
  * @param suggestions - Optional suggestions
+ * @param severity - Error severity (defaults to 'error')
  */
 export function createError(
   type: ValidationError['type'],
   message: string,
-  suggestions: string[] = []
+  suggestions: string[] = [],
+  severity: 'error' | 'warning' | 'info' = 'error'
 ): ValidationError {
-  return { type, message, suggestions };
+  return { type, message, suggestions, severity };
 }
 
 /**

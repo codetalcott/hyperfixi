@@ -38,6 +38,11 @@ export interface ValidationError {
   readonly path?: string;
   readonly code?: string;
   readonly name?: string;
+  /**
+   * Severity level for error classification.
+   * Optional for backward compatibility, but createError() always provides it.
+   * New code should use createError() from error-codes.ts or validation-utils.ts.
+   */
   readonly severity?: 'error' | 'warning' | 'info';
 }
 

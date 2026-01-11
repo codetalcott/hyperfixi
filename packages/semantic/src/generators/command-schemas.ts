@@ -38,6 +38,19 @@ export interface RoleSpec {
 }
 
 /**
+ * A precondition that must be met before command execution.
+ * Used for runtime error documentation.
+ */
+export interface CommandPrecondition {
+  /** Human-readable condition description */
+  readonly condition: string;
+  /** Error code thrown when precondition fails */
+  readonly errorCode: string;
+  /** Error message template */
+  readonly message: string;
+}
+
+/**
  * A command schema defines the semantic structure of a command.
  */
 export interface CommandSchema {
@@ -55,6 +68,15 @@ export interface CommandSchema {
   readonly hasBody?: boolean;
   /** Notes about special handling */
   readonly notes?: string;
+
+  // Runtime error documentation (optional for backward compatibility)
+
+  /** Possible runtime error codes this command can throw */
+  readonly errorCodes?: readonly string[];
+  /** Preconditions that must be met before execution */
+  readonly preconditions?: readonly CommandPrecondition[];
+  /** Recovery hints mapping error code to suggestion */
+  readonly recoveryHints?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -106,6 +128,25 @@ export const toggleSchema: CommandSchema = {
       sovPosition: 1,
     },
   ],
+  // Runtime error documentation
+  errorCodes: ['MISSING_ARGUMENT', 'NO_VALID_CLASS_NAMES', 'INVALID_CSS_PROPERTY'],
+  preconditions: [
+    {
+      condition: 'Command has at least one argument',
+      errorCode: 'MISSING_ARGUMENT',
+      message: 'toggle command requires an argument',
+    },
+    {
+      condition: 'Class names are valid CSS identifiers',
+      errorCode: 'NO_VALID_CLASS_NAMES',
+      message: 'toggle command: no valid class names found',
+    },
+  ],
+  recoveryHints: {
+    MISSING_ARGUMENT: 'Add a class selector (.classname) or attribute to toggle',
+    NO_VALID_CLASS_NAMES: 'Ensure class names start with a dot (.) and are valid CSS identifiers',
+    INVALID_CSS_PROPERTY: 'Check CSS property name syntax (use kebab-case)',
+  },
 };
 
 /**
@@ -135,6 +176,20 @@ export const addSchema: CommandSchema = {
       sovPosition: 1,
     },
   ],
+  // Runtime error documentation
+  errorCodes: ['MISSING_ARGUMENT', 'NO_VALID_CLASS_NAMES', 'PROPERTY_REQUIRES_VALUE'],
+  preconditions: [
+    {
+      condition: 'Command has at least one argument',
+      errorCode: 'MISSING_ARGUMENT',
+      message: 'add command requires an argument',
+    },
+  ],
+  recoveryHints: {
+    MISSING_ARGUMENT: 'Add a class selector (.classname) or attribute to add',
+    NO_VALID_CLASS_NAMES: 'Ensure class names start with a dot (.) and are valid CSS identifiers',
+    PROPERTY_REQUIRES_VALUE: 'When adding a property (*prop), provide a value argument',
+  },
 };
 
 /**
@@ -164,6 +219,19 @@ export const removeSchema: CommandSchema = {
       sovPosition: 1,
     },
   ],
+  // Runtime error documentation
+  errorCodes: ['MISSING_ARGUMENT', 'NO_VALID_CLASS_NAMES'],
+  preconditions: [
+    {
+      condition: 'Command has at least one argument',
+      errorCode: 'MISSING_ARGUMENT',
+      message: 'remove command requires an argument',
+    },
+  ],
+  recoveryHints: {
+    MISSING_ARGUMENT: 'Add a class selector (.classname) or attribute to remove',
+    NO_VALID_CLASS_NAMES: 'Ensure class names start with a dot (.) and are valid CSS identifiers',
+  },
 };
 
 /**
@@ -197,6 +265,33 @@ export const putSchema: CommandSchema = {
       sovPosition: 1,
     },
   ],
+  // Runtime error documentation
+  errorCodes: ['MISSING_ARGUMENTS', 'MISSING_CONTENT', 'MISSING_POSITION', 'INVALID_POSITION', 'NO_TARGET', 'NO_ELEMENTS'],
+  preconditions: [
+    {
+      condition: 'Command has content and position arguments',
+      errorCode: 'MISSING_ARGUMENTS',
+      message: 'put requires arguments',
+    },
+    {
+      condition: 'Content to put is specified',
+      errorCode: 'MISSING_CONTENT',
+      message: 'put requires content',
+    },
+    {
+      condition: 'Position keyword is specified (into, before, after, etc.)',
+      errorCode: 'MISSING_POSITION',
+      message: 'put requires position keyword',
+    },
+  ],
+  recoveryHints: {
+    MISSING_ARGUMENTS: 'Use syntax: put <content> into/before/after <target>',
+    MISSING_CONTENT: 'Add content to put (string, element, or expression)',
+    MISSING_POSITION: 'Add position keyword: into, before, after, at start of, at end of',
+    INVALID_POSITION: 'Valid positions: into, before, after, at start of, at end of',
+    NO_TARGET: 'Ensure target element exists or use "me" reference',
+    NO_ELEMENTS: 'Check that the selector matches existing elements',
+  },
 };
 
 /**
@@ -250,6 +345,31 @@ export const setSchema: CommandSchema = {
       },
     },
   ],
+  // Runtime error documentation
+  errorCodes: ['MISSING_TARGET', 'INVALID_TARGET', 'MISSING_VALUE', 'INVALID_SYNTAX'],
+  preconditions: [
+    {
+      condition: 'Command has a target variable or property',
+      errorCode: 'MISSING_TARGET',
+      message: 'set command requires a target',
+    },
+    {
+      condition: 'Target is a valid variable or property reference',
+      errorCode: 'INVALID_TARGET',
+      message: 'set command target must be a string or object literal',
+    },
+    {
+      condition: 'Value is specified with "to" keyword',
+      errorCode: 'MISSING_VALUE',
+      message: 'set command requires a value (use "to" keyword)',
+    },
+  ],
+  recoveryHints: {
+    MISSING_TARGET: 'Add a target: set :variable to value OR set element.property to value',
+    INVALID_TARGET: 'Use local variable (:name), element property (el.prop), or "the X of Y" syntax',
+    MISSING_VALUE: 'Add "to <value>" to specify what to set',
+    INVALID_SYNTAX: 'Use syntax: set <target> to <value>',
+  },
 };
 
 /**

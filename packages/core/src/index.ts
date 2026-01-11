@@ -95,6 +95,18 @@ export type { ValidationResult, EvaluationType } from './types/base-types';
 
 export type { LLMDocumentation } from './types/command-types';
 
+// CodeFix types for LSP-compatible auto-fix suggestions (used by MCP server)
+export type {
+  CodeFix,
+  CodeActionKind,
+  TextRange,
+  TextEdit,
+  FixCommand,
+  FixableError,
+  DiagnosticWithFixes,
+  DiagnosticResponseWithFixes,
+} from './types/code-fix';
+
 // Partial template validation (development-time)
 export {
   validatePartialContent,

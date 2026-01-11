@@ -354,11 +354,20 @@ export function createError(
     type = 'syntax-error';
   }
 
+  // Determine severity based on error code pattern
+  let severity: 'error' | 'warning' | 'info' = 'error';
+  if (errorCode.includes('WARNING') || errorCode.includes('DEPRECATED')) {
+    severity = 'warning';
+  } else if (errorCode.includes('INFO') || errorCode.includes('HINT')) {
+    severity = 'info';
+  }
+
   return {
     type,
     message,
     code: errorCode,
     suggestions: suggestions || [],
+    severity,
   };
 }
 

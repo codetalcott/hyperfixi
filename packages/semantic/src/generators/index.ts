@@ -37,6 +37,7 @@ export {
 // Command schemas
 export {
   type CommandSchema,
+  type CommandPrecondition,
   type RoleSpec,
   type CommandCategory,
   toggleSchema,
