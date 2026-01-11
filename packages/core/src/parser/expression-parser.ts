@@ -635,9 +635,21 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
         throw new ExpressionParseError('Expected property name after "."');
       }
 
+      // Map possessive pronouns to their context variables for dot notation
+      // This enables my.textContent, its.value, your.name as alternatives to
+      // me.textContent, it.value, you.name
+      let object = left;
+      if (left.type === 'identifier') {
+        const name = (left as any).name;
+        if (name === 'my' || name === 'its' || name === 'your') {
+          const mappedName = name === 'my' ? 'me' : name === 'its' ? 'it' : 'you';
+          object = createIdentifierNode(mappedName, left);
+        }
+      }
+
       left = {
         type: 'propertyAccess',
-        object: left,
+        object,
         property: createIdentifierNode(propertyToken.value, propertyToken),
         ...(left.start !== undefined && { start: left.start }),
         end: propertyToken.end,
@@ -656,9 +668,20 @@ function parsePossessiveExpression(state: ParseState): ASTNode {
         throw new ExpressionParseError('Expected property name after "?."');
       }
 
+      // Map possessive pronouns to their context variables for optional chaining
+      // This enables my?.value, its?.value, your?.value
+      let object = left;
+      if (left.type === 'identifier') {
+        const name = (left as any).name;
+        if (name === 'my' || name === 'its' || name === 'your') {
+          const mappedName = name === 'my' ? 'me' : name === 'its' ? 'it' : 'you';
+          object = createIdentifierNode(mappedName, left);
+        }
+      }
+
       left = {
         type: 'optionalChain',
-        object: left,
+        object,
         property: createIdentifierNode(propertyToken.value, propertyToken),
         optional: true,
         ...(left.start !== undefined && { start: left.start }),
