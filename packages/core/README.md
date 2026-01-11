@@ -90,6 +90,59 @@ console.log(result.metadata);
 // }
 ```
 
+## Runtime Hooks
+
+HyperFixi provides a hooks system for observing and intercepting command execution:
+
+```javascript
+import { HookRegistry, createHooks } from '@hyperfixi/core';
+
+// Create hooks for logging, analytics, or debugging
+const hooks = createHooks({
+  beforeExecute: (ctx) => {
+    console.log(`Executing: ${ctx.commandName}`);
+  },
+  afterExecute: (ctx, result) => {
+    console.log(`Completed: ${ctx.commandName}`, result);
+  },
+  onError: (ctx, error) => {
+    console.error(`Error in ${ctx.commandName}:`, error);
+    return error; // Can transform or wrap the error
+  },
+  interceptCommand: (name, ctx) => {
+    // Return true to skip command execution
+    return name === 'disabled-command';
+  }
+});
+
+// Register hooks with the runtime
+hyperfixi.registerHooks('my-hooks', hooks);
+```
+
+Built-in hook utilities:
+
+- `loggingHooks()` - Pre-configured debug logging hooks
+- `createTimingHooks()` - Performance timing hooks
+
+## Cleanup & Memory Management
+
+The runtime automatically tracks event listeners and observers for cleanup when elements are removed from the DOM. You can also manually trigger cleanup:
+
+```javascript
+// Clean up a specific element
+hyperfixi.cleanup(element);
+
+// Clean up element and all descendants
+hyperfixi.cleanupTree(containerElement);
+
+// Get cleanup statistics
+const stats = hyperfixi.getCleanupStats();
+// { elementsTracked: 5, listeners: 12, observers: 2, ... }
+
+// Full runtime shutdown
+hyperfixi.destroy();
+```
+
 ## API Reference
 
 For complete API documentation, see [API.md](./docs/API.md).
@@ -101,6 +154,9 @@ For complete API documentation, see [API.md](./docs/API.md).
 - `hyperscript.run(code, context)` - Compile and execute in one step
 - `hyperscript.createContext(element)` - Create execution context
 - `evalHyperScript(code, context)` - _hyperscript compatibility API
+- `hyperscript.registerHooks(name, hooks)` - Register runtime hooks
+- `hyperscript.cleanup(element)` - Clean up element resources
+- `hyperscript.destroy()` - Full runtime shutdown
 
 ## Supported Features
 
