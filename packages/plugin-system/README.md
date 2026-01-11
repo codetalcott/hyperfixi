@@ -1,162 +1,340 @@
 # Hyperfixi Plugin System
 
-This experimental plugin system is inspired by Datastar's modular architecture,
-adapted for Hyperfixi's needs.
+A modular, type-safe plugin system for extending Hyperfixi with custom commands, features, and runtime behaviors.
+
+## Installation
+
+```bash
+npm install @hyperfixi/plugin-system
+```
 
 ## Overview
 
-The plugin system allows Hyperfixi to be extended through four types of plugins:
+The plugin system provides four types of extensibility:
 
-### 1. Command Plugins
+| Plugin Type | Purpose | Example |
+|-------------|---------|---------|
+| **Command** | Add hyperscript commands | `toggle`, `add`, `remove` |
+| **Feature** | Add element capabilities | reactive state, auto-fetch |
+| **Transform** | Modify AST during parsing | optimization, i18n |
+| **Runtime** | Enhance execution behavior | debugging, logging |
+
+## Quick Start
+
+```typescript
+import { optimizedRegistry, initializeHyperfixi } from '@hyperfixi/plugin-system';
+import { ToggleCommand, AddCommand } from './my-plugins';
+
+// Option 1: Use the quick start function
+initializeHyperfixi({
+  plugins: [ToggleCommand, AddCommand],
+  autoApply: true,
+});
+
+// Option 2: Manual setup
+optimizedRegistry.load(ToggleCommand, AddCommand);
+optimizedRegistry.apply();
+```
+
+## Plugin Types
+
+### Command Plugins
 
 Handle hyperscript commands like `on`, `toggle`, `send`:
 
 ```typescript
-const OnCommandPlugin: CommandPlugin = {
-  type: "command",
-  name: "on",
-  pattern: /^on\s+(\w+)/,
-  execute: async (ctx) => {
-    // Handle event binding
+import type { CommandPlugin, RuntimeContext } from '@hyperfixi/plugin-system';
+
+const ToggleCommand: CommandPlugin = {
+  type: 'command',
+  name: 'toggle',
+  pattern: /^toggle$/i,
+
+  execute: async (ctx: RuntimeContext) => {
+    const { element, args } = ctx;
+    const className = args[0];
+    element.classList.toggle(className);
   },
 };
 ```
 
-### 2. Feature Plugins
+### Feature Plugins
 
 Add new capabilities to elements:
 
 ```typescript
-const ReactiveStateFeature: FeaturePlugin = {
-  type: "feature",
-  name: "reactive-state",
-  onElementInit: (ctx) => {
-    // Initialize reactive state
+import type { FeaturePlugin, ElementContext } from '@hyperfixi/plugin-system';
+
+const AutoSaveFeature: FeaturePlugin = {
+  type: 'feature',
+  name: 'auto-save',
+
+  onElementInit: (ctx: ElementContext) => {
+    const { element } = ctx;
+    const interval = setInterval(() => {
+      // Auto-save logic
+    }, 5000);
+
+    // Return cleanup function
+    return () => clearInterval(interval);
   },
 };
 ```
 
-### 3. Transform Plugins
+### Transform Plugins
 
 Modify the AST during parsing:
 
 ```typescript
+import type { TransformPlugin, ASTNode, TransformContext } from '@hyperfixi/plugin-system';
+
 const OptimizeTransform: TransformPlugin = {
-  type: "transform",
-  name: "optimize",
-  transformNode: (node, ctx) => {
-    // Optimize AST node
+  type: 'transform',
+  name: 'optimize',
+
+  transformNode: (node: ASTNode, ctx: TransformContext) => {
+    // Transform AST node
     return node;
   },
 };
 ```
 
-### 4. Runtime Plugins
+### Runtime Plugins
 
-Enhance runtime execution:
+Enhance runtime execution with hooks:
 
 ```typescript
-const DebugRuntime: RuntimePlugin = {
-  type: "runtime",
-  name: "debug",
-  beforeExecute: (ctx) => {
-    console.log("Executing:", ctx);
+import type { RuntimePlugin, RuntimeContext } from '@hyperfixi/plugin-system';
+
+const LoggerRuntime: RuntimePlugin = {
+  type: 'runtime',
+  name: 'logger',
+
+  beforeExecute: (ctx: RuntimeContext) => {
+    console.log(`Executing: ${ctx.plugin.name}`, ctx.args);
+  },
+
+  afterExecute: (ctx: RuntimeContext) => {
+    console.log(`Completed: ${ctx.plugin.name}`);
+  },
+
+  interceptCommand: (command: string, ctx: RuntimeContext) => {
+    // Return true to intercept and prevent execution
+    return false;
   },
 };
 ```
 
-## Usage
+## Integration Bridges
 
-### Loading Plugins
+### Parser Bridge
 
-```typescript
-import { pluginRegistry } from "@hyperfixi/plugin-system";
-import { OnCommandPlugin } from "./plugins/commands";
-
-// Load individual plugins
-pluginRegistry.load(OnCommandPlugin);
-
-// Or load multiple
-pluginRegistry.load(
-  OnCommandPlugin,
-  ReactiveStateFeature,
-  AutoFetchFeature,
-);
-
-// Apply to DOM
-pluginRegistry.apply();
-```
-
-### Creating Bundles
-
-Different bundles can load different sets of plugins:
+Integrate plugin commands with the core parser:
 
 ```typescript
-// standard.ts - Full featured
-pluginRegistry.load(
-  OnCommandPlugin,
-  ToggleCommandPlugin,
-  SendCommandPlugin,
-  ReactiveStateFeature,
-  AutoFetchFeature,
-  IntersectionFeature,
-);
+import { ParserBridge, createParserBridge } from '@hyperfixi/plugin-system';
 
-// minimal.ts - Just core commands
-pluginRegistry.load(
-  OnCommandPlugin,
-  ToggleCommandPlugin,
-  SendCommandPlugin,
-);
+const bridge = createParserBridge([ToggleCommand, AddCommand]);
+
+// Register commands for parsing
+bridge.registerCommand(myCustomCommand);
+
+// Parse and match commands
+const ctx = bridge.createExtendedContext(parseContext);
+const result = bridge.tryParseAnyCommand(ctx);
+
+// Export for core parser integration
+const parserCommands = bridge.exportForCoreParser();
 ```
 
-## Key Differences from Datastar
+### Runtime Bridge
 
-1. **Type Safety**: Stronger TypeScript types throughout
-2. **Plugin Types**: Four distinct types vs Datastar's three
-3. **Integration**: Designed to work with existing Hyperfixi parser/runtime
-4. **Lifecycle**: More granular lifecycle hooks
-5. **Dependencies**: Explicit dependency management
-
-## Benefits
-
-1. **Modularity**: Load only what you need
-2. **Extensibility**: Easy to add new commands/features
-3. **Bundle Size**: Create minimal bundles for specific use cases
-4. **Runtime Loading**: Plugins can be loaded dynamically
-5. **Type Safety**: Full TypeScript support
-
-## Migration Path
-
-To adopt this in Hyperfixi:
-
-1. **Phase 1**: Implement plugin registry alongside existing system
-2. **Phase 2**: Migrate existing features to plugins
-3. **Phase 3**: Update parser to use command plugins
-4. **Phase 4**: Deprecate old feature system
-
-## Example: Custom Plugin
+Integrate plugin commands with the runtime:
 
 ```typescript
-const CustomCommandPlugin: CommandPlugin = {
-  type: "command",
-  name: "animate",
-  pattern: /^animate\s+/,
+import { RuntimeBridge, createRuntimeBridge } from '@hyperfixi/plugin-system';
 
-  execute: async (ctx) => {
-    const { element, args } = ctx;
-    const [animation, duration] = args;
+const bridge = createRuntimeBridge(
+  [ToggleCommand, AddCommand],
+  [LoggerRuntime],
+  {
+    enableHooks: true,
+    executionTimeout: 5000,
+    debug: true,
+  }
+);
 
-    element.animate(
-      getKeyframes(animation),
-      { duration: parseDuration(duration) },
-    );
-  },
-};
+// Execute commands
+const result = await bridge.executeCommand('toggle', element, ['.active'], {
+  event: clickEvent,
+});
 
-// Register and use
-pluginRegistry.load(CustomCommandPlugin);
+// Process hyperscript attributes
+await bridge.processAttribute(element, attribute);
+
+// Cleanup when done
+bridge.cleanup(element);
 ```
 
-This plugin system provides a flexible foundation for extending Hyperfixi while
-maintaining compatibility with the existing architecture.
+## Error Handling
+
+The plugin system provides structured error handling:
+
+```typescript
+import {
+  PluginLoadError,
+  PluginExecutionError,
+  PluginDependencyError,
+  isPluginSystemError,
+  wrapError,
+} from '@hyperfixi/plugin-system';
+
+try {
+  await bridge.executeCommand('unknown', element);
+} catch (error) {
+  if (isPluginSystemError(error)) {
+    console.log(`Plugin error [${error.code}]: ${error.message}`);
+  }
+}
+
+// Error types:
+// - PluginLoadError: Plugin failed to load
+// - PluginExecutionError: Execution failed (includes element/action context)
+// - PluginDependencyError: Missing dependencies
+// - PluginRegistrationError: Registration failed (duplicate, invalid)
+// - PluginInitError: Initialization failed
+// - PluginParseError: Parsing failed
+```
+
+## Hybrid Loading
+
+Load plugins dynamically based on DOM content:
+
+```typescript
+import { HybridPluginLoader, createHybridLoader } from '@hyperfixi/plugin-system';
+
+const loader = new HybridPluginLoader({
+  corePlugins: [OnCommand, ToggleCommand],
+  optionalPlugins: new Map([
+    ['websocket', async () => import('./plugins/websocket')],
+    ['animation', async () => import('./plugins/animation')],
+  ]),
+  autoDetect: true,
+  lazyLoadDelay: 100,
+});
+
+await loader.initialize();
+
+// Plugins are automatically loaded when elements need them:
+// <div data-ws="..."> triggers websocket plugin load
+// <div data-animate="..."> triggers animation plugin load
+```
+
+## Build-Time Analysis
+
+Analyze HTML files to determine required plugins:
+
+```typescript
+import { PluginAnalyzer, optimizePluginsForBuild } from '@hyperfixi/plugin-system';
+
+const analyzer = new PluginAnalyzer();
+
+// Analyze single file
+const result = analyzer.analyzeHTML('<button _="on click toggle .active">');
+console.log(result.requiredPlugins); // Set { 'toggle' }
+
+// Analyze entire directory
+const dirResult = await analyzer.analyzeDirectory('./src', ['.html', '.vue']);
+
+// Get optimized plugin list for builds
+const optimized = optimizePluginsForBuild(myPlugins, result);
+```
+
+## Bundle Building
+
+Create optimized bundles:
+
+```typescript
+import { PluginBundleBuilder, buildBundles } from '@hyperfixi/plugin-system';
+
+const builder = new PluginBundleBuilder({
+  outputDir: './dist',
+  minify: true,
+});
+
+// Build bundles for different configurations
+await buildBundles({
+  minimal: ['toggle', 'add'],
+  standard: ['toggle', 'add', 'remove', 'on', 'send'],
+  full: 'all',
+});
+```
+
+## API Reference
+
+### Registry
+
+| Method | Description |
+|--------|-------------|
+| `load(...plugins)` | Register plugins |
+| `unload(name)` | Unregister a plugin |
+| `get(name)` | Get plugin by name |
+| `getByType(type)` | Get all plugins of type |
+| `apply(root?)` | Apply plugins to DOM |
+| `has(name)` | Check if plugin exists |
+
+### ParserBridge
+
+| Method | Description |
+|--------|-------------|
+| `registerCommand(plugin)` | Register command for parsing |
+| `createExtendedContext(ctx)` | Create extended parse context |
+| `wrapCoreParserContext(ctx)` | Wrap core parser context |
+| `parseCommand(name, ctx)` | Parse a specific command |
+| `tryParseAnyCommand(ctx)` | Try to match any command |
+| `exportForCoreParser()` | Export for core integration |
+
+### RuntimeBridge
+
+| Method | Description |
+|--------|-------------|
+| `registerCommand(plugin)` | Register command plugin |
+| `registerRuntimePlugin(plugin)` | Register runtime plugin |
+| `executeCommand(name, el, args)` | Execute a command |
+| `processAttribute(el, attr)` | Process hyperscript attribute |
+| `registerCleanup(el, fn)` | Register cleanup function |
+| `cleanup(el)` | Run cleanup for element |
+| `exportCommandRegistry()` | Export command registry |
+
+## TypeScript Support
+
+Full TypeScript types are exported:
+
+```typescript
+import type {
+  // Plugin types
+  Plugin,
+  CommandPlugin,
+  FeaturePlugin,
+  TransformPlugin,
+  RuntimePlugin,
+
+  // Context types
+  RuntimeContext,
+  ParseContext,
+  ElementContext,
+  TransformContext,
+
+  // Integration types
+  ExtendedParseContext,
+  ExecutionResult,
+  ParsedCommand,
+
+  // Error types
+  ErrorCode,
+} from '@hyperfixi/plugin-system';
+```
+
+## License
+
+MIT
