@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HyperFixi Error Playground - Diagnostics & Auto-Fix</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.2s;
+    }
+
+    .btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .btn.primary {
+      background: #27ae60;
+    }
+
+    .btn.primary:hover {
+      background: #2ecc71;
+    }
+
+    .playground {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr auto;
+      height: calc(100vh - 60px);
+    }
+
+    .editor-panel {
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #333;
+    }
+
+    .panel-header {
+      background: #252542;
+      padding: 0.75rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #333;
+    }
+
+    .panel-header h2 {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    select {
+      background: #333;
+      border: 1px solid #444;
+      color: #fff;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .code-editor {
+      flex: 1;
+      background: #16162a;
+      padding: 1rem;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: none;
+      border: none;
+      color: #e0e0ff;
+      outline: none;
+    }
+
+    .code-editor::placeholder {
+      color: #666;
+    }
+
+    .diagnostics-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .filter-bar {
+      background: #252542;
+      padding: 0.5rem 1rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      border-bottom: 1px solid #333;
+    }
+
+    .filter-btn {
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background: transparent;
+      color: #888;
+      cursor: pointer;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      background: #333;
+    }
+
+    .filter-btn.active {
+      background: #444;
+      color: #fff;
+      border-color: #667eea;
+    }
+
+    .filter-btn.error.active { border-color: #e74c3c; }
+    .filter-btn.warning.active { border-color: #f39c12; }
+    .filter-btn.info.active { border-color: #3498db; }
+
+    .badge {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      margin-left: 0.25rem;
+    }
+
+    .badge.error { background: #e74c3c; color: white; }
+    .badge.warning { background: #f39c12; color: white; }
+    .badge.info { background: #3498db; color: white; }
+
+    .diagnostics-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      background: #16162a;
+    }
+
+    .diagnostic-item {
+      background: #252542;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      border-left: 4px solid #444;
+    }
+
+    .diagnostic-item.error { border-left-color: #e74c3c; }
+    .diagnostic-item.warning { border-left-color: #f39c12; }
+    .diagnostic-item.info { border-left-color: #3498db; }
+
+    .diagnostic-header {
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+    }
+
+    .diagnostic-header:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .severity-icon {
+      font-size: 1.25rem;
+    }
+
+    .diagnostic-message {
+      flex: 1;
+      font-size: 0.9rem;
+    }
+
+    .diagnostic-code {
+      font-family: monospace;
+      font-size: 0.75rem;
+      background: #333;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      color: #888;
+    }
+
+    .diagnostic-details {
+      padding: 0 1rem 1rem;
+      display: none;
+    }
+
+    .diagnostic-item.expanded .diagnostic-details {
+      display: block;
+    }
+
+    .fix-card {
+      background: #1a1a2e;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .fix-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .fix-title {
+      font-size: 0.85rem;
+      color: #27ae60;
+      font-weight: 500;
+    }
+
+    .fix-kind {
+      font-size: 0.65rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      background: #444;
+      color: #aaa;
+    }
+
+    .fix-kind.quickfix { background: #27ae60; color: white; }
+    .fix-kind.refactor { background: #3498db; color: white; }
+
+    .fix-description {
+      font-size: 0.8rem;
+      color: #888;
+      margin-bottom: 0.75rem;
+    }
+
+    .fix-template {
+      font-family: monospace;
+      font-size: 0.8rem;
+      background: #0d0d1a;
+      padding: 0.5rem;
+      border-radius: 4px;
+      color: #9b59b6;
+      white-space: pre-wrap;
+    }
+
+    .apply-fix-btn {
+      margin-top: 0.5rem;
+      background: #27ae60;
+      border: none;
+      color: white;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+
+    .apply-fix-btn:hover {
+      background: #2ecc71;
+    }
+
+    .summary-panel {
+      grid-column: 1 / -1;
+      background: #0d0d1a;
+      border-top: 1px solid #333;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .summary-stats {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .stat-icon {
+      font-size: 1.25rem;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+    }
+
+    .no-issues {
+      text-align: center;
+      padding: 3rem;
+      color: #666;
+    }
+
+    .no-issues .icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .example-codes {
+      margin-top: 1rem;
+    }
+
+    .example-btn {
+      background: #333;
+      border: 1px solid #444;
+      color: #aaa;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      margin: 0.25rem;
+    }
+
+    .example-btn:hover {
+      background: #444;
+      color: #fff;
+    }
+
+    .confidence-bar {
+      height: 4px;
+      background: #333;
+      border-radius: 2px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    .confidence-fill.high { background: #27ae60; }
+    .confidence-fill.medium { background: #f39c12; }
+    .confidence-fill.low { background: #e74c3c; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>HyperFixi Error Playground</h1>
+    <div class="header-actions">
+      <select id="language-select">
+        <option value="en">English</option>
+        <option value="es">Spanish</option>
+        <option value="ja">Japanese</option>
+        <option value="ko">Korean</option>
+        <option value="zh">Chinese</option>
+        <option value="ar">Arabic</option>
+        <option value="de">German</option>
+        <option value="fr">French</option>
+      </select>
+      <button class="btn" onclick="clearEditor()">Clear</button>
+      <a href="index.html" class="btn">Translation Playground</a>
+    </div>
+  </div>
+
+  <div class="playground">
+    <div class="editor-panel">
+      <div class="panel-header">
+        <h2>Hyperscript Code</h2>
+        <span id="parse-status">Ready</span>
+      </div>
+      <textarea
+        class="code-editor"
+        id="code-input"
+        placeholder="Enter hyperscript code to analyze...
+
+Try these examples with errors:
+- toggle (missing argument)
+- put 'hello' (missing destination)
+- on click toggle .active  (correct!)
+- if count > 0 add .positive (missing 'end')"
+      ></textarea>
+      <div class="confidence-bar">
+        <div class="confidence-fill" id="confidence-fill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="diagnostics-panel">
+      <div class="panel-header">
+        <h2>Diagnostics</h2>
+        <span id="diagnostic-count">0 issues</span>
+      </div>
+      <div class="filter-bar">
+        <span style="color: #666; font-size: 0.75rem;">Filter:</span>
+        <button class="filter-btn error active" data-severity="error" onclick="toggleFilter(this)">
+          Errors <span class="badge error" id="error-count">0</span>
+        </button>
+        <button class="filter-btn warning active" data-severity="warning" onclick="toggleFilter(this)">
+          Warnings <span class="badge warning" id="warning-count">0</span>
+        </button>
+        <button class="filter-btn info active" data-severity="info" onclick="toggleFilter(this)">
+          Info <span class="badge info" id="info-count">0</span>
+        </button>
+      </div>
+      <div class="diagnostics-list" id="diagnostics-list">
+        <div class="no-issues">
+          <div class="icon">&#x2705;</div>
+          <p>No issues detected</p>
+          <p style="font-size: 0.85rem; margin-top: 0.5rem;">Start typing hyperscript code to see live diagnostics</p>
+          <div class="example-codes">
+            <p style="font-size: 0.75rem; margin-bottom: 0.5rem;">Try these examples:</p>
+            <button class="example-btn" onclick="loadExample('toggle')">toggle (missing arg)</button>
+            <button class="example-btn" onclick="loadExample('put')">put 'x' (no dest)</button>
+            <button class="example-btn" onclick="loadExample('unclosed')">unclosed if</button>
+            <button class="example-btn" onclick="loadExample('valid')">valid code</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-panel">
+      <div class="summary-stats">
+        <div class="stat">
+          <span class="stat-icon" style="color: #e74c3c;">&#x26A0;</span>
+          <div>
+            <div class="stat-value" id="total-errors">0</div>
+            <div class="stat-label">Errors</div>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="stat-icon" style="color: #f39c12;">&#x26A1;</span>
+          <div>
+            <div class="stat-value" id="total-warnings">0</div>
+            <div class="stat-label">Warnings</div>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="stat-icon" style="color: #27ae60;">&#x2714;</span>
+          <div>
+            <div class="stat-value" id="parse-confidence">-</div>
+            <div class="stat-label">Confidence</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <button class="btn primary" onclick="runDiagnostics()">Analyze Code</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load HyperFixi bundles -->
+  <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
+  <script src="../../packages/semantic/dist/browser.global.js"></script>
+
+  <script>
+    // State
+    let diagnostics = [];
+    let filters = { error: true, warning: true, info: true };
+    let debounceTimer = null;
+
+    // Example code snippets
+    const examples = {
+      toggle: 'toggle',
+      put: "put 'Hello World'",
+      unclosed: 'if count > 0 add .positive',
+      valid: 'on click toggle .active on me'
+    };
+
+    // Initialize
+    document.getElementById('code-input').addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runDiagnostics, 300);
+    });
+
+    function loadExample(key) {
+      document.getElementById('code-input').value = examples[key] || '';
+      runDiagnostics();
+    }
+
+    function clearEditor() {
+      document.getElementById('code-input').value = '';
+      diagnostics = [];
+      renderDiagnostics();
+      updateStats(0, 0, 0);
+    }
+
+    function toggleFilter(btn) {
+      const severity = btn.dataset.severity;
+      filters[severity] = !filters[severity];
+      btn.classList.toggle('active');
+      renderDiagnostics();
+    }
+
+    async function runDiagnostics() {
+      const code = document.getElementById('code-input').value.trim();
+      const language = document.getElementById('language-select').value;
+
+      if (!code) {
+        diagnostics = [];
+        renderDiagnostics();
+        updateStats(0, 0, 0);
+        return;
+      }
+
+      document.getElementById('parse-status').textContent = 'Analyzing...';
+
+      // Collect diagnostics from multiple sources
+      diagnostics = [];
+      let confidence = 0;
+      let errorCount = 0;
+      let warningCount = 0;
+
+      // 1. Try semantic parsing for confidence and role validation
+      if (window.HyperFixiSemantic) {
+        try {
+          const analyzer = HyperFixiSemantic.createSemanticAnalyzer();
+          const result = analyzer.analyze(code, language);
+          confidence = result.confidence;
+
+          // Add role-based diagnostics
+          if (result.command && confidence >= 0.5) {
+            const cmd = result.command.name;
+            const roles = result.command.roles;
+
+            // Check for missing required roles
+            const roleChecks = {
+              'toggle': { required: ['patient'], message: 'toggle command missing target (class, attribute, or visibility)' },
+              'add': { required: ['patient'], message: 'add command missing target to add' },
+              'remove': { required: ['patient'], message: 'remove command missing target to remove' },
+              'put': { required: ['patient', 'destination'], message: 'put command requires content and destination' },
+              'set': { required: ['destination', 'patient'], message: 'set command requires property and value' },
+              'fetch': { required: ['destination'], message: 'fetch command missing URL' }
+            };
+
+            if (roleChecks[cmd]) {
+              const check = roleChecks[cmd];
+              for (const role of check.required) {
+                if (!roles.has(role)) {
+                  diagnostics.push({
+                    severity: 'warning',
+                    message: check.message,
+                    code: `MISSING.${role.toUpperCase()}`,
+                    source: 'semantic-validator',
+                    fixes: getFixesForCode(`MISSING.${role.toUpperCase()}`)
+                  });
+                  warningCount++;
+                }
+              }
+            }
+          }
+
+          // Low confidence warning
+          if (confidence > 0 && confidence < 0.5) {
+            diagnostics.push({
+              severity: 'info',
+              message: `Low parsing confidence (${(confidence * 100).toFixed(0)}%)`,
+              code: 'LOW_CONFIDENCE',
+              source: 'semantic-parser'
+            });
+          }
+        } catch (e) {
+          console.error('Semantic analysis error:', e);
+        }
+      }
+
+      // 2. Basic syntax checks
+      // Unbalanced quotes
+      const singleQuotes = (code.match(/'/g) || []).length - (code.match(/\w's(?=\s|$)/g) || []).length;
+      const doubleQuotes = (code.match(/"/g) || []).length;
+
+      if (singleQuotes % 2 !== 0) {
+        diagnostics.push({
+          severity: 'error',
+          message: 'Unbalanced single quotes',
+          code: 'SYNTAX.UNMATCHED_QUOTE',
+          source: 'syntax-checker',
+          fixes: getFixesForCode('SYNTAX.UNMATCHED_QUOTE')
+        });
+        errorCount++;
+      }
+
+      if (doubleQuotes % 2 !== 0) {
+        diagnostics.push({
+          severity: 'error',
+          message: 'Unbalanced double quotes',
+          code: 'SYNTAX.UNMATCHED_QUOTE',
+          source: 'syntax-checker',
+          fixes: getFixesForCode('SYNTAX.UNMATCHED_QUOTE')
+        });
+        errorCount++;
+      }
+
+      // Unclosed blocks
+      const ifCount = (code.match(/\bif\b/gi) || []).length;
+      const endCount = (code.match(/\bend\b/gi) || []).length;
+      if (ifCount > endCount) {
+        diagnostics.push({
+          severity: 'error',
+          message: `Found ${ifCount} 'if' statement(s) but only ${endCount} 'end' keyword(s)`,
+          code: 'SYNTAX.MISSING_END',
+          source: 'syntax-checker',
+          fixes: getFixesForCode('SYNTAX.MISSING_END')
+        });
+        errorCount++;
+      }
+
+      // Check for onclick attribute
+      if (code.includes('onclick') || code.includes('onClick')) {
+        diagnostics.push({
+          severity: 'error',
+          message: 'Use hyperscript event syntax instead of onclick attribute',
+          code: 'DEPRECATED.ONCLICK',
+          source: 'syntax-checker',
+          suggestion: 'Replace onclick="..." with _="on click ..."'
+        });
+        errorCount++;
+      }
+
+      // Update UI
+      updateStats(errorCount, warningCount, confidence);
+      renderDiagnostics();
+
+      document.getElementById('parse-status').textContent = diagnostics.length === 0 ? 'Valid' : `${diagnostics.length} issue(s)`;
+    }
+
+    function getFixesForCode(code) {
+      // Simulated CodeFix registry (matches error-fixes.ts)
+      const fixes = {
+        'MISSING.ARGUMENT': [
+          { code: 'add-toggle-target', title: 'Add class or attribute to toggle', kind: 'quickfix', edit: { text: 'toggle .${1:classname}' } }
+        ],
+        'MISSING.DESTINATION': [
+          { code: 'add-put-destination', title: 'Add "into" destination', kind: 'quickfix', edit: { text: '${value} into ${1:#element}' } }
+        ],
+        'MISSING.PATIENT': [
+          { code: 'add-patient', title: 'Add target value', kind: 'quickfix' }
+        ],
+        'SYNTAX.UNMATCHED_QUOTE': [
+          { code: 'add-closing-quote', title: 'Add missing closing quote', kind: 'quickfix', edit: { text: '"' } }
+        ],
+        'SYNTAX.MISSING_END': [
+          { code: 'add-end', title: 'Add missing "end"', kind: 'quickfix', edit: { text: '\nend' } }
+        ]
+      };
+      return fixes[code] || [];
+    }
+
+    function updateStats(errors, warnings, confidence) {
+      document.getElementById('total-errors').textContent = errors;
+      document.getElementById('total-warnings').textContent = warnings;
+      document.getElementById('error-count').textContent = errors;
+      document.getElementById('warning-count').textContent = warnings;
+      document.getElementById('info-count').textContent = diagnostics.filter(d => d.severity === 'info').length;
+
+      if (confidence > 0) {
+        document.getElementById('parse-confidence').textContent = `${(confidence * 100).toFixed(0)}%`;
+        const fill = document.getElementById('confidence-fill');
+        fill.style.width = `${confidence * 100}%`;
+        fill.className = 'confidence-fill ' + (confidence >= 0.8 ? 'high' : confidence >= 0.5 ? 'medium' : 'low');
+      } else {
+        document.getElementById('parse-confidence').textContent = '-';
+        document.getElementById('confidence-fill').style.width = '0%';
+      }
+    }
+
+    function renderDiagnostics() {
+      const container = document.getElementById('diagnostics-list');
+      const filteredDiagnostics = diagnostics.filter(d => filters[d.severity]);
+
+      document.getElementById('diagnostic-count').textContent = `${filteredDiagnostics.length} issue(s)`;
+
+      if (filteredDiagnostics.length === 0) {
+        container.innerHTML = `
+          <div class="no-issues">
+            <div class="icon">&#x2705;</div>
+            <p>${diagnostics.length === 0 ? 'No issues detected' : 'All issues filtered out'}</p>
+            <p style="font-size: 0.85rem; margin-top: 0.5rem;">
+              ${diagnostics.length === 0 ? 'Start typing hyperscript code to see live diagnostics' : 'Adjust filters to see hidden issues'}
+            </p>
+            ${diagnostics.length === 0 ? `
+              <div class="example-codes">
+                <p style="font-size: 0.75rem; margin-bottom: 0.5rem;">Try these examples:</p>
+                <button class="example-btn" onclick="loadExample('toggle')">toggle (missing arg)</button>
+                <button class="example-btn" onclick="loadExample('put')">put 'x' (no dest)</button>
+                <button class="example-btn" onclick="loadExample('unclosed')">unclosed if</button>
+                <button class="example-btn" onclick="loadExample('valid')">valid code</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filteredDiagnostics.map((diag, idx) => `
+        <div class="diagnostic-item ${diag.severity}" onclick="toggleDiagnostic(${idx})">
+          <div class="diagnostic-header">
+            <span class="severity-icon">${getSeverityIcon(diag.severity)}</span>
+            <span class="diagnostic-message">${escapeHtml(diag.message)}</span>
+            ${diag.code ? `<span class="diagnostic-code">${escapeHtml(diag.code)}</span>` : ''}
+          </div>
+          <div class="diagnostic-details">
+            ${diag.source ? `<p style="color: #666; font-size: 0.8rem; margin-bottom: 0.5rem;">Source: ${escapeHtml(diag.source)}</p>` : ''}
+            ${diag.suggestion ? `<p style="color: #888; font-size: 0.85rem;">&#x1F4A1; ${escapeHtml(diag.suggestion)}</p>` : ''}
+            ${diag.fixes && diag.fixes.length > 0 ? `
+              <div style="margin-top: 0.75rem;">
+                <p style="color: #27ae60; font-size: 0.8rem; font-weight: 500; margin-bottom: 0.5rem;">Available Fixes:</p>
+                ${diag.fixes.map(fix => `
+                  <div class="fix-card">
+                    <div class="fix-header">
+                      <span class="fix-title">${escapeHtml(fix.title)}</span>
+                      <span class="fix-kind ${fix.kind}">${fix.kind}</span>
+                    </div>
+                    ${fix.description ? `<p class="fix-description">${escapeHtml(fix.description)}</p>` : ''}
+                    ${fix.edit ? `
+                      <div class="fix-template">${escapeHtml(fix.edit.text)}</div>
+                      <button class="apply-fix-btn" onclick="applyFix('${escapeHtml(fix.edit.text)}'); event.stopPropagation();">Apply Fix</button>
+                    ` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleDiagnostic(idx) {
+      const items = document.querySelectorAll('.diagnostic-item');
+      items[idx]?.classList.toggle('expanded');
+    }
+
+    function getSeverityIcon(severity) {
+      switch (severity) {
+        case 'error': return '&#x274C;';
+        case 'warning': return '&#x26A0;';
+        case 'info': return '&#x2139;';
+        default: return '&#x2022;';
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function applyFix(template) {
+      const editor = document.getElementById('code-input');
+      const currentCode = editor.value;
+
+      // Simple fix application - replace placeholders with sensible defaults
+      let fixedCode = template
+        .replace(/\$\{1:([^}]+)\}/g, '$1')
+        .replace(/\$\{2:([^}]+)\}/g, '$1')
+        .replace(/\$\{value\}/g, currentCode.split(' ')[1] || "'value'")
+        .replace(/\$\{selector\}/g, '#element')
+        .replace(/\$\{command\}/g, currentCode);
+
+      // If it looks like a complete replacement, use it
+      if (fixedCode.includes(' ')) {
+        editor.value = fixedCode;
+      } else {
+        // Otherwise append to current code
+        editor.value = currentCode + ' ' + fixedCode;
+      }
+
+      runDiagnostics();
+    }
+
+    // Run initial diagnostics
+    runDiagnostics();
+  </script>
+</body>
+</html>

@@ -7,6 +7,14 @@
 
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
+// Import error fixes registry
+import {
+  getFixesForError,
+  getFixesForDiagnostic,
+  getFixableErrorCodes,
+  hasFixesForError,
+} from './error-fixes.js';
+
 // Try to import semantic package for multilingual support
 let semanticPackage: any = null;
 try {
@@ -196,6 +204,28 @@ export const validationTools: Tool[] = [
       required: ['code', 'sourceLanguage'],
     },
   },
+  {
+    name: 'get_code_fixes',
+    description: 'Get available auto-fixes for a specific error code or diagnostic. Returns LSP-compatible CodeFix suggestions that can be applied to fix common errors. Useful for LLMs to suggest corrections without running full diagnostics.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        errorCode: {
+          type: 'string',
+          description: 'Error code from ErrorCodes (e.g., "MISSING.ARGUMENT", "NOT_FOUND.ELEMENT")',
+        },
+        diagnosticCode: {
+          type: 'string',
+          description: 'Diagnostic code from get_diagnostics (e.g., "parse-error", "missing-role")',
+        },
+        listAll: {
+          type: 'boolean',
+          description: 'If true, list all available error codes that have fixes',
+          default: false,
+        },
+      },
+    },
+  },
 ];
 
 // =============================================================================
@@ -254,6 +284,13 @@ export async function handleValidationTool(
         const targetLanguage = (args.targetLanguage as string) || sourceLanguage;
         const includeTranslations = (args.includeTranslations as boolean) || false;
         return explainInLanguage(code, sourceLanguage, targetLanguage, includeTranslations);
+      }
+
+      case 'get_code_fixes': {
+        const errorCode = args.errorCode as string | undefined;
+        const diagnosticCode = args.diagnosticCode as string | undefined;
+        const listAll = (args.listAll as boolean) || false;
+        return getCodeFixes(errorCode, diagnosticCode, listAll);
       }
 
       default:
@@ -1333,4 +1370,153 @@ function explainInLanguage(
       isError: true,
     };
   }
+}
+
+// =============================================================================
+// Code Fixes Tool (Phase 6 - CodeFix Integration)
+// =============================================================================
+
+/**
+ * Get available auto-fixes for error codes or diagnostics.
+ *
+ * Returns LSP-compatible CodeFix suggestions that LLMs can use to:
+ * - Suggest corrections without running full diagnostics
+ * - Apply fixes automatically when integrated with IDE
+ * - Learn common error patterns and their solutions
+ */
+function getCodeFixes(
+  errorCode: string | undefined,
+  diagnosticCode: string | undefined,
+  listAll: boolean
+): { content: Array<{ type: string; text: string }>; isError?: boolean } {
+  // List all fixable error codes
+  if (listAll) {
+    const allCodes = getFixableErrorCodes();
+    const fixesByCategory: Record<string, string[]> = {};
+
+    for (const code of allCodes) {
+      const category = code.split('.')[0] || 'OTHER';
+      if (!fixesByCategory[category]) {
+        fixesByCategory[category] = [];
+      }
+      fixesByCategory[category].push(code);
+    }
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              totalFixableErrors: allCodes.length,
+              byCategory: fixesByCategory,
+              allCodes,
+              usage: 'Call get_code_fixes with errorCode or diagnosticCode to get specific fixes',
+            },
+            null,
+            2
+          ),
+        },
+      ],
+    };
+  }
+
+  // Get fixes for specific error code
+  if (errorCode) {
+    const fixes = getFixesForError(errorCode);
+    const hasFixes = fixes.length > 0;
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              errorCode,
+              hasFixes,
+              fixCount: fixes.length,
+              fixes: fixes.map((fix) => ({
+                code: fix.code,
+                title: fix.title,
+                kind: fix.kind,
+                description: fix.description,
+                isPreferred: fix.isPreferred || false,
+                priority: fix.priority || 0,
+                edit: fix.edit,
+              })),
+              note: hasFixes
+                ? 'Use the edit.text template to generate corrected code'
+                : 'No automated fixes available for this error code',
+            },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: !hasFixes,
+    };
+  }
+
+  // Get fixes for diagnostic code (maps to error codes)
+  if (diagnosticCode) {
+    const fixes = getFixesForDiagnostic(diagnosticCode);
+    const hasFixes = fixes.length > 0;
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: JSON.stringify(
+            {
+              diagnosticCode,
+              hasFixes,
+              fixCount: fixes.length,
+              fixes: fixes.map((fix) => ({
+                code: fix.code,
+                title: fix.title,
+                kind: fix.kind,
+                description: fix.description,
+                isPreferred: fix.isPreferred || false,
+                priority: fix.priority || 0,
+                edit: fix.edit,
+              })),
+              note: hasFixes
+                ? 'Use the edit.text template to generate corrected code'
+                : 'No automated fixes available for this diagnostic code',
+            },
+            null,
+            2
+          ),
+        },
+      ],
+      isError: !hasFixes,
+    };
+  }
+
+  // No code provided - return usage info
+  return {
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify(
+          {
+            error: 'No error code or diagnostic code provided',
+            usage: {
+              errorCode: 'Provide an error code like "MISSING.ARGUMENT" or "NOT_FOUND.ELEMENT"',
+              diagnosticCode: 'Provide a diagnostic code like "parse-error" or "missing-role"',
+              listAll: 'Set to true to list all fixable error codes',
+            },
+            examples: [
+              { errorCode: 'MISSING.ARGUMENT' },
+              { diagnosticCode: 'parse-error' },
+              { listAll: true },
+            ],
+          },
+          null,
+          2
+        ),
+      },
+    ],
+    isError: true,
+  };
 }

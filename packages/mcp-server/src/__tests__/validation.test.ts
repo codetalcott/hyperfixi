@@ -5,9 +5,16 @@ import { describe, it, expect } from 'vitest';
 import { handleValidationTool, validationTools } from '../tools/validation.js';
 
 describe('validationTools', () => {
-  it('exports 7 tools', () => {
-    // 3 original + 1 validate_schema + 2 Phase 5 semantic tools + 1 Phase 6 explain_in_language
-    expect(validationTools).toHaveLength(7);
+  it('exports 8 tools', () => {
+    // 3 original + 1 validate_schema + 2 Phase 5 semantic tools + 1 explain_in_language + 1 get_code_fixes
+    expect(validationTools).toHaveLength(8);
+  });
+
+  it('has get_code_fixes tool', () => {
+    const tool = validationTools.find((t) => t.name === 'get_code_fixes');
+    expect(tool).toBeDefined();
+    // get_code_fixes has no required fields (all params are optional)
+    expect(tool?.inputSchema.required).toBeUndefined();
   });
 
   it('has validate_hyperscript tool', () => {

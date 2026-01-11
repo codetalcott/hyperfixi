@@ -79,7 +79,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     name === 'get_bundle_config' ||
     name === 'parse_multilingual' ||
     name === 'translate_to_english' ||
-    name === 'explain_in_language'
+    name === 'explain_in_language' ||
+    name === 'get_code_fixes'
   ) {
     return handleValidationTool(name, args as Record<string, unknown>);
   }
