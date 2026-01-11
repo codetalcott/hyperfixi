@@ -2853,8 +2853,11 @@ export class Parser {
       // Body-based commands that require traditional parsing:
       'js',   // js ... end with body content
       'tell', // tell <target> <commands> with body
-      // ✅ 'call'/'get' now supported via ExpressionValue fallback to expression-parser
-      // This enables semantic parsing for method calls like #dialog.showModal()
+      // ⚠️ 'call'/'get' MUST use traditional parsing for method calls like me.insertBefore(a, b)
+      // The semantic parser incorrectly combines method names with parentheses as single tokens
+      // See commit f5f4de90 for details on the original fix
+      'call',
+      'get',
     ];
 
     if (this.semanticAdapter && !skipSemanticParsing.includes(commandName.toLowerCase())) {

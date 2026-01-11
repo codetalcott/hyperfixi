@@ -682,7 +682,10 @@
     </div>
 
     <!-- Enable debug mode -->
-    <script>window.__HYPERFIXI_DEBUG__ = true;</script>
+    <script>
+        window.__HYPERFIXI_DEBUG__ = true;
+        localStorage.setItem('hyperfixi:debug', '*');
+    </script>
     <!-- Load HyperFixi -->
     <script src="../../packages/core/dist/hyperfixi-browser.js"></script>
     <script src="../debug-panel.js"></script>
