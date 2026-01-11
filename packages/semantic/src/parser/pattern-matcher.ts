@@ -540,6 +540,49 @@ export class PatternMatcher {
       depth++;
     }
 
+    // Check for method call: chain + '(' + args + ')'
+    // e.g., me.insertBefore(draggedItem, dropTarget)
+    const openParen = tokens.peek();
+    if (openParen && openParen.kind === 'punctuation' && openParen.value === '(') {
+      tokens.advance(); // consume (
+
+      // Collect arguments (comma-separated values)
+      const args: string[] = [];
+      let argDepth = 0; // Track nested parentheses
+      while (!tokens.isAtEnd() && args.length < PatternMatcher.MAX_METHOD_ARGS) {
+        const argToken = tokens.peek();
+        if (!argToken) break;
+
+        // Handle close paren - respecting nesting
+        if (argToken.kind === 'punctuation' && argToken.value === ')') {
+          if (argDepth === 0) {
+            tokens.advance(); // consume )
+            break;
+          }
+          argDepth--;
+        }
+        // Track nested open parens
+        if (argToken.kind === 'punctuation' && argToken.value === '(') {
+          argDepth++;
+        }
+        // Skip commas between arguments
+        if (argToken.kind === 'punctuation' && argToken.value === ',') {
+          tokens.advance();
+          continue;
+        }
+        // Collect arg value
+        args.push(argToken.value);
+        tokens.advance();
+      }
+
+      // Create expression value with method call: me.insertBefore(a, b)
+      const methodCall = `${chain}(${args.join(', ')})`;
+      return {
+        type: 'expression',
+        raw: methodCall,
+      } as SemanticValue;
+    }
+
     // Create expression value: userData.name
     return {
       type: 'expression',
