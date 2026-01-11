@@ -23,6 +23,54 @@ let semanticAnalyzerInstance: SemanticAnalyzer | null = null;
 // Singleton bridge instance for direct AST path (lazy-initialized)
 let bridgeInstance: import('../multilingual/bridge').SemanticGrammarBridge | null = null;
 
+// =============================================================================
+// Global Configuration
+// =============================================================================
+
+/**
+ * Global configuration for hyperscript parsing and execution.
+ */
+export interface HyperscriptConfig {
+  /**
+   * Enable/disable semantic parsing globally.
+   * When false, uses traditional keyword-based parsing only.
+   * Default: true (semantic parsing enabled)
+   */
+  semantic: boolean;
+
+  /**
+   * Default language for semantic parsing.
+   * Default: 'en'
+   */
+  language: string;
+
+  /**
+   * Confidence threshold for semantic parsing (0-1).
+   * Lower values accept more flexible syntax.
+   * Default: 0.5
+   */
+  confidenceThreshold: number;
+}
+
+/**
+ * Global configuration instance.
+ * Modify this to change default parsing behavior.
+ *
+ * @example
+ * ```javascript
+ * // Disable semantic parsing globally (use traditional parser only)
+ * hyperfixi.config.semantic = false;
+ *
+ * // Set default language
+ * hyperfixi.config.language = 'ja';
+ * ```
+ */
+export const config: HyperscriptConfig = {
+  semantic: true,
+  language: 'en',
+  confidenceThreshold: DEFAULT_CONFIDENCE_THRESHOLD,
+};
+
 /**
  * Get or create the singleton bridge instance for direct AST path.
  * Lazy initialization to avoid overhead if not used.
@@ -48,13 +96,19 @@ function getSemanticAnalyzer(): SemanticAnalyzerInterface {
 }
 
 /**
- * Default parser options with semantic analysis enabled
+ * Default parser options based on global config.
+ * Returns semantic analyzer only if config.semantic is true.
  */
 function getDefaultParserOptions() {
+  if (!config.semantic) {
+    // Traditional parsing only - no semantic analyzer
+    return {};
+  }
+
   return {
     semanticAnalyzer: getSemanticAnalyzer(),
-    language: 'en' as const,
-    semanticConfidenceThreshold: DEFAULT_CONFIDENCE_THRESHOLD,
+    language: config.language as 'en',
+    semanticConfidenceThreshold: config.confidenceThreshold,
   };
 }
 

@@ -18,7 +18,7 @@
  */
 
 import { evalHyperScript, evalHyperScriptAsync, evalHyperScriptSmart } from './eval-hyperscript';
-import { hyperscript } from '../api/hyperscript-api';
+import { hyperscript, config } from '../api/hyperscript-api';
 import { defaultAttributeProcessor } from '../dom/attribute-processor';
 import { tailwindExtension } from '../extensions/tailwind';
 import { Parser } from '../parser/parser';
@@ -90,6 +90,8 @@ declare global {
         getEventHistory: typeof getEventHistory;
         replayEvents: typeof replayEvents;
       };
+      // Global configuration
+      config: typeof config;
     };
     // Also expose as direct globals for test compatibility
     evalHyperScript: typeof evalHyperScript;
@@ -180,6 +182,10 @@ const hyperfixi = {
     getEventHistory,
     replayEvents,
   },
+
+  // Global configuration for parsing behavior
+  // Use: hyperfixi.config.semantic = false to disable semantic parsing
+  config,
 
   // Version info
   version: '1.0.0-full',
