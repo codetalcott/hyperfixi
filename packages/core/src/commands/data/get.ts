@@ -73,6 +73,7 @@ export class GetCommand implements DecoratedCommand {
     context: TypedExecutionContext
   ): GetCommandOutput {
     (context as { it: unknown }).it = input.value;
+    Object.assign(context, { result: input.value });
     return { value: input.value };
   }
 

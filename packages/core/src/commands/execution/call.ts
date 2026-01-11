@@ -89,7 +89,7 @@ export class CallCommand implements DecoratedCommand {
       result = expression;
     }
 
-    Object.assign(context, { it: result });
+    Object.assign(context, { it: result, result: result });
     return { result, wasAsync, expressionType };
   }
 }
