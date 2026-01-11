@@ -21,6 +21,7 @@ import { patternTools, handlePatternTool } from './tools/patterns.js';
 import { validationTools, handleValidationTool } from './tools/validation.js';
 import { lspBridgeTools, handleLspBridgeTool } from './tools/lsp-bridge.js';
 import { languageDocsTools, handleLanguageDocsTool } from './tools/language-docs.js';
+import { profileTools, handleProfileTool } from './tools/profiles.js';
 
 // Resource implementations
 import { listResources, readResource } from './resources/index.js';
@@ -54,6 +55,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       ...validationTools,
       ...lspBridgeTools,
       ...languageDocsTools,
+      ...profileTools,
     ],
   };
 });
@@ -100,7 +102,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     return handleLanguageDocsTool(name, args as Record<string, unknown>);
   }
 
-  // Pattern tools with get_ prefix (after LSP and language-docs tools to avoid conflict)
+  // Profile inspection tools
+  if (
+    name === 'get_language_profile' ||
+    name === 'list_supported_languages' ||
+    name === 'get_keyword_translations' ||
+    name === 'get_role_markers' ||
+    name === 'compare_language_profiles'
+  ) {
+    return handleProfileTool(name, args as Record<string, unknown>);
+  }
+
+  // Pattern tools with get_ prefix (after LSP, language-docs, and profile tools to avoid conflict)
   if (name.startsWith('get_')) {
     return handlePatternTool(name, args as Record<string, unknown>);
   }

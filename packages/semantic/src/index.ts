@@ -177,6 +177,21 @@ export {
 } from './explicit';
 
 // =============================================================================
+// Registry (for language profile and pattern access)
+// =============================================================================
+
+export {
+  tryGetProfile,
+  getRegisteredLanguages,
+  // Note: getPatternsForLanguage and getPatternsForLanguageAndCommand
+  // are already exported from './patterns'
+} from './registry';
+
+// Note: LanguageProfile and related types are already exported from './generators'
+// PossessiveConfig is exported below
+export type { PossessiveConfig } from './registry';
+
+// =============================================================================
 // Convenience: Main API
 // =============================================================================
 
