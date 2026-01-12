@@ -7,12 +7,14 @@
 
     <key>ProgramArguments</key>
     <array>
+        <!-- Update path to your node installation -->
         <string>/opt/homebrew/opt/node@20/bin/node</string>
-        <string>/Users/williamtalcott/projects/hyperfixi/packages/mcp-server/dist/index.js</string>
+        <!-- Update path to your hyperfixi installation -->
+        <string>$HYPERFIXI_PATH/packages/mcp-server/dist/index.js</string>
     </array>
 
     <key>WorkingDirectory</key>
-    <string>/Users/williamtalcott/projects/hyperfixi/packages/mcp-server</string>
+    <string>$HYPERFIXI_PATH/packages/mcp-server</string>
 
     <key>RunAtLoad</key>
     <true/>
@@ -29,10 +31,10 @@
     <integer>5</integer>
 
     <key>StandardOutPath</key>
-    <string>/Users/williamtalcott/projects/hyperfixi/packages/mcp-server/logs/stdout.log</string>
+    <string>$HYPERFIXI_PATH/packages/mcp-server/logs/stdout.log</string>
 
     <key>StandardErrorPath</key>
-    <string>/Users/williamtalcott/projects/hyperfixi/packages/mcp-server/logs/stderr.log</string>
+    <string>$HYPERFIXI_PATH/packages/mcp-server/logs/stderr.log</string>
 
     <key>EnvironmentVariables</key>
     <dict>

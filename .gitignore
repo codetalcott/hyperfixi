@@ -147,6 +147,7 @@ packages/*/html/
 # MCP server files
 mcp-server-hyperscript/dist/
 mcp-server-hyperscript/node_modules/
+packages/mcp-server/com.hyperfixi.mcp-server.plist
 
 # Lock files (keep package-lock.json)
 deno.lock

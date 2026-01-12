@@ -4,7 +4,7 @@
       "command": "node",
       "args": ["packages/mcp-server/dist/index.js"],
       "env": {
-        "LSP_DB_PATH": "/Users/williamtalcott/projects/hyperfixi/packages/patterns-reference/data/patterns.db"
+        "LSP_DB_PATH": "./packages/patterns-reference/data/patterns.db"
       }
     }
   }
