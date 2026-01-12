@@ -18,6 +18,17 @@ Behavior analytics and instrumentation for HyperFixi applications.
 npm install @hyperfixi/analytics
 ```
 
+## Browser Usage
+
+```html
+<script src="hyperfixi-browser.js"></script>
+<script src="analytics-browser.global.js"></script>
+<script>
+  const analytics = await HyperFixiAnalytics.quickStartAnalytics({});
+  HyperFixiAnalytics.integrateWithHyperFixi(hyperfixi, analytics);
+</script>
+```
+
 ## Quick Start
 
 ```typescript
@@ -281,7 +292,26 @@ interface AnalyticsStorage {
 }
 ```
 
-For quick prototyping, `quickStartAnalytics()` provides an in-memory storage backend.
+### In-Memory Storage
+
+For quick prototyping, use `createInMemoryStorage()` with automatic cleanup:
+
+```typescript
+import { createInMemoryStorage } from '@hyperfixi/analytics';
+
+const storage = createInMemoryStorage({
+  maxEvents: 1000,           // Max events before pruning oldest (default: 1000)
+  ttlMs: 60 * 60 * 1000,     // Event TTL in ms (default: 1 hour)
+  cleanupIntervalMs: 60000,  // Auto-cleanup interval (default: 1 minute)
+});
+
+// Manual methods
+storage.stats();    // { count, oldestTimestamp, newestTimestamp }
+storage.cleanup();  // Force cleanup
+storage.destroy();  // Stop cleanup timer and clear data
+```
+
+The `quickStartAnalytics()` function uses this storage by default.
 
 ## API Reference
 
@@ -293,6 +323,7 @@ For quick prototyping, `quickStartAnalytics()` provides an in-memory storage bac
 | `quickStartAnalytics(options)` | Quick setup with in-memory storage |
 | `integrateWithHyperFixi(runtime, analytics, options?)` | Integrate with HyperFixi runtime |
 | `createTrackedCompile(compile, analytics)` | Wrap compile function for tracking |
+| `createInMemoryStorage(options?)` | Create in-memory storage with auto-cleanup |
 | `createExpressAnalyticsMiddleware(analytics)` | Express.js middleware |
 | `createElysiaAnalyticsPlugin(analytics)` | Elysia framework plugin |
 
