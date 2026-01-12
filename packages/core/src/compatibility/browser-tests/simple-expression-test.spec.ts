@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Simple Expression Tests', () => {
   test('math expression test', async ({ page }) => {
-    await page.goto('http://localhost:3000/packages/core/test-global-functions.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(1000);
 
     const result = await page.evaluate(async () => {
@@ -46,7 +46,7 @@ test.describe('Simple Expression Tests', () => {
   });
 
   test('boolean expression test', async ({ page }) => {
-    await page.goto('http://localhost:3000/packages/core/test-global-functions.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(1000);
 
     const result = await page.evaluate(async () => {
@@ -83,7 +83,7 @@ test.describe('Simple Expression Tests', () => {
   });
 
   test('comparison expression test', async ({ page }) => {
-    await page.goto('http://localhost:3000/packages/core/test-global-functions.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(1000);
 
     const result = await page.evaluate(async () => {

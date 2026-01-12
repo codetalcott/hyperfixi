@@ -6,7 +6,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Global Functions Test', () => {
   test('should expose evalHyperScript as global function', async ({ page }) => {
-    await page.goto('http://localhost:3000/packages/core/test-global-functions.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(1000);
 
     // Check if window.evalHyperScript exists
@@ -18,7 +18,7 @@ test.describe('Global Functions Test', () => {
   });
 
   test('should be able to call evalHyperScript directly', async ({ page }) => {
-    await page.goto('http://localhost:3000/packages/core/test-global-functions.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(1000);
 
     // Test calling evalHyperScript directly in browser context
@@ -37,7 +37,7 @@ test.describe('Global Functions Test', () => {
   });
 
   test('should work with math expressions', async ({ page }) => {
-    await page.goto('http://localhost:3000/packages/core/test-global-functions.html');
+    await page.goto('http://localhost:3000/packages/core/compatibility-test.html');
     await page.waitForTimeout(1000);
 
     const result = await page.evaluate(async () => {

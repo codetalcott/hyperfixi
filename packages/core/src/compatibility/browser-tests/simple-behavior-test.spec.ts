@@ -33,8 +33,8 @@ test('simple toggle test: click button should add active class', async ({ page }
   });
   console.log('Behavior check:', behaviorInstalled);
 
-  // Find the toggle button
-  const toggleButton = page.locator('.toggle-button');
+  // Find the first toggle button
+  const toggleButton = page.locator('.toggle-button').first();
   await expect(toggleButton).toBeVisible();
 
   // Check initial state
