@@ -22,6 +22,30 @@ npm install @hyperfixi/i18n
 - **⚡ Performance**: Caching, lazy loading, and optimized translation algorithms
 - **📱 Browser Support**: Modern APIs with graceful fallbacks for legacy environments
 
+## When to Use i18n vs Semantic
+
+HyperFixi has two packages for multilingual support with different purposes:
+
+| Package                 | Purpose                                      | Use Case                                                  |
+|-------------------------|----------------------------------------------|-----------------------------------------------------------|
+| **@hyperfixi/semantic** | Parse code written in any language → execute | Users **write** hyperscript in their native language      |
+| **@hyperfixi/i18n**     | Transform code between languages             | **Translate** code examples for docs/teaching             |
+
+**Use @hyperfixi/semantic** when your users will write hyperscript in their native language. It parses multilingual input directly into executable AST nodes with native idiom support (e.g., Japanese conditionals like `クリックしたら`).
+
+**Use @hyperfixi/i18n** (this package) when you need to translate code examples between languages for documentation, tutorials, or teaching materials. It transforms existing code for display purposes—showing learners how the same logic looks in different languages.
+
+Example workflow for documentation:
+
+```typescript
+// You have English examples in your docs
+const english = 'on click toggle .active';
+
+// Translate to show Japanese readers the equivalent
+const japanese = translator.translate(english, { from: 'en', to: 'ja' });
+// → "クリック で .active を 切り替え"
+```
+
 ## Quick Start
 
 ### Basic Translation
