@@ -493,7 +493,7 @@ async function execute(ast: ASTNode, context?: ExecutionContext): Promise<unknow
  * Enhanced run/evaluate function that seamlessly handles all existing hyperscript code
  * Makes hyperscript.evaluate() equivalent to traditional _="" attribute processing
  */
-async function run(code: string, context?: ExecutionContext): Promise<unknown> {
+async function run(code: string, context?: ExecutionContext | Element): Promise<unknown> {
   // Input validation and normalization
   if (typeof code !== 'string' || code.trim().length === 0) {
     throw new Error('Code must be a non-empty string');
@@ -502,7 +502,20 @@ async function run(code: string, context?: ExecutionContext): Promise<unknown> {
   const normalizedCode = code.trim();
 
   // Create default context if none provided
-  const executionContext = context || createContext();
+  // Also handle case where user passes an Element directly (common mistake)
+  let executionContext: ExecutionContext;
+  if (!context) {
+    executionContext = createContext();
+  } else if (context instanceof Element) {
+    // User passed an Element - wrap it in a proper context
+    executionContext = createContext(context as HTMLElement);
+  } else if (context.locals instanceof Map) {
+    // Already a proper ExecutionContext
+    executionContext = context;
+  } else {
+    // Partial context object - create proper context with element
+    executionContext = createContext((context as any).me as HTMLElement);
+  }
 
   debug.runtime('HyperFixi Enhanced Evaluate:', {
     code: normalizedCode,
