@@ -1,8 +1,8 @@
 # HyperFixi
 
-Multilingual hyperscript for developers who think in *insert your language here*.
+DOM scripting in Japanese, Korean, Arabic, Spanish—23 languages total.
 
-Built on the ideas of [_hyperscript](https://hyperscript.org) by Carson Gross and the Big Sky Software team.
+A multilingual extension of [_hyperscript](https://hyperscript.org) by Carson Gross et al.
 
 ## About This Project
 
@@ -159,7 +159,7 @@ The codebase is complex. The semantic role mapping, grammar transformations, and
 
 **Current gaps:**
 
-- Compatibility with official _hyperscript is partial (behaviors, some edge cases)
+- Compatibility is one-way: official _hyperscript code should work in HyperFixi, but HyperFixi's extended syntax (multilingual, flexible grammar) won't work in official _hyperscript
 - Bundle sizes are large for full multilingual support
 - Language idioms are approximations, not yet verified by native speakers
 
