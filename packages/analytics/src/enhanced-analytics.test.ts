@@ -3,7 +3,7 @@
  * Comprehensive testing following enhanced pattern validation
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   TypedAnalyticsContextImplementation,
   createAnalyticsContext,
@@ -774,5 +774,221 @@ describe('Enhanced Analytics Export', () => {
   it('should export singleton implementation', () => {
     expect(enhancedAnalyticsImplementation).toBeInstanceOf(TypedAnalyticsContextImplementation);
     expect(enhancedAnalyticsImplementation.name).toBe('analyticsContext');
+  });
+});
+
+// Integration tests for HyperFixi runtime hooks
+describe('HyperFixi Integration', () => {
+  // Mock browser globals for analytics tracker
+  beforeEach(() => {
+    // Mock window, document, navigator, screen for analytics tracker
+    (globalThis as any).window = {
+      location: { href: 'https://test.example.com/page' },
+      sessionStorage: {
+        getItem: vi.fn().mockReturnValue(null),
+        setItem: vi.fn(),
+      },
+      addEventListener: vi.fn(),
+      innerWidth: 1920,
+      innerHeight: 1080,
+    };
+    (globalThis as any).document = {
+      referrer: 'https://referrer.example.com',
+      addEventListener: vi.fn(),
+      visibilityState: 'visible',
+    };
+    (globalThis as any).navigator = {
+      userAgent: 'Test User Agent',
+      doNotTrack: null,
+      language: 'en-US',
+    };
+    (globalThis as any).screen = {
+      width: 1920,
+      height: 1080,
+    };
+    (globalThis as any).performance = {
+      now: () => Date.now(),
+      timing: { navigationStart: 0 },
+      getEntriesByType: vi.fn().mockReturnValue([]),
+    };
+  });
+
+  afterEach(() => {
+    // Clean up mocks
+    delete (globalThis as any).window;
+    delete (globalThis as any).document;
+    delete (globalThis as any).navigator;
+    delete (globalThis as any).screen;
+  });
+
+  describe('integrateWithHyperFixi', () => {
+    it('should register hooks with runtime', async () => {
+      const { integrateWithHyperFixi, quickStartAnalytics } = await import('./index.js');
+
+      const mockRuntime = {
+        registerHooks: vi.fn(),
+        unregisterHooks: vi.fn().mockReturnValue(true),
+      };
+
+      const analytics = await quickStartAnalytics({});
+      const cleanup = integrateWithHyperFixi(mockRuntime, analytics);
+
+      // Should have registered hooks with the expected name
+      expect(mockRuntime.registerHooks).toHaveBeenCalledWith(
+        'hyperfixi-analytics',
+        expect.objectContaining({
+          beforeExecute: expect.any(Function),
+          afterExecute: expect.any(Function),
+          onError: expect.any(Function),
+        })
+      );
+
+      // Should return a cleanup function
+      expect(typeof cleanup).toBe('function');
+
+      // Cleanup should unregister hooks
+      cleanup();
+      expect(mockRuntime.unregisterHooks).toHaveBeenCalledWith('hyperfixi-analytics');
+    });
+
+    it('should track execution events via afterExecute hook', async () => {
+      const { integrateWithHyperFixi, quickStartAnalytics } = await import('./index.js');
+
+      let registeredHooks: any = null;
+      const mockRuntime = {
+        registerHooks: vi.fn((name, hooks) => {
+          registeredHooks = hooks;
+        }),
+        unregisterHooks: vi.fn().mockReturnValue(true),
+      };
+
+      const analytics = await quickStartAnalytics({});
+      integrateWithHyperFixi(mockRuntime, analytics);
+
+      // Simulate an afterExecute call
+      const mockContext = {
+        commandName: 'toggle',
+        element: { tagName: 'BUTTON', id: 'test-btn', className: '' } as unknown as Element,
+        args: ['toggle .active'],
+        modifiers: {},
+        event: { type: 'click' } as Event,
+        executionContext: {},
+      };
+
+      // Call the afterExecute hook
+      await registeredHooks.afterExecute(mockContext, 'success');
+
+      // Verify execution was tracked
+      const session = analytics.getSession();
+      expect(session).toBeDefined();
+    });
+
+    it('should track errors via onError hook', async () => {
+      const { integrateWithHyperFixi, quickStartAnalytics } = await import('./index.js');
+
+      let registeredHooks: any = null;
+      const mockRuntime = {
+        registerHooks: vi.fn((name, hooks) => {
+          registeredHooks = hooks;
+        }),
+        unregisterHooks: vi.fn().mockReturnValue(true),
+      };
+
+      const analytics = await quickStartAnalytics({});
+      integrateWithHyperFixi(mockRuntime, analytics);
+
+      // Simulate an error
+      const mockContext = {
+        commandName: 'toggle',
+        element: { tagName: 'DIV', id: '', className: 'container' } as unknown as Element,
+        args: [],
+        modifiers: {},
+        executionContext: {},
+      };
+
+      const testError = new Error('Test error');
+
+      // Call the onError hook
+      const returnedError = await registeredHooks.onError(mockContext, testError);
+
+      // Should return the error unchanged
+      expect(returnedError).toBe(testError);
+    });
+
+    it('should respect integration options', async () => {
+      const { integrateWithHyperFixi, quickStartAnalytics } = await import('./index.js');
+
+      let registeredHooks: any = null;
+      const mockRuntime = {
+        registerHooks: vi.fn((name, hooks) => {
+          registeredHooks = hooks;
+        }),
+        unregisterHooks: vi.fn().mockReturnValue(true),
+      };
+
+      const analytics = await quickStartAnalytics({});
+      integrateWithHyperFixi(mockRuntime, analytics, {
+        trackTiming: false,
+        includeScriptContent: true,
+        maxScriptLength: 100,
+      });
+
+      // Hooks should still be registered
+      expect(mockRuntime.registerHooks).toHaveBeenCalled();
+      expect(registeredHooks).not.toBeNull();
+    });
+  });
+
+  describe('createTrackedCompile', () => {
+    it('should wrap compile function and track compilation', async () => {
+      const { createTrackedCompile, quickStartAnalytics } = await import('./index.js');
+
+      const mockCompileResult = {
+        success: true,
+        ast: { type: 'command' },
+        compilationTime: 5,
+        metadata: {
+          complexity: 1,
+          features: ['toggle'],
+          selectors: ['.active'],
+          commands: ['toggle'],
+          warnings: [],
+        },
+        errors: [],
+      };
+
+      const mockCompile = vi.fn().mockReturnValue(mockCompileResult);
+      const analytics = await quickStartAnalytics({});
+
+      const trackedCompile = createTrackedCompile(mockCompile, analytics);
+
+      // Call the wrapped compile
+      const result = trackedCompile('toggle .active');
+
+      // Should have called the original compile
+      expect(mockCompile).toHaveBeenCalledWith('toggle .active', undefined);
+
+      // Should return the same result
+      expect(result).toBe(mockCompileResult);
+    });
+
+    it('should handle compile errors gracefully', async () => {
+      const { createTrackedCompile, quickStartAnalytics } = await import('./index.js');
+
+      const mockCompileResult = {
+        success: false,
+        errors: [{ message: 'Syntax error', line: 1, column: 1 }],
+        compilationTime: 2,
+      };
+
+      const mockCompile = vi.fn().mockReturnValue(mockCompileResult);
+      const analytics = await quickStartAnalytics({});
+
+      const trackedCompile = createTrackedCompile(mockCompile, analytics);
+      const result = trackedCompile('invalid code');
+
+      // Should return the result even on failure
+      expect(result).toBe(mockCompileResult);
+    });
   });
 });

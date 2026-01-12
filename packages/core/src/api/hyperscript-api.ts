@@ -8,6 +8,7 @@ import { tokenize } from '../parser/tokenizer';
 import { Runtime, type RuntimeOptions } from '../runtime/runtime';
 import { createContext, createChildContext } from '../core/context';
 import type { ASTNode, ExecutionContext, ParseError } from '../types/base-types';
+import type { RuntimeHooks } from '../types/hooks';
 import type { SemanticAnalyzerInterface } from '../parser/types';
 import { debug } from '../utils/debug';
 import {
@@ -174,6 +175,11 @@ export interface HyperscriptAPI {
   // Advanced
   createRuntime(options?: RuntimeOptions): Runtime;
   parse(code: string): ASTNode;
+
+  // Runtime Hooks
+  registerHooks(name: string, hooks: RuntimeHooks): void;
+  unregisterHooks(name: string): boolean;
+  getRegisteredHooks(): string[];
 }
 
 // ============================================================================
@@ -1051,6 +1057,17 @@ export const hyperscript: HyperscriptAPI = {
   // Advanced
   createRuntime: createRuntimeInstance,
   parse,
+
+  // Runtime Hooks - delegate to default runtime
+  registerHooks: (name: string, hooks: RuntimeHooks) => {
+    getDefaultRuntime().registerHooks(name, hooks);
+  },
+  unregisterHooks: (name: string) => {
+    return getDefaultRuntime().unregisterHooks(name);
+  },
+  getRegisteredHooks: () => {
+    return getDefaultRuntime().getRegisteredHooks();
+  },
 };
 
 // Export as _hyperscript for official _hyperscript API compatibility

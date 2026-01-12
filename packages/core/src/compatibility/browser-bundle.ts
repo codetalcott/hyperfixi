@@ -19,6 +19,7 @@
 
 import { evalHyperScript, evalHyperScriptAsync, evalHyperScriptSmart } from './eval-hyperscript';
 import { hyperscript, config } from '../api/hyperscript-api';
+import type { RuntimeHooks } from '../types/hooks';
 import { defaultAttributeProcessor } from '../dom/attribute-processor';
 import { tailwindExtension } from '../extensions/tailwind';
 import { Parser } from '../parser/parser';
@@ -92,6 +93,10 @@ declare global {
       };
       // Global configuration
       config: typeof config;
+      // Runtime hooks for analytics, logging, etc.
+      registerHooks: (name: string, hooks: RuntimeHooks) => void;
+      unregisterHooks: (name: string) => boolean;
+      getRegisteredHooks: () => string[];
     };
     // Also expose as direct globals for test compatibility
     evalHyperScript: typeof evalHyperScript;
@@ -186,6 +191,12 @@ const hyperfixi = {
   // Global configuration for parsing behavior
   // Use: hyperfixi.config.semantic = false to disable semantic parsing
   config,
+
+  // Runtime hooks for analytics, logging, debugging, etc.
+  // Delegates to the default runtime instance
+  registerHooks: hyperscript.registerHooks,
+  unregisterHooks: hyperscript.unregisterHooks,
+  getRegisteredHooks: hyperscript.getRegisteredHooks,
 
   // Version info
   version: '1.0.0-full',

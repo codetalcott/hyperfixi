@@ -321,49 +321,262 @@ export async function quickStartAnalytics(options: {
 }
 
 /**
- * Integration with HyperFixi core system
+ * Type for HyperFixi runtime with hooks support
  */
-export function integrateWithHyperFixi(hyperfixi: any, analytics: ReturnType<typeof createAnalyticsSystem>) {
-  // Hook into compilation events
-  if (hyperfixi.onCompile) {
-    hyperfixi.onCompile((script: string, result: any, timing: any) => {
-      analytics.track.compilation({
-        script,
-        compiledLength: result.compiled?.length || 0,
-        compilationTime: timing.total || 0,
-        complexity: result.metadata?.complexity || 0,
-        features: result.metadata?.features || [],
-        selectors: result.metadata?.selectors || [],
-        commands: result.metadata?.commands || [],
-        errors: result.errors || [],
-        warnings: result.warnings || [],
-      });
-    });
+interface HyperFixiRuntime {
+  registerHooks(name: string, hooks: RuntimeHooks): void;
+  unregisterHooks(name: string): boolean;
+}
+
+/**
+ * RuntimeHooks interface from @hyperfixi/core
+ * Defined locally to avoid circular dependency issues
+ */
+interface RuntimeHooks {
+  beforeExecute?: (ctx: HookContext) => void | Promise<void>;
+  afterExecute?: (ctx: HookContext, result: unknown) => void | Promise<void>;
+  onError?: (ctx: HookContext, error: Error) => void | Error | Promise<void | Error>;
+  interceptCommand?: (commandName: string, ctx: HookContext) => boolean;
+}
+
+/**
+ * HookContext interface from @hyperfixi/core
+ */
+interface HookContext {
+  commandName: string;
+  element: Element | null;
+  args: unknown[];
+  modifiers: Record<string, unknown>;
+  event?: Event;
+  executionContext: unknown;
+}
+
+/**
+ * Integration options for HyperFixi analytics
+ */
+export interface HyperFixiIntegrationOptions {
+  /**
+   * Whether to track execution timing
+   * @default true
+   */
+  trackTiming?: boolean;
+
+  /**
+   * Whether to include full script in execution events
+   * @default false (privacy - scripts may contain sensitive data)
+   */
+  includeScriptContent?: boolean;
+
+  /**
+   * Maximum script length to include (if includeScriptContent is true)
+   * @default 500
+   */
+  maxScriptLength?: number;
+}
+
+const DEFAULT_INTEGRATION_OPTIONS: HyperFixiIntegrationOptions = {
+  trackTiming: true,
+  includeScriptContent: false,
+  maxScriptLength: 500,
+};
+
+/**
+ * Summarize a result value for analytics (avoid serializing large objects)
+ */
+function summarizeResult(result: unknown): string | undefined {
+  if (result === undefined || result === null) {
+    return undefined;
   }
 
-  // Hook into execution events
-  if (hyperfixi.onExecute) {
-    hyperfixi.onExecute((script: string, element: Element, event: string, result: any, timing: any) => {
+  if (typeof result === 'string') {
+    return result.slice(0, 100);
+  }
+
+  if (typeof result === 'number' || typeof result === 'boolean') {
+    return String(result);
+  }
+
+  if (Array.isArray(result)) {
+    return `[Array(${result.length})]`;
+  }
+
+  if (typeof result === 'object') {
+    return '[Object]';
+  }
+
+  return String(result).slice(0, 100);
+}
+
+/**
+ * Integration with HyperFixi core runtime using the registerHooks API
+ *
+ * @param runtime - HyperFixi runtime instance (from createRuntime() or new Runtime())
+ * @param analytics - Analytics system instance (from createAnalyticsSystem())
+ * @param options - Integration options
+ * @returns Cleanup function to unregister hooks
+ *
+ * @example
+ * ```typescript
+ * import { createRuntime } from '@hyperfixi/core';
+ * import { createAnalyticsSystem, integrateWithHyperFixi } from '@hyperfixi/analytics';
+ *
+ * const runtime = createRuntime();
+ * const analytics = createAnalyticsSystem({ storage: myStorage });
+ *
+ * const cleanup = integrateWithHyperFixi(runtime, analytics);
+ *
+ * // Later, to remove analytics hooks:
+ * cleanup();
+ * ```
+ */
+export function integrateWithHyperFixi(
+  runtime: HyperFixiRuntime,
+  analytics: ReturnType<typeof createAnalyticsSystem>,
+  options: HyperFixiIntegrationOptions = {}
+): () => void {
+  const opts = { ...DEFAULT_INTEGRATION_OPTIONS, ...options };
+  const HOOK_NAME = 'hyperfixi-analytics';
+
+  // Timing tracking using WeakMap (same pattern as createTimingHooks in core)
+  const startTimes = new WeakMap<object, number>();
+
+  const hooks: RuntimeHooks = {
+    beforeExecute: (ctx: HookContext) => {
+      if (opts.trackTiming) {
+        startTimes.set(ctx, performance.now());
+      }
+    },
+
+    afterExecute: (ctx: HookContext, result: unknown) => {
+      const startTime = startTimes.get(ctx);
+      const executionTime = startTime !== undefined
+        ? performance.now() - startTime
+        : 0;
+
+      if (startTime !== undefined) {
+        startTimes.delete(ctx);
+      }
+
+      // Extract script content from args if available
+      let script = '';
+      if (opts.includeScriptContent && ctx.args.length > 0) {
+        const firstArg = ctx.args[0];
+        if (typeof firstArg === 'string') {
+          script = firstArg.slice(0, opts.maxScriptLength);
+        }
+      }
+
+      // Extract element information safely
+      const elementTag = ctx.element?.tagName?.toLowerCase() || 'unknown';
+      const elementId = ctx.element?.id || '';
+      const elementClasses = ctx.element?.className || '';
+
       analytics.track.execution({
         script,
-        element: element.tagName.toLowerCase(),
-        event,
-        executionTime: timing.total || 0,
-        success: !result.error,
-        result: result.value,
-        error: result.error?.message,
+        element: elementId || elementClasses || elementTag,
+        event: ctx.event?.type || 'direct',
+        executionTime,
+        success: true,
+        result: summarizeResult(result),
       });
-    });
-  }
+    },
 
-  // Hook into error events
-  if (hyperfixi.onError) {
-    hyperfixi.onError((error: Error, context: any) => {
-      analytics.track.error(error, context);
-    });
-  }
+    onError: (ctx: HookContext, error: Error) => {
+      const startTime = startTimes.get(ctx);
+      const executionTime = startTime !== undefined
+        ? performance.now() - startTime
+        : 0;
 
-  return analytics;
+      if (startTime !== undefined) {
+        startTimes.delete(ctx);
+      }
+
+      // Extract element information
+      const elementTag = ctx.element?.tagName?.toLowerCase() || 'unknown';
+      const elementId = ctx.element?.id || '';
+      const elementClasses = ctx.element?.className || '';
+
+      // Track as failed execution
+      analytics.track.execution({
+        script: '',
+        element: elementId || elementClasses || elementTag,
+        event: ctx.event?.type || 'direct',
+        executionTime,
+        success: false,
+        error: error.message,
+      });
+
+      // Also track as error event with full context
+      analytics.track.error(error, {
+        commandName: ctx.commandName,
+        element: elementTag,
+        elementId,
+        eventType: ctx.event?.type,
+        modifiers: ctx.modifiers,
+      });
+
+      // Return the error unchanged (don't transform it)
+      return error;
+    },
+  };
+
+  // Register hooks with the runtime
+  runtime.registerHooks(HOOK_NAME, hooks);
+
+  // Return cleanup function
+  return () => {
+    runtime.unregisterHooks(HOOK_NAME);
+  };
+}
+
+/**
+ * Create a wrapped compile function that tracks compilation analytics
+ *
+ * @param compile - The hyperfixi.compile function
+ * @param analytics - Analytics system instance
+ * @returns Wrapped compile function that tracks compilation events
+ *
+ * @example
+ * ```typescript
+ * import { createAnalyticsSystem, createTrackedCompile } from '@hyperfixi/analytics';
+ *
+ * const analytics = createAnalyticsSystem({ storage: myStorage });
+ * const trackedCompile = createTrackedCompile(hyperfixi.compile, analytics);
+ *
+ * // Now use trackedCompile instead of hyperfixi.compile
+ * const result = trackedCompile('toggle .active');
+ * ```
+ */
+export function createTrackedCompile<
+  TCompile extends (code: string, options?: unknown) => unknown
+>(
+  compile: TCompile,
+  analytics: ReturnType<typeof createAnalyticsSystem>
+): TCompile {
+  return ((code: string, options?: unknown) => {
+    const startTime = performance.now();
+    const result = compile(code, options) as Record<string, unknown>;
+    const compilationTime = performance.now() - startTime;
+
+    // Extract metadata safely
+    const metadata = (result?.metadata || {}) as Record<string, unknown>;
+
+    analytics.track.compilation({
+      script: code.slice(0, 500), // Limit for privacy
+      compiledLength: 0, // AST doesn't have a "length"
+      compilationTime: (result?.compilationTime as number) || compilationTime,
+      complexity: (metadata?.complexity as number) || 0,
+      features: (metadata?.features as string[]) || [],
+      selectors: (metadata?.selectors as string[]) || [],
+      commands: (metadata?.commands as string[]) || [],
+      errors: ((result?.errors || []) as Array<{ message?: string }>).map(
+        (e) => e?.message || String(e)
+      ),
+      warnings: (metadata?.warnings as string[]) || [],
+    });
+
+    return result;
+  }) as TCompile;
 }
 
 /**
