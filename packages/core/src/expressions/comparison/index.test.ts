@@ -120,7 +120,7 @@ describe('GreaterThanExpression', () => {
   });
 
   describe('Type conversion', () => {
-    it.skip('should convert string numbers for comparison', async () => {
+    it('should convert string numbers for comparison', async () => {
       const input = { left: '10', right: '5' };
       const result = await greaterThanExpr.evaluate(context, input);
 
@@ -238,7 +238,7 @@ describe('LessThanExpression', () => {
   });
 
   describe('String conversion', () => {
-    it.skip('should convert and compare string numbers', async () => {
+    it('should convert and compare string numbers', async () => {
       const input = { left: '5', right: '10' };
       const result = await lessThanExpr.evaluate(context, input);
 
