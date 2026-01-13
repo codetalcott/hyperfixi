@@ -354,13 +354,13 @@ describe('KeywordProvider Integration', () => {
 
     it('should handle Chinese characters correctly', () => {
       // Chinese uses logographic characters
-      // Note: '当' is used for both 'on' and 'while' in commands
-      // Since 'while' appears after 'on' in dictionary, '当' → 'while'
-      expect(zhKeywords.resolve('当')).toBe('while');
+      // Note: '当' (dāng) is used for 'when' (logical), 'while' (commands), and 'on' (commands)
+      // Since 'when' appears last in dictionary iteration, '当' → 'when'
+      expect(zhKeywords.resolve('当')).toBe('when');
       expect(zhKeywords.resolve('切换')).toBe('toggle');
       // Round-trip for toggle
       expect(zhKeywords.toLocale('toggle')).toBe('切换');
-      // Note: toLocale('on') still returns '当' (forward map), even though reverse is 'while'
+      // Note: toLocale('on') still returns '当' (forward map), even though reverse is 'when'
       expect(zhKeywords.toLocale('on')).toBe('当');
     });
   });

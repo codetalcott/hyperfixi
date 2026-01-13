@@ -84,8 +84,8 @@ export const arabicProfile: LanguageProfile = {
     settle: { primary: 'استقر', normalized: 'settle' },
     // Control flow
     if: { primary: 'إذا', normalized: 'if' },
-    when: { primary: 'TODO', normalized: 'when' },
-    where: { primary: 'TODO', normalized: 'where' },
+    when: { primary: 'عندما', normalized: 'when' },
+    where: { primary: 'أين', normalized: 'where' },
     else: { primary: 'وإلا', alternatives: ['خلاف ذلك'], normalized: 'else' },
     repeat: { primary: 'كرر', normalized: 'repeat' },
     for: { primary: 'لكل', normalized: 'for' },

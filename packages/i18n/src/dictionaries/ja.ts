@@ -136,8 +136,8 @@ export const ja: Dictionary = {
   },
   
   logical: {
-    when: 'TODO',
-    where: 'TODO',
+    when: 'とき',
+    where: 'どこ',
     and: 'そして',
     or: 'または',
     not: 'ではない',

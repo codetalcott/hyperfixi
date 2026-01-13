@@ -132,8 +132,8 @@ export const vi: Dictionary = {
   },
 
   logical: {
-    when: 'TODO',
-    where: 'TODO',
+    when: 'khi',
+    where: 'ở_đâu',
     and: 'và',
     or: 'hoặc',
     not: 'không',

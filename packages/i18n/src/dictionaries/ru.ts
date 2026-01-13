@@ -153,8 +153,8 @@ export const russianDictionary: Dictionary = {
   },
 
   logical: {
-    when: 'TODO',
-    where: 'TODO',
+    when: 'когда',
+    where: 'где',
     and: 'и',
     or: 'или',
     not: 'не',

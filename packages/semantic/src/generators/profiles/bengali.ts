@@ -80,8 +80,8 @@ export const bengaliProfile: LanguageProfile = {
     settle: { primary: 'স্থির', alternatives: [], normalized: 'settle' },
     // Control flow
     if: { primary: 'যদি', alternatives: [], normalized: 'if' },
-    when: { primary: 'TODO', normalized: 'when' },
-    where: { primary: 'TODO', normalized: 'where' },
+    when: { primary: 'যখন', normalized: 'when' },
+    where: { primary: 'কোথায়', normalized: 'where' },
     else: { primary: 'নতুবা', alternatives: ['না হলে'], normalized: 'else' },
     repeat: { primary: 'পুনরাবৃত্তি', alternatives: ['বার বার'], normalized: 'repeat' },
     for: { primary: 'জন্য', alternatives: [], normalized: 'for' },

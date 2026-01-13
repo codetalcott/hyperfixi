@@ -153,8 +153,8 @@ export const hindiDictionary: Dictionary = {
   },
 
   logical: {
-    when: 'TODO',
-    where: 'TODO',
+    when: 'जब',
+    where: 'कहाँ',
     and: 'और',
     or: 'या',
     not: 'नहीं',

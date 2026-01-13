@@ -83,8 +83,8 @@ export const hindiProfile: LanguageProfile = {
     settle: { primary: 'स्थिर', alternatives: [], normalized: 'settle' },
     // Control flow
     if: { primary: 'अगर', alternatives: ['यदि'], normalized: 'if' },
-    when: { primary: 'TODO', normalized: 'when' },
-    where: { primary: 'TODO', normalized: 'where' },
+    when: { primary: 'जब', normalized: 'when' },
+    where: { primary: 'कहाँ', normalized: 'where' },
     else: { primary: 'वरना', alternatives: ['नहीं तो'], normalized: 'else' },
     repeat: { primary: 'दोहराएं', alternatives: ['दोहरा'], normalized: 'repeat' },
     for: { primary: 'के लिए', alternatives: [], normalized: 'for' },

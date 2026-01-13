@@ -13,6 +13,20 @@ import type { StripeClient } from './stripe.js';
 import { generateApiKey, hashApiKey } from '../middleware/auth.js';
 import type Stripe from 'stripe';
 
+// Notification logging for future email service integration
+interface NotificationLog {
+  type: 'welcome_email' | 'payment_failed';
+  userId: string;
+  email: string;
+  data: Record<string, unknown>;
+  timestamp: Date;
+}
+
+function logNotification(notification: NotificationLog): void {
+  console.log('[NOTIFICATION]', JSON.stringify(notification, null, 2));
+  // TODO: Replace with actual email service (Resend recommended)
+}
+
 // Tier mapping from Stripe price IDs
 const PRICE_TO_TIER: Record<string, 'free' | 'pro' | 'team'> = {
   [process.env.STRIPE_PRO_PRICE_ID || 'price_pro']: 'pro',
@@ -148,8 +162,18 @@ async function handleSubscriptionCreated(
 
     console.log(`Created new API key ${prefix} for ${tier} tier`);
 
-    // TODO: Send welcome email with API key
-    // This should be done via a queue/email service in production
+    // Log welcome email notification (replace with actual email service in production)
+    logNotification({
+      type: 'welcome_email',
+      userId: user.id,
+      email: customerEmail,
+      data: {
+        apiKeyPrefix: prefix,
+        tier,
+        monthlyLimit: TIER_LIMITS[tier],
+      },
+      timestamp: new Date(),
+    });
   }
 }
 
@@ -223,6 +247,21 @@ async function handlePaymentFailed(db: DatabaseClient, invoice: Stripe.Invoice):
 
   console.log(`Payment failed: customer=${customerId}`);
 
-  // TODO: Send payment failed notification
-  // TODO: Consider grace period before downgrade
+  // Get user for notification
+  const user = await db.getOrCreateUserByStripeId(customerId, `customer_${customerId}@hyperfixi.dev`);
+
+  // Log payment failed notification (replace with actual email service in production)
+  logNotification({
+    type: 'payment_failed',
+    userId: user.id,
+    email: user.email,
+    data: {
+      invoiceId: invoice.id,
+      amountDue: (invoice.amount_due || 0) / 100,
+      currency: invoice.currency || 'usd',
+    },
+    timestamp: new Date(),
+  });
+
+  // Note: Consider implementing 7-day grace period before tier downgrade
 }

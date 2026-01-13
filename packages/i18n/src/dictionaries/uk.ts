@@ -153,8 +153,8 @@ export const ukrainianDictionary: Dictionary = {
   },
 
   logical: {
-    when: 'TODO',
-    where: 'TODO',
+    when: 'коли',
+    where: 'де',
     and: 'і',
     or: 'або',
     not: 'не',

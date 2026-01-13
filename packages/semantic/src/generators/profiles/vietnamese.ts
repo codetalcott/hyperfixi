@@ -85,8 +85,8 @@ export const vietnameseProfile: LanguageProfile = {
     settle: { primary: 'ổn định', normalized: 'settle' },
     // Control flow
     if: { primary: 'nếu', normalized: 'if' },
-    when: { primary: 'TODO', normalized: 'when' },
-    where: { primary: 'TODO', normalized: 'where' },
+    when: { primary: 'khi', normalized: 'when' },
+    where: { primary: 'ở_đâu', normalized: 'where' },
     else: { primary: 'không thì', alternatives: ['nếu không'], normalized: 'else' },
     repeat: { primary: 'lặp lại', normalized: 'repeat' },
     for: { primary: 'với mỗi', normalized: 'for' },

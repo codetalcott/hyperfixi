@@ -88,8 +88,8 @@ export const polishProfile: LanguageProfile = {
     settle: { primary: 'ustabilizuj', normalized: 'settle', form: 'imperative' },
     // Control flow
     if: { primary: 'jeśli', alternatives: ['jesli', 'jeżeli', 'jezeli'], normalized: 'if' },
-    when: { primary: 'TODO', normalized: 'when' },
-    where: { primary: 'TODO', normalized: 'where' },
+    when: { primary: 'kiedy', normalized: 'when' },
+    where: { primary: 'gdzie', normalized: 'where' },
     else: { primary: 'inaczej', alternatives: ['wpp'], normalized: 'else' },
     repeat: { primary: 'powtórz', alternatives: ['powtorz'], normalized: 'repeat', form: 'imperative' },
     for: { primary: 'dla', alternatives: ['każdy', 'kazdy'], normalized: 'for' },

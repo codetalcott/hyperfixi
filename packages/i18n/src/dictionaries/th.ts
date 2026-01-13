@@ -91,8 +91,8 @@ export const thaiDictionary: Dictionary = {
   },
   logical: {
     if: 'ถ้า',
-    when: 'TODO',
-    where: 'TODO',
+    when: 'เมื่อ',
+    where: 'ที่ไหน',
     else: 'ไม่งั้น',
     not: 'ไม่',
     and: 'และ',

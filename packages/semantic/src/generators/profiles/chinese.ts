@@ -78,8 +78,8 @@ export const chineseProfile: LanguageProfile = {
     settle: { primary: '稳定', normalized: 'settle' },
     // Control flow
     if: { primary: '如果', normalized: 'if' },
-    when: { primary: 'TODO', normalized: 'when' },
-    where: { primary: 'TODO', normalized: 'where' },
+    when: { primary: '当', normalized: 'when' },
+    where: { primary: '哪里', normalized: 'where' },
     else: { primary: '否则', normalized: 'else' },
     repeat: { primary: '重复', normalized: 'repeat' },
     for: { primary: '为', normalized: 'for' },
