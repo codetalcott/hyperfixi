@@ -658,6 +658,79 @@ button.secondary:hover,
   color: var(--syntax-function);
 }
 
+/* Prism.js Hyperscript Tokens (prism-hyperfixi) */
+.token.hs-command {
+  color: #66d9ef;
+  font-weight: bold;
+}
+
+.token.hs-modifier {
+  color: #a8a8a8;
+}
+
+.token.hs-event {
+  color: #fd971f;
+}
+
+.token.hs-logical {
+  color: #ae81ff;
+}
+
+.token.hs-temporal {
+  color: #66cccc;
+}
+
+.token.hs-value {
+  color: #a6e22e;
+}
+
+.token.hs-attribute {
+  color: #6699cc;
+}
+
+.token.hs-expression {
+  color: #f92672;
+}
+
+.token.hs-selector {
+  color: #2aa198;
+}
+
+/* Standard Prism tokens */
+.token.comment {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+
+.token.string,
+.token.attr-value {
+  color: var(--syntax-string);
+}
+
+.token.keyword {
+  color: var(--syntax-keyword);
+}
+
+.token.number {
+  color: var(--syntax-number);
+}
+
+.token.tag {
+  color: #e06c75;
+}
+
+.token.attr-name {
+  color: #d19a66;
+}
+
+.token.punctuation {
+  color: #abb2bf;
+}
+
+.token.operator {
+  color: #56b6c2;
+}
+
 /* Inline code */
 code {
   font-family: var(--font-mono);
