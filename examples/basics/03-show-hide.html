@@ -71,10 +71,10 @@
         <div class="demo">
             <h2>Demo</h2>
             <div>
-                <button _="on click show #content">
+                <button _="on click remove .hidden from #content">
                     Show
                 </button>
-                <button class="secondary" _="on click hide #content">
+                <button class="secondary" _="on click add .hidden to #content">
                     Hide
                 </button>
                 <button class="success" _="on click toggle .hidden on #content">
@@ -94,17 +94,17 @@
         <!-- Code Explanation -->
         <h2>The Code</h2>
         <div class="code">
-<span class="comment">&lt;!-- Show button --&gt;</span>
-&lt;button <span class="keyword">_</span>=<span class="string">"on click show #content"</span>&gt;
+<span class="comment">&lt;!-- Show button (removes hidden class) --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click remove .hidden from #content"</span>&gt;
   Show
 &lt;/button&gt;
 
-<span class="comment">&lt;!-- Hide button --&gt;</span>
-&lt;button <span class="keyword">_</span>=<span class="string">"on click hide #content"</span>&gt;
+<span class="comment">&lt;!-- Hide button (adds hidden class) --&gt;</span>
+&lt;button <span class="keyword">_</span>=<span class="string">"on click add .hidden to #content"</span>&gt;
   Hide
 &lt;/button&gt;
 
-<span class="comment">&lt;!-- Toggle button (class syntax) --&gt;</span>
+<span class="comment">&lt;!-- Toggle button (toggles hidden class) --&gt;</span>
 &lt;button <span class="keyword">_</span>=<span class="string">"on click toggle .hidden on #content"</span>&gt;
   Toggle
 &lt;/button&gt;
@@ -117,14 +117,14 @@
         <div class="explanation">
             <h3>How it works:</h3>
             <ul>
-                <li><code>show #content</code> - Makes the element visible by removing <code>display: none</code></li>
-                <li><code>hide #content</code> - Hides the element by adding <code>display: none</code></li>
-                <li><code>toggle .hidden on #content</code> - Toggles the .hidden class (which sets <code>display: none</code>)</li>
+                <li><code>remove .hidden from #content</code> - Shows the element by removing the hidden class</li>
+                <li><code>add .hidden to #content</code> - Hides the element by adding the hidden class</li>
+                <li><code>toggle .hidden on #content</code> - Toggles visibility by adding/removing the hidden class</li>
             </ul>
 
             <h3>Key Concepts:</h3>
             <ul>
-                <li><strong>Simple Commands:</strong> <code>show</code>, <code>hide</code>, and <code>toggle</code> are built-in commands</li>
+                <li><strong>Class-based visibility:</strong> Using a CSS class keeps all buttons working consistently</li>
                 <li><strong>CSS Selectors:</strong> Target any element using standard CSS selectors</li>
                 <li><strong>Declarative:</strong> No need to manage display state manually</li>
                 <li><strong>Animation-Ready:</strong> Combine with transitions for smooth effects</li>
